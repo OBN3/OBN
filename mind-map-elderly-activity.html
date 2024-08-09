@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מפת חשיבה: עידוד פעילות גופנית בקרב זקנים</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js"></script>
+    <style>
+        #mynetwork {
+            width: 100%;
+            height: 1000px;
+            border: 1px solid lightgray;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+        }
+    </style>
+</head>
+<body>
+    <h1>מפת חשיבה: עידוד פעילות גופנית בקרב זקנים</h1>
+    <div id="mynetwork"></div>
+    <script>
+        var nodes = new vis.DataSet([
+            {id: 1, label: 'עידוד פעילות גופנית\nבקרב זקנים', color: '#FFD700', font: {size: 20}},
+            
+            {id: 2, label: 'סוגי פעילויות', color: '#98FB98', font: {size: 18}},
+            {id: 3, label: 'תועלות בריאותיות', color: '#87CEFA', font: {size: 18}},
+            {id: 4, label: 'מוטיבציה', color: '#FFA07A', font: {size: 18}},
+            {id: 5, label: 'התאמה אישית', color: '#DDA0DD', font: {size: 18}},
+            {id: 6, label: 'מקומות לפעילות', color: '#20B2AA', font: {size: 18}},
+            {id: 7, label: 'תמיכה חברתית', color: '#F0E68C', font: {size: 18}},
+            {id: 8, label: 'טכנולוגיה ואפליקציות', color: '#FF69B4', font: {size: 18}},
+            {id: 9, label: 'בטיחות', color: '#CD5C5C', font: {size: 18}},
+            {id: 10, label: 'תזונה ופעילות', color: '#90EE90', font: {size: 18}},
+            {id: 11, label: 'מדיניות ותמריצים', color: '#B0C4DE', font: {size: 18}},
+            
+            {id: 12, label: 'הליכה', color: '#98FB98'},
+            {id: 13, label: 'שחייה', color: '#98FB98'},
+            {id: 14, label: 'יוגה', color: '#98FB98'},
+            
+            {id: 15, label: 'חיזוק העצמות', color: '#87CEFA'},
+            {id: 16, label: 'שיפור שיווי משקל', color: '#87CEFA'},
+            {id: 17, label: 'הפחתת לחץ דם', color: '#87CEFA'},
+            
+            {id: 18, label: 'קביעת מטרות', color: '#FFA07A'},
+            {id: 19, label: 'תגמולים', color: '#FFA07A'},
+            {id: 20, label: 'מעקב התקדמות', color: '#FFA07A'},
+            
+            {id: 21, label: 'בדיקה רפואית', color: '#DDA0DD'},
+            {id: 22, label: 'התאמת עצימות', color: '#DDA0DD'},
+            {id: 23, label: 'בחירת פעילות מועדפת', color: '#DDA0DD'},
+            
+            {id: 24, label: 'פארקים', color: '#20B2AA'},
+            {id: 25, label: 'מרכזי ספורט', color: '#20B2AA'},
+            {id: 26, label: 'בריכות', color: '#20B2AA'},
+            
+            {id: 27, label: 'קבוצות הליכה', color: '#F0E68C'},
+            {id: 28, label: 'מאמן אישי', color: '#F0E68C'},
+            {id: 29, label: 'תמיכה משפחתית', color: '#F0E68C'},
+            
+            {id: 30, label: 'מכשירי כושר חכמים', color: '#FF69B4'},
+            {id: 31, label: 'אפליקציות מעקב', color: '#FF69B4'},
+            {id: 32, label: 'שעונים חכמים', color: '#FF69B4'},
+            
+            {id: 33, label: 'ציוד מותאם', color: '#CD5C5C'},
+            {id: 34, label: 'הכנת הסביבה', color: '#CD5C5C'},
+            {id: 35, label: 'הדרכת בטיחות', color: '#CD5C5C'},
+            
+            {id: 36, label: 'תזונה מאוזנת', color: '#90EE90'},
+            {id: 37, label: 'צריכת חלבון', color: '#90EE90'},
+            {id: 38, label: 'הידרציה', color: '#90EE90'},
+            
+            {id: 39, label: 'הטבות ביטוח', color: '#B0C4DE'},
+            {id: 40, label: 'תוכניות עירוניות', color: '#B0C4DE'},
+            {id: 41, label: 'הנגשת מתקנים', color: '#B0C4DE'},
+
+            // רמה רביעית
+            {id: 42, label: 'קצב איטי', color: '#98FB98'},
+            {id: 43, label: 'מסלולים מותאמים', color: '#98FB98'},
+            {id: 44, label: 'הליכונים במים', color: '#98FB98'},
+            {id: 45, label: 'תרגילי נשימה', color: '#98FB98'},
+            {id: 46, label: 'מניעת אוסטיאופורוזיס', color: '#87CEFA'},
+            {id: 47, label: 'הפחתת סיכון לנפילות', color: '#87CEFA'},
+            {id: 48, label: 'שיפור זרימת הדם', color: '#87CEFA'},
+            {id: 49, label: 'יומן מעקב', color: '#FFA07A'},
+            {id: 50, label: 'תעודות הצטיינות', color: '#FFA07A'},
+            {id: 51, label: 'שיתוף ברשתות חברתיות', color: '#FFA07A'},
+            {id: 52, label: 'בדיקות לב', color: '#DDA0DD'},
+            {id: 53, label: 'התאמת משקולות', color: '#DDA0DD'},
+            {id: 54, label: 'ניתוח העדפות אישיות', color: '#DDA0DD'},
+            {id: 55, label: 'מסלולי הליכה מסומנים', color: '#20B2AA'},
+            {id: 56, label: 'כיתות התעמלות לגיל השלישי', color: '#20B2AA'},
+            {id: 57, label: 'שיעורי התעמלות במים', color: '#20B2AA'},
+            {id: 58, label: 'מפגשים חברתיים', color: '#F0E68C'},
+            {id: 59, label: 'תוכניות אימון מותאמות', color: '#F0E68C'},
+            {id: 60, label: 'ליווי לפעילויות', color: '#F0E68C'},
+            {id: 61, label: 'מדי דופק', color: '#FF69B4'},
+            {id: 62, label: 'תזכורות לפעילות', color: '#FF69B4'},
+            {id: 63, label: 'מדידת צעדים', color: '#FF69B4'},
+            {id: 64, label: 'נעליים מותאמות', color: '#CD5C5C'},
+            {id: 65, label: 'תאורה מתאימה', color: '#CD5C5C'},
+            {id: 66, label: 'טכניקות נכונות', color: '#CD5C5C'},
+            {id: 67, label: 'ארוחות קטנות ותכופות', color: '#90EE90'},
+            {id: 68, label: 'מזונות עשירים בחלבון', color: '#90EE90'},
+            {id: 69, label: 'שתייה לפני, במהלך ואחרי פעילות', color: '#90EE90'},
+            {id: 70, label: 'הנחות בביטוח בריאות', color: '#B0C4DE'},
+            {id: 71, label: 'פעילויות בחינם בפארקים', color: '#B0C4DE'},
+            {id: 72, label: 'מעליות ורמפות', color: '#B0C4DE'}
+        ]);
+
+        var edges = new vis.DataSet([
+            {from: 1, to: 2},
+            {from: 1, to: 3},
+            {from: 1, to: 4},
+            {from: 1, to: 5},
+            {from: 1, to: 6},
+            {from: 1, to: 7},
+            {from: 1, to: 8},
+            {from: 1, to: 9},
+            {from: 1, to: 10},
+            {from: 1, to: 11},
+            
+            {from: 2, to: 12},
+            {from: 2, to: 13},
+            {from: 2, to: 14},
+            
+            {from: 3, to: 15},
+            {from: 3, to: 16},
+            {from: 3, to: 17},
+            
+            {from: 4, to: 18},
+            {from: 4, to: 19},
+            {from: 4, to: 20},
+            
+            {from: 5, to: 21},
+            {from: 5, to: 22},
+            {from: 5, to: 23},
+            
+            {from: 6, to: 24},
+            {from: 6, to: 25},
+            {from: 6, to: 26},
+            
+            {from: 7, to: 27},
+            {from: 7, to: 28},
+            {from: 7, to: 29},
+            
+            {from: 8, to: 30},
+            {from: 8, to: 31},
+            {from: 8, to: 32},
+            
+            {from: 9, to: 33},
+            {from: 9, to: 34},
+            {from: 9, to: 35},
+            
+            {from: 10, to: 36},
+            {from: 10, to: 37},
+            {from: 10, to: 38},
+            
+            {from: 11, to: 39},
+            {from: 11, to: 40},
+            {from: 11, to: 41},
+
+            // קשרים לרמה הרביעית
+            {from: 12, to: 42},
+            {from: 12, to: 43},
+            {from: 13, to: 44},
+            {from: 14, to: 45},
+            {from: 15, to: 46},
+            {from: 16, to: 47},
+            {from: 17, to: 48},
+            {from: 18, to: 49},
+            {from: 19, to: 50},
+            {from: 20, to: 51},
+            {from: 21, to: 52},
+            {from: 22, to: 53},
+            {from: 23, to: 54},
+            {from: 24, to: 55},
+            {from: 25, to: 56},
+            {from: 26, to: 57},
+            {from: 27, to: 58},
+            {from: 28, to: 59},
+            {from: 29, to: 60},
+            {from: 30, to: 61},
+            {from: 31, to: 62},
+            {from: 32, to: 63},
+            {from: 33, to: 64},
+            {from: 34, to: 65},
+            {from: 35, to: 66},
+            {from: 36, to: 67},
+            {from: 37, to: 68},
+            {from: 38, to: 69},
+            {from: 39, to: 70},
+            {from: 40, to: 71},
+            {from: 41, to: 72}
+        ]);
+
+        var container = document.getElementById('mynetwork');
+        var data = {
+            nodes: nodes,
+            edges: edges
+        };
+        var options = {
+            layout: {
+                randomSeed: 2
+            },
+            physics: {
+                stabilization: false,
+                barnesHut: {
+                    gravitationalConstant: -2000,
+                    centralGravity: 0.3,
+                    springLength: 95,
+                    springConstant: 0.04,
+                    damping: 0.09,
+                    avoidOverlap: 0.1
+                }
+            },
+            interaction: {
+                dragNodes: true,
+dragView: true,
+                zoomView: true
+            },
+            nodes: {
+                shape: 'box',
+                margin: 10,
+                widthConstraint: {
+                    maximum: 200
+                }
+            },
+            edges: {
+                smooth: {
+                    type: 'continuous'
+                }
+            }
+        };
+        var network = new vis.Network(container, data, options);
+    </script>
+</body>
+</html>
