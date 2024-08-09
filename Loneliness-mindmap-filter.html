@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מפת חשיבה: בדידות בקרב זקנים</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js"></script>
+    <style>
+        #mynetwork {
+            width: 100%;
+            height: 1000px;
+            border: 1px solid lightgray;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+        }
+    </style>
+</head>
+<body>
+    <h1 align=center>מפת חשיבה: בדידות בקרב זקנים</h1>
+
+  <select id="categoryFilter">
+        <option value="all">הצג הכל</option>
+        <option value="2">גורמי סיכון</option>
+        <option value="3">השפעות בריאותיות</option>
+        <option value="4">התערבויות חברתיות</option>
+        <option value="5">טכנולוגיה ותקשורת</option>
+        <option value="6">תמיכה קהילתית</option>
+        <option value="7">פעילויות פנאי</option>
+        <option value="8">תמיכה משפחתית</option>
+        <option value="9">בריאות נפשית</option>
+        <option value="10">מדיניות ושירותים</option>
+        <option value="11">מיומנויות חברתיות</option>
+    </select>
+ 
+
+
+
+    <div id="mynetwork"></div>
+    <script>
+        var nodes = new vis.DataSet([
+            {id: 1, label: 'בדידות בקרב זקנים', color: '#FFD700', font: {size: 20}},
+            
+            {id: 2, label: 'גורמי סיכון', color: '#98FB98', font: {size: 18}},
+            {id: 3, label: 'השפעות בריאותיות', color: '#87CEFA', font: {size: 18}},
+            {id: 4, label: 'התערבויות חברתיות', color: '#FFA07A', font: {size: 18}},
+            {id: 5, label: 'טכנולוגיה ותקשורת', color: '#DDA0DD', font: {size: 18}},
+            {id: 6, label: 'תמיכה קהילתית', color: '#20B2AA', font: {size: 18}},
+            {id: 7, label: 'פעילויות פנאי', color: '#F0E68C', font: {size: 18}},
+            {id: 8, label: 'תמיכה משפחתית', color: '#FF69B4', font: {size: 18}},
+            {id: 9, label: 'בריאות נפשית', color: '#CD5C5C', font: {size: 18}},
+            {id: 10, label: 'מדיניות ושירותים', color: '#90EE90', font: {size: 18}},
+            {id: 11, label: 'מיומנויות חברתיות', color: '#B0C4DE', font: {size: 18}},
+            
+            {id: 12, label: 'אובדן בן זוג', color: '#98FB98'},
+            {id: 13, label: 'פרישה מעבודה', color: '#98FB98'},
+            {id: 14, label: 'מוגבלות פיזית', color: '#98FB98'},
+            
+            {id: 15, label: 'דיכאון', color: '#87CEFA'},
+            {id: 16, label: 'ירידה קוגניטיבית', color: '#87CEFA'},
+            {id: 17, label: 'לחץ דם גבוה', color: '#87CEFA'},
+            
+            {id: 18, label: 'מועדוני גמלאים', color: '#FFA07A'},
+            {id: 19, label: 'תוכניות התנדבות', color: '#FFA07A'},
+            {id: 20, label: 'קבוצות תמיכה', color: '#FFA07A'},
+            
+            {id: 21, label: 'שיחות וידאו', color: '#DDA0DD'},
+            {id: 22, label: 'רשתות חברתיות', color: '#DDA0DD'},
+            {id: 23, label: 'אפליקציות ייעודיות', color: '#DDA0DD'},
+            
+            {id: 24, label: 'ביקורי בית', color: '#20B2AA'},
+            {id: 25, label: 'תוכניות שכנות טובה', color: '#20B2AA'},
+            {id: 26, label: 'מרכזי יום', color: '#20B2AA'},
+            
+            {id: 27, label: 'חוגי אומנות', color: '#F0E68C'},
+            {id: 28, label: 'טיולים מאורגנים', color: '#F0E68C'},
+            {id: 29, label: 'לימודי העשרה', color: '#F0E68C'},
+            
+            {id: 30, label: 'ביקורים סדירים', color: '#FF69B4'},
+            {id: 31, label: 'שיחות טלפון יומיות', color: '#FF69B4'},
+            {id: 32, label: 'ארוחות משפחתיות', color: '#FF69B4'},
+            
+            {id: 33, label: 'טיפול פסיכולוגי', color: '#CD5C5C'},
+            {id: 34, label: 'קבוצות מדיטציה', color: '#CD5C5C'},
+            {id: 35, label: 'פעילות גופנית', color: '#CD5C5C'},
+            
+            {id: 36, label: 'שירותי רווחה', color: '#90EE90'},
+            {id: 37, label: 'תוכניות דיור מוגן', color: '#90EE90'},
+            {id: 38, label: 'הנגשת שירותים', color: '#90EE90'},
+            
+            {id: 39, label: 'סדנאות תקשורת', color: '#B0C4DE'},
+            {id: 40, label: 'קבוצות דיון', color: '#B0C4DE'},
+            {id: 41, label: 'אימון אישי', color: '#B0C4DE'},
+
+            // רמה רביעית
+            {id: 42, label: 'קבוצות תמיכה לאלמנים', color: '#98FB98'},
+            {id: 43, label: 'תכנון פרישה מוקדם', color: '#98FB98'},
+            {id: 44, label: 'שירותי הסעות מותאמים', color: '#98FB98'},
+            {id: 45, label: 'טיפול תרופתי', color: '#87CEFA'},
+            {id: 46, label: 'תרגילי זיכרון', color: '#87CEFA'},
+            {id: 47, label: 'ניטור בריאות מרחוק', color: '#87CEFA'},
+            {id: 48, label: 'פעילויות בין-דוריות', color: '#FFA07A'},
+            {id: 49, label: 'מנטורינג לצעירים', color: '#FFA07A'},
+            {id: 50, label: 'שיתוף חוויות אישיות', color: '#FFA07A'},
+            {id: 51, label: 'הדרכה טכנולוגית', color: '#DDA0DD'},
+            {id: 52, label: 'קבוצות עניין מקוונות', color: '#DDA0DD'},
+            {id: 53, label: 'משחקים חברתיים מקוונים', color: '#DDA0DD'},
+            {id: 54, label: 'התאמת בית לצרכים', color: '#20B2AA'},
+            {id: 55, label: 'מערכת התראות שכנים', color: '#20B2AA'},
+            {id: 56, label: 'תוכניות העשרה', color: '#20B2AA'},
+            {id: 57, label: 'תערוכות אומנות', color: '#F0E68C'},
+            {id: 58, label: 'מסלולי טיול מותאמים', color: '#F0E68C'},
+            {id: 59, label: 'הרצאות אורח', color: '#F0E68C'},
+            {id: 60, label: 'אלבומי תמונות משפחתיים', color: '#FF69B4'},
+            {id: 61, label: 'שיחות וידאו קבועות', color: '#FF69B4'},
+            {id: 62, label: 'בישול משותף', color: '#FF69B4'},
+            {id: 63, label: 'טיפול באמצעות אומנות', color: '#CD5C5C'},
+            {id: 64, label: 'יוגה לגיל השלישי', color: '#CD5C5C'},
+            {id: 65, label: 'טיפול בבעלי חיים', color: '#CD5C5C'},
+            {id: 66, label: 'סיוע בירוקרטי', color: '#90EE90'},
+            {id: 67, label: 'קהילות גיל שלישי', color: '#90EE90'},
+            {id: 68, label: 'שירותי תרגום והנגשה', color: '#90EE90'},
+            {id: 69, label: 'משחקי תפקידים', color: '#B0C4DE'},
+            {id: 70, label: 'פורומים מונחים', color: '#B0C4DE'},
+            {id: 71, label: 'פיתוח תחביבים', color: '#B0C4DE'},
+            {id: 72, label: 'מפגשי קפה חברתיים', color: '#B0C4DE'}
+        ]);
+
+        var edges = new vis.DataSet([
+            {from: 1, to: 2},
+            {from: 1, to: 3},
+            {from: 1, to: 4},
+            {from: 1, to: 5},
+            {from: 1, to: 6},
+            {from: 1, to: 7},
+            {from: 1, to: 8},
+            {from: 1, to: 9},
+            {from: 1, to: 10},
+            {from: 1, to: 11},
+            
+            {from: 2, to: 12},
+            {from: 2, to: 13},
+            {from: 2, to: 14},
+            
+            {from: 3, to: 15},
+            {from: 3, to: 16},
+            {from: 3, to: 17},
+            
+            {from: 4, to: 18},
+            {from: 4, to: 19},
+            {from: 4, to: 20},
+            
+            {from: 5, to: 21},
+            {from: 5, to: 22},
+            {from: 5, to: 23},
+            
+            {from: 6, to: 24},
+            {from: 6, to: 25},
+            {from: 6, to: 26},
+            
+            {from: 7, to: 27},
+            {from: 7, to: 28},
+            {from: 7, to: 29},
+            
+            {from: 8, to: 30},
+            {from: 8, to: 31},
+            {from: 8, to: 32},
+            
+            {from: 9, to: 33},
+            {from: 9, to: 34},
+            {from: 9, to: 35},
+            
+            {from: 10, to: 36},
+            {from: 10, to: 37},
+            {from: 10, to: 38},
+            
+            {from: 11, to: 39},
+            {from: 11, to: 40},
+            {from: 11, to: 41},
+
+            // קשרים לרמה הרביעית
+            {from: 12, to: 42},
+            {from: 13, to: 43},
+            {from: 14, to: 44},
+            {from: 15, to: 45},
+            {from: 16, to: 46},
+            {from: 17, to: 47},
+            {from: 18, to: 48},
+            {from: 19, to: 49},
+            {from: 20, to: 50},
+            {from: 21, to: 51},
+            {from: 22, to: 52},
+            {from: 23, to: 53},
+            {from: 24, to: 54},
+            {from: 25, to: 55},
+            {from: 26, to: 56},
+            {from: 27, to: 57},
+            {from: 28, to: 58},
+            {from: 29, to: 59},
+            {from: 30, to: 60},
+            {from: 31, to: 61},
+            {from: 32, to: 62},
+            {from: 33, to: 63},
+            {from: 34, to: 64},
+            {from: 35, to: 65},
+            {from: 36, to: 66},
+            {from: 37, to: 67},
+            {from: 38, to: 68},
+            {from: 39, to: 69},
+            {from: 40, to: 70},
+            {from: 41, to: 71},
+            {from: 11, to: 72}
+        ]);
+
+        var container = document.getElementById('mynetwork');
+        var data = {
+            nodes: nodes,
+            edges: edges
+        };
+        var options = {
+            layout: {
+                randomSeed: 2
+            },
+            physics: {
+                stabilization: false,
+                barnesHut: {
+                    gravitationalConstant: -2000,
+                    centralGravity: 0.3,
+                    springLength: 95,
+                    springConstant: 0.04,
+                    damping: 0.09,
+                    avoidOverlap: 0.1
+                }
+            },
+            interaction: {
+                dragNodes: true,
+                dragView: true,
+                zoomView: true
+            },
+            nodes: {
+                shape: 'box',
+                margin: 10,
+                widthConstraint: {
+                    maximum: 200
+                }
+            },
+            edges: {
+                smooth: {
+                    type: 'continuous'
+                }
+            }
+        };
+        var network = new vis.Network(container, data, options);
+
+
+
+document.getElementById('categoryFilter').addEventListener('change', function() {
+    var selectedValue = this.value;
+    var filteredNodes = new vis.DataSet(nodes.get());
+    var filteredEdges = new vis.DataSet(edges.get());
+
+    if (selectedValue !== 'all') {
+        filteredNodes.clear();
+        filteredEdges.clear();
+
+        // Always include the central node
+        filteredNodes.add(nodes.get(1));
+
+        // Add the selected category and its children
+        var categoryNode = nodes.get(parseInt(selectedValue));
+        filteredNodes.add(categoryNode);
+        
+        edges.forEach(function(edge) {
+            if (edge.from == selectedValue || edge.to == selectedValue) {
+                filteredEdges.add(edge);
+                if (edge.from == selectedValue) {
+                    filteredNodes.add(nodes.get(edge.to));
+                } else {
+                    filteredNodes.add(nodes.get(edge.from));
+                }
+            }
+        });
+
+        // Add edge from central node to category
+        filteredEdges.add({from: 1, to: parseInt(selectedValue)});
+    }
+
+    network.setData({nodes: filteredNodes, edges: filteredEdges});
+});
+
+
+// ... [כל הקוד הקיים נשאר כאן] ...
+
+var network = new vis.Network(container, data, options);
+
+// הקוד החדש מתחיל כאן
+document.getElementById('categoryFilter').addEventListener('change', function() {
+    var selectedValue = this.value;
+    
+    if (selectedValue === 'all') {
+        network.setData({nodes: nodes, edges: edges});
+        return;
+    }
+
+    var filteredNodes = new vis.DataSet([nodes.get(1), nodes.get(parseInt(selectedValue))]);
+    var filteredEdges = new vis.DataSet([{from: 1, to: parseInt(selectedValue)}]);
+
+    edges.forEach(function(edge) {
+        if (edge.from == selectedValue) {
+            filteredNodes.add(nodes.get(edge.to));
+            filteredEdges.add(edge);
+        }
+    });
+
+    network.setData({nodes: filteredNodes, edges: filteredEdges});
+});
+</script>
+
+
+
+
+
+
+
+    </script>
+</body>
+</html>
