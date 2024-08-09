@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>כרטיסי פרסונה</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            padding: 20px;
+            width: 90%;
+            max-width: 800px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .placeholder {
+            width: 100px;
+            height: 100px;
+            background-color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+        }
+        h2 {
+            margin: 0;
+            color: #0077be;
+        }
+        .content {
+            display: flex;
+            justify-content: space-between;
+        }
+        .left-column, .right-column {
+            width: 48%;
+        }
+        h3 {
+            color: #0077be;
+            margin-top: 0;
+        }
+        ul {
+            padding-right: 20px;
+        }
+        .meter-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .meter {
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            flex-grow: 1;
+            margin-left: 10px;
+        }
+        .meter-fill {
+            height: 100%;
+            background-color: #0077be;
+            border-radius: 10px;
+        }
+        .meter-label {
+            min-width: 70px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="header">
+            <h2>שרה (72)</h2>
+            <div class="placeholder">תמונה</div>
+        </div>
+        <div class="content">
+            <div class="left-column">
+                <h3>ביוגרפיה קצרה</h3>
+                <p>סבתא פעילה, אוהבת לטייל ולבלות עם הנכדים. חיה לבד מאז שאביה נפטר.</p>
+                <h3>מטרות</h3>
+                <ul>
+                    <li>לשפר את הכושר הגופני</li>
+                    <li>להכיר אנשים חדשים</li>
+                    <li>להרגיש צעירה יותר</li>
+                </ul>
+                <h3>צרכים ורצונות</h3>
+                <ul>
+                    <li>תוכניות אימון פשוטות ומותאמות אישית</li>
+                    <li>קהילה תומכת</li>
+                    <li>מעקב אחר התקדמות</li>
+                </ul>
+            </div>
+            <div class="right-column">
+                <h3>נקודות כאב</h3>
+                <ul>
+                    <li>קושי למצוא מוטיבציה להתאמן לבד</li>
+                    <li>פחד מפציעה</li>
+                </ul>
+                <h3>מדדים</h3>
+                <div>
+                    <div class="meter-container">
+                        <span class="meter-label">מוטיבציה</span>
+                        <div class="meter"><div class="meter-fill" style="width: 80%;"></div></div>
+                        <span>8/10</span>
+                    </div>
+                    <div class="meter-container">
+                        <span class="meter-label">אושר</span>
+                        <div class="meter"><div class="meter-fill" style="width: 70%;"></div></div>
+                        <span>7/10</span>
+                    </div>
+                    <div class="meter-container">
+                        <span class="meter-label">ידע טכנולוגי</span>
+                        <div class="meter"><div class="meter-fill" style="width: 60%;"></div></div>
+                        <span>6/10</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="header">
+            <h2>דוד (65)</h2>
+            <div class="placeholder">תמונה</div>
+        </div>
+        <div class="content">
+            <div class="left-column">
+                <h3>ביוגרפיה קצרה</h3>
+                <p>גבר פריש, סובל מכאבי גב. אוהב לגנן ולטייל.</p>
+                <h3>מטרות</h3>
+                <ul>
+                    <li>להפחית את הכאבים</li>
+                    <li>לשפר את איכות החיים</li>
+                    <li>להרגיש עצמאי</li>
+                </ul>
+                <h3>צרכים ורצונות</h3>
+                <ul>
+                    <li>תרגילים עדינים ומתיחות</li>
+                    <li>טיפים לשיפור השינה</li>
+                    <li>מעקב אחר התקדמות</li>
+                </ul>
+            </div>
+            <div class="right-column">
+                <h3>נקודות כאב</h3>
+                <ul>
+                    <li>קושי לבצע פעילות גופנית עקב כאבים</li>
+                    <li>חוסר ידע בתרגילים מתאימים</li>
+                </ul>
+                <h3>מדדים</h3>
+                <div>
+                    <div class="meter-container">
+                        <span class="meter-label">מוטיבציה</span>
+                        <div class="meter"><div class="meter-fill" style="width: 70%;"></div></div>
+                        <span>7/10</span>
+                    </div>
+                    <div class="meter-container">
+                        <span class="meter-label">אושר</span>
+                        <div class="meter"><div class="meter-fill" style="width: 60%;"></div></div>
+                        <span>6/10</span>
+                    </div>
+                    <div class="meter-container">
+                        <span class="meter-label">ידע טכנולוגי</span>
+                        <div class="meter"><div class="meter-fill" style="width: 50%;"></div></div>
+                        <span>5/10</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="header">
+            <h2>מיכל (78)</h2>
+            <div class="placeholder">תמונה</div>
+        </div>
+        <div class="content">
+            <div class="left-column">
+                <h3>ביוגרפיה קצרה</h3>
+                <p>אישה עצמאית, גרה לבד. אוהבת לקרוא ולשחק שחמט.</p>
+                <h3>מטרות</h3>
+                <ul>
+                    <li>לשמור על עצמאות</li>
+                    <li>למנוע נפילות</li>
+                    <li>להרגיש בטוחה בבית</li>
+                </ul>
+                <h3>צרכים ורצונות</h3>
+                <ul>
+                    <li>תרגילים לשיפור היציבה והשיווי משקל</li>
+                    <li>תרגילים שניתן לבצע בבית</li>
+                    <li>מידע על בטיחות</li>
+                </ul>
+            </div>
+            <div class="right-column">
+                <h3>נקודות כאב</h3>
+                <ul>
+                    <li>פחד מנפילות</li>
+                    <li>קושי לבצע משימות יומיומיות</li>
+                </ul>
+                <h3>מדדים</h3>
+                <div>
+                    <div class="meter-container">
+                        <span class="meter-label">מוטיבציה</span>
+                        <div class="meter"><div class="meter-fill" style="width: 90%;"></div></div>
+                        <span>9/10</span>
+                    </div>
+                    <div class="meter-container">
+                        <span class="meter-label">אושר</span>
+                        <div class="meter"><div class="meter-fill" style="width: 70%;"></div></div>
+                        <span>7/10</span>
+                    </div>
+                    <div class="meter-container">
+                        <span class="meter-label">ידע טכנולוגי</span>
+                        <div class="meter"><div class="meter-fill" style="width: 50%;"></div></div>
+                        <span>5/10</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="header">
+            <h2>יוסף (68)</h2>
+            <div class="placeholder">תמונה</div>
+        </div>
+        <div class="content">
+            <div class="left-column">
+                <h3>ביוגרפיה קצרה</h3>
+                <p>גבר פריש, משועמם. אוהב לשחק כדורסל ולבשל.</p>
+                <h3>מטרות</h3>
+                <ul>
+                    <li>למצוא תחביב חדש</li>
+                    <li>להכיר אנשים חדשים</li>
+                    <li>להרגיש מועיל</li>
+                </ul>
+                <h3>צרכים ורצונות</h3>
+                <ul>
+                    <li>פעילויות חברתיות</li>
+                    <li>תחרותיות</li>
+                    <li>משחקים</li>
+                    <li>מתכונים בריאים</li>
+                </ul>
+            </div>
+            <div class="right-column">
+                <h3>נקודות כאב</h3>
+                <ul>
+                    <li>קושי למצוא פעילויות מעניינות</li>
+                    <li>בדידות</li>
+                </ul>
+                <h3>מדדים</h3>
+                <div>
+                    <div class="meter-container">
+                        <span class="meter-label">מוטיבציה</span>
+                        <div class="meter"><div class="meter-fill" style="width: 80%;"></div></div>
+                        <span>8/10</span>
+                    </div>
+                    <div class="meter-container">
+                        <span class="meter-label">אושר</span>
+                        <div class="meter"><div class="meter-fill" style="width: 60%;"></div></div>
+                        <span>6/10</span>
+                    </div>
+                    <div class="meter-container">
+                        <span class="meter-label">ידע טכנולוגי</span>
+                        <div class="meter"><div class="meter-fill" style="width: 70%;"></div></div>
+                        <span>7/10</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="header">
+            <h2>רחל (75)</h2>
+            <div class="placeholder">תמונה</div>
+        </div>
+        <div class="content">
+            <div class="left-column">
+                <h3>ביוגרפיה קצרה</h3>
+                <p>אישה אינטליגנטית, אוהבת ללמוד דברים חדשים.</p>
+                <h3>מטרות</h3>
+                <ul>
+                    <li>לשפר את הזיכרון והריכוז</li>
+                    <li>למנוע דמנציה</li>
+                    <li>להישאר פעילה מנטלית</li>
+                </ul>
+                <h3>צרכים ורצונות</h3>
+                <ul>
+                    <li>תרגילים קוגניטיביים</li>
+                    <li>משחקי חשיבה</li>
+                    <li>מידע על בריאות המוח</li>
+                </ul>
+            </div>
+            <div class="right-column">
+                <h3>נקודות כאב</h3>
+                <ul>
+                    <li>דאגה מאובדן זיכרון</li>
+                    <li>קושי ללמוד דברים חדשים</li>
+                </ul>
+                <h3>מדדים</h3>
+                <div>
+                    <div class="meter-container">
+                        <span class="meter-label">מוטיבציה</span>
+                        <div class="meter"><div class="meter-fill" style="width: 90%;"></div></div>
+                        <span>9/10</span>
+                    </div>
+                    <div class="meter-container">
+                        <span class="meter-label">אושר</span>
+                        <div class="meter"><div class="meter-fill" style="width: 80%;"></div></div>
+                        <span>8/10</span>
+                    </div>
+                    <div class="meter-container">
+                <span class="meter-label">ידע טכנולוגי</span>
+                        <div class="meter"><div class="meter-fill" style="width: 80%;"></div></div>
+                        <span>8/10</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
