@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OBN-SIG - הוספת חתימה לתמונה</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            color: #00008b;
+            text-align: center;
+            direction: rtl;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #4169e1;
+        }
+        p {
+            margin-bottom: 20px;
+        }
+        .small-text {
+            font-size: 0.9em;
+        }
+        button, select {
+            background-color: #4169e1;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px 0;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover, select:hover {
+            background-color: #1e90ff;
+        }
+        #preview {
+            max-width: 400px;
+            margin: 20px auto;
+            border: 1px solid #4169e1;
+        }
+        #qualitySlider, #signatureWidthSlider, #transparencySlider {
+            width: 100%;
+            margin: 20px 0;
+        }
+        footer {
+            margin-top: 20px;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>OBN-SIG - הוספת חתימה לתמונה</h1>
+        <p class="small-text">1. העלו קובץ תמונה, 2. העלו קובץ חתימה, 3. בחרו באיזו פינה תהיה ממוקמת החתימה,
+	<br>
+ 4. בחרו את רוחב החתימה, 5. בחרו את רמת השקיפות של החתימה,
+<br>
+6. בחרו את איכות התמונה, 7. לחצו לשמירת התמונה.</p>
+        <p class="small-text">על מנת שהחתימה תעבוד בצורה הטובה ביותר - קובץ החתימה צריך להיות קובץ עם שקיפות ובפורמט PNG</p>
+
+        <button onclick="document.getElementById('mainImage').click()">1. העלאת קובץ תמונה</button>
+        <input type="file" id="mainImage" style="display: none;" accept="image/*" onchange="loadMainImage(event)">
+
+        <button onclick="document.getElementById('signatureImage').click()">2. העלאת קובץ חתימה</button>
+        <input type="file" id="signatureImage" style="display: none;" accept="image/png" onchange="loadSignatureImage(event)">
+
+        <br>
+        <select id="position" onchange="updatePreview()">
+            <option value="topRight">3. פינה ימנית עליונה</option>
+            <option value="bottomRight">פינה ימנית תחתונה</option>
+            <option value="topLeft">פינה שמאלית עליונה</option>
+            <option value="bottomLeft">פינה שמאלית תחתונה</option>
+        </select>
+	<hr>
+        <br>
+        <label for="signatureWidthSlider">4. רוחב החתימה: </label><span id="signatureWidthValue">10</span>
+        <input type="range" id="signatureWidthSlider" min="1" max="10" value="10" onchange="updateSignatureWidth()">
+        <hr>
+        <br>
+        <label for="transparencySlider">5. שקיפות החתימה: </label><span id="transparencyValue">100%</span>
+        <input type="range" id="transparencySlider" min="0" max="100" value="100" onchange="updateTransparency()">
+        <br>
+	<hr>
+        <br>
+        <label for="qualitySlider">6. איכות התמונה: </label><span id="qualityValue">10</span>
+        <input type="range" id="qualitySlider" min="1" max="10" value="10" onchange="updateQuality()">
+
+        <canvas id="preview"></canvas>
+
+        <br>
+        <button onclick="saveImage()">7. שמירת קובץ התמונה עם החתימה</button>
+
+        <footer>
+            אפליקציה להוספת חתימה על תמונה. © OBN 2024
+        </footer>
+    </div>
+
+    <script>
+        let mainImage = new Image();
+        let signatureImage = new Image();
+        let quality = 1.0;
+        let transparency = 1.0;
+
+        function loadMainImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    mainImage.src = e.target.result;
+                    mainImage.onload = updatePreview;
+                }
+                reader.readAsDataURL(file);
+            } else {
+                alert("אנא בחר קובץ תמונה תקין.");
+            }
+        }
+
+        function loadSignatureImage(event) {
+            const file = event.target.files[0];
+            if (file && file.type === "image/png") {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    signatureImage.src = e.target.result;
+                    signatureImage.onload = updatePreview;
+                }
+                reader.readAsDataURL(file);
+            } else {
+                alert("אנא בחר קובץ PNG תקין עבור החתימה.");
+            }
+        }
+
+        function updatePreview() {
+            const canvas = document.getElementById('preview');
+            const ctx = canvas.getContext('2d');
+
+            if (!mainImage.src) {
+                return;
+            }
+
+            canvas.width = mainImage.width;
+            canvas.height = mainImage.height;
+
+            ctx.drawImage(mainImage, 0, 0, canvas.width, canvas.height);
+
+            if (!signatureImage.src) {
+                return;
+            }
+
+            const position = document.getElementById('position').value;
+            const padding = 10;
+            let x, y;
+
+            // Calculate the width of the signature image
+            const signatureWidthSlider = document.getElementById('signatureWidthSlider');
+            const scale = signatureWidthSlider.value / 10;
+            let signatureWidth = signatureImage.naturalWidth * scale;
+            let signatureHeight = signatureImage.naturalHeight * scale;
+
+            switch(position) {
+                case 'topRight':
+                    x = canvas.width - signatureWidth - padding;
+                    y = padding;
+                    break;
+                case 'bottomRight':
+                    x = canvas.width - signatureWidth - padding;
+                    y = canvas.height - signatureHeight - padding;
+                    break;
+                case 'topLeft':
+                    x = padding;
+                    y = padding;
+                    break;
+                case 'bottomLeft':
+                    x = padding;
+                    y = canvas.height - signatureHeight - padding;
+                    break;
+            }
+
+            ctx.globalAlpha = transparency;
+            ctx.drawImage(signatureImage, x, y, signatureWidth, signatureHeight);
+            ctx.globalAlpha = 1.0; // Reset transparency for future drawings
+        }
+
+        function updateQuality() {
+            const slider = document.getElementById('qualitySlider');
+            const value = document.getElementById('qualityValue');
+            quality = slider.value / 10;
+            value.textContent = slider.value;
+        }
+
+        function updateSignatureWidth() {
+            const slider = document.getElementById('signatureWidthSlider');
+            const value = document.getElementById('signatureWidthValue');
+            value.textContent = slider.value;
+            updatePreview();
+        }
+
+        function updateTransparency() {
+            const slider = document.getElementById('transparencySlider');
+            const value = document.getElementById('transparencyValue');
+            transparency = slider.value / 100;
+            value.textContent = slider.value + '%';
+            updatePreview();
+        }
+
+        function saveImage() {
+            const canvas = document.getElementById('preview');
+            if (canvas.width === 0 || canvas.height === 0 || !mainImage.src || !signatureImage.src) {
+                alert("אנא העלה את שני הקבצים ובצע תצוגה מקדימה לפני השמירה.");
+                return;
+            }
+
+            const dataURL = canvas.toDataURL('image/jpeg', quality);
+            const link = document.createElement('a');
+            link.download = 'signed_image.jpg';
+            link.href = dataURL;
+            link.click();
+        }
+    </script>
+</body>
+</html>
