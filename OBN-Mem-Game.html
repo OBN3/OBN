@@ -2,29 +2,36 @@
 <html dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>משחק זיכרון - בעלי חיים</title>
     <style>
         body {
             text-align: center;
             background-color: #f0f8ff;
             font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
         }
         h1, h2 {
             color: #008080;
+            font-size: 1.5em;
         }
         #gameArea {
-            display: inline-block;
-            margin-top: 20px;
+            display: inline-flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 10px;
         }
         .card {
-            width: 100px;
-            height: 100px;
+            width: 70px;
+            height: 70px;
             background-color: #ffcc00;
-            display: inline-flex;
+            display: flex;
             justify-content: center;
             align-items: center;
             margin: 5px;
-            font-size: 50px;
+            font-size: 35px;
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -40,24 +47,26 @@
         .hidden::after {
             content: "?";
             color: #ffffff;
-            font-size: 50px;
+            font-size: 35px;
         }
         table {
             margin: 20px auto;
             border-collapse: collapse;
+            font-size: 0.8em;
         }
         th, td {
             border: 1px solid #000;
-            padding: 10px;
+            padding: 5px;
         }
         #timer {
-            font-size: 24px;
+            font-size: 20px;
             margin: 10px 0;
         }
         input, select, button {
-            margin: 10px;
+            margin: 5px;
             padding: 5px;
             font-size: 16px;
+            max-width: 100%;
         }
         .popup {
             display: none;
@@ -70,6 +79,23 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
             z-index: 1000;
+            max-width: 90%;
+        }
+        @media (max-width: 600px) {
+            .card {
+                width: 60px;
+                height: 60px;
+                font-size: 30px;
+            }
+            .hidden::after {
+                font-size: 30px;
+            }
+            h1, h2 {
+                font-size: 1.2em;
+            }
+            table {
+                font-size: 0.7em;
+            }
         }
     </style>
 </head>
@@ -90,8 +116,8 @@
         <thead>
             <tr>
                 <th>שם השחקן</th>
-                <th>הזמן לסיום המשחק</th>
-                <th>מספר צעדים</th>
+                <th>זמן</th>
+                <th>צעדים</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -102,8 +128,8 @@
         <thead>
             <tr>
                 <th>שם השחקן</th>
-                <th>הזמן לסיום המשחק</th>
-                <th>מספר צעדים</th>
+                <th>זמן</th>
+                <th>צעדים</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -114,8 +140,8 @@
         <thead>
             <tr>
                 <th>שם השחקן</th>
-                <th>הזמן לסיום המשחק</th>
-                <th>מספר צעדים</th>
+                <th>זמן</th>
+                <th>צעדים</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -197,7 +223,17 @@
 
         function displayCards() {
             const gameArea = document.getElementById('gameArea');
-            gameArea.style.width = level === 'hard' ? '550px' : '450px';
+            gameArea.innerHTML = '';
+            let gridWidth;
+            if (level === 'easy') {
+                gridWidth = 4;
+            } else if (level === 'medium') {
+                gridWidth = 4;
+            } else {
+                gridWidth = 5;
+            }
+            gameArea.style.width = `${(gridWidth * 80) + (gridWidth * 10)}px`; // 80px for card width, 10px for margins
+            gameArea.style.maxWidth = '100%';
             cards.forEach((card, index) => {
                 const cardElement = document.createElement('div');
                 cardElement.className = 'card hidden';
@@ -213,7 +249,6 @@
                 flippedCards.push(index);
                 steps++;
 
-                // מתחיל את הטיימר רק כאשר הקלף הראשון נלחץ
                 if (steps === 1) {
                     startTimer();
                 }
@@ -279,7 +314,6 @@
             
             document.getElementById('timer').textContent = formatTime(totalTime);
 
-            // הצגת חלון הניצחון
             const levelName = level === 'easy' ? 'קלה' : level === 'medium' ? 'בינונית' : 'קשה';
             document.getElementById('winMessage').textContent = `כל הכבוד! ניצחת ברמה ${levelName} ב-${totalTime} שניות!`;
             document.getElementById('winPopup').style.display = 'block';
@@ -307,7 +341,6 @@
             });
         }
 
-        // הצגת קלפים ראשונית
         updateGameArea();
     </script>
 </body>
