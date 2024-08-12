@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>משחק זיכרון - בעלי חיים</title>
+    <style>
+        body {
+            text-align: center;
+            background-color: #f0f8ff;
+            font-family: Arial, sans-serif;
+        }
+        h1, h2 {
+            color: #008080;
+        }
+        #gameArea {
+            display: inline-block;
+            margin-top: 20px;
+        }
+        .card {
+            width: 100px;
+            height: 100px;
+            background-color: #ffcc00;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            margin: 5px;
+            font-size: 50px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        .card:hover {
+            transform: scale(1.05);
+        }
+        .hidden {
+            background-color: #ff9999;
+            color: transparent;
+        }
+        .hidden::after {
+            content: "?";
+            color: #ffffff;
+            font-size: 50px;
+        }
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 10px;
+        }
+        #timer {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+        input, select, button {
+            margin: 10px;
+            padding: 5px;
+            font-size: 16px;
+        }
+        .popup {
+            display: none;
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <h1>משחק זיכרון - בעלי חיים</h1>
+    <input type="text" id="playerName" placeholder="הכנס את שמך">
+    <select id="level" onchange="updateGameArea()">
+        <option value="easy">קל</option>
+        <option value="medium">בינוני</option>
+        <option value="hard">קשה</option>
+    </select>
+    <button onclick="startGame()">התחל משחק</button>
+    <div id="timer">00:00</div>
+    <div id="gameArea"></div>
+    
+    <h2>תוצאות - רמה קלה</h2>
+    <table id="easyResults">
+        <thead>
+            <tr>
+                <th>שם השחקן</th>
+                <th>הזמן לסיום המשחק</th>
+                <th>מספר צעדים</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <h2>תוצאות - רמה בינונית</h2>
+    <table id="mediumResults">
+        <thead>
+            <tr>
+                <th>שם השחקן</th>
+                <th>הזמן לסיום המשחק</th>
+                <th>מספר צעדים</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <h2>תוצאות - רמה קשה</h2>
+    <table id="hardResults">
+        <thead>
+            <tr>
+                <th>שם השחקן</th>
+                <th>הזמן לסיום המשחק</th>
+                <th>מספר צעדים</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <div id="winPopup" class="popup">
+        <h2 id="winMessage"></h2>
+        <button onclick="closePopup()">סגור</button>
+    </div>
+
+    <script>
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let playerName = '';
+        let level = 'easy';
+        let steps = 0;
+        let timerInterval;
+        let startTime;
+        let gameResults = {
+            easy: [],
+            medium: [],
+            hard: []
+        };
+
+        const animals = ['🐶', '🐱', '🐭', '🐹', '🐰', '🐼', '🐻', '🐷', '🐸', '🦁', '🐯', '🐨'];
+
+        function updateGameArea() {
+            level = document.getElementById('level').value;
+            resetGame();
+            createCards();
+            displayCards();
+        }
+
+        function startGame() {
+            playerName = document.getElementById('playerName').value;
+            if (!playerName) {
+                alert('נא להכניס שם');
+                return;
+            }
+            resetGame();
+            createCards();
+            displayCards();
+        }
+
+        function resetGame() {
+            cards = [];
+            flippedCards = [];
+            matchedPairs = 0;
+            steps = 0;
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            document.getElementById('timer').textContent = '00:00';
+            document.getElementById('gameArea').innerHTML = '';
+        }
+
+        function createCards() {
+            let numPairs;
+            if (level === 'easy') numPairs = 4;
+            else if (level === 'medium') numPairs = 8;
+            else numPairs = 10;
+
+            for (let i = 0; i < numPairs; i++) {
+                let animal = animals[i];
+                cards.push(animal);
+                cards.push(animal);
+            }
+            shuffleArray(cards);
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function displayCards() {
+            const gameArea = document.getElementById('gameArea');
+            gameArea.style.width = level === 'hard' ? '550px' : '450px';
+            cards.forEach((card, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card hidden';
+                cardElement.onclick = () => flipCard(cardElement, index);
+                gameArea.appendChild(cardElement);
+            });
+        }
+
+        function flipCard(cardElement, index) {
+            if (flippedCards.length < 2 && !flippedCards.includes(index) && !cardElement.classList.contains('matched')) {
+                cardElement.textContent = cards[index];
+                cardElement.classList.remove('hidden');
+                flippedCards.push(index);
+                steps++;
+
+                // מתחיל את הטיימר רק כאשר הקלף הראשון נלחץ
+                if (steps === 1) {
+                    startTimer();
+                }
+
+                if (flippedCards.length === 2) {
+                    setTimeout(checkMatch, 500);
+                }
+            }
+        }
+
+        function checkMatch() {
+            const [index1, index2] = flippedCards;
+            const card1 = document.getElementsByClassName('card')[index1];
+            const card2 = document.getElementsByClassName('card')[index2];
+
+            if (cards[index1] === cards[index2]) {
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                matchedPairs++;
+                if (matchedPairs === cards.length / 2) {
+                    endGame();
+                }
+            } else {
+                setTimeout(() => {
+                    card1.textContent = '';
+                    card2.textContent = '';
+                    card1.classList.add('hidden');
+                    card2.classList.add('hidden');
+                }, 500);
+            }
+            flippedCards = [];
+        }
+
+        function startTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById('timer').textContent = formatTime(elapsedTime);
+        }
+
+        function endGame() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            const endTime = Date.now();
+            const totalTime = Math.floor((endTime - startTime) / 1000);
+            const result = {
+                name: playerName,
+                time: totalTime,
+                steps: steps
+            };
+            gameResults[level].push(result);
+            gameResults[level].sort((a, b) => a.time - b.time);
+            updateResultsTable(level);
+            document.getElementById('playerName').value = '';
+            
+            document.getElementById('timer').textContent = formatTime(totalTime);
+
+            // הצגת חלון הניצחון
+            const levelName = level === 'easy' ? 'קלה' : level === 'medium' ? 'בינונית' : 'קשה';
+            document.getElementById('winMessage').textContent = `כל הכבוד! ניצחת ברמה ${levelName} ב-${totalTime} שניות!`;
+            document.getElementById('winPopup').style.display = 'block';
+        }
+
+        function closePopup() {
+            document.getElementById('winPopup').style.display = 'none';
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const remainingSeconds = (seconds % 60).toString().padStart(2, '0');
+            return `${minutes}:${remainingSeconds}`;
+        }
+
+        function updateResultsTable(level) {
+            const tableId = level + 'Results';
+            const tbody = document.getElementById(tableId).getElementsByTagName('tbody')[0];
+            tbody.innerHTML = '';
+            gameResults[level].forEach(result => {
+                const row = tbody.insertRow();
+                row.insertCell().textContent = result.name;
+                row.insertCell().textContent = formatTime(result.time);
+                row.insertCell().textContent = result.steps;
+            });
+        }
+
+        // הצגת קלפים ראשונית
+        updateGameArea();
+    </script>
+</body>
+</html>
