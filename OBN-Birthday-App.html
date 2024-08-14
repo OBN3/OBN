@@ -21,13 +21,27 @@
             padding: 20px;
             max-width: 95%;
             width: 100%;
+            align-items: center;
         }
+
+	.OBNButton {
+          align: center;
+	  text-align: center;
+}
         @media (min-width: 768px) {
             .container {
                 width: 50%;
             }
         }
         h1 {
+            color: #0066cc;
+            text-align: center;
+        }
+        h4 {
+            color: #0066cc;
+            text-align: center;
+        }
+        h5 {
             color: #0066cc;
             text-align: center;
         }
@@ -73,18 +87,30 @@
 <body>
     <div class="container">
         <h1>אפליקציית ימי הולדת</h1>
-        <div>
+<h4>
+הזינו שם ותאריך לידה, לדוגמה: 15/05/1989, ולחצו על "הוסף משתמש"
+<br><br>
+האפליקציה תחשב עבורכם את הגיל הנוכחי, מספר החודשים ומספר הימים עד יום ההולדת הבא.
+<br>
+תוכלו להקיש על כותרות הטבלה, על מנת למיין בסדר עולה, והקשה נוספת - למיון בסדר יורד.
+</h4>
+<h5> כפתור שמור נתונים ישמור קובץ עם הנתונים, אותו תוכלו לשמור או לשלוח למשתמש אחר
+<br> כפתור טען נתונים יטען את הנתונים מקובץ ששמרתם במחשב, או קיבלתם ממשתמש אחר
+<br> ניתן גם לערוך או למחוק רשומה
+</h5>
+
+
+        <div class="OBNButton">
             <input type="text" id="name" placeholder="שם">
             <input type="text" id="birthdate" placeholder="תאריך לידה (dd/mm/yyyy)">
-<!--
-<input type="date" id="birthdate" name="birthdate" required pattern="\d{4}-\d{2}-\d{2}">
--->
-
-
             <button onclick="addPerson()">הוסף משתמש</button>
-        </div>
+
         <button onclick="saveBirthdays()">שמור נתונים</button>
         <button onclick="loadBirthdays()">טען נתונים</button>
+
+        </div>
+
+
         <table id="birthdayTable">
             <thead>
                 <tr>
