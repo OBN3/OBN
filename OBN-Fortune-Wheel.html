@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang='he' dir='rtl'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>ההגרלה הגדולה</title>
+    <style>
+    button {
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    button:hover {
+        background-color: #0056b3;
+    }
+    textarea {
+        width: 80%;
+        width: 300px;
+        height: 100px;
+        padding: 10px;
+        border: 2px solid #007bff;
+        border-radius: 15px;
+        font-size: 16px;
+        resize: vertical;
+        margin-top: 10px;
+        font-family: Arial, sans-serif;
+        color: #000;
+        font-weight: bold;
+        background-color: rgba(173, 216, 230, 0.7);
+    }
+
+    #container {
+        width: 300px;
+        height: 200px;
+        border: 2px solid #007bff;
+        border-radius: 15px;
+        margin: 20px auto;
+        position: relative;
+        overflow: hidden;
+        background-color: rgba(173, 216, 230, 0.7);
+    }
+
+    #container1 {
+        width: 350px;
+        margin: 5px auto;
+        position: relative;
+        overflow: hidden;
+        text-align: right;
+        padding: 5px;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        background-color: #f0f8ff;
+        color: #0066cc;
+    }
+    .ball {
+        width: 37.5px;
+        height: 37.5px;
+        border-radius: 50%;
+        position: absolute;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #fff;
+        font-weight: bold;
+        border: 2px solid #fff;
+        font-size: 12px;
+        transition: transform 0.5s ease;
+    }
+
+    #result {
+        margin-top: 20px;
+        font-size: 24px;
+        color: #007bff;
+    }
+
+    #confetti {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 10;
+    }
+
+    .confetti-piece {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background-color: #ff0;
+        animation: fly 5s ease-out forwards;
+    }
+
+    @keyframes fly {
+        0% { transform: translateY(0) scale(1); opacity: 1; }
+        100% { transform: translateY(-100vh) scale(0.5); opacity: 0; }
+    }
+    </style>
+
+</head>
+<body>
+    <h1>ההגרלה הגדולה</h1>
+    <div id='container1'>
+        - הקלידו שמות או מספרים שתרצו שישתתפו בהגרלה.
+        <br>
+        -  הקישו Enter לרדת שורה, כדי להזין את הטקסט הבא.
+        <br>
+        - סמנו אם תרצו לשמוע צליל ניצחון בסיום ההגרלה.
+        <br>
+        - הקישו "התחלת הגרלה"
+    </div>
+
+    <div id='inputArea'>
+        <textarea id='itemsInput' rows='5' cols='30' placeholder='הזינו עד 10 פריטים, כל אחד בשורה נפרדת (Enter לרדת שורה)'></textarea><br>
+        <button id='startButton' onclick='startDraw()'>התחלת הגרלה</button>
+        <label>
+            <input type='checkbox' id='soundToggle'> השמע סאונד בזכייה
+        </label>
+    </div>
+    <div id='container'></div>
+    <div id='confetti'></div>
+    <div id='result'></div>
+
+    <script>
+        const container = document.getElementById('container');
+        const itemsInput = document.getElementById('itemsInput');
+        const resultDisplay = document.getElementById('result');
+        const confettiContainer = document.getElementById('confetti');
+        const soundToggle = document.getElementById('soundToggle');
+        const startButton = document.getElementById('startButton');
+        let items = [];
+        let balls = [];
+        const diameter = 37.5;
+        let animationId;
+        let isDrawing = false;
+
+        function startDraw() {
+            if (isDrawing) return;
+            isDrawing = true;
+            startButton.innerText = 'התחל הגרלה';
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            resultDisplay.innerText = '';
+            container.innerHTML = '';
+            confettiContainer.innerHTML = '';
+            items = itemsInput.value.split('\n').filter(item => item.trim() !== '').slice(0, 10);
+            if (items.length === 0) {
+                // No items were entered, use values from 1 to 10
+                items = Array.from({ length: 10 }, (_, i) => (i + 1).toString());
+                alert("לא הזנת טקסט. הכנסו טקסט רנדומלי, כדי שתראה איך האפליקציה עובדת");
+            }
+
+            balls = items.map((item, index) => {
+                const ball = document.createElement('div');
+                ball.className = 'ball';
+                ball.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                ball.style.left = `${Math.random() * (300 - diameter)}px`;
+                ball.style.top = `${Math.random() * (200 - diameter)}px`;
+                ball.innerText = item;
+                ball.dx = (Math.random() - 0.5) * 4;
+                ball.dy = (Math.random() - 0.5) * 4;
+                container.appendChild(ball);
+                return ball;
+            });
+
+            animateBalls();
+            setTimeout(selectWinner, 7000);
+        }
+
+        function animateBalls() {
+            balls.forEach(ball => {
+                let x = parseFloat(ball.style.left);
+                let y = parseFloat(ball.style.top);
+
+                x += ball.dx;
+                y += ball.dy;
+
+                if (x <= 0 || x >= 300 - diameter) ball.dx *= -1;
+                if (y <= 0 || y >= 200 - diameter) ball.dy *= -1;
+
+                ball.style.left = `${x}px`;
+                ball.style.top = `${y}px`;
+            });
+
+            animationId = requestAnimationFrame(animateBalls);
+        }
+
+        function selectWinner() {
+            cancelAnimationFrame(animationId);
+            const winnerIndex = Math.floor(Math.random() * balls.length);
+            const winningBall = balls[winnerIndex];
+
+            winningBall.style.transform = 'scale(1.5)';
+
+            resultDisplay.innerText = `הזוכה: ${winningBall.innerText}`;
+            showConfetti();
+            if (soundToggle.checked) {
+                playSound();
+            }
+
+            isDrawing = false;
+            startButton.innerText = 'הגרלה נוספת';
+        }
+
+        function showConfetti() {
+            confettiContainer.style.display = 'block';
+            for (let i = 0; i < 100; i++) {
+                const confettiPiece = document.createElement('div');
+                confettiPiece.className = 'confetti-piece';
+                confettiPiece.style.left = `${Math.random() * 100}vw`;
+                confettiPiece.style.top = `${Math.random() * 100}vh`;
+                confettiPiece.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                confettiContainer.appendChild(confettiPiece);
+            }
+            setTimeout(() => {
+                confettiContainer.style.display = 'none';
+                confettiContainer.innerHTML = '';
+            }, 5000);
+        }
+
+        function playSound() {
+            const audio = new Audio('fanfare.wav');
+            audio.play().catch(error => console.log('No sound file available.'));
+        }
+    </script>
+<footer>
+    כל הזכויות שמורות OBN 2024
+</footer>
+
+</body>
+</html>
