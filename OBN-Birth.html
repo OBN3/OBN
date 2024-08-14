@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מחשבון גיל ותאריך עברי</title>
+
+<style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff; /* צבע רקע בהיר */
+        }
+        .container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 15px;
+            background-color: #e0f7fa; /* צבע כחול בהיר */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        input, button {
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid #b0e0e6; /* גבול בהיר */
+            border-radius: 5px;
+            font-size: 20px;
+        }
+        button {
+            background-color: #00bcd4; /* צבע כחול כהה */
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0097a7; /* צבע כהה יותר בעת ריחוף */
+        }
+        #result {
+            margin-top: 20px;
+            font-weight: bold;
+            color: #00796b; /* צבע טקסט כהה */
+        }
+    </style>
+</head>
+<body>
+
+   <div class="container">
+    <h1>מחשבון גיל ותאריך עברי</h1>
+    <h3>הזינו תאריך לידה: חודש, יום ושנת לידה,
+<br> לדוגמה: 07/05/1989, בפורמט mm/dd/yyyy
+<br> (או בחרו מהיומן)
+    <br> על מנת לקבל את הגיל המדויק ואת תאריך הלידה העברי</h3>
+    <input type="date" id="birthdate">
+    <button onclick="calculateAge()">חשב גיל</button>
+    <div id="result"></div>
+</div>
+
+    <script>
+        function calculateAge() {
+            const birthdateInput = document.getElementById('birthdate').value;
+            const birthdate = new Date(birthdateInput);
+            const today = new Date();
+            
+            let years = today.getFullYear() - birthdate.getFullYear();
+            let months = today.getMonth() - birthdate.getMonth();
+            let days = today.getDate() - birthdate.getDate();
+
+            if (months < 0 || (months === 0 && days < 0)) {
+                years--;
+                months += 12;
+            }
+
+            if (days < 0) {
+                const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 0);
+                days += lastMonth.getDate();
+                months--;
+            }
+
+            const hebrewDate = getHebrewDate(birthdate);
+
+            document.getElementById('result').innerHTML = 
+                `גילך המדויק: ${years} שנים, ${months} חודשים, ו-${days} ימים<br>
+                תאריך הלידה העברי שלך: ${hebrewDate}<br>`;
+
+        }
+
+        function getHebrewDate(date) {
+            const formatter = new Intl.DateTimeFormat('he-IL-u-ca-hebrew', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+            const parts = formatter.formatToParts(date);
+            let day, month, year;
+
+            parts.forEach(part => {
+                if (part.type === 'day') {
+                    day = part.value;
+                } else if (part.type === 'month') {
+                    month = part.value;
+                } else if (part.type === 'year') {
+                    year = part.value;
+                }
+            });
+
+            day = convertToHebrewNumerals(day);
+            year = convertToHebrewYear(year);
+
+            return `${day} ב${month} ${year}`;
+        }
+
+        function convertToHebrewNumerals(number) {
+            const hebrewNumerals = ["", "א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "ט", "י", 
+                "י״א", "י״ב", "י״ג", "י״ד", "ט״ו", "ט״ז", "י״ז", "י״ח", "י״ט", "כ",
+                "כ״א", "כ״ב", "כ״ג", "כ״ד", "כ״ה", "כ״ו", "כ״ז", "כ״ח", "כ״ט", "ל"];
+            return hebrewNumerals[parseInt(number)];
+        }
+
+        function convertToHebrewYear(year) {
+            const hebrewNumerals = {
+                1: "א", 2: "ב", 3: "ג", 4: "ד", 5: "ה", 6: "ו", 7: "ז", 8: "ח", 9: "ט",
+                10: "י", 20: "כ", 30: "ל", 40: "מ", 50: "נ", 60: "ס", 70: "ע", 80: "פ", 90: "צ",
+                100: "ק", 200: "ר", 300: "ש", 400: "ת"
+            };
+
+            let result = "ה'";
+            let numYear = parseInt(year);
+            let thousands = Math.floor(numYear / 1000);
+            numYear %= 1000;
+
+            while (numYear > 0) {
+                let highestPlace = Object.keys(hebrewNumerals)
+                    .reverse()
+                    .find(place => place <= numYear);
+                
+                result += hebrewNumerals[highestPlace];
+                numYear -= highestPlace;
+            }
+
+            result = result.replace(/יה/, "ט״ו").replace(/יו/, "ט״ז");
+
+            return result;
+        }
+    </script>
+<footer>
+    כל הזכויות שמורות OBN 2024
+</footer>
+</body>
+</html>
