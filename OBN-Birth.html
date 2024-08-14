@@ -24,12 +24,19 @@
         input, button {
             margin: 10px 0;
             padding: 10px;
-            width: 100%;
+            width: 200px;
             text-align: center;
             border: 1px solid #b0e0e6; /* גבול בהיר */
             border-radius: 5px;
             font-size: 20px;
         }
+	input[type="date"] {
+	  display: block;
+	  width: 200px; /* Adjust as needed */
+	  margin: 0 auto;
+	  text-align: center;
+	}
+
         button {
             background-color: #00bcd4; /* צבע כחול כהה */
             color: white;
@@ -55,7 +62,7 @@
 <br> לדוגמה: 07/05/1989, בפורמט mm/dd/yyyy
 <br> (או בחרו מהיומן)
     <br> על מנת לקבל את הגיל המדויק ואת תאריך הלידה העברי</h3>
-    <input type="date" id="birthdate">
+    <input type="date" id="birthdate" >
     <button onclick="calculateAge()">חשב גיל</button>
     <div id="result"></div>
 </div>
