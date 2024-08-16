@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>אפליקציית ימי הולדת</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            max-width: 95%;
+            width: 100%;
+            align-items: center;
+
+	   justify-content: center;
+	   margin-bottom: 20px;
+
+        }
+
+	.OBNButton {
+          align: center;
+	  text-align: center;
+}
+        @media (min-width: 768px) {
+            .container {
+                width: 50%;
+            }
+        }
+        h1 {
+            color: #0066cc;
+            text-align: center;
+        }
+        h4 {
+            color: #0066cc;
+            text-align: center;
+        }
+        h5 {
+            color: #0066cc;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: right;
+        }
+        th {
+            background-color: #0066cc;
+            color: white;
+            cursor: pointer;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        input, button {
+            margin: 10px 0;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #0066cc;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #004499;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>אפליקציית ימי הולדת</h1>
+<h4>
+הזינו שם ותאריך לידה, לדוגמה: 15/05/1989, ולחצו על "הוסף משתמש"
+<br><br>
+האפליקציה תחשב עבורכם את הגיל הנוכחי, מספר החודשים ומספר הימים עד יום ההולדת הבא.
+<br>
+תוכלו להקיש על כותרות הטבלה, על מנת למיין בסדר עולה, והקשה נוספת - למיון בסדר יורד.
+</h4>
+<h5> כפתור שמור נתונים ישמור קובץ עם הנתונים, אותו תוכלו לשמור או לשלוח למשתמש אחר
+<br> כפתור טען נתונים יטען את הנתונים מקובץ ששמרתם במחשב, או קיבלתם ממשתמש אחר
+<br> ניתן גם לערוך או למחוק רשומה
+</h5>
+
+        <div class="OBNButton">
+            <input type="text" id="name" placeholder="שם">
+            <input type="text" id="birthdate" placeholder="תאריך לידה (dd/mm/yyyy)">
+            <button onclick="addPerson()">הוסף משתמש</button>
+
+        <button onclick="saveBirthdays()">שמור נתונים</button>
+        <button onclick="loadBirthdays()">טען נתונים</button>
+
+        </div>
+
+
+        <table id="birthdayTable">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)">שם</th>
+                    <th onclick="sortTable(1)">תאריך לידה</th>
+                    <th onclick="sortTable(2)">ימים עד יום ההולדת</th>
+                    <th onclick="sortTable(3)">חודשים עד יום ההולדת</th>
+                    <th onclick="sortTable(4)">גיל מלא</th>
+                    <th>פעולות</th>
+                </tr>
+            </thead>
+            <tbody id="birthdayTableBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        let birthdays = [];
+        let sortDirection = 1;
+        let lastSortedColumn = -1;
+
+        function addPerson() {
+            const name = document.getElementById('name').value;
+            const birthdate = document.getElementById('birthdate').value;
+
+            if (!name || !birthdate) {
+                alert('נא למלא את כל השדות');
+                return;
+            }
+
+            if (!isValidDate(birthdate)) {
+                alert('נא להזין תאריך תקין בפורמט dd/mm/yyyy');
+                return;
+            }
+
+            birthdays.push({ name, birthdate });
+            updateTable();
+            saveToLocalStorage();
+            clearInputs();
+        }
+
+        function isValidDate(dateString) {
+            const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+            if (!regex.test(dateString)) return false;
+            const [, day, month, year] = dateString.match(regex);
+            const date = new Date(year, month - 1, day);
+            return date && date.getMonth() === month - 1 && date.getDate() == day;
+        }
+
+        function updateTable() {
+            const tableBody = document.getElementById('birthdayTableBody');
+            tableBody.innerHTML = '';
+
+            birthdays.forEach((person, index) => {
+                const row = tableBody.insertRow();
+                const today = new Date();
+                const birthDate = new Date(person.birthdate.split('/').reverse().join('-'));
+                const nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+                if (nextBirthday < today) {
+                    nextBirthday.setFullYear(nextBirthday.getFullYear() + 1);
+                }
+
+                const daysUntilBirthday = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
+                const monthsUntilBirthday = Math.floor(daysUntilBirthday / 30.44);
+                const age = today.getFullYear() - birthDate.getFullYear();
+                const fullAge = getFullAge(birthDate, today);
+
+                row.insertCell(0).textContent = person.name;
+                row.insertCell(1).textContent = person.birthdate;
+                row.insertCell(2).textContent = daysUntilBirthday;
+                row.insertCell(3).textContent = monthsUntilBirthday;
+                row.insertCell(4).textContent = fullAge;
+
+                const actionsCell = row.insertCell(5);
+                actionsCell.innerHTML = `
+                    <button onclick="editPerson(${index})">ערוך</button>
+                    <button onclick="deletePerson(${index})">מחק</button>
+                `;
+            });
+        }
+
+        function getFullAge(birthDate, today) {
+            let years = today.getFullYear() - birthDate.getFullYear();
+            let months = today.getMonth() - birthDate.getMonth();
+            let days = today.getDate() - birthDate.getDate();
+
+            if (months < 0 || (months === 0 && days < 0)) {
+                years--;
+                months += 12;
+            }
+
+            if (days < 0) {
+                const prevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 0);
+                days += prevMonth.getDate();
+                months--;
+            }
+
+            return `${years} שנים, ${months} חודשים, ${days} ימים`;
+        }
+
+        function editPerson(index) {
+            const person = birthdays[index];
+            const newName = prompt('הזן שם חדש:', person.name);
+            const newBirthdate = prompt('הזן תאריך לידה חדש (dd/mm/yyyy):', person.birthdate);
+
+            if (newName && newBirthdate && isValidDate(newBirthdate)) {
+                birthdays[index] = { name: newName, birthdate: newBirthdate };
+                updateTable();
+                saveToLocalStorage();
+            } else {
+                alert('נתונים לא תקינים. לא בוצע שינוי.');
+            }
+        }
+
+        function deletePerson(index) {
+            if (confirm('האם אתה בטוח שברצונך למחוק רשומה זו?')) {
+                birthdays.splice(index, 1);
+                updateTable();
+                saveToLocalStorage();
+            }
+        }
+
+        function sortTable(columnIndex) {
+            if (lastSortedColumn === columnIndex) {
+                sortDirection *= -1;
+            } else {
+                sortDirection = 1;
+            }
+            lastSortedColumn = columnIndex;
+
+            birthdays.sort((a, b) => {
+                let valueA, valueB;
+
+                switch(columnIndex) {
+                    case 0: // שם
+                        return sortDirection * a.name.localeCompare(b.name);
+                    case 1: // תאריך לידה
+                        return sortDirection * (new Date(a.birthdate.split('/').reverse().join('-')) - new Date(b.birthdate.split('/').reverse().join('-')));
+                    case 2: // ימים עד יום ההולדת
+                    case 3: // חודשים עד יום ההולדת
+//                    case 4: // גיל בשנים
+//                        valueA = calculateValue(a.birthdate, columnIndex);
+//                        valueB = calculateValue(b.birthdate, columnIndex);
+//                        return sortDirection * (valueA - valueB);
+                    case 4: // גיל מלא
+                        valueA = calculateFullAge(a.birthdate);
+                        valueB = calculateFullAge(b.birthdate);
+                        return sortDirection * (valueA - valueB);
+                }
+            });
+
+            updateTable();
+        }
+
+        function calculateValue(birthdate, columnIndex) {
+            const today = new Date();
+            const birthDate = new Date(birthdate.split('/').reverse().join('-'));
+            const nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+            if (nextBirthday < today) {
+                nextBirthday.setFullYear(nextBirthday.getFullYear() + 1);
+            }
+
+            const daysUntilBirthday = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
+            const monthsUntilBirthday = Math.floor(daysUntilBirthday / 30.44);
+            const age = today.getFullYear() - birthDate.getFullYear();
+
+            switch(columnIndex) {
+                case 2: return daysUntilBirthday;
+                case 3: return monthsUntilBirthday;
+                case 4: return age;
+            }
+        }
+
+        function calculateFullAge(birthdate) {
+            const today = new Date();
+            const birthDate = new Date(birthdate.split('/').reverse().join('-'));
+            const diffTime = Math.abs(today - birthDate);
+            return Math.floor(diffTime / (1000 * 60 * 60 * 24 * 365.25));
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('birthdays', JSON.stringify(birthdays));
+        }
+
+        function saveToJSON() {
+            const data = JSON.stringify(birthdays);
+            const blob = new Blob([data], {type: 'application/json'});
+            const fileName = `OBN-Birthday_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            link.click();
+            URL.revokeObjectURL(link.href);
+
+            alert(`הנתונים נשמרו בקובץ ${fileName}. תוכלו לשלוח קובץ זה, יחד עם קובץ ההפעלה הראשי, למשתמש אחר.`);
+        }
+
+        function saveBirthdays() {
+            saveToJSON();
+
+//            alert('הנתונים יישמרו בקובץ JSON בשם OBN-Birthday בתוספת תאריך ושעה. תוכלו לשלוח קובץ זה, יחד עם קובץ ההפעלה הראשי, למשתמש אחר.');
+        }
+
+        function loadBirthdays() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            birthdays = JSON.parse(e.target.result);
+                            updateTable();
+                            saveToLocalStorage();
+                            alert('הנתונים נטענו בהצלחה');
+                        } catch (error) {
+                            alert('שגיאה בטעינת הקובץ. אנא ודא שבחרת קובץ JSON תקין.');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
+
+        function clearInputs() {
+            document.getElementById('name').value = '';
+            document.getElementById('birthdate').value = '';
+        }
+
+        // טעינת נתונים אוטומטית בעת טעינת הדף
+        window.onload = function() {
+            const savedData = localStorage.getItem('birthdays');
+            if (savedData) {
+                birthdays = JSON.parse(savedData);
+                updateTable();
+            }
+        };
+
+
+    </script>
+<br>
+<footer>
+    כל הזכויות שמורות OBN 2024
+</footer>
+</body>
+</html>
