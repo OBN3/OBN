@@ -1,0 +1,526 @@
+<!--
+
+בנה אפליקציית ימי הולדת בקובץ HTML אחד.
+המשתמש יוכל להוסיף בתיבת טקסט - שם ובתיבת בחירת תאריך - תאריך לידה. התאריך צריך להיות בפורמט dd/mm/yyyy, וכל החישובים של התאריכים צריכים להתבסס על פורמט זה. כאשר המשתמש הזין שם ותאריך לידה - אתה תוסיף אותם לטבלה. אם המשתמש לא מוסיף שם או כותב תאריך בפורמט לא נכון - הצג לו הודעת שגיאה עם הסבר מה לעשות.
+הטבלה כוללת את העמודות: שם, תאריך לידה, ימים עד יום ההולדת, חודשים עד יום ההולדת, גיל בשנים וכן גיל מלא (שנים, חודשים, ימים), תאריך לידה עברי (על פי תאריך הלידה שהוזן), פעולות.
+כל הנתונים צריכים להישמר מקומית ב- Local storage
+שים לב שחישוב תאריך לידה עברי דורש התייחסות מעמיקה. השתמש באלגוריתמים מצויינים להמרה לתאריך עברי, אך בלי צורך בספריות חיצוניות.
+את התאריך העברי יש להציג בפורמט למשל: "א אלול ה'תשפג". יש לחפש אלגוריתם מצויין שיאפשר להציג זאת נכון.
+בעמודת "פעולות" צריכה להיות אפשרות לערוך את פרטי המשתמש (שם ותאריך לידה), וכן - למחוק משתמש. הוסף הודעת אזהרה לפני מחיקה.
+הוסף כפתור "שמור נתונים", שיאפשר למשתמש לשמור את כל נתוני הטבלה על מחשב המשתמש בקובץ בפורמט json , ובו הפרטים שבטבלה. תן לקובץ שם -OBN-Birth עם התאריך, שעה, דקות, שניות של זמן השמירה, וסיומת json. לאחר שמירה הוסף בראש הטבלה טקסט הסבר: "נשמר קובץ עם פרטי ימי ההולדת, בשם X. אפשר לשלוח קובץ זה למשתמש אחר, שיוכל להטעין אותו באפליקציה אצלו". במקום X הצב את שם הקובץ ששמרת.
+הוסף כפתור "טען נתונים" בעזרתו יכול משתמש לטעון נתונים מתוך קובץ json שנשמר קודם. 
+
+הוסף אפשרות למיין את עמודות הטבלה: שם, ימים עד יום ההולדת הבא, חודשים עד יום ההולדת הבא, גיל בשנים, גיל מלא. בהקשה אחת על כותרת העמודה - מיין בסדר עולה, בהקשה נוספת - מיין בסדר יורד וחוזר חלילה.
+
+הוסף בתחתית הטבלה טקסט הסבר:
+"הכפתור הורד נתונים יוצר קובץ json עם כל הנתונים בטבלה. תוכלו לשלוח קובץ זה למשתמש אחר. משתמש יוכל ללחוץ על כפתור "טען נתונים", לבחור את קובץ ה-json ולטעון את הנתונים לטבלה אצלו.
+הכפתור "טען נתונים" מאפשר לכם לטעון נתונים מקובץ json ששמרת במחשב, ולמלא את הטבלה עם הנתונים ששמרת או מתוך קובץ שקיבלת ממישהו אחר."
+
+שים לב שהכל צריך להיות מעוצב בסגנון מדהים, מהמם, מקצעוי, מינימליסטי, מודרני, בצבעי כחול בהיר, פינות מעוגלות, בעברית, מיושר למרכז, כיוון כתיבה מימין לשמאל.
+הכל צריך להיות מותאם גם למובייל, כולל רוחב הטבלה.
+אני סומך עליך ואתן לך טיפ של 100 דולר אם תמלא את כל המשימה בצורה מצויינת. עבור על כל הבקשה שלי כמה פעמים, עד שתראה שאתה מבי ןהכל ואז בצע.תן לי קובץ HTML אחד.
+
+-->
+
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>אפליקציית ימי הולדת</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            direction: rtl;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 800px;
+            width: 100%;
+            align-items: center;
+        }
+
+        h1 {
+            color: #0077be;
+            text-align: center;
+	}
+        h4 {
+            color: #0066cc;
+            text-align: center;
+        }
+        h5 {
+            color: #0066cc;
+            text-align: center;
+        }
+
+        input, select, button {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+//            width: 100%;
+            box-sizing: border-box;
+//	    float: center;
+//	    display: inline-block;
+        }
+
+	.input-item {
+	  display: flex;
+	  align-items: center;
+	  justify-content: space-between;
+	}
+
+        button {
+            background-color: #0077be;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #005fa3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #0077be;
+            color: white;
+            cursor: pointer;
+        }
+        .error {
+            color: red;
+            text-align: center;
+        }
+        .success {
+            color: green;
+            text-align: center;
+        }
+        .explanation {
+            margin-top: 20px;
+            font-size: 0.9em;
+            text-align: center;
+        }
+        @media (max-width: 600px) {
+            table {
+                font-size: 0.8em;
+            }
+            th, td {
+                padding: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>אפליקציית ימי הולדת</h1>
+<h4>
+הזינו שם ותאריך לידה (חודש-יום-שנה: 9/21/1989). אפשר גם להקיש על אייקון היומן. לחצו על "שמור יום הולדת"
+<br><br>
+האפליקציה מציגה את הגיל הנוכחי, התאריך העברי ואת מספר החודשים ומספר הימים עד יום ההולדת הבא.
+<br>
+תוכלו להקיש על כותרות הטבלה, על מנת למיין בסדר עולה, והקשה נוספת - למיון בסדר יורד.
+</h4>
+<h5> כפתור שמור נתונים ישמור קובץ עם הנתונים, אותו תוכלו לשמור או לשלוח למשתמש אחר.
+<br> כפתור טען נתונים יטען את הנתונים מקובץ ששמרתם במחשב, או קיבלתם ממשתמש אחר.
+<br> ניתן גם לערוך או למחוק רשומה.
+</h5>
+<div class="input-item">
+     <input type="text" id="name" placeholder="שם האדם">
+        <input type="date" id="birthdate">
+     <button onclick="addPerson()">שמור יום הולדת</button>
+</div>
+        <div id="error" class="error"></div>
+        <div id="success" class="success"></div>
+        <table id="birthdayTable">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)">שם</th>
+                    <th onclick="sortTable(1)">תאריך לידה</th>
+                    <th onclick="sortTable(2)">ימים עד יום ההולדת</th>
+                    <th onclick="sortTable(3)">חודשים עד יום ההולדת</th>
+                    <th onclick="sortTable(4)">גיל בשנים</th>
+                    <th onclick="sortTable(5)">גיל מלא</th>
+                    <th>תאריך לידה עברי</th>
+                    <th>פעולות</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+
+        <button onclick="saveData()">שמור נתונים</button>
+        <button onclick="loadData()">טען נתונים</button>
+
+        <p class="explanation">
+            הכפתור "שמור נתונים" יוצר קובץ JSON עם כל הנתונים בטבלה. תוכלו לשלוח קובץ זה למשתמש אחר.
+            הכפתור "טען נתונים" מאפשר לכם לטעון נתונים מקובץ JSON ששמרתם במחשב, ולמלא את הטבלה עם הנתונים ששמרתם או מתוך קובץ שקיבלתם ממישהו אחר.
+        </p>
+    </div>
+
+ 
+
+
+
+<script>
+    let people = [];
+    let sortDirection = 1;
+    let lastSortedColumn = -1;
+
+    function addPerson() {
+        const name = document.getElementById('name').value;
+        const birthdate = document.getElementById('birthdate').value;
+        const error = document.getElementById('error');
+        const success = document.getElementById('success');
+
+        if (!name || !birthdate) {
+            error.textContent = 'נא למלא את כל השדות';
+            success.textContent = '';
+            return;
+        }
+
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(birthdate)) {
+            error.textContent = 'נא להזין תאריך בפורמט הנכון (YYYY-MM-DD)';
+            success.textContent = '';
+            return;
+        }
+
+        const person = { name, birthdate };
+        people.push(person);
+        updateTable();
+        saveToLocalStorage();
+
+        document.getElementById('name').value = '';
+        document.getElementById('birthdate').value = '';
+        error.textContent = '';
+        success.textContent = 'הנתונים נוספו בהצלחה';
+    }
+
+    function updateTable() {
+        const tableBody = document.getElementById('tableBody');
+        tableBody.innerHTML = '';
+
+        people.forEach((person, index) => {
+            const row = tableBody.insertRow();
+            const nameCell = row.insertCell(0);
+            const birthdateCell = row.insertCell(1);
+            const daysUntilBirthdayCell = row.insertCell(2);
+            const monthsUntilBirthdayCell = row.insertCell(3);
+            const ageYearsCell = row.insertCell(4);
+            const ageFullCell = row.insertCell(5);
+            const hebrewDateCell = row.insertCell(6);
+            const actionsCell = row.insertCell(7);
+
+            nameCell.textContent = person.name;
+            birthdateCell.textContent = formatDate(person.birthdate);
+            
+            const birthdayInfo = calculateBirthdayInfo(person.birthdate);
+            daysUntilBirthdayCell.textContent = birthdayInfo.daysUntilBirthday;
+            monthsUntilBirthdayCell.textContent = birthdayInfo.monthsUntilBirthday;
+            ageYearsCell.textContent = birthdayInfo.ageYears;
+            ageFullCell.textContent = birthdayInfo.ageFull;
+            
+            hebrewDateCell.textContent = getHebrewDate(person.birthdate);
+
+            const editButton = document.createElement('button');
+            editButton.textContent = 'ערוך';
+            editButton.onclick = () => editPerson(index);
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'מחק';
+            deleteButton.onclick = () => deletePerson(index);
+
+            actionsCell.appendChild(editButton);
+            actionsCell.appendChild(deleteButton);
+        });
+    }
+
+
+
+
+function calculateBirthdayInfo(birthdate) {
+    const today = new Date();
+    const birth = new Date(birthdate);
+    const nextBirthday = new Date(today.getFullYear(), birth.getMonth(), birth.getDate());
+    
+    if (nextBirthday < today) {
+        nextBirthday.setFullYear(nextBirthday.getFullYear() + 1);
+    }
+
+    const diffTime = Math.abs(nextBirthday - today);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffMonths = Math.floor(diffDays / 30.44);
+
+    let ageYears = today.getFullYear() - birth.getFullYear();
+    let ageMonths = today.getMonth() - birth.getMonth();
+    let ageDays = today.getDate() - birth.getDate();
+
+    if (ageDays < 0) {
+        ageMonths--;
+        ageDays += new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+    }
+    if (ageMonths < 0) {
+        ageYears--;
+        ageMonths += 12;
+    }
+
+    const ageFull = ageYears + ' שנים, ' + 
+                    ageMonths + ' חודשים, ' + 
+                    ageDays + ' ימים';
+
+    return {
+        daysUntilBirthday: diffDays,
+        monthsUntilBirthday: diffMonths,
+        ageYears: ageYears,
+        ageFull: ageFull
+    };
+}
+
+
+
+
+
+
+
+
+//    function getHebrewDate(gregorianDate) {
+        // This is a simplified version. For accurate conversion, use a proper library or API
+//        const gDate = new Date(gregorianDate);
+//        const hDate = new Intl.DateTimeFormat('he-u-ca-hebrew', {
+//            day: 'numeric',
+//            month: 'long',
+//            year: 'numeric'
+//        }).format(gDate);
+//        return hDate;
+//    }
+
+
+
+function getHebrewDate(gregorianDate) {
+    const gDate = new Date(gregorianDate);
+    const formatter = new Intl.DateTimeFormat('he-IL', {
+        calendar: 'hebrew',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
+    
+    let hebrewDate = formatter.format(gDate);
+    
+    // המרת המספרים לאותיות עבריות
+    const hebrewNumerals = {
+        '1': 'א', '2': 'ב', '3': 'ג', '4': 'ד', '5': 'ה', '6': 'ו', '7': 'ז', '8': 'ח', '9': 'ט',
+        '10': 'י', '11': 'יא', '12': 'יב', '13': 'יג', '14': 'יד', '15': 'טו', '16': 'טז', '17': 'יז', '18': 'יח', '19': 'יט',
+        '20': 'כ', '21': 'כא', '22': 'כב', '23': 'כג', '24': 'כד', '25': 'כה', '26': 'כו', '27': 'כז', '28': 'כח', '29': 'כט',
+        '30': 'ל'
+    };
+    
+    // המרת היום למספר עברי
+    const dayMatch = hebrewDate.match(/\d+/);
+    if (dayMatch) {
+        const day = dayMatch[0];
+        hebrewDate = hebrewDate.replace(day, hebrewNumerals[day] || day);
+    }
+    
+    // הוספת גרש או גרשיים לפי הצורך
+    if (hebrewDate.match(/^[א-ט]/) || hebrewDate.match(/^י$/)) {
+        hebrewDate = hebrewDate.replace(/^([א-י])/, "$1'");
+    } else if (hebrewDate.match(/^[י][א-ט]/)) {
+        hebrewDate = hebrewDate.replace(/^([י][א-ט])/, "$1\"");
+    }
+    
+    // המרת השנה לפורמט המסורתי
+    const yearMatch = hebrewDate.match(/\d+$/);
+    if (yearMatch) {
+        const year = parseInt(yearMatch[0]);
+        const hebrewYear = numberToHebrewYear(year);
+//        hebrewDate = hebrewDate.replace(/\d+$/, "ה'" + hebrewYear);
+        hebrewDate = hebrewDate.replace(/\d+$/, "" + hebrewYear);
+
+    }
+    
+    return hebrewDate;
+}
+
+function numberToHebrewYear(number) {
+    const units = ['', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט'];
+    const tens = ['', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ'];
+    const hundreds = ['', 'ק', 'ר', 'ש', 'ת', 'תק', 'תר', 'תש', 'תת', 'תתק'];
+
+    let result = '';
+    let remaining = number;
+
+    // אלפים
+    const thousands = Math.floor(remaining / 1000);
+    if (thousands > 0) {
+        result += units[thousands] + "'";
+    }
+    remaining %= 1000;
+
+    // מאות
+    const hundred = Math.floor(remaining / 100);
+    result += hundreds[hundred];
+    remaining %= 100;
+
+    // עשרות ויחידות
+    if (remaining > 15 && remaining < 20) {
+        result += 'ט' + units[remaining - 15];
+    } else {
+        const ten = Math.floor(remaining / 10);
+        const unit = remaining % 10;
+        result += tens[ten] + units[unit];
+    }
+
+    // הוספת גרשיים בסוף
+    if (result.length > 1) {
+        result = result.slice(0, -1) + '"' + result.slice(-1);
+    } else {
+        result += "'";
+    }
+
+    return result;
+}
+
+
+
+
+
+
+    function editPerson(index) {
+        const person = people[index];
+        document.getElementById('name').value = person.name;
+        document.getElementById('birthdate').value = person.birthdate;
+        people.splice(index, 1);
+        updateTable();
+        saveToLocalStorage();
+    }
+
+    function deletePerson(index) {
+        if (confirm('האם אתה בטוח שברצונך למחוק משתמש זה?')) {
+            people.splice(index, 1);
+            updateTable();
+            saveToLocalStorage();
+        }
+    }
+
+    function saveToLocalStorage() {
+        localStorage.setItem('birthdayPeople', JSON.stringify(people));
+    }
+
+    function loadFromLocalStorage() {
+        const storedPeople = localStorage.getItem('birthdayPeople');
+        if (storedPeople) {
+            people = JSON.parse(storedPeople);
+            updateTable();
+        }
+    }
+
+    function formatDate(dateString) {
+        const [year, month, day] = dateString.split('-');
+        return `${day}/${month}/${year}`;
+    }
+
+    function sortTable(columnIndex) {
+        if (columnIndex === lastSortedColumn) {
+            sortDirection *= -1;
+        } else {
+            sortDirection = 1;
+        }
+        lastSortedColumn = columnIndex;
+
+        people.sort((a, b) => {
+            let valueA, valueB;
+            switch(columnIndex) {
+                case 0: // שם
+                    valueA = a.name;
+                    valueB = b.name;
+                    break;
+                case 1: // תאריך לידה
+                    valueA = new Date(a.birthdate);
+                    valueB = new Date(b.birthdate);
+                    break;
+                case 2: // ימים עד יום ההולדת
+                case 3: // חודשים עד יום ההולדת
+                case 4: // גיל בשנים
+                case 5: // גיל מלא
+                    const infoA = calculateBirthdayInfo(a.birthdate);
+                    const infoB = calculateBirthdayInfo(b.birthdate);
+                    valueA = infoA[Object.keys(infoA)[columnIndex - 2]];
+                    valueB = infoB[Object.keys(infoB)[columnIndex - 2]];
+                    break;
+            }
+            if (valueA < valueB) return -1 * sortDirection;
+            if (valueA > valueB) return 1 * sortDirection;
+            return 0;
+        });
+
+        updateTable();
+    }
+
+    function saveData() {
+        const data = JSON.stringify(people);
+        const blob = new Blob([data], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const date = new Date();
+        const fileName = `OBN-Birth_${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}.json`;
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById('success').textContent = `נשמר קובץ עם פרטי ימי ההולדת, בשם ${fileName}. אפשר לשלוח קובץ זה למשתמש אחר, שיוכל להטעין אותו באפליקציה אצלו`;
+    }
+
+    function loadData() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = function(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                people = JSON.parse(content);
+                updateTable();
+                saveToLocalStorage();
+                document.getElementById('success').textContent = 'הנתונים נטענו בהצלחה';
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+
+    window.onload = loadFromLocalStorage;
+</script>
+
+<br>
+<footer>
+    כל הזכויות שמורות OBN 2024
+</footer>
+
+
+</body>
+</html>
+
+
+
+
+
+
