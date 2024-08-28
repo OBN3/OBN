@@ -308,13 +308,37 @@ function displayResults(answers) {
                 }
             });
 
+
             const avg1 = answers.set1.reduce((a, b) => a + b, 0) / answers.set1.length;
             const avg2 = answers.set2.reduce((a, b) => a + b, 0) / answers.set2.length;
+	
+// OBN start
+            let mess1, mess2, combAvg;
+
+            if (avg1 >= 1 && avg1 <= 4) {
+                mess1 = "Your Health Management level is low";
+            } else if (avg1 >= 5 && avg1 <= 7) {
+                mess1 = "Your Health Management level is medium";
+            } else {
+                mess1 = "Your Health Management level is high";
+            }
+
+            if (avg2 >= 1 && avg2 <= 4) {
+                mess2 = "Your level of Maintaining a Healthy Lifestyle is low";
+            } else if (avg2 >= 5 && avg2 <= 7) {
+                mess2 = "Your level of Maintaining a Healthy Lifestyle is medium";
+            } else {
+                mess2 = "Your level of Maintaining a Healthy Lifestyle is high";
+            }
+			combAvg = (avg1+avg2)/2
+// OBN End
+
             document.getElementById('averages').innerHTML = `
-                Average of How easy or difficult is it for you to: <font color="red"><b> ${avg1.toFixed(2)}</b></font><br>
-                Average of To what extent do you: <font color="red"><b> ${avg2.toFixed(2)} </b></font>
+                ${mess1}. The score is: <font color="red"><b> ${avg1.toFixed(2)}</b></font><br>
+                ${mess2}. The score is: <font color="red"><b> ${avg2.toFixed(2)} </b></font><br>
+				Your combined Health Management Pantry score is: <font color="red"><b> ${combAvg} </b></font><br>
             `;
-        }
+		}
 
         createQuestions();
     </script>
