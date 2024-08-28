@@ -3,114 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Health Management Questionnaire</title>
+    <title>Health Management Tool</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
             background-color: #f0f8ff;
             color: #333;
+            line-height: 1.6;
+            padding: 20px;
         }
-        h1 {
-            color: #0077be;
-	    text-align: center;
-        }
-
-        h2 {
-            color: #0077be;
-        }
-        h3 {
-            color: #EE4B2B;
-            font-size: 16px;
-        }
-		
         .container {
+            width: 90%;
             max-width: 800px;
             margin: 0 auto;
-            background-color: #ffffff;
+            background-color: white;
             padding: 20px;
-            border-radius: 8px;
+            border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #38761d; // #4682b4;
+            text-align: center;
+        }
+        h3 {
+            color: #38761d; // #4682b4;
+            text-align: center;
         }		
-		
+        .subtitle {
+            color: #38761d; // #3d85c6; // #20b2aa;
+            font-size: 1em;
+            text-align: center;
+            margin-bottom: 20px;
+        }
         .question {
             margin-bottom: 15px;
+            color: #4682b4;			
         }
         select {
-// OBN            width: 100%;
+            width: 100%;
             padding: 5px;
             margin-top: 5px;
         }
+        .error {
+            color: red;
+        }
         button {
-            background-color: #0077be;
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #4682b4;
             color: white;
             border: none;
-            padding: 10px 20px;
+            border-radius: 5px;
             cursor: pointer;
             margin-top: 20px;
         }
         button:hover {
-            background-color: #005c99;
-        }
-        .error {
-            color: red;
+            background-color: #20b2aa;
         }
         #results {
             display: none;
         }
         .chart-container {
-            width: 90%;
+            width: 95%;
             margin: 20px auto;
+        }
+        .result-text {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+        }
+        .button-container button {
+            width: 48%;
         }
     </style>
 </head>
 <body>
-
     <div class="container">
+        <div id="questionnaire">
+            <h1>The Health Management Tool</h1>
+		<h3>Please answer the following questions to get your "Health Management Pantry"</h3>
 
-    <div id="questionnaire">
-        <h1>Health Management Questionnaire</h1>
-        
-        <h2>How easy or difficult is it for you to:</h2>
-        <h3>Please select 1 – Very Difficult, 10 – Very Easy</h3>
-        
-        <div id="set1"></div>
-        
-        <h2>To what extent do you:</h2>
-        <h3>Please select 1 – Very little, 10 – Very much</h3>
-        
-        <div id="set2"></div>
-        
-        <button onclick="submitQuestionnaire()">Submit</button>
-    </div>
+            <h3>How easy or difficult is it for you to:</h3>
+            <p class="subtitle">(Please select 1 – Very Difficult, 10 – Very Easy)</p>
 
-    <div id="results">
-        <div class="chart-container">
-            <canvas id="chart1"></canvas>
+            <div id="set1"></div>
+
+            <h2>To what extent do you:</h2>
+            <p class="subtitle">Please select 1 – Very little, 10 – Very much</p>
+            <div id="set2"></div>
+
+            <button onclick="submitForm()">Submit</button>
         </div>
-        <div id="stats1"></div>
-        
-        <div class="chart-container">
-            <canvas id="chart2"></canvas>
+
+        <div id="results">
+            <h1>My Health Management Pantry</h1>
+            <div class="chart-container">
+                <canvas id="radarChart"></canvas>
+            </div>
+            <div class="result-text" id="averages"></div>
+            <div class="chart-container">
+                <canvas id="barChart"></canvas>
+            </div>
+            <div class="button-container">
+                <button onclick="location.reload()">Back to Questionnaire</button>
+                <button onclick="window.print()">Save Results</button>
+            </div>
         </div>
-        <div id="stats2"></div>
-        
-        <div class="chart-container">
-            <canvas id="chart3"></canvas>
-
-		<div align=center>
-        <button onclick="backToQuestionnaire()">Back to Questionnaire</button>
-        <button onclick="saveResults()">Save Results</button>
-		</div>
-
-        </div>
-       
-
-    </div>
-
     </div>
 
     <script>
@@ -148,12 +151,10 @@
             questions.set1.forEach((q, i) => {
                 set1Html += `
                     <div class="question">
-					  <hr><label for="set1_${i}">${q}</label><br>
-                        <select id="set1_${i}">
-                            <option value="">Select answer</option>
-							<option value="1">1 - Very Difficult</option>							
-                            ${[...Array(8)].map((_, j) => `<option value="${j+2}">${j+2}</option>`).join('')}
-							<option value="10">10 - Very Easy</option>
+                        <label for="set1_${i}">${q}</label>
+                        <select id="set1_${i}" name="set1_${i}">
+                            <option value="">Select...</option>
+                            ${[...Array(10)].map((_, j) => `<option value="${j+1}">${j+1}</option>`).join('')}
                         </select>
                     </div>
                 `;
@@ -162,13 +163,11 @@
             questions.set2.forEach((q, i) => {
                 set2Html += `
                     <div class="question">
-                        <hr><label for="set2_${i}">${q}</label><br>
-                        <select id="set2_${i}">
-                            <option value="">Select answer</option>
-							<option value="1">1 - Very little</option>
-                            ${[...Array(8)].map((_, j) => `<option value="${j+2}">${j+2}</option>`).join('')}
-							<option value="10">10 - Very much</option>                        
-						</select>
+                        <label for="set2_${i}">${q}</label>
+                        <select id="set2_${i}" name="set2_${i}">
+                            <option value="">Select...</option>
+                            ${[...Array(10)].map((_, j) => `<option value="${j+1}">${j+1}</option>`).join('')}
+                        </select>
                     </div>
                 `;
             });
@@ -177,159 +176,144 @@
             document.getElementById('set2').innerHTML = set2Html;
         }
 
-        function submitQuestionnaire() {
-            let unanswered = [];
-            let answers = {set1: [], set2: []};
+        function submitForm() {
+            let allAnswered = true;
+            const answers = {set1: [], set2: []};
 
-            questions.set1.forEach((_, i) => {
-                let value = document.getElementById(`set1_${i}`).value;
-                if (value === "") {
-                    unanswered.push(`set1_${i}`);
-                } else {
-                    answers.set1.push(parseInt(value));
-                }
-            });
-
-            questions.set2.forEach((_, i) => {
-                let value = document.getElementById(`set2_${i}`).value;
-                if (value === "") {
-                    unanswered.push(`set2_${i}`);
-                } else {
-                    answers.set2.push(parseInt(value));
-                }
-            });
-
-            if (unanswered.length > 0) {
-                alert("Please answer all questions before submitting.");
-                unanswered.forEach(id => {
-                    document.getElementById(id).style.color = "red";
+            ['set1', 'set2'].forEach(set => {
+                questions[set].forEach((_, i) => {
+                    const select = document.getElementById(`${set}_${i}`);
+                    if (select.value === "") {
+                        allAnswered = false;
+                        select.parentElement.classList.add('error');
+                    } else {
+                        select.parentElement.classList.remove('error');
+                        answers[set].push(parseInt(select.value));
+                    }
                 });
-            } else {
-                showResults(answers);
+            });
+
+            if (!allAnswered) {
+                alert("Please answer all questions.");
+                return;
+            }
+
+            // Save answers to file (this would typically be done server-side)
+            const date = new Date().toISOString();
+            let csvContent = "Date,Question Number,Question Text,Score\n";
+            ['set1', 'set2'].forEach(set => {
+                questions[set].forEach((q, i) => {
+                    csvContent += `${date},${set}_${i+1},"${q}",${answers[set][i]}\n`;
+                });
+            });
+            // In a real application, you would send this data to the server to save
+
+            displayResults(answers);
+        }
+
+function displayResults(answers) {
+    document.getElementById('questionnaire').style.display = 'none';
+    document.getElementById('results').style.display = 'block';
+
+    const ctx = document.getElementById('radarChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: [...Array(10).keys()].map(i => `Q${i+1}`),
+            datasets: [{
+                label: 'Set 1',
+                data: answers.set1,
+                backgroundColor: 'rgba(70, 130, 180, 0.2)',
+                borderColor: 'rgba(70, 130, 180, 1)',
+                pointBackgroundColor: 'rgba(70, 130, 180, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(70, 130, 180, 1)'
+            }, {
+                label: 'Set 2',
+                data: answers.set2,
+                backgroundColor: 'rgba(32, 178, 170, 0.2)',
+                borderColor: 'rgba(32, 178, 170, 1)',
+                pointBackgroundColor: 'rgba(32, 178, 170, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(32, 178, 170, 1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    angleLines: {
+                        display: true // OBN: show the spider lines
+                    },
+                    suggestedMin: 0,
+                    suggestedMax: 10,
+			pointLabels: {
+                        display: false // This hides the labels around the chart
+                    },
+                    ticks: {
+                        display: true // This hides the numerical labels
+                    }
+                }
+            },
+			
+			
+           plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const setIndex = context.datasetIndex;
+                            const pointIndex = context.dataIndex;
+                            const value = context.raw;
+                            const question = questions[`set${setIndex + 1}`][pointIndex];
+                            return `${question}: ${value}`;
+                        }
+                    }
+                }
             }
         }
+    });
+					
 
-        function showResults(answers) {
-            document.getElementById('questionnaire').style.display = 'none';
-            document.getElementById('results').style.display = 'block';
-
-            createChart('chart1', 'How easy or difficult is it for you to:', questions.set1, answers.set1);
-            createChart('chart2', 'To what extent do you:', questions.set2, answers.set2);
-            createCombinedChart('chart3', questions.set1, questions.set2, answers.set1, answers.set2);
-
-            showStats('stats1', 'How easy or difficult is it for you to:', questions.set1, answers.set1);
-            showStats('stats2', 'To what extent do you:', questions.set2, answers.set2);
-        }
-
-        function createChart(canvasId, title, labels, data) {
-            new Chart(document.getElementById(canvasId), {
-                type: 'radar',
+            const barCtx = document.getElementById('barChart').getContext('2d');
+            new Chart(barCtx, {
+                type: 'bar',
                 data: {
-                    labels: labels,
+                    labels: [...Array(10).keys()].map(i => `Q${i+1}`),
                     datasets: [{
-                        label: title,
-                        data: data,
-                        fill: true,
-                        backgroundColor: 'rgba(0, 119, 190, 0.2)',
-                        borderColor: 'rgb(0, 119, 190)',
-                        pointBackgroundColor: 'rgb(0, 119, 190)',
-                        pointBorderColor: '#fff',
-                        pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: 'rgb(0, 119, 190)'
+                        label: 'Set 1',
+                        data: answers.set1,
+                        backgroundColor: 'rgba(70, 130, 180, 0.2)',
+                        borderColor: 'rgba(70, 130, 180, 1)',
+                        borderWidth: 1
+                    }, {
+                        label: 'Set 2',
+                        data: answers.set2,
+                        backgroundColor: 'rgba(32, 178, 170, 0.2)',
+                        borderColor: 'rgba(32, 178, 170, 1)',
+                        borderWidth: 1
                     }]
                 },
                 options: {
-                    elements: {
-                        line: {
-                            borderWidth: 3
-                        }
-                    },
-	
+                    responsive: true,
+                    maintainAspectRatio: false,
                     scales: {
-                        r: {
-                            angleLines: {
-                                display: false
-                            },
-                            suggestedMin: 0,
-                            suggestedMax: 10
+                        y: {
+                            beginAtZero: true,
+                            max: 10
                         }
                     }
                 }
             });
-        }
 
-        function createCombinedChart(canvasId, labels1, labels2, data1, data2) {
-            new Chart(document.getElementById(canvasId), {
-                type: 'radar',
-                data: {
-                    labels: labels1.concat(labels2),
-                    datasets: [
-                        {
-                            label: 'Set 1: How easy or difficult is it for you to:',
-                            data: data1.concat(new Array(10).fill(null)),
-                            fill: true,
-                            backgroundColor: 'rgba(0, 119, 190, 0.2)',
-                            borderColor: 'rgb(0, 119, 190)',
-                            pointBackgroundColor: 'rgb(0, 119, 190)',
-                            pointBorderColor: '#fff',
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: 'rgb(0, 119, 190)'
-                        },
-                        {
-                            label: 'Set 2: To what extent do you:',
-                            data: new Array(10).fill(null).concat(data2),
-                            fill: true,
-                            backgroundColor: 'rgba(0, 190, 119, 0.2)',
-                            borderColor: 'rgb(0, 190, 119)',
-                            pointBackgroundColor: 'rgb(0, 190, 119)',
-                            pointBorderColor: '#fff',
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: 'rgb(0, 190, 119)'
-                        }
-                    ]
-                },
-                options: {
-                    elements: {
-                        line: {
-                            borderWidth: 3
-                        }
-                    },
-                    scales: {
-                        r: {
-                            angleLines: {
-                                display: false
-                            },
-                            suggestedMin: 0,
-                            suggestedMax: 10
-                        }
-                    }
-                }
-            });
-        }
-
-        function showStats(elementId, title, questions, answers) {
-            let avg = answers.reduce((a, b) => a + b, 0) / answers.length;
-            let minScore = Math.min(...answers);
-            let maxScore = Math.max(...answers);
-            let minQuestion = questions[answers.indexOf(minScore)];
-            let maxQuestion = questions[answers.indexOf(maxScore)];
-
-            document.getElementById(elementId).innerHTML = `
-                <p>Average of ${title} ${avg.toFixed(2)}
-                <br>Question with the lowest score: ${minQuestion}, Scale: ${minScore}
-                <br>Question with the highest score: ${maxQuestion}, Scale: ${maxScore}</p><br>
+            const avg1 = answers.set1.reduce((a, b) => a + b, 0) / answers.set1.length;
+            const avg2 = answers.set2.reduce((a, b) => a + b, 0) / answers.set2.length;
+            document.getElementById('averages').innerHTML = `
+                Average of How easy or difficult is it for you to: <font color="red"><b> ${avg1.toFixed(2)}</b></font><br>
+                Average of To what extent do you: <font color="red"><b> ${avg2.toFixed(2)} </b></font>
             `;
-        }
-
-        function backToQuestionnaire() {
-            document.getElementById('questionnaire').style.display = 'block';
-            document.getElementById('results').style.display = 'none';
-        }
-
-        function saveResults() {
-//            alert("This function would save the results as a PDF.");
-            // Implement PDF saving functionality here
-                    window.print();
         }
 
         createQuestions();
