@@ -202,12 +202,12 @@
             });
 
             // Send data to server
+            const form = new FormData();
+            form.append('csvContent', csvContent);
+
             fetch('save_results.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({csvContent: csvContent}),
+                body: form
             })
             .then(response => response.text())
             .then(data => {
@@ -268,17 +268,17 @@
             new Chart(barCtx, {
                 type: 'bar',
                 data: {
-                    labels: [...questions.set1, ...questions.set2],
+                    labels: [...Array(10).keys()].map(i => `Q${i+1}`),
                     datasets: [{
                         label: 'Set 1',
-                        data: [...answers.set1, ...new Array(10).fill(null)],
-                        backgroundColor: 'rgba(70, 130, 180, 0.2)',
+                        data: answers.set1,
+                        backgroundColor: 'rgba(70, 130, 180, 0.5)',
                         borderColor: 'rgba(70, 130, 180, 1)',
                         borderWidth: 1
                     }, {
                         label: 'Set 2',
-                        data: [...new Array(10).fill(null), ...answers.set2],
-                        backgroundColor: 'rgba(32, 178, 170, 0.2)',
+                        data: answers.set2,
+                        backgroundColor: 'rgba(32, 178, 170, 0.5)',
                         borderColor: 'rgba(32, 178, 170, 1)',
                         borderWidth: 1
                     }]
@@ -287,6 +287,9 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
+                        x: {
+                            stacked: false,
+                        },
                         y: {
                             beginAtZero: true,
                             max: 10
