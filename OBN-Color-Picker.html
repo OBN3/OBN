@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>בוחר צבעים מתקדם</title>
+    <script src="https://cdn.jsdelivr.net/npm/@jaames/iro@5"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+			color: #001aff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            text-align: center;
+        }
+        #imageUpload, #screenColorPicker {
+            margin: 20px 0;
+        }
+        #selectedColor {
+            width: 100px;
+            height: 100px;
+            border: 1px solid #000;
+            margin: 20px auto;
+        }
+        .color-value {
+            margin-bottom: 10px;
+        }
+        button {
+            margin-right: 10px;
+            cursor: pointer;
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        #colorPicker {
+            margin: 0 auto;
+            align-items: center;
+			display: flex;
+			justify-content: center;
+		
+        }
+        #uploadedImage {
+            max-width: 500px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>בוחר צבעים מתקדם</h1>
+		ניתן לבחור צבע עם בוחר הצבעים, או מתוך מניפת הצבעים או מתוך תמונה שניתן להעלות<br>
+        <button id="screenColorPicker">לחץ כדי להפעיל את בוחר הצבע מהמסך</button>
+		<div id="colorPicker"></div>
+        <div id="selectedColor"></div>
+        <div id="colorValues"></div>		
+        <hr>
+		העלה תמונה ולחץ על איזור כדי לבחור צבע
+        <br>		
+        <input type="file" id="imageUpload" accept="image/*">
+        <br>
+        <canvas id="uploadedImage"></canvas>
+        <br>
+		<hr>
+		<font size=2 >copyright: OBN 2024</font>
+		
+    </div>
+
+    <script>
+        const imageUpload = document.getElementById('imageUpload');
+        const selectedColor = document.getElementById('selectedColor');
+        const colorValues = document.getElementById('colorValues');
+        const screenColorPicker = document.getElementById('screenColorPicker');
+        const uploadedImage = document.getElementById('uploadedImage');
+
+        // יצירת בורר הצבעים המתקדם
+        const colorPicker = new iro.ColorPicker("#colorPicker", {
+            width: 250,
+            color: "#f00",
+            borderWidth: 1,
+            borderColor: "#fff",
+        });
+
+        function updateColor(color) {
+            selectedColor.style.backgroundColor = color.hexString;
+            const rgb = color.rgb;
+            const hsl = color.hsl;
+            
+            colorValues.innerHTML = `
+                <div class="color-value">HEX: ${color.hexString} <button onclick="copyToClipboard('${color.hexString}')">העתק</button></div>
+                <div class="color-value">RGB: rgb(${Math.round(rgb.r)}, ${Math.round(rgb.g)}, ${Math.round(rgb.b)}) <button onclick="copyToClipboard('rgb(${Math.round(rgb.r)}, ${Math.round(rgb.g)}, ${Math.round(rgb.b)})')">העתק</button></div>
+                <div class="color-value">HSL: hsl(${Math.round(hsl.h)}, ${Math.round(hsl.s)}%, ${Math.round(hsl.l)}%) <button onclick="copyToClipboard('hsl(${Math.round(hsl.h)}, ${Math.round(hsl.s)}%, ${Math.round(hsl.l)}%)')">העתק</button></div>
+            `;
+        }
+
+        colorPicker.on('color:change', updateColor);
+
+        imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const ctx = uploadedImage.getContext('2d');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > 500) {
+                        height = height * (500 / width);
+                        width = 500;
+                    }
+                    
+                    uploadedImage.width = width;
+                    uploadedImage.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    uploadedImage.style.display = 'block';
+                    
+                    uploadedImage.onclick = (e) => {
+                        const rect = uploadedImage.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        const imageData = ctx.getImageData(x, y, 1, 1);
+                        const color = `rgb(${imageData.data[0]}, ${imageData.data[1]}, ${imageData.data[2]})`;
+                        colorPicker.color.set(color);
+                    };
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // פונקציונליות בחירת צבע מהמסך
+        screenColorPicker.addEventListener('click', () => {
+            if (!window.EyeDropper) {
+                alert('הדפדפן שלך לא תומך בתכונת בחירת צבע מהמסך. נסה להשתמש בדפדפן עדכני יותר.');
+                return;
+            }
+
+            const eyeDropper = new EyeDropper();
+            eyeDropper.open().then(result => {
+                colorPicker.color.set(result.sRGBHex);
+            }).catch(e => {
+                console.error(e);
+                alert('אירעה שגיאה בבחירת הצבע מהמסך.');
+            });
+        });
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('הועתק ללוח!');
+            }, (err) => {
+                console.error('שגיאה בהעתקה: ', err);
+            });
+        }
+
+        // אתחול הצבע ההתחלתי
+        updateColor(colorPicker.color);
+    </script>
+</body>
+</html>
