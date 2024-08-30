@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>משחק הזיכרון הקסום</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(to right, #a78bfa, #ec4899, #ef4444);
+            color: white;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+        }
+        h3 {
+            text-align: center;
+            direction: rtl;
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+        }		
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .game-type-selection {
+            background-color: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        .game-type-selection h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            color: #333;
+        }
+        .game-type-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        button {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .card {
+            width: 5rem;
+            height: 5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            background-color: #7c3aed;
+            color: transparent;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .card.flipped {
+            background-color: #f0f0f0;
+            color: #6d28d9;
+        }
+        .game-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .alert {
+            background-color: #d1fae5;
+            border: 1px solid #10b981;
+            color: #047857;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .results-table {
+            background-color: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+            color: #333;
+        }
+        .results-table h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            text-align: right;
+            padding: 0.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            font-weight: bold;
+            cursor: pointer;
+        }
+        th::after {
+            content: '\25B2';
+            margin-right: 5px;
+            visibility: hidden;
+        }
+        th.sort-asc::after {
+            content: '\25B2';
+            visibility: visible;
+        }
+        th.sort-desc::after {
+            content: '\25BC';
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    <h1>משחק הזיכרון הקסום</h1>
+    <div class="game-container">
+        <div class="game-type-selection">
+            <h2 align="center" dir="rtl">בחרו סוג משחק:</h2>
+            <div class="game-type-buttons">
+                <button data-type="animals">חיות ותמונות</button>
+                <button data-type="animalNames">חיות ושמות באנגלית</button>
+                <button data-type="math">תרגילי מתמטיקה</button>
+                <button data-type="words">מילים בעברית ואנגלית</button>
+            </div>
+        </div>
+        <div class="game-board"></div>
+        <div class="game-info">
+            <p>מהלכים: <span id="moves">0</span></p>
+            <p>זמן: <span id="timer">0:00</span></p>
+            <button id="new-game">משחק חדש</button>
+        </div>
+        <div id="game-over-alert" class="alert" style="display: none;"></div>
+    </div>
+    <div class="results-table">
+        <h2>תוצאות קודמות</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th data-sort="type">סוג משחק</th>
+                    <th data-sort="moves">מהלכים</th>
+                    <th data-sort="time">זמן</th>
+                </tr>
+				<tr>
+				</tr>
+            </thead>
+            <tbody id="results-body"></tbody>
+        </table>
+    </div>
+<div>
+<br>    <button onclick="confirmClearAllResults()">מחק את כל התוצאות מהטבלה</button>
+</div>
+
+    <script>
+
+
+        // פונקציה חדשה לאישור מחיקת התוצאות
+        function confirmClearAllResults() {
+            if (confirm("האם באמת למחוק את כל התוצאות?")) {
+                clearAllResults();
+            }
+        }
+        // פונקציה למחיקת כל התוצאות
+        function clearAllResults() {
+            localStorage.removeItem('gameResults');
+            results = [];
+            updateResultsTable();
+        }
+
+        const gameTypes = [
+            { id: 'animals', name: 'חיות ותמונות' },
+            { id: 'animalNames', name: 'חיות ושמות באנגלית' },
+            { id: 'math', name: 'תרגילי מתמטיקה' },
+            { id: 'words', name: 'מילים בעברית ואנגלית' }
+        ];
+
+        let currentGameType = '';
+        let cards = [];
+        let flipped = [];
+        let solved = [];
+        let moves = 0;
+        let startTime = null;
+        let timerInterval = null;
+        let results = JSON.parse(localStorage.getItem('memoryGameResults')) || [];
+        let currentSort = { column: 'time', order: 'asc' };
+
+        const gameBoard = document.querySelector('.game-board');
+        const gameTypeSelection = document.querySelector('.game-type-selection');
+        const movesElement = document.getElementById('moves');
+        const timerElement = document.getElementById('timer');
+        const newGameButton = document.getElementById('new-game');
+        const gameOverAlert = document.getElementById('game-over-alert');
+        const resultsBody = document.getElementById('results-body');
+
+        function createCards(gameType) {
+            switch (gameType) {
+                case 'animals':
+                    return [
+                        { id: 1, content: '🐶', pair: 2 }, { id: 2, content: '🐶', pair: 1 },
+                        { id: 3, content: '🐱', pair: 4 }, { id: 4, content: '🐱', pair: 3 },
+                        { id: 5, content: '🐭', pair: 6 }, { id: 6, content: '🐭', pair: 5 },
+                        { id: 7, content: '🐰', pair: 8 }, { id: 8, content: '🐰', pair: 7 },
+                        { id: 9, content: '🦁', pair: 10 }, { id: 10, content: '🦁', pair: 9 },
+                        { id: 11, content: '🐼', pair: 12 }, { id: 12, content: '🐼', pair: 11 },
+                        { id: 13, content: '🐸', pair: 14 }, { id: 14, content: '🐸', pair: 13 },
+                        { id: 15, content: '🦒', pair: 16 }, { id: 16, content: '🦒', pair: 15 },
+                    ];
+                case 'animalNames':
+                    return [
+                        { id: 1, content: 'כלב', pair: 2 }, { id: 2, content: 'Dog', pair: 1 },
+                        { id: 3, content: 'חתול', pair: 4 }, { id: 4, content: 'Cat', pair: 3 },
+                        { id: 5, content: 'עכבר', pair: 6 }, { id: 6, content: 'Mouse', pair: 5 },
+                        { id: 7, content: 'ארנב', pair: 8 }, { id: 8, content: 'Rabbit', pair: 7 },
+                        { id: 9, content: 'אריה', pair: 10 }, { id: 10, content: 'Lion', pair: 9 },
+                        { id: 11, content: 'פנדה', pair: 12 }, { id: 12, content: 'Panda', pair: 11 },
+                        { id: 13, content: 'צפרדע', pair: 14 }, { id: 14, content: 'Frog', pair: 13 },
+                        { id: 15, content: 'ג׳ירפה', pair: 16 }, { id: 16, content: 'Giraffe', pair: 15 },
+                    ];
+                case 'math':
+                    return [
+                        { id: 1, content: '2 + 3', pair: 2 }, { id: 2, content: '5', pair: 1 },
+                        { id: 3, content: '4 × 2', pair: 4 }, { id: 4, content: '8', pair: 3 },
+                        { id: 5, content: '10 - 6', pair: 6 }, { id: 6, content: '4', pair: 5 },
+                        { id: 7, content: '10 - 3', pair: 8 }, { id: 8, content: '7', pair: 7 },
+                        { id: 9, content: '5 + 5', pair: 10 }, { id: 10, content: '10', pair: 9 },
+                        { id: 11, content: '4 + 5', pair: 12 }, { id: 12, content: '9', pair: 11 },
+                        { id: 13, content: '3 + 3', pair: 14 }, { id: 14, content: '6', pair: 13 },
+                        { id: 15, content: '2 + 1', pair: 16 }, { id: 16, content: '3', pair: 15 },
+                    ];
+                case 'words':
+                    return [
+                        { id: 1, content: 'שמש', pair: 2 }, { id: 2, content: 'Sun', pair: 1 },
+                        { id: 3, content: 'ירח', pair: 4 }, { id: 4, content: 'Moon', pair: 3 },
+                        { id: 5, content: 'כוכב', pair: 6 }, { id: 6, content: 'Star', pair: 5 },
+                        { id: 7, content: 'עץ', pair: 8 }, { id: 8, content: 'Tree', pair: 7 },
+                        { id: 9, content: 'פרח', pair: 10 }, { id: 10, content: 'Flower', pair: 9 },
+                        { id: 11, content: 'ים', pair: 12 }, { id: 12, content: 'Sea', pair: 11 },
+                        { id: 13, content: 'אהבה', pair: 14 }, { id: 14, content: 'Love', pair: 13 },
+                        { id: 15, content: 'ספר', pair: 16 }, { id: 16, content: 'Book', pair: 15 },
+                    ];
+                default:
+                    return [];
+            }
+        }
+
+        function shuffleCards(cards) {
+            const shuffled = [...cards];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function startGame(gameType) {
+            currentGameType = gameType;
+            cards = shuffleCards(createCards(gameType));
+            flipped = [];
+            solved = [];
+            moves = 0;
+            startTime = null;
+            clearInterval(timerInterval);
+
+            gameTypeSelection.style.display = 'none';
+            gameBoard.innerHTML = '';
+            movesElement.textContent = '0';
+            timerElement.textContent = '0:00';
+            gameOverAlert.style.display = 'none';
+
+            cards.forEach(card => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card';
+                cardElement.dataset.id = card.id;
+                cardElement.textContent = '?';
+                cardElement.addEventListener('click', () => handleCardClick(card.id));
+                gameBoard.appendChild(cardElement);
+            });
+        }
+
+        function handleCardClick(id) {
+            if (flipped.length === 2 || flipped.includes(id) || solved.includes(id)) return;
+            
+            if (!startTime) {
+                startTime = Date.now();
+                startTimer();
+            }
+
+            flipped.push(id);
+            const cardElement = document.querySelector(`.card[data-id="${id}"]`);
+            cardElement.classList.add('flipped');
+            cardElement.textContent = cards.find(card => card.id === id).content;
+
+            moves++;
+            movesElement.textContent = moves;
+
+            if (flipped.length === 2) {
+                const [first, second] = flipped;
+                if (cards.find(card => card.id === first).pair === second) {
+                    solved.push(first, second);
+                    flipped = [];
+                    if (solved.length === cards.length) {
+                        endGame();
+                    }
+                } else {
+                    setTimeout(() => {
+						document.querySelector(`.card[data-id="${first}"]`).classList.remove('flipped');
+                        document.querySelector(`.card[data-id="${second}"]`).classList.remove('flipped');
+                        document.querySelector(`.card[data-id="${first}"]`).textContent = '?';
+                        document.querySelector(`.card[data-id="${second}"]`).textContent = '?';
+                        flipped = [];
+                    }, 1000);
+                }
+            }
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                const elapsedTime = Date.now() - startTime;
+                timerElement.textContent = formatTime(elapsedTime);
+            }, 1000);
+        }
+
+        function formatTime(ms) {
+            const seconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(seconds / 60);
+            return `${minutes}:${(seconds % 60).toString().padStart(2, '0')}`;
+        }
+
+        function endGame() {
+            clearInterval(timerInterval);
+            const endTime = Date.now();
+            const totalTime = endTime - startTime;
+            const gameTypeName = gameTypes.find(t => t.id === currentGameType).name;
+            
+            gameOverAlert.innerHTML = `
+                <h3>כל הכבוד!</h3>
+                <p align="center" dir="rtl">סיימת את המשחק מסוג "${gameTypeName}"<br>
+                ב-${moves} מהלכים ובזמן של ${formatTime(totalTime)}.</p>
+            `;
+            gameOverAlert.style.display = 'block';
+
+            saveResult(currentGameType, moves, totalTime);
+            updateResultsTable();
+        }
+
+        function saveResult(type, moves, time) {
+            const newResult = { type, moves, time };
+            results.unshift(newResult);
+            if (results.length > 30) {
+                results.pop();
+            }
+            sortResults();
+            localStorage.setItem('memoryGameResults', JSON.stringify(results));
+        }
+
+        function sortResults() {
+            results.sort((a, b) => {
+                if (currentSort.column === 'type') {
+                    const aName = gameTypes.find(t => t.id === a.type)?.name || '';
+                    const bName = gameTypes.find(t => t.id === b.type)?.name || '';
+                    return currentSort.order === 'asc' ? aName.localeCompare(bName) : bName.localeCompare(aName);
+                } else {
+                    return currentSort.order === 'asc' ? a[currentSort.column] - b[currentSort.column] : b[currentSort.column] - a[currentSort.column];
+                }
+            });
+        }
+
+        function updateResultsTable() {
+            resultsBody.innerHTML = '';
+            results.forEach(result => {
+                const row = document.createElement('tr');
+                const typeCell = document.createElement('td');
+                const movesCell = document.createElement('td');
+                const timeCell = document.createElement('td');
+                typeCell.textContent = gameTypes.find(t => t.id === result.type)?.name || 'לא ידוע';
+                movesCell.textContent = result.moves;
+                timeCell.textContent = formatTime(result.time);
+                row.appendChild(typeCell);
+                row.appendChild(movesCell);
+                row.appendChild(timeCell);
+                resultsBody.appendChild(row);
+            });
+
+            // Update sort indicators
+            document.querySelectorAll('th').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+                if (th.dataset.sort === currentSort.column) {
+                    th.classList.add(currentSort.order === 'asc' ? 'sort-asc' : 'sort-desc');
+                }
+            });
+        }
+
+        // Event Listeners
+        document.querySelectorAll('.game-type-buttons button').forEach(button => {
+            button.addEventListener('click', () => startGame(button.dataset.type));
+        });
+
+        newGameButton.addEventListener('click', () => {
+            gameBoard.innerHTML = '';
+            gameTypeSelection.style.display = 'block';
+            gameOverAlert.style.display = 'none';
+        });
+
+        document.querySelectorAll('th[data-sort]').forEach(th => {
+            th.addEventListener('click', () => {
+                if (currentSort.column === th.dataset.sort) {
+                    currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort.column = th.dataset.sort;
+                    currentSort.order = 'asc';
+                }
+                sortResults();
+                updateResultsTable();
+            });
+        });
+
+        // Initialize results table
+        document.addEventListener('DOMContentLoaded', () => {
+            sortResults();
+            updateResultsTable();
+        });
+    </script>
+<br>
+<footer>
+    כל הזכויות שמורות OBN 2024
+</footer>
+
+</body>
+</html>						
+						
+						
+						
+						
+						
+						
+						
+						
+						
+						
+						
+						
+						
+						
+						
+						
+						
+						
+						
+						
+						
+						
+						
+						
+						
