@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>אפליקציית ניהול דירוג מתמודדים</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --background-color: #ecf0f1;
+            --text-color: #34495e;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+        }
+        h4 {
+            color: var(--primary-color);
+            text-align: center;
+        }
+		footer {
+            color: var(--primary-color);
+            text-align: center;		
+		}
+        input[type="file"], button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: right;
+        }
+        th {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            table {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>אפליקציית ניהול דירוג מתמודדים</h1>
+		<h4>שלח למנקדים את אפליקציית הניקוד.
+		<br>הם מנקדים כל מתמודד בסולם 1 (נמוך ביותר), עד 5 (גבוה ביותר).
+		<br>הם יכולים לשלוח לך את קובץ הניקוד שלהם (CSV).
+		<br>או להעלות אותו לספריה המשותפת המצויינת מטה.
+		<br>ניתן להעלות כמה קבצי ניקוד יחד והמערכת תחשב את ממוצע הניקוד מכולם.
+		</h4>				
+        <input type="file" id="fileInput" multiple accept=".csv">
+        <button onclick="uploadFiles()">העלה וחשב</button>
+        <table id="resultsTable"></table>
+        <button onclick="exportResults()">ייצא תוצאות</button>
+		<h4>
+		קבצי הניקוד נשמרים מקומית באפליקצייה במכשיר של המנקד (בשם המנקד+תאריך+סיומת CSV). <br>
+		בנוסף, המשתמש יכול להעלות את הקבצים לתיקייה המשותפת הבאה (בחשבון ofirbn2@gmail.com)
+		https://drive.google.com/drive/folders/1XbqIEH1gwcWwAHNpKZz57JTj4ZaF2waS?usp=sharing
+		</h4>
+		<footer> Copyright OBN 2024</footer>
+	
+	</div>
+
+    <script>
+        const categories = ['חדשנות', 'יישומיות', 'מודל עסקי', 'אופן ההצגה'];
+        let allScores = [];
+
+        function uploadFiles() {
+            const fileInput = document.getElementById('fileInput');
+            const files = fileInput.files;
+            
+            if (files.length === 0) {
+                alert('אנא בחר לפחות קובץ אחד');
+                return;
+            }
+
+            allScores = [];
+            let filesProcessed = 0;
+
+            for (let i = 0; i < files.length; i++) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const content = e.target.result;
+                    const lines = content.split('\n');
+                    lines.shift(); // מסיר את שורת הכותרת
+                    lines.forEach(line => {
+                        if (line.trim() !== '') {
+                            allScores.push(line.split(','));
+                        }
+                    });
+                    filesProcessed++;
+                    if (filesProcessed === files.length) {
+                        calculateAndDisplayResults();
+                    }
+                };
+                reader.readAsText(files[i], 'UTF-8');
+            }
+        }
+
+        function calculateAndDisplayResults() {
+            const results = {};
+            allScores.forEach(score => {
+                const contestant = score[0];
+                if (!results[contestant]) {
+                    results[contestant] = { totals: [0, 0, 0, 0], count: 0 };
+                }
+                for (let i = 1; i < 5; i++) {
+                    results[contestant].totals[i-1] += parseFloat(score[i]);
+                }
+                results[contestant].count++;
+            });
+
+            const finalResults = Object.entries(results).map(([contestant, data]) => {
+                const averages = data.totals.map(total => (total / data.count).toFixed(2));
+                const overallScore = (averages.reduce((a, b) => parseFloat(a) + parseFloat(b), 0) / 4).toFixed(2);
+                return [contestant, ...averages, overallScore];
+            });
+
+            finalResults.sort((a, b) => b[5] - a[5]);
+
+            const table = document.getElementById('resultsTable');
+            table.innerHTML = `
+                <tr>
+                    <th>מיקום</th>
+                    <th>מתמודד</th>
+                    ${categories.map(cat => `<th>${cat}</th>`).join('')}
+                    <th>ציון כולל</th>
+                </tr>
+                ${finalResults.map((result, index) => `
+                    <tr>
+                        <td>${index + 1}</td>
+                        ${result.map(value => `<td>${value}</td>`).join('')}
+                    </tr>
+                `).join('')}
+            `;
+        }
+
+        function exportResults() {
+            const table = document.getElementById('resultsTable');
+            let csvContent = "\ufeff"; // BOM for UTF-8
+            
+            for (let i = 0; i < table.rows.length; i++) {
+                const row = table.rows[i];
+                const rowData = [];
+                for (let j = 0; j < row.cells.length; j++) {
+                    rowData.push(row.cells[j].innerText);
+                }
+                csvContent += rowData.join(",") + "\n";
+            }
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "תוצאות_דירוג.csv";
+            link.click();
+        }
+    </script>
+</body>
+</html>
