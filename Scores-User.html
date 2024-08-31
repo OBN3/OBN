@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ניקוד מתמודדים</title>
+    <title>אפליקציית ניקוד מתמודדים</title>
     <style>
         :root {
             --primary-color: #3498db;
@@ -27,14 +27,10 @@
             padding: 20px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        h1, h2, h3, h4 {
+        h1, h2, h3 {
             color: var(--primary-color);
             text-align: center;
         }
-		footer {
-            color: var(--primary-color);
-            text-align: center;		
-		}	
         input, button {
             width: 100%;
             padding: 10px;
@@ -84,11 +80,24 @@
         a:hover {
             text-decoration: underline;
         }
-        #uploadInstructions {
+        #uploadInstructions, #shareOptions {
             margin-top: 20px;
             padding: 15px;
             background-color: #f8f9fa;
             border-radius: 5px;
+        }
+        .share-button {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px 20px;
+            background-color: var(--secondary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .share-button:hover {
+            background-color: #27ae60;
         }
         @media (max-width: 600px) {
             .container {
@@ -102,8 +111,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>ניקוד מתמודדים</h1>
-        <h4>אנא נקדו כל מתמודד בסולם 1 (נמוך ביותר), עד 5 (גבוה ביותר)</h4>		
+        <h1>אפליקציית ניקוד מתמודדים</h1>
         <input type="text" id="judgeNameInput" placeholder="שם המנקד">
         <button onclick="startScoring()">התחל ניקוד</button>
         <div id="scoringForm" style="display: none;">
@@ -115,13 +123,18 @@
             <table id="resultsTable"></table>
         </div>
         <div id="uploadInstructions" style="display: none;"></div>
+        <div id="shareOptions" style="display: none;">
+            <h3>שתף את הקובץ</h3>
+            <a id="emailLink" class="share-button" target="_blank">שלח במייל</a>
+            <a id="whatsappLink" class="share-button" target="_blank">שלח בווטסאפ</a>
+        </div>
     
-		<footer> Copyright OBN 2024</footer>	
-		
+			<footer> Copyright OBN 2024</footer>
+	
 	</div>
 
     <script>
-        const contestants = ['מתמודד1', 'מתמודד2', 'מתמודד3', 'מתמודד4', 'מתמודד5', 'מתמודד6', 'מתמודד7', 'מתמודד8', 'מתמודד9', 'מתמודד10'];
+        const contestants = ['מתמודד 1', 'מתמודד 2', 'מתמודד 3', 'מתמודד 4', 'מתמודד 5', 'מתמודד 6', 'מתמודד 7', 'מתמודד 8', 'מתמודד 9', 'מתמודד 10'];
         const categories = ['חדשנות', 'יישומיות', 'מודל עסקי', 'אופן ההצגה'];
 
         function startScoring() {
@@ -170,7 +183,7 @@
             });
 
             if (!isValid) {
-                alert('אנא תקן את השדות המסומנים באדום (הערכים חייבים להיות בין 1 ל-5, ולא יכולים להיות ריקים)');
+                alert('אנא תקן את השדות המסומנים באדום (ערכים חייבים להיות בין 1 ל-5)');
                 return;
             }
 
@@ -229,6 +242,9 @@
             
             // הצגת הוראות להעלאה לGoogle Drive
             showUploadInstructions(fileName);
+
+            // הצגת אפשרויות שיתוף
+            showShareOptions(fileName);
         }
 
         function showUploadInstructions(fileName) {
@@ -245,6 +261,20 @@
             const instructionsDiv = document.getElementById('uploadInstructions');
             instructionsDiv.innerHTML = instructions;
             instructionsDiv.style.display = 'block';
+        }
+
+        function showShareOptions(fileName) {
+            const emailSubject = encodeURIComponent("קובץ ניקוד מתמודדים");
+            const emailBody = encodeURIComponent(`מצורף קובץ הניקוד ${fileName}. אנא מצא את הקובץ המצורף.`);
+            const emailLink = `mailto:mordicon@mail.com?subject=${emailSubject}&body=${emailBody}`;
+            const judgeName = document.getElementById('judgeNameInput').value;
+            
+		const whatsappText = encodeURIComponent(`שלום, מצורף קובץ הניקוד ${fileName} מ- ${judgeName} .`);
+            const whatsappLink = `https://wa.me/?text=${whatsappText}`;
+
+            document.getElementById('emailLink').href = emailLink;
+            document.getElementById('whatsappLink').href = whatsappLink;
+            document.getElementById('shareOptions').style.display = 'block';
         }
     </script>
 </body>
