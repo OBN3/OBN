@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניקוד מתמודדים</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --background-color: #ecf0f1;
+            --text-color: #34495e;
+            --error-color: #e74c3c;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3, h4 {
+            color: var(--primary-color);
+            text-align: center;
+        }
+		footer {
+            color: var(--primary-color);
+            text-align: center;		
+		}	
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: right;
+        }
+        th {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .error {
+            color: var(--error-color);
+            font-weight: bold;
+        }
+        .error-border {
+            border: 2px solid var(--error-color);
+        }
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        #uploadInstructions {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            table {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ניקוד מתמודדים</h1>
+        <h4>אנא נקדו כל מתמודד בסולם 1 (נמוך ביותר), עד 5 (גבוה ביותר)</h4>		
+        <input type="text" id="judgeNameInput" placeholder="שם המנקד">
+        <button onclick="startScoring()">התחל ניקוד</button>
+        <div id="scoringForm" style="display: none;">
+            <table id="scoringTable"></table>
+            <button onclick="saveScores()">שמור וסיים</button>
+        </div>
+        <div id="resultsDiv" style="display: none;">
+            <h2>תוצאות הניקוד</h2>
+            <table id="resultsTable"></table>
+        </div>
+        <div id="uploadInstructions" style="display: none;"></div>
+    
+		<footer> Copyright OBN 2024</footer>	
+		
+	</div>
+
+    <script>
+        const contestants = ['מתמודד1', 'מתמודד2', 'מתמודד3', 'מתמודד4', 'מתמודד5', 'מתמודד6', 'מתמודד7', 'מתמודד8', 'מתמודד9', 'מתמודד10'];
+        const categories = ['חדשנות', 'יישומיות', 'מודל עסקי', 'אופן ההצגה'];
+
+        function startScoring() {
+            const judgeName = document.getElementById('judgeNameInput').value;
+            if (!judgeName || /[^א-ת\s]/.test(judgeName)) {
+                alert('אנא הזן שם מנקד תקין (אותיות בעברית בלבד)');
+                return;
+            }
+            
+            const table = document.getElementById('scoringTable');
+            table.innerHTML = `
+                <tr>
+                    <th>מתמודד</th>
+                    ${categories.map(cat => `<th>${cat}</th>`).join('')}
+                </tr>
+                ${contestants.map(cont => `
+                    <tr>
+                        <td>${cont}</td>
+                        ${categories.map(() => `<td><input type="number" min="1" max="5" required onchange="validateInput(this)"></td>`).join('')}
+                    </tr>
+                `).join('')}
+            `;
+            
+            document.getElementById('scoringForm').style.display = 'block';
+        }
+
+        function validateInput(input) {
+            const value = input.value.trim();
+            const numValue = parseInt(value);
+            const isValid = value !== '' && !isNaN(numValue) && numValue >= 1 && numValue <= 5;
+            
+            input.classList.toggle('error', !isValid);
+            input.parentElement.classList.toggle('error-border', !isValid);
+        }
+
+        function saveScores() {
+            const scores = [];
+            const inputs = document.querySelectorAll('#scoringTable input');
+            let isValid = true;
+
+            inputs.forEach(input => {
+                validateInput(input);
+                if (input.classList.contains('error')) {
+                    isValid = false;
+                }
+            });
+
+            if (!isValid) {
+                alert('אנא תקן את השדות המסומנים באדום (הערכים חייבים להיות בין 1 ל-5, ולא יכולים להיות ריקים)');
+                return;
+            }
+
+            contestants.forEach((cont, i) => {
+                const contestantScores = [cont];
+                categories.forEach((_, j) => {
+                    contestantScores.push(inputs[i * categories.length + j].value);
+                });
+                scores.push(contestantScores);
+            });
+
+            // מיון התוצאות לפי הממוצע מהגבוה לנמוך
+            scores.sort((a, b) => {
+                const avgA = a.slice(1).reduce((sum, score) => sum + parseInt(score), 0) / categories.length;
+                const avgB = b.slice(1).reduce((sum, score) => sum + parseInt(score), 0) / categories.length;
+                return avgB - avgA;
+            });
+
+            // הצגת התוצאות בטבלה
+            const resultsTable = document.getElementById('resultsTable');
+            resultsTable.innerHTML = `
+                <tr>
+                    <th>דירוג</th>
+                    <th>מתמודד</th>
+                    ${categories.map(cat => `<th>${cat}</th>`).join('')}
+                    <th>ממוצע</th>
+                </tr>
+                ${scores.map((score, index) => {
+                    const avg = (score.slice(1).reduce((sum, s) => sum + parseInt(s), 0) / categories.length).toFixed(2);
+                    return `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${score[0]}</td>
+                            ${score.slice(1).map(s => `<td>${s}</td>`).join('')}
+                            <td>${avg}</td>
+                        </tr>
+                    `;
+                }).join('')}
+            `;
+
+            document.getElementById('resultsDiv').style.display = 'block';
+
+            // שמירת הקובץ מקומית
+            const csvContent = `מתמודד,${categories.join(',')}\n${scores.map(s => s.join(',')).join('\n')}`;
+            const blob = new Blob(["\ufeff", csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const judgeName = document.getElementById('judgeNameInput').value;
+            const date = new Date().toISOString().split('T')[0];
+            const fileName = `${judgeName}-${date}.csv`;
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            link.click();
+            
+            // הודעה למשתמש
+            alert(`הקובץ "${fileName}" נשמר מקומית במכשיר שלך.`);
+            
+            // הצגת הוראות להעלאה לGoogle Drive
+            showUploadInstructions(fileName);
+        }
+
+        function showUploadInstructions(fileName) {
+            const driveLink = "https://drive.google.com/drive/folders/1XbqIEH1gwcWwAHNpKZz57JTj4ZaF2waS?usp=sharing";
+            const instructions = `
+                <h3>העלאת הקובץ ל-Google Drive:</h3>
+                <ol>
+                    <li>לחץ על הקישור הבא: <a href="${driveLink}" target="_blank">תיקיית Google Drive</a></li>
+                    <li>בחר באפשרות "העלאת קבצים" או גרור את הקובץ "${fileName}" לתיקייה</li>
+                    <li>המתן עד לסיום ההעלאה</li>
+                </ol>
+            `;
+            
+            const instructionsDiv = document.getElementById('uploadInstructions');
+            instructionsDiv.innerHTML = instructions;
+            instructionsDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
