@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Health Management Tool</title>
+    <title>The Personal Health Compass</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
@@ -85,7 +85,7 @@
 <body>
     <div class="container">
         <div id="questionnaire">
-            <h1>The Health Management Tool</h1>
+            <h1>The Personal Health Compass</h1>
 		<h3>Please answer the following questions to get your "Health Management Pantry"</h3>
 
             <h3>How easy or difficult is it for you to:</h3>
@@ -101,14 +101,12 @@
         </div>
 
         <div id="results">
-            <h1>My Health Management Pantry</h1>
+            <h1>The Personal Health Compass</h1>
             <div class="chart-container">
                 <canvas id="radarChart"></canvas>
             </div>
             <div class="result-text" id="averages"></div>
-            <div class="chart-container">
-                <canvas id="barChart"></canvas>
-            </div>
+
             <div class="button-container">
                 <button onclick="location.reload()">Back to Questionnaire</button>
                 <button onclick="window.print()">Save Results</button>
@@ -118,6 +116,9 @@
 
     <script>
         const questions = {
+		
+// Health Management
+		
             set1: [
                 "Find information about your health issues on your own",
                 "Understand the information provided by the doctor/pharmacist",
@@ -130,6 +131,9 @@
                 "Monitor the symptoms of your health condition",
                 "Make shared decisions with your doctor about your care"
             ],
+
+// Maintaining a Healthy Lifestyle 
+
             set2: [
                 "Engage in physical activity",
                 "Make healthy nutritional choices",
@@ -194,7 +198,7 @@
             });
 
             if (!allAnswered) {
-                alert("Please answer all questions.");
+                alert("Please answer all questions (marked red).");
                 return;
             }
 
@@ -221,7 +225,7 @@ function displayResults(answers) {
         data: {
             labels: [...Array(10).keys()].map(i => `Q${i+1}`),
             datasets: [{
-                label: 'Set 1',
+                label: 'Health Management level',
                 data: answers.set1,
                 backgroundColor: 'rgba(70, 130, 180, 0.2)',
                 borderColor: 'rgba(70, 130, 180, 1)',
@@ -230,14 +234,17 @@ function displayResults(answers) {
                 pointHoverBackgroundColor: '#fff',
                 pointHoverBorderColor: 'rgba(70, 130, 180, 1)'
             }, {
-                label: 'Set 2',
+                label: 'Maintaining a Healthy Lifestyle',
                 data: answers.set2,
-                backgroundColor: 'rgba(32, 178, 170, 0.2)',
-                borderColor: 'rgba(32, 178, 170, 1)',
-                pointBackgroundColor: 'rgba(32, 178, 170, 1)',
+//                backgroundColor: 'rgba(32, 178, 170, 0.2)',
+//                borderColor: 'rgba(32, 178, 170, 1)',
+//                pointBackgroundColor: 'rgba(32, 178, 170, 1)',
+                backgroundColor: 'rgba(255, 0, 55, 0.2)',
+                borderColor: 'rgba(255, 0, 55, 1)',
+                pointBackgroundColor: 'rgba(255, 0, 55, 1)',				
                 pointBorderColor: '#fff',
                 pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: 'rgba(32, 178, 170, 1)'
+                pointHoverBorderColor: 'rgba(255, 0, 55, 1)'
             }]
         },
         options: {
@@ -247,18 +254,25 @@ function displayResults(answers) {
                 r: {
                     angleLines: {
                         display: true // OBN: show the spider lines
+						
                     },
                     suggestedMin: 0,
                     suggestedMax: 10,
 			pointLabels: {
                         display: false // This hides the labels around the chart
                     },
+		
+                        grid: {
+                            lineWidth: 1.5,
+                            color: '#8A8A8A'
+                        },							
+					
                     ticks: {
                         display: true // This hides the numerical labels
                     }
+					
                 }
             },
-			
 			
            plugins: {
                 tooltip: {
@@ -275,39 +289,6 @@ function displayResults(answers) {
             }
         }
     });
-					
-
-            const barCtx = document.getElementById('barChart').getContext('2d');
-            new Chart(barCtx, {
-                type: 'bar',
-                data: {
-                    labels: [...Array(10).keys()].map(i => `Q${i+1}`),
-                    datasets: [{
-                        label: 'Set 1',
-                        data: answers.set1,
-                        backgroundColor: 'rgba(70, 130, 180, 0.2)',
-                        borderColor: 'rgba(70, 130, 180, 1)',
-                        borderWidth: 1
-                    }, {
-                        label: 'Set 2',
-                        data: answers.set2,
-                        backgroundColor: 'rgba(32, 178, 170, 0.2)',
-                        borderColor: 'rgba(32, 178, 170, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 10
-                        }
-                    }
-                }
-            });
-
 
             const avg1 = answers.set1.reduce((a, b) => a + b, 0) / answers.set1.length;
             const avg2 = answers.set2.reduce((a, b) => a + b, 0) / answers.set2.length;
@@ -315,18 +296,18 @@ function displayResults(answers) {
 // OBN start
             let mess1, mess2, combAvg;
 
-            if (avg1 >= 1 && avg1 <= 4) {
+            if (avg1 >= 1 && avg1 <= 3) {
                 mess1 = "Your Health Management level is low";
-            } else if (avg1 >= 5 && avg1 <= 7) {
-                mess1 = "Your Health Management level is medium";
+            } else if (avg1 >= 4 && avg1 <= 7) {
+                mess1 = "Your Health Management level needs improvement";
             } else {
                 mess1 = "Well done! Your Health Management level is high";
             }
 
-            if (avg2 >= 1 && avg2 <= 4) {
+            if (avg2 >= 1 && avg2 <= 3) {
                 mess2 = "Your level of Maintaining a Healthy Lifestyle is low";
-            } else if (avg2 >= 5 && avg2 <= 7) {
-                mess2 = "Your level of Maintaining a Healthy Lifestyle is medium";
+            } else if (avg2 >= 4 && avg2 <= 7) {
+                mess2 = "Your level of Maintaining a Healthy Lifestyle needs improvement";
             } else {
                 mess2 = "Well done! Your level of Maintaining a Healthy Lifestyle is high";
             }
@@ -334,11 +315,13 @@ function displayResults(answers) {
 // OBN End
 
             document.getElementById('averages').innerHTML = `
-                ${mess1}. The score is: <font color="red"><b> ${avg1.toFixed(2)} of 10</b></font><br>
-                ${mess2}. The score is: <font color="red"><b> ${avg2.toFixed(2)} of 10</b></font><br>
-				Your combined Health Management Pantry score is: <font color="red"><b> ${combAvg} of 10</b></font><br>
+                ${mess1}. The score is: <font color="red"><b> ${avg1.toFixed(2)} (of 10)</b></font><br>
+                ${mess2}. The score is: <font color="red"><b> ${avg2.toFixed(2)} (of 10)</b></font><br>
             `;
 		}
+
+//				Your combined Health Management Pantry score is: <font color="red"><b> ${combAvg} (of 10)</b></font><br>
+
 
         createQuestions();
     </script>
