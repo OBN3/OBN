@@ -54,6 +54,13 @@
             margin-top: 20px;
             font-size: 0.8em;
         }
+// OBN
+        #signatureCanvas {
+            border: 2px solid #000FF;
+            margin-bottom: 10px;
+        }
+// OBN		
+		
     </style>
 </head>
 <body>
@@ -65,7 +72,10 @@
 <br>
 6. בחרו את איכות התמונה, 7. לחצו לשמירת התמונה (ראו סרטון הסבר למטה)
 </p>
-        <p class="small-text">על מנת שהחתימה תעבוד בצורה הטובה ביותר - קובץ החתימה צריך להיות קובץ עם שקיפות ובפורמט PNG</p>
+        <p class="small-text">על מנת שהחתימה תעבוד בצורה הטובה ביותר - קובץ החתימה צריך להיות קובץ עם שקיפות ובפורמט PNG
+		<br>
+		אין לכם חתימה? תוכלו ליצור אחת למטה.
+		</p>
 
         <button onclick="document.getElementById('mainImage').click()">1. העלאת קובץ תמונה</button>
         <input type="file" id="mainImage" style="display: none;" accept="image/*" onchange="loadMainImage(event)">
@@ -99,12 +109,33 @@
         <br>
         <button onclick="saveImage()">7. שמירת קובץ התמונה עם החתימה</button>
 
-<br>
+<br><br>
 סרטון הסבר לשימוש באפליקציה
 <br>
 <iframe width="420" height="315" src="https://www.youtube.com/embed/GDypiQSHBQ0">
 </iframe>
-
+<hr>
+	<h1>יצירת חתימה</h1>
+    <p class="small-text">    
+	צייר חתימה שלך, ושמור כדי להשתמש במסמכים או תמונות.
+	<br>
+	הקובץ שנשמר יהיה קובץ PNG שקוף, בו תוכל להשתמש בשלב 1 למעלה.
+	<br><br>
+    <canvas id="signatureCanvas" width="400" height="200" style="border:1px solid #4169e1;"></canvas>
+<br> 
+	ניתן לשמור גרסה רגילה (בשחור), וניתן לסמן כדי לשמור את אותה גרסה גם בלבן.
+</p>
+   <div>
+        <label>
+            <input type="checkbox" id="negativeCheckbox">
+            שמור חתימה בצבע לבן
+        </label>
+    	</div>	
+	<br>
+    <div>
+        <button id="clearButton">נקה חתימה</button>
+        <button id="saveButton">שמור חתימה</button>
+    </div>
 
         <footer>
             אפליקציה להוספת חתימה על תמונה. © OBN 2024
@@ -231,6 +262,93 @@
             link.href = dataURL;
             link.click();
         }
+		
+		
+		
+// OBN signature pad		
+		
+		const canvas = document.getElementById('signatureCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
+
+        document.getElementById('clearButton').addEventListener('click', clearCanvas);
+        document.getElementById('saveButton').addEventListener('click', saveSignature);
+
+        function startDrawing(e) {
+            isDrawing = true;
+            draw(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+
+            e.preventDefault();
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left || e.touches[0].clientX - rect.left;
+            const y = e.clientY - rect.top || e.touches[0].clientY - rect.top;
+
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+            ctx.beginPath();
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function saveSignature() {
+            const isNegative = document.getElementById('negativeCheckbox').checked;
+            
+            if (isNegative) {
+                // שמירה בנגטיב
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                for (let i = 0; i < imageData.data.length; i += 4) {
+                    imageData.data[i] = 255 - imageData.data[i];
+                    imageData.data[i+1] = 255 - imageData.data[i+1];
+                    imageData.data[i+2] = 255 - imageData.data[i+2];
+                }
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.putImageData(imageData, 0, 0);
+                const dataURL = tempCanvas.toDataURL('image/png');
+                downloadImage(dataURL);
+            } else {
+                // שמירה רגילה
+                const dataURL = canvas.toDataURL('image/png');
+                downloadImage(dataURL);
+            }
+        }
+
+        function downloadImage(dataURL) {
+            const link = document.createElement('a');
+            link.download = 'חתימה.png';
+            link.href = dataURL;
+            link.click();
+        }
+		
+// End OBN signature pad				
+		
+		
     </script>
 </body>
 </html>
