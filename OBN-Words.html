@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <title>ניחוש מילים</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        #game-container {
+            width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+        }
+        #word-display {
+            font-size: 2em;
+            margin-bottom: 20px;
+            direction: rtl;
+            text-align: center;
+        }
+        #guesses-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            text-align: center;			
+            font-size: 24px;
+            align-items: center;			
+        }
+        #guesses-list li {
+            margin-right: 5px;
+            margin-bottom: 0;
+        }
+        #new-game-button, #hint-button, #clearDataBtn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #hint-button {
+            background-color: #2196F3;
+        }
+        #clearDataBtn {
+            background-color: #FF0000;
+        }		
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+	
+
+    .sort-icon {
+        font-size: 0.8em;
+        color: #999;
+        margin-right: 5px;
+    }
+    th {
+        cursor: pointer;
+    }	
+	
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>נחשו את המילה בעברית</h1>
+        <h4>הקלידו אות והקישו Enter</h4>
+		<h2>מספר האותיות במילה: <span id="word-length"></span></h2>
+        <div id="word-display"></div>
+        <input type="text" id="guess" placeholder="הקלידו אות אחת" autofocus>
+        <br><br>
+		<button id="new-game-button">משחק חדש</button>
+        <button id="hint-button">רמז?</button>
+        <ul id="guesses-list"></ul>
+        <p>מספר הניחושים: <span id="guess-count">0</span></p>
+        <p>זמן: <span id="timer">00:00</span></p>
+        <p id="result-message"></p>
+
+<h4>20 המשחקים האחרונים</h4>
+<table id="scores-table">
+    <thead>
+        <tr>
+            <th onclick="sortTable(0)">מספר ניחושים <span class="sort-icon">&#x25B2;&#x25BC;</span></th>
+            <th onclick="sortTable(1)">זמן משחק <span class="sort-icon">&#x25B2;&#x25BC;</span></th>
+            <th onclick="sortTable(2)">מספר אותיות <span class="sort-icon">&#x25B2;&#x25BC;</span></th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<br><br>
+<button id="clearDataBtn">מחק נתונים מהטבלה</button>
+
+
+    </div>
+
+    <script>
+	
+    const words = ["תפוח", "ענב", "בננה", "תות", "לחם", "חלב", "דבש", "עוגה", "סלט", "מרק", "דגים", "ביצה", "גזר", "תמר",
+  "אור", "שמש", "ירח", "כוכב", "ענן", "גשם", "שלג", "רוח", "אש", "מים",
+  "עץ", "פרח", "עלה", "שורש", "ענף", "זרע", "ניצן", "פרי", "ירק",
+  "כלב", "חתול", "סוס", "פרה", "כבש", "עז", "תרנגול", "ברווז", "דג",
+  "בית", "גג", "קיר", "דלת", "חלון", "רצפה", "מדף", "שולחן", "כסא",
+  "ספר", "עט", "דף", "מחק", "ילקוט", "לוח", "מורה", "תלמיד",
+  "אבא", "אמא", "אח", "אחות", "סבא", "סבתא", "דוד", "דודה",
+  "יום", "לילה", "בוקר", "ערב", "שבוע", "חודש", "שנה", "זמן",
+  "ראש", "עין", "אוזן", "אף", "פה", "יד", "רגל", "גוף",
+  "שיר", "ריקוד", "ציור", "פסל", "סרט", "ספר", "מחזה", "אמן",
+  "כחול", "אדום", "ירוק", "צהוב", "לבן", "שחור", "ורוד", "סגול",
+  "אחד", "שתים", "שלוש", "ארבע", "חמש", "שש", "שבע", "שמונה",
+  "קיץ", "סתיו", "חורף", "אביב", "חום", "קור", "לח", "יבש",
+  "ים", "אגם", "נהר", "הר", "גבעה", "עמק", "מדבר", "יער",
+  "רכב", "אופן", "רכבת", "מטוס", "ספינה", "אוטו", "משאית", "טנק",
+  "מלך", "מלכה", "נסיך", "נסיכה", "אביר", "מכשף", "קוסם", "גמד",
+  "חיוך", "צחוק", "בכי", "כעס", "פחד", "אהבה", "שנאה", "קנאה",
+  "אמת", "שקר", "טוב", "רע", "יפה", "מכוער", "חכם", "טיפש",
+  "קטן", "גדול", "רזה", "שמן", "ארוך", "קצר", "רחב", "צר",
+  "חדש", "ישן", "צעיר", "זקן", "חזק", "חלש", "מהיר", "אטי",
+  "מעל", "מתחת", "לפני", "אחרי", "בתוך", "מחוץ", "ליד", "רחוק",
+  "כסף", "זהב", "ברזל", "עץ", "אבן", "חול", "מלח", "סוכר",
+  "אש", "מים", "אויר", "אדמה", "שמים", "ארץ", "עולם", "טבע",
+  "אות", "מילה", "משפט", "שפה", "דבור", "כתב", "קול", "שקט",
+  "מזל", "גורל", "חלום", "מציאות", "אמונה", "תקווה", "אושר", "עצב",
+  "גיר", "מחט", "סיר", "מגב", "מטר", "סרט", "ארנק", "מסרק", "מברג", "פטיש",
+"מזלג", "כפית", "צלחת", "כוס", "קנקן", "מפה", "מגבת", "סבון", "קרם", "מסכה",
+"כובע", "צעיף", "גרב", "נעל", "חגורה", "שמלה", "חצאית", "מכנס", "חולצה", "מעיל",
+"תיק", "ארון", "מיטה", "כרית", "שמיכה", "מנורה", "שטיח", "וילון", "מראה", "שעון",
+"רדיו", "טלפון", "מחשב", "מסך", "עכבר", "מקלדת", "רמקול", "אוזניה", "מצלמה", "סוללה",
+"מפתח", "מנעול", "ברז", "כיור", "אסלה", "מקלחת", "אמבט", "מגבת", "מברשת", "משחה",
+"סכין", "מזמרה", "מסור", "פלייר", "מברג", "מקדחה", "מספרים", "דבק", "נייר", "עפרון",
+"צבע", "מכחול", "בד", "חוט", "מחט", "כפתור", "רוכסן", "סיכה", "קליפס", "גומי",
+"כדור", "חישוק", "חבל", "מחבט", "רשת", "שער", "משרוקית", "דגל", "מדליה", "גביע",
+"תו", "כינור", "חליל", "תוף", "גיטרה", "פסנתר", "מיתר", "קשת", "תווים", "במה",
+"מפה", "מצפן", "שביל", "גשר", "מנהרה", "כביש", "רמזור", "תמרור", "שלט", "ספסל",
+"עציץ", "זרע", "שתיל", "ענף", "גזע", "שורש", "קליפה", "עלה", "פרח", "פרי",
+"חיידק", "וירוס", "תא", "גן", "דנא", "מוח", "לב", "כבד", "כליה", "ריאה",
+"אטום", "מולקולה", "יסוד", "חומר", "גז", "נוזל", "מוצק", "אנרגיה", "כוח", "מסה",
+"מעגל", "משולש", "ריבוע", "עיגול", "קו", "נקודה", "זווית", "צורה", "מרחק", "שטח",
+"מטבע", "שטר", "צק", "בנק", "חסכון", "חוב", "רווח", "מס", "שכר", "מחיר",
+"חוק", "משפט", "עורך", "שופט", "עד", "ראיה", "אשמה", "זכות", "חובה", "עונש",
+"מדע", "מחקר", "ניסוי", "תאוריה", "הוכחה", "ממצא", "גילוי", "המצאה", "פיתוח", "יישום",
+"דת", "אל", "נביא", "כהן", "קדוש", "מקדש", "תפילה", "ברכה", "מצווה", "חטא",
+"מיתוס", "אגדה", "סיפור", "שיר", "פתגם", "חידה", "בדיחה", "משל", "מוסר", "לקח"
+ 
+  ];
+
+    let randomWord, guessedLetters, wordLength, guessCount, maxHints, hintsUsed, gameOver, startTime, timerInterval;
+    let scores = [];
+
+    function initGame() {
+        randomWord = words[Math.floor(Math.random() * words.length)];
+        guessedLetters = [];
+        wordLength = randomWord.length;
+        guessCount = 0;
+        maxHints = 2;
+        hintsUsed = 0;
+        gameOver = false;
+        startTime = null;
+        clearInterval(timerInterval);
+
+        document.getElementById("word-length").textContent = wordLength;
+        document.getElementById("guess-count").textContent = guessCount;
+        document.getElementById("result-message").textContent = "";
+        document.getElementById("guesses-list").innerHTML = "";
+        document.getElementById("guess").value = "";
+        document.getElementById("timer").textContent = "00:00";
+        createWordDisplay();
+    }
+
+    function createWordDisplay() {
+        let displayWord = "<span>";
+        for (let i = 0; i < randomWord.length; i++) {
+            if (guessedLetters.includes(randomWord[i])) {
+                displayWord += randomWord[i];
+            } else {
+                displayWord += "_";
+            }
+        }
+        displayWord += "</span>";
+        document.getElementById("word-display").innerHTML = displayWord;
+    }
+
+    function startTimer() {
+        if (!startTime) {
+            startTime = new Date();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+    }
+
+    function updateTimer() {
+        const currentTime = new Date();
+        const elapsedTime = new Date(currentTime - startTime);
+        const minutes = elapsedTime.getMinutes().toString().padStart(2, '0');
+        const seconds = elapsedTime.getSeconds().toString().padStart(2, '0');
+        document.getElementById("timer").textContent = `${minutes}:${seconds}`;
+    }
+
+    function stopTimer() {
+        clearInterval(timerInterval);
+    }
+
+    document.getElementById("guess").addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            guessLetter();
+        }
+    });
+
+    function guessLetter() {
+        if (gameOver) {
+            alert("המשחק הסתיים. אנא התחל משחק חדש.");
+            return;
+        }
+
+        const guess = document.getElementById("guess").value.toLowerCase();
+        document.getElementById("guess").value = ""; // ניקוי תיבת הטקסט
+        
+        if (guess.length !== 1 || !/^[\u0590-\u05FF]+$/.test(guess)) {
+            alert("נא להזין אות אחת בעברית");
+            return;
+        }
+
+        startTimer(); // התחלת הטיימר בניחוש הראשון
+
+        if (guessedLetters.includes(guess)) {
+            alert("ניחשת כבר אות זו");
+            return;
+        }
+
+        guessedLetters.push(guess);
+        createWordDisplay();
+
+        guessCount++;
+        document.getElementById("guess-count").textContent = guessCount;
+
+        const guessesList = document.getElementById("guesses-list");			
+
+        if (guessesList) {
+            guessedLetters.sort();
+            guessesList.innerHTML = "";
+            guessedLetters.forEach(letter => {
+                const li = document.createElement("li");
+                li.textContent = letter;
+                guessesList.appendChild(li);
+            });
+        } else {
+            console.error("אלמנט 'guesses-list' לא נמצא.");
+        }			
+
+        if (randomWord === document.getElementById("word-display").textContent.replace(/_/g, '')) {
+            gameOver = true;
+            stopTimer();
+            addScore();			
+//            alert("כל הכבוד! ניצחת!");
+            document.getElementById("result-message").textContent = `ניצחת! מספר הניחושים: ${guessCount}`;
+			alert(`כל הכבוד! ניצחת ב: ${guessCount} ניחושים! המילה היא: ${randomWord}`);
+//            addScore();
+        }
+    }
+
+    function giveHint() {
+        if (gameOver) {
+            alert("המשחק הסתיים. אנא התחל משחק חדש כדי לקבל רמז.");
+            return;
+        }
+
+        if (hintsUsed >= maxHints) {
+            alert("נגמרו לך הרמזים!");
+            return;
+        }
+
+        if (confirm("אתה בטוח שאתה רוצה רמז? זה יפחית ממספר הניחושים שלך.")) {
+            startTimer(); // התחלת הטיימר אם זה הרמז הראשון
+            let letterToReveal = randomWord.charAt(Math.floor(Math.random() * randomWord.length));
+            while (guessedLetters.includes(letterToReveal)) {
+                letterToReveal = randomWord.charAt(Math.floor(Math.random() * randomWord.length));
+            }
+            guessedLetters.push(letterToReveal);
+            createWordDisplay();
+            guessCount++;
+            hintsUsed++;
+            document.getElementById("guess-count").textContent = guessCount;
+        }
+    }
+
+    function addScore() {
+        const endTime = new Date();
+        const gameTime = (endTime - startTime) / 1000; // זמן בשניות
+        scores.unshift({ guesses: guessCount, time: gameTime, wordLength: wordLength });
+        if (scores.length > 20) {
+            scores.pop(); // מחיקת המשחק הישן ביותר אם יש יותר מ-20 משחקים
+        }
+        updateScoresTable();
+        saveToLocalStorage();
+    }
+
+    function updateScoresTable() {
+        const tbody = document.querySelector("#scores-table tbody");
+        tbody.innerHTML = "";
+        scores.forEach(score => {
+            const row = tbody.insertRow();
+            row.insertCell(0).textContent = score.guesses;
+            row.insertCell(1).textContent = formatTime(score.time);
+            row.insertCell(2).textContent = score.wordLength;
+        });
+    }
+
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+        return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+
+    function saveToLocalStorage() {
+        localStorage.setItem('wordGameScores', JSON.stringify(scores));
+    }
+
+    function loadFromLocalStorage() {
+        const savedScores = localStorage.getItem('wordGameScores');
+        if (savedScores) {
+            scores = JSON.parse(savedScores);
+            updateScoresTable();
+        }
+    }
+
+    document.getElementById("hint-button").addEventListener("click", giveHint);
+    document.getElementById("new-game-button").addEventListener("click", initGame);
+
+    // טעינת התוצאות מה-Local Storage בעת טעינת הדף
+    loadFromLocalStorage();
+
+    // התחלת המשחק הראשון
+    initGame();
+
+
+
+
+function sortTable(n) {
+    var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+    table = document.getElementById("scores-table");
+    switching = true;
+    dir = "asc";
+    
+    while (switching) {
+        switching = false;
+        rows = table.rows;
+        
+        for (i = 1; i < (rows.length - 1); i++) {
+            shouldSwitch = false;
+            x = rows[i].getElementsByTagName("TD")[n];
+            y = rows[i + 1].getElementsByTagName("TD")[n];
+            
+            if (n === 1) { // עמודת זמן משחק
+                xValue = convertTimeToSeconds(x.innerHTML);
+                yValue = convertTimeToSeconds(y.innerHTML);
+            } else {
+                xValue = Number(x.innerHTML);
+                yValue = Number(y.innerHTML);
+            }
+            
+            if (dir == "asc") {
+                if (xValue > yValue) {
+                    shouldSwitch = true;
+                    break;
+                }
+            } else if (dir == "desc") {
+                if (xValue < yValue) {
+                    shouldSwitch = true;
+                    break;
+                }
+            }
+        }
+        
+        if (shouldSwitch) {
+            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+            switching = true;
+            switchcount++;
+        } else {
+            if (switchcount == 0 && dir == "asc") {
+                dir = "desc";
+                switching = true;
+            }
+        }
+    }
+    
+    // עדכון סמלי המיון
+    var headers = table.getElementsByTagName("TH");
+    for (i = 0; i < headers.length; i++) {
+        headers[i].getElementsByClassName("sort-icon")[0].innerHTML = "&#x25B2;&#x25BC;";
+    }
+    headers[n].getElementsByClassName("sort-icon")[0].innerHTML = (dir === "asc" ? "&#x25B2;" : "&#x25BC;");
+}
+
+function convertTimeToSeconds(timeStr) {
+    var parts = timeStr.split(':');
+    return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+}
+
+
+
+
+
+
+// מחיקת נתוני טבלה
+function clearTableData() {
+  if (confirm("האם אתה בטוח שברצונך למחוק את כל נתוני הטבלה?")) {
+    localStorage.removeItem('wordGameScores');
+	updateScoresTable();
+  }
+}
+
+document.getElementById('clearDataBtn').addEventListener('click', clearTableData);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </script>
+</body>
+</html>
