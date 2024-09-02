@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מצפין ומפענח רשימת מילים</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 10px;
+        }
+        button {
+            display: block;
+            margin-bottom: 10px;
+        }
+        #instructions {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>מצפין ומפענח רשימת מילים</h1>
+    
+    <div id="instructions">
+        <h2>הוראות שימוש:</h2>
+        <p>הכנס רשימת מילים בעברית בפורמט הבא:</p>
+        <p>"מילה1", "מילה2", "מילה3"</p>
+        <p>כל מילה צריכה להיות בין מרכאות ומופרדת מהמילה הבאה על ידי פסיק ורווח.</p>
+    </div>
+
+    <textarea id="inputText" placeholder='הכנס רשימת מילים כאן, לדוגמה: "שלום", "עולם"'></textarea>
+    <button onclick="encrypt()">הצפן</button>
+    
+    <textarea id="encryptedText" readonly placeholder="מילים מוצפנות יופיעו כאן"></textarea>
+    <button onclick="decrypt()">פענח</button>
+    
+    <textarea id="decryptedText" readonly placeholder="מילים מפוענחות יופיעו כאן"></textarea>
+
+    <script>
+        function encrypt() {
+            const input = document.getElementById('inputText').value;
+            const words = input.match(/"[^"]+"/g) || [];
+            const encryptedWords = words.map(word => {
+                const cleanWord = word.slice(1, -1); // הסרת המרכאות
+                const encrypted = btoa(encodeURIComponent(cleanWord));
+                return `"${encrypted}"`;
+            });
+            document.getElementById('encryptedText').value = encryptedWords.join(', ');
+        }
+
+        function decrypt() {
+            const input = document.getElementById('encryptedText').value;
+            const words = input.match(/"[^"]+"/g) || [];
+            const decryptedWords = words.map(word => {
+                const cleanWord = word.slice(1, -1); // הסרת המרכאות
+                try {
+                    const decrypted = decodeURIComponent(atob(cleanWord));
+                    return `"${decrypted}"`;
+                } catch (error) {
+                    return '"שגיאה"';
+                }
+            });
+            document.getElementById('decryptedText').value = decryptedWords.join(', ');
+        }
+    </script>
+</body>
+</html>
