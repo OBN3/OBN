@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>משחק ניחוש מילים</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h1, h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        input[type="text"] {
+            width: 50px;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 18px;
+            text-align: center;
+        }
+        #wordDisplay {
+            font-size: 24px;
+            letter-spacing: 5px;
+            margin: 20px 0;
+        }
+        #guessedLetters {
+            color: red;
+            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+            cursor: pointer;
+        }
+        #timer, #moves {
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        #hintButton {
+            background-color: #008CBA;
+        }
+        #hintButton:hover {
+            background-color: #007B9A;
+        }
+        #clearDataButton {
+            background-color: #f44336;
+        }
+        #clearDataButton:hover {
+            background-color: #da190b;
+        }
+        #encryptionTest {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        #encryptionTest input[type="text"] {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        #message {
+            color: red;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            input[type="text"] {
+                width: 40px;
+                font-size: 16px;
+            }
+            #wordDisplay {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>נחשו את המילה בעברית</h1>
+        <div id="wordInfo"></div>
+        <div id="wordDisplay"></div>
+        <input type="text" id="guessInput" maxlength="1" autofocus>
+        <p>הקלידו אות והקישו Enter</p>		
+        <div id="guessedLetters"></div>
+        <div id="timer">זמן: 0 שניות</div>
+        <div id="moves">מהלכים: 0</div>
+        <button id="newGameButton">התחילו משחק חדש</button>		
+        <button id="hintButton">רמז?</button>
+        <div id="message"></div>
+        <h4>נתוני 20 המשחקים האחרונים (לחצו על עמודה למיון)</h4>
+		<table id="scoreTable">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)">זמן</th>
+                    <th onclick="sortTable(1)">מהלכים</th>
+                    <th onclick="sortTable(2)">מספר אותיות</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <br>
+		<button id="clearDataButton">נקו טבלה (מחקו נתונים)</button>
+		<br><br>
+		<footer> Copyright OBN 2024 </footer>
+		
+    </div>
+
+    <script>
+        // מאגר המילים המוצפנות
+        const encryptedWords = [
+
+"JUQ3JTkwJUQ3JTkxJUQ3JTkw", "JUQ3JTkwJUQ3JTkxJUQ3JTkz", "JUQ3JTkwJUQ3JTkxJUQ3JTlD", "JUQ3JTkwJUQ3JTkxJUQ3JTlG", "JUQ3JTkwJUQ3JTkyJUQ3JTkx", "JUQ3JTkwJUQ3JTkyJUQ3JTlE", "JUQ3JTkwJUQ3JTkyJUQ3JUEx", "JUQ3JTkwJUQ3JTkzJUQ3JTlE", "JUQ3JTkwJUQ3JTkzJUQ3JUE4", "JUQ3JTkwJUQ3JTk0JUQ3JTkx", "JUQ3JTkwJUQ3JTk0JUQ3JTlD", "JUQ3JTkwJUQ3JTk1JUQ3JTlCJUQ3JTlD", "JUQ3JTkwJUQ3JTk1JUQ3JTlD", "JUQ3JTkwJUQ3JTk1JUQ3JTlFJUQ3JUE1", "JUQ3JTkwJUQ3JTk1JUQ3JUE2JUQ3JUE4", "JUQ3JTkwJUQ3JTk1JUQ3JUE4", "JUQ3JTkwJUQ3JTk1JUQ3JUFB", "JUQ3JTkwJUQ3JTk3JUQ3JTkz", "JUQ3JTkwJUQ3JTk3JUQ3JUE4", "JUQ3JTkwJUQ3JTk5JUQ3JTlB", "JUQ3JTkwJUQ3JTk5JUQ3JUE5", "JUQ3JTkwJUQ3JTlCJUQ3JTlD", "JUQ3JTkwJUQ3JTlDJUQ3JTk0", "JUQ3JTkwJUQ3JTlDJUQ3JTk1", "JUQ3JTkwJUQ3JTlDJUQ3JUEz", "JUQ3JTkwJUQ3JTlFJUQ3JTkw", "JUQ3JTkwJUQ3JTlFJUQ3JTlG", "JUQ3JTkwJUQ3JTlFJUQ3JUE4", "JUQ3JTkwJUQ3JUEwJUQ3JTk5", "JUQ3JTkwJUQ3JUExJUQ3JUEz", "JUQ3JTkwJUQ3JUEz", "JUQ3JTkwJUQ3JUE0JUQ3JUEx", "JUQ3JTkwJUQ3JUE4JUQ3JTk2", "JUQ3JTkwJUQ3JUE4JUQ3JUE1", "JUQ3JTkwJUQ3JUE5", "JUQ3JTkwJUQ3JUE5JUQ3JTk0", "JUQ3JTkwJUQ3JUFB", "JUQ3JTkwJUQ3JUFBJUQ3JTk0", "JUQ3JTkxJUQ3JTkwJUQ3JUE4", "JUQ3JTkxJUQ3JTkyJUQ3JTkz", "JUQ3JTkxJUQ3JTkzJUQ3JUE3", "JUQ3JTkxJUQ3JTk0JUQ3JTk5JUQ3JUE4", "JUQ3JTkxJUQ3JTk1JUQ3JTkw", "JUQ3JTkxJUQ3JTk1JUQ3JUE4", "JUQ3JTkxJUQ3JTk3JUQ3JUE4", "JUQ3JTkxJUQ3JTk5JUQ3JTkx", "JUQ3JTkxJUQ3JTk5JUQ3JTlG", "JUQ3JTkxJUQ3JTk5JUQ3JUFB", "JUQ3JTkxJUQ3JTlCJUQ3JTk0", "JUQ3JTkxJUQ3JTlDJUQ3JTk4", "JUQ3JTkxJUQ3JUEwJUQ3JTk0", "JUQ3JTkxJUQ3JUEyJUQ3JTlD", "JUQ3JTkxJUQ3JUE2JUQ3JTlD", "JUQ3JTkxJUQ3JUE3JUQ3JUE4", "JUQ3JTkxJUQ3JUE4", "JUQ3JTkxJUQ3JUE4JUQ3JTk2", "JUQ3JTkxJUQ3JUE4JUQ3JTlB", "JUQ3JTkxJUQ3JUE5JUQ3JTlD", "JUQ3JTkxJUQ3JUE5JUQ3JUE4", "JUQ3JTkyJUQ3JTkwJUQ3JTk0", "JUQ3JTkyJUQ3JTkxJUQ3JTk0", "JUQ3JTkyJUQ3JTkxJUQ3JUE4", "JUQ3JTkyJUQ3JTkzJUQ3JTlD", "JUQ3JTkyJUQ3JTkzJUQ3JUE4", "JUQ3JTkyJUQ3JTk1JUQ3JUEz", "JUQ3JTkyJUQ3JTk1JUQ3JUE4", "JUQ3JTkyJUQ3JTk2JUQ3JUE4", "JUQ3JTkyJUQ3JTk5JUQ3JTlD", "JUQ3JTkyJUQ3JTlDJUQ3JTk0", "JUQ3JTkyJUQ3JTlFJUQ3JTlD", "JUQ3JTkyJUQ3JUEwJUQ3JTkx", "JUQ3JTkyJUQ3JUEyJUQ3JUE4", "JUQ3JTkyJUQ3JUE0JUQ3JTlG", "JUQ3JTkyJUQ3JUE4", "JUQ3JTkyJUQ3JUE4JUQ3JTkx", "JUQ3JTkyJUQ3JUE4JUQ3JTlE", "JUQ3JTkzJUQ3JTkxJUQ3JUE3", "JUQ3JTkzJUQ3JTkxJUQ3JUE4", "JUQ3JTkzJUQ3JTky", "JUQ3JTkzJUQ3JTkyJUQ3JTlD", "JUQ3JTkzJUQ3JTk0JUQ3JUE4", "JUQ3JTkzJUQ3JTk1JUQ3JTkx", "JUQ3JTkzJUQ3JTk1JUQ3JTkz", "JUQ3JTkzJUQ3JTk1JUQ3JTlE", "JUQ3JTkzJUQ3JTk3JUQ3JUEz", "JUQ3JTkzJUQ3JTk5JUQ3JTk1", "JUQ3JTkzJUQ3JTk5JUQ3JUE4", "JUQ3JTkzJUQ3JTlDJUQ3JTk5", "JUQ3JTkzJUQ3JTlE", "JUQ3JTkzJUQ3JUEyJUQ3JTk0", "JUQ3JTkzJUQ3JUEz", "JUQ3JTkzJUQ3JUE3JUQ3JTlD", "JUQ3JTkzJUQ3JUE4JUQ3JTlB", "JUQ3JTk0JUQ3JTkwJUQ3JTlE", "JUQ3JTk0JUQ3JTkxJUQ3JTlD", "JUQ3JTk0JUQ3JTkyJUQ3JTk0", "JUQ3JTk0JUQ3JTkzJUQ3JUE4", "JUQ3JTk0JUQ3JTk1JUQ3JTkw", "JUQ3JTk0JUQ3JTk1JUQ3JTlG", "JUQ3JTk0JUQ3JTk2JUQ3JTk0", "JUQ3JTk0JUQ3JTk5JUQ3JTkw", "JUQ3JTk0JUQ3JTlDJUQ3JTlB", "JUQ3JTk0JUQ3JTlE", "JUQ3JTk0JUQ3JUEwJUQ3JTk0", "JUQ3JTk0JUQ3JUE4", "JUQ3JTk0JUQ3JUE4JUQ3JUEx", "JUQ3JTk0JUQ3JUE5JUQ3JTlE", "JUQ3JTk1JUQ3JTkwJUQ3JTk1", "JUQ3JTk1JUQ3JTk1", "JUQ3JTk2JUQ3JTkwJUQ3JTkx", "JUQ3JTk2JUQ3JTkxJUQ3JTlD", "JUQ3JTk2JUQ3JTk0JUQ3JTkx", "JUQ3JTk2JUQ3JTk0JUQ3JUE4", "JUQ3JTk2JUQ3JTk1JUQ3JTky", "JUQ3JTk2JUQ3JTk2", "JUQ3JTk2JUQ3JTk5JUQ3JUFB", "JUQ3JTk2JUQ3JTlCJUQ3JTk0", "JUQ3JTk2JUQ3JTlCJUQ3JUE4", "JUQ3JTk2JUQ3JTlFJUQ3JTlG", "JUQ3JTk2JUQ3JUEwJUQ3JTkx", "JUQ3JTk2JUQ3JUE4", "JUQ3JTk2JUQ3JUE4JUQ3JUEy", "JUQ3JTk3JUQ3JTkxJUQ3JTlD", "JUQ3JTk3JUQ3JTkxJUQ3JUE4", "JUQ3JTk3JUQ3JTky", "JUQ3JTk3JUQ3JTkzJUQ3JUE4", "JUQ3JTk3JUQ3JTkzJUQ3JUE5", "JUQ3JTk3JUQ3JTk1JUQ3JTkx", "JUQ3JTk3JUQ3JTk1JUQ3JTk4", "JUQ3JTk3JUQ3JTk1JUQ3JTlD", "JUQ3JTk3JUQ3JTk1JUQ3JTlE", "JUQ3JTk3JUQ3JTk1JUQ3JUEz", "JUQ3JTk3JUQ3JTk1JUQ3JUE4", "JUQ3JTk3JUQ3JTk2JUQ3JTk0", "JUQ3JTk3JUQ3JTk2JUQ3JUE3", "JUQ3JTk3JUQ3JTk2JUQ3JUE4", "JUQ3JTk3JUQ3JTk5", "JUQ3JTk3JUQ3JTk5JUQ3JTk0", "JUQ3JTk3JUQ3JTk5JUQ3JTlB", "JUQ3JTk3JUQ3JTlDJUQ3JTkx", "JUQ3JTk3JUQ3JTlDJUQ3JTk0", "JUQ3JTk3JUQ3JTlDJUQ3JUE3", "JUQ3JTk3JUQ3JTlDJUQ3JUE5", "JUQ3JTk3JUQ3JTlE", "JUQ3JTk3JUQ3JTlFJUQ3JTkz", "JUQ3JTk3JUQ3JTlFJUQ3JUE5", "JUQ3JTk3JUQ3JUEwJUQ3JTk0", "JUQ3JTk3JUQ3JUExJUQ3JTkz", "JUQ3JTk3JUQ3JUExJUQ3JUE4", "JUQ3JTk3JUQ3JUE0JUQ3JUE1", "JUQ3JTk3JUQ3JUE2JUQ3JTk5", "JUQ3JTk3JUQ3JUE4JUQ3JTkx", "JUQ3JTk3JUQ3JUE4JUQ3JUE5", "JUQ3JTk3JUQ3JUE5JUQ3JTkx", "JUQ3JTk3JUQ3JUFBJUQ3JTlB", "JUQ3JTk4JUQ3JTkxJUQ3JTk3", "JUQ3JTk4JUQ3JTkxJUQ3JUEy", "JUQ3JTk4JUQ3JTk1JUQ3JTkx", "JUQ3JTk4JUQ3JTk3JUQ3JTlG", "JUQ3JTk4JUQ3JTk5JUQ3JTk4", "JUQ3JTk4JUQ3JTlD", "JUQ3JTk4JUQ3JTlDJUQ3JTk0", "JUQ3JTk4JUQ3JUEyJUQ3JTk0", "JUQ3JTk4JUQ3JUEyJUQ3JTlE", "JUQ3JTk4JUQ3JUE0JUQ3JTk3", "JUQ3JTk4JUQ3JUE4JUQ3JTk3", "JUQ3JTk4JUQ3JUE4JUQ3JUEz", "JUQ3JTk5JUQ3JTkxJUQ3JUE5", "JUQ3JTk5JUQ3JTkz", "JUQ3JTk5JUQ3JTkzJUQ3JUEy", "JUQ3JTk5JUQ3JTk0JUQ3JTk5", "JUQ3JTk5JUQ3JTk1JUQ3JTlE", "JUQ3JTk5JUQ3JTk3JUQ3JTkz", "JUQ3JTk5JUQ3JTlDJUQ3JTkz", "JUQ3JTk5JUQ3JTlE", "JUQ3JTk5JUQ3JTlFJUQ3JTk0", "JUQ3JTk5JUQ3JUE0JUQ3JTk0", "JUQ3JTk5JUQ3JUE2JUQ3JTkw", "JUQ3JTk5JUQ3JUE2JUQ3JUE4", "JUQ3JTk5JUQ3JUE4JUQ3JTkw", "JUQ3JTk5JUQ3JUE4JUQ3JTkz", "JUQ3JTk5JUQ3JUE4JUQ3JTk0", "JUQ3JTk5JUQ3JUE4JUQ3JTk3", "JUQ3JTk5JUQ3JUE4JUQ3JUE3", "JUQ3JTk5JUQ3JUE5JUQ3JTkx", "JUQ3JTk5JUQ3JUE5JUQ3JTlG", "JUQ3JTk5JUQ3JUFBJUQ3JUE4", "JUQ3JTlCJUQ3JTkwJUQ3JTkx", "JUQ3JTlCJUQ3JTkxJUQ3JTkz", "JUQ3JTlCJUQ3JTkxJUQ3JUE5", "JUQ3JTlCJUQ3JTkzJUQ3JTk5", "JUQ3JTlCJUQ3JTk0JUQ3JTk0", "JUQ3JTlCJUQ3JTk1JUQ3JTk3", "JUQ3JTlCJUQ3JTk1JUQ3JUEx", "JUQ3JTlCJUQ3JTk3", "JUQ3JTlCJUQ3JTk5", "JUQ3JTlCJUQ3JTk5JUQ3JUEx", "JUQ3JTlCJUQ3JTlB", "JUQ3JTlCJUQ3JTlDJUQ3JTkx", "JUQ3JTlCJUQ3JTlDJUQ3JTk0", "JUQ3JTlCJUQ3JTlDJUQ3JTk5", "JUQ3JTlCJUQ3JTlFJUQ3JTk0", "JUQ3JTlCJUQ3JTlG", "JUQ3JTlCJUQ3JUEwJUQ3JUEz", "JUQ3JTlCJUQ3JUExJUQ3JTkw", "JUQ3JTlCJUQ3JUExJUQ3JUEz", "JUQ3JTlCJUQ3JUEyJUQ3JUEx", "JUQ3JTlCJUQ3JUEz", "JUQ3JTlCJUQ3JUE0JUQ3JUE4", "JUQ3JTlCJUQ3JUE4JUQ3JUEy", "JUQ3JTlCJUQ3JUFBJUQ3JTkx", "JUQ3JTlDJUQ3JTkw", "JUQ3JTlDJUQ3JTkx", "JUQ3JTlDJUQ3JTkxJUQ3JTkz", "JUQ3JTlDJUQ3JTkxJUQ3JTlG", "JUQ3JTlDJUQ3JTk1JUQ3JTk3", "JUQ3JTlDJUQ3JTk3JUQ3JTlE", "JUQ3JTlDJUQ3JTk3JUQ3JUE1", "JUQ3JTlDJUQ3JTk5JUQ3JTlD", "JUQ3JTlDJUQ3JTlFJUQ3JTkz", "JUQ3JTlDJUQ3JUE3JUQ3JTk3", "JUQ3JTlDJUQ3JUE5JUQ3JTkz", "JUQ3JTlDJUQ3JUE5JUQ3JTlE", "JUQ3JTlFJUQ3JTkwJUQ3JTk0", "JUQ3JTlFJUQ3JTkwJUQ3JTk2", "JUQ3JTlFJUQ3JTkxJUQ3JTk4", "JUQ3JTlFJUQ3JTkyJUQ3JTlG", "JUQ3JTlFJUQ3JTkzJUQ3JTkz", "JUQ3JTlFJUQ3JTkzJUQ3JTk5", "JUQ3JTlFJUQ3JTk0", "JUQ3JTlFJUQ3JTk0JUQ3JUE4", "JUQ3JTlFJUQ3JTk1JUQ3JTlD", "JUQ3JTlFJUQ3JTk1JUQ3JUFB", "JUQ3JTlFJUQ3JTk2JUQ3JTlD", "JUQ3JTlFJUQ3JTk3JUQ3JTk4", "JUQ3JTlFJUQ3JTk3JUQ3JUE4", "JUQ3JTlFJUQ3JTk4JUQ3JUE4", "JUQ3JTlFJUQ3JTk5", "JUQ3JTlFJUQ3JTk5JUQ3JTkz", "JUQ3JTlFJUQ3JTk5JUQ3JTlE", "JUQ3JTlFJUQ3JTlCJUQ3JUE4", "JUQ3JTlFJUQ3JTlDJUQ3JTkw", "JUQ3JTlFJUQ3JTlDJUQ3JTk3", "JUQ3JTlFJUQ3JTlDJUQ3JTlB", "JUQ3JTlFJUQ3JTlFJUQ3JUE5", "JUQ3JTlFJUQ3JTlG", "JUQ3JTlFJUQ3JUEwJUQ3JTk0", "JUQ3JTlFJUQ3JUExJUQ3JTlB", "JUQ3JTlFJUQ3JUEyJUQ3JTk4", "JUQ3JTlFJUQ3JUEyJUQ3JTlD", "JUQ3JTlFJUQ3JUE2JUQ3JTkw", "JUQ3JTlFJUQ3JUE3JUQ3JTlD", "JUQ3JTlFJUQ3JUE4", "JUQ3JTlFJUQ3JUE4JUQ3JUE3", "JUQ3JTlFJUQ3JUE5JUQ3JTk0", "JUQ3JTlFJUQ3JUE5JUQ3JTlB", "JUQ3JTlFJUQ3JUFBJUQ3JTk5", "JUQ3JUEwJUQ3JTkxJUQ3JTk4", "JUQ3JUEwJUQ3JTkyJUQ3JTkz", "JUQ3JUEwJUQ3JTkyJUQ3JUEy", "JUQ3JUEwJUQ3JTkzJUQ3JUE4", "JUQ3JUEwJUQ3JTk0JUQ3JTky", "JUQ3JUEwJUQ3JTk0JUQ3JUE4", "JUQ3JUEwJUQ3JTk1JUQ3JTk3", "JUQ3JUEwJUQ3JTk1JUQ3JUEz", "JUQ3JUEwJUQ3JTk2JUQ3JUE4", "JUQ3JUEwJUQ3JTk3JUQ3JTlD", "JUQ3JUEwJUQ3JTk3JUQ3JUE5", "JUQ3JUEwJUQ3JTk4JUQ3JTk0", "JUQ3JUEwJUQ3JTk5JUQ3JUE4", "JUQ3JUEwJUQ3JTlCJUQ3JTkz", "JUQ3JUEwJUQ3JTlCJUQ3JTk0", "JUQ3JUEwJUQ3JTlFJUQ3JTlD", "JUQ3JUEwJUQ3JUEx", "JUQ3JUEwJUQ3JUExJUQ3JUEy", "JUQ3JUEwJUQ3JUEyJUQ3JUE4", "JUQ3JUEwJUQ3JUE0JUQ3JTlD", "JUQ3JUEwJUQ3JUE0JUQ3JUE5", "JUQ3JUEwJUQ3JUE2JUQ3JTk3", "JUQ3JUEwJUQ3JUE3JUQ3JTk5", "JUQ3JUEwJUQ3JUE4", "JUQ3JUEwJUQ3JUE5JUQ3JTkw", "JUQ3JUEwJUQ3JUE5JUQ3JTlB", "JUQ3JUEwJUQ3JUE5JUQ3JTlE", "JUQ3JUEwJUQ3JUFBJUQ3JTlG", "JUQ3JUExJUQ3JTkxJUQ3JTkw", "JUQ3JUExJUQ3JTkxJUQ3JTlD", "JUQ3JUExJUQ3JTkyJUQ3JTlD", "JUQ3JUExJUQ3JTkyJUQ3JUE4", "JUQ3JUExJUQ3JTkzJUQ3JUE4", "JUQ3JUExJUQ3JTk1JUQ3JTkz", "JUQ3JUExJUQ3JTk1JUQ3JUEx", "JUQ3JUExJUQ3JTk1JUQ3JUEz", "JUQ3JUExJUQ3JTk3JUQ3JTkx", "JUQ3JUExJUQ3JTk3JUQ3JUE4", "JUQ3JUExJUQ3JTk5JUQ3JUE4", "JUQ3JUExJUQ3JTlCJUQ3JTlE", "JUQ3JUExJUQ3JTlDJUQ3JTk3", "JUQ3JUExJUQ3JTlDJUQ3JUEy", "JUQ3JUExJUQ3JTlFJUQ3JTlD", "JUQ3JUExJUQ3JUEyJUQ3JUE4", "JUQ3JUExJUQ3JUE0JUQ3JUE4", "JUQ3JUExJUQ3JUE4JUQ3JTk4", "JUQ3JUEyJUQ3JTkxJUQ3JTkz", "JUQ3JUEyJUQ3JTkxJUQ3JUE4", "JUQ3JUEyJUQ3JTkyJUQ3JTlD", "JUQ3JUEyJUQ3JTkz", "JUQ3JUEyJUQ3JTkzJUQ3JTlG", "JUQ3JUEyJUQ3JTk1JUQ3JTkz", "JUQ3JUEyJUQ3JTk1JUQ3JUEz", "JUQ3JUEyJUQ3JTk1JUQ3JUE4", "JUQ3JUEyJUQ3JTk2", "JUQ3JUEyJUQ3JTk2JUQ3JTkx", "JUQ3JUEyJUQ3JTk2JUQ3JUE4", "JUQ3JUEyJUQ3JTk4", "JUQ3JUEyJUQ3JTk5JUQ3JTlG", "JUQ3JUEyJUQ3JTk5JUQ3JUE4", "JUQ3JUEyJUQ3JTlD", "JUQ3JUEyJUQ3JTlDJUQ3JTk0", "JUQ3JUEyJUQ3JTlE", "JUQ3JUEyJUQ3JUEwJUQ3JTkx", "JUQ3JUEyJUQ3JUEwJUQ3JTk0", "JUQ3JUEyJUQ3JUEwJUQ3JUEw", "JUQ3JUEyJUQ3JUEz", "JUQ3JUEyJUQ3JUE0JUQ3JUE4", "JUQ3JUEyJUQ3JUE1", "JUQ3JUEyJUQ3JUE2JUQ3JTkx", "JUQ3JUEyJUQ3JUE2JUQ3JTlE", "JUQ3JUEyJUQ3JUE3JUQ3JTkx", "JUQ3JUEyJUQ3JUE4JUQ3JTkx", "JUQ3JUEyJUQ3JUE4JUQ3JTlB", "JUQ3JUEyJUQ3JUE5JUQ3JTk0", "JUQ3JUEyJUQ3JUFB", "JUQ3JUE0JUQ3JTkyJUQ3JUEy", "JUQ3JUE0JUQ3JTk0", "JUQ3JUE0JUQ3JTk1JUQ3JTlB", "JUQ3JUE0JUQ3JTk1JUQ3JTlD", "JUQ3JUE0JUQ3JTk3JUQ3JTkz", "JUQ3JUE0JUQ3JTk5", "JUQ3JUE0JUQ3JTlDJUQ3JTkw", "JUQ3JUE0JUQ3JUEwJUQ3JTk0", "JUQ3JUE0JUQ3JUEwJUQ3JUEx", "JUQ3JUE0JUQ3JUEyJUQ3JTlD", "JUQ3JUE0JUQ3JUEyJUQ3JTlE", "JUQ3JUE0JUQ3JUE3JUQ3JTkz", "JUQ3JUE0JUQ3JUE4JUQ3JTk0", "JUQ3JUE0JUQ3JUE4JUQ3JTk3", "JUQ3JUE0JUQ3JUE4JUQ3JTk5", "JUQ3JUE0JUQ3JUE4JUQ3JTlB", "JUQ3JUE0JUQ3JUE4JUQ3JUEx", "JUQ3JUE0JUQ3JUE4JUQ3JUEy", "JUQ3JUE0JUQ3JUE4JUQ3JUE5", "JUQ3JUE0JUQ3JUE5JUQ3JTk4", "JUQ3JUE0JUQ3JUFBJUQ3JTk3", "JUQ3JUE2JUQ3JTkwJUQ3JTlG", "JUQ3JUE2JUQ3JTkxJUQ3JTkw", "JUQ3JUE2JUQ3JTkxJUQ3JUEy", "JUQ3JUE2JUQ3JTkz", "JUQ3JUE2JUQ3JTkzJUQ3JUE3", "JUQ3JUE2JUQ3JTk0JUQ3JTlD", "JUQ3JUE2JUQ3JTk1JUQ3JTlE", "JUQ3JUE2JUQ3JTk3JUQ3JUE3", "JUQ3JUE2JUQ3JTk5JUQ3JUE4", "JUQ3JUE2JUQ3JTlD", "JUQ3JUE2JUQ3JTlDJUQ3JTk0", "JUQ3JUE2JUQ3JTlDJUQ3JTlD", "JUQ3JUE2JUQ3JTlFJUQ3JTkw", "JUQ3JUE2JUQ3JTlFJUQ3JTk3", "JUQ3JUE2JUQ3JUEwJUQ3JTk3", "JUQ3JUE2JUQ3JUEyJUQ3JTkz", "JUQ3JUE2JUQ3JUEyJUQ3JUE3", "JUQ3JUE2JUQ3JUE0JUQ3JTk0", "JUQ3JUE2JUQ3JUE0JUQ3JUE4", "JUQ3JUE2JUQ3JUE4", "JUQ3JUE3JUQ3JTkxJUQ3JTlD", "JUQ3JUE3JUQ3JTkxJUQ3JUE4", "JUQ3JUE3JUQ3JTkzJUQ3JTk3", "JUQ3JUE3JUQ3JTkzJUQ3JTlE", "JUQ3JUE3JUQ3JTk1JUQ3JTlD", "JUQ3JUE3JUQ3JTk1JUQ3JTlE", "JUQ3JUE3JUQ3JTk1JUQ3JUEz", "JUQ3JUE3JUQ3JTk4JUQ3JTlG", "JUQ3JUE3JUQ3JTk5JUQ3JUE4", "JUQ3JUE3JUQ3JTlD", "JUQ3JUE3JUQ3JTlDJUQ3JTk4", "JUQ3JUE3JUQ3JTlE", "JUQ3JUE3JUQ3JTlFJUQ3JTk3", "JUQ3JUE3JUQ3JUEwJUQ3JTk0", "JUQ3JUE3JUQ3JUE0JUQ3JTkw", "JUQ3JUE3JUQ3JUE0JUQ3JUE1", "JUQ3JUE3JUQ3JUE2JUQ3JUE4", "JUQ3JUE3JUQ3JUE4JUQ3JTkw", "JUQ3JUE3JUQ3JUE4JUQ3JTkx", "JUQ3JUE3JUQ3JUE4JUQ3JTk0", "JUQ3JUE3JUQ3JUE4JUQ3JTlG", "JUQ3JUE3JUQ3JUE5JUQ3JTk0", "JUQ3JUE3JUQ3JUE5JUQ3JUE4", "JUQ3JUE4JUQ3JTkwJUQ3JTk0", "JUQ3JUE4JUQ3JTkwJUQ3JUE5", "JUQ3JUE4JUQ3JTkx", "JUQ3JUE4JUQ3JTkxJUQ3JTk0", "JUQ3JUE4JUQ3JTkyJUQ3JTlD", "JUQ3JUE4JUQ3JTkzJUQ3JUEz", "JUQ3JUE4JUQ3JTk1JUQ3JTk3", "JUQ3JUE4JUQ3JTk1JUQ3JTlB", "JUQ3JUE4JUQ3JTk1JUQ3JTlE", "JUQ3JUE4JUQ3JTk1JUQ3JUE1", "JUQ3JUE4JUQ3JTk3JUQ3JTkx", "JUQ3JUE4JUQ3JTk3JUQ3JTlE", "JUQ3JUE4JUQ3JTk3JUQ3JUE1", "JUQ3JUE4JUQ3JTk4JUQ3JTkx", "JUQ3JUE4JUQ3JTk5JUQ3JTkx", "JUQ3JUE4JUQ3JTk5JUQ3JTk3", "JUQ3JUE4JUQ3JTlCJUQ3JTkx", "JUQ3JUE4JUQ3JTlE", "JUQ3JUE4JUQ3JTlFJUQ3JTk2", "JUQ3JUE4JUQ3JUEyJUQ3JTkx", "JUQ3JUE4JUQ3JUEyJUQ3JTkz", "JUQ3JUE4JUQ3JUEyJUQ3JTk0", "JUQ3JUE4JUQ3JUEyJUQ3JTlD", "JUQ3JUE4JUQ3JUEyJUQ3JTlE", "JUQ3JUE4JUQ3JUEyJUQ3JUE5", "JUQ3JUE4JUQ3JUE0JUQ3JTkw", "JUQ3JUE4JUQ3JUE2JUQ3JTk0", "JUQ3JUE4JUQ3JUE3JUQ3JTkz", "JUQ3JUE4JUQ3JUE5JUQ3JUEy", "JUQ3JUE4JUQ3JUFBJUQ3JTk3", "JUQ3JUE5JUQ3JTkwJUQ3JTlD", "JUQ3JUE5JUQ3JTkxJUQ3JTk3", "JUQ3JUE5JUQ3JTkxJUQ3JTk4", "JUQ3JUE5JUQ3JTkxJUQ3JUE4", "JUQ3JUE5JUQ3JTkxJUQ3JUFB", "JUQ3JUE5JUQ3JTkzJUQ3JTk0", "JUQ3JUE5JUQ3JTk1JUQ3JTkx", "JUQ3JUE5JUQ3JTk1JUQ3JUE3", "JUQ3JUE5JUQ3JTk1JUQ3JUE4", "JUQ3JUE5JUQ3JTk3JUQ3JTk0", "JUQ3JUE5JUQ3JTk3JUQ3JUE3", "JUQ3JUE5JUQ3JTk3JUQ3JUE4", "JUQ3JUE5JUQ3JTk4JUQ3JTk3", "JUQ3JUE5JUQ3JTk5JUQ3JTk3", "JUQ3JUE5JUQ3JTk5JUQ3JUE4", "JUQ3JUE5JUQ3JTlCJUQ3JTkx", "JUQ3JUE5JUQ3JTlCJUQ3JTk3", "JUQ3JUE5JUQ3JTlCJUQ3JTlD", "JUQ3JUE5JUQ3JTlCJUQ3JTlG", "JUQ3JUE5JUQ3JTlDJUQ3JTky", "JUQ3JUE5JUQ3JTlDJUQ3JTk3", "JUQ3JUE5JUQ3JTlDJUQ3JTk4", "JUQ3JUE5JUQ3JTlDJUQ3JTlE", "JUQ3JUE5JUQ3JTlE", "JUQ3JUE5JUQ3JTlFJUQ3JTk3", "JUQ3JUE5JUQ3JTlFJUQ3JUEy", "JUQ3JUE5JUQ3JTlFJUQ3JUE4", "JUQ3JUE5JUQ3JTlFJUQ3JUE5", "JUQ3JUE5JUQ3JUEwJUQ3JTkw", "JUQ3JUE5JUQ3JUEwJUQ3JTk0", "JUQ3JUE5JUQ3JUEyJUQ3JTk0", "JUQ3JUE5JUQ3JUEyJUQ3JUE4", "JUQ3JUE5JUQ3JUE0JUQ3JTk0", "JUQ3JUE5JUQ3JUE0JUQ3JTk4", "JUQ3JUE5JUQ3JUE3JUQ3JTk4", "JUQ3JUE5JUQ3JUE3JUQ3JTlD", "JUQ3JUE5JUQ3JUE3JUQ3JUEy", "JUQ3JUE5JUQ3JUE4", "JUQ3JUE5JUQ3JUE4JUQ3JUEz", "JUQ3JUE5JUQ3JUFBJUQ3JTk0", "JUQ3JUFBJUQ3JTkwJUQ3JUE4", "JUQ3JUFBJUQ3JTkxJUQ3JTlD", "JUQ3JUFBJUQ3JTk0JUQ3JTk1", "JUQ3JUFBJUQ3JTk1JUQ3JTlB", "JUQ3JUFBJUQ3JTk1JUQ3JUE4", "JUQ3JUFBJUQ3JTlDJUQ3JTk0", "JUQ3JUFBJUQ3JTlE", "JUQ3JUFBJUQ3JTlFJUQ3JTlB", "JUQ3JUFBJUQ3JUEwJUQ3JTk0", "JUQ3JUFBJUQ3JUE0JUQ3JTk3", "JUQ3JUFBJUQ3JUE0JUQ3JUEx", "JUQ3JUFBJUQ3JUE3JUQ3JUEy", "JUQ3JUFBJUQ3JUE3JUQ3JUEz", "JUQ3JUFBJUQ3JUE4JUQ3JTlE", "JUQ3JTkwJUQ3JTkxJUQ3JTk5JUQ3JTkx", "JUQ3JTkwJUQ3JTkxJUQ3JUEwJUQ3JTk4", "JUQ3JTkwJUQ3JTkyJUQ3JUE4JUQ3JTk0", "JUQ3JTkwJUQ3JTkzJUQ3JTk1JUQ3JTlE", "JUQ3JTkwJUQ3JTkzJUQ3JTk5JUQ3JUE4", "JUQ3JTkwJUQ3JTkzJUQ3JTlFJUQ3JTk0", "JUQ3JTkwJUQ3JTk0JUQ3JTkxJUQ3JTk0", "JUQ3JTkwJUQ3JTk1JUQ3JTk2JUQ3JTlG", "JUQ3JTkwJUQ3JTk1JUQ3JTlDJUQ3JTk5", "JUQ3JTkwJUQ3JTk1JUQ3JTlFJUQ3JTk0", "JUQ3JTkwJUQ3JTk1JUQ3JUE0JUQ3JTk0", "JUQ3JTkwJUQ3JTk1JUQ3JUE0JUQ3JTlG", "JUQ3JTkwJUQ3JTk1JUQ3JUE4JUQ3JTk2", "JUQ3JTkwJUQ3JTk1JUQ3JUE4JUQ3JTk3", "JUQ3JTkwJUQ3JTk1JUQ3JUE5JUQ3JUE4", "JUQ3JTkwJUQ3JTk3JUQ3JTk1JUQ3JTk2", "JUQ3JTkwJUQ3JTk3JUQ3JTk1JUQ3JUFB", "JUQ3JTkwJUQ3JTk3JUQ3JUE4JUQ3JTk5", "JUQ3JTkwJUQ3JTk5JUQ3JTkxJUQ3JUE4", "JUQ3JTkwJUQ3JTk5JUQ3JTlDJUQ3JTlG", "JUQ3JTkwJUQ3JTk5JUQ3JTlFJUQ3JTk0", "JUQ3JTkwJUQ3JTk5JUQ3JUEwJUQ3JTk1", "JUQ3JTkwJUQ3JTk5JUQ3JUE0JUQ3JTk0", "JUQ3JTkwJUQ3JTk5JUQ3JUE5JUQ3JTk0", "JUQ3JTkwJUQ3JTlCJUQ3JTk2JUQ3JTkx", "JUQ3JTkwJUQ3JTlDJUQ3JTk1JUQ3JUEz", "JUQ3JTkwJUQ3JTlDJUQ3JTk5JUQ3JTlD", "JUQ3JTkwJUQ3JTlDJUQ3JTlFJUQ3JTlG", "JUQ3JTkwJUQ3JTlFJUQ3JTk1JUQ3JTlG", "JUQ3JTkwJUQ3JTlFJUQ3JUEwJUQ3JTlE", "JUQ3JTkwJUQ3JTlFJUQ3JUE2JUQ3JUEy", "JUQ3JTkwJUQ3JUEwJUQ3JTk3JUQ3JTk0", "JUQ3JTkwJUQ3JUEwJUQ3JTk3JUQ3JUEwJUQ3JTk1", "JUQ3JTkwJUQ3JUExJUQ3JTk1JUQ3JTlG", "JUQ3JTkwJUQ3JUExJUQ3JTk5JUQ3JUE4", "JUQ3JTkwJUQ3JUExJUQ3JTlE", "JUQ3JTkwJUQ3JUE0JUQ3JTk1JUQ3JTkw", "JUQ3JTkwJUQ3JUE0JUQ3JTk1JUQ3JUE4", "JUQ3JTkwJUQ3JUE0JUQ3JTk5JUQ3JTk0", "JUQ3JTkwJUQ3JUE0JUQ3JTlDJUQ3JTk0", "JUQ3JTkwJUQ3JUE2JUQ3JTkxJUQ3JUEy", "JUQ3JTkwJUQ3JUE3JUQ3JTkzJUQ3JTk3", "JUQ3JTkwJUQ3JUE4JUQ3JTkxJUQ3JUEy", "JUQ3JTkwJUQ3JUE4JUQ3JTk1JUQ3JTlB", "JUQ3JTkwJUQ3JUE4JUQ3JTk1JUQ3JTlG", "JUQ3JTkwJUQ3JUE4JUQ3JTk1JUQ3JUEx", "JUQ3JTkwJUQ3JUE4JUQ3JUEwJUQ3JTkx", "JUQ3JTkwJUQ3JUE5JUQ3JTlCJUQ3JTk1JUQ3JTlD", "JUQ3JTkwJUQ3JUE5JUQ3JTlFJUQ3JTk0", "JUQ3JTkwJUQ3JUFBJUQ3JTkyJUQ3JUE4", "JUQ3JTkwJUQ3JUFBJUQ3JTlFJUQ3JTk1JUQ3JTlD", "JUQ3JTkxJUQ3JTkwJUQ3JTlFJUQ3JUFB", "JUQ3JTkxJUQ3JTkyJUQ3JTkzJUQ3JTk0", "JUQ3JTkxJUQ3JTkyJUQ3JTlDJUQ3JTlD", "JUQ3JTkxJUQ3JTkzJUQ3JTk5JUQ3JTlD", "JUQ3JTkxJUQ3JTk0JUQ3JTlFJUQ3JTk0", "JUQ3JTkxJUQ3JTk1JUQ3JTk0JUQ3JUE3", "JUQ3JTkxJUQ3JTk1JUQ3JUE3JUQ3JUE4", "JUQ3JTkxJUQ3JTk1JUQ3JUE5JUQ3JTk0", "JUQ3JTkxJUQ3JTk2JUQ3JTkxJUQ3JTk2", "JUQ3JTkxJUQ3JTk3JUQ3JTk1JUQ3JUE1", "JUQ3JTkxJUQ3JTk3JUQ3JTk1JUQ3JUE4", "JUQ3JTkxJUQ3JTk5JUQ3JUE2JUQ3JTk0", "JUQ3JTkxJUQ3JTlCJUQ3JTk1JUQ3JUE4", "JUQ3JTkxJUQ3JTlCJUQ3JTlDJUQ3JTlD", "JUQ3JTkxJUQ3JTlDJUQ3JTkxJUQ3JTkz", "JUQ3JTkxJUQ3JTlDJUQ3JTk0JUQ3JTk0", "JUQ3JTkxJUQ3JTlDJUQ3JTk1JUQ3JTlG", "JUQ3JTkxJUQ3JTlFJUQ3JUE5JUQ3JTlB", "JUQ3JTkxJUQ3JUEwJUQ3JTkwJUQ3JTk5", "JUQ3JTkxJUQ3JUExJUQ3JTkzJUQ3JUE4", "JUQ3JTkxJUQ3JUEyJUQ3JTk5JUQ3JTk0", "JUQ3JTkxJUQ3JUEyJUQ3JTlDJUQ3JTk5", "JUQ3JTkxJUQ3JUEyJUQ3JUE4JUQ3JTlB", "JUQ3JTkxJUQ3JUE2JUQ3JTk1JUQ3JUE4JUQ3JUFB", "JUQ3JTkxJUQ3JUE3JUQ3JTkxJUQ3JTk1JUQ3JUE3", "JUQ3JTkxJUQ3JUE3JUQ3JTk5JUQ3JTkw", "JUQ3JTkxJUQ3JUE3JUQ3JUEyJUQ3JTk0", "JUQ3JTkxJUQ3JUE3JUQ3JUE5JUQ3JTk0", "JUQ3JTkxJUQ3JUE4JUQ3JTkwJUQ3JUE5", "JUQ3JTkxJUQ3JUE4JUQ3JTkxJUQ3JTk1JUQ3JUE4", "JUQ3JTkxJUQ3JUE4JUQ3JTk1JUQ3JUE5", "JUQ3JTkxJUQ3JUE4JUQ3JTk2JUQ3JTlD", "JUQ3JTkxJUQ3JUE4JUQ3JTk5JUQ3JTkw", "JUQ3JTkxJUQ3JUE4JUQ3JTlCJUQ3JTk0", "JUQ3JTkxJUQ3JUE4JUQ3JUE3JUQ3JUFB", "JUQ3JTkxJUQ3JUE5JUQ3JTkxJUQ3JUFB", "JUQ3JTkxJUQ3JUE5JUQ3JTlFJUQ3JUFB", "JUQ3JTkxJUQ3JUFBJUQ3JTk1JUQ3JTlB", "JUQ3JTkyJUQ3JTkwJUQ3JTk1JUQ3JTk0", "JUQ3JTkyJUQ3JTkwJUQ3JTk1JUQ3JTlG", "JUQ3JTkyJUQ3JTkxJUQ3JTk1JUQ3JTlD", "JUQ3JTkyJUQ3JTkxJUQ3JTk5JUQ3JUEwJUQ3JTk0", "JUQ3JTkyJUQ3JTkxJUQ3JTk5JUQ3JUEy", "JUQ3JTkyJUQ3JTkxJUQ3JUEyJUQ3JTk0", "JUQ3JTkyJUQ3JTkzJUQ3JTk1JUQ3JTlD", "JUQ3JTkyJUQ3JTkzJUQ3JTk5JUQ3JTlD", "JUQ3JTkyJUQ3JTk1JUQ3JTkxJUQ3JTk0", "JUQ3JTkyJUQ3JTk1JUQ3JTlDJUQ3JTk0", "JUQ3JTkyJUQ3JTk1JUQ3JTlFJUQ3JTk5", "JUQ3JTkyJUQ3JTk1JUQ3JUE4JUQ3JTlD", "JUQ3JTkyJUQ3JTk2JUQ3JTk5JUQ3JUFB", "JUQ3JTkyJUQ3JTk3JUQ3JTlDJUQ3JUFB", "JUQ3JTkyJUQ3JTk5JUQ3JTkzJUQ3JTk1JUQ3JTlD", "JUQ3JTkyJUQ3JTk5JUQ3JTk0JUQ3JTk1JUQ3JUE1", "JUQ3JTkyJUQ3JTk5JUQ3JUEwJUQ3JTk0", "JUQ3JTkyJUQ3JTlDJUQ3JTkyJUQ3JTlD", "JUQ3JTkyJUQ3JTlDJUQ3JTk1JUQ3JUFB", "JUQ3JTkyJUQ3JTlDJUQ3JTk5JUQ3JTlD", "JUQ3JTkyJUQ3JTlFJUQ3JTk5JUQ3JUE5", "JUQ3JTkyJUQ3JTlFJUQ3JUE4JUQ3JTkw", "JUQ3JTkyJUQ3JUEwJUQ3JTk5JUQ3JTkxJUQ3JTk0", "JUQ3JTkyJUQ3JUEyJUQ3JTkyJUQ3JTk1JUQ3JUEy", "JUQ3JTkyJUQ3JUE0JUQ3JUE4JUQ3JTk1JUQ3JUE4", "JUQ3JTkyJUQ3JUE4JUQ3JTkyJUQ3JUE4", "JUQ3JTkyJUQ3JUE4JUQ3JTk1JUQ3JUE5", "JUQ3JTkyJUQ3JUE4JUQ3JTk2JUQ3JTlG", "JUQ3JTkyJUQ3JUE4JUQ3JUEyJUQ3JTk5JUQ3JTlG", "JUQ3JTkzJUQ3JTkwJUQ3JTkyJUQ3JTk0", "JUQ3JTkzJUQ3JTkxJUQ3JTk1JUQ3JUE4", "JUQ3JTkzJUQ3JTkxJUQ3JTk1JUQ3JUE4JUQ3JTk0", "JUQ3JTkzJUQ3JTkxJUQ3JTk5JUQ3JUE3", "JUQ3JTkzJUQ3JTkyJUQ3JTk5JUQ3JTlE", "JUQ3JTkzJUQ3JTk0JUQ3JTk1JUQ3JTk5", "JUQ3JTkzJUQ3JTk1JUQ3JTkwJUQ3JUE4", "JUQ3JTkzJUQ3JTk1JUQ3JTkxJUQ3JTkzJUQ3JTkxJUQ3JTlG", "JUQ3JTkzJUQ3JTk1JUQ3JTkzJUQ3JTk0", "JUQ3JTkzJUQ3JTk1JUQ3JTlFJUQ3JTk0", "JUQ3JTkzJUQ3JTk1JUQ3JUE0JUQ3JUE3", "JUQ3JTkzJUQ3JTk3JUQ3JTk1JUQ3JUEx", "JUQ3JTkzJUQ3JTk5JUQ3JTkxJUQ3JTk1JUQ3JUE4", "JUQ3JTkzJUQ3JTk5JUQ3JTk1JUQ3JUE3", "JUQ3JTkzJUQ3JTk5JUQ3JTlFJUQ3JTk1JUQ3JTk5", "JUQ3JTkzJUQ3JTk5JUQ3JUE4JUQ3JTk0", "JUQ3JTkzJUQ3JTlDJUQ3JTk1JUQ3JUFB", "JUQ3JTkzJUQ3JTlDJUQ3JUEyJUQ3JUFB", "JUQ3JTkzJUQ3JTlFJUQ3JTk1JUQ3JUFB", "JUQ3JTkzJUQ3JTlFJUQ3JTk5JUQ3JTk1JUQ3JTlG", "JUQ3JTkzJUQ3JUEyJUQ3JTk1JUQ3JUFB", "JUQ3JTkzJUQ3JUE0JUQ3JTk1JUQ3JUEx", "JUQ3JTkzJUQ3JUE3JUQ3JTkzJUQ3JTk1JUQ3JUE3", "JUQ3JTkzJUQ3JUE3JUQ3JTk1JUQ3JUFB", "JUQ3JTkzJUQ3JUE4JUQ3JTkyJUQ3JTk0", "JUQ3JTkzJUQ3JUE4JUQ3JTk1JUQ3JUE4", "JUQ3JTkzJUQ3JUE4JUQ3JTlCJUQ3JTk1JUQ3JTlG", "JUQ3JTkzJUQ3JUE4JUQ3JUE5JUQ3JTk0", "JUQ3JTk0JUQ3JTkwJUQ3JTk2JUQ3JTk5JUQ3JTlG", "JUQ3JTk0JUQ3JTkxJUQ3JTk5JUQ3JTkw", "JUQ3JTk0JUQ3JTkxJUQ3JTk5JUQ3JTlG", "JUQ3JTk0JUQ3JTkyJUQ3JTk5JUQ3JUEy", "JUQ3JTk0JUQ3JTkyJUQ3JTk5JUQ3JUE5", "JUQ3JTk0JUQ3JTkzJUQ3JTlDJUQ3JTk5JUQ3JUE3", "JUQ3JTk0JUQ3JTk1JUQ3JTkxJUQ3JTk5JUQ3JTlD", "JUQ3JTk0JUQ3JTk1JUQ3JTkzJUQ3JTk0", "JUQ3JTk0JUQ3JTk1JUQ3JTlCJUQ3JTk5JUQ3JTk3", "JUQ3JTk0JUQ3JTk1JUQ3JTlDJUQ3JTkzJUQ3JUFB", "JUQ3JTk0JUQ3JTk1JUQ3JUE4JUQ3JTkwJUQ3JTk0", "JUQ3JTk0JUQ3JTk1JUQ3JUE4JUQ3JTk0", "JUQ3JTk0JUQ3JTk1JUQ3JUE5JUQ3JTk5JUQ3JTk4", "JUQ3JTk0JUQ3JTk2JUQ3JTlFJUQ3JTk5JUQ3JTlG", "JUQ3JTk0JUQ3JTk3JUQ3JTk2JUQ3JTk5JUQ3JUE3", "JUQ3JTk0JUQ3JTk3JUQ3JTlDJUQ3JTk5JUQ3JTk4", "JUQ3JTk0JUQ3JTk4JUQ3JTk5JUQ3JTlD", "JUQ3JTk0JUQ3JTk5JUQ3JTkyJUQ3JTk5JUQ3JTk1JUQ3JTlG", "JUQ3JTk0JUQ3JTk5JUQ3JTk4JUQ3JTkx", "JUQ3JTk0JUQ3JTlCJUQ3JTk5JUQ3JUE4", "JUQ3JTk0JUQ3JTlDJUQ3JTkwJUQ3JTk0", "JUQ3JTk0JUQ3JTlDJUQ3JTk5JUQ3JTlCJUQ3JTk0", "JUQ3JTk0JUQ3JTlFJUQ3JTk1JUQ3JTlG", "JUQ3JTk0JUQ3JTlFJUQ3JUE5JUQ3JTk5JUQ3JTlB", "JUQ3JTk0JUQ3JUEwJUQ3JTk5JUQ3JTk3", "JUQ3JTk0JUQ3JUExJUQ3JTkxJUQ3JTk5JUQ3JUE4", "JUQ3JTk0JUQ3JUExJUQ3JTk5JUQ3JUEy", "JUQ3JTk0JUQ3JUExJUQ3JUE0JUQ3JTk5JUQ3JUE3", "JUQ3JTk0JUQ3JUEyJUQ3JUE4JUQ3JTk0", "JUQ3JTk0JUQ3JUE0JUQ3JTk5JUQ3JTlD", "JUQ3JTk0JUQ3JUE0JUQ3JUExJUQ3JTk5JUQ3JUE3", "JUQ3JTk0JUQ3JUE0JUQ3JUE4JUQ3JTk5JUQ3JUEy", "JUQ3JTk0JUQ3JUE2JUQ3JTkxJUQ3JTk5JUQ3JUEy", "JUQ3JTk0JUQ3JUE2JUQ3JTk5JUQ3JUEy", "JUQ3JTk0JUQ3JUE2JUQ3JTk5JUQ3JUE1", "JUQ3JTk0JUQ3JUE3JUQ3JUE5JUQ3JTk5JUQ3JTkx", "JUQ3JTk0JUQ3JUE4JUQ3JTkxJUQ3JTk0", "JUQ3JTk0JUQ3JUE4JUQ3JTkyJUQ3JTk5JUQ3JUE5", "JUQ3JTk0JUQ3JUE4JUQ3JTk5JUQ3JTlE", "JUQ3JTk0JUQ3JUE5JUQ3JTkwJUQ3JTk5JUQ3JUE4", "JUQ3JTk0JUQ3JUE5JUQ3JTk5JUQ3JTkx", "JUQ3JTk0JUQ3JUE5JUQ3JTk5JUQ3JTky", "JUQ3JTk0JUQ3JUE5JUQ3JTlCJUQ3JTk5JUQ3JTlE", "JUQ3JTk0JUQ3JUE5JUQ3JUE3JUQ3JTk0", "JUQ3JTk0JUQ3JUFBJUQ3JTk3JUQ3JTk5JUQ3JTlD", "JUQ3JTk0JUQ3JUFBJUQ3JTk5JUQ3JUE4", "JUQ3JTk0JUQ3JUFBJUQ3JUEwJUQ3JTk0JUQ3JTky", "JUQ3JTk1JUQ3JTkwJUQ3JTkzJUQ3JTk5", "JUQ3JTk1JUQ3JTk5JUQ3JTlDJUQ3JTk1JUQ3JTlG", "JUQ3JTk1JUQ3JTk5JUQ3JUFBJUQ3JUE4", "JUQ3JTk1JUQ3JUEyJUQ3JTkzJUQ3JTk0", "JUQ3JTk2JUQ3JTkxJUQ3JTk1JUQ3JTkx", "JUQ3JTk2JUQ3JTk0JUQ3JTk5JUQ3JUE4", "JUQ3JTk2JUQ3JTk1JUQ3JTk0JUQ3JUE4", "JUQ3JTk2JUQ3JTk1JUQ3JTk1JUQ3JTk5JUQ3JUFB", "JUQ3JTk2JUQ3JTk5JUQ3JTk1JUQ3JUEz", "JUQ3JTk2JUQ3JTk5JUQ3JTlCJUQ3JUE4JUQ3JTk1JUQ3JTlG", "JUQ3JTk2JUQ3JTk5JUQ3JTlFJUQ3JTk1JUQ3JTlG", "JUQ3JTk2JUQ3JTk5JUQ3JUE3JUQ3JTk0", "JUQ3JTk2JUQ3JTk5JUQ3JUFBJUQ3JTk5JUQ3JTlE", "JUQ3JTk2JUQ3JTlCJUQ3JTk1JUQ3JUFB", "JUQ3JTk2JUQ3JTlCJUQ3JTk5JUQ3JTk0", "JUQ3JTk2JUQ3JTlFJUQ3JTk5JUQ3JUE4", "JUQ3JTk2JUQ3JTlFJUQ3JUE4JUQ3JTk0", "JUQ3JTk2JUQ3JUEyJUQ3JTk2JUQ3JTk1JUQ3JUEy", "JUQ3JTk2JUQ3JUE3JUQ3JTk1JUQ3JUEz", "JUQ3JTk2JUQ3JUE3JUQ3JUEwJUQ3JTk0", "JUQ3JTk2JUQ3JUE4JUQ3JTk5JUQ3JTk2", "JUQ3JTk2JUQ3JUE4JUQ3JTk5JUQ3JTlFJUQ3JTk0", "JUQ3JTk3JUQ3JTkxJUQ3JTk1JUQ3JUE4JUQ3JTk0", "JUQ3JTk3JUQ3JTkxJUQ3JTk5JUQ3JTkx", "JUQ3JTk3JUQ3JTkxJUQ3JTk5JUQ3JUFB", "JUQ3JTk3JUQ3JTkxJUQ3JUE2JUQ3JTlDJUQ3JUFB", "JUQ3JTk3JUQ3JTkxJUQ3JUE4JUQ3JTk0", "JUQ3JTk3JUQ3JTkyJUQ3JTk1JUQ3JUE4JUQ3JTk0", "JUQ3JTk3JUQ3JTkzJUQ3JTk1JUQ3JTk0", "JUQ3JTk3JUQ3JTkzJUQ3JUE5JUQ3JTk1JUQ3JUFB", "JUQ3JTk3JUQ3JTk1JUQ3JTkxJUQ3JTk0", "JUQ3JTk3JUQ3JTk1JUQ3JTk2JUQ3JTk0", "JUQ3JTk3JUQ3JTk1JUQ3JTlDJUQ3JTk0", "JUQ3JTk3JUQ3JTk1JUQ3JTlDJUQ3JUE2JUQ3JTk0", "JUQ3JTk3JUQ3JTk1JUQ3JTlFJUQ3JTk0", "JUQ3JTk3JUQ3JTk1JUQ3JTlFJUQ3JUE4", "JUQ3JTk3JUQ3JTk1JUQ3JUE0JUQ3JUE5", "JUQ3JTk3JUQ3JTk1JUQ3JUE3JUQ3JUE4", "JUQ3JTk3JUQ3JTk1JUQ3JUE4JUQ3JUEz", "JUQ3JTk3JUQ3JTk1JUQ3JUE5JUQ3JTlB", "JUQ3JTk3JUQ3JTk1JUQ3JUFBJUQ3JTlE", "JUQ3JTk3JUQ3JTk2JUQ3JTk5JUQ3JUE4", "JUQ3JTk3JUQ3JTk2JUQ3JUE4JUQ3JTk0", "JUQ3JTk3JUQ3JTk5JUQ3JTkxJUQ3JTk0", "JUQ3JTk3JUQ3JTk5JUQ3JTkzJUQ3JTk0", "JUQ3JTk3JUQ3JTk5JUQ3JTk1JUQ3JTlB", "JUQ3JTk3JUQ3JTk5JUQ3JTk4JUQ3JTk0", "JUQ3JTk3JUQ3JTk5JUQ3JTk5JUQ3JTlE", "JUQ3JTk3JUQ3JTk5JUQ3JTlCJUQ3JTk0", "JUQ3JTk3JUQ3JTk5JUQ3JTlDJUQ3JTk1JUQ3JUEz", "JUQ3JTk3JUQ3JTk5JUQ3JUEwJUQ3JTlE", "JUQ3JTk3JUQ3JTk5JUQ3JUE0JUQ3JTk0", "JUQ3JTk3JUQ3JTk5JUQ3JUE0JUQ3JTk1JUQ3JUE5", "JUQ3JTk3JUQ3JTk5JUQ3JUE4JUQ3JTk1JUQ3JUFB", "JUQ3JTk3JUQ3JTlCJUQ3JTlFJUQ3JTk0", "JUQ3JTk3JUQ3JTlDJUQ3JTk1JUQ3JUE3", "JUQ3JTk3JUQ3JTlDJUQ3JTk1JUQ3JTlE", "JUQ3JTk3JUQ3JTlDJUQ3JTk1JUQ3JUEz", "JUQ3JTk3JUQ3JTlDJUQ3JTk5JUQ3JTlD", "JUQ3JTk3JUQ3JTlDJUQ3JUE3JUQ3JTk0", "JUQ3JTk3JUQ3JTlFJUQ3JTkwJUQ3JTk0", "JUQ3JTk3JUQ3JTlFJUQ3JTk1JUQ3JUE1", "JUQ3JTk3JUQ3JTlFJUQ3JTk1JUQ3JUE4", "JUQ3JTk3JUQ3JTlFJUQ3JTlDJUQ3JTk0", "JUQ3JTk3JUQ3JTlFJUQ3JUE2JUQ3JTlG", "JUQ3JTk3JUQ3JUEwJUQ3JTk5JUQ3JTk0", "JUQ3JTk3JUQ3JUEwJUQ3JTk5JUQ3JUFB", "JUQ3JTk3JUQ3JUEwJUQ3JTlCJUQ3JTk0", "JUQ3JTk3JUQ3JUExJUQ3JTk5JUQ3JTkz", "JUQ3JTk3JUQ3JUE0JUQ3JTk5JUQ3JUE4JUQ3JTk0", "JUQ3JTk3JUQ3JUE2JUQ3JTk1JUQ3JUE2JUQ3JUE4JUQ3JTk0", "JUQ3JTk3JUQ3JUE3JUQ3JTlDJUQ3JTkwJUQ3JTk5", "JUQ3JTk3JUQ3JUE4JUQ3JTkzJUQ3JTk0", "JUQ3JTk3JUQ3JUE4JUQ3JTk5JUQ3JUEz", "JUQ3JTk3JUQ3JUE4JUQ3JTlFJUQ3JTk1JUQ3JTlG", "JUQ3JTk3JUQ3JUE4JUQ3JUE2JUQ3JTk5JUQ3JUFB", "JUQ3JTk3JUQ3JUE5JUQ3JTkxJUQ3JTk1JUQ3JTlG", "JUQ3JTk3JUQ3JUE5JUQ3JTlFJUQ3JTlD", "JUQ3JTk3JUQ3JUFBJUQ3JTk1JUQ3JTlD", "JUQ3JTk3JUQ3JUFBJUQ3JTk1JUQ3JUEwJUQ3JTk0", "JUQ3JTk4JUQ3JTkxJUQ3JTlDJUQ3JTk0", "JUQ3JTk4JUQ3JTk0JUQ3JTk1JUQ3JUE4", "JUQ3JTk4JUQ3JTk1JUQ3JTkxJUQ3JTk0", "JUQ3JTk4JUQ3JTk1JUQ3JTk1JUQ3JUEx", "JUQ3JTk4JUQ3JTk3JUQ3JTk5JUQ3JUEwJUQ3JTk0", "JUQ3JTk4JUQ3JTk5JUQ3JTk1JUQ3JTlD", "JUQ3JTk4JUQ3JTk5JUQ3JUE4JUQ3JTk0", "JUQ3JTk4JUQ3JTlDJUQ3JTk5JUQ3JUFB", "JUQ3JTk4JUQ3JTlFJUQ3JTk5JUQ3JUE4", "JUQ3JTk4JUQ3JUEyJUQ3JTk1JUQ3JUFB", "JUQ3JTk4JUQ3JUEyJUQ3JUEwJUQ3JTk0"
+
+       
+        ];
+
+        let currentWord = '';
+        let guessedWord = [];
+        let guessedLetters = [];
+        let moves = 0;
+        let startTime;
+        let timerInterval;
+        let hintsUsed = 0;
+        let gameEnded = false;
+
+        function encrypt(text) {
+            return btoa(encodeURIComponent(text));
+        }
+
+        function decrypt(encryptedText) {
+            return decodeURIComponent(atob(encryptedText));
+        }
+
+        function startNewGame() {
+            const randomIndex = Math.floor(Math.random() * encryptedWords.length);
+            currentWord = decrypt(encryptedWords[randomIndex]);
+            guessedWord = Array(currentWord.length).fill('_');
+            guessedLetters = [];
+            moves = 0;
+            hintsUsed = 0;
+            gameEnded = false;
+            updateDisplay();
+            document.getElementById('wordInfo').textContent = `מספר האותיות במילה: ${currentWord.length}`;
+            document.getElementById('guessInput').value = '';
+            document.getElementById('guessInput').focus();
+            document.getElementById('message').textContent = '';
+            document.getElementById('moves').textContent = 'מהלכים: 0';
+            document.getElementById('timer').textContent = 'זמן: 0 שניות';
+            clearInterval(timerInterval);
+            startTime = null;
+        }
+
+        function updateDisplay() {
+            document.getElementById('wordDisplay').textContent = guessedWord.join(' ');
+            document.getElementById('guessedLetters').textContent = `אותיות שניחשתם כבר: ${guessedLetters.join(', ')}`;
+            document.getElementById('moves').textContent = `מהלכים: ${moves} `;
+        }
+
+        function checkGuess(letter) {
+            if (gameEnded) {
+                const message = 'המשחק הסתיים. נא להתחיל משחק חדש.';
+                document.getElementById('message').textContent = message;
+                alert(message);
+                return;
+            }
+
+            if (!startTime) {
+                startTime = new Date();
+                startTimer();
+            }
+            
+            if (guessedLetters.includes(letter)) {
+                const message = 'כבר ניחשת את האות הזו';
+                document.getElementById('message').textContent = message;
+                alert(message);
+                return;
+            }
+            
+            moves++;
+            guessedLetters.push(letter);
+            
+            let correctGuess = false;
+            for (let i = 0; i < currentWord.length; i++) {
+                if (currentWord[i] === letter) {
+                    guessedWord[i] = letter;
+                    correctGuess = true;
+                }
+            }
+            
+            updateDisplay();
+            
+            if (guessedWord.join('') === currentWord) {
+                endGame(true);
+            }
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                const currentTime = new Date();
+                const elapsedTime = Math.floor((currentTime - startTime) / 1000); // זמן בשניות שלמות
+                document.getElementById('timer').textContent = `זמן: ${formatTime(elapsedTime)}`;
+            }, 1000);
+        }
+
+        function formatTime(seconds) {
+            if (seconds < 60) {
+                return `${seconds} שניות`;
+            } else {
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = seconds % 60;
+                return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+            }
+        }
+
+        function endGame(won) {
+            clearInterval(timerInterval);
+            const endTime = new Date();
+            const totalTime = Math.floor((endTime - startTime) / 1000); // זמן בשניות שלמות
+            if (won) {
+                const timeString = formatTime(totalTime);
+                const message = `ניצחת! המילה היא: ${currentWord}. הצלחת לנחש ב-${moves} ניסיונות וב-${timeString}.`;
+                document.getElementById('message').textContent = message;
+                alert(message);
+                updateScoreTable(totalTime, moves, currentWord.length);
+                gameEnded = true;
+            }
+        }
+
+        function updateScoreTable(time, moves, wordLength) {
+            const table = document.getElementById('scoreTable').getElementsByTagName('tbody')[0];
+            const newRow = table.insertRow(0);
+            newRow.insertCell(0).textContent = formatTime(time);
+            newRow.insertCell(1).textContent = moves;
+            newRow.insertCell(2).textContent = wordLength;
+            
+            if (table.rows.length > 20) {
+                table.deleteRow(-1);
+            }
+            
+            saveScoreToLocalStorage();
+        }
+
+        function saveScoreToLocalStorage() {
+            const table = document.getElementById('scoreTable').getElementsByTagName('tbody')[0];
+            const scores = [];
+            for (let i = 0; i < table.rows.length; i++) {
+                scores.push({
+                    time: table.rows[i].cells[0].textContent,
+                    moves: table.rows[i].cells[1].textContent,
+                    wordLength: table.rows[i].cells[2].textContent
+                });
+            }
+            localStorage.setItem('wordGameScores', JSON.stringify(scores));
+        }
+
+        function loadScoresFromLocalStorage() {
+            const scores = JSON.parse(localStorage.getItem('wordGameScores')) || [];
+            const table = document.getElementById('scoreTable').getElementsByTagName('tbody')[0];
+            scores.forEach(score => {
+                const newRow = table.insertRow(-1);
+                newRow.insertCell(0).textContent = score.time;
+                newRow.insertCell(1).textContent = score.moves;
+                newRow.insertCell(2).textContent = score.wordLength;
+            });
+        }
+
+        function sortTable(n) {
+            const table = document.getElementById('scoreTable');
+            let rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+            switching = true;
+            dir = 'asc';
+            while (switching) {
+                switching = false;
+                rows = table.rows;
+                for (i = 1; i < (rows.length - 1); i++) {
+                    shouldSwitch = false;
+                    x = rows[i].getElementsByTagName('TD')[n];
+                    y = rows[i + 1].getElementsByTagName('TD')[n];
+                    if (dir == 'asc') {
+                        if (compareTime(x.innerHTML, y.innerHTML) > 0) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir == 'desc') {
+                        if (compareTime(x.innerHTML, y.innerHTML) < 0) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                }
+                if (shouldSwitch) {
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                    switchcount++;
+                } else {
+                    if (switchcount == 0 && dir == 'asc') {
+                        dir = 'desc';
+                        switching = true;
+                    }
+                }
+            }
+        }
+
+        function compareTime(time1, time2) {
+            const seconds1 = timeToSeconds(time1);
+            const seconds2 = timeToSeconds(time2);
+            return seconds1 - seconds2;
+        }
+
+        function timeToSeconds(time) {
+            if (time.includes(':')) {
+                const [minutes, seconds] = time.split(':').map(Number);
+                return minutes * 60 + seconds;
+            } else {
+                return parseInt(time);
+            }
+        }
+
+        function giveHint() {
+            if (gameEnded) {
+                alert('המשחק הסתיים. יש להתחיל משחק חדש.');
+                return;
+            }
+            if (currentWord === '') {
+                alert('יש להתחיל משחק חדש תחילה.');
+                return;
+            }
+            if (hintsUsed >= 2) {
+                alert('אין אפשרות לקבל יותר משני רמזים.');
+                return;
+            }
+            let unrevealedCount = guessedWord.filter(letter => letter === '_').length;
+            if (unrevealedCount === 1) {
+                alert('לא ניתן לתת רמז לאות אחרונה.');
+                return;
+            }
+				
+            if (confirm('רמז ייחשב כעוד מהלך. האם אתה בטוח שאתה רוצה רמז?')) {
+                if (!startTime) {
+                    startTime = new Date();
+                    startTimer();
+                }
+                let unrevealedIndices = [];
+                for (let i = 0; i < currentWord.length; i++) {
+                    if (guessedWord[i] === '_') {
+                        unrevealedIndices.push(i);
+                    }
+                }
+                if (unrevealedIndices.length > 0) {
+                    const randomIndex = unrevealedIndices[Math.floor(Math.random() * unrevealedIndices.length)];
+                    guessedWord[randomIndex] = currentWord[randomIndex];
+                    moves++;
+                    hintsUsed++;
+                    updateDisplay();
+                } else {
+                    alert('כל האותיות כבר התגלו!');
+                }
+            }
+        }
+
+        document.getElementById('newGameButton').addEventListener('click', startNewGame);
+        document.getElementById('guessInput').addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                const guess = this.value.trim();
+                if (guess && /^[\u0590-\u05FF]$/.test(guess)) {
+                    checkGuess(guess);
+                    this.value = '';
+                } else {
+                    alert('נא להזין אות בעברית בלבד');
+                    this.value = '';
+                }
+            }
+        });
+        document.getElementById('hintButton').addEventListener('click', giveHint);
+        document.getElementById('clearDataButton').addEventListener('click', function() {
+            if (confirm('האם אתם בטוחים שתרצו למחוק את כל הנתונים מהטבלה? פעולה זו בלתי הפיכה.')) {
+                localStorage.removeItem('wordGameScores');
+                document.getElementById('scoreTable').getElementsByTagName('tbody')[0].innerHTML = '';
+                location.reload();
+            }
+        });
+
+        window.onload = function() {
+            loadScoresFromLocalStorage();
+            startNewGame();
+        };
+    </script>
+</body>
+</html>				
+
+
+
+
+
+
+
+
+				
