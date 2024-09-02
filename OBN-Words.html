@@ -427,35 +427,15 @@ function convertTimeToSeconds(timeStr) {
 }
 
 
-
-
-
-
 // מחיקת נתוני טבלה
 function clearTableData() {
   if (confirm("האם אתה בטוח שברצונך למחוק את כל נתוני הטבלה?")) {
     localStorage.removeItem('wordGameScores');
 	updateScoresTable();
+	window.location.href = window.location.href;	// טעינת הדף לאחר מחיקת נתונים
   }
 }
-
 document.getElementById('clearDataBtn').addEventListener('click', clearTableData);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     </script>
