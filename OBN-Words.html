@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <head>
     <title>ניחוש מילים</title>
     <style>
@@ -13,7 +14,12 @@
             padding: 20px;
             border: 1px solid #ccc;
             border-radius: 10px;
+			overflow-x: auto;
+			max-width: 100%;			
         }
+		
+
+		
         #word-display {
             font-size: 2em;
             margin-bottom: 20px;
@@ -22,13 +28,18 @@
         }
         #guesses-list {
             list-style: none;
-            padding: 0;
             display: flex;
             flex-wrap: wrap;
             margin-top: 10px;
             text-align: center;			
             font-size: 24px;
+            color: #f00;			
             align-items: center;			
+            width: 95%;
+            margin: 0 auto;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 10px;			
         }
         #guesses-list li {
             margin-right: 5px;
@@ -37,12 +48,19 @@
         #new-game-button, #hint-button, #clearDataBtn {
             margin-top: 20px;
             padding: 10px 20px;
-            font-size: 16px;
+            font-size: 20px;
             background-color: #4CAF50;
             color: white;
             border: none;
             cursor: pointer;
         }
+		
+		#guess {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+		}
+		
         #hint-button {
             background-color: #2196F3;
         }
@@ -85,6 +103,7 @@
         <br><br>
 		<button id="new-game-button">משחק חדש</button>
         <button id="hint-button">רמז?</button>
+		<h4> רשימת אותיות שניחשת:</h4>
         <ul id="guesses-list"></ul>
         <p>מספר הניחושים: <span id="guess-count">0</span></p>
         <p>זמן: <span id="timer">00:00</span></p>
