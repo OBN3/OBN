@@ -49,34 +49,6 @@
             padding: 15px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-
-        .summary {
-            margin-top: 20px;
-            font-weight: bold;
-            text-align: center;
-            background-color: white;
-            border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);			
-        }
-		
-		
-		.OBN_Charts {
-            margin-top: 20px;
-			margin: 20px auto;			
-            font-weight: bold;
-            text-align: center;
-            background-color: white;
-            border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-			width: 100%;			
-            max-width: 400px;	
-            justify-content: center;
-            display: flex;
-            flex-direction: column;			
-		}
-		
         .expense-item {
             border-bottom: 1px solid #eee;
             padding: 10px 0;
@@ -92,10 +64,17 @@
             padding: 5px 10px;
             font-size: 12px;
         }
-
+        .summary {
+            margin-top: 20px;
+            font-weight: bold;
+            text-align: center;
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);			
+        }
         .file-input {
             display: none;
-            justify-content: center;			
         }
         .file-label {
             display: inline-block;
@@ -126,70 +105,135 @@
             margin-top: 10px;
             font-weight: bold;
         }
+        .screen {
+            display: none;
+        }
+        .screen.active {
+            display: block;
+        }
+        .nav-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .nav-button:hover {
+            background-color: #45a049;
+        }
+        .import-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .import-container button,
+        .import-container .file-label {
+            width: auto;
+            min-width: 270px;
+            margin: 5px 0;
+        }
+        .chart-wrapper {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+		
+		
+		.file-input {
+			display: none;
+		}
+		.import-container button {
+			width: auto;
+			min-width: 270px;
+			margin: 5px 0;
+		}
 
-    .import-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin-top: 20px;
-    }
-    .import-container button,
-    .import-container .file-label {
-        width: auto;
-        min-width: 200px;
-        margin: 5px 0;
-    }		
+		.OBN_Charts {
+            margin-top: 20px;
+			margin: 20px auto;			
+            font-weight: bold;
+            text-align: center;
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+			width: 100%;			
+            max-width: 400px;	
+            justify-content: center;
+            display: flex;
+            flex-direction: column;			
+		}
 		
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>ניהול הוצאות משותף</h1>
-        
-        <div id="userSetup">
-            <h2>הגדרת משתמשים</h2>
-            <label for="userName">משתמש ראשי:</label>
-            <input type="text" id="userName" placeholder="השם שלך">
-            <label for="partnerName">משתמש שני (שותף):</label>
-            <input type="text" id="partnerName" placeholder="שם השותף">
-            <button onclick="setUserNames()">שמור שמות</button>
+        <div id="mainScreen" class="screen active">
+            <h1>ניהול הוצאות משותף</h1>
+            
+            <div id="userSetup">
+                <h2>הגדרת משתמשים</h2>
+                <p>הגדירו את משתמשי המערכת, אם טרם הוגדרו:</p>				
+                <label for="userName">משתמש ראשי:</label>
+                <input type="text" id="userName" placeholder="השם שלך">
+                <label for="partnerName">משתמש שני (שותף):</label>
+                <input type="text" id="partnerName" placeholder="שם השותף">
+                <button onclick="setUserNames()">שמור משתמשי מערכת</button>
+            </div>
+            
+            <label for="date">תאריך ההוצאה:</label>
+            <input type="date" id="date">
+            <label for="description">תיאור ההוצאה:</label>
+            <input type="text" id="description" placeholder="תיאור ההוצאה">
+            <label for="amount">סכום:</label>
+            <input type="number" id="amount" placeholder="סכום">
+            <label for="paidBy">שולם על ידי:</label>
+            <select id="paidBy"></select>
+            <label for="splitType">אופן החלוקה:</label>
+            <select id="splitType">
+                <option value="equal">חלוקה שווה</option>
+                <option value="full">המשלם שילם את מלוא הסכום</option>
+            </select>
+            <label for="category">קטגוריית הוצאה:</label>
+            <select id="category">
+                <option value="">בחר קטגוריה</option>
+                <option value="מזון">מזון</option>
+                <option value="מסעדה">מסעדה</option>
+                <option value="בידור">בידור</option>
+                <option value="נופש">נופש</option>
+                <option value="שונות">שונות</option>
+            </select>
+            <button onclick="addExpense()">הוסף הוצאה לרשימה</button>
+            
+            <div class="import-container">
+                <button onclick="exportData()">ייצא נתונים לגיבוי (JSON)</button>
+                <button onclick="exportToCSV()">ייצא נתונים לקובץ אקסל (CSV)</button>
+
+				<button onclick="triggerFileInput()">טען קובץ JSON לייבוא נתונים למערכת</button>
+				<input type="file" id="fileInput" class="file-input" onchange="importData(event)" accept="application/json">
+</div>
+			
+				
+            </div>
+            
+            <div id="summary" class="summary"></div>
+            
+            <button class="nav-button" onclick="showExpenseList()">הצג עמוד פירוט ועריכת ההוצאות</button>
+            
+            <div id="charts" class="OBN_Charts"></div>
+			
         </div>
-        
-        <label for="date">תאריך ההוצאה:</label>
-        <input type="date" id="date">
-        <label for="description">תיאור ההוצאה, מיקום:</label>
-        <input type="text" id="description" placeholder="תיאור ההוצאה">
-        <label for="amount">סכום ההוצאה:</label>
-        <input type="number" id="amount" placeholder="סכום">
-        <label for="paidBy">שולם על ידי:</label>
-        <select id="paidBy"></select>
-        <label for="splitType">אופן החלוקה:</label>
-        <select id="splitType">
-            <option value="equal">חלוקה שווה</option>
-            <option value="full">המשלם שילם את מלוא הסכום</option>
-        </select>
-        <label for="category">קטגוריה:</label>
-        <select id="category">
-            <option value="">בחר קטגוריה</option>
-            <option value="מזון">מזון</option>
-            <option value="מסעדה">מסעדה</option>
-            <option value="בידור">בידור</option>
-            <option value="נופש">נופש</option>
-            <option value="שונות">שונות</option>
-        </select>
-        <button onclick="addExpense()">הוסף הוצאה</button>
-        <button onclick="exportData()">ייצא נתונים לגיבוי או לאפליקציה שניה (JSON)</button>
-        <button onclick="exportToCSV()">ייצא נתונים לאקסל (CSV)</button>
-		
-		<div class="import-container">
-		<label for="fileInput" class="file-label">טען קובץ נתונים</label>
-		<input type="file" id="fileInput" class="file-input" onchange="importData(event)" accept="application/json">
-		</div>
-		
-		
-        <div id="expenseList" class="expense-list"></div>
-        <div id="summary" class="summary"></div>
-        
+
+        <div id="expenseListScreen" class="screen">
+            <h1>פירוט הוצאות</h1>
+            <div id="expenseList" class="expense-list"></div>
+            <button class="nav-button" onclick="showMainScreen()">חזרה למסך הראשי</button>
+        </div>
+
         <div id="editExpenseForm">
             <h3>עריכת הוצאה</h3>
             <input type="hidden" id="editExpenseId">
@@ -218,20 +262,18 @@
             <button onclick="saveEditedExpense()">שמור שינויים</button>
             <button onclick="cancelEdit()">ביטול</button>
         </div>
-
-        <div id="charts" class="OBN_Charts"></div>
     </div>
 
     <script>
-        let expenses = [];
-        let users = { user: "", partner: "" };
+        let obn_expenses = [];
+        let obn_users = { user: "", partner: "" };
         let charts = {};
 
         function setUserNames() {
             const userName = document.getElementById('userName').value;
             const partnerName = document.getElementById('partnerName').value;
             if (userName && partnerName) {
-                users = { user: userName, partner: partnerName };
+                obn_users = { user: userName, partner: partnerName };
                 updatePaidByOptions();
                 updatePaidByOptions('editPaidBy');
                 saveToLocalStorage();
@@ -245,8 +287,8 @@
         function updatePaidByOptions(selectId = 'paidBy') {
             const paidBySelect = document.getElementById(selectId);
             paidBySelect.innerHTML = `
-                <option value="${users.user}">${users.user} (משתמש ראשי)</option>
-                <option value="${users.partner}">${users.partner} (משתמש שני)</option>
+                <option value="${obn_users.user}">${obn_users.user} (משתמש ראשי)</option>
+                <option value="${obn_users.partner}">${obn_users.partner} (משתמש שני)</option>
             `;
         }
 
@@ -259,7 +301,7 @@
             const category = document.getElementById('category').value;
 
             if (date && description && amount && !isNaN(amount)) {
-                expenses.push({
+                obn_expenses.push({
                     date,
                     description,
                     amount,
@@ -280,7 +322,7 @@
             document.getElementById('date').value = '';
             document.getElementById('description').value = '';
             document.getElementById('amount').value = '';
-            document.getElementById('paidBy').value = users.user;
+            document.getElementById('paidBy').value = obn_users.user;
             document.getElementById('splitType').value = 'equal';
             document.getElementById('category').value = '';
         }
@@ -289,7 +331,7 @@
             const listElement = document.getElementById('expenseList');
             listElement.innerHTML = '<h2>רשימת הוצאות</h2>';
             
-            expenses.forEach((expense, index) => {
+            obn_expenses.forEach((expense, index) => {
                 const item = document.createElement('div');
                 item.className = 'expense-item';
                 item.innerHTML = `
@@ -317,8 +359,8 @@
             let userShare = 0;
             let partnerShare = 0;
 
-            expenses.forEach(expense => {
-                if (expense.paidBy === users.user) {
+            obn_expenses.forEach(expense => {
+                if (expense.paidBy === obn_users.user) {
                     totalPaidByUser += expense.amount;
                     if (expense.splitType === 'equal') {
                         userShare += expense.amount / 2;
@@ -340,16 +382,16 @@
             const balance = totalPaidByUser - userShare;
 
             summary.innerHTML = `
-                <p>סה"כ ${users.user} שילם: ₪${totalPaidByUser.toFixed(2)}</p>
-                <p>סה"כ ${users.partner} שילם: ₪${totalPaidByPartner.toFixed(2)}</p>
-                <p>החלק של ${users.user}: ₪${userShare.toFixed(2)}</p>
-                <p>החלק של ${users.partner}: ₪${partnerShare.toFixed(2)}</p>
-                <p>מאזן: ${balance > 0 ? `${users.partner} חייב ל${users.user}` : `${users.user} חייב ל${users.partner}`} ₪${Math.abs(balance).toFixed(2)}</p>
+                <p>סה"כ ${obn_users.user} שילם: ₪${totalPaidByUser.toFixed(2)}</p>
+                <p>סה"כ ${obn_users.partner} שילם: ₪${totalPaidByPartner.toFixed(2)}</p>
+                <p>החלק של ${obn_users.user}: ₪${userShare.toFixed(2)}</p>
+                <p>החלק של ${obn_users.partner}: ₪${partnerShare.toFixed(2)}</p>
+                <p>מאזן: ${balance > 0 ? `${obn_users.partner} חייב ל${obn_users.user}` : `${obn_users.user} חייב ל${obn_users.partner}`} ₪${Math.abs(balance).toFixed(2)}</p>
             `;
         }
 
         function editExpense(index) {
-            const expense = expenses[index];
+            const expense = obn_expenses[index];
             document.getElementById('editExpenseId').value = index;
             document.getElementById('editDate').value = expense.date;
             document.getElementById('editDescription').value = expense.description;
@@ -363,9 +405,10 @@
             document.getElementById('editExpenseForm').scrollIntoView({ behavior: 'smooth' });
         }
 
+
         function saveEditedExpense() {
             const index = document.getElementById('editExpenseId').value;
-            expenses[index] = {
+            obn_expenses[index] = {
                 date: document.getElementById('editDate').value,
                 description: document.getElementById('editDescription').value,
                 amount: parseFloat(document.getElementById('editAmount').value),
@@ -386,7 +429,7 @@
 
         function deleteExpense(index) {
             if (confirm('האם אתה בטוח שברצונך למחוק הוצאה זו?')) {
-                expenses.splice(index, 1);
+                obn_expenses.splice(index, 1);
                 saveToLocalStorage();
                 displayExpenses();
                 updateCharts();
@@ -394,23 +437,20 @@
         }
 
         function saveToLocalStorage() {
-            localStorage.setItem('expenses', JSON.stringify(expenses));
-            localStorage.setItem('users', JSON.stringify({
-                user: document.getElementById('userName').value,
-                partner: document.getElementById('partnerName').value
-            }));
+            localStorage.setItem('obn_expenses', JSON.stringify(obn_expenses));
+            localStorage.setItem('obn_users', JSON.stringify(obn_users));
         }
 
         function loadFromLocalStorage() {
-            const storedExpenses = localStorage.getItem('expenses');
-            const storedUsers = localStorage.getItem('users');
+            const storedExpenses = localStorage.getItem('obn_expenses');
+            const storedUsers = localStorage.getItem('obn_users');
             if (storedExpenses) {
-                expenses = JSON.parse(storedExpenses);
+                obn_expenses = JSON.parse(storedExpenses);
             }
             if (storedUsers) {
-                users = JSON.parse(storedUsers);
-                document.getElementById('userName').value = users.user || '';
-                document.getElementById('partnerName').value = users.partner || '';
+                obn_users = JSON.parse(storedUsers);
+                document.getElementById('userName').value = obn_users.user || '';
+                document.getElementById('partnerName').value = obn_users.partner || '';
             }
             updatePaidByOptions();
             updatePaidByOptions('editPaidBy');
@@ -420,8 +460,8 @@
 
         function exportData() {
             const dataToExport = { 
-                expenses,
-                users 
+                obn_expenses,
+                obn_users 
             };
             const dataStr = JSON.stringify(dataToExport, null, 2);
             const blob = new Blob([dataStr], { type: 'application/json' });
@@ -438,7 +478,7 @@
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
             csvContent += "תאריך,תיאור,סכום,שולם על ידי,אופן החלוקה,קטגוריה\n";
             
-            expenses.forEach(expense => {
+            obn_expenses.forEach(expense => {
                 const row = [
                     expense.date,
                     expense.description,
@@ -453,49 +493,60 @@
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "expenses.csv");
+            link.setAttribute("download", "obn_expenses.csv");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         }
 
-        function importData(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const importedData = JSON.parse(e.target.result);
-                        if (importedData.expenses && importedData.users) {
-                            users = importedData.users;
-                            expenses = importedData.expenses;
-                            document.getElementById('userName').value = users.user;
-                            document.getElementById('partnerName').value = users.partner;
-                            updatePaidByOptions();
-                            updatePaidByOptions('editPaidBy');
-                            saveToLocalStorage();
-                            displayExpenses();
-                            updateCharts();
-                            alert('הנתונים יובאו בהצלחה');
-                        } else {
-                            throw new Error('מבנה הקובץ אינו תקין');
-                        }
-                    } catch (error) {
-                        alert('שגיאה בטעינת הקובץ. אנא ודא שזהו קובץ JSON תקין.');
-                    }
-                };
-                reader.readAsText(file);
+ function importData(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                if (importedData.obn_expenses && importedData.obn_users) {
+                    obn_users = importedData.obn_users;
+                    obn_expenses = importedData.obn_expenses;
+                    document.getElementById('userName').value = obn_users.user;
+                    document.getElementById('partnerName').value = obn_users.partner;
+                    updatePaidByOptions();
+                    updatePaidByOptions('editPaidBy');
+                    saveToLocalStorage();
+                    displayExpenses();
+                    updateCharts();
+                    alert('הנתונים יובאו בהצלחה');
+                } else {
+                    throw new Error('מבנה הקובץ אינו תקין');
+                }
+            } catch (error) {
+                alert('שגיאה בטעינת הקובץ. אנא ודא שזהו קובץ JSON תקין.');
             }
-        }
+        };
+        reader.readAsText(file);
+    } else {
+        // המשתמש ביטל את בחירת הקובץ
+        console.log('ייבוא הנתונים בוטל על ידי המשתמש');
+    }
+    // איפוס שדה הקלט כדי לאפשר בחירת אותו קובץ שוב
+    event.target.value = '';
+}
+
+function triggerFileInput() {
+    if (confirm("תוכל לייבא נתונים מקובץ JSON ששמרת לגיבוי, אך שים לב כי הוא ידרוס את הנתונים הקיימים. להמשיך?")) {
+        document.getElementById('fileInput').click();
+    }
+}
 
         function updateCharts() {
             const chartsContainer = document.getElementById('charts');
             chartsContainer.innerHTML = '';
 
-            const months = [...new Set(expenses.map(expense => expense.date.substring(0, 7)))].sort();
+            const months = [...new Set(obn_expenses.map(expense => expense.date.substring(0, 7)))].sort();
 
             months.forEach(month => {
-                const monthExpenses = expenses.filter(expense => expense.date.startsWith(month));
+                const monthExpenses = obn_expenses.filter(expense => expense.date.startsWith(month));
                 const categoryExpenses = {};
 
                 monthExpenses.forEach(expense => {
@@ -506,9 +557,12 @@
                     categoryExpenses[category] += expense.amount;
                 });
 
+                const chartWrapper = document.createElement('div');
+                chartWrapper.className = 'chart-wrapper';
                 const chartCanvas = document.createElement('canvas');
                 chartCanvas.id = `chart-${month}`;
-                chartsContainer.appendChild(chartCanvas);
+                chartWrapper.appendChild(chartCanvas);
+                chartsContainer.appendChild(chartWrapper);
 
                 const ctx = chartCanvas.getContext('2d');
                 const labels = Object.keys(categoryExpenses);
@@ -532,13 +586,14 @@
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: false,
                         plugins: {
                             legend: {
                                 position: 'top',
                             },
                             title: {
                                 display: true,
-                                text: `הוצאות לפי קטגוריות לחודש ${month}`
+                                text: `הוצאות לפי קטגוריות - ${month}`
                             }
                         }
                     }
@@ -546,34 +601,41 @@
             });
         }
 
+        function showExpenseList() {
+            document.getElementById('mainScreen').classList.remove('active');
+            document.getElementById('expenseListScreen').classList.add('active');
+            displayExpenses();			
+
+			scrollToBottom()		
+		
+        }
+
+        function showMainScreen() {
+            document.getElementById('expenseListScreen').classList.remove('active');
+            document.getElementById('mainScreen').classList.add('active');
+            updateSummary();
+            updateCharts();
+			
+			scrollToTop()
+			
+        }
+
         // טען נתונים בעת טעינת הדף
         loadFromLocalStorage();
+        updateSummary();
+        updateCharts();
+		
+		
+		function scrollToTop() {
+		window.scrollTo({top: 0, behavior: 'smooth'});
+		}
+		
+		function scrollToBottom() {
+		window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'smooth'});
+		}
+		
     </script>
 </body>
-</html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-				
+</html>			
+			
+			
