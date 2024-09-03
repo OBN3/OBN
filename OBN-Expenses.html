@@ -167,7 +167,18 @@
             display: flex;
             flex-direction: column;			
 		}
-		
+		  
+		input.readonly {
+			background-color: #f0f0f0;
+			color: #666;
+			cursor: not-allowed;
+		}
+	
+	        .OBN_Class {
+            font-weight: bold;
+            text-align: center;
+        }
+	
     </style>
 </head>
 <body>
@@ -176,13 +187,15 @@
             <h1>ניהול הוצאות משותף</h1>
             
             <div id="userSetup">
-                <h2>הגדרת משתמשים</h2>
-                <p>הגדירו את משתמשי המערכת, אם טרם הוגדרו:</p>				
+                <h2>משתמשי המערכת</h2>
+
+				<p id="userSetupInstructions">הגדירו את משתמשי המערכת, אם טרם הוגדרו:</p>
                 <label for="userName">משתמש ראשי:</label>
                 <input type="text" id="userName" placeholder="השם שלך">
                 <label for="partnerName">משתמש שני (שותף):</label>
                 <input type="text" id="partnerName" placeholder="שם השותף">
-                <button onclick="setUserNames()">שמור משתמשי מערכת</button>
+				<button id="setUserNamesButton" onclick="setUserNames()">שמור משתמשי מערכת</button>
+				<button id="editUserNamesButton" onclick="enableUserNameEditing()" style="display: none;">ערוך שמות</button>
             </div>
             
             <label for="date">תאריך ההוצאה:</label>
@@ -201,6 +214,7 @@
             <label for="category">קטגוריית הוצאה:</label>
             <select id="category">
                 <option value="">בחר קטגוריה</option>
+				<option value="מכולת">מכולת</option>
                 <option value="מזון">מזון</option>
                 <option value="מסעדה">מסעדה</option>
                 <option value="בידור">בידור</option>
@@ -217,15 +231,16 @@
 				<input type="file" id="fileInput" class="file-input" onchange="importData(event)" accept="application/json">
 </div>
 			
-				
             </div>
             
             <div id="summary" class="summary"></div>
             
             <button class="nav-button" onclick="showExpenseList()">הצג עמוד פירוט ועריכת ההוצאות</button>
-            
-            <div id="charts" class="OBN_Charts"></div>
 			
+            <div id="charts" class="OBN_Charts"></div>
+
+			<footer class="OBN_Class">Copyright OBN 2024</footer>            
+
         </div>
 
         <div id="expenseListScreen" class="screen">
@@ -253,6 +268,7 @@
             <label for="editCategory">קטגוריה:</label>
             <select id="editCategory">
                 <option value="">בחר קטגוריה</option>
+				<option value="מכולת">מכולת</option>				
                 <option value="מזון">מזון</option>
                 <option value="מסעדה">מסעדה</option>
                 <option value="בידור">בידור</option>
@@ -262,27 +278,35 @@
             <button onclick="saveEditedExpense()">שמור שינויים</button>
             <button onclick="cancelEdit()">ביטול</button>
         </div>
+		
     </div>
+
 
     <script>
         let obn_expenses = [];
         let obn_users = { user: "", partner: "" };
         let charts = {};
 
-        function setUserNames() {
-            const userName = document.getElementById('userName').value;
-            const partnerName = document.getElementById('partnerName').value;
-            if (userName && partnerName) {
-                obn_users = { user: userName, partner: partnerName };
-                updatePaidByOptions();
-                updatePaidByOptions('editPaidBy');
-                saveToLocalStorage();
-                displayExpenses();
-                alert('שמות המשתמשים נשמרו בהצלחה');
-            } else {
-                alert('נא להזין שמות לשני המשתמשים');
-            }
-        }
+		function setUserNames() {
+			const userName = document.getElementById('userName').value;
+			const partnerName = document.getElementById('partnerName').value;
+		if (userName && partnerName) {
+				obn_users = { user: userName, partner: partnerName };
+				updatePaidByOptions();
+				updatePaidByOptions('editPaidBy');
+				saveToLocalStorage();
+				displayExpenses();
+				hideSetUserNamesButton();
+				disableUserNameInputs();
+				
+				document.getElementById('editUserNamesButton').style.display = 'block';
+				document.getElementById('userSetupInstructions').style.display = 'none'; // הסתרת ההוראות
+				
+				alert('שמות המשתמשים נשמרו בהצלחה');
+			} else {
+			alert('נא להזין שמות לשני המשתמשים');
+			}
+		}
 
         function updatePaidByOptions(selectId = 'paidBy') {
             const paidBySelect = document.getElementById(selectId);
@@ -441,7 +465,7 @@
             localStorage.setItem('obn_users', JSON.stringify(obn_users));
         }
 
-        function loadFromLocalStorage() {
+        function OBN_loadFromLocalStorage() {
             const storedExpenses = localStorage.getItem('obn_expenses');
             const storedUsers = localStorage.getItem('obn_users');
             if (storedExpenses) {
@@ -457,6 +481,87 @@
             displayExpenses();
             updateCharts();
         }
+
+		function loadFromLocalStorage() {
+			const storedExpenses = localStorage.getItem('obn_expenses');
+			const storedUsers = localStorage.getItem('obn_users');
+			if (storedExpenses) {
+				obn_expenses = JSON.parse(storedExpenses);
+			}
+			if (storedUsers) {
+				obn_users = JSON.parse(storedUsers);
+				document.getElementById('userName').value = obn_users.user || '';
+				document.getElementById('partnerName').value = obn_users.partner || '';
+			}
+			updatePaidByOptions();
+			updatePaidByOptions('editPaidBy');
+			displayExpenses();
+			updateCharts();
+			
+			// בדיקה אם שני השמות קיימים
+			if (obn_users.user && obn_users.partner) {
+				hideSetUserNamesButton();
+				disableUserNameInputs();
+
+				document.getElementById('editUserNamesButton').style.display = 'block';
+				document.getElementById('userSetupInstructions').style.display = 'none'; // הסתרת ההוראות
+
+				
+			} else {
+				showSetUserNamesButton();
+				enableUserNameInputs();
+				
+				document.getElementById('editUserNamesButton').style.display = 'none';
+				document.getElementById('userSetupInstructions').style.display = 'block'; // הצגת ההוראות
+			}
+
+			 
+			if (obn_users.user && obn_users.partner) {
+				hideSetUserNamesButton();
+				disableUserNameInputs();
+				document.getElementById('editUserNamesButton').style.display = 'block';
+			} else {
+				showSetUserNamesButton();
+				enableUserNameInputs();
+				document.getElementById('editUserNamesButton').style.display = 'none';
+			}
+
+			
+		}			
+
+			function disableUserNameInputs() {
+				document.getElementById('userName').readOnly = true;
+				document.getElementById('partnerName').readOnly = true;
+				document.getElementById('userName').classList.add('readonly');
+				document.getElementById('partnerName').classList.add('readonly');
+			}
+
+			function enableUserNameInputs() {
+				document.getElementById('userName').readOnly = false;
+				document.getElementById('partnerName').readOnly = false;
+				document.getElementById('userName').classList.remove('readonly');
+				document.getElementById('partnerName').classList.remove('readonly');
+			}
+
+
+			function hideSetUserNamesButton() {
+				document.getElementById('setUserNamesButton').style.display = 'none';
+			}
+
+			function showSetUserNamesButton() {
+				document.getElementById('setUserNamesButton').style.display = 'block';
+			}
+
+
+			function enableUserNameEditing() {
+				enableUserNameInputs();
+				showSetUserNamesButton();
+				document.getElementById('editUserNamesButton').style.display = 'none';
+				
+				document.getElementById('userSetupInstructions').style.display = 'block'; // הצגת ההוראות שוב
+				
+			}
+
 
         function exportData() {
             const dataToExport = { 
