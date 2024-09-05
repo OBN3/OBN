@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>יוצר חתימה שקופה מטקסט (PNG)</title>
+    <style>
+
+        @import url('https://fonts.googleapis.com/css2?family=Alef&family=Assistant&family=Heebo&family=Rubik&family=Varela+Round&family=Amatic+SC&family=Dancing+Script&family=Indie+Flower&family=Pacifico&family=Shadows+Into+Light&family=Secular+One&family=Suez+One&family=Bellefair&family=Caveat&family=Permanent+Marker&family=Satisfy&family=Kalam&family=Rubik+Doodle+Shadow&display=swap');
+
+        body {
+            font-family: 'Heebo', sans-serif;
+            background-color: #f0f0f0;
+//            display: flex;
+//            justify-content: center;
+//            align-items: center;
+            height: 100vh;
+            margin: 0;
+            direction: rtl;
+			padding: 20px;			
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 350px;
+			max-width: 600px;
+			margin: 0 auto;			
+        }
+
+        .OBN2 {
+            background-color: white;
+            border-radius: 15px;
+            padding: 10px;
+//            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+			max-width: 100%;
+			margin: 0 auto;
+            display: flex;			
+        }		
+
+        h1 {
+            text-align: center;
+            color: #4169e1;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+
+        textarea, select {
+            width: 90%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+			text-align: center;
+        }
+
+        .radio-group {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 10px;
+        }
+
+        .radio-group label {
+            display: flex;
+            align-items: center;
+        }
+
+        canvas {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: block; /* להבטיח שהקנבס ממורכז */
+			margin-left: auto;
+			margin-right: auto;			
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+		#copyrightButton {
+			width: 100%;
+			padding: 10px;
+			background-color: #4CAF50;
+			color: white;
+			border: none;
+			border-radius: 5px;
+			font-size: 16px;
+			cursor: pointer;
+            transition: background-color 0.3s;			
+		}
+
+		#copyrightButton:hover {
+			background-color: #45a049;
+		}
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .slider-container label {
+            margin-left: 10px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+        }
+
+		.text-input-container {
+		display: flex;
+		align-items: center;
+		margin-bottom: 10px;
+		}
+
+		#textInput {
+		flex-grow: 1;
+		margin-left: 10px;
+		}
+	    .OBN_Footer {
+          text-align: center;
+		  color: #0075ff;
+        }
+	    .OBN_Description {
+			text-align: center;
+            color: #0075ff;
+            font-size: 14;
+        }		
+		
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>יוצר חתימה שקופה מטקסט</h1>
+		<div class="OBN2">
+		<textarea id="textInput" rows="1" placeholder="הקלד טקסט כאן">טקסט לדוגמה ©</textarea>		
+		</div>
+        <div class="radio-group">
+            <label>
+                <input type="radio" name="textColor" value="black" checked> טקסט שחור
+            </label>
+            <label>
+                <input type="radio" name="textColor" value="white"> טקסט לבן
+            </label>
+        </div>
+        <canvas id="textCanvas" width="350" height="100"></canvas>
+		<div class="OBN2">
+		<select id="fontSelect">
+            <option value="">בחרו סוג פונט</option>		
+            <option value="Heebo">הבו (Heebo) (עברית)</option>
+            <option value="Assistant">אסיסטנט (Assistant) (עברית)</option>
+            <option value="Rubik">רוביק (Rubik) (עברית)</option>
+            <option value="Rubik Doodle Shadow">רוביק (Rubik Doodle Shadow) (עברית)</option>			
+            <option value="Alef">אלף (Alef) (עברית)</option>
+            <option value="Varela Round">ורלה עגול (Varela Round) (עברית)</option>
+            <option value="Secular One">סקולר וואן (Secular One) (עברית)</option>
+            <option value="Suez One">סואץ וואן (Suez One) (עברית)</option>
+            <option value="Bellefair">בלפייר (Bellefair) (עברית)</option>
+            <option value="Amatic SC">Amatic SC (כתב יד) (עברית ואנגלית)</option>
+            <option value="Arial">Arial (אנגלית)</option>
+            <option value="Times New Roman">Times New Roman (אנגלית)</option>
+            <option value="Verdana">Verdana (אנגלית)</option>
+            <option value="Dancing Script">Dancing Script (כתב יד) (אנגלית)</option>
+            <option value="Caveat">Caveat (כתב יד) (אנגלית)</option>
+            <option value="Permanent Marker">Permanent Marker (כתב יד) (אנגלית)</option>
+            <option value="Satisfy">Satisfy (כתב יד) (אנגלית)</option>
+        </select>
+		</div>
+        <div class="slider-container">
+            <label for="fontSizeSlider">גודל פונט:</label>
+            <input type="range" id="fontSizeSlider" min="20" max="60" value="40">
+            <span id="fontSizeValue">40</span>
+        </div>
+		<div class="text-input-container">
+			<button id="copyrightButton" title="הוסף סימן זכויות יוצרים">הוסף סימן זכויות יוצרים לטקסט (©)</button>
+		</div>		
+        <button id="saveButton">שמור כ-PNG</button>
+		<hr>
+       <p class="OBN_Description">הסבר: 1. הקלידו בתיבה טקסט אותו תרצו להפוך לחתימה, 2. בחרו סוג וגודל פונט, 3. בחרו טקסט שחור או לבן (על רקע שקוף), 4. לחצו על שמור וקבלו קובץ חתימה. תוכלו להשתמש בו בתמונות (השתמשו באפליקציית
+		<a href="https://obn-kappa.vercel.app/OBN-SIG.html">
+	   "חתימה על תמונה" </a> שלי), או במסמכים </p>		
+		<footer class="OBN_Footer">Copyright OBN© 2024</footer>
+    </div>
+
+    <script>
+        const textInput = document.getElementById('textInput');
+        const fontSelect = document.getElementById('fontSelect');
+        const canvas = document.getElementById('textCanvas');
+        const ctx = canvas.getContext('2d');
+        const saveButton = document.getElementById('saveButton');
+        const radioButtons = document.getElementsByName('textColor');
+        const fontSizeSlider = document.getElementById('fontSizeSlider');
+        const fontSizeValue = document.getElementById('fontSizeValue');
+
+		fontSelect.addEventListener('change', () => {
+		  const selectedFont = fontSelect.value;
+		  document.fonts.load(`20px "${selectedFont}"`).then(() => {
+		  setTimeout(updateCanvas, 50);			
+			updateCanvas();
+		  });
+		});
+
+        let fontSize = 40;
+
+        function updateCanvas() {
+            const text = textInput.value;
+            const font = fontSelect.value;
+            const textColor = document.querySelector('input[name="textColor"]:checked').value;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (textColor === 'white') {
+                canvas.style.backgroundColor = '#888';
+            } else {
+                canvas.style.backgroundColor = 'white';
+            }
+
+            ctx.font = `${fontSize}px "${font}"`;
+            ctx.fillStyle = textColor;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const lines = text.split('\n');
+            const lineHeight = fontSize * 1.2;
+            const startY = canvas.height / 2 - (lines.length - 1) * lineHeight / 2;
+
+            lines.forEach((line, index) => {
+                ctx.fillText(line, canvas.width / 2, startY + index * lineHeight);
+            });
+        }
+
+        textInput.addEventListener('input', updateCanvas);
+        fontSelect.addEventListener('change', () => {
+		// טעינת הפונט לפני עדכון הקנבס
+           document.fonts.load(`${fontSize}px "${fontSelect.value}"`).then(updateCanvas);
+		
+			
+        });
+        radioButtons.forEach(radio => radio.addEventListener('change', updateCanvas));
+
+        fontSizeSlider.addEventListener('input', (e) => {
+            fontSize = parseInt(e.target.value);
+            fontSizeValue.textContent = fontSize;
+            updateCanvas();
+        });
+
+        saveButton.addEventListener('click', () => {
+		   // יצירת קנבס זמני בגודל כפול
+			const tempCanvas = document.createElement('canvas');
+			tempCanvas.width = canvas.width * 2;
+			tempCanvas.height = canvas.height * 2;
+			const tempCtx = tempCanvas.getContext('2d');
+
+			// הגדרת הרקע השקוף
+			tempCtx.fillStyle = 'rgba(0,0,0,0)';
+			tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+			const text = textInput.value || defaultText;
+			const font = fontSelect.value;
+			const textColor = document.querySelector('input[name="textColor"]:checked').value;
+
+			// הגדרת הפונט בגודל כפול
+			tempCtx.font = `${fontSize * 2}px "${font}"`;
+			tempCtx.fillStyle = textColor;
+			tempCtx.textAlign = 'center';
+			tempCtx.textBaseline = 'middle';
+
+			const lines = text.split('\n');
+			const lineHeight = fontSize *  2.4; // גם מרווח השורות גדל פי 2
+			const startY = tempCanvas.height / 2 - (lines.length - 1) * lineHeight / 2;
+
+			lines.forEach((line, index) => {
+				tempCtx.fillText(line, tempCanvas.width / 2, startY + index * lineHeight);
+			});
+
+			// שמירת התמונה
+			const dataURL = tempCanvas.toDataURL('image/png');
+			const link = document.createElement('a');
+			link.download = 'signature.png';
+			link.href = dataURL;
+			link.click();
+        });
+
+
+		// טעינת הפונט ההתחלתי
+        document.fonts.load(`${fontSize}px "${fontSelect.value}"`).then(updateCanvas);
+
+		copyrightButton.addEventListener('click', () => {
+		const cursorPosition = textInput.selectionStart;
+		const textBeforeCursor = textInput.value.substring(0, cursorPosition);
+		const textAfterCursor = textInput.value.substring(cursorPosition);
+		textInput.value = textBeforeCursor + '©' + textAfterCursor;
+		textInput.selectionStart = textInput.selectionEnd = cursorPosition + 1;
+		textInput.focus();
+		updateCanvas();
+		});
+
+		const defaultText = "טקסט לדוגמה ©";
+
+		textInput.addEventListener('focus', function() {
+			if (this.value === defaultText) {
+				this.value = '';
+			}
+		});
+
+		textInput.addEventListener('blur', function() {
+			if (this.value.trim() === '') {
+				this.value = defaultText;
+				updateCanvas();
+			}
+		});
+
+		textInput.addEventListener('input', updateCanvas);
+	
+    </script>
+	
+</body>
+</html>
