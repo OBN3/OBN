@@ -180,7 +180,7 @@
             { english: 'Strong', hebrew: 'חזק' },
             { english: 'Beautiful', hebrew: 'יפה' },
             { english: 'was born', hebrew: '(הוא) נולד' },
-            { english: 'Named', hebrew: 'קרוי של שם...' }
+            { english: 'Named', hebrew: 'קרוי של שם...' }			
         ];
         
         let currentWordIndex = 0;
@@ -381,7 +381,8 @@ function nextWord() {
         function endGame() {
             const totalWords = words.length * 2;
             const percentage = Math.round((score / totalWords) * 100);
-            const stars = score + partialScore;
+//            const stars = score + partialScore;
+            const stars = Math.round((score + partialScore / totalWords) / 2);
             
             document.getElementById('gameContainer').innerHTML = `
                 <h2>כל הכבוד!</h2>
