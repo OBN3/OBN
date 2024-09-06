@@ -352,25 +352,6 @@ function checkAnswer() {
     updateScore();
 }
 
-
-/*
-        function nextWord() {
-            currentWordIndex++;
-            if (currentWordIndex >= words.length) {
-                if (isFirstPhase) {
-                    isFirstPhase = false;
-                    currentWordIndex = 0;
-                    document.getElementById('message').innerHTML = "יפה מאד! עברת לשלב השני! כעת נסי לכתוב את המילה באנגלית";
-                } else {
-                    endGame();
-                    return;
-                }
-            }
-            displayWord();
-        }
-*/
-
-
 function nextWord() {
     currentWordIndex++;
     if (currentWordIndex >= words.length) {
@@ -392,9 +373,6 @@ function nextWord() {
         displayWord();
     }
 }
-
-
-
 
         function updateScore() {
             document.getElementById('score').innerHTML = `ניקוד: ${score}`;
