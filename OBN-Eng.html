@@ -243,7 +243,45 @@ function displayWord() {
     feedbackElement.innerHTML = '';
 //    document.getElementById('encouragement').innerHTML = '';
     attempts = 0;
+ 
+    // מיקוד הסמן בשדה הקלט
+    userInput.focus();
+	
 }
+
+
+
+function setupEventListeners() {
+    const submitButton = document.getElementById('submitButton');
+    const userInput = document.getElementById('userInput');
+    const soundCheckbox = document.getElementById('soundCheckbox');
+
+    submitButton.addEventListener('click', checkAnswer);
+    
+    // מאזין אירועים להקשה על Enter
+    userInput.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // מניעת התנהגות ברירת המחדל
+            checkAnswer();
+        }
+    });
+
+    soundCheckbox.addEventListener('change', function() {
+        soundEnabled = this.checked;
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*
         function checkAnswer() {
@@ -280,8 +318,11 @@ function checkAnswer() {
     const userInput = document.getElementById('userInput');
     const feedbackElement = document.getElementById('feedback');
     
-    const inputValue = userInput.value.toLowerCase();
-    const correctAnswer = words[currentWordIndex].english.toLowerCase();
+//    const inputValue = userInput.value.toLowerCase();
+	const inputValue = userInput.value.trim().toLowerCase();
+
+//    const correctAnswer = words[currentWordIndex].english.toLowerCase();
+	const correctAnswer = words[currentWordIndex].english.trim().toLowerCase();
 	
     if (inputValue === correctAnswer) {
         score++;
@@ -368,7 +409,7 @@ function nextWord() {
                 <p>הצלחת באופן חלקי לכתוב ${partialScore} מילים!</p>
                 <p>קיבלת ${stars} כוכבים! ${'⭐'.repeat(stars)}</p>
                 <p>הציון הכולל שלך הוא ${percentage}%!</p>
-                <button onclick="restartGame()">התחל משחק מחדש</button>
+                <button onclick="restartGame()">התחילו משחק מחדש</button>
             `;
             showConfetti();
             playSound(winSound);
@@ -459,6 +500,7 @@ function nextWord() {
             
             displayWord();
             updateScore();
+		    setupEventListeners();
             
             document.getElementById('submitButton').addEventListener('click', checkAnswer);
             document.getElementById('soundCheckbox').addEventListener('change', function() {
@@ -469,6 +511,7 @@ function nextWord() {
         window.onload = function() {
             displayWord();
             updateScore();
+			setupEventListeners();
             document.getElementById('submitButton').addEventListener('click', checkAnswer);
             updateResultsTable();
         }
