@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang='he' dir='rtl'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>משחק לימוד מילים באנגלית</title>
+    <style>
+        :root {
+            --primary-color: #FF6B6B;
+            --secondary-color: #4ECDC4;
+            --background-color: #F7FFF7;
+            --text-color: #2C3E50;
+            --accent-color: #FFD93D;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        #gameContainer {
+            background-color: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        h1, h2 {
+            color: var(--primary-color);
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        #wordContainer, #message, #feedback {
+            font-size: 24px;
+            margin: 20px 0;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+        #userInput {
+            padding: 12px;
+            width: 80%;
+            font-size: 18px;
+            border: 2px solid var(--secondary-color);
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        button {
+            padding: 12px 25px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #FF8E8E;
+        }
+        #score, #encouragement {
+            margin-top: 20px;
+            font-size: 20px;
+			
+        }
+        #score {
+            color: var(--accent-color);
+            font-weight: bold;
+			margin-top: 10px;
+
+        }
+        #confetti {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+        #soundToggle {
+            margin-bottom: 15px;
+        }
+        #soundToggle label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        #soundCheckbox {
+            margin-right: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid var(--secondary-color);
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        @media (max-width: 480px) {
+            #gameContainer {
+                padding: 15px;
+            }
+            h1, h2 {
+                font-size: 24px;
+            }
+            #wordContainer, #message {
+                font-size: 22px;
+            }
+            #userInput {
+                font-size: 16px;
+            }
+            button {
+                font-size: 16px;
+            }
+        }
+		
+		#feedback {
+			margin-top: 15px;
+			min-height: 24px; /* כדי למנוע קפיצות בגובה כשמופיעות הודעות */
+		}
+
+		#score {
+			margin-top: 10px;
+		}
+		
+		
+		
+		
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <h1>משחק לימוד מילים באנגלית</h1>
+        <div id='soundToggle'>
+            <label>
+                <input type='checkbox' id='soundCheckbox' checked> הפעל סאונד
+            </label>
+        </div>
+        <div id="message"></div>
+        <div id="wordContainer"></div>
+        <input type="text" id="userInput" placeholder="הקלידי את המילה כאן...">
+        <button id="submitButton">שלחי</button>
+        <div id="feedback"></div>		
+        <div id="score"></div>
+        <div id="encouragement"></div>
+    </div>
+    <div id="confetti"></div>
+    <h2>טבלת משחקים</h2>
+    <table id="resultsTable">
+        <thead>
+            <tr>
+ <!--
+               <th>מספר</th>
+-->			   
+                <th>מילים מלאות</th>
+                <th>מילים חלקיות</th>
+<!--
+                <th>כוכבים</th>
+-->				
+                <th>ציון</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        const words = [
+            { english: 'Happiness', hebrew: 'שמחה/אושר' },
+            { english: 'Remember', hebrew: 'לזכור' },
+            { english: 'Strong', hebrew: 'חזק' },
+            { english: 'Beautiful', hebrew: 'יפה' },
+            { english: 'was born', hebrew: '(הוא) נולד' },
+            { english: 'Named', hebrew: 'קרוי של שם...' }
+        ];
+        
+        let currentWordIndex = 0;
+        let score = 0;
+        let partialScore = 0;
+        let isFirstPhase = true;
+        let attempts = 0;
+        let soundEnabled = true;
+        let gameNumber = 1;
+
+        const soundCheckbox = document.getElementById('soundCheckbox');
+        const winSound = new Audio('win1.wav');
+        const loseSound = new Audio('lose.wav');
+        
+        soundCheckbox.addEventListener('change', function() {
+            soundEnabled = this.checked;
+        });
+
+        function playSound(sound) {
+            if (soundEnabled) {
+                sound.play().catch(e => console.error('Error playing audio:', e));
+            }
+        }
+
+/*
+        function displayWord() {
+            const wordContainer = document.getElementById('wordContainer');
+            const messageElement = document.getElementById('message');
+            const feedbackElement = document.getElementById('feedback');
+            const word = words[currentWordIndex];
+            
+            if (isFirstPhase) {
+                wordContainer.innerHTML = `${word.english} - ${word.hebrew}`;
+                messageElement.innerHTML = "שלב ראשון: קראי את המילה באנגלית, והקלידי אותה בתיבת הטקסט";
+            } else {
+                wordContainer.innerHTML = word.hebrew;
+                messageElement.innerHTML = "שלב שני: כעת נסי לכתוב את המילה באנגלית";
+            }
+            
+            feedbackElement.innerHTML = '';
+            document.getElementById('encouragement').innerHTML = '';
+            attempts = 0;
+        }
+*/
+
+function displayWord() {
+    const wordContainer = document.getElementById('wordContainer');
+    const messageElement = document.getElementById('message');
+    const feedbackElement = document.getElementById('feedback');
+    const word = words[currentWordIndex];
+    
+    if (isFirstPhase) {
+        wordContainer.innerHTML = `${word.english} - ${word.hebrew}`;
+        messageElement.innerHTML = "שלב ראשון: קראי את המילה באנגלית, והקלידי אותה בתיבת הטקסט";
+
+    } else {
+        wordContainer.innerHTML = word.hebrew;
+        messageElement.innerHTML = "שלב שני: כעת נסי לכתוב את המילה באנגלית";		
+    }
+    feedbackElement.innerHTML = '';
+//    document.getElementById('encouragement').innerHTML = '';
+    attempts = 0;
+}
+
+/*
+        function checkAnswer() {
+            const userInput = document.getElementById('userInput');
+            const feedbackElement = document.getElementById('feedback');
+            
+            const inputValue = userInput.value.toLowerCase();
+            const correctAnswer = words[currentWordIndex].english.toLowerCase();
+            
+            if (inputValue === correctAnswer) {
+                score++;
+                feedbackElement.innerHTML = 'כל הכבוד! המשיכי כך!';
+                playSound(winSound);
+                setTimeout(nextWord, 1500);
+            } else {
+                attempts++;
+                if (attempts === 1) {
+                    feedbackElement.innerHTML = 'לא נורא! נסי שוב!';
+                    playSound(loseSound);
+                } else {
+                    partialScore++;
+                    feedbackElement.innerHTML = `לא נורא! שימי לב שככה כותבים זאת נכון: <strong>${correctAnswer}</strong>`;
+                    playSound(loseSound);
+                    setTimeout(nextWord, 3000);
+                }
+            }
+            
+            userInput.value = '';
+            updateScore();
+        }
+*/
+
+function checkAnswer() {
+    const userInput = document.getElementById('userInput');
+    const feedbackElement = document.getElementById('feedback');
+    
+    const inputValue = userInput.value.toLowerCase();
+    const correctAnswer = words[currentWordIndex].english.toLowerCase();
+	
+    if (inputValue === correctAnswer) {
+        score++;
+        feedbackElement.innerHTML = 'כל הכבוד! המשיכי כך!';
+        playSound(winSound);
+        setTimeout(() => {
+            feedbackElement.innerHTML = '';
+            nextWord();
+        }, 1500);
+    } else {
+        attempts++;
+        if (attempts === 1) {
+            feedbackElement.innerHTML = 'לא נורא! נסי שוב!';
+            playSound(loseSound);
+        } else {
+            partialScore++;
+            feedbackElement.innerHTML = `לא נורא! שימי לב שככה כותבים זאת נכון: <strong>${correctAnswer}</strong>`;
+            playSound(loseSound);
+            setTimeout(() => {
+                feedbackElement.innerHTML = '';
+                nextWord();
+            }, 3000);
+        }
+    }
+    
+    userInput.value = '';
+    updateScore();
+}
+
+
+/*
+        function nextWord() {
+            currentWordIndex++;
+            if (currentWordIndex >= words.length) {
+                if (isFirstPhase) {
+                    isFirstPhase = false;
+                    currentWordIndex = 0;
+                    document.getElementById('message').innerHTML = "יפה מאד! עברת לשלב השני! כעת נסי לכתוב את המילה באנגלית";
+                } else {
+                    endGame();
+                    return;
+                }
+            }
+            displayWord();
+        }
+*/
+
+
+function nextWord() {
+    currentWordIndex++;
+    if (currentWordIndex >= words.length) {
+        if (isFirstPhase) {
+            isFirstPhase = false;
+            currentWordIndex = 0;
+            document.getElementById('feedback').innerHTML = "יפה מאד! עברת לשלב השני! כעת נסי לכתוב את המילה באנגלית";
+            setTimeout(() => {
+                document.getElementById('feedback').innerHTML = '';
+                displayWord();
+            }, 3000);
+        } else {
+            endGame();
+            return;
+        }
+    } else {
+        displayWord();
+    }
+}
+
+
+
+
+        function updateScore() {
+            document.getElementById('score').innerHTML = `ציון: ${score}`;
+        }
+
+        function endGame() {
+            const totalWords = words.length * 2;
+            const percentage = Math.round((score / totalWords) * 100);
+            const stars = score + partialScore;
+            
+            document.getElementById('gameContainer').innerHTML = `
+                <h2>כל הכבוד!</h2>
+                <p>הצלחת באופן מלא לכתוב ${score} מילים!</p>
+                <p>הצלחת באופן חלקי לכתוב ${partialScore} מילים!</p>
+                <p>קיבלת ${stars} כוכבים! ${'⭐'.repeat(stars)}</p>
+                <p>הציון הכולל שלך הוא ${percentage}%!</p>
+                <button onclick="restartGame()">התחל משחק מחדש</button>
+            `;
+            showConfetti();
+            playSound(winSound);
+
+            // שמירת התוצאות
+            saveGameResults({
+//                game_number: gameNumber,
+                full_words: score,
+                partial_words: partialScore,
+//                stars: stars,
+                score: percentage
+            });
+
+            // עדכון הטבלה
+            updateResultsTable();
+
+            gameNumber++;
+        }
+
+        function saveGameResults(results) {
+            let data = JSON.parse(localStorage.getItem('gameResults')) || [];
+            data.push(results);
+            if (data.length > 20) {
+                data = data.slice(-20);
+            }
+            localStorage.setItem('gameResults', JSON.stringify(data));
+        }
+
+        function updateResultsTable() {
+            const tableBody = document.querySelector('#resultsTable tbody');
+            tableBody.innerHTML = '';
+            const data = JSON.parse(localStorage.getItem('gameResults')) || [];
+            data.forEach(result => {
+                const row = tableBody.insertRow();
+//                row.insertCell().textContent = result.game_number;
+                row.insertCell().textContent = result.full_words;
+                row.insertCell().textContent = result.partial_words;
+//                row.insertCell().textContent = result.stars;
+                row.insertCell().textContent = result.score + '%';
+            });
+        }
+
+        function showConfetti() {
+            const confettiContainer = document.getElementById('confetti');
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.width = '10px';
+                confetti.style.height = '10px';
+                confetti.style.background = getRandomColor();
+                confetti.style.position = 'absolute';
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.top = '-10px';
+                confetti.style.borderRadius = '50%';
+                confetti.style.animation = `fall ${Math.random() * 3 + 2}s linear`;
+                confettiContainer.appendChild(confetti);
+            }
+            
+            setTimeout(() => {
+                confettiContainer.innerHTML = '';
+            }, 5000);
+        }
+
+        function getRandomColor() {
+            return ['#FF6B6B', '#4ECDC4', '#FFD93D', '#FF8E8E', '#6BCB77'][Math.floor(Math.random() * 5)];
+        }
+
+        function restartGame() {
+            currentWordIndex = 0;
+            score = 0;
+            partialScore = 0;
+            isFirstPhase = true;
+            
+            document.getElementById('gameContainer').innerHTML = `
+                <h1>משחק לימוד מילים באנגלית</h1>
+                <div id='soundToggle'>
+                    <label>
+                        <input type='checkbox' id='soundCheckbox'${soundEnabled ? ' checked' : ''}> הפעל סאונד
+                    </label>
+                </div>
+                <div id="message"></div>
+                <div id="wordContainer"></div>
+                <div id="feedback"></div>
+                <input type="text" id="userInput" placeholder="הקלידי את המילה כאן...">
+                <button id="submitButton">שלחי</button>
+                <div id="score"></div>
+                <div id="encouragement"></div>
+            `;
+            
+            displayWord();
+            updateScore();
+            
+            document.getElementById('submitButton').addEventListener('click', checkAnswer);
+            document.getElementById('soundCheckbox').addEventListener('change', function() {
+                soundEnabled = this.checked;
+            });
+        }
+
+        window.onload = function() {
+            displayWord();
+            updateScore();
+            document.getElementById('submitButton').addEventListener('click', checkAnswer);
+            updateResultsTable();
+        }
+
+        // הוספת אנימציה לקונפטי
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fall {
+                to {
+                    transform: translateY(100vh);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
