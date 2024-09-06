@@ -377,7 +377,9 @@ function nextWord() {
         if (isFirstPhase) {
             isFirstPhase = false;
             currentWordIndex = 0;
-            document.getElementById('feedback').innerHTML = "יפה מאד! עברת לשלב השני! כעת נסי לכתוב את המילה באנגלית";
+//            document.getElementById('feedback').innerHTML = "יפה מאד! עברת לשלב השני! כעת נסי לכתוב את המילה באנגלית";
+			document.getElementById('feedback').innerHTML = `<font color="F00">יפה מאד! עברת לשלב השני! כעת נסי לכתוב את המילה באנגלית$</font>`;
+				
             setTimeout(() => {
                 document.getElementById('feedback').innerHTML = '';
                 displayWord();
