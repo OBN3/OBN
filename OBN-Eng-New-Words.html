@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ממיר מילים לאפליקציית לימוד אנגלית</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        textarea {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+#outputText {
+    direction: ltr;
+    text-align: left;
+}
+		
+    </style>
+</head>
+<body>
+    <h1>ממיר מילים לאפליקציית לימוד אנגלית</h1>
+    
+    <h2>הכנס מילים באנגלית ובעברית</h2>
+    <p>הקלד בכל שורה מילה באנגלית, פסיק, ואז את התרגום שלה בעברית. לדוגמה: Car, מכונית</p>
+    <textarea id="inputText" rows="10" placeholder="Car, מכונית&#10;Cat, חתול"></textarea>
+    
+    <h2>התוצאה בפורמט JSON</h2>
+    <p>כאן תופיע התוצאה בפורמט JSON מוכן להעתקה</p>
+    <p>העתק את הקוד מכאן ושלב אותו בקוד של אפליקציית לימוד אנגלית:
+	<a href="">OBN-Eng.html</a> באזור הקוד הזה:
+	</p>
+	<p dir="ltr">	        
+			const words = [ <br>
+            { english: 'Happiness', hebrew: 'שמחה/אושר' },<br>
+            { english: 'Remember', hebrew: 'לזכור' },<br>
+            { english: 'Strong', hebrew: 'חזק' }<br>
+        ];
+	</p>
+	
+    <textarea id="outputText" rows="10" readonly></textarea>
+
+    <script>
+        function convertToJSON() {
+            const input = document.getElementById('inputText').value;
+            const lines = input.split('\n').filter(line => line.trim() !== '');
+            const result = lines.map(line => {
+                const [english, hebrew] = line.split(',').map(item => item.trim());
+                return `            { english: '${english}', hebrew: '${hebrew}' }`;
+            });
+            document.getElementById('outputText').value = '[\n' + result.join(',\n') + '\n]';
+        }
+
+        document.getElementById('inputText').addEventListener('input', convertToJSON);
+    </script>
+</body>
+</html>
