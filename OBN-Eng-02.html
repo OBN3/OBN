@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>משחק לימוד מילים באנגלית</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #gameContainer {
+            background-color: #ffffff;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+		
+		#wordContainer1 {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f0f8ff;
+		
+		}
+		
+        h1 {
+            color: #4a69bd;
+            text-align: center;
+        }
+        #word, #translation {
+            font-size: 24px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        input[type='text'] {
+            padding: 10px;
+            margin-top: 20px;
+            width: 100%;
+            font-size: 16px;
+            border: 2px solid #4a69bd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4a69bd;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            width: 100%;
+        }
+        .points {
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 18px;
+            text-align: center;
+        }
+        .message {
+            font-size: 18px;
+            margin-top: 10px;
+            text-align: center;
+            min-height: 27px;
+        }
+        .success {
+            color: #28a745;
+        }
+        .failure {
+            color: #dc3545;
+        }
+        #soundToggle {
+            margin-top: 20px;
+        }
+        table {
+            margin-top: 20px;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #4a69bd;
+            color: white;
+        }
+        #confetti {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+		#userInput {
+			text-align: left;
+			direction: ltr;
+		}
+
+		@keyframes fall {
+		to {
+        transform: translateY(100vh);
+		}
+}
+		
+    </style>
+</head>
+<body>
+
+    <div id="gameContainer">
+	    <h1 id="stageTitle">שלב ראשון: קראי את המילה באנגלית, והקלידי אותה בתיבת הטקסט</h1>
+        <div id="wordContainer">
+            <div id="wordContainer1">
+			<h2 id="word"></h2>
+			&nbsp; &nbsp; &nbsp; 
+			<h2 id="translation"></h2>
+			</div>
+            <input type="text" id="userInput" autofocus/>
+            <button id="submitBtn">שלח</button>
+            <div id="message" class="message"></div>
+        <div class="points">נקודות: <span id="score">0</span></div>			
+        </div>
+        <div id="soundToggle">
+            <label>
+                <input type="checkbox" id="soundCheckbox" checked/>
+                הפעל סאונד במשחק
+            </label>
+        </div>
+    </div>
+
+<canvas id="confetti" style="display: none;"></canvas>
+
+    <table id="resultsTable" style="display: none;">
+        <thead>
+            <tr>
+<!--                <th>מספר</th> -->
+                <th>מילים מלאות</th>
+                <th>מילים חלקיות</th>
+                <th>ניקוד</th>
+            </tr>
+        </thead>
+        <tbody id="resultsBody"></tbody>
+    </table>
+    <br><br>
+	<a href="OBN-Eng-Words-Admin.html">הוסף מילים חדשות</a>
+    <!--
+	<canvas id="confetti" style="display: none;"></canvas>
+	-->
+
+    <script>
+        // Initialize variables
+        let score = 0;
+        let currentWordIndex = 0;
+        let words = [];
+        let successes = 0;
+        let partialSuccesses = 0;
+        let failures = 0;
+        let currentStage = 1;
+        let attempts = 0;
+
+        // Load words from JSON file
+		//	https://api.github.com/repos/OBN3/OBN/contents/words.json
+		
+		async function loadWords() {
+			try {
+				const response = await fetch('https://api.github.com/repos/OBN3/OBN/contents/words.json');
+				if (!response.ok) {
+					throw new Error('Network response was not ok');
+				}
+				const data = await response.json();
+				
+				// פענוח התוכן המקודד ב-base64
+				const decodedContent = decodeURIComponent(escape(atob(data.content)));
+				console.log('Decoded content:', decodedContent);
+
+				// ניסיון לפרסר את התוכן המפוענח כ-JSON
+				const parsedContent = JSON.parse(decodedContent);
+				console.log('Parsed content:', parsedContent);
+
+				if (Array.isArray(parsedContent) && parsedContent.length > 0) {
+					if (parsedContent[0].english && parsedContent[0].hebrew) {
+						words = parsedContent;
+					} else {
+						throw new Error('Array items do not have the expected structure');
+					}
+				} else if (typeof parsedContent === 'object' && parsedContent !== null) {
+					words = Object.entries(parsedContent).map(([english, hebrew]) => ({ english, hebrew }));
+				} else {
+					throw new Error('Data is not in the expected format');
+				}
+
+				console.log('Loaded words:', words);
+			} catch (error) {
+				console.error('Error loading words:', error);
+				words = [
+					{ english: 'Happiness', hebrew: 'שמחה/אושר' },
+					{ english: 'Strong', hebrew: 'חזק' },
+					{ english: 'Beautiful', hebrew: 'יפה' },
+					{ english: 'was born', hebrew: 'נולד' },
+					{ english: 'Named', hebrew: 'קרוי על שם...' },
+					{ english: 'Remember', hebrew: 'לזכור' }
+				];
+			}
+			startGame();
+		}
+
+
+
+				function startGame() {
+					if (Array.isArray(words) && words.length > 0) {
+						displayWord();
+					} else {
+						console.error('Error: words array is not properly initialized');
+						// הצג הודעת שגיאה למשתמש
+					}
+				}
+
+
+
+        // Display the current word and translation
+
+		function displayWord() {
+			if (Array.isArray(words) && words.length > currentWordIndex && words[currentWordIndex]) {
+				const wordElement = document.getElementById('word');
+				const translationElement = document.getElementById('translation');
+				if (currentStage === 1) {
+					wordElement.innerText = words[currentWordIndex].english || 'Error: Word not found';
+					translationElement.innerText = words[currentWordIndex].hebrew || 'Error: Translation not found';
+				} else {
+					wordElement.innerText = words[currentWordIndex].hebrew || 'Error: Word not found';
+					translationElement.innerText = '';
+				}
+			} else {
+				console.error('Error: words array is not properly initialized or index is out of bounds');
+				// הצג הודעת שגיאה למשתמש
+				document.getElementById('word').innerText = 'Error: Unable to load words';
+				document.getElementById('translation').innerText = '';
+			}
+		}
+
+
+        // Check the answer
+        function checkAnswer() {
+            const userInput = document.getElementById('userInput').value.trim().toLowerCase();
+            const correctWord = words[currentWordIndex].english.toLowerCase();
+            const messageElement = document.getElementById('message');
+            attempts++;
+
+            if (userInput === correctWord) {
+                messageElement.innerHTML = 'כל הכבוד!';
+                messageElement.className = 'message success';
+                playSound('win1.wav');
+
+				setTimeout(() => {
+                        messageElement.innerHTML = '';
+                        document.getElementById('userInput').value = '';
+                        document.getElementById('userInput').focus();
+				}, 3000);
+				
+                score += (attempts === 1) ? 2 : 1;
+                if (attempts === 1) {
+                    successes++;
+                } else {
+                    partialSuccesses++;
+                }
+                updateScore();
+                setTimeout(nextWord, 3000);
+				
+
+                    setTimeout(() => {
+                        messageElement.innerHTML = '';
+//                        document.getElementById('userInput').value = '';
+//                        document.getElementById('userInput').focus();
+                    }, 3000);
+				
+				
+            } else {
+                if (attempts === 1) {
+                    messageElement.innerHTML = 'לא נורא! נסה שוב';
+                    messageElement.className = 'message failure';
+                    playSound('lose.wav');
+                    setTimeout(() => {
+                        messageElement.innerHTML = '';
+                        document.getElementById('userInput').value = '';
+                        document.getElementById('userInput').focus();
+                    }, 3000);
+                } else {
+                    messageElement.innerHTML = `לא נורא! שים לב, את המילה כותבים כך: ${words[currentWordIndex].english}`;
+                    messageElement.className = 'message failure';
+                    playSound('lose.wav');
+                    failures++;
+                    setTimeout(nextWord, 3000);
+					
+				setTimeout(() => {
+                        messageElement.innerHTML = '';
+                        document.getElementById('userInput').value = '';
+                        document.getElementById('userInput').focus();
+				}, 3000);
+					
+                }
+            }
+
+				// ניקוי תיבת הטקסט
+			    //document.getElementById('userInput').value = '';
+		
+			
+        }
+
+        // Move to the next word
+        function nextWord() {
+            currentWordIndex++;
+            attempts = 0;
+            if (currentWordIndex < words.length) {
+                displayWord();
+            } else if (currentStage === 1) {
+                currentStage = 2;
+                currentWordIndex = 0;
+                document.getElementById('stageTitle').innerText = 'שלב שני: כתבי את המילה באנגלית, בלי עזרה';
+                displayWord();
+            } else {
+                endGame();
+            }
+        }
+
+        // End the game
+        function endGame() {
+            const totalWords = words.length * 2;
+            const fullSuccessRate = (successes / totalWords) * 100;
+            const partialSuccessRate = (partialSuccesses / totalWords) * 50;
+            const finalScore = Math.round(fullSuccessRate + partialSuccessRate);
+
+            showConfetti();
+            playSound('win.wav');
+
+            const gameContainer = document.getElementById('gameContainer');
+            gameContainer.innerHTML = `
+                <h1>כל הכבוד!</h1>
+                <p>הצלחת באופן מלא לכתוב ${successes} מילים!</p>
+                <p>הצלחת באופן חלקי לכתוב ${partialSuccesses} מילים!</p>
+                <p>קיבלת ${successes + partialSuccesses} ⭐!</p>
+                <p>הניקוד הכולל שלך הוא ${finalScore}!</p>
+                <button onclick="restartGame()">התחל משחק מחדש</button>
+            `;
+
+            updateResultsTable(successes, partialSuccesses, finalScore);
+			
+		    // הסרת הפוקוס מתיבת הטקסט
+//		    document.getElementById('userInput').blur();
+
+			
+        }
+
+        // Update the score display
+        function updateScore() {
+            document.getElementById('score').innerText = score;
+        }
+
+        // Play sound if enabled
+        function playSound(soundFile) {
+            if (document.getElementById('soundCheckbox').checked) {
+                const audio = new Audio(soundFile);
+                audio.play();
+            }
+        }
+
+
+
+
+       function showConfetti() {
+            const confettiContainer = document.getElementById('confetti');
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.width = '10px';
+                confetti.style.height = '10px';
+                confetti.style.background = getRandomColor();
+                confetti.style.position = 'absolute';
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.top = '-10px';
+                confetti.style.borderRadius = '50%';
+                confetti.style.animation = `fall ${Math.random() * 3 + 2}s linear`;
+                confettiContainer.appendChild(confetti);
+            }
+            
+            setTimeout(() => {
+                confettiContainer.innerHTML = '';
+            }, 5000);
+        }
+
+        function getRandomColor() {
+            return ['#FF6B6B', '#4ECDC4', '#FFD93D', '#FF8E8E', '#6BCB77'][Math.floor(Math.random() * 5)];
+        }
+
+/*
+        // Show confetti animation
+        function showConfetti() {
+            const confetti = document.getElementById('confetti');
+            // confetti.style.display = 'block';
+			confetti.style.display = 'flex';
+            const ctx = confetti.getContext('2d');
+            const particles = [];
+            const particleCount = 100;
+
+            confetti.width = window.innerWidth;
+            confetti.height = window.innerHeight;
+
+            function Particle(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 5 + 5;
+                this.speedY = Math.random() * -1 - 1;
+                this.speedX = Math.random() * 6 - 3;
+                this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+            }
+
+            Particle.prototype.update = function() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.size > 0.1) this.size -= 0.1;
+            }
+
+            Particle.prototype.draw = function() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            function createParticles() {
+                for (let i = 0; i < particleCount; i++) {
+                    particles.push(new Particle(Math.random() * confetti.width, confetti.height + 100));
+                }
+            }
+
+            function animateParticles() {
+                ctx.clearRect(0, 0, confetti.width, confetti.height);
+                for (let i = 0; i < particles.length; i++) {
+                    particles[i].update();
+                    particles[i].draw();
+                    if (particles[i].size <= 0.1) {
+                        particles.splice(i, 1);
+                        i--;
+                    }
+                }
+                if (particles.length > 0) {
+                    requestAnimationFrame(animateParticles);
+                } else {
+                    confetti.style.display = 'none';
+                }
+            }
+
+
+            createParticles();
+            animateParticles();
+        }
+
+*/
+
+
+        // Update results table
+        function updateResultsTable(fullWords, partialWords, score) {
+            const resultsTable = document.getElementById('resultsTable');
+            const resultsBody = document.getElementById('resultsBody');
+            let results = JSON.parse(localStorage.getItem('gameResults')) || [];
+			
+			// הוסף את התוצאה החדשה
+			results.push({ fullWords, partialWords, score, date: new Date().toISOString() });
+			// results.push({ fullWords, partialWords, score });
+			
+			// מיין את התוצאות לפי התאריך בסדר יורד (החדש ביותר קודם)
+			results.sort((a, b) => new Date(b.date) - new Date(a.date));			
+			
+//            if (results.length > 20) results.shift();
+			// שמור רק את 20 התוצאות האחרונות
+			results = results.slice(0, 20);			
+            
+			// שמור את התוצאות המעודכנות ב-localStorage
+            localStorage.setItem('gameResults', JSON.stringify(results));
+			
+			// נקה את הטבלה הקיימת
+			resultsBody.innerHTML = '';
+			
+            
+            resultsBody.innerHTML = '';
+            results.forEach((result, index) => {
+                const row = resultsBody.insertRow();
+//                row.insertCell(0).textContent = index + 1;
+                row.insertCell(0).textContent = result.fullWords;
+                row.insertCell(1).textContent = result.partialWords;
+                row.insertCell(2).textContent = result.score;
+            });
+            
+            resultsTable.style.display = 'table';
+        }
+
+
+        // Restart the game
+        function restartGame() {
+		
+			location.reload();
+		
+            score = 0;
+            currentWordIndex = 0;
+            successes = 0;
+            partialSuccesses = 0;
+            failures = 0;
+            currentStage = 1;
+            attempts = 0;
+            document.getElementById('stageTitle').innerText = 'שלב ראשון: קראי את המילה באנגלית, והקלידי אותה בתיבת הטקסט';
+            document.getElementById('gameContainer').innerHTML = `
+                <h1 id="stageTitle">שלב ראשון: קראי את המילה באנגלית, והקלידי אותה בתיבת הטקסט</h1>
+                <div class="points">נקודות: <span id="score">0</span></div>
+                <div id="wordContainer">
+                    <h2 id="word"></h2>
+                    <h2 id="translation"></h2>
+                    <input type="text" id="userInput" autofocus/>
+                    <button id="submitBtn">שלח</button>
+                    <div id="message" class="message"></div>
+                </div>
+                <div id="soundToggle">
+                    <label>
+                        <input type="checkbox" id="soundCheckbox" checked/>
+                        הפעל סאונד במשחק
+                    </label>
+                </div>
+            `;
+            document.getElementById('resultsTable').style.display = 'none';
+            document.getElementById('submitBtn').addEventListener('click', checkAnswer);
+            document.getElementById('userInput').addEventListener('keypress', event => {
+                if (event.key === 'Enter') {
+                    checkAnswer();
+                }
+            });
+            startGame();
+        }
+
+        // Event listeners
+        document.getElementById('submitBtn').addEventListener('click', checkAnswer);
+        document.getElementById('userInput').addEventListener('keypress', event => {
+            if (event.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        // Load words on startup
+        loadWords();
+
+        // Load previous results
+        function loadPreviousResults() {
+            const results = JSON.parse(localStorage.getItem('gameResults')) || [];
+            const resultsBody = document.getElementById('resultsBody');
+            results.forEach((result, index) => {
+                const row = resultsBody.insertRow();
+                row.insertCell(0).textContent = index + 1;
+                row.insertCell(1).textContent = result.fullWords;
+                row.insertCell(2).textContent = result.partialWords;
+                row.insertCell(3).textContent = result.score;
+            });
+        }
+
+        loadPreviousResults();
+
+        // Keep input focused
+//        setInterval(() => {
+//            document.getElementById('userInput').focus();
+//        }, 1000);
+
+    </script>
+</body>
+</html>		
+		
+		
+		
+		
