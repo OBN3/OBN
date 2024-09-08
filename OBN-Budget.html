@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניהול הוצאות משותף</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Heebo', Arial, sans-serif;
+            direction: rtl;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        .container {
+            max-width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        h1, h2, h3 {
+            text-align: center;
+            color: #007AFF;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007AFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .expense-list, .chart-container {
+            margin-top: 20px;
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .expense-item {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .expense-item:last-child {
+            border-bottom: none;
+        }
+        .expense-item button {
+            margin-left: 5px;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .summary {
+            margin-top: 20px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .file-input {
+            display: none;
+        }
+        .file-label {
+            display: inline-block;
+            padding: 12px;
+            background-color: #28a745;
+            color: white;
+            text-align: center;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #userSetup {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #editExpenseForm {
+            display: none;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .screen {
+            display: none;
+        }
+        .screen.active {
+            display: block;
+        }
+        .nav-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .nav-button:hover {
+            background-color: #45a049;
+        }
+        .import-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .import-container button,
+        .import-container .file-label {
+            width: auto;
+            min-width: 200px;
+            margin: 5px 0;
+        }
+        .chart-wrapper {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+        input.readonly {
+            background-color: #f0f0f0;
+            color: #666;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="mainScreen" class="screen active">
+            <h1>ניהול הוצאות משותף</h1>
+            
+            <div id="userSetup">
+                <h2>הגדרת משתמשים</h2>
+                <p id="userSetupInstructions">הגדירו את משתמשי המערכת, אם טרם הוגדרו:</p>
+                <label for="userName">משתמש ראשי:</label>
+                <input type="text" id="userName" placeholder="השם שלך">
+                <label for="partnerName">משתמש שני (שותף):</label>
+                <input type="text" id="partnerName" placeholder="שם השותף">
+                <button id="setUserNamesButton" onclick="setUserNames()">שמור שמות</button>
+                <button id="editUserNamesButton" onclick="enableUserNameEditing()" style="display: none;">ערוך שמות</button>
+            </div>
+            
+            <label for="date">תאריך:</label>
+            <input type="date" id="date">
+            <label for="description">תיאור ההוצאה:</label>
+            <input type="text" id="description" placeholder="תיאור ההוצאה">
+            <label for="amount">סכום:</label>
+            <input type="number" id="amount" placeholder="סכום">
+            <label for="paidBy">שולם על ידי:</label>
+            <select id="paidBy"></select>
+            <label for="splitType">אופן החלוקה:</label>
+            <select id="splitType">
+                <option value="equal">חלוקה שווה</option>
+                <option value="full">תשלום מלא</option>
+            </select>
+            <label for="category">קטגוריה:</label>
+            <select id="category">
+                <option value="">בחר קטגוריה</option>
+                <option value="מזון">מזון</option>
+                <option value="מסעדה">מסעדה</option>
+                <option value="בידור">בידור</option>
+                <option value="נופש">נופש</option>
+                <option value="שונות">שונות</option>
+            </select>
+            <button onclick="addExpense()">הוסף הוצאה</button>
+            
+            <div class="import-container">
+                <button onclick="exportData()">ייצא נתונים (JSON)</button>
+                <button onclick="exportToCSV()">ייצא נתונים (CSV)</button>
+                <button onclick="triggerFileInput()">טען קובץ</button>
+                <input type="file" id="fileInput" class="file-input" onchange="importData(event)" accept="application/json">
+            </div>
+            
+            <div id="summary" class="summary"></div>
+            
+            <button class="nav-button" onclick="showExpenseList()">פירוט הוצאות</button>
+            
+            <div id="charts"></div>
+        </div>
+
+        <div id="expenseListScreen" class="screen">
+            <h1>פירוט הוצאות</h1>
+            <div id="expenseList" class="expense-list"></div>
+            <button class="nav-button" onclick="showMainScreen()">חזרה למסך הראשי</button>
+        </div>
+
+        <div id="editExpenseForm">
+            <h3>עריכת הוצאה</h3>
+            <input type="hidden" id="editExpenseId">
+            <label for="editDate">תאריך:</label>
+            <input type="date" id="editDate">
+            <label for="editDescription">תיאור ההוצאה:</label>
+            <input type="text" id="editDescription">
+            <label for="editAmount">סכום:</label>
+            <input type="number" id="editAmount">
+            <label for="editPaidBy">שולם על ידי:</label>
+            <select id="editPaidBy"></select>
+            <label for="editSplitType">אופן החלוקה:</label>
+            <select id="editSplitType">
+                <option value="equal">חלוקה שווה</option>
+                <option value="full">תשלום מלא</option>
+            </select>
+            <label for="editCategory">קטגוריה:</label>
+            <select id="editCategory">
+                <option value="">בחר קטגוריה</option>
+                <option value="מזון">מזון</option>
+                <option value="מסעדה">מסעדה</option>
+                <option value="בידור">בידור</option>
+                <option value="נופש">נופש</option>
+                <option value="שונות">שונות</option>
+            </select>
+            <button onclick="saveEditedExpense()">שמור שינויים</button>
+            <button onclick="cancelEdit()">ביטול</button>
+        </div>
+    </div>
+
+    <script>
+        let expenses = [];
+        let users = { user: "", partner: "" };
+        let charts = {};
+
+        // GitHub API functions
+        function getGitHubToken() {
+            return 'YOUR_GITHUB_TOKEN';
+        }
+
+
+//            const owner = 'OBN3';
+//            const repo = 'OBN';
+//            const path = 'budgetdata.json';
+//            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+
+
+			async function fetchDataFromGitHub()  {
+			const token = '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'; // החלף זאת בטוקן האמיתי שלך
+			const owner = 'OBN3';
+			const repo = 'OBN';
+			const path = 'budgetdata.json'; // שם הקובץ עודכן כאן
+			const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+
+			try {
+				const response = await fetch(url, {
+					headers: {
+						'Authorization': `token ${token}`,
+					}
+				});
+				if (!response.ok) {
+					throw new Error('Network response was not ok');
+				}
+				const data = await response.json();
+				const content = decodeURIComponent(escape(atob(data.content)));				
+//				const content = atob(data.content);
+				
+				// בדיקה אם התוכן ריק או לא תקין
+				if (!content.trim()) {
+					console.log('File is empty. Returning default data.');
+					return { expenses: [], users: { user: "", partner: "" } };
+				}
+				
+				try {
+					return JSON.parse(content);
+				} catch (parseError) {
+					console.error('Error parsing JSON:', parseError);
+					console.log('Returning default data due to parsing error.');
+					return { expenses: [], users: { user: "", partner: "" } };
+				}
+			} catch (error) {
+				console.error('Error fetching data from GitHub:', error);
+				return { expenses: [], users: { user: "", partner: "" } };
+			}
+		}
+
+//			const token = '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'; // החלף זאת בטוקן האמיתי שלך
+//			const owner = 'OBN3';
+//			const repo = 'OBN';
+//			const path = 'budgetdata.json';
+//			const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+
+			async function updateDataOnGitHub(newData) {
+				const token = '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'; // החלף זאת בטוקן האמיתי שלך
+				const owner = 'OBN3';
+				const repo = 'OBN';
+				const path = 'budgetdata.json';
+				const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+				
+				try {
+					// בדוק אם הקובץ כבר קיים
+					const response = await fetch(url, {
+						headers: {
+							'Authorization': `token ${token}`,
+						}
+					});
+					
+					let sha;
+					if (response.status === 404) {
+						console.log('File does not exist. Creating new file.');
+					} else if (response.ok) {
+						const data = await response.json();
+						sha = data.sha;
+					} else {
+						throw new Error('Unexpected response when checking file existence');
+					}
+
+					const content = btoa(unescape(encodeURIComponent(JSON.stringify(newData))));
+					const body = {
+						message: 'Update expense data',
+						content,
+						...(sha && { sha })
+					};
+
+					const updateResponse = await fetch(url, {
+						method: 'PUT',
+						headers: {
+							'Authorization': `token ${token}`,
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify(body)
+					});
+
+					if (updateResponse.ok) {
+						console.log('Data updated successfully on GitHub');
+						return true;
+					} else {
+						const errorData = await updateResponse.json();
+						console.error('Failed to update data on GitHub:', errorData);
+						return false;
+					}
+				} catch (error) {
+					console.error('Error updating data on GitHub:', error);
+					return false;
+				}
+			}
+
+
+		async function loadData() {
+			try {
+				const data = await fetchDataFromGitHub();
+				expenses = data.expenses || [];
+				users = data.users || { user: "", partner: "" };
+				document.getElementById('userName').value = users.user || '';
+				document.getElementById('partnerName').value = users.partner || '';
+				updatePaidByOptions();
+				updatePaidByOptions('editPaidBy');
+				displayExpenses();
+				updateCharts();
+				updateUserSetup();
+			} catch (error) {
+				console.error('Error loading data:', error);
+				alert('אירעה שגיאה בטעינת הנתונים. ייתכן שזו הפעם הראשונה שאתה משתמש באפליקציה.');
+				// Initialize with empty data
+				expenses = [];
+				users = { user: "", partner: "" };
+				updateUserSetup();
+			}
+		}
+
+        function setUserNames() {
+            const userName = document.getElementById('userName').value;
+            const partnerName = document.getElementById('partnerName').value;
+            if (userName && partnerName) {
+                users = { user: userName, partner: partnerName };
+                updatePaidByOptions();
+                updatePaidByOptions('editPaidBy');
+                updateDataOnGitHub({ expenses, users });
+                displayExpenses();
+                updateUserSetup();
+                alert('שמות המשתמשים נשמרו בהצלחה');
+            } else {
+                alert('נא להזין שמות לשני המשתמשים');
+            }
+        }
+
+        function updateUserSetup() {
+            if (users.user && users.partner) {
+                hideSetUserNamesButton();
+                disableUserNameInputs();
+                document.getElementById('editUserNamesButton').style.display = 'block';
+                document.getElementById('userSetupInstructions').style.display = 'none';
+            } else {
+                showSetUserNamesButton();
+                enableUserNameInputs();
+                document.getElementById('editUserNamesButton').style.display = 'none';
+                document.getElementById('userSetupInstructions').style.display = 'block';
+            }
+        }
+
+        function updatePaidByOptions(selectId = 'paidBy') {
+            const paidBySelect = document.getElementById(selectId);
+            paidBySelect.innerHTML = `
+                <option value="${users.user}">${users.user} (משתמש ראשי)</option>
+                <option value="${users.partner}">${users.partner} (משתמש שני)</option>
+            `;
+        }
+
+async function addExpense() {
+    const date = document.getElementById('date').value;
+    const description = document.getElementById('description').value;
+    const amount = parseFloat(document.getElementById('amount').value);
+    const paidBy = document.getElementById('paidBy').value;
+    const splitType = document.getElementById('splitType').value;
+    const category = document.getElementById('category').value;
+
+    if (date && description && amount && !isNaN(amount)) {
+        const newExpense = {
+            date,
+            description,
+            amount,
+            paidBy,
+            splitType,
+            category
+        };
+
+        expenses.push(newExpense);
+        
+        try {
+            const success = await updateDataOnGitHub({ expenses, users });
+            if (success) {
+                displayExpenses();
+                updateCharts();
+                clearInputs();
+                alert('ההוצאה נוספה בהצלחה ועודכנה ב-GitHub.');
+            } else {
+                // אם העדכון ב-GitHub נכשל, נסיר את ההוצאה שהוספנו
+                expenses.pop();
+                alert('אירעה שגיאה בשמירת הנתונים ב-GitHub. ההוצאה לא נשמרה. אנא נסה שוב.');
+            }
+        } catch (error) {
+            console.error('שגיאה בהוספת הוצאה:', error);
+            // אם הייתה שגיאה, נסיר את ההוצאה שהוספנו
+            expenses.pop();
+            alert('אירעה שגיאה בהוספת ההוצאה. אנא נסה שוב מאוחר יותר.');
+        }
+    } else {
+        alert('נא למלא את כל השדות בצורה תקינה');
+    }
+}
+
+        function clearInputs() {
+            document.getElementById('date').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('amount').value = '';
+            document.getElementById('paidBy').value = users.user;
+            document.getElementById('splitType').value = 'equal';
+            document.getElementById('category').value = '';
+        }
+
+        function displayExpenses() {
+            const listElement = document.getElementById('expenseList');
+            listElement.innerHTML = '<h2>רשימת הוצאות</h2>';
+            
+            expenses.forEach((expense, index) => {
+                const item = document.createElement('div');
+                item.className = 'expense-item';
+                item.innerHTML = `
+                    <div>
+                        <strong>${expense.date}</strong> - ${expense.description}: ₪${expense.amount}
+                        <br>שילם: ${expense.paidBy}, 
+                        חלוקה: ${expense.splitType === 'equal' ? 'שווה' : 'מלאה'}
+                        ${expense.category ? ', קטגוריה: ' + expense.category : ''}
+                    </div>
+                    <div>
+                        <button onclick="editExpense(${index})">ערוך</button>
+                        <button onclick="deleteExpense(${index})">מחק</button>
+                    </div>
+                `;
+                listElement.appendChild(item);
+            });
+
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const summary = document.getElementById('summary');
+            let totalPaidByUser = 0;
+            let totalPaidByPartner = 0;
+            let userShare = 0;
+            let partnerShare = 0;
+
+            expenses.forEach(expense => {
+                if (expense.paidBy === users.user) {
+                    totalPaidByUser += expense.amount;
+                    if (expense.splitType === 'equal') {
+                        userShare += expense.amount / 2;
+                        partnerShare += expense.amount / 2;
+                    } else {
+                        partnerShare += expense.amount;
+                    }
+                } else {
+                    totalPaidByPartner += expense.amount;
+                    if (expense.splitType === 'equal') {
+                        userShare += expense.amount / 2;
+                        partnerShare += expense.amount / 2;
+                    } else {
+                        userShare += expense.amount;
+                    }
+                }
+            });
+
+            const balance = totalPaidByUser - userShare;
+
+            summary.innerHTML = `
+                <p>סה"כ ${users.user} שילם: ₪${totalPaidByUser.toFixed(2)}</p>
+                <p>סה"כ ${users.partner} שילם: ₪${totalPaidByPartner.toFixed(2)}</p>
+                <p>החלק של ${users.user}: ₪${userShare.toFixed(2)}</p>
+                <p>החלק של ${users.partner}: ₪${partnerShare.toFixed(2)}</p>
+                <p>מאזן: ${balance > 0 ? `${users.partner} חייב ל${users.user}` : `${users.user} חייב ל${users.partner}`} ₪${Math.abs(balance).toFixed(2)}</p>
+            `;
+        }
+
+        function editExpense(index) {
+            const expense = expenses[index];
+            document.getElementById('editExpenseId').value = index;
+            document.getElementById('editDate').value = expense.date;
+            document.getElementById('editDescription').value = expense.description;
+            document.getElementById('editAmount').value = expense.amount;
+            document.getElementById('editPaidBy').value = expense.paidBy;
+            document.getElementById('editSplitType').value = expense.splitType;
+            document.getElementById('editCategory').value = expense.category;
+
+            updatePaidByOptions('editPaidBy');
+            document.getElementById('editExpenseForm').style.display = 'block';
+            document.getElementById('editExpenseForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function saveEditedExpense() {
+            const index = document.getElementById('editExpenseId').value;
+            expenses[index] = {
+                date: document.getElementById('editDate').value,
+                description: document.getElementById('editDescription').value,
+                amount: parseFloat(document.getElementById('editAmount').value),
+                paidBy: document.getElementById('editPaidBy').value,
+                splitType: document.getElementById('editSplitType').value,
+                category: document.getElementById('editCategory').value
+            };
+
+            await updateDataOnGitHub({ expenses, users });
+            displayExpenses();
+            updateCharts();
+            cancelEdit();
+        }
+
+        function cancelEdit() {
+            document.getElementById('editExpenseForm').style.display = 'none';
+        }
+
+        async function deleteExpense(index) {
+            if (confirm('האם אתה בטוח שברצונך למחוק הוצאה זו?')) {
+                expenses.splice(index, 1);
+                await updateDataOnGitHub({ expenses, users });
+                displayExpenses();
+                updateCharts();
+            }
+        }
+
+        function exportData() {
+            const dataToExport = { 
+                expenses,
+                users 
+            };
+            const dataStr = JSON.stringify(dataToExport, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'expenses_and_users.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function exportToCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+            csvContent += "תאריך,תיאור,סכום,שולם על ידי,אופן החלוקה,קטגוריה\n";
+            
+            expenses.forEach(expense => {
+                const row = [
+                    expense.date,
+                    expense.description,
+                    expense.amount,
+                    expense.paidBy,
+                    expense.splitType === 'equal' ? 'חלוקה שווה' : 'תשלום מלא',
+                    expense.category
+                ].join(',');
+                csvContent += row + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "expenses.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function triggerFileInput() {
+            if (confirm("תוכל לייבא נתונים מקובץ JSON ששמרת לגיבוי, אך שים לב כי הוא ידרוס את הנתונים הקיימים. להמשיך?")) {
+                document.getElementById('fileInput').click();
+            }
+        }
+
+        async function importData(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        if (importedData.expenses && importedData.users) {
+                            expenses = importedData.expenses;
+                            users = importedData.users;
+                            document.getElementById('userName').value = users.user;
+                            document.getElementById('partnerName').value = users.partner;
+                            updatePaidByOptions();
+                            updatePaidByOptions('editPaidBy');
+                            await updateDataOnGitHub({ expenses, users });
+                            displayExpenses();
+                            updateCharts();
+                            updateUserSetup();
+                            alert('הנתונים יובאו בהצלחה');
+                        } else {
+                            throw new Error('מבנה הקובץ אינו תקין');
+                        }
+                    } catch (error) {
+                        alert('שגיאה בטעינת הקובץ. אנא ודא שזהו קובץ JSON תקין.');
+                    }
+                };
+                reader.readAsText(file);
+            }
+            event.target.value = '';
+        }
+
+        function updateCharts() {
+            const chartsContainer = document.getElementById('charts');
+            chartsContainer.innerHTML = '';
+
+            const months = [...new Set(expenses.map(expense => expense.date.substring(0, 7)))].sort();
+
+            months.forEach(month => {
+                const monthExpenses = expenses.filter(expense => expense.date.startsWith(month));
+                const categoryExpenses = {};
+
+                monthExpenses.forEach(expense => {
+                    const category = expense.category || 'ללא קטגוריה';
+                    if (!categoryExpenses[category]) {
+                        categoryExpenses[category] = 0;
+                    }
+                    categoryExpenses[category] += expense.amount;
+                });
+
+                const chartWrapper = document.createElement('div');
+                chartWrapper.className = 'chart-wrapper';
+                const chartCanvas = document.createElement('canvas');
+                chartCanvas.id = `chart-${month}`;
+                chartWrapper.appendChild(chartCanvas);
+                chartsContainer.appendChild(chartWrapper);
+
+                const ctx = chartCanvas.getContext('2d');
+                const labels = Object.keys(categoryExpenses);
+                const data = labels.map(category => categoryExpenses[category]);
+
+                if (charts[month]) {
+                    charts[month].destroy();
+                }
+
+                charts[month] = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: [
+                                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
+                                '#FF9999', '#66B2FF', '#99FF99', '#FFCC99', '#FF99CC'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: `הוצאות לפי קטגוריות - ${month}`
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        function showExpenseList() {
+            document.getElementById('mainScreen').classList.remove('active');
+            document.getElementById('expenseListScreen').classList.add('active');
+            displayExpenses();
+        }
+
+        function showMainScreen() {
+            document.getElementById('expenseListScreen').classList.remove('active');
+            document.getElementById('mainScreen').classList.add('active');
+            updateSummary();
+            updateCharts();
+        }
+
+        function hideSetUserNamesButton() {
+            document.getElementById('setUserNamesButton').style.display = 'none';
+        }
+
+        function showSetUserNamesButton() {
+            document.getElementById('setUserNamesButton').style.display = 'block';
+        }
+
+        function disableUserNameInputs() {
+            document.getElementById('userName').readOnly = true;
+            document.getElementById('partnerName').readOnly = true;
+            document.getElementById('userName').classList.add('readonly');
+            document.getElementById('partnerName').classList.add('readonly');
+        }
+
+        function enableUserNameInputs() {
+            document.getElementById('userName').readOnly = false;
+            document.getElementById('partnerName').readOnly = false;
+            document.getElementById('userName').classList.remove('readonly');
+            document.getElementById('partnerName').classList.remove('readonly');
+        }
+
+        function enableUserNameEditing() {
+            enableUserNameInputs();
+            showSetUserNamesButton();
+            document.getElementById('editUserNamesButton').style.display = 'none';
+            document.getElementById('userSetupInstructions').style.display = 'block';
+        }
+
+        // טען נתונים בעת טעינת הדף
+        loadData();
+    </script>
+</body>
+</html>
