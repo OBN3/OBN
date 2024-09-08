@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>דף מנהל - הוספת מילים</title>
+    <style>
+	        :root {
+            --primary-color: #00F;
+            --secondary-color: #4ECDC4;
+            --background-color: #F7FFF7;
+            --text-color: #2C3E50;
+            --accent-color: #FFD93D;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            color: var(--primary-color);			
+        }
+        textarea {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>דף מנהל - הוספת מילים למשחק לימוד אנגלית</h1>
+
+    <h2>הסבר</h2>
+    <p>הקלידו צמדי מילים אנגלית-עברית בכל שורה. מילה באנגלית, רווח והתרגום שלה בעברית. הקישו Enter כדי לעבור לשורה הבאה, לצמד המילים הבא.</p>
+    <p>למשל:
+<br>car מכונית
+<br>
+cat חתול	
+<br><br>
+לאחר סיום הוספת המילים - הקישו לחזרה לאפליקציית הלימוד
+	</p>
+    <textarea id="inputTextArea" rows="10" style="text-align: right; direction: rtl;"  placeholder="Car מכונית&#10;Cat חתול"></textarea>
+
+    <button id="returnButton">לחזרה לאפליקציית לימוד אנגלית</button>
+
+    <script>
+        function convertInput() {
+            const input = document.getElementById('inputTextArea').value;
+            const lines = input.split('\n').filter(line => line.trim() !== '');
+            const output = lines.map(line => {
+                const [english, ...hebrewParts] = line.split(' ');
+                const hebrew = hebrewParts.join(' '); // מאחד את כל החלקים של המילה בעברית במקרה שיש רווחים
+                return `            { english: '${english}', hebrew: '${hebrew}' }`;
+            }).join(',\n');
+            document.getElementById('outputTextArea').value = output;
+        }
+
+        document.getElementById('inputTextArea').addEventListener('input', convertInput);
+
+        document.getElementById('returnButton').onclick = function() {
+            window.location.href = 'OBN-Eng-03.html';
+        };
+    </script>
+</body>
+</html>
