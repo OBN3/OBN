@@ -4,7 +4,7 @@
       "date": "2024-09-02",
       "description": "בדיקה 100",
       "amount": 152,
-      "paidBy": "יוסי",
+      "paidBy": "Ruth",
       "splitType": "equal",
       "category": "מסעדה"
     },
@@ -18,7 +18,7 @@
     }
   ],
   "users": {
-    "user": "אהבל",
-    "partner": "אהבלה"
+    "user": "Ruth",
+    "partner": "Alice"
   }
 }
