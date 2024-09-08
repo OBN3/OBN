@@ -3,14 +3,22 @@
     {
       "date": "2024-09-02",
       "description": "בדיקה 100",
-      "amount": 172,
-      "paidBy": "חיים",
+      "amount": 152,
+      "paidBy": "יוסי",
       "splitType": "equal",
       "category": "מסעדה"
+    },
+    {
+      "date": "2024-09-08",
+      "description": "בבדיקההה",
+      "amount": 362.5,
+      "paidBy": "אהבל",
+      "splitType": "equal",
+      "category": "בידור"
     }
   ],
   "users": {
-    "user": "חיים",
-    "partner": "נחמה"
+    "user": "אהבל",
+    "partner": "אהבלה"
   }
 }
