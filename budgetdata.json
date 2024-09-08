@@ -4,7 +4,7 @@
       "date": "2024-09-02",
       "description": "בדיקה 100",
       "amount": 152,
-      "paidBy": "Ruth",
+      "paidBy": "רות",
       "splitType": "equal",
       "category": "מסעדה"
     },
@@ -12,7 +12,7 @@
       "date": "2024-09-08",
       "description": "בבדיקההה",
       "amount": 362.5,
-      "paidBy": "Alice",
+      "paidBy": "אליס",
       "splitType": "equal",
       "category": "בידור"
     }
