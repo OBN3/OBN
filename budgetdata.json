@@ -1,1 +1,16 @@
-{"expenses":[],"users":{"user":"מלכה","partner":"אופיר"}}
+{
+  "expenses": [
+    {
+      "date": "2024-09-02",
+      "description": "בדיקה 100",
+      "amount": 152,
+      "paidBy": "יוסי",
+      "splitType": "equal",
+      "category": "מסעדה"
+    }
+  ],
+  "users": {
+    "user": "חיים",
+    "partner": "נחמה"
+  }
+}
