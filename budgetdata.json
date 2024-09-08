@@ -1,1 +1,1 @@
-{"expenses":[{"date":"2024-09-02","description":"בדיקה נוספת","amount":235,"paidBy":"מלכה 2","splitType":"equal","category":"בידור"},{"date":"2024-09-01","description":"בדיקה 4","amount":215,"paidBy":"מלכה 2","splitType":"equal","category":"בידור"}],"users":{"user":"מלכה","partner":"אופיר"}}
+{"expenses":[{"date":"2024-09-01","description":"בדיקה 4","amount":215,"paidBy":"מלכה 2","splitType":"equal","category":"בידור"}],"users":{"user":"מלכה","partner":"אופיר"}}
