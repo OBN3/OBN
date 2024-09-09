@@ -6,14 +6,6 @@
   "expenses": [
     {
       "date": "2024-09-01",
-      "description": "בדיקה",
-      "amount": 122.5,
-      "category": "מסעדה",
-      "paidBy": "אהובה",
-      "splitMethod": "equal"
-    },
-    {
-      "date": "2024-09-01",
       "description": "בדיקה 1001",
       "amount": 123.5,
       "category": "בידור",
