@@ -1,1 +1,64 @@
-{"expenses":[],"users":{"user":"מלכה","partner":"אופיר"}}
+{
+  "users": {
+    "user1": "אהובה",
+    "user2": "אהובית"
+  },
+  "expenses": [
+    {
+      "date": "2024-09-01",
+      "description": "בדיקה 1001",
+      "amount": 123.5,
+      "category": "בידור",
+      "paidBy": "אהובית",
+      "splitMethod": "equal"
+    },
+    {
+      "date": "2024-09-01",
+      "description": "בדיקה",
+      "amount": 250,
+      "category": "מסעדה",
+      "paidBy": "אהובה",
+      "splitMethod": "equal"
+    },
+    {
+      "date": "2024-08-05",
+      "description": "מחשב חדש",
+      "amount": 162.4,
+      "category": "שונות",
+      "paidBy": "אהובית",
+      "splitMethod": "equal"
+    },
+    {
+      "date": "2024-08-14",
+      "description": "בדחקקקקנ",
+      "amount": 153.4,
+      "category": "מסעדה",
+      "paidBy": "אהובה",
+      "splitMethod": "equal"
+    },
+    {
+      "date": "2024-09-09",
+      "description": "קפה בוקר ",
+      "amount": 50,
+      "category": "מסעדה",
+      "paidBy": "אהובית",
+      "splitMethod": "equal"
+    },
+    {
+      "date": "2024-09-05",
+      "description": "בדיקה של חלוקה לא שווה",
+      "amount": 232.4,
+      "category": "שונות",
+      "paidBy": "אהובה",
+      "splitMethod": "full"
+    },
+    {
+      "date": "2024-09-10",
+      "description": "חוב",
+      "amount": 33.75,
+      "category": "שונות",
+      "paidBy": "אהובית",
+      "splitMethod": "full"
+    }
+  ]
+}
