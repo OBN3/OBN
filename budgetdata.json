@@ -27,6 +27,14 @@
       "category": "שונות",
       "paidBy": "אהובית",
       "splitMethod": "equal"
+    },
+    {
+      "date": "2024-08-14",
+      "description": "בדחקקקקנ",
+      "amount": 153.4,
+      "category": "מסעדה",
+      "paidBy": "אהובה",
+      "splitMethod": "equal"
     }
   ]
 }
