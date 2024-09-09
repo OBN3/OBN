@@ -19,6 +19,14 @@
       "category": "מסעדה",
       "paidBy": "אהובה",
       "splitMethod": "equal"
+    },
+    {
+      "date": "2024-08-05",
+      "description": "מחשב חדש",
+      "amount": 162.4,
+      "category": "שונות",
+      "paidBy": "אהובית",
+      "splitMethod": "equal"
     }
   ]
 }
