@@ -43,6 +43,14 @@
       "category": "מסעדה",
       "paidBy": "אהובית",
       "splitMethod": "equal"
+    },
+    {
+      "date": "2024-09-05",
+      "description": "בדיקה של חלוקה לא שווה",
+      "amount": 232.4,
+      "category": "שונות",
+      "paidBy": "אהובה",
+      "splitMethod": "full"
     }
   ]
 }
