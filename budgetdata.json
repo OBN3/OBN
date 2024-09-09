@@ -1,1 +1,16 @@
-
+{
+  "users": {
+    "user1": "אהובה",
+    "user2": "אהובית"
+  },
+  "expenses": [
+    {
+      "date": "2024-09-01",
+      "description": "בדיקה",
+      "amount": 122.5,
+      "category": "מסעדה",
+      "paidBy": "אהובה",
+      "splitMethod": "equal"
+    }
+  ]
+}
