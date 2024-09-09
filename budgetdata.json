@@ -51,6 +51,14 @@
       "category": "שונות",
       "paidBy": "אהובה",
       "splitMethod": "full"
+    },
+    {
+      "date": "2024-09-10",
+      "description": "חוב",
+      "amount": 33.75,
+      "category": "שונות",
+      "paidBy": "אהובית",
+      "splitMethod": "full"
     }
   ]
 }
