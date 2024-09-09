@@ -43,14 +43,6 @@
       "category": "מסעדה",
       "paidBy": "אהובית",
       "splitMethod": "equal"
-    },
-    {
-      "date": "2024-09-09",
-      "description": "קפה בוקר",
-      "amount": 50,
-      "category": "מסעדה",
-      "paidBy": "אהובית",
-      "splitMethod": "equal"
     }
   ]
 }
