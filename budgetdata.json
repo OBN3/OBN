@@ -11,6 +11,14 @@
       "category": "בידור",
       "paidBy": "אהובית",
       "splitMethod": "equal"
+    },
+    {
+      "date": "2024-09-01",
+      "description": "בדיקה",
+      "amount": 250,
+      "category": "מסעדה",
+      "paidBy": "אהובה",
+      "splitMethod": "equal"
     }
   ]
 }
