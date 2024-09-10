@@ -1,0 +1,88 @@
+{
+  "users": {
+    "user1": "שותף",
+    "user2": "שותפה"
+  },
+  "expenses": [
+    {
+      "date": "2024-09-08",
+      "description": "סופרמרקט",
+      "amount": 156.35,
+      "category": "מזון",
+      "paidBy": "שותף",
+      "splitMethod": "equal"
+    },
+    {
+      "date": "2024-09-06",
+      "description": "שוק",
+      "amount": 255.75,
+      "category": "מזון",
+      "paidBy": "שותף",
+      "splitMethod": "equal"
+    },
+    {
+      "date": "2024-09-04",
+      "description": "הופעה של אהוד בנאי",
+      "amount": 300,
+      "category": "בידור",
+      "paidBy": "שותפה",
+      "splitMethod": "equal"
+    },
+    {
+      "date": "2024-08-04",
+      "description": "סושי",
+      "amount": 150,
+      "category": "מסעדה",
+      "paidBy": "שותף",
+      "splitMethod": "equal"
+    },
+    {
+      "date": "2024-09-08",
+      "description": "סופרמרקט",
+      "amount": 146.5,
+      "category": "מזון",
+      "paidBy": "שותף",
+      "splitMethod": "equal"
+    },
+    {
+      "date": "2024-09-02",
+      "description": "שוק פירות",
+      "amount": 235,
+      "category": "מזון",
+      "paidBy": "שותף",
+      "splitMethod": "equal"
+    },
+    {
+      "date": "2024-09-09",
+      "description": "החזר חוב",
+      "amount": 321.8,
+      "category": "שונות",
+      "paidBy": "שותפה",
+      "splitMethod": "equal"
+    },
+    {
+      "date": "2024-09-09",
+      "description": "החזר חוב 2",
+      "amount": 160.9,
+      "category": "שונות",
+      "paidBy": "שותפה",
+      "splitMethod": "full"
+    },
+    {
+      "date": "2024-08-13",
+      "description": "ירקות ופירות",
+      "amount": 145.75,
+      "category": "מזון",
+      "paidBy": "שותף",
+      "splitMethod": "equal"
+    },
+    {
+      "date": "2024-08-13",
+      "description": "גבינות",
+      "amount": 125.5,
+      "category": "מזון",
+      "paidBy": "שותפה",
+      "splitMethod": "equal"
+    }
+  ]
+}
