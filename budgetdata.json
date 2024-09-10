@@ -83,6 +83,14 @@
       "category": "מזון",
       "paidBy": "שותפה",
       "splitMethod": "equal"
+    },
+    {
+      "date": "2024-09-09",
+      "description": "פירות",
+      "amount": 89.5,
+      "category": "מזון",
+      "paidBy": "שותף",
+      "splitMethod": "equal"
     }
   ]
 }
