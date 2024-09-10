@@ -119,39 +119,18 @@
             const formData = new FormData();
             formData.append('file', file);
             formData.append('model', 'whisper-1');
-			
-			// 'Authorization': 'Bearer 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',
-			
+
             try {
                 const response = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
                     headers: {
-                        'Authorization': 'Bearer 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',
+                        'Authorization': 'Bearer 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',
                         'Content-Type': 'multipart/form-data'
                     }
                 });
 
-				  // קוד לטיפול בתשובה מוצלחת
-				} catch (error) {
-					if (error.response) {
-						if (error.response.status === 401) {
-							status.textContent = 'שגיאת אימות. בדוק את מפתח ה-API שלך.';
-						} else {
-							status.textContent = 'שגיאה: ' + error.response.status + ' ' + error.response.data.error.message;
-						}
-					} else {
-						status.textContent = 'אירעה שגיאה: ' + error.message;
-					}
-				}
-
-
-
-
-
-
                 status.textContent = 'התמלול הושלם בהצלחה!';
                 transcriptionResult.textContent = response.data.text;
 
-                // הוספת כפתור להורדת הטקסט כקובץ
                 const downloadButton = document.createElement('button');
                 downloadButton.textContent = 'הורד את התמלול כקובץ טקסט';
                 downloadButton.className = 'button';
@@ -159,7 +138,15 @@
                 transcriptionResult.appendChild(document.createElement('br'));
                 transcriptionResult.appendChild(downloadButton);
             } catch (error) {
-                status.textContent = 'אירעה שגיאה בתמלול: ' + error.message;
+                if (error.response) {
+                    if (error.response.status === 401) {
+                        status.textContent = 'שגיאת אימות. בדוק את מפתח ה-API שלך.';
+                    } else {
+                        status.textContent = 'שגיאה: ' + error.response.status + ' ' + error.response.data.error.message;
+                    }
+                } else {
+                    status.textContent = 'אירעה שגיאה: ' + error.message;
+                }
             }
         }
 
