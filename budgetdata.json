@@ -83,14 +83,6 @@
       "category": "מזון",
       "paidBy": "שותפה",
       "splitMethod": "equal"
-    },
-    {
-      "date": "2024-09-10",
-      "description": "קניית ירקות",
-      "amount": 85,
-      "category": "מזון",
-      "paidBy": "שותפה",
-      "splitMethod": "equal"
     }
   ]
 }
