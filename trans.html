@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickScribe - תמלול אודיו קל ופשוט</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        #dropArea {
+            border: 2px dashed #ccc;
+            border-radius: 20px;
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+            background-color: #fff;
+            cursor: pointer;
+        }
+        #dropArea.highlight {
+            border-color: #007bff;
+            background-color: #e6f2ff;
+        }
+        #fileInput {
+            display: none;
+        }
+        #transcriptionResult {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            white-space: pre-wrap;
+        }
+        #status {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>QuickScribe - תמלול אודיו קל ופשוט</h1>
+    <div id="dropArea">
+        <p>גרור קובץ אודיו לכאן או לחץ לבחירת קובץ</p>
+        <input type="file" id="fileInput" accept="audio/*">
+    </div>
+    <div id="status"></div>
+    <div id="transcriptionResult"></div>
+
+    <script>
+        const dropArea = document.getElementById('dropArea');
+        const fileInput = document.getElementById('fileInput');
+        const status = document.getElementById('status');
+        const transcriptionResult = document.getElementById('transcriptionResult');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            dropArea.classList.add('highlight');
+        }
+
+        function unhighlight() {
+            dropArea.classList.remove('highlight');
+        }
+
+        dropArea.addEventListener('drop', handleDrop, false);
+        dropArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const file = dt.files[0];
+            handleFile(file);
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            handleFile(file);
+        }
+
+        async function handleFile(file) {
+            status.textContent = 'מעלה את הקובץ...';
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('model', 'whisper-1');
+
+            try {
+                const response = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
+                    headers: {
+                        'Authorization': 'Bearer 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',
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+
+                status.textContent = 'התמלול הושלם בהצלחה!';
+                transcriptionResult.textContent = response.data.text;
+
+                // הוספת כפתור להורדת הטקסט כקובץ
+                const downloadButton = document.createElement('button');
+                downloadButton.textContent = 'הורד את התמלול כקובץ טקסט';
+                downloadButton.className = 'button';
+                downloadButton.onclick = () => downloadTranscription(response.data.text);
+                transcriptionResult.appendChild(document.createElement('br'));
+                transcriptionResult.appendChild(downloadButton);
+            } catch (error) {
+                status.textContent = 'אירעה שגיאה בתמלול: ' + error.message;
+            }
+        }
+
+        function downloadTranscription(text) {
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'transcription.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
