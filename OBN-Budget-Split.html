@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניהול תקציב משותף</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #4682b4;
+            display: inline-block;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        input, select, button {
+            margin: 10px 0;
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4682b4;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #5f9ea0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: right;
+        }
+        th {
+            background-color: #4682b4;
+            color: white;
+        }
+        #pieChart {
+            max-width: 400px;
+            margin: 20px auto;
+        }
+        #budgetDetails {
+            display: none;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            text-align: right;
+//            max-height: 500px;
+            overflow-y: auto;
+        }
+        #budgetDetails h4 {
+            color: #4682b4;
+            margin-top: 20px;
+        }
+        #budgetDetails h5 {
+            color: #5f9ea0;
+        }
+        #budgetDetails ul {
+            list-style-type: none;
+            padding-right: 20px;
+        }
+        #budgetDetails hr {
+            border: none;
+            border-top: 1px solid #ddd;
+            margin: 20px 0;
+        }
+        #passwordInput {
+            display: none;
+        }
+        #summary {
+            font-weight: bold;
+            color: #FF0000;
+            font-size: 1.2em;
+            margin: 20px 0;
+        }
+        .help-icon {
+            width: 20px;
+            height: 20px;
+            vertical-align: middle;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 5px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-content h3 {
+            color: #4682b4;
+            margin-top: 0;
+        }
+        .modal-content p {
+            margin-bottom: 10px;
+        }
+        .modal-content ol {
+            padding-left: 20px;
+        }
+        .modal-content hr {
+            border: 0;
+            border-top: 1px solid #ddd;
+            margin: 15px 0;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        @media screen and (max-width: 600px) {
+            table {
+                font-size: 0.8em;
+            }
+            th, td {
+                padding: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>ניהול תקציב משותף</h1>
+    <img src="question.png" alt="עזרה" id="helpIcon" class="help-icon">
+
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeHelpModal()">&times;</span>
+            <h2>הסבר על השימוש באפליקציה</h2>
+            <div id="helpText"></div>
+        </div>
+    </div>
+    
+    <div id="passwordInput">
+        <input type="password" id="tokenPassword" placeholder="הזן את הססמה" maxlength="5">
+        <button id="submitPassword">אישור</button>
+    </div>
+
+    <div id="userNames">
+        <input type="text" id="user1" placeholder="שם משתמש 1">
+        <input type="text" id="user2" placeholder="שם משתמש 2">
+        <button id="saveNames">שמור שמות משתמשים</button>
+    </div>
+	<button id="logoutButton" style="display: none;">התנתק מהמערכת</button>
+
+    <div id="expenseForm">
+        <input type="date" id="date" required>
+        <input type="text" id="description" placeholder="תיאור ההוצאה" required>
+        <input type="number" id="amount" placeholder="סכום" required>
+        <select id="category" required>
+            <option value="">בחר קטגוריה</option>
+            <option value="מזון">מזון</option>
+            <option value="מסעדה">מסעדה</option>
+            <option value="בידור">בידור</option>
+            <option value="נופש">נופש</option>
+            <option value="שונות">שונות</option>
+        </select>
+        <select id="paidBy" required>
+            <option value="">שולם על ידי</option>
+        </select>
+        <select id="splitMethod" required>
+            <option value="equal">חלוקה שווה</option>
+            <option value="full">שולם באופן מלא על ידי המשלם</option>
+        </select>
+        <button id="addExpense">הוסף הוצאה</button>
+    </div>
+
+<h4>פירוט 20 הוצאות אחרונות</h4>
+    <table id="expensesTable">
+        <thead>
+            <tr>
+                <th>תאריך</th>
+                <th>תיאור</th>
+                <th>סכום</th>
+                <th>קטגוריה</th>
+                <th>שולם על ידי</th>
+                <th>חלוקה</th>
+                <th>פעולות</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <button id="showAllExpenses" style="display: none;">כל ההוצאות</button>
+
+    <div id="summary"></div>
+
+    <button id="exportJSON">ייצוא ל-JSON (גיבוי)</button>
+    <button id="exportCSV">ייצוא לאקסל</button>
+<!--     <input type="file" id="importJSON" accept=".json">  -->
+    <button id="importJSONBtn">ייבוא מ-JSON (מגיבוי)</button>
+
+    <div>
+        <select id="monthSelect">
+            <option value="">סך כל ההוצאות</option>
+        </select>
+    </div>
+    <div id="pieChart">
+        <canvas id="myPieChart"></canvas>
+    </div>
+
+    <button id="showBudgetDetails">הצג פירוט תקציב</button>
+    <div id="budgetDetails"></div>
+<br><br><br>
+	<br><br>
+		<footer>
+			כל הזכויות שמורות OBN 2024
+		</footer>
+    <script>
+        let partialToken = 'github_pat_11BKNOHJY062mf6a7sKyKK_gBM5qho0JnGsTK8VDhCbt5BA3WOY8ceYLtLBo9jW6eALBSNMSUPGGQ'; // BH5DX
+        let fullToken = '';
+		const owner = 'OBN3';
+        const repo = 'OBN';
+        const path = 'budgetdata.json';		
+
+        let expenses = [];
+        let users = { user1: '', user2: '' };
+        let pieChart = null;
+        let showingAllExpenses = false;
+
+        const helpText = `
+        <p>ברוכים הבאים לאפליקציית ניהול התקציב המשותף!</p>
+        <p><strong>להוספת הוצאה חדשה:</strong></p>
+        <ol>
+            <li>מלאו את כל השדות בטופס</li>
+            <li>לחצו על כפתור "הוסף הוצאה"</li>
+        </ol>
+        <p><strong>לעריכת או מחיקת הוצאה קיימת:</strong></p>
+        <ol>
+            <li>לחצו על כפתור "ערוך" או מחק ליד ההוצאה הרצויה</li>
+            <li>שנו את הפרטים בטופס</li>
+            <li>לחצו על "עדכן הוצאה"</li>
+        </ol>
+		<p><strong>גיבוי וייצוא</strong></p>
+        <ol>
+            <li>לחצו על "ייצוא ל-JSON" כדי לייצא לקובץ גיבוי</li>
+            <li>לחצו על "ייצוא לאקסל" כדי לייצא לקובץ אקסל</li>
+            <li>לחצו על ייבוא מ-JSON כדי לטעון קובץ ששמרתם בשלב 1</li>
+        </ol>
+        <p>לצפייה בסיכום ההוצאות, השתמשו בגרף העוגה (אפשר לבחור חודשים), וב"הצג פירוט תקציב"</p>
+        <hr>
+        <p><em>אם יש לכם שאלות נוספות, דברו איתי! אופיר</em></p>
+        `;
+
+        document.getElementById('helpIcon').addEventListener('click', openHelpModal);
+        document.getElementById('submitPassword').addEventListener('click', submitPassword);
+        document.getElementById('logoutButton').addEventListener('click', logout);
+        document.getElementById('saveNames').addEventListener('click', saveUserNames);
+        document.getElementById('addExpense').addEventListener('click', addExpense);
+        document.getElementById('exportJSON').addEventListener('click', exportJSON);
+        document.getElementById('exportCSV').addEventListener('click', exportCSV);
+		document.getElementById('importJSONBtn').addEventListener('click', importJSON);
+        document.getElementById('monthSelect').addEventListener('change', updatePieChart);
+        document.getElementById('showBudgetDetails').addEventListener('click', toggleBudgetDetails);
+        document.getElementById('showAllExpenses').addEventListener('click', toggleAllExpenses);
+
+        function submitPassword() {
+            const password = document.getElementById('tokenPassword').value;
+            if (password.length === 5) {
+                fullToken = partialToken + password;
+                localStorage.setItem('fullToken', fullToken);
+                document.getElementById('passwordInput').style.display = 'none';
+                document.getElementById('logoutButton').style.display = 'block';
+                loadFromGithub();
+            } else {
+                alert('נא להזין 5 תווים בדיוק');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('fullToken');
+            fullToken = '';
+            document.getElementById('passwordInput').style.display = 'block';
+            document.getElementById('logoutButton').style.display = 'none';
+            users = { user1: '', user2: '' };
+            expenses = [];
+            updateUI();
+        }
+
+        function saveUserNames() {
+            const user1Input = document.getElementById('user1');
+            const user2Input = document.getElementById('user2');
+            const saveButton = document.getElementById('saveNames');
+
+            if (saveButton.textContent === 'שמור שמות') {
+                // שמירת שמות חדשים
+                users.user1 = user1Input.value;
+                users.user2 = user2Input.value;
+                if (users.user1 && users.user2) {
+                    user1Input.disabled = true;
+                    user2Input.disabled = true;
+                    saveButton.textContent = 'ערוך שמות';
+                    updatePaidByOptions();
+                    saveToGithub();
+                } else {
+                    alert('נא להזין שני שמות משתמשים');
+                }
+            } else {
+                // מצב עריכה
+                user1Input.disabled = false;
+                user2Input.disabled = false;
+                saveButton.textContent = 'שמור שמות';
+            }
+        }
+
+        function updatePaidByOptions() {
+            const paidBySelect = document.getElementById('paidBy');
+            paidBySelect.innerHTML = `
+                <option value="">שולם על ידי</option>
+                <option value="${users.user1}">${users.user1}</option>
+                <option value="${users.user2}">${users.user2}</option>
+            `;
+        }
+
+        function addExpense() {
+            const date = document.getElementById('date').value;
+            const description = document.getElementById('description').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const category = document.getElementById('category').value;
+            const paidBy = document.getElementById('paidBy').value;
+            const splitMethod = document.getElementById('splitMethod').value;
+
+            if (!date || !description || !amount || !category || !paidBy || !splitMethod) {
+                alert('נא למלא את כל השדות');
+                return;
+            }
+
+            const expense = { date, description, amount, category, paidBy, splitMethod };
+            expenses.push(expense);
+            updateUI();
+            saveToGithub();
+            clearForm();
+        }
+
+        function updateExpensesTable() {
+            const tbody = document.querySelector('#expensesTable tbody');
+            tbody.innerHTML = '';
+            const sortedExpenses = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const expensesToShow = showingAllExpenses ? sortedExpenses : sortedExpenses.slice(0, 20);
+            expensesToShow.forEach((expense, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${expense.date || ''}</td>
+                    <td>${expense.description || ''}</td>
+                    <td>${expense.amount != null ? expense.amount.toFixed(2) : '0.00'}</td>
+                    <td>${expense.category || ''}</td>
+                    <td>${expense.paidBy || ''}</td>
+                    <td>${expense.splitMethod === 'equal' ? 'חלוקה שווה' : 'תשלום מלא'}</td>
+                    <td>
+                        <button onclick="editExpense(${expenses.indexOf(expense)})">ערוך</button>
+                        <button onclick="deleteExpense(${expenses.indexOf(expense)})">מחק</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('showAllExpenses').style.display = expenses.length > 20 ? 'block' : 'none';
+            document.getElementById('showAllExpenses').textContent = showingAllExpenses ? 'הצג 20 אחרונות' : 'כל ההוצאות';
+        }
+
+        function toggleAllExpenses() {
+            showingAllExpenses = !showingAllExpenses;
+            updateExpensesTable();
+        }
+
+        function calculateSummary() {
+            let user1Total = 0;
+            let user2Total = 0;
+
+            expenses.forEach(expense => {
+                if (expense.splitMethod === 'equal') {
+                    if (expense.paidBy === users.user1) {
+                        user1Total += expense.amount / 2;
+                        user2Total -= expense.amount / 2;
+                    } else {
+                        user2Total += expense.amount / 2;
+                        user1Total -= expense.amount / 2;
+                    }
+                } else { // full payment
+                    if (expense.paidBy === users.user1) {
+                        user2Total -= expense.amount;
+                    } else {
+                        user1Total -= expense.amount;
+                    }
+                }
+            });
+
+            const summaryDiv = document.getElementById('summary');
+            if (user1Total > 0) {
+                summaryDiv.textContent = `${users.user2} חייב ל${users.user1} ${Math.abs(user1Total).toFixed(2)} ש"ח`;
+            } else if (user2Total > 0) {
+                summaryDiv.textContent = `${users.user1} חייב ל${users.user2} ${Math.abs(user2Total).toFixed(2)} ש"ח`;
+            } else {
+                summaryDiv.textContent = 'אין חובות';
+            }
+        }
+
+        function clearForm() {
+            document.getElementById('date').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('amount').value = '';
+            document.getElementById('category').value = '';
+            document.getElementById('paidBy').value = '';
+            document.getElementById('splitMethod').value = 'equal';
+        }
+
+        function editExpense(index) {
+            const expense = expenses[index];
+            document.getElementById('date').value = expense.date;
+            document.getElementById('description').value = expense.description;
+            document.getElementById('amount').value = expense.amount;
+            document.getElementById('category').value = expense.category;
+            document.getElementById('paidBy').value = expense.paidBy;
+            document.getElementById('splitMethod').value = expense.splitMethod;
+
+            // שינוי כפתור "הוסף הוצאה" ל"עדכן הוצאה"
+            const addButton = document.getElementById('addExpense');
+            addButton.textContent = 'עדכן הוצאה';
+            addButton.onclick = function() {
+                updateExpense(index);
+            };
+
+            // הוספת כפתור "בטל עריכה"
+            const cancelButton = document.createElement('button');
+            cancelButton.textContent = 'בטל עריכה';
+            cancelButton.id = 'cancelEditButton';
+            cancelButton.onclick = cancelEdit;
+            addButton.parentNode.insertBefore(cancelButton, addButton.nextSibling);
+        }
+
+        function updateExpense(index) {
+            const updatedExpense = {
+                date: document.getElementById('date').value,
+                description: document.getElementById('description').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                category: document.getElementById('category').value,
+                paidBy: document.getElementById('paidBy').value,
+                splitMethod: document.getElementById('splitMethod').value
+            };
+
+            expenses[index] = updatedExpense;
+            updateUI();
+            saveToGithub();
+            resetForm();
+        }
+
+        function cancelEdit() {
+            resetForm();
+        }
+
+        function resetForm() {
+            clearForm();
+            const addButton = document.getElementById('addExpense');
+            addButton.textContent = 'הוסף הוצאה';
+            addButton.onclick = addExpense;
+            
+            // הסרת כפתור "בטל עריכה"
+            const cancelButton = document.getElementById('cancelEditButton');
+            if (cancelButton) {
+                cancelButton.remove();
+            }
+        }
+
+		function deleteExpense(index) {
+			if (confirm('האם אתה בטוח שברצונך למחוק הוצאה זו?')) {
+				expenses = expenses.filter((_, i) => i !== index);
+				updateUI();
+				saveToGithub();
+			}
+		}
+
+        async function saveToGithub() {
+            try {
+                const currentSHA = await getFileSHA();
+                const content = btoa(unescape(encodeURIComponent(JSON.stringify({ users, expenses }, null, 2))));
+
+                const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${fullToken}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: 'Update budget data',
+                        content: content,
+                        sha: currentSHA,
+                    }),
+                });
+
+                if (!response.ok) {
+                    if (response.status === 409) {
+                        console.log('Conflict detected, retrying with updated data');
+                        await loadFromGithub();
+                        await saveToGithub();
+                    } else {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                } else {
+                    console.log('Data saved successfully to GitHub');
+                }
+            } catch (error) {
+                console.error('Error saving to GitHub:', error);
+                alert('שגיאה בשמירת הנתונים לשרת. הנתונים נשמרו מקומית.');
+                localStorage.setItem('budgetData', encodeURIComponent(JSON.stringify({ users, expenses })));
+            }
+        }
+
+        async function getFileSHA() {
+            try {
+                const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+                    headers: {
+                        'Authorization': `token ${fullToken}`,
+                    },
+                });
+                if (response.status === 404) {
+                    return null; // קובץ לא קיים
+                }
+                const data = await response.json();
+                return data.sha;
+            } catch (error) {
+                console.error('Error getting file SHA:', error);
+                return null;
+            }
+        }
+
+        async function loadFromGithub() {
+            try {
+                const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+                    headers: {
+                        'Authorization': `token ${fullToken}`,
+                    },
+                });
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        console.log('File not found. Initializing with empty data.');
+                        return { users: {}, expenses: [] };
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                if (!data.content) {
+                    console.log('File is empty. Initializing with empty data.');
+                    return { users: {}, expenses: [] };
+                }
+                const decodedContent = decodeURIComponent(escape(atob(data.content)));
+                const content = JSON.parse(decodedContent);
+                users = content.users || { user1: '', user2: '' };
+                expenses = content.expenses || [];
+                updateUI();
+                document.getElementById('logoutButton').style.display = 'block';
+            } catch (error) {
+                console.error('Error loading from GitHub:', error);
+                alert('שגיאה בטעינת הנתונים מהשרת. מנסה לטעון מהאחסון המקומי.');
+                loadFromLocalStorage();
+            }
+        }
+
+        function loadFromLocalStorage() {
+            const localData = localStorage.getItem('budgetData');
+            if (localData) {
+                const parsedData = JSON.parse(decodeURIComponent(localData));
+                users = parsedData.users;
+                expenses = parsedData.expenses;
+                updateUI();
+            } else {
+                users = { user1: '', user2: '' };
+                expenses = [];
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            const user1Input = document.getElementById('user1');
+            const user2Input = document.getElementById('user2');
+            const saveButton = document.getElementById('saveNames');
+
+            user1Input.value = users.user1;
+            user2Input.value = users.user2;
+            if (users.user1 && users.user2) {
+                user1Input.disabled = true;
+                user2Input.disabled = true;
+                saveButton.textContent = 'ערוך שמות';
+                updatePaidByOptions();
+            } else {
+                user1Input.disabled = false;
+                user2Input.disabled = false;
+                saveButton.textContent = 'שמור שמות';
+            }
+            updateExpensesTable();
+            calculateSummary();
+            updateMonthSelect();
+            updatePieChart();
+            updateBudgetDetails();
+        }
+
+        function exportJSON() {
+            const data = JSON.stringify({ users, expenses }, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'budget_data.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportCSV() {
+            let csv = 'תאריך,תיאור,סכום,קטגוריה,שולם על ידי,חלוקה\n';
+            expenses.forEach(expense => {
+                csv += `${expense.date},${expense.description},${expense.amount},${expense.category},${expense.paidBy},${expense.splitMethod}\n`;
+            });
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'budget_data.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+		function importJSON() {
+			const input = document.createElement('input');
+			input.type = 'file';
+			input.accept = '.json';
+			input.onchange = function(event) {
+				const file = event.target.files[0];
+				if (file) {
+					const reader = new FileReader();
+					reader.onload = function(e) {
+						try {
+							const content = JSON.parse(e.target.result);
+							if (confirm('ייבוא זה ידרוס את כל הנתונים הקיימים. האם להמשיך?')) {
+								users = content.users;
+								expenses = content.expenses;
+								updateUI();
+								saveToGithub();
+							}
+						} catch (error) {
+							alert('שגיאה בקריאת הקובץ');
+						}
+					};
+					reader.readAsText(file);
+				}
+			};
+			input.click();
+		}
+
+        function updateMonthSelect() {
+            const monthSelect = document.getElementById('monthSelect');
+            const months = new Set();
+            expenses.forEach(expense => {
+                const month = expense.date.substring(0, 7); // YYYY-MM
+                months.add(month);
+            });
+            
+            monthSelect.innerHTML = '<option value="">סך כל ההוצאות</option>';
+            Array.from(months).sort().forEach(month => {
+                const option = document.createElement('option');
+                option.value = month;
+                option.textContent = new Date(month + '-01').toLocaleString('he-IL', { year: 'numeric', month: 'long' });
+                monthSelect.appendChild(option);
+            });
+        }
+
+        function updatePieChart() {
+            const selectedMonth = document.getElementById('monthSelect').value;
+            let filteredExpenses = expenses;
+
+            if (selectedMonth) {
+                filteredExpenses = expenses.filter(expense => expense.date.startsWith(selectedMonth));
+            }
+
+            const categoryTotals = {};
+
+            filteredExpenses.forEach(expense => {
+                if (categoryTotals[expense.category]) {
+                    categoryTotals[expense.category] += expense.amount;
+                } else {
+                    categoryTotals[expense.category] = expense.amount;
+                }
+            });
+
+            const labels = Object.keys(categoryTotals);
+            const data = Object.values(categoryTotals);
+
+            const ctx = document.getElementById('myPieChart').getContext('2d');
+            
+            if (pieChart) {
+                pieChart.destroy();
+            }
+
+            const totalExpenses = data.reduce((sum, value) => sum + value, 0);
+
+            pieChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: selectedMonth ? `התפלגות הוצאות לחודש ${selectedMonth}` : 'התפלגות הוצאות כללית'
+                        },
+                        subtitle: {
+                            display: true,
+                            text: `סך הכל הוצאות: ${totalExpenses.toFixed(2)} ש"ח`
+                        }
+                    }
+                }
+            });
+        }
+
+        function toggleBudgetDetails() {
+            const detailsDiv = document.getElementById('budgetDetails');
+            if (detailsDiv.style.display === 'none' || detailsDiv.style.display === '') {
+                detailsDiv.style.display = 'block';
+            } else {
+                detailsDiv.style.display = 'none';
+            }
+            updateBudgetDetails();
+        }
+
+
+		function updateBudgetDetails() {
+			const detailsDiv = document.getElementById('budgetDetails');
+			let html = '<h3>פירוט תקציב</h3>';
+			
+			const expensesByMonth = {};
+			expenses.forEach(expense => {
+				if (expense && expense.date) {
+					const month = expense.date.substring(0, 7); // YYYY-MM
+					if (!expensesByMonth[month]) {
+						expensesByMonth[month] = [];
+					}
+					expensesByMonth[month].push(expense);
+				}
+			});
+
+			const sortedMonths = Object.keys(expensesByMonth).sort().reverse();
+
+			sortedMonths.forEach(month => {
+				const monthlyExpenses = expensesByMonth[month];
+				const monthName = new Date(month + '-01').toLocaleString('he-IL', { year: 'numeric', month: 'long' });
+				
+				html += `<h4>${monthName}</h4>`;
+
+				const categoryTotals = {};
+				monthlyExpenses.forEach(expense => {
+					if (expense && expense.category && typeof expense.amount === 'number') {
+						if (categoryTotals[expense.category]) {
+							categoryTotals[expense.category] += expense.amount;
+						} else {
+							categoryTotals[expense.category] = expense.amount;
+						}
+					}
+				});
+
+				html += '<h5>הוצאות לפי קטגוריה:</h5>';
+				html += '<ul>';
+				for (const [category, total] of Object.entries(categoryTotals)) {
+					html += `<li>${category}: ${total.toFixed(2)} ש"ח</li>`;
+				}
+				html += '</ul>';
+
+				const userTotals = { [users.user1]: 0, [users.user2]: 0 };
+				monthlyExpenses.forEach(expense => {
+					if (expense && expense.paidBy && typeof expense.amount === 'number') {
+						if (expense.splitMethod === 'equal') {
+							userTotals[expense.paidBy] += expense.amount / 2;
+							userTotals[expense.paidBy === users.user1 ? users.user2 : users.user1] += expense.amount / 2;
+						} else {
+							userTotals[expense.paidBy] += expense.amount;
+						}
+					}
+				});
+
+				html += '<h5>הוצאות לפי משתמש:</h5>';
+				html += '<ul>';
+				for (const [user, total] of Object.entries(userTotals)) {
+					html += `<li>${user}: ${total.toFixed(2)} ש"ח</li>`;
+				}
+				html += '</ul>';
+
+				const monthlyTotal = monthlyExpenses.reduce((sum, expense) => {
+					return sum + (expense && typeof expense.amount === 'number' ? expense.amount : 0);
+				}, 0);
+				html += `<p><strong>סך הכל לחודש: ${monthlyTotal.toFixed(2)} ש"ח</strong></p>`;
+
+				html += '<hr>';
+			});
+
+			detailsDiv.innerHTML = html;
+		}
+
+
+
+
+
+
+        function openHelpModal() {
+            document.getElementById('helpModal').style.display = 'block';
+            document.getElementById('helpText').innerHTML = helpText;
+        }
+
+        function closeHelpModal() {
+            document.getElementById('helpModal').style.display = 'none';
+        }
+
+        // בדיקה אם יש token חלקי בזיכרון המקומי
+        const storedPartialToken = localStorage.getItem('partialToken');
+        if (storedPartialToken) {
+            partialToken = storedPartialToken;
+        } else {
+            // אם אין, שמור את ה-token החלקי בזיכרון המקומי
+            localStorage.setItem('partialToken', partialToken);
+        }
+
+        // בדיקה אם יש כבר token מלא ב-localStorage
+        const storedFullToken = localStorage.getItem('fullToken');
+        if (storedFullToken) {
+            fullToken = storedFullToken;
+            loadFromGithub();
+        } else {
+            // הצגת שדה הזנת הסיסמה בטעינת הדף
+            document.getElementById('passwordInput').style.display = 'block';
+        }
+
+        // סגירת המודל כאשר לוחצים מחוץ לתוכן שלו
+        window.onclick = function(event) {
+            const modal = document.getElementById('helpModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
+
+				
