@@ -5,11 +5,11 @@
   },
   "expenses": [
     {
-      "date": "2024-09-08",
-      "description": "סופרמרקט",
-      "amount": 156.35,
-      "category": "מזון",
-      "paidBy": "שותף",
+      "date": "",
+      "description": "",
+      "amount": null,
+      "category": "",
+      "paidBy": "",
       "splitMethod": "equal"
     },
     {
@@ -90,6 +90,14 @@
       "amount": 154.5,
       "category": "מזון",
       "paidBy": "שותפה",
+      "splitMethod": "equal"
+    },
+    {
+      "date": "2024-09-08",
+      "description": "סופרמרקט",
+      "amount": 124,
+      "category": "מזון",
+      "paidBy": "שותף",
       "splitMethod": "equal"
     }
   ]
