@@ -240,23 +240,27 @@
             }
         }
 
-        function downloadTranscription() {
-            if (checkApiKey()) {
-                const transcriptionArea = document.getElementById('transcription');
-                const text = transcriptionArea.value;
-                if (text.trim() === '') {
-                    alert('אין תמלול להורדה. אנא בצע תמלול תחילה.');
-                    return;
-                }
-                const blob = new Blob([text], { type: 'text/plain' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'transcription.txt';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            }
-        }
+		function downloadTranscription() {
+			if (checkApiKey()) {
+				const transcriptionArea = document.getElementById('transcription');
+				const text = transcriptionArea.value;
+				if (text.trim() === '') {
+					alert('אין תמלול להורדה. אנא בצע תמלול תחילה.');
+					return;
+				}
+				// הוספת BOM לתחילת הטקסט
+				const BOM = '\uFEFF';
+				const textWithBOM = BOM + text;
+				// יצירת Blob עם קידוד UTF-8
+				const blob = new Blob([textWithBOM], { type: 'text/plain;charset=utf-8' });
+				const a = document.createElement('a');
+				a.href = URL.createObjectURL(blob);
+				a.download = 'transcription.txt';
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+			}
+		}
 
         async function transcribe(textOnly) {
             if (!checkApiKey()) {
