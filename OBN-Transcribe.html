@@ -161,8 +161,8 @@
     <div class="container">
         <h1>OBN Transcribe - תמלול אודיו קל ופשוט</h1>
         <div class="api-key-wrapper">
+		קוד ה-API שלך מ-Groq: &nbsp;
             <input type="text" id="apiKey" placeholder="הזן/הדבק את ה-API Key מ-Groq" />
-            <button id="deleteApiKeyBtn" onclick="deleteApiKey()">מחק קוד</button>
         </div>
         <button id="selectFileBtn" onclick="selectAudioFile()">בחר קובץ אודיו</button>
         <input type="file" id="audioFile" accept="audio/mp3,audio/mp4,audio/mpeg,audio/mpga,audio/m4a,audio/wav,audio/webm,audio/ogg" style="display:none;">
@@ -176,6 +176,7 @@
             <button onclick="downloadTranscription()">הורד תמלול בקובץ txt</button>
         </div>
         <button id="helpBtn" onclick="openHelpModal()">עזרה</button>
+		<button id="deleteApiKeyBtn" onclick="deleteApiKey()">מחק קוד</button>
 		<BR>
 		<footer>Copyright OBN 2024</footer>
 	</div>
@@ -223,11 +224,13 @@
             return true;
         }
 
-        function deleteApiKey() {
-            localStorage.removeItem('apiKey');
-            document.getElementById('apiKey').value = '';
-            alert('ה-API Key נמחק בהצלחה');
-        }
+		function deleteApiKey() {
+			if (confirm("האם אתה בטוח שברצונך למחוק את ה-API Key? פעולה זו תמחק את המפתח השמור ותדרוש הזנה מחדש בפעם הבאה.")) {
+				localStorage.removeItem('apiKey');
+				document.getElementById('apiKey').value = '';
+				alert('ה-API Key נמחק בהצלחה. אנא הזן מפתח חדש לפני השימוש הבא באפליקציה.');
+			}
+		}
 
         function selectAudioFile() {
             if (checkApiKey()) {
