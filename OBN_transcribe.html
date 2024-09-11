@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OBN Transcribe - תמלול אודיו קל ופשוט</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #3498db;
+            margin-bottom: 1rem;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .file-label, button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+            margin: 0.5rem;
+            transition: background-color 0.3s;
+            border: none;
+            font-size: 1rem;
+        }
+        .file-label:hover, button:hover {
+            background-color: #2980b9;
+        }
+        #transcribeBtn {
+            background-color: #2ecc71;
+        }
+        #transcribeBtn:hover {
+            background-color: #27ae60;
+        }
+        textarea {
+            width: 100%;
+            height: 300px;
+            margin-top: 1rem;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            resize: vertical;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        #status {
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+        .button-group {
+            margin-top: 1rem;
+        }
+        #helpBtn {
+            background-color: #f39c12;
+            margin-top: 1rem;
+        }
+        #helpBtn:hover {
+            background-color: #e67e22;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .close {
+            color: #aaa;
+            float: left;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #apiKeySuffix {
+            margin-top: 1rem;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 1rem;
+        }
+		
+		input[type="file"] {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			padding: 0;
+			margin: -1px;
+			overflow: hidden;
+			clip: rect(0, 0, 0, 0);
+			border: 0;
+		}
+
+		#selectFileBtn {
+			background-color: #3498db;
+			color: white;
+			padding: 10px 20px;
+			border-radius: 5px;
+			cursor: pointer;
+			display: inline-block;
+			margin: 0.5rem;
+			transition: background-color 0.3s;
+			border: none;
+			font-size: 1rem;
+		}
+
+		#selectFileBtn:hover {
+			background-color: #2980b9;
+		}
+		
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>OBN Transcribe - תמלול אודיו קל ופשוט</h1>
+        <input type="text" id="apiKeySuffix" placeholder="הזינו ססמה" maxlength="6">
+        <br>
+		<button id="selectFileBtn" onclick="selectAudioFile()">1. בחר קובץ אודיו</button>
+		<input type="file" id="audioFile" accept="audio/mp3,audio/mp4,audio/mpeg,audio/mpga,audio/m4a,audio/wav,audio/webm,audio/ogg" style="display:none;">
+
+        <br>
+        <button id="transcribeBtn" onclick="transcribe()">2. תמלל</button>
+        <textarea id="transcription" placeholder="התמלול יופיע כאן..." readonly></textarea>
+        <div id="status"></div>
+        <div id="loader" class="loader"></div>
+        <div class="button-group">
+            <button onclick="copyTranscription()">העתק תמלול</button>
+            <button onclick="downloadTranscription()">הורד תמלול בקובץ txt</button>
+			<footer>Copyright - OBN  2024 EtbbP5</footer>
+        </div>
+        <button id="helpBtn" onclick="openHelpModal()">עזרה</button>
+    </div>
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeHelpModal()">&times;</span>
+            <h2>עזרה</h2>
+            <div id="helpContent"></div>
+        </div>
+    </div>
+    <script>
+        const API_KEY_PREFIX = "gsk_9yKzNXVNPXZuPdpPbQQTWGdyb3FYu6ONqGdUFEbEp6XBd5";
+        const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB in bytes
+
+
+		document.getElementById('audioFile').addEventListener('change', function(event) {
+			if (!checkApiKey()) {
+			event.target.value = ''; // מנקה את הבחירה אם ה-API Key לא תקין
+			}
+		});
+
+
+        const help = `
+            <b>ברוכים הבאים לOBN Transcribe!</b><br><br>
+            כדי להשתמש באפליקציה:<br>
+            1. הזינו ססמה. אין לכם? דברו איתי.<br>
+            2. לאחר הזנת הססמה, תוכלו לבחור קובץ אודיו, לתמלל, להעתיק או להוריד את התמלול.<br>
+            3. בחר קובץ אודיו (עד 25MB) בפורמטים הנתמכים: mp3, mp4, mpeg, mpga, m4a, wav, webm, ogg.<br>
+            4. לחצו על "תמלל" כדי להתחיל בתהליך התמלול.<br>
+            5. המתינו עד לסיום התמלול.<br>
+            6. לאחר סיום התמלול, תוכל להעתיק או להוריד את התמלול.<br><br>
+        `;
+
+        function checkApiKey() {
+            const apiKeySuffix = document.getElementById('apiKeySuffix').value;
+            if (apiKeySuffix.length !== 6) {
+                alert('אנא הזן 6 ספרות אחרונות של ה-API Key');
+                return false;
+            }
+            return true;
+        }
+
+		function selectAudioFile() {
+			if (checkApiKey()) {
+				document.getElementById('audioFile').click();
+			}
+		}
+
+        function copyTranscription() {
+            if (checkApiKey()) {
+                const transcriptionArea = document.getElementById('transcription');
+                transcriptionArea.select();
+                document.execCommand('copy');
+                alert('התמלול הועתק ללוח');
+            }
+        }
+
+        function downloadTranscription() {
+            if (checkApiKey()) {
+                const transcriptionArea = document.getElementById('transcription');
+                const text = transcriptionArea.value;
+                if (text.trim() === '') {
+                    alert('אין תמלול להורדה. אנא בצע תמלול תחילה.');
+                    return;
+                }
+                const blob = new Blob([text], { type: 'text/plain' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'transcription.srt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        }
+
+        async function transcribe() {
+            if (!checkApiKey()) {
+                return;
+            }
+
+            const fileInput = document.getElementById('audioFile');
+            const transcriptionArea = document.getElementById('transcription');
+            const statusDiv = document.getElementById('status');
+            const loader = document.getElementById('loader');
+            const apiKeySuffix = document.getElementById('apiKeySuffix').value;
+
+            if (!fileInput.files.length) {
+                alert('אנא בחר קובץ אודיו');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            if (file.size > MAX_FILE_SIZE) {
+                alert(`הקובץ שלך שוקל ${(file.size / 1024 / 1024).toFixed(2)} MB וחורג מהמגבלה של 25 MB`);
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('model', 'whisper-large-v3');
+
+            statusDiv.textContent = 'מתמלל...';
+            loader.style.display = 'block';
+
+            try {
+                const fullApiKey = API_KEY_PREFIX + apiKeySuffix;
+                const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + fullApiKey
+                    },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('שגיאה בתמלול');
+                }
+
+                const result = await response.json();
+                const formattedText = formatToSRT(result.text);
+                transcriptionArea.value = formattedText;
+                statusDiv.textContent = 'התמלול הושלם בהצלחה!';
+            } catch (error) {
+                console.error('שגיאה:', error);
+                statusDiv.textContent = 'אירעה שגיאה בתמלול. אנא נסה שוב.';
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        function formatToSRT(text) {
+            const words = text.split(' ');
+            let srtOutput = '';
+            let lineCount = 1;
+            let startTime = 0;
+
+            for (let i = 0; i < words.length; i += 8) {
+                const lineWords = words.slice(i, i + 8);
+                const endTime = startTime + (lineWords.length * 0.5);
+
+                srtOutput += `${lineCount}\n`;
+                srtOutput += `${formatTime(startTime)} --> ${formatTime(endTime)}\n`;
+                srtOutput += `${lineWords.join(' ')}\n\n`;
+
+                lineCount++;
+                startTime = endTime;
+            }
+
+            return srtOutput;
+        }
+
+        function formatTime(seconds) {
+            const date = new Date(seconds * 1000);
+            const hours = date.getUTCHours().toString().padStart(2, '0');
+            const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+            const secs = date.getUTCSeconds().toString().padStart(2, '0');
+            const ms = date.getUTCMilliseconds().toString().padStart(3, '0');
+            return `${hours}:${minutes}:${secs},${ms}`;
+        }
+
+        function openHelpModal() {
+            document.getElementById('helpModal').style.display = 'block';
+            document.getElementById('helpContent').innerHTML = help;
+        }
+
+        function closeHelpModal() {
+            document.getElementById('helpModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('helpModal')) {
+                closeHelpModal();
+            }
+        }
+    </script>
+</body>
+</html>
