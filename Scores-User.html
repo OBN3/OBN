@@ -114,6 +114,8 @@
         <h1>אפליקציית ניקוד מתמודדים</h1>
         <input type="text" id="judgeNameInput" placeholder="שם המנקד">
         <button onclick="startScoring()">התחל ניקוד</button>
+		<p align="center">
+		 אנא נקדו כל מתמודד בסולם 1 (נמוך ביותר), עד 5 (גבוה ביותר). </p>
         <div id="scoringForm" style="display: none;">
             <table id="scoringTable"></table>
             <button onclick="saveScores()">שמור וסיים</button>
@@ -125,6 +127,10 @@
         <div id="uploadInstructions" style="display: none;"></div>
         <div id="shareOptions" style="display: none;">
             <h3>שתף את הקובץ</h3>
+			<p>אפשר לשלוח את קובץ הניקוד ששמרתם במחשב/טלפון באמצעות המייל או הווטסאפ.
+			<br>
+			לחצו על שלח במייל או בווטסאפ, צרפו את קובץ הניקוד ושלחו.
+			</p>
             <a id="emailLink" class="share-button" target="_blank">שלח במייל</a>
             <a id="whatsappLink" class="share-button" target="_blank">שלח בווטסאפ</a>
         </div>
@@ -238,7 +244,7 @@
             link.click();
             
             // הודעה למשתמש
-            alert(`הקובץ "${fileName}" נשמר מקומית במכשיר שלך.`);
+            alert(`הקובץ "${fileName}" נשמר מקומית במכשיר שלך. תוכלו לשתף אותו באמצעות מייל, ווטסאפ או העלאה לדרייב המשותף. ההוראות מפורטות מטה.`);
             
             // הצגת הוראות להעלאה לGoogle Drive
             showUploadInstructions(fileName);
