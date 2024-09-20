@@ -102,13 +102,19 @@
             font-size: 14px;
             line-height: 1.6;
         }
+        #scorerInterface:not(.hidden) + #adminBtn,
+        #scorerInterface:not(.hidden) ~ #adminPanel {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>אפליקציית ניקוד מתמודדים - ניהול</h1>
-        <input type="text" id="scorerName" placeholder="הכנס את שמך">
-        <button id="startScoring">התחל ניקוד</button>
+        <div id="scorerInterface" class="hidden">
+            <input type="text" id="scorerName" placeholder="הכנס את שמך">
+            <button id="startScoring">התחל ניקוד</button>
+        </div>
         <div id="scoringTable" class="hidden">
             <h2>אנא נקדו כל מתמודד בסולם 1 (נמוך ביותר), עד 5 (גבוה ביותר).</h2>
             <table>
@@ -227,7 +233,7 @@
             generateScoringFileBtn.addEventListener('click', () => {
                 const inputs = document.querySelectorAll('#groupInputs input');
                 groups = Array.from(inputs).map(input => input.value).filter(name => name.trim() !== '');
-                alert('הקבוצות נשמרו בהצלחה');
+                alert('קובץ הניקוד נשמר בהצלחה. אתה יכול להעלות לשרת ולשלוח קישור למנקדים');
                 
                 // Generate new HTML file without admin management section
                 let newHtmlContent = document.documentElement.outerHTML;
@@ -238,21 +244,31 @@
                 newHtmlContent = newHtmlContent.replace(/<div id="groupInputs".*?<\/div>/s, '');
                 newHtmlContent = newHtmlContent.replace(/<button id="addGroupBtn">.*?<\/button>/, '');
                 newHtmlContent = newHtmlContent.replace(/<button id="generateScoringFile">.*?<\/button>/, '');
-
-				// שינוי הכותרת בקובץ החדש
-				newHtmlContent = newHtmlContent.replace(/<h1>.*?<\/h1>/,'<h1>אפליקציית ניקוד מתמודדים - מנקדים</h1>');	
-				// שינוי הכותרת בקובץ החדש
-				newHtmlContent = newHtmlContent.replace(/<title>.*?<\/title>/,'<title>אפליקציית ניקוד מתמודדים - מנקדים</title>');
-				
+                
                 // Update groups array
                 newHtmlContent = newHtmlContent.replace(/let groups = .*?;/, `let groups = ${JSON.stringify(groups)};`);
+                
+                // Change title and h1 for the scorer's file
+                newHtmlContent = newHtmlContent.replace(
+                    /<title>.*?<\/title>/,
+                    '<title>אפליקציית ניקוד מתמודדים - מנקדים</title>'
+                );
+                newHtmlContent = newHtmlContent.replace(
+                    /<h1>.*?<\/h1>/,
+                    '<h1>אפליקציית ניקוד מתמודדים - מנקדים</h1>'
+                );
+                
+                // Show scorer interface
+                newHtmlContent = newHtmlContent.replace(
+                    /<div id="scorerInterface" class="hidden">/,
+                    '<div id="scorerInterface">'
+                );
                 
                 const blob = new Blob([newHtmlContent], {type: 'text/html;charset=utf-8;'});
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
                 link.download = `OBN-Score-User-${groups.length}.html`;
                 link.click();
-				
             });
         }
 
@@ -264,6 +280,7 @@
                     showError('יש להזין את שמך לפני תחילת הניקוד');
                     return;
                 }
+                document.getElementById('scorerInterface').classList.add('hidden');
                 const scoringTable = document.getElementById('scoringTable');
                 if (scoringTable) {
                     scoringTable.classList.remove('hidden');
@@ -306,7 +323,7 @@
             } else {
                 input.value = numericValue;
             }
-            
+
             // מסיר את סימון השגיאה אם הערך תקין
             if (input.value >= 1 && input.value <= 5) {
                 input.classList.remove('invalid-input');
@@ -452,3 +469,6 @@
     </script>
 </body>
 </html>
+
+
+			
