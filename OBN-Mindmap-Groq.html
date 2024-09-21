@@ -194,8 +194,10 @@
             <button onclick="copyResponse()">העתק תוכן</button>
         </div>
         <div id="response-display"></div>
+<!-- OBN
         <h3>הפקודה שנשלחה ל-Groq</h3>
         <div id="prompt-display"></div>
+-->
     </div>
 
     <div id="helpModal" class="modal">
@@ -266,7 +268,7 @@
             return;
         }
 
-        document.getElementById('prompt-display').textContent = '';
+//        document.getElementById('prompt-display').textContent = '';
         document.getElementById('response-display').textContent = '';
         document.getElementById('error-message').textContent = '';
         if (network) {
@@ -312,7 +314,7 @@
 			]
 		}`;
 
-        document.getElementById('prompt-display').textContent = prompt;
+//        document.getElementById('prompt-display').textContent = prompt;
 
         try {
             const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -457,7 +459,7 @@
         network = new vis.Network(container, data, options);
         
         network.on("stabilizationIterationsDone", function () {
-            setTimeout(resizeNetwork, 1000); // מחכה שניה אחת לאפשר לרשת להתייצב
+            setTimeout(resizeNetwork, 1200); // מחכה שניה אחת לאפשר לרשת להתייצב
         });
 
         network.once("afterDrawing", function() {
@@ -473,16 +475,16 @@
             const networkBoundingBox = network.getBoundingBox();
             if (networkBoundingBox && networkBoundingBox.bottom !== undefined && networkBoundingBox.top !== undefined) {
                 const newHeight = networkBoundingBox.bottom - networkBoundingBox.top + 50; // מוסיף מרווח
-                container.style.height = `${Math.max(1000, newHeight)}px`; // לפחות 800 px או גובה התוכן
+                container.style.height = `${Math.max(1200, newHeight)}px`; // לפחות 800 px או גובה התוכן
                 network.fit(); // מתאים את התצוגה לגודל החדש
             } else {
                 // אם getBoundingBox() מחזיר undefined או חסרים ערכים, נשתמש בגובה ברירת המחדל
-                container.style.height = '1000px';
+                container.style.height = '1200px';
             }
         } catch (error) {
             console.error("Error resizing network:", error);
             // במקרה של שגיאה, נשתמש בגובה ברירת המחדל
-            container.style.height = '1000px';
+            container.style.height = '1200px';
         }
     }
 
