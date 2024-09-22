@@ -146,6 +146,12 @@
             font-size: 0.8em;
             color: #666;
         }
+	    #nodeSpacing {
+			width: 60px;
+			padding: 5px;
+			border: 1px solid #3CAEA3;
+			border-radius: 5px;
+    }
     </style>
 </head>
 <body>
@@ -177,16 +183,25 @@
                 צורת צמתים:
                 <select id="nodeShape" onchange="updateMindMap()">
                     <option value="box">מרובע</option>
-                    <option value="circle">עיגול</option>
                     <option value="ellipse">אליפסה</option>
                 </select>
             </label>
-            <label><input type="checkbox" id="enableShadows" onchange="updateMindMap()" checked> הפעל צללים</label>
+			<label>
+				רווח בין צמתים:
+				<input type="number" id="nodeSpacing" value="150" min="50" max="300" step="10" onchange="updateMindMap()">
+			</label>
+			<label>
+				רווח בין רמות:
+				<input type="number" id="levelSeparation" value="150" min="50" max="300" step="10" onchange="updateMindMap()">
+			</label>
+			<label>
+				רווח בין תתי-עצים:
+				<input type="number" id="treeSpacing" value="200" min="50" max="500" step="10" onchange="updateMindMap()">
+			</label>
+            <label><input type="checkbox" id="enableShadows" onchange="updateMindMap()" checked>צללים</label>
             <button onclick="copyMindMap()">העתק תמונת מפת חשיבה</button>
         </div>
-
         <div id="error-message"></div>
-		
         <h3>הקוד שבו השתמשנו ליצירת מפת החשיבה</h3>
         <div>
             <button onclick="showAsList()">הצג בצורת רשימה</button>
@@ -418,14 +433,20 @@
         const layoutType = document.getElementById('layoutType').value;
         const nodeShape = document.getElementById('nodeShape').value;
         const enableShadows = document.getElementById('enableShadows').checked;
+		const nodeSpacing = parseInt(document.getElementById('nodeSpacing').value, 10);
+		const levelSeparation = parseInt(document.getElementById('levelSeparation').value, 10);
+		const treeSpacing = parseInt(document.getElementById('treeSpacing').value, 10);
 
         const options = {
             layout: {
                 hierarchical: layoutType === 'hierarchical' ? {
                     direction: "UD",
                     sortMethod: "directed",
-                    levelSeparation: 150,
-                    nodeSpacing: 150
+//                  levelSeparation: 150,
+//                  nodeSpacing: 150
+					levelSeparation: levelSeparation,
+					nodeSpacing: nodeSpacing,
+					treeSpacing: treeSpacing					
                 } : false
             },
             physics: enablePhysics ? {
@@ -459,7 +480,7 @@
         network = new vis.Network(container, data, options);
         
         network.on("stabilizationIterationsDone", function () {
-            setTimeout(resizeNetwork, 1200); // מחכה שניה אחת לאפשר לרשת להתייצב
+            setTimeout(resizeNetwork, 1000); // מחכה שניה אחת לאפשר לרשת להתייצב
         });
 
         network.once("afterDrawing", function() {
@@ -475,16 +496,16 @@
             const networkBoundingBox = network.getBoundingBox();
             if (networkBoundingBox && networkBoundingBox.bottom !== undefined && networkBoundingBox.top !== undefined) {
                 const newHeight = networkBoundingBox.bottom - networkBoundingBox.top + 50; // מוסיף מרווח
-                container.style.height = `${Math.max(1200, newHeight)}px`; // לפחות 800 px או גובה התוכן
+                container.style.height = `${Math.max(1000, newHeight)}px`; // לפחות 800 px או גובה התוכן
                 network.fit(); // מתאים את התצוגה לגודל החדש
             } else {
                 // אם getBoundingBox() מחזיר undefined או חסרים ערכים, נשתמש בגובה ברירת המחדל
-                container.style.height = '1200px';
+                container.style.height = '1000px';
             }
         } catch (error) {
             console.error("Error resizing network:", error);
             // במקרה של שגיאה, נשתמש בגובה ברירת המחדל
-            container.style.height = '1200px';
+            container.style.height = '1000px';
         }
     }
 
