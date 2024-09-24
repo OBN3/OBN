@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מפת חשיבה עם Groq</title>
+    <title>מנוע מפת חשיבה - MindMap Engine OBN</title>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/default.min.css">
@@ -159,7 +159,7 @@
 </head>
 <body>
     <div id="container">
-        <h1>יצירת מפת חשיבה עם Groq</h1>
+        <h1>מנוע מפת חשיבה - MindMap Engine OBN</h1>
         <input type="text" id="api-key" placeholder="הכנס את מפתח ה-API של Groq">
         <input type="text" id="concept" placeholder="הכנס מושג">
         <div class="control-group">
@@ -228,6 +228,7 @@
             </label>
             <button onclick="copyMindMap()">העתק תמונת מפת חשיבה</button>
         </div>
+		<br>
         <div>
             <button onclick="showAsList()">הצג בצורת רשימה</button>
             <button onclick="showAsJson()">הצג בפורמט JSON</button>
@@ -341,7 +342,7 @@
             network = null;
         }
 
-        document.getElementById('mindmap-title').textContent = `מפת חשיבה בנושא: ${concept} - מודל: ${selectedModel}`;
+        document.getElementById('mindmap-title').textContent = `מפת חשיבה בנושא: ${concept} (מודל בשימוש: ${selectedModel} )`;
         document.getElementById('loader').style.display = 'block';
 
         const API_KEY = apiKeyInput.value.trim();
