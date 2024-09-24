@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מנוע יצירת מפות חשיבה - OBN</title>
+    <title>מפת חשיבה עם Groq</title>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/default.min.css">
@@ -159,9 +159,9 @@
 </head>
 <body>
     <div id="container">
-        <h1>מנוע יצירת מפות חשיבה - OBN</h1>
-        <input type="text" id="api-key" placeholder="הכניסו את מפתח ה-API של Groq">
-        <input type="text" id="concept" placeholder="הזינו מושג">
+        <h1>יצירת מפת חשיבה עם Groq</h1>
+        <input type="text" id="api-key" placeholder="הכנס את מפתח ה-API של Groq">
+        <input type="text" id="concept" placeholder="הכנס מושג">
         <div class="control-group">
             <label>בחרו מודל AI:
                 <select id="groqModel" onchange="saveModelPreference()">
@@ -228,7 +228,6 @@
             </label>
             <button onclick="copyMindMap()">העתק תמונת מפת חשיבה</button>
         </div>
-
         <div>
             <button onclick="showAsList()">הצג בצורת רשימה</button>
             <button onclick="showAsJson()">הצג בפורמט JSON</button>
@@ -260,12 +259,15 @@
         1. צרו לעצמכם בחינם קוד 
         <a href="https://console.groq.com/playground" target="_blank">ב-Groq</a> בתפריט API Keys<br>
         2. שמרו את הקוד אצלכם והדביקו אותו בתיבת הקוד (לא לשתף עם אחרים!)<br>
-        3. הזינו את המושג לו אתם מבקשים ליצור מפת חשיבה. מילה עד 3 מילים.<br>
-        3. בחרו מודל ai. נסו מודלים שונים כדי להתנסות עם תוצאות אחרות.<br>
-        4. בחרו רמות עומק: אפשר קבל רמת ראשונה של מושגים ראשיים, או רמת עומק שניה של נושאים או רמה שלישית של תתי-נושאים.<br>
-		5. לא עבד בפעם הראשונה? יש הודעת שגיאה? נסו שוב!<br>
-		6. אפשר לבחור טמפרטורה: מידת היצירתיות של המודל. 0.7 זה ממוצע.<br><br>
-        שאלות? דברו איתי <a href="mailto:ofirbn@post.com">במייל</a>
+        3. בחרו מהמחשב או הטלפון קובץ אודיו לתמלול. הגודל המקסימלי הוא 25MB.<br>
+        3. לחצו על "תמלול עם תזמון" כדי לקבל תמלול עם תזמונים,<br>
+        שמתאים לכתוביות, למשל, או על "תמלול כטקסט בלבד" לקבלת טקסט ללא תזמון.<br>
+        4. המתינו עד לסיום התמלול.<br>
+        5. לאחר סיום התמלול, תוכל להעתיק או להוריד את התמלול.<br><br>
+        טמפרטורה: מידת היצירתיות של המודל. 0.7 זה ממוצע. אפשר להתנסות עם אפשרויות אחרות.<br><br>
+        רמות עומק: האם רוצים לקבל רק רמת ראשונה של מושגים ראשיים, או רמה שניה של נושאים או רמה שלישית של תתי-נושאים.<br><br>
+        שאלות? דברו איתי
+        <a href="mailto:ofirbn@post.com">במייל</a>
     `;
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -618,10 +620,8 @@
                     const newPrefix = [...prefix, index + 1];
                     result += createList(child, newPrefix, currentDepth + 1);
                 });
-                // הוספת שורה ריקה אחרי כל קבוצת תתי-נושאים, למעט הרמה האחרונה
-                if (currentDepth < parseInt(document.getElementById('depthLevel').value) - 1) {
-                    result += '\n';
-                }
+                // הוספת שורה ריקה אחרי כל קבוצת תתי-נושאים
+                result += '\n';
             }
             return result;
         }
@@ -629,9 +629,7 @@
         let listContent = '';
         if (jsonData.children) {
             jsonData.children.forEach((child, index) => {
-                listContent += createList(child, [index + 1], 1);
-                // הוספת שורה ריקה בין נושאים ראשיים
-                listContent += '\n';
+                listContent += createList(child, [index + 1], 0);
             });
         }
 
@@ -656,17 +654,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-			
