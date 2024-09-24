@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מנוע יצירת מפות חשיבה - OBN</title>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/default.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            direction: rtl;
+            background-color: #f0f8ff;
+        }
+        #container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #concept, #api-key {
+            width: 300px;
+            padding: 10px;
+            border: 2px solid #3CAEA3;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background-color: #ffffff;
+        }
+        button {
+            background-color: #4ECDC4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin: 0 5px;
+        }
+        button:hover {
+            background-color: #3CAEA3;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #mynetwork {
+            width: 100%;
+            height: 800px;
+            border: 1px solid #3CAEA3;
+            margin-bottom: 20px;
+            background-color: #ffffff;
+        }
+        #response-display, #error-message {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border: 1px solid #3CAEA3;
+            background-color: #ffffff;
+        }
+        #response-display {
+            white-space: pre-wrap;
+            font-family: monospace;
+            text-align: left;
+            direction: ltr;
+        }
+        .options {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .options label {
+            margin-right: 10px;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 10px;
+        }
+        .close {
+            color: #aaa;
+            float: left;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        h2, h3 {
+            color: #3CAEA3;
+        }
+        #loader {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3CAEA3;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #response-list {
+            direction: rtl;
+            text-align: right;
+            white-space: pre-wrap;
+            font-family: Arial, sans-serif;
+        }
+        #copyright {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.8em;
+            color: #666;
+        }
+        #nodeSpacing, #levelSeparation, #treeSpacing, #groqModel, #depthLevel, #temperature {
+            padding: 5px;
+            border: 1px solid #3CAEA3;
+            border-radius: 5px;
+            background-color: white;
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>מנוע יצירת מפות חשיבה - OBN</h1>
+        <input type="text" id="api-key" placeholder="הכניסו את מפתח ה-API של Groq">
+        <input type="text" id="concept" placeholder="הזינו מושג">
+        <div class="control-group">
+            <label>בחרו מודל AI:
+                <select id="groqModel" onchange="saveModelPreference()">
+                    <option value="llama3-70b-8192">llama3-70b-8192</option>
+                    <option value="llama-3.1-70b-versatile">llama-3.1-70b-versatile</option>
+                </select>
+            </label>
+            <label>רמות עומק:
+                <select id="depthLevel">
+                    <option value="1">1</option>
+                    <option value="2" selected>2</option>
+                    <option value="3">3</option>
+                </select>
+            </label>
+            <label>טמפרטורה:
+                <select id="temperature">
+                    <option value="0.1">0.1</option>
+                    <option value="0.3">0.3</option>
+                    <option value="0.5">0.5</option>
+                    <option value="0.7" selected>0.7</option>
+                    <option value="0.9">0.9</option>
+                </select>
+            </label>
+        </div>
+        <div>
+            <button id="generate-btn" onclick="generateMindMap()" disabled>צור מפת חשיבה</button>
+            <button id="help-btn" onclick="showHelp()">עזרה</button>
+        </div>
+        <div id="error-message"></div>
+        <h2 id="mindmap-title"></h2>
+        <div id="loader">
+            <div class="spinner"></div>
+            <span>מייצר מפה...</span>
+        </div>
+        <div id="mynetwork"></div>
+        <div class="options">
+            <label><input type="checkbox" id="enablePhysics" onchange="updateMindMap()" checked> הפעל פיזיקה</label>
+            <label>
+                סוג פריסה:
+                <select id="layoutType" onchange="updateMindMap()">
+                    <option value="standard">סטנדרטי</option>
+                    <option value="hierarchical">היררכי</option>
+                </select>
+            </label>
+            <label>
+                צורת צמתים:
+                <select id="nodeShape" onchange="updateMindMap()">
+                    <option value="box">מרובע</option>
+                    <option value="ellipse">אליפסה</option>
+                </select>
+            </label>
+            <label><input type="checkbox" id="enableShadows" onchange="updateMindMap()" checked> הפעל צללים</label>
+            <label>
+                רווח בין צמתים:
+                <input type="number" id="nodeSpacing" value="150" min="50" max="300" step="10" onchange="updateMindMap()">
+            </label>
+            <label>
+                רווח בין רמות:
+                <input type="number" id="levelSeparation" value="150" min="50" max="300" step="10" onchange="updateMindMap()">
+            </label>
+            <label>
+                רווח בין תתי-עצים:
+                <input type="number" id="treeSpacing" value="200" min="50" max="500" step="10" onchange="updateMindMap()">
+            </label>
+            <button onclick="copyMindMap()">העתק תמונת מפת חשיבה</button>
+        </div>
+        <h3>הקוד שבו השתמשנו ליצירת מפת החשיבה</h3>
+        <div>
+            <button onclick="showAsList()">הצג בצורת רשימה</button>
+            <button onclick="showAsJson()">הצג בפורמט JSON</button>
+            <button onclick="copyResponse()">העתק תוכן</button>
+        </div>
+        <div id="response-display"></div>
+    </div>
+
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeHelp()">&times;</span>
+            <h2>עזרה ביצירת מפת חשיבה</h2>
+            <div id="help-content"></div>
+        </div>
+    </div>
+
+    <div id="copyright">Copyright OBN 2024</div>
+
+    <script>
+    let network;
+    let data;
+    let lastConcept = '';
+    let jsonData;
+    const apiKeyInput = document.getElementById('api-key');
+    const generateBtn = document.getElementById('generate-btn');
+    const help = `
+        <b>ברוכים הבאים ל-OBN Mind Maps!</b><br><br>
+        כדי להשתמש באפליקציה:<br>
+        1. צרו לעצמכם בחינם קוד 
+        <a href="https://console.groq.com/playground" target="_blank">ב-Groq</a> בתפריט API Keys<br>
+        2. שמרו את הקוד אצלכם והדביקו אותו בתיבת הקוד (לא לשתף עם אחרים!)<br>
+        3. הזינו את המושג לו אתם מבקשים ליצור מפת חשיבה. מילה עד 3 מילים.<br>
+        3. בחרו מודל ai. נסו מודלים שונים כדי להתנסות עם תוצאות אחרות.<br>
+        4. בחרו רמות עומק: אפשר קבל רמת ראשונה של מושגים ראשיים, או רמת עומק שניה של נושאים או רמה שלישית של תתי-נושאים.<br>
+		5. לא עבד בפעם הראשונה? יש הודעת שגיאה? נסו שוב!<br>
+		6. אפשר לבחור טמפרטורה: מידת היצירתיות של המודל. 0.7 זה ממוצע.<br><br>
+        שאלות? דברו איתי <a href="mailto:ofirbn@post.com">במייל</a>
+    `;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedApiKey = localStorage.getItem('OBN-Groq-API');
+        if (savedApiKey) {
+            apiKeyInput.value = savedApiKey;
+            generateBtn.disabled = false;
+        }
+
+        apiKeyInput.addEventListener('input', function() {
+            const apiKey = apiKeyInput.value.trim();
+            localStorage.setItem('OBN-Groq-API', apiKey);
+            generateBtn.disabled = apiKey === '';
+        });
+
+        document.getElementById('help-content').innerHTML = help;
+
+        const savedModel = localStorage.getItem('OBN-Groq-Model');
+        if (savedModel) {
+            document.getElementById('groqModel').value = savedModel;
+        }
+
+        const savedNodeSpacing = localStorage.getItem('OBN-Groq-NodeSpacing');
+        if (savedNodeSpacing) {
+            document.getElementById('nodeSpacing').value = savedNodeSpacing;
+        }
+
+        const savedLevelSeparation = localStorage.getItem('OBN-Groq-LevelSeparation');
+        if (savedLevelSeparation) {
+            document.getElementById('levelSeparation').value = savedLevelSeparation;
+        }
+
+        const savedTreeSpacing = localStorage.getItem('OBN-Groq-TreeSpacing');
+        if (savedTreeSpacing) {
+            document.getElementById('treeSpacing').value = savedTreeSpacing;
+        }
+    });
+
+    function saveModelPreference() {
+        const selectedModel = document.getElementById('groqModel').value;
+        localStorage.setItem('OBN-Groq-Model', selectedModel);
+    }
+
+    async function delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function generateMindMap(retryCount = 0) {
+        const concept = document.getElementById('concept').value.trim();
+        const selectedModel = document.getElementById('groqModel').value;
+        const depthLevel = parseInt(document.getElementById('depthLevel').value);
+        const temperature = parseFloat(document.getElementById('temperature').value);
+        
+        if (concept === lastConcept) {
+            if (!confirm("כבר בוצעה מפת חשיבה על ביטוי זה. האם תרצו לבצע שוב? זה ימחק את המפה הנוכחית!")) {
+                return;
+            }
+        }
+        
+        lastConcept = concept;
+
+        if (retryCount >= 3) {
+            document.getElementById('error-message').textContent = 'בוצעו 3 ניסיונות ללא הצלחה. אנא נסה שוב מאוחר יותר.';
+            return;
+        }
+
+        document.getElementById('response-display').textContent = '';
+        document.getElementById('error-message').textContent = '';
+        if (network) {
+            network.destroy();
+            network = null;
+        }
+
+        document.getElementById('mindmap-title').textContent = `מפת חשיבה בנושא: ${concept} - מודל: ${selectedModel}`;
+        document.getElementById('loader').style.display = 'block';
+
+        const API_KEY = apiKeyInput.value.trim();
+        const prompt = `צור מפת חשיבה מפורטת על המושג "${concept}" בפורמט JSON תקין בלבד. הקפד על שימוש במרכאות כפולות לכל המפתחות והערכים. הנה דוגמה למבנה הנדרש:
+{
+  "name": "${concept}",
+  "children": [
+    {
+      "name": "היבט 1",
+      ${depthLevel > 1 ? `
+      "children": [
+        {
+          "name": "תת-היבט 1.1",
+          ${depthLevel > 2 ? `
+          "children": [
+            {"name": "תת-תת-היבט 1.1.1"},
+            {"name": "תת-תת-היבט 1.1.2"}
+          ]
+          ` : ''}
+        },
+        {
+          "name": "תת-היבט 1.2",
+          ${depthLevel > 2 ? `
+          "children": [
+            {"name": "תת-תת-היבט 1.2.1"},
+            {"name": "תת-תת-היבט 1.2.2"}
+          ]
+          ` : ''}
+        }
+      ]
+      ` : ''}
+    }
+  ]
+}
+הכן בדיוק 10 היבטים ראשיים${depthLevel > 1 ? `, כל אחד עם לפחות 3 תתי-היבטים` : ''}${depthLevel > 2 ? `, וכל תת-היבט עם לפחות 2 תתי-תתי-היבטים` : ''}.
+אל תכלול מספור בשמות הצמתים. השתמש רק בשמות התוכן עצמם. חשוב מאוד: וודא שה-JSON תקין לחלוטין ומוכן לפרסור.`;
+
+        try {
+            console.log('שולח בקשה ל-Groq API עם הפרמטרים הבאים:', {
+                model: selectedModel,
+                prompt: prompt,
+                max_tokens: 4000,
+                temperature: temperature
+            });
+
+            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: selectedModel,
+                    messages: [{ role: "user", content: prompt }],
+                    max_tokens: 4000,
+                    temperature: temperature
+                })
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.text();
+                console.error('תגובת שגיאה מלאה:', errorBody);
+                throw new Error(`שגיאת HTTP! סטטוס: ${response.status}. תוכן: ${errorBody}`);
+            }
+
+            const data = await response.json();
+            if (data.choices && data.choices[0] && data.choices[0].message) {
+                let content = data.choices[0].message.content;
+                
+                console.log("תוכן גולמי מ-Groq:", content);
+
+                // ניקוי ה-JSON
+                content = content.trim().replace(/[\x00-\x1F\x7F-\x9F]/g, "");
+                content = content.replace(/\n/g, "").replace(/\r/g, "");
+
+                const jsonStartIndex = content.indexOf('{');
+                const jsonEndIndex = content.lastIndexOf('}');
+                if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
+                    content = content.slice(jsonStartIndex, jsonEndIndex + 1);
+                }
+
+                console.log("JSON לאחר ניקוי:", content);
+
+                try {
+                    // ניסיון לתקן JSON לא תקין
+                    content = content.replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":');
+                    jsonData = JSON.parse(content);
+                    showAsList();
+                    createMindMap(jsonData);
+                } catch (jsonError) {
+                    console.error("שגיאת פרסור JSON:", jsonError);
+                    console.error("JSON בעייתי:", content);
+                    document.getElementById('error-message').innerHTML = `שגיאה בפרסור JSON: ${jsonError.message}<br><a href="#" onclick="generateMindMap()">נסה שוב</a>`;
+                }
+            } else {
+                throw new Error('תגובה לא תקינה מ-API');
+            }
+        } catch (error) {
+            console.error('שגיאה מפורטת:', error);
+            document.getElementById('error-message').innerHTML = `שגיאה: ${error.message}<br><a href="#" onclick="generateMindMap()">נסה שוב</a>`;
+        } finally {
+            document.getElementById('loader').style.display = 'none';
+        }
+    }
+
+    function createMindMap(mindMapData) {
+        const nodes = [];
+        const edges = [];
+        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F6D55C', '#ED553B', '#3CAEA3', '#20639B', '#173F5F'];
+        const depthLevel = parseInt(document.getElementById('depthLevel').value);
+
+        function addNode(item, parentId = null, level = 0, branchColor) {
+            const id = nodes.length;
+            const nodeColor = level === 0 ? '#FFFFFF' : branchColor;
+            const node = { 
+                id: id, 
+                label: item.name, 
+                level: level,
+                color: nodeColor,
+                font: { color: getContrastYIQ(nodeColor) }
+            };
+            nodes.push(node);
+            if (parentId !== null) {
+                edges.push({ from: parentId, to: id });
+            }
+            if (item.children && level < depthLevel) {
+                item.children.forEach((child, index) => {
+                    const childColor = level === 0 ? colors[index % colors.length] : branchColor;
+                    addNode(child, id, level + 1, childColor);
+                });
+            }
+        }
+
+        addNode(mindMapData);
+
+        data = {
+            nodes: new vis.DataSet(nodes),
+            edges: new vis.DataSet(edges)
+        };
+
+        updateMindMap();
+    }
+
+    function getContrastYIQ(hexcolor) {
+        if (!hexcolor) {
+            return 'black';
+        }
+        hexcolor = hexcolor.replace("#", "");
+        var r = parseInt(hexcolor.substr(0,2),16);
+        var g = parseInt(hexcolor.substr(2,2),16);
+        var b = parseInt(hexcolor.substr(4,2),16);
+        var yiq = ((r*299)+(g*587)+(b*114))/1000;
+        return (yiq >= 128) ? 'black' : 'white';
+    }
+
+    function updateMindMap() {
+        const container = document.getElementById('mynetwork');
+        const enablePhysics = document.getElementById('enablePhysics').checked;
+        const layoutType = document.getElementById('layoutType').value;
+        const nodeShape = document.getElementById('nodeShape').value;
+        const enableShadows = document.getElementById('enableShadows').checked;
+        const nodeSpacing = parseInt(document.getElementById('nodeSpacing').value, 10);
+        const levelSeparation = parseInt(document.getElementById('levelSeparation').value, 10);
+        const treeSpacing = parseInt(document.getElementById('treeSpacing').value, 10);
+
+        const options = {
+            layout: {
+                hierarchical: layoutType === 'hierarchical' ? {
+                    direction: "UD",
+                    sortMethod: "directed",
+                    levelSeparation: levelSeparation,
+                    nodeSpacing: nodeSpacing,
+                    treeSpacing: treeSpacing
+                } : false
+            },
+            physics: enablePhysics ? {
+                stabilization: false,
+                barnesHut: {
+                    gravitationalConstant: -2000,
+                    centralGravity: 0.3,
+                    springLength: 95,
+                    springConstant: 0.04,
+                    damping: 0.09,
+                    avoidOverlap: 0
+                }
+            } : false,
+            nodes: {
+                shape: nodeShape,
+                font: {
+                    size: 14
+                },
+                borderWidth: 2,
+                shadow: enableShadows
+            },
+            edges: {
+                width: 2,
+                shadow: enableShadows
+            }
+        };
+
+        if (network) {
+            network.destroy();
+        }
+        network = new vis.Network(container, data, options);
+        
+        network.on("stabilizationIterationsDone", function () {
+            setTimeout(resizeNetwork, 1000);
+        });
+
+        network.once("afterDrawing", function() {
+            setTimeout(resizeNetwork, 2000);
+        });
+
+        // שמירת ההעדפות
+        localStorage.setItem('OBN-Groq-NodeSpacing', nodeSpacing);
+        localStorage.setItem('OBN-Groq-LevelSeparation', levelSeparation);
+        localStorage.setItem('OBN-Groq-TreeSpacing', treeSpacing);
+    }
+
+    function resizeNetwork() {
+        if (!network) return;
+
+        const container = document.getElementById('mynetwork');
+        try {
+            const networkBoundingBox = network.getBoundingBox();
+            if (networkBoundingBox && networkBoundingBox.bottom !== undefined && networkBoundingBox.top !== undefined) {
+                const newHeight = networkBoundingBox.bottom - networkBoundingBox.top + 50;
+                container.style.height = `${Math.max(800, newHeight)}px`;
+                network.fit();
+            } else {
+                container.style.height = '800px';
+            }
+        } catch (error) {
+            console.error("שגיאה בשינוי גודל הרשת:", error);
+            container.style.height = '800px';
+        }
+    }
+
+    function showHelp() {
+        document.getElementById('helpModal').style.display = 'block';
+    }
+
+    function closeHelp() {
+        document.getElementById('helpModal').style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+        const modal = document.getElementById('helpModal');
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+
+    function copyMindMap() {
+        const canvas = document.querySelector('#mynetwork canvas');
+        canvas.toBlob(function(blob) {
+            const item = new ClipboardItem({ "image/png": blob });
+            navigator.clipboard.write([item]).then(function() {
+                alert("המפה הועתקה. אתם יכולים להדביק אותה במסמך וורד או פאורפוינט, למשל");
+            }, function(error) {
+                console.error("לא ניתן להעתיק את התמונה:", error);
+            });
+        });
+    }
+
+    function showAsList() {
+        if (!jsonData) return;
+
+        function createList(node, prefix = [], currentDepth = 0) {
+            let nodeName = node.name.replace(/^\d+(\.\d+)*\.\s*/, '');
+            
+            let result = prefix.join('.') + (prefix.length ? '. ' : '') + nodeName + '\n';
+            
+            if (node.children && currentDepth < parseInt(document.getElementById('depthLevel').value)) {
+                node.children.forEach((child, index) => {
+                    const newPrefix = [...prefix, index + 1];
+                    result += createList(child, newPrefix, currentDepth + 1);
+                });
+                // הוספת שורה ריקה אחרי כל קבוצת תתי-נושאים, למעט הרמה האחרונה
+                if (currentDepth < parseInt(document.getElementById('depthLevel').value) - 1) {
+                    result += '\n';
+                }
+            }
+            return result;
+        }
+
+        let listContent = '';
+        if (jsonData.children) {
+            jsonData.children.forEach((child, index) => {
+                listContent += createList(child, [index + 1], 1);
+                // הוספת שורה ריקה בין נושאים ראשיים
+                listContent += '\n';
+            });
+        }
+
+        document.getElementById('response-display').innerHTML = `<pre id="response-list">${listContent.trim()}</pre>`;
+    }
+
+    function showAsJson() {
+        if (!jsonData) return;
+        const formattedJson = JSON.stringify(jsonData, null, 2);
+        const highlightedJson = hljs.highlight(formattedJson, {language: 'json'}).value;
+        document.getElementById('response-display').innerHTML = `<pre><code class="hljs language-json">${highlightedJson}</code></pre>`;
+    }
+
+    function copyResponse() {
+        const responseContent = document.getElementById('response-display').innerText;
+        navigator.clipboard.writeText(responseContent).then(function() {
+            alert("הקוד הועתק. אתם יכולים להדביק אותו במסמך וורד או פאורפוינט, למשל");
+        }, function(error) {
+            console.error("לא ניתן להעתיק את הטקסט:", error);
+        });
+    }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+			
