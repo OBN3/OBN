@@ -23,8 +23,14 @@
             border-radius: 20px;
             padding: 30px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            max-width: 800px;
-            width: 100%;
+            max-width: 396;
+//            width: 100%;
+            width: 396;
+			
+			display: flex;
+			flex-direction: column;
+			align-items: center;						
+			
         }
         h1, h2 {
             color: #2c3e50;
@@ -33,13 +39,20 @@
             text-align: center;
         }
         textarea, select, input[type="range"] {
-            width: 100%;
+//            width: 100%;
+            width: 95%;
             padding: 10px;
             margin-bottom: 15px;
             border: 1px solid #bdc3c7;
             border-radius: 10px;
             font-size: 16px;
             transition: border-color 0.3s;
+			
+			display: block;
+			margin-left: auto;
+			margin-right: auto;
+			text-align-last: center;			
+			
         }
         textarea:focus, select:focus {
             outline: none;
@@ -115,7 +128,7 @@
         .slider-container {
             display: flex;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
         .slider-container label {
             flex: 1;
@@ -144,6 +157,7 @@
         <h2>יצירת חתימה</h2>
         <textarea id="text" rows="1" placeholder="הכנס טקסט לחתימה"></textarea>
         <canvas id="signatureCanvas" width="350" height="75"></canvas>
+		<br>
         <select id="font">
             <option value="Alef">אלף - Alef (עברית)</option>
             <option value="Assistant">אסיסטנט - Assistant (עברית)</option>
@@ -203,8 +217,8 @@
         </div>
         <div class="slider-container">
             <label for="signatureSize">גודל החתימה:</label>
-            <input type="range" id="signatureSize" min="1" max="50" value="10">
-            <span id="signatureSizeValue">10%</span>
+            <input type="range" id="signatureSize" min="1" max="100" value="20">
+            <span id="signatureSizeValue">20%</span>
         </div>
         <div class="slider-container">
             <label for="signatureOpacity">שקיפות החתימה:</label>
