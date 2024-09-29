@@ -23,7 +23,7 @@
             border-radius: 20px;
             padding: 30px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            max-width: 500px;
+            max-width: 800px;
             width: 100%;
         }
         h1, h2 {
@@ -49,6 +49,14 @@
             border: 2px dashed #bdc3c7;
             border-radius: 10px;
             margin-bottom: 15px;
+        }
+        #signatureCanvas {
+            display: block;
+            margin: 0 auto;
+        }
+        #imageCanvas {
+            display: block;
+            margin: 0 auto 30px auto;
         }
         button, .file-upload-btn {
             background-color: #3498db;
@@ -79,8 +87,7 @@
             margin: 0 10px;
             cursor: pointer;
         }
-
-		#explanation {
+        #explanation {
             background-color: #ecf0f1;
             padding: 20px;
             border-radius: 10px;
@@ -89,7 +96,7 @@
             font-size: 14px;
             line-height: 1.6;
         }
-        #explanation h3 {
+        #explanation h3, #explanation h4 {
             color: #2c3e50;
             margin-bottom: 10px;
         }
@@ -99,7 +106,6 @@
         #explanation li {
             margin-bottom: 10px;
         }
-		
         #copyright {
             margin-top: 20px;
             font-size: 14px;
@@ -125,14 +131,19 @@
         .file-upload-btn input[type="file"] {
             display: none;
         }
+        .center-buttons {
+            text-align: center;
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>יוצר החתימות והתמונות</h1>
+        <h1>יוצר החתימות - OBN</h1>
+        
         <h2>יצירת חתימה</h2>
-        <textarea id="text" rows="1" placeholder="הזינו טקסט ליצירת חתימה"></textarea>
-        <canvas id="signatureCanvas" width="380" height="75"></canvas>
+        <textarea id="text" rows="1" placeholder="הכנס טקסט לחתימה"></textarea>
+        <canvas id="signatureCanvas" width="350" height="75"></canvas>
         <select id="font">
             <option value="Alef">אלף - Alef (עברית)</option>
             <option value="Assistant">אסיסטנט - Assistant (עברית)</option>
@@ -159,27 +170,36 @@
         </div>
         <div class="slider-container">
             <label for="size">גודל פונט:</label>
-            <input type="range" id="size" min="10" max="100" value="40">
+            <input type="range" id="size" min="10" max="100" value="50">
             <span id="sizeValue">50</span>
         </div>
-        <button id="addCopyright">הוסף סימן זכויות יוצרים</button>
-        <button id="saveSignature">שמור את החתימה</button>
+        <div class="center-buttons">
+            <button id="addCopyright">הוסף סימן זכויות יוצרים</button>
+            <button id="saveSignature">שמור את החתימה</button>
+        </div>
 
-        <h2>העלאת תמונה והוספת חתימה קיימת</h2>
-        <label class="file-upload-btn">
-            העלאת תמונה
-            <input type="file" id="imageUpload" accept="image/*">
-        </label>
-        <label class="file-upload-btn">
-            העלאת חתימה
-            <input type="file" id="signatureUpload" accept="image/*">
-        </label>
-        <canvas id="imageCanvas" width="400"></canvas>
+        <h2>העלאת תמונה וחתימה</h2>
+        <div class="center-buttons">
+            <label class="file-upload-btn">
+                העלאת תמונה
+                <input type="file" id="imageUpload" accept="image/*">
+            </label>
+            <label class="file-upload-btn">
+                העלאת חתימה
+                <input type="file" id="signatureUpload" accept="image/*">
+            </label>
+        </div>
+        <canvas id="imageCanvas" width="350"></canvas>
         
         <div class="slider-container">
-            <label for="signatureOffset">מרחק מהקצה:</label>
-            <input type="range" id="signatureOffset" min="0" max="100" value="10">
-            <span id="signatureOffsetValue">10 פיקסלים</span>
+            <label for="signatureOffsetX">מרחק אופקי מקצה התמונה:</label>
+            <input type="range" id="signatureOffsetX" min="0" max="100" value="10">
+            <span id="signatureOffsetXValue">10 פיקסלים</span>
+        </div>
+        <div class="slider-container">
+            <label for="signatureOffsetY">מרחק אנכי מקצה התמונה:</label>
+            <input type="range" id="signatureOffsetY" min="0" max="100" value="10">
+            <span id="signatureOffsetYValue">10 פיקסלים</span>
         </div>
         <div class="slider-container">
             <label for="signatureSize">גודל החתימה:</label>
@@ -197,7 +217,9 @@
             <span id="imageQualityValue">10 (מקסימלי)</span>
         </div>
 
-        <button id="saveImage">שמרו את התמונה עם החתימה</button>
+        <div class="center-buttons">
+            <button id="saveImage">שמור את התמונה עם החתימה</button>
+        </div>
 
         <div id="explanation"></div>
         <div id="copyright">Copyright OBN 2024</div>
@@ -218,8 +240,10 @@
         const imageCtx = imageCanvas.getContext('2d');
         const imageUpload = document.getElementById('imageUpload');
         const signatureUpload = document.getElementById('signatureUpload');
-        const signatureOffset = document.getElementById('signatureOffset');
-        const signatureOffsetValue = document.getElementById('signatureOffsetValue');
+        const signatureOffsetX = document.getElementById('signatureOffsetX');
+        const signatureOffsetXValue = document.getElementById('signatureOffsetXValue');
+        const signatureOffsetY = document.getElementById('signatureOffsetY');
+        const signatureOffsetYValue = document.getElementById('signatureOffsetYValue');
         const signatureSize = document.getElementById('signatureSize');
         const signatureSizeValue = document.getElementById('signatureSizeValue');
         const signatureOpacity = document.getElementById('signatureOpacity');
@@ -234,22 +258,22 @@
 
         const help = `
             <h3>עזרה</h3>
-			<h4>יצירת חתימה:</h4>
+            <h4>יצירת חתימה:</h4>
             1. הקלידו טקסט אותו תרצו ליצור כחתימה בתיבת הטקסט.<br>
             2. בחרו סוג פונט, גודל וצבע (שחור על שקוף או לבן על שקוף).<br>
             3. שמרו את החתימה. קובץ החתימה יישמר במחשב או הטלפון.
-           <h4> הוספת חתימה לתמונה:</h4>
-			1. העלו תמונה.<br>
-			2. העלו קובץ חתימה.<br>
+            <h4>הוספת חתימה לתמונה:</h4>
+            1. העלו תמונה.<br>
+            2. העלו קובץ חתימה.<br>
             3. לחצו על אחד העיגולים האדומים בפינות התמונה כדי למקם את החתימה במקום אותו תרצו.<br>
             4. התאימו את גודל החתימה, מרחקה מקצה התמונה ושקיפותה.<br>
             7. בחרו את איכות התמונה הסופית.<br>
             8. שמרו את התמונה עם החתימה במחשב או הטלפון.<br><br>
-			שאלות? דברו איתי <a href="mailto:ofirbn@post.com">במייל</a>
-			<br>			
+            שאלות? דברו איתי <a href="mailto:ofirbn@post.com">במייל</a>
+            <br>
         `;
-//        explanation.textContent = help;
-		explanation.innerHTML = help;  // שימוש ב-innerHTML במקום textContent
+
+        explanation.innerHTML = help;
 
         const fontFamilies = [
             'Alef', 'Assistant', 'Bellefair', 'Heebo', 'Rubik', 'Secular One', 'Suez One', 'Varela Round',
@@ -267,7 +291,6 @@
                 updateSignatureCanvas();
             })
             .catch(err => console.log('Some fonts could not be loaded:', err));
-
         function updateSignatureCanvas() {
             const textColor = document.querySelector('input[name="color"]:checked').value;
             
@@ -310,26 +333,27 @@
             if (uploadedSignature) {
                 const signatureWidth = imageCanvas.width * (signatureSize.value / 100);
                 const signatureHeight = (uploadedSignature.height / uploadedSignature.width) * signatureWidth;
-                const offset = parseInt(signatureOffset.value);
+                const offsetX = parseInt(signatureOffsetX.value);
+                const offsetY = parseInt(signatureOffsetY.value);
                 const opacity = signatureOpacity.value / 100;
 
                 let x, y;
                 switch (signaturePosition) {
                     case 'topLeft':
-                        x = offset;
-                        y = offset;
+                        x = offsetX;
+                        y = offsetY;
                         break;
                     case 'topRight':
-                        x = imageCanvas.width - signatureWidth - offset;
-                        y = offset;
+                        x = imageCanvas.width - signatureWidth - offsetX;
+                        y = offsetY;
                         break;
                     case 'bottomLeft':
-                        x = offset;
-                        y = imageCanvas.height - signatureHeight - offset;
+                        x = offsetX;
+                        y = imageCanvas.height - signatureHeight - offsetY;
                         break;
                     case 'bottomRight':
-                        x = imageCanvas.width - signatureWidth - offset;
-                        y = imageCanvas.height - signatureHeight - offset;
+                        x = imageCanvas.width - signatureWidth - offsetX;
+                        y = imageCanvas.height - signatureHeight - offsetY;
                         break;
                 }
 
@@ -340,12 +364,12 @@
         }
 
         function drawCornerCircles() {
-            const circleRadius = 10;
+            const circleRadius = 20;
             const positions = [
-                {x: circleRadius, y: circleRadius, position: 'topLeft'},
-                {x: imageCanvas.width - circleRadius, y: circleRadius, position: 'topRight'},
-                {x: circleRadius, y: imageCanvas.height - circleRadius, position: 'bottomLeft'},
-                {x: imageCanvas.width - circleRadius, y: imageCanvas.height - circleRadius, position: 'bottomRight'}
+                {x: 10 + circleRadius, y: 10 + circleRadius, position: 'topLeft'},
+                {x: imageCanvas.width - 10 - circleRadius, y: 10 + circleRadius, position: 'topRight'},
+                {x: 10 + circleRadius, y: imageCanvas.height - 10 - circleRadius, position: 'bottomLeft'},
+                {x: imageCanvas.width - 10 - circleRadius, y: imageCanvas.height - 10 - circleRadius, position: 'bottomRight'}
             ];
 
             imageCtx.strokeStyle = 'red';
@@ -399,7 +423,7 @@
 
         addCopyright.addEventListener('click', () => {
             if (text.value.trim() === '') {
-                alert('אנא הזינו טקסט לחתימה לפני הוספת סימן זכויות יוצרים.');
+                alert('אנא הכנס טקסט לחתימה לפני הוספת סימן זכויות יוצרים.');
                 return;
             }
             text.value += ' ©';
@@ -408,11 +432,13 @@
 
         saveSignature.addEventListener('click', () => {
             if (text.value.trim() === '') {
-                alert('אנא הזינו טקסט לחתימה לפני שמירה.');
+                alert('אנא הכנס טקסט לחתימה לפני שמירה.');
                 return;
             }
             const link = document.createElement('a');
-            link.download = 'signature.png';
+            const now = new Date();
+            const dateString = now.toISOString().slice(0,19).replace(/[-:]/g,"").replace("T", "-");
+            link.download = `OBN-Signature-${dateString}.png`;
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = signatureCanvas.width;
             tempCanvas.height = signatureCanvas.height;
@@ -437,6 +463,7 @@
 
             link.href = tempCanvas.toDataURL('image/png');
             link.click();
+            alert('החתימה נשמרה. אפשר להשתמש בה במסמך או בתמונה');
         });
 
         imageUpload.addEventListener('change', (e) => {
@@ -467,58 +494,71 @@
             }
         });
 
-        signatureOffset.addEventListener('input', () => {
+        signatureOffsetX.addEventListener('input', () => {
             if (!uploadedSignature) {
-                alert('אנא העלו חתימה לפני שינוי המרחק מהקצה.');
-                signatureOffset.value = 10;
+                alert('אנא העלה חתימה לפני שינוי המרחק האופקי מהקצה.');
+                signatureOffsetX.value = 10;
                 return;
             }
-            signatureOffsetValue.textContent = `${signatureOffset.value} פיקסלים`;
+            signatureOffsetXValue.textContent = `${signatureOffsetX.value} פיקסלים`;
             updateImageCanvas();
         });
+
+        signatureOffsetY.addEventListener('input', () => {
+            if (!uploadedSignature) {
+                alert('אנא העלה חתימה לפני שינוי המרחק האנכי מהקצה.');
+                signatureOffsetY.value = 10;
+                return;
+            }
+            signatureOffsetYValue.textContent = `${signatureOffsetY.value} פיקסלים`;
+            updateImageCanvas();
+        });
+
         signatureSize.addEventListener('input', () => {
             if (!uploadedSignature) {
-                alert('אנא העלו חתימה לפני שינוי גודל החתימה.');
+                alert('אנא העלה חתימה לפני שינוי גודל החתימה.');
                 signatureSize.value = 10;
                 return;
             }
             signatureSizeValue.textContent = `${signatureSize.value}%`;
             updateImageCanvas();
         });
+
         signatureOpacity.addEventListener('input', () => {
             if (!uploadedSignature) {
-                alert('אנא העלו חתימה לפני שינוי שקיפות החתימה.');
+                alert('אנא העלה חתימה לפני שינוי שקיפות החתימה.');
                 signatureOpacity.value = 100;
                 return;
             }
             signatureOpacityValue.textContent = `${signatureOpacity.value}%`;
             updateImageCanvas();
         });
+
         imageQuality.addEventListener('input', () => {
             imageQualityValue.textContent = `${imageQuality.value} ${imageQuality.value === '10' ? '(מקסימלי)' : ''}`;
         });
 
         imageCanvas.addEventListener('click', (e) => {
             if (!uploadedImage) {
-                alert('אנא העלו תמונה לפני בחירת מיקום החתימה.');
+                alert('אנא העלה תמונה לפני בחירת מיקום החתימה.');
                 return;
             }
             if (!uploadedSignature) {
-                alert('אנא העלו חתימה לפני בחירת מיקום החתימה.');
+                alert('אנא העלה חתימה לפני בחירת מיקום החתימה.');
                 return;
             }
             const rect = imageCanvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-            const circleRadius = 10;
+            const circleRadius = 20;
 
-            if (x <= circleRadius * 2 && y <= circleRadius * 2) {
+            if (x <= 10 + circleRadius * 2 && y <= 10 + circleRadius * 2) {
                 signaturePosition = 'topLeft';
-            } else if (x >= imageCanvas.width - circleRadius * 2 && y <= circleRadius * 2) {
+            } else if (x >= imageCanvas.width - 10 - circleRadius * 2 && y <= 10 + circleRadius * 2) {
                 signaturePosition = 'topRight';
-            } else if (x <= circleRadius * 2 && y >= imageCanvas.height - circleRadius * 2) {
+            } else if (x <= 10 + circleRadius * 2 && y >= imageCanvas.height - 10 - circleRadius * 2) {
                 signaturePosition = 'bottomLeft';
-            } else if (x >= imageCanvas.width - circleRadius * 2 && y >= imageCanvas.height - circleRadius * 2) {
+            } else if (x >= imageCanvas.width - 10 - circleRadius * 2 && y >= imageCanvas.height - 10 - circleRadius * 2) {
                 signaturePosition = 'bottomRight';
             }
 
@@ -527,15 +567,17 @@
 
         saveImage.addEventListener('click', () => {
             if (!uploadedImage) {
-                alert('אנא העלו תמונה לפני שמירה.');
+                alert('אנא העלה תמונה לפני שמירה.');
                 return;
             }
             if (!uploadedSignature) {
-                alert('אנא העלו חתימה לפני שמירה.');
+                alert('אנא העלה חתימה לפני שמירה.');
                 return;
             }
             const link = document.createElement('a');
-            link.download = 'image_with_signature.png';
+            const now = new Date();
+            const dateString = now.toISOString().slice(0,19).replace(/[-:]/g,"").replace("T", "-");
+            link.download = `Image-with-Signature-${dateString}.png`;
             
             // יצירת קנבס זמני בגודל המקורי של התמונה
             const tempCanvas = document.createElement('canvas');
@@ -550,26 +592,27 @@
             const scale = uploadedImage.width / imageCanvas.width;
             const signatureWidth = uploadedImage.width * (signatureSize.value / 100);
             const signatureHeight = (uploadedSignature.height / uploadedSignature.width) * signatureWidth;
-            const offset = parseInt(signatureOffset.value) * scale;
+            const offsetX = parseInt(signatureOffsetX.value) * scale;
+            const offsetY = parseInt(signatureOffsetY.value) * scale;
             const opacity = signatureOpacity.value / 100;
 
             let x, y;
             switch (signaturePosition) {
                 case 'topLeft':
-                    x = offset;
-                    y = offset;
+                    x = offsetX;
+                    y = offsetY;
                     break;
                 case 'topRight':
-                    x = uploadedImage.width - signatureWidth - offset;
-                    y = offset;
+                    x = uploadedImage.width - signatureWidth - offsetX;
+                    y = offsetY;
                     break;
                 case 'bottomLeft':
-                    x = offset;
-                    y = uploadedImage.height - signatureHeight - offset;
+                    x = offsetX;
+                    y = uploadedImage.height - signatureHeight - offsetY;
                     break;
                 case 'bottomRight':
-                    x = uploadedImage.width - signatureWidth - offset;
-                    y = uploadedImage.height - signatureHeight - offset;
+                    x = uploadedImage.width - signatureWidth - offsetX;
+                    y = uploadedImage.height - signatureHeight - offsetY;
                     break;
             }
 
@@ -580,6 +623,7 @@
             // שמירת התמונה עם איכות מותאמת
             link.href = tempCanvas.toDataURL('image/jpeg', imageQuality.value / 10);
             link.click();
+            alert('התמונה נשמרה');
         });
 
         // עדכון ראשוני של הקנבסים
@@ -587,4 +631,4 @@
         updateImageCanvas();
     </script>
 </body>
-</html>
+</html>			
