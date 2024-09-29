@@ -126,20 +126,26 @@
             text-align: center;
         }
         .slider-container {
-            display: flex;
+//          display: flex;
             align-items: center;
             margin-bottom: 5px;
+			text-align: center;
         }
         .slider-container label {
-            flex: 1;
+//			flex: 1;
+            align-items: center;
             margin-right: 10px;
+			text-align: center;
         }
         .slider-container input[type="range"] {
-            flex: 2;
+//			flex: 2;
+            align-items: center;
+			text-align: center;
         }
         .slider-container span {
-            flex: 1;
-            text-align: left;
+//			flex: 1;
+            text-align: center;
+            align-items: center;			
         }
         .file-upload-btn input[type="file"] {
             display: none;
@@ -159,34 +165,36 @@
         <canvas id="signatureCanvas" width="350" height="75"></canvas>
 		<br>
         <select id="font">
-            <option value="Alef">אלף - Alef (עברית)</option>
-            <option value="Assistant">אסיסטנט - Assistant (עברית)</option>
-            <option value="Bellefair">בלפייר - Bellefair (עברית)</option>
-            <option value="Heebo">היבו - Heebo (עברית)</option>
-            <option value="Rubik">רוביק - Rubik (עברית)</option>
-            <option value="Rubik Doodle Shadow">רוביק דודל שאדו - Rubik Doodle Shadow (עברית ואנגלית)</option>
-            <option value="Secular One">סקולר ואן - Secular One (עברית)</option>
-            <option value="Suez One">סואץ ואן - Suez One (עברית)</option>
-            <option value="Varela Round">ורלה עגול - Varela Round (עברית)</option>
-            <option value="Amatic SC">אמטיק - Amatic SC (אנגלית)</option>
-            <option value="Caveat">קוויאט - Caveat (אנגלית)</option>
-            <option value="Dancing Script">דנסינג סקריפט - Dancing Script (אנגלית)</option>
-            <option value="Indie Flower">אינדי פלאואר - Indie Flower (אנגלית)</option>
-            <option value="Kalam">קלאם - Kalam (אנגלית)</option>
-            <option value="Pacifico">פסיפיקו - Pacifico (אנגלית)</option>
-            <option value="Permanent Marker">פרמננט מרקר - Permanent Marker (אנגלית)</option>
-            <option value="Satisfy">סטיספיי - Satisfy (אנגלית)</option>
-            <option value="Shadows Into Light">שאדוס אינטו לייט - Shadows Into Light (אנגלית)</option>
+            <option value="Alef">Alef (עברית)</option>
+            <option value="Assistant">Assistant (עברית)</option>
+            <option value="Bellefair">Bellefair (עברית)</option>
+            <option value="Heebo">Heebo (עברית)</option>
+            <option value="Rubik">Rubik (עברית)</option>
+            <option value="Rubik Doodle Shadow">Rubik Doodle Shadow (עברית ואנגלית)</option>
+            <option value="Secular One">Secular One (עברית)</option>
+            <option value="Suez One">Suez One (עברית)</option>
+            <option value="Varela Round">Varela Round (עברית)</option>
+            <option value="Amatic SC">Amatic SC (אנגלית)</option>
+            <option value="Caveat">Caveat (אנגלית)</option>
+            <option value="Dancing Script">Dancing Script (אנגלית)</option>
+            <option value="Indie Flower">Indie Flower (אנגלית)</option>
+            <option value="Kalam">Kalam (אנגלית)</option>
+            <option value="Pacifico">Pacifico (אנגלית)</option>
+            <option value="Permanent Marker">Permanent Marker (אנגלית)</option>
+            <option value="Satisfy">Satisfy (אנגלית)</option>
+            <option value="Shadows Into Light">Shadows Into Light (אנגלית)</option>
         </select>
         <div class="options">
-            <label><input type="radio" name="color" value="black" checked> טקסט שחור עם רקע שקוף</label>
-            <label><input type="radio" name="color" value="white"> טקסט לבן עם רקע שקוף</label>
+            <label><input type="radio" name="color" value="black" checked> טקסט שחור</label>
+            <label><input type="radio" name="color" value="white"> טקסט לבן</label>
         </div>
+
         <div class="slider-container">
             <label for="size">גודל פונט:</label>
+			<span id="sizeValue">50</span>
             <input type="range" id="size" min="10" max="100" value="50">
-            <span id="sizeValue">50</span>
         </div>
+		
         <div class="center-buttons">
             <button id="addCopyright">הוסף סימן זכויות יוצרים</button>
             <button id="saveSignature">שמור את החתימה</button>
@@ -206,29 +214,26 @@
         <canvas id="imageCanvas" width="350"></canvas>
         
         <div class="slider-container">
-            <label for="signatureOffsetX">מרחק אופקי מקצה התמונה:</label>
-            <input type="range" id="signatureOffsetX" min="0" max="100" value="10">
-            <span id="signatureOffsetXValue">10 פיקסלים</span>
-        </div>
-        <div class="slider-container">
-            <label for="signatureOffsetY">מרחק אנכי מקצה התמונה:</label>
-            <input type="range" id="signatureOffsetY" min="0" max="100" value="10">
-            <span id="signatureOffsetYValue">10 פיקסלים</span>
-        </div>
-        <div class="slider-container">
             <label for="signatureSize">גודל החתימה:</label>
+			<span id="signatureSizeValue">20%</span>
             <input type="range" id="signatureSize" min="1" max="100" value="20">
-            <span id="signatureSizeValue">20%</span>
-        </div>
-        <div class="slider-container">
+			
+            <label for="signatureOffsetX">מרחק אופקי מקצה התמונה:</label>
+			<span id="signatureOffsetXValue">10 פיקסלים</span>
+            <input type="range" id="signatureOffsetX" min="0" max="100" value="10">			
+
+            <label for="signatureOffsetY">מרחק אנכי מקצה התמונה:</label>
+            <span id="signatureOffsetYValue">10 פיקסלים</span>			
+            <input type="range" id="signatureOffsetY" min="0" max="100" value="10">
+
             <label for="signatureOpacity">שקיפות החתימה:</label>
-            <input type="range" id="signatureOpacity" min="10" max="100" value="100">
-            <span id="signatureOpacityValue">100%</span>
-        </div>
-        <div class="slider-container">
-            <label for="imageQuality">איכות התמונה:</label>
+            <span id="signatureOpacityValue">100%</span>			
+            <input type="range" id="signatureOpacity" min="0" max="100" value="100">
+
+            <label for="imageQuality">איכות שמירת התמונה:</label>
+            <span id="imageQualityValue">10</span>			
             <input type="range" id="imageQuality" min="1" max="10" value="10">
-            <span id="imageQualityValue">10 (מקסימלי)</span>
+
         </div>
 
         <div class="center-buttons">
@@ -271,7 +276,7 @@
         let signaturePosition = 'bottomRight';
 
         const help = `
-            <h3>עזרה</h3>
+            <h3>איך ליצור חתימה?</h3>
             <h4>יצירת חתימה:</h4>
             1. הקלידו טקסט אותו תרצו ליצור כחתימה בתיבת הטקסט.<br>
             2. בחרו סוג פונט, גודל וצבע (שחור על שקוף או לבן על שקוף).<br>
