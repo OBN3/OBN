@@ -138,19 +138,26 @@
 
     <script>
         const help = `
-            <b>ברוכים הבאים ל-OBN Transcribe!</b><br><br>
-            כדי להשתמש באפליקציה:<br>
-            1. צרו לעצמכם בחינם קוד 
-			<a href="https://console.groq.com/playground" target="_blank">ב-Groq</a> בתפריט API Keys<br>
-			2. שמרו את הקוד אצלכם והדביקו אותו בתיבת הקוד (לא לשתף עם אחרים!)<br>
-            3. בחרו מהמחשב או הטלפון קובץ אודיו לתמלול. הגודל המקסימלי הוא 25MB.<br>
-			קבצים אפשריים: flac, mp3, mp4, mpeg, mpga, m4a, ogg, opus, wav, webm <br>
-            4. לחצו על "תמלול עם תזמון" כדי לקבל תמלול עם תזמונים,<br>
-			שמתאים לכתוביות, למשל, או על "תמלול כטקסט בלבד" לקבלת טקסט ללא תזמון.<br>
-            5. המתינו עד לסיום התמלול.<br>
-            6. לאחר סיום התמלול, תוכל להעתיק או להוריד את התמלול.<br><br>
-            שאלות? דברו איתי
-			<a href="mailto:ofirbn@post.com">במייל</a>
+            <h2>עזרה</h2>
+            <p>ברוכים הבאים ל-OBN Transcribe!</p>
+            <p>כדי להשתמש באפליקציה:</p>
+            <ol>
+                <li>צרו לעצמכם בחינם קוד 
+				<a href="https://console.groq.com/playground">
+				ב-Groq בתפריט API Keys </a>
+				</li>
+                <li>שמרו את הקוד אצלכם והדביקו אותו בתיבת הקוד (לא לשתף עם אחרים!)</li>
+                <li>בחרו מהמחשב או הטלפון קובץ אודיו לתמלול.<br>
+					קבצים אפשריים: flac, mp3, mp4, mpeg, mpga, m4a, ogg, opus, wav, webm
+				</li>
+                <li>לחצו על "תמלל" כדי לקבל את התמלול.</li>
+                <li>השתמשו בכפתורים "הצג כטקסט" ו"הצג כ-SRT" כדי לשנות את פורמט התצוגה.</li>
+                <li>לאחר סיום התמלול, תוכלו להעתיק או להוריד את התמלול.</li>
+            </ol>
+            <p><b>שאלות? 
+			<a href="mailto:ofirbn@post.com">
+			דברו איתי במייל</a>
+			</b></p>
         `;
 
         document.getElementById('helpContent').innerHTML = help;
@@ -161,6 +168,19 @@
 
         function saveApiKey() {
             const apiKey = document.getElementById('apiKey').value;
+            if (!apiKey.trim()) {
+                alert('נא להזין API Key לפני השמירה');
+                return;
+            }
+
+            const existingKey = localStorage.getItem('groqApiKey');
+            if (existingKey && existingKey !== apiKey) {
+                const confirmOverwrite = confirm('קיים כבר API Key שמור. האם ברצונך להחליף אותו?');
+                if (!confirmOverwrite) {
+                    return;
+                }
+            }
+
             localStorage.setItem('groqApiKey', apiKey);
             alert('API Key נשמר בהצלחה');
         }
