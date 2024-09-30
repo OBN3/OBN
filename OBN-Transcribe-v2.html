@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OBN Transcribe</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #50e3c2;
+            --background-color: #f5f7fa;
+            --text-color: #333;
+            --button-hover-color: #3a7bd5;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 395px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            direction: rtl;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        h1, h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+        input, button, textarea {
+            width: 100%;
+            margin: 10px 0;
+            padding: 12px;
+            box-sizing: border-box;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: var(--button-hover-color);
+        }
+        #transcription {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            text-align: right;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        .loading {
+            display: none;
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--secondary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 395px;
+            border-radius: 15px;
+            text-align: right;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .close {
+            color: #aaa;
+            float: left;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover,
+        .close:focus {
+            color: #000;
+            text-decoration: none;
+        }
+        #statistics {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            text-align: right;
+        }
+        #statistics h2 {
+            margin-bottom: 10px;
+        }
+        #statistics p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>OBN Transcribe</h1>
+    
+    <input type="text" id="apiKey" placeholder="הכנס Groq API Key">
+    <button onclick="saveApiKey()">שמור API Key</button>
+    
+    <input type="file" id="audioFile" accept="audio/*,video/*" onchange="handleFileSelect()">
+    <button onclick="transcribe()">תמלל</button>
+    <button onclick="displayAsText()">הצג כטקסט</button>
+    <button onclick="displayAsSRT()">הצג כ-SRT</button>
+    
+    <div class="loading" id="loading"></div>
+    
+    <textarea id="transcription" rows="10" readonly></textarea>
+    
+    <button onclick="copyTranscription()">העתק תמלול</button>
+    <button onclick="saveTranscription()">שמור תמלול</button>
+    
+    <button onclick="showHelp()">עזרה</button>
+
+    <div id="statistics">
+        <h2>סטטיסטיקה</h2>
+        <div id="statsContent"></div>
+        <button id="downloadDownsampled" style="display: none;" onclick="downloadDownsampledFile()">הורד קובץ מוקטן</button>
+    </div>
+
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeHelp()">&times;</span>
+            <div id="helpContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const help = `
+            <h2>עזרה</h2>
+            <p>ברוכים הבאים ל-OBN Transcribe!</p>
+            <p>כדי להשתמש באפליקציה:</p>
+            <ol>
+                <li>צרו לעצמכם בחינם קוד 
+				<a href="https://console.groq.com/playground">
+				ב-Groq בתפריט API Keys </a>
+				</li>
+                <li>שמרו את הקוד אצלכם והדביקו אותו בתיבת הקוד (לא לשתף עם אחרים!)</li>
+                <li>בחרו מהמחשב או הטלפון קובץ אודיו לתמלול.</li>
+                <li>לחצו על "תמלל" כדי לקבל את התמלול.</li>
+                <li>השתמשו בכפתורים "הצג כטקסט" ו"הצג כ-SRT" כדי לשנות את פורמט התצוגה.</li>
+                <li>לאחר סיום התמלול, תוכלו להעתיק או להוריד את התמלול.</li>
+				<li>באפשרותכם לשמור את קובץ האודיו שעבר אופטימיזציה והוקטן.</li>
+            </ol>
+            <p><b>שאלות? 
+			<a href="mailto:ofirbn@post.com">
+			דברו איתי במייל</a>
+			</b></p>
+        `;
+
+        document.getElementById('helpContent').innerHTML = help;
+
+        let originalTranscription = '';
+        let currentFile = null;
+        let downsampledFile = null;
+        const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+        let stats = {};
+
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKey').value;
+            if (!apiKey.trim()) {
+                alert('נא להזין API Key לפני השמירה');
+                return;
+            }
+
+            const existingKey = localStorage.getItem('groqApiKey');
+            if (existingKey && existingKey !== apiKey) {
+                const confirmOverwrite = confirm('קיים כבר API Key שמור. האם ברצונך להחליף אותו?');
+                if (!confirmOverwrite) {
+                    return;
+                }
+            }
+
+            localStorage.setItem('groqApiKey', apiKey);
+            alert('API Key נשמר בהצלחה');
+        }
+
+        function handleFileSelect() {
+            const file = document.getElementById('audioFile').files[0];
+            if (!file) return;
+
+            const allowedTypes = ['flac', 'mp3', 'mp4', 'mpeg', 'mpga', 'm4a', 'ogg', 'opus', 'wav', 'webm'];
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            if (!allowedTypes.includes(fileExtension)) {
+                alert(`סוג הקובץ אינו נתמך. אנא בחר קובץ מסוג: ${allowedTypes.join(', ')}`);
+                document.getElementById('audioFile').value = ''; // Clear the file input
+                return;
+            }
+
+            if (file.size > MAX_FILE_SIZE) {
+                alert('הקובץ גדול מדי. הגודל המקסימלי המותר הוא 25MB.');
+                document.getElementById('audioFile').value = ''; // Clear the file input
+                return;
+            }
+
+            currentFile = file;
+            stats.originalSize = file.size;
+            document.getElementById('downloadDownsampled').style.display = 'none';
+        }
+
+        async function transcribe() {
+            const apiKey = localStorage.getItem('groqApiKey');
+            if (!apiKey) {
+                alert('נא להזין Groq API Key');
+                return;
+            }
+
+            if (!currentFile) {
+                alert('נא לבחור קובץ אודיו או וידאו');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            const startTime = new Date();
+
+            try {
+                downsampledFile = await downsampleAudio(currentFile);
+                stats.downsampledSize = downsampledFile.size;
+                
+                const groqStartTime = new Date();
+                originalTranscription = await sendToGroq(apiKey, downsampledFile, 'downsampled_audio.wav');
+                const groqEndTime = new Date();
+                stats.groqTime = groqEndTime - groqStartTime;
+                
+                displayAsText();
+            } catch (error) {
+                alert('שגיאה בתמלול: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                const endTime = new Date();
+                stats.totalTime = endTime - startTime;
+                updateStatistics();
+                document.getElementById('downloadDownsampled').style.display = 'block';
+            }
+        }
+
+        async function downsampleAudio(audioFile) {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const reader = new FileReader();
+            
+            return new Promise((resolve, reject) => {
+                reader.onload = async function(event) {
+                    try {
+                        const audioBuffer = await audioContext.decodeAudioData(event.target.result);
+                        stats.duration = audioBuffer.duration;
+                        
+                        const offlineContext = new OfflineAudioContext(1, audioBuffer.duration * 16000, 16000);
+                        const source = offlineContext.createBufferSource();
+                        source.buffer = audioBuffer;
+                        source.connect(offlineContext.destination);
+                        source.start();
+                        const renderedBuffer = await offlineContext.startRendering();
+                        
+                        const downsampledWav = audioBufferToWav(renderedBuffer);
+                        const downsampledBlob = new Blob([downsampledWav], { type: 'audio/wav' });
+                        resolve(downsampledBlob);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.onerror = error => reject(error);
+                reader.readAsArrayBuffer(audioFile);
+            });
+        }
+
+        function audioBufferToWav(buffer) {
+            const numOfChan = buffer.numberOfChannels;
+            const length = buffer.length * numOfChan * 2 + 44;
+            const out = new ArrayBuffer(length);
+            const view = new DataView(out);
+            const channels = [];
+            let sample;
+            let offset = 0;
+            let pos = 0;
+
+            // write WAVE header
+            setUint32(0x46464952);                         // "RIFF"
+            setUint32(length - 8);                         // file length - 8
+            setUint32(0x45564157);                         // "WAVE"
+
+            setUint32(0x20746d66);                         // "fmt " chunk
+            setUint32(16);                                 // length = 16
+            setUint16(1);                                  // PCM (uncompressed)
+            setUint16(numOfChan);
+            setUint32(buffer.sampleRate);
+            setUint32(buffer.sampleRate * 2 * numOfChan); // avg. bytes/sec
+            setUint16(numOfChan * 2);                      // block-align
+            setUint16(16);                                 // 16-bit (hardcoded in this demo)
+
+            setUint32(0x61746164);                         // "data" - chunk
+            setUint32(length - pos - 4);                   // chunk length
+
+            // write interleaved data
+            for(let i = 0; i < buffer.numberOfChannels; i++)
+                channels.push(buffer.getChannelData(i));
+
+            while(pos < length) {
+                for(let i = 0; i < numOfChan; i++) {             // interleave channels
+                    sample = Math.max(-1, Math.min(1, channels[i][offset])); // clamp
+                    sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767)|0; // scale to 16-bit signed int
+                    view.setInt16(pos, sample, true);          // write 16-bit sample
+                    pos += 2;
+                }
+                offset++; // next source sample
+            }
+
+            return out;
+
+            function setUint16(data) {
+                view.setUint16(pos, data, true);
+                pos += 2;
+            }
+
+            function setUint32(data) {
+                view.setUint32(pos, data, true);
+                pos += 4;
+            }
+        }
+
+        async function sendToGroq(apiKey, audioData, fileName) {
+            try {
+                const formData = new FormData();
+                formData.append('file', audioData, fileName);
+                formData.append('model', 'whisper-large-v3');
+
+                const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                    },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`שגיאת HTTP! סטטוס: ${response.status}, פירוט: ${JSON.stringify(errorData)}`);
+                }
+
+                const result = await response.json();
+                return result.text;
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        function displayAsText() {
+            if (!originalTranscription) {
+                alert('אין תמלול זמין. נא לתמלל קובץ תחילה.');
+                return;
+            }
+            const transcriptionArea = document.getElementById('transcription');
+            const words = originalTranscription.split(' ');
+            let formattedText = '';
+            for (let i = 0; i < words.length; i += 8) {
+                formattedText += words.slice(i, i + 8).join(' ') + '\n';
+            }
+            transcriptionArea.value = formattedText.trim();
+        }
+
+        function displayAsSRT() {
+            if (!originalTranscription) {
+                alert('אין תמלול זמין. נא לתמלל קובץ תחילה.');
+                return;
+            }
+            const transcriptionArea = document.getElementById('transcription');
+            const words = originalTranscription.split(' ');
+            let srtText = '';
+            let lineCounter = 1;
+            let timeCounter = 0;
+
+            for (let i = 0; i < words.length; i += 5) {
+                const lineWords = words.slice(i, i + 5);
+                const startTime = formatTime(timeCounter);
+                timeCounter += lineWords.length * 0.5; // מניח 0.5 שניות למילה
+                const endTime = formatTime(timeCounter);
+
+                srtText += `${lineCounter}\n`;
+                srtText += `${startTime} --> ${endTime}\n`;
+                srtText += `${lineWords.join(' ')}\n\n`;
+
+                lineCounter++;
+            }
+
+            transcriptionArea.value = srtText.trim();
+        }
+
+        function formatTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            const millisecs = Math.floor((seconds % 1) * 1000);
+
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')},${String(millisecs).padStart(3, '0')}`;
+        }
+
+        function copyTranscription() {
+            const transcription = document.getElementById('transcription');
+            transcription.select();
+            document.execCommand('copy');
+            alert('התמלול הועתק ללוח');
+        }
+
+        function saveTranscription() {
+            const transcription = document.getElementById('transcription').value;
+            const blob = new Blob([transcription], {type: 'text/plain;charset=utf-8'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'transcription.txt';
+            a.click();
+        }
+
+        function showHelp() {
+            document.getElementById('helpModal').style.display = 'block';
+        }
+
+        function closeHelp() {
+            document.getElementById('helpModal').style.display = 'none';
+        }
+
+        function updateStatistics() {
+            const statsContent = document.getElementById('statsContent');
+            const formatFileSize = (bytes) => {
+                const mb = bytes / (1024 * 1024);
+                return `${bytes.toLocaleString()} בתים (${mb.toFixed(2)} מ"ב)`;
+            };
+            const formatTime = (ms) => {
+                const seconds = ms / 1000;
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            };
+            
+            statsContent.innerHTML = `
+                <p>גודל הקובץ המקורי: ${formatFileSize(stats.originalSize)}</p>
+                <p>גודל הקובץ לאחר downsample: ${formatFileSize(stats.downsampledSize)}</p>
+                <p>זמן כולל של התהליך: ${formatTime(stats.totalTime)}</p>
+                <p>זמן התמלול של Groq: ${formatTime(stats.groqTime)}</p>
+                <p>אורך הקובץ: ${formatTime(stats.duration * 1000)}</p>
+            `;
+        }
+
+        function downloadDownsampledFile() {
+            if (!downsampledFile) {
+                alert('אין קובץ זמין להורדה. נא לתמלל קובץ תחילה.');
+                return;
+            }
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(downsampledFile);
+            a.download = 'downsampled_audio.wav';
+            a.click();
+        }
+
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('helpModal')) {
+                closeHelp();
+            }
+        }
+
+        // טען את ה-API Key בטעינת הדף
+        window.onload = function() {
+            const savedApiKey = localStorage.getItem('groqApiKey');
+            if (savedApiKey) {
+                document.getElementById('apiKey').value = savedApiKey;
+            }
+        }
+    </script>
+</body>
+</html>
+
