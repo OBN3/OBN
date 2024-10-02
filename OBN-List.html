@@ -24,11 +24,15 @@
         .welcome-container {
             text-align: center;
         }
-        h1 {
+        h1, h2 {
             color: #4A90E2;
             font-size: 24px;
             margin-bottom: 15px;
             text-align: center;
+        }
+        h2 {
+            font-size: 20px;
+            margin-top: 20px;
         }
         .gauge-container {
             position: fixed;
@@ -67,12 +71,6 @@
             margin-top: 5px;
             font-weight: bold;
             color: #4A90E2;
-        }
-        h2 {
-            color: #4A90E2;
-            font-size: 18px;
-            margin-top: 15px;
-            margin-bottom: 10px;
         }
         label {
             display: flex;
@@ -205,6 +203,8 @@
         <div class="container">
             <h1 id="userTitle">רשימת פריטים לטיול</h1>
             <div id='itemsList'></div>
+            <h2>ארזתי</h2>
+            <div id='packedItems'></div>
             <div id='message'></div>
             <img src="001.jpg" alt="תמונת טיול" class="trip-image" id="tripImage">
         </div>
@@ -243,7 +243,8 @@
                 let [categoryName, itemsList] = category.split(':');
                 return itemsList.split(',').map(item => ({
                     category: categoryName.trim(),
-                    name: item.trim()
+                    name: item.trim(),
+                    packed: false
                 }));
             });
 
@@ -251,18 +252,18 @@
                 itemsArray = itemsArray.filter(item => !item.name.includes('חזייה') && !item.name.includes('גומיות לשיער'));
             }
             if (userGender === 'female') {
-                itemsArray.push({ category: 'אביזרים', name: 'גומיות לשיער' });
+                itemsArray.push({ category: 'אביזרים', name: 'גומיות לשיער', packed: false });
                 let bras = itemsArray.find(item => item.name.includes('תחתונים'));
                 if (bras) {
                     bras.name = bras.name.replace('תחתונים', 'תחתונים/חזייה');
                 }
             }
 
-            checkedItems = new Array(itemsArray.length).fill(false);
             renderItems();
         }
 
         let itemsList = document.getElementById('itemsList');
+        let packedItems = document.getElementById('packedItems');
         let gaugeFill = document.getElementById('gaugeFill');
         let gaugePercentage = document.getElementById('gaugePercentage');
         let gaugeMessage = document.getElementById('gaugeMessage');
@@ -270,30 +271,48 @@
 
         function renderItems() {
             itemsList.innerHTML = '';
+            packedItems.innerHTML = '';
             let currentCategory = '';
             itemsArray.forEach((item, index) => {
-                if (item.category !== currentCategory) {
-                    if (currentCategory !== '') {
-                        addNewItemButton(currentCategory);
+                if (item.packed) {
+                    renderPackedItem(item, index);
+                } else {
+                    if (item.category !== currentCategory) {
+                        currentCategory = item.category;
+                        let categoryHeader = document.createElement('h2');
+                        categoryHeader.textContent = currentCategory;
+                        itemsList.appendChild(categoryHeader);
                     }
-                    currentCategory = item.category;
-                    let categoryHeader = document.createElement('h2');
-                    categoryHeader.textContent = currentCategory;
-                    itemsList.appendChild(categoryHeader);
+                    renderUnpackedItem(item, index);
                 }
-                let itemLabel = document.createElement('label');
-                itemLabel.className = checkedItems[index] ? 'completed' : '';
-                itemLabel.innerHTML = `
-                    <span class="checkbox-container">
-                        <input type='checkbox' ${checkedItems[index] ? 'checked' : ''} data-index='${index}'>
-                        <span class="checkmark"></span>
-                    </span>
-                    ${item.name}
-                `;
-                itemsList.appendChild(itemLabel);
             });
             addNewItemButton(currentCategory);
             updateGauge();
+        }
+
+        function renderUnpackedItem(item, index) {
+            let itemLabel = document.createElement('label');
+            itemLabel.innerHTML = `
+                <span class="checkbox-container">
+                    <input type='checkbox' ${item.packed ? 'checked' : ''} data-index='${index}'>
+                    <span class="checkmark"></span>
+                </span>
+                ${item.name}
+            `;
+            itemsList.appendChild(itemLabel);
+        }
+
+        function renderPackedItem(item, index) {
+            let itemLabel = document.createElement('label');
+            itemLabel.className = 'completed';
+            itemLabel.innerHTML = `
+                <span class="checkbox-container">
+                    <input type='checkbox' checked data-index='${index}'>
+                    <span class="checkmark"></span>
+                </span>
+                ${item.name}
+            `;
+            packedItems.appendChild(itemLabel);
         }
 
         function addNewItemButton(category) {
@@ -307,16 +326,15 @@
         function addNewItem(category) {
             let newItemName = prompt('הכנס את שם הפריט החדש:');
             if (newItemName) {
-                itemsArray.push({ category: category, name: newItemName });
-                checkedItems.push(false);
+                itemsArray.push({ category: category, name: newItemName, packed: false });
                 renderItems();
             }
         }
 
         function updateGauge() {
             let totalItems = itemsArray.length;
-            let checkedCount = checkedItems.filter(checked => checked).length;
-            let percentage = Math.round((checkedCount / totalItems) * 100);
+            let packedCount = itemsArray.filter(item => item.packed).length;
+            let percentage = Math.round((packedCount / totalItems) * 100);
             gaugeFill.style.width = percentage + '%';
             gaugePercentage.textContent = percentage + '%';
             
@@ -342,18 +360,19 @@
             }
         }
 
-        itemsList.addEventListener('change', (event) => {
+        document.addEventListener('change', (event) => {
             if (event.target.type === 'checkbox') {
                 let index = event.target.dataset.index;
-                checkedItems[index] = event.target.checked;
-                event.target.parentElement.parentElement.classList.toggle('completed');
+                itemsArray[index].packed = event.target.checked;
+                renderItems();
                 event.target.parentElement.classList.add('animate-check');
                 setTimeout(() => {
                     event.target.parentElement.classList.remove('animate-check');
                 }, 500);
-                updateGauge();
             }
         });
+
+        renderItems();
     </script>
 </body>
 </html>
