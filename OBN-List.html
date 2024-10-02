@@ -10,15 +10,16 @@
             background-color: #f2f2f2;
             margin: 0;
             padding: 0;
+            overflow-y: auto;
         }
         .container {
-            width: 395px;
+            width: 380px;
             background-color: #ffffff;
             border-radius: 15px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
             text-align: right;
-            margin: 60px auto 20px;
+            margin: 80px auto 20px; /* הגדלנו את ה-margin-top */
         }
         h1 {
             color: #4A90E2;
@@ -34,7 +35,7 @@
             background-color: #ffffff;
             padding: 10px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            z-index: 1000;
+            z-index: 9999;
         }
         .gauge {
             width: 100%;
@@ -89,7 +90,7 @@
             text-align: center;
         }
         .trip-image {
-            width: 370px;
+            width: 355px; /* שינינו ל-355 כדי להתאים לרוחב החדש של הקונטיינר */
             height: auto;
             margin-top: 20px;
             border-radius: 15px;
@@ -156,6 +157,15 @@
             border: solid white;
             border-width: 0 3px 3px 0;
             transform: rotate(45deg);
+        }
+        @media (max-width: 768px) {
+            .container {
+                width: 90%;
+                margin-top: 80px;
+            }
+            .trip-image {
+                width: 100%;
+            }
         }
     </style>
 </head>
