@@ -18,7 +18,7 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
             text-align: right;
-            margin: 20px auto;
+            margin: 60px auto 20px;
         }
         h1 {
             color: #4A90E2;
@@ -77,9 +77,6 @@
             font-size: 16px;
             color: #333;
         }
-        input[type='checkbox'] {
-            margin-left: 10px;
-        }
         .completed {
             text-decoration: line-through;
             color: #aaa;
@@ -96,6 +93,69 @@
             height: auto;
             margin-top: 20px;
             border-radius: 15px;
+        }
+        .add-item-btn {
+            background-color: #4A90E2;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        @keyframes checkmark {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5); }
+            100% { transform: scale(1); }
+        }
+        .animate-check {
+            animation: checkmark 0.5s ease-in-out;
+        }
+        .checkbox-container {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-left: 10px;
+            position: relative;
+        }
+        .checkbox-container input {
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            margin: 0;
+            cursor: pointer;
+        }
+        .checkmark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 20px;
+            width: 20px;
+            background-color: #eee;
+            border-radius: 4px;
+        }
+        .checkbox-container input:checked ~ .checkmark {
+            background-color: #4A90E2;
+        }
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+        }
+        .checkbox-container input:checked ~ .checkmark:after {
+            display: block;
+        }
+        .checkbox-container .checkmark:after {
+            left: 7px;
+            top: 3px;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 3px 3px 0;
+            transform: rotate(45deg);
         }
     </style>
 </head>
@@ -122,7 +182,7 @@
         כללי:ספר, משחק קטן או קלפים
         `;
         
-        let itemsArray = items.split(';').flatMap(category => {
+        let itemsArray = JSON.parse(localStorage.getItem('itemsArray')) || items.split(';').flatMap(category => {
             let [categoryName, itemsList] = category.split(':');
             return itemsList.split(',').map(item => ({
                 category: categoryName.trim(),
@@ -142,6 +202,9 @@
             let currentCategory = '';
             itemsArray.forEach((item, index) => {
                 if (item.category !== currentCategory) {
+                    if (currentCategory !== '') {
+                        addNewItemButton(currentCategory);
+                    }
                     currentCategory = item.category;
                     let categoryHeader = document.createElement('h2');
                     categoryHeader.textContent = currentCategory;
@@ -149,10 +212,36 @@
                 }
                 let itemLabel = document.createElement('label');
                 itemLabel.className = checkedItems[index] ? 'completed' : '';
-                itemLabel.innerHTML = `<input type='checkbox' ${checkedItems[index] ? 'checked' : ''} data-index='${index}' /> ${item.name}`;
+                itemLabel.innerHTML = `
+                    <span class="checkbox-container">
+                        <input type='checkbox' ${checkedItems[index] ? 'checked' : ''} data-index='${index}'>
+                        <span class="checkmark"></span>
+                    </span>
+                    ${item.name}
+                `;
                 itemsList.appendChild(itemLabel);
             });
+            addNewItemButton(currentCategory);
             updateGauge();
+        }
+
+        function addNewItemButton(category) {
+            let addButton = document.createElement('button');
+            addButton.textContent = 'הוסיפי פריט';
+            addButton.className = 'add-item-btn';
+            addButton.onclick = function() { addNewItem(category); };
+            itemsList.appendChild(addButton);
+        }
+
+        function addNewItem(category) {
+            let newItemName = prompt('הכניסי את שם הפריט החדש:');
+            if (newItemName) {
+                itemsArray.push({ category: category, name: newItemName });
+                checkedItems.push(false);
+                localStorage.setItem('itemsArray', JSON.stringify(itemsArray));
+                localStorage.setItem('checkedItems', JSON.stringify(checkedItems));
+                renderItems();
+            }
         }
 
         function updateGauge() {
@@ -185,7 +274,12 @@
                 let index = event.target.dataset.index;
                 checkedItems[index] = event.target.checked;
                 localStorage.setItem('checkedItems', JSON.stringify(checkedItems));
-                renderItems();
+                event.target.parentElement.parentElement.classList.toggle('completed');
+                event.target.parentElement.classList.add('animate-check');
+                setTimeout(() => {
+                    event.target.parentElement.classList.remove('animate-check');
+                }, 500);
+                updateGauge();
             }
         });
 
