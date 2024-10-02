@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang='he' dir='rtl'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>רשימת פריטים לטיול</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 395px;
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: right;
+            margin: 20px auto;
+        }
+        h1 {
+            color: #4A90E2;
+            font-size: 24px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .gauge-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: #ffffff;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        .gauge {
+            width: 100%;
+            height: 30px;
+            background-color: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+        .gauge-fill {
+            height: 100%;
+            background-color: #4caf50;
+            width: 0%;
+            transition: width 0.5s;
+        }
+        .gauge-percentage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #333;
+            font-weight: bold;
+        }
+        .gauge-message {
+            text-align: center;
+            margin-top: 5px;
+            font-weight: bold;
+            color: #4A90E2;
+        }
+        h2 {
+            color: #4A90E2;
+            font-size: 18px;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+        label {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+            font-size: 16px;
+            color: #333;
+        }
+        input[type='checkbox'] {
+            margin-left: 10px;
+        }
+        .completed {
+            text-decoration: line-through;
+            color: #aaa;
+        }
+        #message {
+            display: none;
+            color: #ff5722;
+            font-weight: bold;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .trip-image {
+            width: 370px;
+            height: auto;
+            margin-top: 20px;
+            border-radius: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="gauge-container">
+        <div class='gauge'>
+            <div class='gauge-fill' id='gaugeFill'></div>
+            <span class='gauge-percentage' id='gaugePercentage'>0%</span>
+        </div>
+        <div class='gauge-message' id='gaugeMessage'></div>
+    </div>
+    <div class="container">
+        <h1>רשימת פריטים לטיול</h1>
+        <div id='itemsList'></div>
+        <div id='message'></div>
+        <img src="001.jpg" alt="תמונת טיול" class="trip-image" id="tripImage">
+    </div>
+    <script>
+        let items = `
+        בגדים:חולצות קצרות (2), חולצות ארוכות (2), מכנסיים (2), פיג'מה (1), גרביים (3), תחתונים/חזייה (3), סווטשירט (1);
+        נעליים:נעלים גבוהות, כפכפים למקלחת;
+        היגיינה:מברשת שיניים, שמפו, סבון, מברשת, מגבת;
+        אביזרים:כובע, גומיות לשיער, תיק גב קטן ליום טיול, בקבוק מים, טלפון, מטען לטלפון, אוזניות;
+        כללי:ספר, משחק קטן או קלפים
+        `;
+        
+        let itemsArray = items.split(';').flatMap(category => {
+            let [categoryName, itemsList] = category.split(':');
+            return itemsList.split(',').map(item => ({
+                category: categoryName.trim(),
+                name: item.trim()
+            }));
+        });
+
+        let checkedItems = JSON.parse(localStorage.getItem('checkedItems')) || new Array(itemsArray.length).fill(false);
+        let itemsList = document.getElementById('itemsList');
+        let gaugeFill = document.getElementById('gaugeFill');
+        let gaugePercentage = document.getElementById('gaugePercentage');
+        let gaugeMessage = document.getElementById('gaugeMessage');
+        let tripImage = document.getElementById('tripImage');
+
+        function renderItems() {
+            itemsList.innerHTML = '';
+            let currentCategory = '';
+            itemsArray.forEach((item, index) => {
+                if (item.category !== currentCategory) {
+                    currentCategory = item.category;
+                    let categoryHeader = document.createElement('h2');
+                    categoryHeader.textContent = currentCategory;
+                    itemsList.appendChild(categoryHeader);
+                }
+                let itemLabel = document.createElement('label');
+                itemLabel.className = checkedItems[index] ? 'completed' : '';
+                itemLabel.innerHTML = `<input type='checkbox' ${checkedItems[index] ? 'checked' : ''} data-index='${index}' /> ${item.name}`;
+                itemsList.appendChild(itemLabel);
+            });
+            updateGauge();
+        }
+
+        function updateGauge() {
+            let totalItems = itemsArray.length;
+            let checkedCount = checkedItems.filter(checked => checked).length;
+            let percentage = Math.round((checkedCount / totalItems) * 100);
+            gaugeFill.style.width = percentage + '%';
+            gaugePercentage.textContent = percentage + '%';
+            
+            if (percentage >= 100) {
+                tripImage.src = '003.jpg';
+                gaugeMessage.textContent = 'תמר! הצלחת לארוז הכל!';
+            } else if (percentage >= 90) {
+                tripImage.src = '002.jpg';
+                gaugeMessage.textContent = 'נו, תמר! עוד קצת!';
+            } else if (percentage >= 60) {
+                tripImage.src = '002.jpg';
+                gaugeMessage.textContent = 'תמר, יה אלופה! את מתקדמת!';
+            } else if (percentage >= 30) {
+                tripImage.src = '002.jpg';
+                gaugeMessage.textContent = 'כל הכבוד, תמר, המשיכי';
+            } else {
+                tripImage.src = '001.jpg';
+                gaugeMessage.textContent = '';
+            }
+        }
+
+        itemsList.addEventListener('change', (event) => {
+            if (event.target.type === 'checkbox') {
+                let index = event.target.dataset.index;
+                checkedItems[index] = event.target.checked;
+                localStorage.setItem('checkedItems', JSON.stringify(checkedItems));
+                renderItems();
+            }
+        });
+
+        renderItems();
+    </script>
+</body>
+</html>
