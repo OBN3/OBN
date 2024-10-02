@@ -12,14 +12,17 @@
             padding: 0;
             overflow-y: auto;
         }
-        .container {
+        .container, .welcome-container {
             width: 380px;
             background-color: #ffffff;
             border-radius: 15px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
             text-align: right;
-            margin: 80px auto 20px; /* הגדלנו את ה-margin-top */
+            margin: 80px auto 20px;
+        }
+        .welcome-container {
+            text-align: center;
         }
         h1 {
             color: #4A90E2;
@@ -90,19 +93,20 @@
             text-align: center;
         }
         .trip-image {
-            width: 355px; /* שינינו ל-355 כדי להתאים לרוחב החדש של הקונטיינר */
+            width: 355px;
             height: auto;
             margin-top: 20px;
             border-radius: 15px;
         }
-        .add-item-btn {
+        .add-item-btn, #startApp {
             background-color: #4A90E2;
             color: white;
             border: none;
-            padding: 5px 10px;
+            padding: 10px 20px;
             border-radius: 5px;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 20px;
+            font-size: 16px;
         }
         @keyframes checkmark {
             0% { transform: scale(1); }
@@ -158,8 +162,16 @@
             border-width: 0 3px 3px 0;
             transform: rotate(45deg);
         }
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
         @media (max-width: 768px) {
-            .container {
+            .container, .welcome-container {
                 width: 90%;
                 margin-top: 80px;
             }
@@ -170,37 +182,86 @@
     </style>
 </head>
 <body>
-    <div class="gauge-container">
-        <div class='gauge'>
-            <div class='gauge-fill' id='gaugeFill'></div>
-            <span class='gauge-percentage' id='gaugePercentage'>0%</span>
+    <div id="welcomeScreen" class="welcome-container">
+        <h1>ברוכים הבאים לרשימת הטיול!</h1>
+        <img src="001.jpg" alt="תמונת טיול" class="trip-image">
+        <input type="text" id="userName" placeholder="הכנס את שמך">
+        <select id="userGender">
+            <option value="">מי אני?</option>
+            <option value="male">בן</option>
+            <option value="female">בת</option>
+        </select>
+        <button id="startApp">התחל</button>
+    </div>
+
+    <div id="mainApp" style="display: none;">
+        <div class="gauge-container">
+            <div class='gauge'>
+                <div class='gauge-fill' id='gaugeFill'></div>
+                <span class='gauge-percentage' id='gaugePercentage'>0%</span>
+            </div>
+            <div class='gauge-message' id='gaugeMessage'></div>
         </div>
-        <div class='gauge-message' id='gaugeMessage'></div>
+        <div class="container">
+            <h1 id="userTitle">רשימת פריטים לטיול</h1>
+            <div id='itemsList'></div>
+            <div id='message'></div>
+            <img src="001.jpg" alt="תמונת טיול" class="trip-image" id="tripImage">
+        </div>
     </div>
-    <div class="container">
-        <h1>רשימת פריטים לטיול</h1>
-        <div id='itemsList'></div>
-        <div id='message'></div>
-        <img src="001.jpg" alt="תמונת טיול" class="trip-image" id="tripImage">
-    </div>
+
     <script>
         let items = `
-        בגדים:חולצות קצרות (2), חולצות ארוכות (2), מכנסיים (2), פיג'מה (1), גרביים (3), תחתונים/חזייה (3), סווטשירט (1);
+        בגדים:חולצות קצרות (2), חולצות ארוכות (2), מכנסיים (2), פיג'מה (1), גרביים (3), תחתונים (3), סווטשירט (1);
         נעליים:נעלים גבוהות, כפכפים למקלחת;
         היגיינה:מברשת שיניים, שמפו, סבון, מברשת, מגבת;
-        אביזרים:כובע, גומיות לשיער, תיק גב קטן ליום טיול, בקבוק מים, טלפון, מטען לטלפון, אוזניות;
+        אביזרים:כובע, תיק גב קטן ליום טיול, בקבוק מים, טלפון, מטען לטלפון, אוזניות;
         כללי:ספר, משחק קטן או קלפים
         `;
         
-        let itemsArray = JSON.parse(localStorage.getItem('itemsArray')) || items.split(';').flatMap(category => {
-            let [categoryName, itemsList] = category.split(':');
-            return itemsList.split(',').map(item => ({
-                category: categoryName.trim(),
-                name: item.trim()
-            }));
+        let itemsArray = [];
+        let checkedItems = [];
+        let userName = '';
+        let userGender = '';
+
+        document.getElementById('startApp').addEventListener('click', function() {
+            userName = document.getElementById('userName').value;
+            userGender = document.getElementById('userGender').value;
+
+            if (userName && userGender) {
+                document.getElementById('welcomeScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                document.getElementById('userTitle').textContent = `רשימת פריטים ל${userName}`;
+                initializeApp();
+            } else {
+                alert('אנא הכנס שם ובחר מגדר');
+            }
         });
 
-        let checkedItems = JSON.parse(localStorage.getItem('checkedItems')) || new Array(itemsArray.length).fill(false);
+        function initializeApp() {
+            itemsArray = items.split(';').flatMap(category => {
+                let [categoryName, itemsList] = category.split(':');
+                return itemsList.split(',').map(item => ({
+                    category: categoryName.trim(),
+                    name: item.trim()
+                }));
+            });
+
+            if (userGender === 'male') {
+                itemsArray = itemsArray.filter(item => !item.name.includes('חזייה') && !item.name.includes('גומיות לשיער'));
+            }
+            if (userGender === 'female') {
+                itemsArray.push({ category: 'אביזרים', name: 'גומיות לשיער' });
+                let bras = itemsArray.find(item => item.name.includes('תחתונים'));
+                if (bras) {
+                    bras.name = bras.name.replace('תחתונים', 'תחתונים/חזייה');
+                }
+            }
+
+            checkedItems = new Array(itemsArray.length).fill(false);
+            renderItems();
+        }
+
         let itemsList = document.getElementById('itemsList');
         let gaugeFill = document.getElementById('gaugeFill');
         let gaugePercentage = document.getElementById('gaugePercentage');
@@ -237,19 +298,17 @@
 
         function addNewItemButton(category) {
             let addButton = document.createElement('button');
-            addButton.textContent = 'הוסיפי פריט';
+            addButton.textContent = 'הוסף פריט';
             addButton.className = 'add-item-btn';
             addButton.onclick = function() { addNewItem(category); };
             itemsList.appendChild(addButton);
         }
 
         function addNewItem(category) {
-            let newItemName = prompt('הכניסי את שם הפריט החדש:');
+            let newItemName = prompt('הכנס את שם הפריט החדש:');
             if (newItemName) {
                 itemsArray.push({ category: category, name: newItemName });
                 checkedItems.push(false);
-                localStorage.setItem('itemsArray', JSON.stringify(itemsArray));
-                localStorage.setItem('checkedItems', JSON.stringify(checkedItems));
                 renderItems();
             }
         }
@@ -261,18 +320,22 @@
             gaugeFill.style.width = percentage + '%';
             gaugePercentage.textContent = percentage + '%';
             
+            let genderVerb = userGender === 'male' ? 'המשך' : 'המשיכי';
+            let genderProgress = userGender === 'male' ? 'אתה מתקדם' : 'את מתקדמת';
+            let genderChamp = userGender === 'male' ? 'אלוף' : 'אלופה';
+            
             if (percentage >= 100) {
                 tripImage.src = '003.jpg';
-                gaugeMessage.textContent = 'תמר! הצלחת לארוז הכל!';
+                gaugeMessage.textContent = `${userName}! הצלחת לארוז הכל!`;
             } else if (percentage >= 90) {
                 tripImage.src = '002.jpg';
-                gaugeMessage.textContent = 'נו, תמר! עוד קצת!';
+                gaugeMessage.textContent = `נו, ${userName}! עוד קצת!`;
             } else if (percentage >= 60) {
                 tripImage.src = '002.jpg';
-                gaugeMessage.textContent = 'תמר, יה אלופה! את מתקדמת!';
+                gaugeMessage.textContent = `${userName}, יה ${genderChamp}! ${genderProgress}!`;
             } else if (percentage >= 30) {
                 tripImage.src = '002.jpg';
-                gaugeMessage.textContent = 'כל הכבוד, תמר, המשיכי';
+                gaugeMessage.textContent = `כל הכבוד, ${userName}, ${genderVerb}`;
             } else {
                 tripImage.src = '001.jpg';
                 gaugeMessage.textContent = '';
@@ -283,7 +346,6 @@
             if (event.target.type === 'checkbox') {
                 let index = event.target.dataset.index;
                 checkedItems[index] = event.target.checked;
-                localStorage.setItem('checkedItems', JSON.stringify(checkedItems));
                 event.target.parentElement.parentElement.classList.toggle('completed');
                 event.target.parentElement.classList.add('animate-check');
                 setTimeout(() => {
@@ -292,8 +354,6 @@
                 updateGauge();
             }
         });
-
-        renderItems();
     </script>
 </body>
 </html>
