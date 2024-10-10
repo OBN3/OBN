@@ -125,9 +125,9 @@
 <body>
     <div class="container">
         <h1>ממיר נתוני המיפוי - הקול שלנו</h1>
-        <p class="description">האפליקציה מסננת ומייצאת נתונים מקובץ האקסל של <a href="https://app.eye.do/">	מערכת "הקול שלנו" </a>
+        <p class="description">האפליקציה מסננת ומייצאת נתונים מקובץ האקסל של <a href="https://app.eye.do/"  target="_blank">	מערכת "הקול שלנו" </a>
 		לפורמט איתו אפשר ליצור מפות במערכות:<br>
-		,<a href="https://www.google.com/mymaps">Google Maps</a> ,<a href="https://earth.google.com/web/">Google Earth</a>, <a href="https://www.gpsvisualizer.com/map_input"> GPSVisualizer</a><br> <button class="btn btn-red" onclick="openHelpModal()">עזרה</button></p>
+		,<a href="https://www.google.com/mymaps"  target="_blank">Google Maps</a> ,<a href="https://earth.google.com/web/"  target="_blank">Google Earth</a>, <a href="https://www.gpsvisualizer.com/map_input"  target="_blank"> GPSVisualizer</a><br> <button class="btn btn-red" onclick="openHelpModal()">עזרה</button></p>
         <input type="file" id="fileInput" accept=".xlsx, .xls" style="display: none;">
         <button class="btn btn-blue" onclick="forceFileReload()">בחר קובץ אקסל</button>
         <div id="fileName"></div>
@@ -169,9 +169,9 @@
         כדי להשתמש באפליקציה:<br>
         1. העלו את קובץ האקסל שייצאתם ממערכת הניהול של "הקול שלנו". ודאו שהוא כולל לפחות את העמודות:  'תאריך דיווח', 'קו רוחב', 'קו אורך', 'גורם מעודד או מעכב',
             'מהות הגורם המעכב', 'מהות הגורם המעודד הליכה', 'בטיחות בדרכים', 'מפגעי פסולת', 'הנגשה ונגישות', 'גינון', 'תשתיות ותאורה'. <br>
-        2. תוכלו לייצא לאחת מהמערכות האלה: <a href="https://www.google.com/mymaps">Google Maps</a>, <a href="https://earth.google.com/web/">Google Earth</a>, <a href="https://www.gpsvisualizer.com/map_input"> GPSVisualizer</a>.<br> 
+        2. תוכלו לייצא לאחת מהמערכות האלה: <a href="https://www.google.com/mymaps"  target="_blank">Google Maps</a>, <a href="https://earth.google.com/web/" target="_blank">Google Earth</a>, <a href="https://www.gpsvisualizer.com/map_input target="_blank""> GPSVisualizer</a>.<br> 
 		לחצו על הכפתור המתאים למערכת שתרצו לעבוד איתה.<br>
-        3. עברו לאתר <a href="https://www.google.com/mymaps"> Google My Maps</a><br>
+        3. עברו לאתר <a href="https://www.google.com/mymaps target="_blank""> Google My Maps</a><br>
         3. צרו מפה חדשה ותנו לה שם. למשל: אשדוד, 08-10-2024 אם המפה צריכה לתעד את הנתונים מתאריך זה<br>
         4. לחצו על "ייבוא" וטענו את קובץ האקסל שייצאתם<br>
 		5. סמנו את שדה קו אורך וחברו אותו ל"קו אורך". עשו אותו דבר עם קו הרוחב ולחצו על המשך<br>
@@ -179,8 +179,8 @@
 		7. תנו שם לשכבה<br>
 		8. לחצו על "סגנון אחיד" ובחרו "גורם מעודד או מעכב" כדי לתת צבע אחר לכל אחד מהם.<br>
 		9. אפשר לעשות שימוש ליצירת מפה גם בשירות 
-		<a href="https://www.gpsvisualizer.com/map_input">gpsvisualizer</a> באותה דרך. הורידו את הקובץ, העתיקו את תוכנו והדביקו בשירות.<br><br>
-		<a href="https://www.gpsvisualizer.com/map_input">gpsvisualizer</a> באותה דרך. הורידו את הקובץ, העתיקו את תוכנו, כולל שורת הכותרת והדביקו בשירות.
+		<a href="https://www.gpsvisualizer.com/map_input" target="_blank">gpsvisualizer</a> באותה דרך. הורידו את הקובץ, העתיקו את תוכנו והדביקו בשירות.<br><br>
+		<a href="https://www.gpsvisualizer.com/map_input" target="_blank">gpsvisualizer</a> באותה דרך. הורידו את הקובץ, העתיקו את תוכנו, כולל שורת הכותרת והדביקו בשירות.
 		<br><br>
         שאלות? דברו איתי <a href="mailto:ofirbn@post.com">במייל</a>
     `;
@@ -256,7 +256,7 @@
 
             const newFileName = `OurVoice-Filtered-${originalFileName}`;
             XLSX.writeFile(newWorkbook, newFileName);
-            document.getElementById('message').innerHTML = 'הקובץ יוצא בהצלחה! אפשר לטעון אותו ב: <a href="https://www.google.com/mymaps"> Google My Maps</a>';						
+            document.getElementById('message').innerHTML = 'הקובץ יוצא בהצלחה! אפשר לטעון אותו ב: <a href="https://www.google.com/mymaps" target="_blank"> Google My Maps</a>';						
         }
 
         function exportForGPSVisualizer() {
