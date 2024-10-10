@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>סדנת צִילוּמוֹבַּיל - טיפים וטכניקות לצילום חכם בסמארטפון</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 390px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f8ff;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #4a90e2;
+            font-size: 24px;
+        }
+        h2 {
+            color: #4a90e2;
+            font-size: 20px;
+            margin-top: 20px;
+        }
+        #search-container {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        #search {
+            flex-grow: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 20px 0 0 20px;
+            font-size: 16px;
+        }
+        #clear-search {
+            background-color: #4a90e2;
+            color: white;
+            padding: 5px 10px;
+            border: none;			
+            border-radius: 15px 0 0 15px;
+            font-size: 14px;
+            cursor: pointer;
+        }		
+        #keywords {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .keyword {
+            background-color: #4a90e2;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .keyword.selected {
+            background-color: #4CAF50;
+        }
+        .topic {
+            cursor: pointer;
+            margin-bottom: 10px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: background-color 0.3s;
+        }
+        .topic:hover {
+            background-color: #e6f2ff;
+        }
+        .content {
+            display: none;
+            padding: 15px;
+            background-color: #e6f2ff;
+            border-radius: 10px;
+            margin-top: 10px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        #copyright {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>סדנת צִילוּמוֹבַּיל - טיפים וטכניקות לצילום חכם בסמארטפון</h1>
+    
+    <div id="search-container">
+        <input type="text" id="search" placeholder="חפשו נושא כלשהו...">
+        <button id="clear-search">נקה</button>
+    </div>
+    
+    <h2>אינדקס מילות מפתח</h2>
+    <div id="keywords"></div>
+    
+    <h2>רשימת נושאים</h2>
+    <div id="topics"></div>
+
+    <div id="copyright">Copyright OBN 2024</div>
+
+    <script>
+        const topics = [
+            {
+                title: "ניקוי עדשות המצלמה",
+                content: "<b>לפני כל צילום</b> - נקו את עדשות המצלמה!<br>לא תאמינו לכמות האבק, השומן והלכלוך.<br>במידת האפשר השתמשו <i>בבד ניקוי של משקפיים</i>."
+            },
+            {
+                title: "תאורה ואור",
+                content: "השתדלו לצלם בתנאי אור אחידים, ולא באור שמש ישיר, ובוודאי שלא בתנאי אור מעורבים.<br><br><b>טיפ:</b> העדיפו לצלם ב'שעות הזהב' (שעת הזהב היא השעה הראשונה והשעה האחרונה של אור השמש, והיא הזמן האידאלי לצילום תמונות מרהיבות. כלומר - <i>בזריחה ולקראת שקיעה</i>)."
+            },
+            {
+                title: "הפעלה מהירה של המצלמה",
+                content: "<b>אייפון:</b><br>כשהמסך כבוי - במסך הנעילה החליקו למעלה או שמאלה, או לחצו על אייקון המצלמה, תלוי בדגם.<br>בדגמים בהם יש כפתור 'פעולה', ניתן להגדיר שהכפתור יפעיל את המצלמה.<br><br><b>אנדרואיד:</b><br>לחיצה כפולה על כפתור ההפעלה, או החלקה על המסך שמאלה או ימינה (תלוי בשפה המוגדרת בטלפון)."
+            },
+            {
+                title: "הגדרות מצלמה",
+                content: "<b>צילום ביחס של 3:4</b>. זו האיכות הגבוהה ביותר של המצלמה, זו הזווית הרחבה ביותר, וזה יחס התמונה המקורי של החיישן.<br><br><b>באייפון:</b> בדגמי iPhone 11 ואילך, יש להקיש על כפתור 'פקדי המצלמה', ואז על 4:3.<br><br><b>באנדרואיד:</b> בחלק העליון של המצלמה לבחור את היחס בין 16:9, 1:1, Full וכו'.<br><br>איפה שאפשר, עדיף להשתמש במצלמה האחורית ולא הקדמית (של הסלפי).<br><br><b>טיפ:</b> כיבוי הפלאש האוטומטי. ברוב המכריע של הצילומים אנחנו רוצים לצלם בלי פלאש."
+            },
+            {
+                title: "חשיפה ומיקוד",
+                content: "מיד לאחר הנגיעה במסך המצלמה - החליקו עם האצבע, על מנת לשנות את החשיפה (את כמות האור שנכנסת למצלמה):<br><br><b>באייפון:</b><br>- החליקו למעלה - להגדלת החשיפה (להכניס יותר אור)<br>- למטה - להקטנת החשיפה (להכניס פחות אור)<br><br><b>שימו לב:</b> במצב זה - הגדרת החשיפה והמיקוד (פוקוס) מתאפסים אחרי כל צילום."
+            },
+            {
+                title: "נעילת חשיפה ומיקוד",
+                content: "אם רוצים לנעול את החשיפה והמיקוד גם לצילומים הבאים (כדי לצלם צילומים נוספים עם אותם נתונים) - <b>לחצו לחיצה ארוכה על המסך במקום בו אתם רוצים למקד</b>. יופיע חיווי שנעלתם את החשיפה והמיקוד.<br><br>על מנת 'לשחרר' את הגדרת החשיפה והמיקוד - געו בנקודה אחרת על המסך שם תרצו להתמקד."
+            },
+            {
+                title: "זום",
+                content: "על מנת להתקרב לאובייקט המצולם, עשו אחת משתי פעולות אלה:<br>1. התקרבו פיזית עם הסמארטפון, במידת האפשר.<br>2. החליפו בין העדשות: ברוב הטלפונים יש מספר עדשות. השתמשו בהן כדי לקבל את האיכות הגבוהה ביותר:<br>- הקישו על המסך על המספרים המופיעים למטה.<br>- בד'כ: 0.5 או 0.6 - לעדשה עם זווית רחבה, 1 - לעדשה הסטנדרטית, 2 - לעדשת טלה.<br><br><b>טיפ חשוב:</b> השתדלו להימנע להתקרב או להתרחק מהאובייקט באמצעות תנועת הזום עם שתי האצבעות. הפעולה הזו עושה שימוש ב'זום דיגיטלי', ולא בזום אופטי, שהוא באיכות פחות טובה. הפעולה הזו זהה לחיתוך התמונה בעריכה לאחר הצילום."
+            },
+            {
+                title: "קומפוזיציה",
+                content: "<b>חוק השלישים:</b><br>קווי הרשת (Grid) במצלמה מסייעים לנו לבנות תמונה עם קומפוזיציה מושכת ומעניינת (סידור האובייקטים בתמונה). הם גם מסייעים לנו לצלם תמונה מיושרת ולא נוטה.<br><br><b>באיפון:</b> דרך תפריט הטלפון -> מצלמה -> 'רשת' או Grid.<br>כדאי להפעיל גם את 'פלס' שעוזר ליישור התמונה.<br><br><b>טיפים נוספים:</b><br>- מקמו את הנושא המרכזי על אחד מקווי הרשת או בנקודות החיבור של קווי הרשת.<br>- קווים ואלכסונים: השתמשו בקווים ואלכסונים שקיימים במקום להולכת העין לנושא (שביל, עמוד, גדר).<br>- עומק: עשו שימוש באובייקטים שנמצאים לפני הנושא, או אחריו.<br>- מסגרו את הנושא: מצאו אובייקטים שיכולים ליצור מסגור לנושא: עצים או מבנים, למשל.<br>- זוויות מיוחדות: נסו זוויות מעניינות ושונות (צילום מגבוה, מנמוך), נקודות מבט אחרות."
+            },
+            {
+                title: "צילום במצב דיוקן (Portrait)",
+                content: "מצב זה מדמה צילום סטודיו ומדגיש את הדיוקן המצולם. ברוב המצלמות ניתן לערוך את התוצאה לאחר הצילום ואפילו לבטל את האפקט.<br><br><b>מתי זה עובד:</b> מצב דיוקן פועל, בד'כ, כאשר המצלמה מזהה פנים קרובות. המצב פועל לפעמים גם עם אובייקטים אחרים (פרח, כוס וכו').<br><br><b>מעבר למצב דיוקן:</b><br><b>אנדרואיד:</b> להחליק בחלק התחתון כדי לעבור למצב דיוקן. אחרי בחירה במצב דיוקן יופיע עיגול לבן קטן (תלוי בדגם המכשיר). לחיצה עליו תאפשר בחירת אפקטים שונים: טשטוש, סטודיו, ועוד. ניתן לשלוט על עוצמת האפקט על ידי החלקה ימינה/שמאלה, או על ידי לחיצה על לחצן עם האות f. בטלפונים אחרים האפקטים יכולים להופיע בחלק העליון של המסך.<br><br><b>אייפון:</b> להחליק ימינה או שמאלה על מסך המצלמה כדי לעבור למצב פורטרט. להחליק את האייקון בצורת תיבה כדי לקבל את אפשרויות האפקטים: תאורה טבעית, תאורת אולפן, במה וכו'. אפשר לשלוט על עוצמת האפקט ('בקרת עומק'), על ידי הקשה על f בחלק העליון של המסך ואז החלקה ימינה או שמאלה."
+            },
+            {
+                title: "טשטוש רקע או עומק שדה",
+                content: "בעיקר בצילומי דיוקן, אך לא רק בהם, כדאי לעשות הפרדה בין האובייקט לבין הרקע, על ידי צמצום 'עומק השדה' (כמה מהאובייקט נמצא בפוקוס וכמה הרקע מטושטש). ההפרדה מהרקע יוצרת תמונה נעימה, שקטה וממוקדת יותר.<br><br><b>טכניקות להשגת טשטוש רקע:</b><br>1. להתקרב ככל הניתן לאובייקט (בד\"כ מטר עד שניים)<br>2. לדאוג שיהיה מספיק מרחק מאחורי האובייקט, בין האובייקט לרקע. ככל שהמרחק של האובייקט מהרקע שמאחוריו גדול יותר, הטשטוש יהיה בולט יותר.<br>3. להשתמש בעדשת טלה (2X או 3X)."
+            },
+            {
+                title: "צילום רצף (Burst Mode)",
+                content: "צילום רצף מאפשר לנו לתפוס פעולה מהירה, שאחרת היה קשה לתפוס בדיוק את הרגע הנכון.<br><br><b>אנדרואיד:</b> גרירה כלפי מטה של לחצן הצילום במסך המצלמה, מבלי לעזוב (יש דגמים בהם צריך להחזיק את לחצן הצילום).<br><br><b>אייפון:</b><br>- בדגמים חדשים יותר: להחליק ימינה או שמאלה את כפתור הצילום.<br>- בדגמים ישנים יותר: ללחוץ על כפתור הצילום בלי לעזוב.<br>כדי להפסיק - הפסיקו את הלחיצה.<br><br><b>טיפ:</b> לאחר הצילום, בחרו את התמונות הטובות ביותר מתוך הרצף ומחקו את השאר כדי לחסוך מקום אחסון."
+            },
+            {
+                title: "צילום 'הפוך'",
+                content: "במקרים בהם האובייקט נמצא נמוך, או שאנו רוצים צילום מזווית נמוכה יותר - <b>הפכו את הנייד כך שהמצלמה נמצאת למטה</b>.<br><br>יתרונות:<br>- התקרבות יותר לאובייקט<br>- קבלת נקודת מבט עם פרספקטיבה מעניינת<br>- אפשרות לצלם מבנה גבוה מלמטה"
+            },
+            {
+                title: "צילום פנורמה",
+                content: "צילום פנורמה מאפשר לנו לתפוס זווית רחבה יותר של האובייקט המצולם לרוחב או לגובה.<br><br><b>טיפים:</b><br>- לצילום נוף רחב או מבנה רחב: צלמו כשהטלפון שוכב לרוחב (landscape)<br>- לצילום מגדל גבוה: צלמו כשהטלפון עומד לגובה (portrait), ובצעו את התנועה של הטלפון מלמטה למעלה, או להיפך<br>- השתדלו כי התנועה תהיה חלקה ואיטית, בלי עצירות פתאומיות"
+            },
+            {
+                title: "פנורמה למתקדמים",
+                content: "באמצעות טכניקת הפנורמה אפשר לצלם תמונה בה אדם מופיע פעמיים (או יותר) באותה תמונה:<br><br>1. התחילו לצלם את הפנורמה כרגיל, כאשר האדם נמצא בצד אחד של התמונה<br>2. עצרו את תנועת המצלמה קצת אחרי שעברתם אותו<br>3. האדם עובר לצד השני של התמונה<br>4. המשיכו את תנועת המצלמה<br>5. לבסוף - עצרו את הצילום"
+            },
+            {
+                title: "צילום באמצעות פקודה קולית או מחווה",
+                content: "<b>אנדרואיד:</b><br>בהגדרות המצלמה: לבחור שיטות צילום -> פקודות קוליות והצגת כף יד.<br>כדי לצלם אפשר להגיד בקול: smile, cheese, capture, shoot.<br>כדי לצלם וידאו הגידו: 'Record Video'.<br><br><b>אייפון:</b><br>הגדרות הטלפון -> נגישות -> שליטה קולית -> פקודות.<br>שם יש להגדיר לחיצה שתפעיל את המצלמה, ולהגדיר מילת הפעלה, למשל - Smile."
+            },
+            {
+                title: "חצובות מאולתרות",
+                content: "רעיונות ליצירת חצובות מאולתרות:<br>- להשעין את המצלמה על תיק או אובייקט אחר<br>- להפוך כוס קרטון לחצובה<br>- שימוש בגומיות שיער<br>- בתוך נעל/כפכף"
+            },
+            {
+                title: "צלמו הרבה",
+                content: "כדאי לצלם בכל מקום או סיטואציה <b>מספר תמונות</b>, במספר אפשרויות וזוויות. לאחר מכן תוכלו לבחור את התמונה הטובה ביותר.<br><br><i>טיפ:</i> זכרו למחוק את התמונות הפחות טובות כדי לחסוך מקום אחסון."
+            },
+			{
+                title: "10 הדיברות לצילום דיוקן בנייד",
+                content: "<ul><li>לנקות את עדשות מצלמה</li>לעשות פוקוס – רצוי על הפנים או העיניים</li><li>מעבר למצב פורטרט / דיוקן </li><li>הרחקת הדמות המצולמת מהרקע ככל האפשר </li><li>מיקום הדמות: במרכז הפריים, או על קו השלישים </li><li>דגש על פלג גוף עליון</li>	<li>שימו לב לרקע של הדמות </li><li>שימו לב לצבע הבגד ביחס לרקע</li><li>התייחסו לתאורה - הקסם טמון באור</li><li>דיוק הבעת הפנים הרצויה, איזה רגש או תחושה נרצה להעביר</li></ul>"
+            },
+			{
+                title: "10 הדיברות לצילום סלפי",
+                content: "<ul><li>לנקות את עדשות מצלמה</li>הגדרת טיימר – 2-5 שניות</li><li>שימוש בפונקציה של כף יד – אנדרואיד</li><li>שימוש בפקודה קולית (smile)</li><li>צילום במצב פורטרט</li><li>בחירת זווית צילום מחמיאה</li>	<li>מבט לעדשה של המצלמה ולא למסך הטלפון</li><li>להרגיש בנח - למצוא מקום שנח לי</li><li>שימו לב לרקע</li><li>התייחסו לתאורה - הקסם טמון באור</li></ul>"
+            }
+        ];
+
+        function displayTopics() {
+            const topicsDiv = document.getElementById('topics');
+            topicsDiv.innerHTML = '';
+            topics.forEach((topic, index) => {
+                const topicDiv = document.createElement('div');
+                topicDiv.className = 'topic';
+                topicDiv.textContent = topic.title;
+                topicDiv.onclick = () => toggleContent(index);
+                topicsDiv.appendChild(topicDiv);
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'content';
+                contentDiv.id = `content-${index}`;
+                contentDiv.innerHTML = topic.content;
+                topicsDiv.appendChild(contentDiv);
+            });
+        }
+
+        function toggleContent(index) {
+            const content = document.getElementById(`content-${index}`);
+            content.style.display = content.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function searchTopics() {
+            const searchTerm = document.getElementById('search').value.toLowerCase();
+            const topicsDiv = document.getElementById('topics');
+            topicsDiv.innerHTML = '';
+            topics.forEach((topic, index) => {
+                if (topic.title.toLowerCase().includes(searchTerm) || topic.content.toLowerCase().includes(searchTerm)) {
+                    const topicDiv = document.createElement('div');
+                    topicDiv.className = 'topic';
+                    topicDiv.textContent = topic.title;
+                    topicDiv.onclick = () => toggleContent(index);
+                    topicsDiv.appendChild(topicDiv);
+
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'content';
+                    contentDiv.id = `content-${index}`;
+                    contentDiv.innerHTML = topic.content;
+                    topicsDiv.appendChild(contentDiv);
+                }
+            });
+        }
+
+		function clearSearch() {
+			document.getElementById('search').value = '';
+			displayTopics();
+			resetKeywords(); // הוספנו קריאה לפונקציה חדשה
+		}
+
+		function resetKeywords() {
+			document.querySelectorAll('.keyword').forEach(el => el.classList.remove('selected'));
+		}
+
+        function createKeywords() {
+            const keywordsDiv = document.getElementById('keywords');
+            keywordsDiv.innerHTML = '';
+
+			resetKeywords(); // הוספנו קריאה לפונקציה החדשה
+            
+            // רשימת מילות מפתח מוגדרת מראש
+            const predefinedKeywords = [
+                "צילום", "סמארטפון", "מצלמה", "עדשה", "תאורה", "קומפוזיציה",
+                "חשיפה", "מיקוד", "זום", "פנורמה", "דיוקן", "סלפי", "רצף",
+                "פלאש", "עריכה", "אפקטים", "ניקוי", "טשטוש", "רקע", "פוקוס",
+                "אייפון", "אנדרואיד"
+            ];
+            
+            predefinedKeywords.forEach(keyword => {
+                const keywordSpan = document.createElement('span');
+                keywordSpan.className = 'keyword';
+                keywordSpan.textContent = keyword;
+                keywordSpan.onclick = () => {
+                    document.getElementById('search').value = keyword;
+                    searchTopics();
+                    highlightKeyword(keywordSpan);
+                };
+                keywordsDiv.appendChild(keywordSpan);
+            });
+        }
+
+        function highlightKeyword(element) {
+            document.querySelectorAll('.keyword').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+
+        document.getElementById('search').addEventListener('input', searchTopics);
+        document.getElementById('clear-search').addEventListener('click', clearSearch);
+
+        document.body.style.userSelect = 'none';
+        document.body.style.webkitUserSelect = 'none';
+        document.body.style.msUserSelect = 'none';
+        document.body.style.mozUserSelect = 'none';
+
+        displayTopics();
+        createKeywords();
+    </script>
+</body>
+</html>
