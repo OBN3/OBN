@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ממיר נתוני המיפוי - הקול שלנו</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 2rem;
+            direction: rtl;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        .description {
+            color: #7f8c8d;
+            margin-bottom: 1.5rem;
+        }
+        .btn {
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 1rem;
+            margin: 10px 0;
+        }
+        .btn-blue {
+            background-color: #3498db;
+        }
+        .btn-blue:hover {
+            background-color: #2980b9;
+        }
+        .btn-green {
+            background-color: #2ecc71;
+        }
+        .btn-green:hover {
+            background-color: #27ae60;
+        }
+        .btn-red {
+            background-color: #e74c3c;
+        }
+        .btn-red:hover {
+            background-color: #c0392b;
+        }
+        .btn-purple {
+            background-color: #9b59b6;
+        }
+        .btn-purple:hover {
+            background-color: #8e44ad;
+        }
+        .btn-orange {
+            background-color: #f39c12;
+        }
+        .btn-orange:hover {
+            background-color: #e67e22;
+        }
+        .btn-teal {
+            background-color: #008080;
+        }
+        .btn-teal:hover {
+            background-color: #006666;
+        }
+        #fileName {
+            margin-top: 1rem;
+            font-weight: bold;
+            color: #34495e;
+        }
+        #message {
+            margin-top: 1rem;
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 10px;
+        }
+        .close {
+            color: #aaa;
+            float: left;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ממיר נתוני המיפוי - הקול שלנו</h1>
+        <p class="description">האפליקציה מסננת ומייצאת נתונים מקובץ האקסל של <a href="https://app.eye.do/">	מערכת "הקול שלנו" </a>
+		לפורמט איתו אפשר ליצור מפות במערכות:<br>
+		,<a href="https://www.google.com/mymaps">Google Maps</a> ,<a href="https://earth.google.com/web/">Google Earth</a>, <a href="https://www.gpsvisualizer.com/map_input"> GPSVisualizer</a><br> <button class="btn btn-red" onclick="openHelpModal()">עזרה</button></p>
+        <input type="file" id="fileInput" accept=".xlsx, .xls" style="display: none;">
+        <button class="btn btn-blue" onclick="forceFileReload()">בחר קובץ אקסל</button>
+        <div id="fileName"></div>
+        <button class="btn btn-green" id="exportBtn" style="display: none;" onclick="exportFilteredData()">ייצא ל-Google Maps</button>
+		<button class="btn btn-teal" id="googleEarthBtn" style="display: none;" onclick="exportForGoogleEarth()">ייצא ל-Google Earth</button>
+        <button class="btn btn-purple" id="gpsVisualizerBtn" style="display: none;" onclick="exportForGPSVisualizer()">ייצא ל-GPS Visualzer</button>
+        <button class="btn btn-orange" id="openGPSVisualizerBtn" style="display: none;" onclick="openGPSVisualizer()">פתח ב-GPS Visualizer</button>
+        <div id="message"></div>
+		
+		<div id="image">
+		<img src="GoogleMyMaps.png" alt="דוגמה" width="502" height="410" style="border:1px solid black">
+		</div>
+		
+    </div>
+
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeHelpModal()">&times;</span>
+            <div id="helpContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let workbook;
+        let originalFileName;
+        const relevantColumns = [
+            'תאריך דיווח', 'קו רוחב', 'קו אורך', 'גורם מעודד או מעכב',
+            'מהות הגורם המעכב', 'מהות הגורם המעודד הליכה', 'בטיחות בדרכים',
+            'מפגעי פסולת', 'הנגשה ונגישות', 'גינון', 'תשתיות ותאורה'
+        ];
+
+        const columnMapping = {
+            'נקודת רוחב': 'קו רוחב',
+            'נקודת אורך': 'קו אורך'
+        };
+
+        const help = `
+        <b>ברוכים הבאים לממיר נתוני המיפוי של תכנית "הקול שלנו"</b><br><br>
+        כדי להשתמש באפליקציה:<br>
+        1. העלו את קובץ האקסל שייצאתם ממערכת הניהול של "הקול שלנו". ודאו שהוא כולל לפחות את העמודות:  'תאריך דיווח', 'קו רוחב', 'קו אורך', 'גורם מעודד או מעכב',
+            'מהות הגורם המעכב', 'מהות הגורם המעודד הליכה', 'בטיחות בדרכים', 'מפגעי פסולת', 'הנגשה ונגישות', 'גינון', 'תשתיות ותאורה'. <br>
+        2. תוכלו לייצא לאחת מהמערכות האלה: <a href="https://www.google.com/mymaps">Google Maps</a>, <a href="https://earth.google.com/web/">Google Earth</a>, <a href="https://www.gpsvisualizer.com/map_input"> GPSVisualizer</a>.<br> 
+		לחצו על הכפתור המתאים למערכת שתרצו לעבוד איתה.<br>
+        3. עברו לאתר <a href="https://www.google.com/mymaps"> Google My Maps</a><br>
+        3. צרו מפה חדשה ותנו לה שם. למשל: אשדוד, 08-10-2024 אם המפה צריכה לתעד את הנתונים מתאריך זה<br>
+        4. לחצו על "ייבוא" וטענו את קובץ האקסל שייצאתם<br>
+		5. סמנו את שדה קו אורך וחברו אותו ל"קו אורך". עשו אותו דבר עם קו הרוחב ולחצו על המשך<br>
+		6. בחרו עמודה שתשמש ככותרת של הסמנים. בדרך כלל: "גורם מעודד או מעכב"<br>
+		7. תנו שם לשכבה<br>
+		8. לחצו על "סגנון אחיד" ובחרו "גורם מעודד או מעכב" כדי לתת צבע אחר לכל אחד מהם.<br>
+		9. אפשר לעשות שימוש ליצירת מפה גם בשירות 
+		<a href="https://www.gpsvisualizer.com/map_input">gpsvisualizer</a> באותה דרך. הורידו את הקובץ, העתיקו את תוכנו והדביקו בשירות.<br><br>
+		<a href="https://www.gpsvisualizer.com/map_input">gpsvisualizer</a> באותה דרך. הורידו את הקובץ, העתיקו את תוכנו, כולל שורת הכותרת והדביקו בשירות.
+		<br><br>
+        שאלות? דברו איתי <a href="mailto:ofirbn@post.com">במייל</a>
+    `;
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                originalFileName = file.name;
+                readExcelFile(file);
+            }
+        });
+
+        function readExcelFile(file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                workbook = XLSX.read(data, {type: 'array', cellDates: true});
+                document.getElementById('fileName').textContent = 'קובץ נבחר: ' + file.name;
+                document.getElementById('exportBtn').style.display = 'inline-block';
+                document.getElementById('gpsVisualizerBtn').style.display = 'inline-block';
+                document.getElementById('openGPSVisualizerBtn').style.display = 'inline-block';
+                document.getElementById('googleEarthBtn').style.display = 'inline-block';
+            };
+            
+            reader.readAsArrayBuffer(file);
+
+            document.getElementById('fileInput').value = '';
+        }
+
+        function exportFilteredData() {
+            if (!workbook) {
+                alert('אנא בחר קובץ אקסל תחילה.');
+                return;
+            }
+
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(sheet, {raw: false, dateNF: 'DD-MM-YYYY'});
+            
+            const filteredData = jsonData.map(row => {
+                const filteredRow = {};
+                relevantColumns.forEach(col => {
+                    const originalCol = Object.keys(columnMapping).find(key => columnMapping[key] === col) || col;
+                    if (row.hasOwnProperty(originalCol)) {
+                        let value = row[originalCol];
+                        if (col === 'תאריך דיווח') {
+                            const date = new Date(value);
+                            if (!isNaN(date.getTime())) {
+                                value = `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
+                            } else {
+                                value = 'Invalid Date';
+                            }
+                        }
+                        filteredRow[col] = value;
+                    }
+                });
+                return filteredRow;
+            });
+
+            const newWorkbook = XLSX.utils.book_new();
+            const newSheet = XLSX.utils.json_to_sheet(filteredData, {dateNF: 'DD-MM-YYYY'});
+
+            if(!newSheet['!cols']) newSheet['!cols'] = [];
+            newSheet['!cols'] = relevantColumns.map(() => ({ wch: 20 }));
+            newSheet['!cols'][0] = { wch: 20, numFmt: 'dd-mm-yyyy' }; // עבור עמודת התאריך
+
+            XLSX.utils.book_append_sheet(newWorkbook, newSheet, 'Filtered Data');
+
+            if(!newWorkbook.Workbook) newWorkbook.Workbook = {};
+            if(!newWorkbook.Workbook.Views) newWorkbook.Workbook.Views = [];
+            if(!newWorkbook.Workbook.Views[0]) newWorkbook.Workbook.Views[0] = {};
+            newWorkbook.Workbook.Views[0].RTL = true;
+
+            const newFileName = `OurVoice-Filtered-${originalFileName}`;
+            XLSX.writeFile(newWorkbook, newFileName);
+            document.getElementById('message').innerHTML = 'הקובץ יוצא בהצלחה! אפשר לטעון אותו ב: <a href="https://www.google.com/mymaps"> Google My Maps</a>';						
+        }
+
+        function exportForGPSVisualizer() {
+            if (!workbook) {
+                alert('אנא בחר קובץ אקסל תחילה.');
+                return;
+            }
+
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(sheet, {raw: false});
+            
+            const gpsVisualizerData = jsonData.map(row => {
+                const latitude = row['נקודת רוחב'] || row['קו רוחב'];
+                const longitude = row['נקודת אורך'] || row['קו אורך'];
+                const name = [
+                    row['גורם מעודד או מעכב'] || '',
+                    row['מהות הגורם המעכב'] || '',
+                    row['מהות הגורם המעודד הליכה'] || '',
+                    row['בטיחות בדרכים'] || row['בטיחות  בדרכים'] || '',
+                    row['מפגעי פסולת'] || '',
+                    row['הנגשה ונגישות'] || '',
+                    row['גינון'] || '',
+                    row['תשתיות ותאורה'] || ''
+                ].filter(Boolean).join(' | ');
+                const factor = (row['גורם מעודד או מעכב'] || '').toLowerCase();
+                const isEncouraging = factor.includes('מעודד') || factor.includes('מקדם');
+                const color = isEncouraging ? 'green' : 'red';
+                const symbol = isEncouraging ? 'pin' : 'star';
+                return `${latitude},${longitude},${name},${color},${symbol}`;
+            }).join('\n');
+
+            const BOM = '\uFEFF';
+            const csvContent = BOM + "latitude,longitude,name,color,symbol\n" + gpsVisualizerData;
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", "gps_visualizer_data.csv");
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            document.getElementById('message').innerHTML = 'הקובץ יוצא בהצלחה! אפשר לטעון אותו ב: <a href="https://www.gpsvisualizer.com/map_input" target="_blank">GPS Visualizer</a>';			
+        }
+
+        function openGPSVisualizer() {
+            if (!workbook) {
+                alert('אנא בחר קובץ אקסל תחילה.');
+                return;
+            }
+
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(sheet, {raw: false});
+            
+            const gpsVisualizerData = jsonData.map(row => {
+                const latitude = row['נקודת רוחב'] || row['קו רוחב'];
+                const longitude = row['נקודת אורך'] || row['קו אורך'];
+                const name = [
+                    row['גורם מעודד או מעכב'] || '',
+                    row['מהות הגורם המעכב'] || '',
+                    row['מהות הגורם המעודד הליכה'] || '',
+                    row['בטיחות בדרכים'] || row['בטיחות  בדרכים'] || '',
+                    row['מפגעי פסולת'] || '',
+                    row['הנגשה ונגישות'] || '',
+                    row['גינון'] || '',
+                    row['תשתיות ותאורה'] || ''
+                ].filter(Boolean).join(' | ');
+                const factor = (row['גורם מעודד או מעכב'] || '').toLowerCase();
+                const isEncouraging = factor.includes('מעודד') || factor.includes('מקדם');
+                const color = isEncouraging ? 'green' : 'red';
+                const symbol = isEncouraging ? 'pin' : 'star';
+                return `${latitude},${longitude},${name},${color},${symbol}`;
+            }).join('\n');
+            document.getElementById('message').innerHTML = 'הקובץ יוצא בהצלחה! הוא נפתח ב: <a href="https://www.gpsvisualizer.com/map_input" target="_blank">GPS Visualizer</a>';			
+            const dataString = encodeURIComponent("latitude,longitude,name,color,symbol\n" + gpsVisualizerData);
+            const url = `https://www.gpsvisualizer.com/map_input?form=data&data=${dataString}&colorize=color&symbol=symbol&format=google&width=1000&map_type=OSM_TOPO&units=metric&opacity=1&generate=both&listwidth=200&label_style=permanent`;
+            window.open(url, '_blank');
+        }
+
+        function exportForGoogleEarth() {
+            if (!workbook) {
+                alert('אנא בחר קובץ אקסל תחילה.');
+                return;
+            }
+
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(sheet, {raw: false});
+            
+            let kml = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <Style id="greenPin">
+      <IconStyle>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/pushpin/grn-pushpin.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="redStar">
+      <IconStyle>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/shapes/star.png</href>
+        </Icon>
+        <color>ff0000ff</color>
+      </IconStyle>
+    </Style>`;
+
+            jsonData.forEach(row => {
+                const latitude = row['נקודת רוחב'] || row['קו רוחב'];
+                const longitude = row['נקודת אורך'] || row['קו אורך'];
+                const name = row['גורם מעודד או מעכב'] || '';
+                const description = [
+                    row['מהות הגורם המעכב'] || '',
+                    row['מהות הגורם המעודד הליכה'] || '',
+                    row['בטיחות בדרכים'] || row['בטיחות  בדרכים'] || '',
+                    row['מפגעי פסולת'] || '',
+                    row['הנגשה ונגישות'] || '',
+                    row['גינון'] || '',
+                    row['תשתיות ותאורה'] || ''
+                ].filter(Boolean).join(' | ');
+                const factor = (row['גורם מעודד או מעכב'] || '').toLowerCase();
+                const isEncouraging = factor.includes('מעודד') || factor.includes('מקדם');
+                const styleUrl = isEncouraging ? '#greenPin' : '#redStar';
+
+                kml += `
+    <Placemark>
+      <name>${name}</name>
+      <description>${description}</description>
+      <styleUrl>${styleUrl}</styleUrl>
+      <Point>
+        <coordinates>${longitude},${latitude},0</coordinates>
+      </Point>
+    </Placemark>`;
+            });
+
+            kml += `
+  </Document>
+</kml>`;
+
+            const zip = new JSZip();
+            zip.file("doc.kml", kml);
+            zip.generateAsync({type:"blob"})
+            .then(function(content) {
+                const url = URL.createObjectURL(content);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = "google_earth_data.kmz";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                document.getElementById('message').innerHTML = 'הקובץ יוצא בהצלחה! אפשר לטעון אותו ב: <a href="https://earth.google.com/web/" target="_blank">Google Earth</a>';
+            });
+        }
+
+        function openHelpModal() {
+            document.getElementById('helpModal').style.display = 'block';
+            document.getElementById('helpContent').innerHTML = help;
+        }
+
+        function closeHelpModal() {
+            document.getElementById('helpModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('helpModal')) {
+                closeHelpModal();
+            }
+        }
+
+        function forceFileReload() {
+            document.getElementById('fileInput').click();
+        }
+    </script>
+</body>
+</html>
