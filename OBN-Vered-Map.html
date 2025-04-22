@@ -1,0 +1,219 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>יצירת נתונים למפה - OBN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+        }
+        input, textarea {
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            width: 100%;
+        }
+        button {
+            transition: background-color 0.2s;
+        }
+        #helpModal {
+            display: none;
+        }
+        #helpModal.open {
+            display: flex;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-4xl">
+        <h1 class="text-2xl font-bold text-gray-800 mb-4 text-center">OBN - הזנת נתונים למפה</h1>
+        <div id="rows" class="space-y-4">
+            <!-- 10 שורות ראשוניות יווצרו על ידי JavaScript -->
+        </div>
+        <div class="mt-4 flex space-x-2 justify-center">
+            <button id="addRow" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">הוסף שורה</button>
+            <button id="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">צור קוד</button>
+            <button id="copy" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">העתק טקסט</button>
+            <button id="clear" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">ניקוי תיבת טקסט</button>
+            <button id="help" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">עזרה</button>
+        </div>
+        <div class="mt-6">
+            <h2 class="text-lg font-semibold text-gray-700">תוצאה:</h2>
+            <textarea id="output" class="mt-2 w-full h-64 resize-y" readonly></textarea>
+            <div class="mt-2 text-center">
+                <p class="text-gray-700">קישור ל-GPS Visualizer: <a href="https://www.gpsvisualizer.com/map_input?form=leaflet&google_wpt_labels=2&marker_list_options:width=320&units=metric&width=1000&wpt_list=desc_border" target="_blank" class="text-blue-500 hover:underline">לחצו כאן</a></p>
+                <p class="text-gray-700 mt-1">העתיקו את תוכן תיבת הטקסט והדביקו בקישור בתוך GPS Visualizer והקישו על Draw the map</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- חלון מודאלי לעזרה -->
+    <div id="helpModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-lg p-6 max-w-md w-full relative">
+            <button id="closeModal" class="absolute top-2 left-2 text-gray-600 hover:text-gray-800 text-xl">×</button>
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">עזרה</h2>
+            <div id="helpContent" class="text-gray-700"></div>
+        </div>
+    </div>
+
+    <script>
+        // משתנה לעריכת טקסט העזרה
+        const obn_help = `
+            <p>מערכת זו מאפשרת לך ליצור קובץ CSV עבור מפה ב-GPS Visualizer.</p>
+            <p><strong>איך להשתמש:</strong></p>
+            <ul class="list-disc mr-4">
+                <li>הזן בכל שורה את שם המשתתפת, הישוב, קישור ליוטיוב, וקואורדינטות (בפורמט latitude,longitude).</li>
+                <li>לחץ על "הוסף שורה" להוספת שורות נוספות.</li>
+                <li>לחץ על "צור קוד" ליצירת קוד CSV בתיבת התוצאות ולהורדתו כקובץ טקסט.</li>
+                <li>לחץ על "העתק טקסט" להעתקת הקוד ללוח.</li>
+                <li>הדבק את הקוד בקובץ CSV או ב-GPS Visualizer.</li>
+                <li>שמור את הקובץ שהורד למחשב לשימוש מאוחר יותר ב-GPS Visualizer.</li>
+                <li>לחץ על "ניקוי תיבת טקסט" למחיקת התוצאות.</li>
+            </ul>
+            <p>לעזרה פנו למייל זה: <a href="mailto:mordicon@mail.com" class="text-blue-500 hover:underline">mail me</a></p>
+        `;
+
+        // פונקציה להוספת שורה חדשה
+        function addRow() {
+            const rows = document.getElementById('rows');
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-4 gap-4';
+            row.innerHTML = `
+                <input type="text" placeholder="שם" class="name">
+                <input type="text" placeholder="ישוב" class="city">
+                <input type="text" placeholder="קישור ליוטיוב" class="youtube">
+                <input type="text" placeholder="latitude,longitude" class="coords">
+            `;
+            rows.appendChild(row);
+        }
+
+        // יצירת 10 שורות ראשוניות
+        for (let i = 0; i < 10; i++) {
+            addRow();
+        }
+
+        // הוספת שורה חדשה בלחיצה
+        document.getElementById('addRow').addEventListener('click', addRow);
+
+        // שליחת הנתונים, הצגת תוצאה והורדת קובץ
+        document.getElementById('submit').addEventListener('click', () => {
+            const rows = document.querySelectorAll('#rows > div');
+            let csv = 'name,city,latitude,longitude,description\n';
+            rows.forEach(row => {
+                const name = row.querySelector('.name').value.trim();
+                const city = row.querySelector('.city').value.trim();
+                const youtube = row.querySelector('.youtube').value.trim();
+                const coords = row.querySelector('.coords').value.trim();
+                
+                if (name && city && youtube && coords) {
+                    // המרת קישור יוטיוב למזהה וידאו
+                    let videoId = '';
+                    if (youtube.includes('youtube.com/watch?v=')) {
+                        videoId = youtube.split('v=')[1].split('&')[0];
+                    } else if (youtube.includes('youtu.be/')) {
+                        videoId = youtube.split('youtu.be/')[1].split('?')[0];
+                    } else {
+                        videoId = youtube; // אם זה כבר מזהה
+                    }
+                    
+                    // פיצול קואורדינטות
+                    const [latitude, longitude] = coords.split(',').map(c => c.trim());
+                    
+                    // יצירת תיאור עם iframe
+                    const description = `עיר: ${city}<br><iframe width='280' height='157' src='https://www.youtube.com/embed/${videoId}' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe>`;
+                    
+                    // הוספה ל-CSV
+                    csv += `${name},${city},${latitude},${longitude},"${description}"\n`;
+                }
+            });
+            
+            // הצגת התוצאה בתיבת הטקסט
+            document.getElementById('output').value = csv;
+
+            // הורדת הקובץ כ-CSV עם קידוד UTF-8
+            const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'map_data.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            // הצגת הודעה למשתמש
+            alert('הקוד ירד לקובץ טקסט. תוכל להשתמש בו בהמשך במערכת GPS Visualizer');
+        });
+
+        // העתקת תוכן תיבת הטקסט ל-clipboard
+        document.getElementById('copy').addEventListener('click', () => {
+            const output = document.getElementById('output');
+            output.select();
+            try {
+                document.execCommand('copy');
+                alert('הטקסט הועתק ללוח!');
+            } catch (err) {
+                alert('שגיאה בהעתקה: ' + err);
+            }
+        });
+
+        // ניקוי תיבת התוצאות
+        document.getElementById('clear').addEventListener('click', () => {
+            document.getElementById('output').value = '';
+        });
+
+        // פתיחת חלון העזרה
+        document.getElementById('help').addEventListener('click', () => {
+            const modal = document.getElementById('helpModal');
+            modal.classList.add('open');
+            document.getElementById('helpContent').innerHTML = obn_help;
+        });
+
+        // סגירת חלון העזרה
+        document.getElementById('closeModal').addEventListener('click', () => {
+            document.getElementById('helpModal').classList.remove('open');
+        });
+    </script>
+</body>
+</html>
