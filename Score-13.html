@@ -1,0 +1,467 @@
+<html lang="he" dir="rtl"><head><style>body {transition: opacity ease-in 0.2s; } 
+body[unresolved] {opacity: 0; display: block; overflow: hidden; position: relative; } 
+</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>האקתון רופין - ניקוד שופטים</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            direction: rtl;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        input[type="text"], input[type="password"], button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        input[type="text"][inputmode="numeric"] {
+            width: 40px;
+            padding: 5px;
+            text-align: center;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #bdc3c7;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .hidden {
+            display: none;
+        }
+        .summary-table {
+            margin-top: 30px;
+        }
+        .summary-table th {
+            background-color: #2c3e50;
+        }
+        .share-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .share-buttons button {
+            width: 45%;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #7f8c8d;
+        }
+        .invalid-input {
+            border-color: #e74c3c !important;
+        }
+        .admin-explanation {
+            background-color: #ecf0f1;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        #scorerInterface:not(.hidden) + #adminBtn,
+        #scorerInterface:not(.hidden) ~ #adminPanel {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>האקתון רופין - ניקוד שופטים</h1>
+        <div id="scorerInterface">
+            <input type="text" id="scorerName" placeholder="הכנס את שמך">
+            <button id="startScoring">התחל ניקוד</button>
+        </div>
+        <div id="scoringTable" class="hidden">
+            <h2>אנא נקדו כל מתמודד בסולם 1 (נמוך ביותר), עד 5 (גבוה ביותר).</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>קבוצה</th>
+                        <th>חדשנות</th>
+                        <th>יישומיות</th>
+                        <th>מודל עסקי</th>
+                        <th>אופן ההצגה</th>
+                    </tr>
+                </thead>
+                <tbody id="scoreTableBody"></tbody>
+            </table>
+            <button id="finishScoring">סיים ושלח ניקוד</button>
+        </div>
+        <div id="results" class="hidden">
+            <h2>טבלת הניקוד</h2>
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>דירוג</th>
+                        <th>קבוצה</th>
+                        <th>חדשנות</th>
+                        <th>יישומיות</th>
+                        <th>מודל עסקי</th>
+                        <th>אופן ההצגה</th>
+                        <th>ניקוד כולל</th>
+                    </tr>
+                </thead>
+                <tbody id="summaryTableBody"></tbody>
+            </table>
+            <h3>שתף את הקובץ</h3>
+            <p>אפשר לשלוח את קובץ הניקוד ששמרתם במחשב/טלפון באמצעות המייל או הווטסאפ.
+            לחצו על שלח במייל או בווטסאפ, צרפו את קובץ הניקוד שנשמר אצלכם ושלחו.</p>
+            <div class="share-buttons">
+                <button id="sendEmail">שלח במייל</button>
+                <button id="sendWhatsApp">שלח בווטסאפ</button>
+            </div>
+        </div>
+        <div id="errorMessage" class="error hidden"></div>
+        
+        
+                
+                
+                
+            </div>
+        </div>
+    </div>
+    <footer>Copyright OBN</footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let groups = ["1","2","3","4","5","6","7","8","9"];
+        const adminPassword = "1234";
+        
+        const adminBtn = document.getElementById('adminBtn');
+        if (adminBtn) {
+            adminBtn.addEventListener('click', () => {
+                const adminPanel = document.getElementById('adminPanel');
+                if (adminPanel) {
+                    adminPanel.classList.toggle('hidden');
+                } else {
+                    alert('פונקציית הניהול אינה זמינה בגרסה זו.');
+                }
+            });
+        }
+
+        const loginBtn = document.getElementById('loginBtn');
+        if (loginBtn) {
+            loginBtn.addEventListener('click', () => {
+                const password = document.getElementById('adminPassword').value;
+                if (password === adminPassword) {
+                    document.getElementById('groupManagement').classList.remove('hidden');
+                    renderGroupInputs();
+                } else {
+                    alert('סיסמה שגויה');
+                }
+            });
+        }
+
+        function renderGroupInputs() {
+            const container = document.getElementById('groupInputs');
+            if (!container) return;
+            container.innerHTML = '';
+            // Start with 5 empty inputs
+            for (let i = 0; i < 5; i++) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = 'שם הקבוצה';
+                container.appendChild(input);
+            }
+        }
+
+        const addGroupBtn = document.getElementById('addGroupBtn');
+        if (addGroupBtn) {
+            addGroupBtn.addEventListener('click', () => {
+                const container = document.getElementById('groupInputs');
+                if (!container) return;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = 'שם הקבוצה';
+                container.appendChild(input);
+            });
+        }
+
+        const generateScoringFileBtn = document.getElementById('generateScoringFile');
+        if (generateScoringFileBtn) {
+            generateScoringFileBtn.addEventListener('click', () => {
+                const inputs = document.querySelectorAll('#groupInputs input');
+                groups = Array.from(inputs).map(input => input.value).filter(name => name.trim() !== '');
+                alert('קובץ הניקוד נשמר בהצלחה. אתה יכול להעלות לשרת ולשלוח קישור למנקדים');
+                
+                // Generate new HTML file without admin management section
+                let newHtmlContent = document.documentElement.outerHTML;
+                
+                // Remove admin button, panel, and management elements
+                newHtmlContent = newHtmlContent.replace(/<button id="adminBtn">.*?<\/button>/, '');
+                newHtmlContent = newHtmlContent.replace(/<div id="adminPanel".*?<\/div>/s, '');
+                newHtmlContent = newHtmlContent.replace(/<div id="groupInputs".*?<\/div>/s, '');
+                newHtmlContent = newHtmlContent.replace(/<button id="addGroupBtn">.*?<\/button>/, '');
+                newHtmlContent = newHtmlContent.replace(/<button id="generateScoringFile">.*?<\/button>/, '');
+                
+                // Update groups array
+                newHtmlContent = newHtmlContent.replace(/let groups = .*?;/, `let groups = ${JSON.stringify(groups)};`);
+                
+                // Change title and h1 for the scorer's file
+                newHtmlContent = newHtmlContent.replace(
+                    /<title>.*?<\/title>/,
+                    '<title>אפליקציית ניקוד מתמודדים - מנקדים</title>'
+                );
+                newHtmlContent = newHtmlContent.replace(
+                    /<h1>.*?<\/h1>/,
+                    '<h1>אפליקציית ניקוד מתמודדים - מנקדים</h1>'
+                );
+                
+                // Show scorer interface
+                newHtmlContent = newHtmlContent.replace(
+                    /<div id="scorerInterface" class="hidden">/,
+                    '<div id="scorerInterface">'
+                );
+                
+                const blob = new Blob([newHtmlContent], {type: 'text/html;charset=utf-8;'});
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `OBN-Score-User-${groups.length}.html`;
+                link.click();
+            });
+        }
+
+        const startScoringBtn = document.getElementById('startScoring');
+        if (startScoringBtn) {
+            startScoringBtn.addEventListener('click', () => {
+                const scorerName = document.getElementById('scorerName').value;
+                if (!scorerName) {
+                    showError('יש להזין את שמך לפני תחילת הניקוד');
+                    return;
+                }
+                document.getElementById('scorerInterface').classList.add('hidden');
+                const scoringTable = document.getElementById('scoringTable');
+                if (scoringTable) {
+                    scoringTable.classList.remove('hidden');
+                    renderScoringTable();
+                }
+            });
+        }
+
+        function renderScoringTable() {
+            const tbody = document.getElementById('scoreTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            groups.forEach((group, index) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${group}</td>
+                    <td><input type="text" inputmode="numeric" pattern="[1-5]" maxlength="1" required></td>
+                    <td><input type="text" inputmode="numeric" pattern="[1-5]" maxlength="1" required></td>
+                    <td><input type="text" inputmode="numeric" pattern="[1-5]" maxlength="1" required></td>
+                    <td><input type="text" inputmode="numeric" pattern="[1-5]" maxlength="1" required></td>
+                `;
+                row.querySelectorAll('input[type="text"]').forEach(input => {
+                    if (input) {
+                        input.addEventListener('input', validateAndFormatInput);
+                    }
+                });
+            });
+        }
+
+        function validateAndFormatInput(event) {
+            const input = event.target;
+            const value = input.value;
+            
+            // מסיר כל תו שאינו מספר
+            const numericValue = value.replace(/[^1-5]/g, '');
+            
+            // מגביל את הערך למספר בין 1 ל-5
+            if (numericValue !== '' && (parseInt(numericValue) < 1 || parseInt(numericValue) > 5)) {
+                input.value = '';
+            } else {
+                input.value = numericValue;
+            }
+
+            // מסיר את סימון השגיאה אם הערך תקין
+            if (input.value >= 1 && input.value <= 5) {
+                input.classList.remove('invalid-input');
+                hideError();
+            } else {
+                input.classList.add('invalid-input');
+                showError('יש להזין מספר בין 1 ל-5');
+            }
+        }
+
+        function validateAllScores() {
+            const inputs = document.querySelectorAll('#scoreTableBody input[type="text"]');
+            const emptyInputs = Array.from(inputs).filter(input => input.value === '');
+            return emptyInputs.length === 0;
+        }
+
+        function showError(message, highlightEmptyFields = false) {
+            const errorElement = document.getElementById('errorMessage');
+            if (errorElement) {
+                errorElement.textContent = message;
+                errorElement.classList.remove('hidden');
+            }
+            if (highlightEmptyFields) {
+                const inputs = document.querySelectorAll('#scoreTableBody input[type="text"]');
+                inputs.forEach(input => {
+                    if (input.value === '') {
+                        input.classList.add('invalid-input');
+                    } else {
+                        input.classList.remove('invalid-input');
+                    }
+                });
+            }
+        }
+
+        function hideError() {
+            const errorElement = document.getElementById('errorMessage');
+            if (errorElement) {
+                errorElement.classList.add('hidden');
+            }
+        }
+
+        const finishScoringBtn = document.getElementById('finishScoring');
+        if (finishScoringBtn) {
+            finishScoringBtn.addEventListener('click', () => {
+                if (!validateAllScores()) {
+                    showError('יש למלא את כל שדות הניקוד לפני שליחה', true);
+                    return;
+                }
+                
+                const scores = collectScores();
+                if (scores.some(score => score.scores.some(s => parseInt(s) < 1 || parseInt(s) > 5))) {
+                    showError('יש להזין מספרים בין 1 ל-5 בלבד');
+                    return;
+                }
+                
+                showResults(scores);
+                saveCSV(scores);
+            });
+        }
+
+        function collectScores() {
+            const rows = document.querySelectorAll('#scoreTableBody tr');
+            return Array.from(rows).map(row => {
+                const inputs = row.querySelectorAll('input[type="text"]');
+                return {
+                    group: row.cells[0].textContent,
+                    scores: Array.from(inputs).map(input => input.value)
+                };
+            });
+        }
+
+        function showResults(scores) {
+            const tbody = document.getElementById('summaryTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            scores.sort((a, b) => calculateAverage(b.scores) - calculateAverage(a.scores))
+                .forEach((score, index) => {
+                    const row = tbody.insertRow();
+                    const avg = calculateAverage(score.scores);
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${score.group}</td>
+                        <td>${score.scores[0]}</td>
+                        <td>${score.scores[1]}</td>
+                        <td>${score.scores[2]}</td>
+                        <td>${score.scores[3]}</td>
+                        <td>${avg.toFixed(2)}</td>
+                    `;
+                });
+            document.getElementById('results').classList.remove('hidden');
+        }
+
+        function calculateAverage(scores) {
+            return scores.reduce((sum, score) => sum + Number(score), 0) / scores.length;
+        }
+
+        function saveCSV(scores) {
+            const scorerName = document.getElementById('scorerName').value;
+            const date = new Date().toISOString().split('T')[0];
+            const fileName = `${scorerName}-${date}.csv`;
+            
+            let csvContent = "\uFEFF"; // BOM for UTF-8
+            csvContent += "קבוצה,חדשנות,יישומיות,מודל עסקי,אופן ההצגה,ניקוד כולל\n";
+            scores.forEach(score => {
+                const avg = calculateAverage(score.scores);
+                csvContent += `${score.group},${score.scores.join(',')},${avg.toFixed(2)}\n`;
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", fileName);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            
+            alert(`קובץ הניקוד נשמר אצלך בשם ${fileName}. אתה יכול לשלוח אותו לשיפוט בווטסאפ, מייל או להעלות לספריה המשותפת. ההוראות מפורטות בהמשך.`);
+        }
+
+        const sendEmailBtn = document.getElementById('sendEmail');
+        if (sendEmailBtn) {
+            sendEmailBtn.addEventListener('click', () => {
+                const scorerName = document.getElementById('scorerName').value;
+                const subject = `קובץ ניקוד של ${scorerName}`;
+                const body = `מצורף קובץ הניקוד`;
+                window.location.href = `mailto:ofirbn@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            });
+        }
+
+        const sendWhatsAppBtn = document.getElementById('sendWhatsApp');
+        if (sendWhatsAppBtn) {
+            sendWhatsAppBtn.addEventListener('click', () => {
+                const scorerName = document.getElementById('scorerName').value;
+                const text = `מצורף קובץ הניקוד של ${scorerName}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+            });
+        }
+    });
+    </script>
+
+
+
+
+			<script async="" data-explicit-opt-in="true" data-cookie-opt-in="true" data-deployment-id="dpl_DazVLNrCBCrdSEkUgmBkQTVGh8to" src="https://vercel.live/_next-live/feedback/feedback.js"></script><veepn-guard-alert><style>@font-face{font-family:FigtreeVF;src:url(chrome-extension://majdfhpaihoncoakbjgbdhglocklcgno/fonts/FigtreeVF.woff2) format("woff2 supports variations"),url(chrome-extension://majdfhpaihoncoakbjgbdhglocklcgno/fonts/FigtreeVF.woff2) format("woff2-variations");font-weight:100 1000;font-display:swap}</style></veepn-guard-alert><veepn-lock-screen><style>@font-face{font-family:FigtreeVF;src:url(chrome-extension://majdfhpaihoncoakbjgbdhglocklcgno/fonts/FigtreeVF.woff2) format("woff2 supports variations"),url(chrome-extension://majdfhpaihoncoakbjgbdhglocklcgno/fonts/FigtreeVF.woff2) format("woff2-variations");font-weight:100 1000;font-display:swap}</style></veepn-lock-screen><vercel-live-feedback style="position: absolute; top: 0px; left: 0px; z-index: 2147483647;"></vercel-live-feedback></body></html>
