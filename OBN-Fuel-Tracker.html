@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעקב תדלוקים וצריכת דלק</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #f4f6fb;
+            --surface: #ffffff;
+            --primary: #1e88e5;
+            --primary-dark: #1565c0;
+            --text: #1a1a1a;
+            --muted: #607d8b;
+            --border: rgba(0, 0, 0, 0.08);
+            --shadow: 0 10px 30px rgba(30, 136, 229, 0.12);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0f172a;
+                --surface: #0b1220;
+                --text: #f8fafc;
+                --muted: #cbd5f5;
+                --border: rgba(255, 255, 255, 0.1);
+                --shadow: 0 12px 32px rgba(14, 165, 233, 0.24);
+            }
+
+            input, select, textarea {
+                color-scheme: dark;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', 'Rubik', 'Assistant', Arial, sans-serif;
+            background: radial-gradient(circle at top, rgba(30,136,229,0.18), transparent 55%),
+                        radial-gradient(circle at bottom, rgba(14,165,233,0.12), transparent 45%),
+                        var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 3rem;
+        }
+
+        header {
+            background: linear-gradient(135deg, rgba(30, 136, 229, 0.95), rgba(14, 165, 233, 0.88));
+            color: #fff;
+            padding: clamp(1.5rem, 2vw + 1.5rem, 3rem) clamp(1rem, 4vw, 6rem);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: clamp(2rem, 3vw + 1.2rem, 3.2rem);
+            letter-spacing: 0.02em;
+        }
+
+        header p {
+            margin: 0;
+            max-width: 60ch;
+            font-size: clamp(1rem, 0.5vw + 1rem, 1.25rem);
+            opacity: 0.9;
+        }
+
+        main {
+            padding: clamp(1.5rem, 2vw + 1rem, 3.5rem);
+            display: grid;
+            gap: clamp(1.5rem, 2vw + 1rem, 3rem);
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 1.5rem;
+            box-shadow: var(--shadow);
+            padding: clamp(1.5rem, 1.5vw + 1.5rem, 2.5rem);
+            border: 1px solid var(--border);
+        }
+
+        .form-section {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        form {
+            display: grid;
+            gap: 1.25rem;
+        }
+
+        fieldset {
+            border: 1px dashed var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            display: grid;
+            gap: 1rem;
+        }
+
+        legend {
+            padding: 0 0.5rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .form-grid {
+            display: grid;
+            gap: 1.25rem;
+        }
+
+        @media (min-width: 768px) {
+            .form-grid.two-columns {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        label {
+            display: grid;
+            gap: 0.4rem;
+            font-weight: 600;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        input, select, textarea {
+            font: inherit;
+            padding: 0.75rem 1rem;
+            border-radius: 0.85rem;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.85);
+            color: inherit;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: rgba(30, 136, 229, 0.6);
+            box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.15);
+        }
+
+        input[type="file"] {
+            padding: 0.85rem;
+            background: rgba(30,136,229,0.06);
+            border-style: dashed;
+            cursor: pointer;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        button {
+            font: inherit;
+            border: none;
+            border-radius: 0.9rem;
+            padding: 0.85rem 1.4rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.15s ease, box-shadow 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .primary-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            box-shadow: 0 12px 24px rgba(30, 136, 229, 0.35);
+        }
+
+        .outline-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 992px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(12, minmax(0, 1fr));
+            }
+        }
+
+        .summary-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .summary-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .summary-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+        }
+
+        .summary-card {
+            background: rgba(255,255,255,0.75);
+            border-radius: 1.25rem;
+            padding: 1.25rem;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            display: grid;
+            gap: 0.25rem;
+        }
+
+        .summary-card h3 {
+            margin: 0;
+            font-size: 0.95rem;
+            color: var(--muted);
+        }
+
+        .summary-card strong {
+            font-size: 1.6rem;
+            color: var(--text);
+        }
+
+        .summary-card small {
+            color: var(--muted);
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .entries-section {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .entry-list {
+            display: grid;
+            gap: 1.25rem;
+        }
+
+        .entry-card {
+            background: rgba(255,255,255,0.9);
+            border-radius: 1.25rem;
+            border: 1px solid var(--border);
+            padding: 1.25rem;
+            display: grid;
+            gap: 1rem;
+            box-shadow: var(--shadow);
+        }
+
+        .entry-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .entry-header h4 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .entry-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .entry-content {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .entry-stats {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        @media (min-width: 768px) {
+            .entry-stats {
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            }
+        }
+
+        .stat-chip {
+            background: rgba(30,136,229,0.08);
+            border-radius: 0.85rem;
+            padding: 0.75rem 1rem;
+            display: grid;
+            gap: 0.4rem;
+        }
+
+        .stat-chip span {
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        .image-grid {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        @media (min-width: 600px) {
+            .image-grid {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            }
+        }
+
+        .entry-image {
+            width: 100%;
+            aspect-ratio: 4 / 5;
+            object-fit: cover;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            background: rgba(30,136,229,0.08);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--muted);
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--muted);
+            margin-top: 2rem;
+        }
+
+        .badges {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: rgba(15,118,110,0.1);
+            color: rgba(15,118,110,0.85);
+            padding: 0.35rem 0.65rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .danger {
+            background: rgba(220,38,38,0.12);
+            color: rgba(220,38,38,0.9);
+        }
+
+        .success {
+            background: rgba(22,163,74,0.12);
+            color: rgba(22,163,74,0.9);
+        }
+
+        .inline-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .muted-link {
+            color: var(--muted);
+            font-size: 0.85rem;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>מעקב תדלוקים חכם</h1>
+        <p>הזינו את נתוני התדלוק והקילומטרז' שלכם, צפו בצילומי המשאבה והספידומטר, וקבלו דאשבורד מלא עם סטטיסטיקות, חישובי צריכת דלק וניתוח לפי חודשים.</p>
+    </header>
+
+    <main>
+        <section class="form-section card">
+            <h2>הזנת תדלוק חדש</h2>
+            <form id="refuelForm">
+                <fieldset>
+                    <legend>נתוני תדלוק בסיסיים</legend>
+                    <div class="form-grid two-columns">
+                        <label>
+                            תאריך ושעה
+                            <input type="datetime-local" name="date" required>
+                        </label>
+                        <label>
+                            תחנת דלק
+                            <input type="text" name="station" placeholder="לדוגמה: פז, תל אביב" required>
+                        </label>
+                        <label>
+                            כמות דלק (ליטרים)
+                            <input type="number" name="liters" step="0.01" min="0" required>
+                        </label>
+                        <label>
+                            מחיר לליטר (₪)
+                            <input type="number" name="pricePerLiter" step="0.01" min="0" required>
+                        </label>
+                        <label>
+                            עלות כוללת (₪)
+                            <input type="number" name="totalCost" step="0.01" min="0" placeholder="חישוב אוטומטי אם נשאר ריק">
+                        </label>
+                        <label>
+                            מרחק מהתדלוק הקודם (ק"מ)
+                            <input type="number" name="distance" step="0.1" min="0" required>
+                        </label>
+                        <label>
+                            מד אודומטר נוכחי (ק"מ)
+                            <input type="number" name="odometer" step="0.1" min="0" required>
+                        </label>
+                        <label>
+                            תיאור או הערות
+                            <textarea name="notes" placeholder="מידע נוסף, נסיעה מיוחדת, מזגן דולק וכד'."></textarea>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>צילומי אסמכתא</legend>
+                    <div class="form-grid two-columns">
+                        <label>
+                            צילום נתוני המשאבה
+                            <input type="file" name="pumpPhoto" accept="image/*" required>
+                        </label>
+                        <label>
+                            צילום מד הקילומטרים
+                            <input type="file" name="odometerPhoto" accept="image/*" required>
+                        </label>
+                    </div>
+                    <small>הקבצים נשמרים בצורה מקומית בדפדפן (localStorage) ואינם נשלחים לשום שרת.</small>
+                </fieldset>
+
+                <div class="actions">
+                    <button type="submit" class="primary-btn">שמירת תדלוק</button>
+                    <button type="button" id="clearForm" class="outline-btn">ניקוי הטופס</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="dashboard-grid">
+            <div class="card" style="grid-column: span 12;">
+                <div class="filters">
+                    <div>
+                        <h2 style="margin: 0 0 0.5rem 0;">דאשבורד תדלוקים</h2>
+                        <p style="margin: 0; color: var(--muted);">בחרו חודש ושנה להצגת תובנות ממוקדות או הציגו את כלל הנתונים.</p>
+                    </div>
+                    <div class="inline-actions">
+                        <select id="monthFilter">
+                            <option value="all">כל החודשים</option>
+                        </select>
+                        <select id="yearFilter">
+                            <option value="all">כל השנים</option>
+                        </select>
+                        <button type="button" class="outline-btn" id="clearFilters">איפוס סינון</button>
+                        <button type="button" class="outline-btn" id="clearStorage">מחיקת כל הנתונים</button>
+                    </div>
+                </div>
+
+                <div class="summary-grid" id="summaryGrid"></div>
+            </div>
+        </section>
+
+        <section class="entries-section card">
+            <div class="filters" style="align-items: flex-end;">
+                <div>
+                    <h2 style="margin: 0;">יומן תדלוקים</h2>
+                    <p style="margin: 0; color: var(--muted);">רשימת כל התדלוקים כולל צילומים, סטטיסטיקות וחישובים לכל נסיעה.</p>
+                </div>
+                <div style="display: grid; gap: 0.35rem; text-align: left;">
+                    <span class="muted-link" id="exportData">ייצוא נתונים (JSON)</span>
+                    <span class="muted-link" id="importData">ייבוא נתונים (JSON)</span>
+                    <input type="file" id="importFile" accept="application/json" style="display:none;">
+                </div>
+            </div>
+            <div id="entriesList" class="entry-list"></div>
+        </section>
+    </main>
+
+    <footer>
+        הנתונים נשמרים בדפדפן בלבד. מומלץ לייצא גיבוי מעת לעת.
+    </footer>
+
+    <script>
+        const storageKey = 'obnFuelEntries';
+        let entries = [];
+
+        const form = document.getElementById('refuelForm');
+        const clearFormBtn = document.getElementById('clearForm');
+        const entriesList = document.getElementById('entriesList');
+        const summaryGrid = document.getElementById('summaryGrid');
+        const monthFilter = document.getElementById('monthFilter');
+        const yearFilter = document.getElementById('yearFilter');
+        const clearFiltersBtn = document.getElementById('clearFilters');
+        const clearStorageBtn = document.getElementById('clearStorage');
+        const exportDataBtn = document.getElementById('exportData');
+        const importDataBtn = document.getElementById('importData');
+        const importFileInput = document.getElementById('importFile');
+
+        function loadEntries() {
+            try {
+                const stored = localStorage.getItem(storageKey);
+                entries = stored ? JSON.parse(stored) : [];
+            } catch (error) {
+                console.error('שגיאה בטעינת הנתונים', error);
+                entries = [];
+            }
+        }
+
+        function saveEntries() {
+            localStorage.setItem(storageKey, JSON.stringify(entries));
+        }
+
+        function fileToDataUrl(file) {
+            return new Promise((resolve) => {
+                if (!file) {
+                    resolve(null);
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => resolve(null);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function formatNumber(value, options = {}) {
+            const number = Number(value);
+            if (Number.isNaN(number)) return '—';
+            return number.toLocaleString('he-IL', {
+                maximumFractionDigits: options.maximumFractionDigits ?? 2,
+                minimumFractionDigits: options.minimumFractionDigits ?? 0
+            });
+        }
+
+        function formatDate(value) {
+            try {
+                const date = new Date(value);
+                return new Intl.DateTimeFormat('he-IL', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                }).format(date);
+            } catch (error) {
+                return value;
+            }
+        }
+
+        function getFilters() {
+            return {
+                month: monthFilter.value,
+                year: yearFilter.value
+            };
+        }
+
+        function applyFilters(entriesToFilter) {
+            const { month, year } = getFilters();
+            return entriesToFilter.filter(entry => {
+                const entryDate = new Date(entry.date);
+                const entryMonth = String(entryDate.getMonth() + 1).padStart(2, '0');
+                const entryYear = String(entryDate.getFullYear());
+                const monthMatch = month === 'all' || entryMonth === month;
+                const yearMatch = year === 'all' || entryYear === year;
+                return monthMatch && yearMatch;
+            });
+        }
+
+        function calculateSummaries(filteredEntries) {
+            const totals = filteredEntries.reduce((acc, entry) => {
+                acc.liters += Number(entry.liters) || 0;
+                const cost = Number(entry.totalCost) || (Number(entry.liters) || 0) * (Number(entry.pricePerLiter) || 0);
+                acc.cost += cost;
+                acc.distance += Number(entry.distance) || 0;
+                acc.entries += 1;
+                if (entry.consumption != null) {
+                    acc.consumptionValues.push(entry.consumption);
+                }
+                return acc;
+            }, { liters: 0, cost: 0, distance: 0, entries: 0, consumptionValues: [] });
+
+            const avgConsumption = totals.distance > 0 ? (totals.liters / totals.distance) * 100 : null;
+            const avgCostPerLiter = totals.liters > 0 ? totals.cost / totals.liters : null;
+            const costPerKm = totals.distance > 0 ? totals.cost / totals.distance : null;
+            const bestConsumption = totals.consumptionValues.length ? Math.min(...totals.consumptionValues) : null;
+            const worstConsumption = totals.consumptionValues.length ? Math.max(...totals.consumptionValues) : null;
+
+            return {
+                ...totals,
+                avgConsumption,
+                avgCostPerLiter,
+                costPerKm,
+                bestConsumption,
+                worstConsumption
+            };
+        }
+
+        function renderSummary(filteredEntries) {
+            const summary = calculateSummaries(filteredEntries);
+            const cards = [
+                {
+                    title: 'סה"כ ליטרים',
+                    value: `${formatNumber(summary.liters)} ל'`,
+                    subtitle: `ב-${summary.entries} תדלוקים`
+                },
+                {
+                    title: 'סה"כ עלות',
+                    value: `${formatNumber(summary.cost, { minimumFractionDigits: 2 })} ₪`,
+                    subtitle: summary.avgCostPerLiter != null ? `₪${formatNumber(summary.avgCostPerLiter, { minimumFractionDigits: 2 })} לליטר בממוצע` : '—'
+                },
+                {
+                    title: 'מרחק מצטבר',
+                    value: `${formatNumber(summary.distance)} ק"מ`,
+                    subtitle: summary.costPerKm != null ? `${formatNumber(summary.costPerKm, { minimumFractionDigits: 2 })} ₪ לק"מ` : '—'
+                },
+                {
+                    title: 'צריכת דלק ממוצעת',
+                    value: summary.avgConsumption != null ? `${formatNumber(summary.avgConsumption, { minimumFractionDigits: 2 })} ל'/100ק"מ` : '—',
+                    subtitle: summary.bestConsumption != null ? `טווח: ${formatNumber(summary.bestConsumption, { minimumFractionDigits: 2 })}–${formatNumber(summary.worstConsumption, { minimumFractionDigits: 2 })}` : '—'
+                }
+            ];
+
+            summaryGrid.innerHTML = cards.map(card => `
+                <article class="summary-card">
+                    <h3>${card.title}</h3>
+                    <strong>${card.value}</strong>
+                    <small>${card.subtitle}</small>
+                </article>
+            `).join('');
+        }
+
+        function renderEntries(filteredEntries) {
+            if (!filteredEntries.length) {
+                entriesList.innerHTML = '<div class="empty-state">אין תדלוקים להצגה. הוסיפו תדלוק חדש או שנו את הסינון.</div>';
+                return;
+            }
+
+            entriesList.innerHTML = filteredEntries.map(entry => {
+                const badges = [];
+                if (entry.consumption != null) {
+                    badges.push(`<span class="badge ${entry.consumption < 6 ? 'success' : entry.consumption > 10 ? 'danger' : ''}">צריכה: ${formatNumber(entry.consumption, { minimumFractionDigits: 2 })} ל'/100ק"מ</span>`);
+                }
+                if (entry.pricePerLiter) {
+                    badges.push(`<span class="badge">₪${formatNumber(entry.pricePerLiter, { minimumFractionDigits: 2 })} לליטר</span>`);
+                }
+                if (entry.costPerKm != null) {
+                    badges.push(`<span class="badge">${formatNumber(entry.costPerKm, { minimumFractionDigits: 2 })} ₪ לק"מ</span>`);
+                }
+
+                const noteSection = entry.notes ? `<div><strong>הערות:</strong><br>${entry.notes.replace(/\n/g, '<br>')}</div>` : '';
+
+                return `
+                    <article class="entry-card">
+                        <div class="entry-header">
+                            <h4>${entry.station || 'תחנה לא ידועה'}</h4>
+                            <div class="entry-meta">
+                                <span>${formatDate(entry.date)}</span>
+                                <span>${formatNumber(entry.liters)} ליטר</span>
+                                <span>${formatNumber(entry.totalCost, { minimumFractionDigits: 2 })} ₪</span>
+                                <span>${formatNumber(entry.distance)} ק"מ</span>
+                            </div>
+                        </div>
+                        <div class="badges">${badges.join('')}</div>
+                        <div class="entry-content">
+                            <div class="entry-stats">
+                                <div class="stat-chip">
+                                    <span>אודומטר נוכחי</span>
+                                    <strong>${formatNumber(entry.odometer)} ק"מ</strong>
+                                </div>
+                                <div class="stat-chip">
+                                    <span>עלות לליטר</span>
+                                    <strong>₪${formatNumber(entry.pricePerLiter, { minimumFractionDigits: 2 })}</strong>
+                                </div>
+                                <div class="stat-chip">
+                                    <span>עלות כוללת</span>
+                                    <strong>₪${formatNumber(entry.totalCost, { minimumFractionDigits: 2 })}</strong>
+                                </div>
+                                <div class="stat-chip">
+                                    <span>מרחק נסיעה</span>
+                                    <strong>${formatNumber(entry.distance)} ק"מ</strong>
+                                </div>
+                            </div>
+                            ${noteSection}
+                            <div class="image-grid">
+                                ${entry.pumpPhoto ? `<figure><img class="entry-image" src="${entry.pumpPhoto}" alt="צילום נתוני המשאבה"><figcaption style="margin-top:0.4rem;color:var(--muted);font-size:0.85rem;">משאבה</figcaption></figure>` : ''}
+                                ${entry.odometerPhoto ? `<figure><img class="entry-image" src="${entry.odometerPhoto}" alt="צילום מד הקילומטרים"><figcaption style="margin-top:0.4rem;color:var(--muted);font-size:0.85rem;">מד אודומטר</figcaption></figure>` : ''}
+                            </div>
+                        </div>
+                        <div class="actions" style="justify-content: flex-start;">
+                            <button type="button" class="outline-btn" data-delete="${entry.id}">מחיקת תדלוק</button>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        function updateFiltersOptions() {
+            const months = new Set();
+            const years = new Set();
+
+            entries.forEach(entry => {
+                const date = new Date(entry.date);
+                if (!Number.isNaN(date)) {
+                    months.add(String(date.getMonth() + 1).padStart(2, '0'));
+                    years.add(String(date.getFullYear()));
+                }
+            });
+
+            const sortedMonths = Array.from(months).sort();
+            const sortedYears = Array.from(years).sort();
+
+            monthFilter.innerHTML = '<option value="all">כל החודשים</option>' +
+                sortedMonths.map(month => {
+                    const monthName = new Date(2000, Number(month) - 1, 1).toLocaleString('he-IL', { month: 'long' });
+                    return `<option value="${month}">${monthName}</option>`;
+                }).join('');
+
+            yearFilter.innerHTML = '<option value="all">כל השנים</option>' +
+                sortedYears.map(year => `<option value="${year}">${year}</option>`).join('');
+        }
+
+        function refreshUI() {
+            updateFiltersOptions();
+            const filteredEntries = applyFilters(entries);
+            renderSummary(filteredEntries);
+            renderEntries(filteredEntries);
+        }
+
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            const formData = new FormData(form);
+
+            const liters = Number(formData.get('liters')) || 0;
+            const pricePerLiter = Number(formData.get('pricePerLiter')) || 0;
+            let totalCost = formData.get('totalCost');
+            totalCost = totalCost ? Number(totalCost) : liters * pricePerLiter;
+            const distance = Number(formData.get('distance')) || 0;
+
+            const pumpPhotoFile = formData.get('pumpPhoto');
+            const odometerPhotoFile = formData.get('odometerPhoto');
+
+            const [pumpPhoto, odometerPhoto] = await Promise.all([
+                fileToDataUrl(pumpPhotoFile),
+                fileToDataUrl(odometerPhotoFile)
+            ]);
+
+            const entry = {
+                id: Date.now(),
+                createdAt: new Date().toISOString(),
+                date: formData.get('date'),
+                station: formData.get('station'),
+                liters,
+                pricePerLiter,
+                totalCost,
+                distance,
+                odometer: Number(formData.get('odometer')) || null,
+                notes: formData.get('notes')?.trim() || '',
+                pumpPhoto,
+                odometerPhoto
+            };
+
+            entry.consumption = distance > 0 ? (liters / distance) * 100 : null;
+            entry.costPerKm = distance > 0 ? totalCost / distance : null;
+
+            entries = [entry, ...entries];
+            saveEntries();
+            refreshUI();
+            form.reset();
+            form.querySelector('input[name="date"]').value = new Date().toISOString().slice(0, 16);
+        }
+
+        function handleEntryDelete(id) {
+            const confirmed = confirm('האם למחוק את התדלוק הזה? הפעולה אינה הפיכה.');
+            if (!confirmed) return;
+            entries = entries.filter(entry => entry.id !== id);
+            saveEntries();
+            refreshUI();
+        }
+
+        function clearForm() {
+            form.reset();
+            form.querySelector('input[name="date"]').value = new Date().toISOString().slice(0, 16);
+        }
+
+        function clearFilters() {
+            monthFilter.value = 'all';
+            yearFilter.value = 'all';
+            refreshUI();
+        }
+
+        function clearStorage() {
+            const confirmed = confirm('האם למחוק את כל התדלוקים שנשמרו?');
+            if (!confirmed) return;
+            entries = [];
+            saveEntries();
+            refreshUI();
+        }
+
+        function exportData() {
+            const data = JSON.stringify(entries, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `fuel-log-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function handleImport(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const imported = JSON.parse(reader.result);
+                    if (Array.isArray(imported)) {
+                        entries = imported.concat(entries.filter(entry => !imported.some(newEntry => newEntry.id === entry.id)));
+                        saveEntries();
+                        refreshUI();
+                        alert('ייבוא הנתונים בוצע בהצלחה!');
+                    } else {
+                        alert('קובץ ה-JSON אינו בפורמט הצפוי.');
+                    }
+                } catch (error) {
+                    console.error('Import error', error);
+                    alert('אירעה שגיאה בעת ייבוא הנתונים. ודאו שהקובץ בפורמט תקין.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadEntries();
+            refreshUI();
+            const dateInput = form.querySelector('input[name="date"]');
+            dateInput.value = new Date().toISOString().slice(0, 16);
+        });
+
+        form.addEventListener('submit', handleFormSubmit);
+        clearFormBtn.addEventListener('click', clearForm);
+        monthFilter.addEventListener('change', () => refreshUI());
+        yearFilter.addEventListener('change', () => refreshUI());
+        clearFiltersBtn.addEventListener('click', clearFilters);
+        clearStorageBtn.addEventListener('click', clearStorage);
+        exportDataBtn.addEventListener('click', exportData);
+        importDataBtn.addEventListener('click', () => importFileInput.click());
+        importFileInput.addEventListener('change', (event) => {
+            const [file] = event.target.files;
+            handleImport(file);
+            event.target.value = '';
+        });
+
+        entriesList.addEventListener('click', (event) => {
+            const button = event.target.closest('button[data-delete]');
+            if (!button) return;
+            const id = Number(button.dataset.delete);
+            handleEntryDelete(id);
+        });
+    </script>
+</body>
+</html>
