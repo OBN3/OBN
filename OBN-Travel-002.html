@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=395">
+  <title>אריזת טיול</title>
+  <style>
+    /* קונפיגורציה כללית */
+    body {
+      background: #f2f2f2;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 10px;
+      direction: rtl;
+      text-align: right;
+    }
+    #app-container {
+      width: 395px;
+      background: #fff;
+      border-radius: 15px;
+      margin: auto;
+      padding: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    img {
+      max-width: 100%;
+      border-radius: 10px;
+      display: block;
+      margin-bottom: 10px;
+    }
+    input[type="text"] {
+      width: calc(100% - 10px);
+      padding: 5px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background: #007bff;
+      color: #fff;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    label {
+      font-size: 16px;
+      margin-bottom: 5px;
+      display: block;
+      cursor: pointer;
+    }
+    /* מסכי אפליקציה */
+    .screen {
+      display: none;
+    }
+    /* בר התקדמות */
+    #progressContainer {
+      width: 100%;
+      background: #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 10px;
+      position: relative;
+      height: 20px;
+    }
+    #progressBar {
+      height: 100%;
+      background: #28a745;
+      width: 0%;
+      transition: width 0.3s;
+    }
+    #progressText {
+      position: absolute;
+      width: 100%;
+      top: 0;
+      left: 0;
+      text-align: center;
+      line-height: 20px;
+      font-size: 14px;
+      color: #000;
+    }
+    /* רשימות פריטים */
+    #itemLists h2 {
+      margin-top: 15px;
+      font-size: 18px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 5px;
+    }
+    #notPackedItems, #packedItems {
+      margin-bottom: 15px;
+    }
+    #notPackedItems h3 {
+      margin: 10px 0 5px;
+      font-size: 16px;
+      color: #555;
+    }
+    /* קונפטי */
+    .confetti {
+      position: fixed;
+      top: -10px;
+      width: 10px;
+      height: 10px;
+      opacity: 0.8;
+      z-index: 1000;
+      animation: fall 3s linear forwards;
+    }
+    @keyframes fall {
+      to { transform: translateY(100vh) rotate(360deg); }
+    }
+    /* שדות בחירת מין */
+    .gender-group label {
+      display: inline-block;
+      margin-right: 10px;
+      font-size: 16px;
+    }
+    /* הודעות אבני דרך */
+    #milestoneMessage {
+      text-align: center;
+      font-weight: bold;
+      font-size: 16px;
+      color: #d9534f;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <!-- מסך פתיחה -->
+    <div id="welcomeScreen" class="screen">
+      <!-- שינוי שם התמונה ל- 001.jpg -->
+      <img src="001.jpg" alt="תמונת טיול">
+      <div>
+        <label for="userName">שם:</label>
+        <input type="text" id="userName" placeholder="הכנס את שמך">
+      </div>
+      <div class="gender-group">
+        <label><input type="radio" name="gender" value="male"> בן</label>
+        <label><input type="radio" name="gender" value="female"> בת</label>
+      </div>
+      <button id="startBtn">המשך</button>
+    </div>
+    
+    <!-- מסך פריטי אריזה -->
+    <div id="packingScreen" class="screen">
+      <div id="welcomeMessage" style="font-size:18px; margin-bottom:10px;"></div>
+      <div id="progressContainer">
+        <div id="progressBar"></div>
+        <div id="progressText">0% נארזו</div>
+      </div>
+      <div id="milestoneMessage"></div>
+      <div id="itemLists">
+        <div id="toPackList">
+          <h2 id="itemsTitle"></h2>
+          <!-- שדה להוספת פריט חדש -->
+          <input type="text" id="newItemInput" placeholder="הוסף פריט">
+          <button id="addItemBtn">הוסף פריט</button>
+          <div id="notPackedItems"></div>
+        </div>
+        <div id="packedList">
+          <h2>ארזתי כבר</h2>
+          <div id="packedItems"></div>
+        </div>
+      </div>
+      <!-- שינוי שם התמונה ל- 002.jpg -->
+      <img src="002.jpg" alt="תמונת טיול">
+    </div>
+  </div>
+
+  <script>
+    // משתנה לשמירת סטאטוס אבני דרך - כדי להפעיל קונפטי פעם אחת עבור כל milestone (25% ו-100%)
+    var milestonesTriggered = {25: false, 100: false};
+
+    // הגדרת משתנים גלובליים עם רשימת הפריטים המעודכנת
+ 
+     var itemsData = {
+  "ביגוד יומיומי": [
+    "חולצות מנדפות זיעה (2–4)",
+    "חולצות ארוכות דקות (2)",
+    "חולצות טרמיות (2)",
+    "גופיות / טי-שירט",
+    "פליז / סווטשירט",
+    "סוודרים חמים (2–3)",
+    "מעיל פוך חם (Puffer)",
+    "מעיל גשם קל (אופציונלי)",
+    "ג'ינס / מכנסיים חמים (2–3)",
+    "טייץ תרמי",
+    "כובע חם",
+    "צעיף / BUFF",
+    "כפפות חמות",
+    "כפפות דקות (לשכבה כפולה)",
+    "גרביים עבים / תרמיים (3–5 זוגות)",
+    "תחתונים",
+    "בגדי שינה נוחים",
+    "ביגוד להחלפה ביום הראשון",
+    "לוקים יפים לתמונות / יציאה בערב (1–2)"
+  ],
+  "היגיינה": [
+    "מגבת מיקרופייבר קלה",
+    "סבון/שמפו/מרכך (מיני)",
+    "דאודורנט",
+    "מברשת ומשחת שיניים",
+    "חוט דנטלי",
+    "קרם ידיים",
+    "קרם פנים לחותי",
+    "שפתון לחות",
+    "טישו / נייר טואלט",
+    "ערכת עזרה ראשונה בסיסית",
+    "מספריים קטנות / ציפורניים",
+    "מוצרי היגיינה נשית"
+  ],
+  "הנעלה ואביזרים": [
+    "נעלי הליכה נוחות שעמידות לגשם",
+    "נעלי ספורט",
+    "מגפיים חורפיים",
+    "כפכפים (למלון)",
+    "תרמיל יום",
+    "משקפי שמש",
+    "שקית בגדים מלוכלכים",
+    "כובע אוזניים (אופציונלי)"
+  ],
+  "ציוד טיול": [
+    "בקבוק מים רב פעמי",
+    "סוללת גיבוי (Power Bank)",
+    "כבל טעינה",
+    "מטען רזרבי",
+    "מתאם תקע אמריקאי",
+    "אוזניות"
+  ],
+  "אלקטרוניקה": [
+    "טלפון + מטען",
+    "סוללת גיבוי",
+    "מתאם חשמל לארה״ב",
+    "אוזניות",
+    "כבל גיבוי"
+  ],
+  "מסמכים חשובים": [
+    "דרכון",
+    "ביטוח נסיעות",
+    "אישורי טיסות / מלון",
+    "כתובת המלון",
+    "כרטיס אשראי / קצת מזומן (דולרים)"
+  ],
+  "אחר": [
+    "חטיפים אהובים מהבית",
+    "בקבוקון ג'ל אלכוהול",
+    "גמישות לחשוב חיובי :)"
+  ]
+};
+
+ 
+
+    // אם יש פריטים מותאמים אישית ששמורים, נטען אותם תחת קטגוריה "נוספים"
+    var storedCustomItems = localStorage.getItem("customItems");
+    if(storedCustomItems){
+      itemsData["נוספים"] = JSON.parse(storedCustomItems);
+    }
+    
+    // שמירת מצב הפריטים: מפתח = "קטגוריה_פריט", ערך = true/false
+    var itemStates = localStorage.getItem("itemStates") ? JSON.parse(localStorage.getItem("itemStates")) : {};
+    
+    // בדיקה אם יש נתוני משתמש שמורים
+    var storedUser = localStorage.getItem("tripUser");
+    var userData = storedUser ? JSON.parse(storedUser) : null;
+    
+    // הפונקציה להצגת מסך פתיחה
+    function showWelcomeScreen(){
+      document.getElementById("welcomeScreen").style.display = "block";
+      document.getElementById("packingScreen").style.display = "none";
+    }
+    
+    // הפונקציה להצגת מסך פריטי האריזה
+    function showPackingScreen(user){
+      document.getElementById("welcomeScreen").style.display = "none";
+      document.getElementById("packingScreen").style.display = "block";
+      // הגדרת כותרת עם ברכה בהתאם למין
+      var greeting = (user.gender === "male") ? "ברוך הבא" : "ברוכה הבאה";
+      document.getElementById("welcomeMessage").textContent = greeting + ", " + user.name + " לאריזה לטיול!";
+      document.getElementById("itemsTitle").textContent = "רשימת פריטים ל" + user.name;
+      renderItems();
+      updateProgress();
+    }
+    
+    // רינדור רשימות הפריטים
+    function renderItems(){
+      var notPackedContainer = document.getElementById("notPackedItems");
+      var packedContainer = document.getElementById("packedItems");
+      notPackedContainer.innerHTML = "";
+      packedContainer.innerHTML = "";
+      
+      // מעבר על כל קטגוריה ופריטים
+      for(var category in itemsData){
+        // הוספת כותרת לקטגוריה רק אם יש פריטים שלא נארזו
+        var categoryItemsNotPacked = itemsData[category].filter(function(item){
+          var key = category + "_" + item;
+          return !itemStates[key];
+        });
+        if(categoryItemsNotPacked.length > 0){
+          var catHeader = document.createElement("h3");
+          catHeader.textContent = category;
+          notPackedContainer.appendChild(catHeader);
+        }
+        itemsData[category].forEach(function(item){
+          var key = category + "_" + item;
+          var isChecked = itemStates[key] || false;
+          var label = document.createElement("label");
+          label.style.display = "block";
+          var checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = isChecked;
+          checkbox.dataset.key = key;
+          checkbox.addEventListener("change", function(){
+            var key = this.dataset.key;
+            itemStates[key] = this.checked;
+            localStorage.setItem("itemStates", JSON.stringify(itemStates));
+            renderItems();
+            updateProgress();
+          });
+          label.appendChild(checkbox);
+          label.appendChild(document.createTextNode(" " + item));
+          
+          if(isChecked){
+            packedContainer.appendChild(label);
+          } else {
+            notPackedContainer.appendChild(label);
+          }
+        });
+      }
+    }
+    
+    // עדכון התקדמות ובדיקת אבני דרך
+    function updateProgress(){
+      var total = 0, packed = 0;
+      for(var category in itemsData){
+        itemsData[category].forEach(function(item){
+          total++;
+          var key = category + "_" + item;
+          if(itemStates[key]) packed++;
+        });
+      }
+      var percent = total ? Math.round((packed / total) * 100) : 0;
+      document.getElementById("progressBar").style.width = percent + "%";
+      document.getElementById("progressText").textContent = percent + "% נארזו";
+      
+      var milestoneMessage = document.getElementById("milestoneMessage");
+      if(percent >= 100){
+        milestoneMessage.textContent = "הכל מוכן! אפשר לצאת לטיול!";
+        if(!milestonesTriggered[100]){
+          milestonesTriggered[100] = true;
+          triggerConfetti();
+        }
+      } else if(percent >= 75){
+        milestoneMessage.textContent = "כבוד! כבר 3/4 ארוז!";
+      } else if(percent >= 50){
+        milestoneMessage.textContent = "וואו, כבר ארזת חצי!";
+      } else if(percent >= 25){
+        milestoneMessage.textContent = "כל הכבוד! כבר ארזת רבע מהפריטים!";
+        if(!milestonesTriggered[25]){
+          milestonesTriggered[25] = true;
+          triggerConfetti();
+        }
+      } else {
+        milestoneMessage.textContent = "";
+      }
+    }
+    
+    // פונקציה להוספת פריט חדש תחת קטגוריה "נוספים"
+    document.getElementById("addItemBtn").addEventListener("click", function(){
+      var newItemInput = document.getElementById("newItemInput");
+      var newItem = newItemInput.value.trim();
+      if(newItem === "") return;
+      if(!itemsData["נוספים"]){
+        itemsData["נוספים"] = [];
+      }
+      itemsData["נוספים"].push(newItem);
+      // שמירת הפריטים המותאמים אישית בזיכרון המקומי
+      localStorage.setItem("customItems", JSON.stringify(itemsData["נוספים"]));
+      newItemInput.value = "";
+      renderItems();
+      updateProgress();
+    });
+    
+    // הפעלת אנימציית קונפטי פשוטה - מופעלת רק פעם אחת עבור כל milestone
+    function triggerConfetti(){
+      for(var i = 0; i < 30; i++){
+        var confetti = document.createElement("div");
+        confetti.className = "confetti";
+        // בחירת צבע רנדומלי מתוך מערך
+        var colors = ["#FFC107", "#28A745", "#17A2B8", "#DC3545", "#6F42C1"];
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.left = Math.random() * 100 + "%";
+        confetti.style.animationDelay = Math.random() * 2 + "s";
+        document.body.appendChild(confetti);
+        setTimeout((function(el){ return function(){ el.remove(); } })(confetti), 3000);
+      }
+    }
+    
+    // מאזין לטעינת המסמך
+    document.addEventListener("DOMContentLoaded", function(){
+      if(userData){
+        showPackingScreen(userData);
+      } else {
+        showWelcomeScreen();
+      }
+      // מאזין ללחיצה על כפתור ההמשך במסך הפתיחה
+      document.getElementById("startBtn").addEventListener("click", function(){
+        var name = document.getElementById("userName").value.trim();
+        var genderEl = document.querySelector('input[name="gender"]:checked');
+        if(!name || !genderEl){
+          alert("אנא מלא את השדות");
+          return;
+        }
+        var gender = genderEl.value;
+        userData = { name: name, gender: gender };
+        localStorage.setItem("tripUser", JSON.stringify(userData));
+        showPackingScreen(userData);
+      });
+    });
+  </script>
+</body>
+</html>
