@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>הורים פלוס - צ'ק ליסט</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap');
+        body {
+            font-family: 'Heebo', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+        }
+        /* Custom scrollbar for the modal content */
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        .modal-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        
+        /* Animation for Toast */
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(100%); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-toast {
+            animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- הודעות עידוד לאבני דרך ---
+        const MILESTONE_MESSAGES = {
+            25: [
+                "כל הכבוד! 25% מהמשימות סומנו!",
+                "התחלה נהדרת! הרבע הראשון מאחורייך.",
+                "צעד אחר צעד, כבר השלמת 25% מהדרך!",
+                "ישר כוח! רבע מהעבודה כבר נעשתה."
+            ],
+            50: [
+                "וואו! כבר 50% מהמשימות בוצעו!",
+                "חצי דרך! אתם עושים עבודה מדהימה.",
+                "הגעתם לאמצע הדרך. תמשיכו כך!",
+                "איזה יופי! חצי מהרשימה כבר ירוקה."
+            ],
+            75: [
+                "יפה מאד! 75% מהמשימות סומנו. אין עוד הרבה!",
+                "הישורת האחרונה לפניכם, נשאר רק רבע!",
+                "אוטוטו מסיימים! כל הכבוד על ההשקעה.",
+                "שלושה רבעים מאחוריכם! הסוף כבר נראה באופק."
+            ],
+            100: [
+                "וואו! כל המשימות סומנו כמבוצעות! כבוד!",
+                "סיימתם את הצ'ק ליסט! ההורים בידיים טובות.",
+                "אלופים! משימה הושלמה בהצלחה מלאה!",
+                "אין עליכם! דאגתם להכל מא' ועד ת'."
+            ]
+        };
+
+        // --- קומפוננטת אייקון בטוחה (פותרת את בעיית ההתנגשות עם React) ---
+        const Icon = ({ name, className }) => {
+            const ref = useRef(null);
+
+            useEffect(() => {
+                if (ref.current && window.lucide && window.lucide.icons && window.lucide.icons[name]) {
+                    const iconNode = window.lucide.icons[name];
+                    const svgElement = window.lucide.createElement(iconNode);
+                    if (className) {
+                        svgElement.setAttribute('class', className);
+                    }
+                    ref.current.innerHTML = '';
+                    ref.current.appendChild(svgElement);
+                }
+            }, [name, className]);
+
+            return <span ref={ref} className="inline-flex items-center justify-center shrink-0" />;
+        };
+
+        // --- הגדרת האייקונים ---
+        const Icons = {
+            CheckCircle2: () => <Icon name="CheckCircle2" className="w-6 h-6 text-teal-500" />,
+            Circle: () => <Icon name="Circle" className="w-6 h-6 text-slate-300 group-hover:text-teal-300" />,
+            ChevronDown: () => <Icon name="ChevronDown" className="w-5 h-5" />,
+            ChevronUp: () => <Icon name="ChevronUp" className="w-5 h-5" />,
+            Key: () => <Icon name="Key" className="w-5 h-5" />,
+            Smartphone: () => <Icon name="Smartphone" className="w-5 h-5" />,
+            FileText: () => <Icon name="FileText" className="w-5 h-5" />,
+            HeartPulse: () => <Icon name="HeartPulse" className="w-5 h-5" />,
+            BadgeDollarSign: () => <Icon name="BadgeDollarSign" className="w-5 h-5" />,
+            ShieldCheck: () => <Icon name="ShieldCheck" className="w-5 h-5" />,
+            Home: () => <Icon name="Home" className="w-5 h-5" />,
+            Info: () => <Icon name="Info" className="w-5 h-5" />,
+            HelpCircle: () => <Icon name="HelpCircle" className="w-5 h-5" />,
+            RotateCcw: () => <Icon name="RotateCcw" className="w-4 h-4" />,
+            X: () => <Icon name="X" className="w-5 h-5" />,
+            PartyPopper: () => <Icon name="PartyPopper" className="w-6 h-6 text-yellow-300" />
+        };
+
+        // --- נתונים (Data) ---
+        const initialData = [
+            {
+                id: 'general',
+                title: 'כללי וכניסה לבית',
+                icon: 'Key',
+                helpContent: `
+                    <ul class="list-disc pr-5 space-y-2">
+                        <li><strong>מפתחות:</strong> וודאו שאין מפתח קבוע בחור המנעול מבפנים, דבר המונע פתיחה מבחוץ במקרה חירום.</li>
+                        <li><strong>שרשרת ביטחון:</strong> מומלץ לבטל או לוודא שאינה נעולה קבוע, כדי לאפשר כניסה מהירה של כוחות הצלה או בני משפחה.</li>
+                        <li><strong>שכפול:</strong> חלקו מפתחות לכל הילדים/האחים המעורבים בטיפול.</li>
+                    </ul>
+                `,
+                items: [
+                    { id: 'keys', text: 'שכפול מפתחות לבית וחלוקה לילדים/אחים' },
+                    { id: 'lock', text: 'וידוא שההורים לא משאירים מפתח בדלת מבפנים' },
+                    { id: 'chain', text: 'ביטול/בדיקת שרשרת סגירה פנימית (מונע כניסה בחירום)' }
+                ]
+            },
+            {
+                id: 'tech',
+                title: 'תמיכה טכנית וגישה',
+                icon: 'Smartphone',
+                helpContent: `
+                    <ul class="list-disc pr-5 space-y-2">
+                        <li><strong>Gmail:</strong> הגדירו "מנהל חשבון לא פעיל" (Inactive Account Manager) בהגדרות גוגל, כך שתקבלו גישה לחשבון לאחר תקופת חוסר פעילות.</li>
+                        <li><strong>שליטה מרחוק:</strong> בהתקנת TeamViewer סמנו את האופציה "Grant easy access" כדי שתוכלו להתחבר ללא צורך בסיסמה מתחלפת בכל פעם.</li>
+                        <li><strong>SMS:</strong> חברו את הטלפון למחשב באמצעות messages.android.com כדי לראות קודי אימות (OTP) מרחוק כשאתם עוזרים להורים עם אתרי בנקים/ממשלה.</li>
+                        <li><strong>סיסמאות:</strong> רשמו את קוד הנעילה של הטלפון במקום פיזי בבית (ליד הצוואה למשל).</li>
+                    </ul>
+                `,
+                items: [
+                    { id: 'chrome_profile', text: 'יצירת פרופיל כרום נפרד להורים במחשב שלהם/שלך' },
+                    { id: 'gmail_account', text: 'פתיחת/וידוא חשבון Gmail פעיל' },
+                    { id: 'recovery_contact', text: 'הוספת ילד כ"איש קשר לשחזור" ב-Google' },
+                    { id: 'inactive_manager', text: 'הגדרת "מנהל חשבון לא פעיל" ב-Google' },
+                    { id: 'passwords_list', text: 'רישום סיסמאות ודפוס נעילה (טלפון/מחשב) במקום מוגדר בבית' },
+                    { id: 'fingerprint', text: 'הוספת טביעת אצבע של אחד הילדים לטלפון ההורים' },
+                    { id: 'teamviewer', text: 'התקנת TeamViewer לשליטה מרחוק (כולל Grant easy access)' },
+                    { id: 'sms_sync', text: 'חיבור הודעות SMS למחשב (Messages for web)' },
+                    { id: 'whatsapp_web', text: 'התקנת WhatsApp Web במחשב לנוחות הקלדה' }
+                ]
+            },
+            {
+                id: 'docs',
+                title: 'מסמכים וסריקה',
+                icon: 'FileText',
+                helpContent: `
+                    <p class="mb-2">מומלץ ליצור תיקייה משותפת בענן (Google Drive) במבנה הבא:</p>
+                    <ul class="list-disc pr-5 space-y-1">
+                        <li>תיקייה ראשית: "אבא ואמא"</li>
+                        <li>תיקיית משנה: "רפואי" (בחלוקה לאבא/אמא)</li>
+                        <li>תיקיית משנה: "פיננסי"</li>
+                        <li>תיקיית משנה: "נדל"ן"</li>
+                    </ul>
+                    <p class="mt-2 text-sm text-gray-600">השתמשו באפליקציות סריקה (כמו CamScanner) בטלפון ולא בסורק ביתי ישן.</p>
+                `,
+                items: [
+                    { id: 'scanner_app', text: 'התקנת אפליקציית סריקה בטלפון (CamScanner וכו\')' },
+                    { id: 'cloud_drive', text: 'פתיחת תיקייה משותפת בענן (Google Drive)' },
+                    { id: 'id_scan', text: 'סריקת ת.ז + ספח של שני ההורים' },
+                    { id: 'structure_folders', text: 'סידור תיקיות בענן (רפואי, פיננסי, נדל"ן)' }
+                ]
+            },
+            {
+                id: 'medical',
+                title: 'רפואי ובריאות',
+                icon: 'HeartPulse',
+                helpContent: `
+                    <ul class="list-disc pr-5 space-y-2">
+                        <li><strong>רשימת תרופות:</strong> לא להסתמך רק על המחשב בקופ"ח. הכינו טבלה פיזית/דיגיטלית עם שמות התרופות והמינונים. חשוב מאוד למקרה של אשפוז חירום.</li>
+                        <li><strong>אבחון גריאטרי:</strong> אם יש חשד לירידה קוגניטיבית, הזמינו תור לגריאטר מוקדם ככל האפשר (התורים ארוכים). זהו מסמך קריטי לקבלת גמלת סיעוד מביטוח לאומי.</li>
+                    </ul>
+                `,
+                items: [
+                    { id: 'hmo_login', text: 'יצירת שם משתמש וסיסמה לאתר קופת חולים' },
+                    { id: 'meds_list', text: 'הכנת רשימת תרופות מסודרת + מינונים' },
+                    { id: 'meds_sensitivity', text: 'תיעוד רגישויות לתרופות' },
+                    { id: 'medical_summary', text: 'סריקת סיכום רפואי עדכני מרופא מומחה' },
+                    { id: 'geriatric', text: 'קביעת תור לאבחון גריאטרי (אם יש ירידה קוגניטיבית)' },
+                    { id: 'checkups', text: 'קביעת בדיקות תקופתיות (ראייה, שמיעה, שיניים)' }
+                ]
+            },
+            {
+                id: 'financial',
+                title: 'פיננסי ובנקים',
+                icon: 'BadgeDollarSign',
+                helpContent: `
+                    <ul class="list-disc pr-5 space-y-2">
+                        <li><strong>סעיף אריכות ימים:</strong> קריטי! בחשבון משותף, וודאו שההורים חתומים על סעיף זה. ללא סעיף זה, במקרה פטירה של אחד מבני הזוג, החשבון עלול להיות מוקפא עד לצו ירושה, ובן הזוג השני לא יוכל למשוך כספים למחיה.</li>
+                        <li><strong>ייפוי כוח בבנק:</strong> מאפשר לילדים לפעול בחשבון, אך שימו לב: הוא מתבטל אוטומטית במקרה של פטירה או אי-כשירות משפטית של בעל החשבון.</li>
+                        <li><strong>בדיקת כספים:</strong> השתמשו ב"הר הביטוח" ו"המסלקה הפנסיונית" כדי לאתר חסכונות נשכחים.</li>
+                    </ul>
+                `,
+                items: [
+                    { id: 'bank_details', text: 'רישום מספרי חשבונות ופרטי סניף' },
+                    { id: 'long_life_clause', text: 'חתימה על "סעיף אריכות ימים" בחשבון משותף' },
+                    { id: 'power_attorney_bank', text: 'הסדרת ייפוי כוח בחשבון הבנק (לשוטף)' },
+                    { id: 'credit_cards', text: 'רישום מספרי כרטיסי אשראי + תוקף' },
+                    { id: 'bills_scan', text: 'סריקת חשבונות שוטפים (ארנונה, חשמל, מים)' },
+                    { id: 'insurance_check', text: 'בדיקת כפל ביטוחים ("הר הביטוח")' },
+                    { id: 'pension_check', text: 'בדיקת קופות גמל ופנסיה ("המסלקה הפנסיונית")' },
+                    { id: 'beneficiaries', text: 'וידוא מוטבים בקרנות הפנסיה/גמל' }
+                ]
+            },
+            {
+                id: 'legal',
+                title: 'משפטי וייפוי כוח',
+                icon: 'ShieldCheck',
+                helpContent: `
+                    <ul class="list-disc pr-5 space-y-2">
+                        <li><strong>ייפוי כוח מתמשך:</strong> הכלי המשפטי החשוב ביותר. מאפשר להורים לקבוע מי יקבל החלטות עבורם אם לא יוכלו לעשות זאת, וחוסך את הצורך במינוי אפוטרופוס דרך בית משפט (תהליך בירוקרטי ויקר).</li>
+                        <li><strong>חוק החולה הנוטה למות:</strong> טופס המאפשר לאדם להנחות רופאים להימנע מטיפולים מאריכי חיים במצבי סוף חיים מסוימים. ניתן לחתום בחינם במשרד הבריאות.</li>
+                    </ul>
+                `,
+                items: [
+                    { id: 'epa', text: 'חתימה על ייפוי כוח מתמשך (רפואי וכלכלי)' },
+                    { id: 'dying_patient', text: 'חתימה על טופס הנחיות חולה נוטה למות' },
+                    { id: 'will_location', text: 'בדיקת מיקום הצוואה (פיזית)' }
+                ]
+            },
+            {
+                id: 'home',
+                title: 'בטיחות בבית',
+                icon: 'Home',
+                helpContent: `
+                    <ul class="list-disc pr-5 space-y-2">
+                        <li><strong>מניעת נפילות:</strong> נפילה אחת יכולה לשנות הכל. הסירו שטיחונים קטנים ומחליקים.</li>
+                        <li><strong>תאורה:</strong> התקינו תאורת לילה עם חיישן בדרך לשירותים.</li>
+                        <li><strong>עזרה חיצונית:</strong> ניתן לפנות לעמותות (כמו "בטוח בבית") להתקנת אביזרי בטיחות ומאחזי יד בחינם או בעלות מסובסדת.</li>
+                    </ul>
+                `,
+                items: [
+                    { id: 'night_light', text: 'התקנת תאורת לילה במסדרון/שירותים' },
+                    { id: 'rugs', text: 'הסרת שטיחים מחליקים או הדבקתם' },
+                    { id: 'handles', text: 'התקנת ידיות אחיזה במקלחת ובשירותים' },
+                    { id: 'emergency_button', text: 'בדיקת צורך בלחצן מצוקה' },
+                    { id: 'accessibility', text: 'הנגשת חפצים יומיומיים למדפים נמוכים' }
+                ]
+            },
+            {
+                id: 'emergency_kit',
+                title: 'תיק אשפוז מוכן',
+                icon: 'Info',
+                helpContent: `
+                    <p>במקרה של פינוי מהיר למיון, הכינו תיק קטן המכיל:</p>
+                    <ul class="list-disc pr-5 space-y-1">
+                        <li>צילומי תעודת זהות וכרטיס קופ"ח</li>
+                        <li>רשימת תרופות עדכנית מודפסת</li>
+                        <li>מטען לטלפון (עם כבל ארוך!)</li>
+                        <li>כלי רחצה בסיסיים</li>
+                    </ul>
+                `,
+                items: [
+                    { id: 'kit_docs', text: 'צילומי ת.ז וכרטיס קופ"ח בתיק' },
+                    { id: 'kit_meds', text: 'רשימת תרופות עדכנית מודפסת' },
+                    { id: 'kit_charger', text: 'מטען לטלפון עם כבל ארוך' },
+                    { id: 'kit_hygiene', text: 'כלי רחצה ובגדים להחלפה' }
+                ]
+            }
+        ];
+
+        // --- קומפוננטת חלון מודאלי (Modal) ---
+        const Modal = ({ isOpen, onClose, title, content }) => {
+            if (!isOpen) return null;
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+                    <div 
+                        className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden transform transition-all animate-slide-up flex flex-col max-h-[80vh]"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="bg-teal-50 px-6 py-4 border-b border-teal-100 flex justify-between items-center shrink-0">
+                            <h3 className="text-lg font-bold text-teal-800 flex items-center gap-2">
+                                <Icons.Info />
+                                {title}
+                            </h3>
+                            <button 
+                                onClick={onClose} 
+                                className="p-1 rounded-full hover:bg-teal-100 text-teal-600 transition-colors"
+                            >
+                                <Icons.X />
+                            </button>
+                        </div>
+                        
+                        {/* Content */}
+                        <div className="p-6 overflow-y-auto modal-content text-slate-700 leading-relaxed">
+                            {content ? (
+                                <div dangerouslySetInnerHTML={{ __html: content }} />
+                            ) : (
+                                <div className="text-center py-8 text-slate-400">
+                                    <Icons.Info className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                                    <p>אין הסברים נוספים בשלב זה עבור קטגוריה זו.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="bg-slate-50 px-6 py-3 border-t border-slate-100 shrink-0 text-left">
+                            <button 
+                                onClick={onClose}
+                                className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors"
+                            >
+                                סגור
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- קומפוננטת התראה צפה (Toast) לחגיגות ---
+        const Notification = ({ message, isVisible, onClose }) => {
+            useEffect(() => {
+                if (isVisible) {
+                    const timer = setTimeout(onClose, 5000); // סגירה אוטומטית אחרי 5 שניות
+                    return () => clearTimeout(timer);
+                }
+            }, [isVisible, onClose]);
+
+            if (!isVisible) return null;
+
+            return (
+                <div className="fixed bottom-6 left-4 right-4 z-[60] flex justify-center pointer-events-none">
+                    <div className="bg-teal-700 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center justify-between max-w-md w-full animate-toast pointer-events-auto border-2 border-teal-500/50 backdrop-blur-sm">
+                        <div className="flex items-center gap-4">
+                            <div className="p-2 bg-white/20 rounded-full shrink-0">
+                                <Icons.PartyPopper />
+                            </div>
+                            <p className="font-medium text-sm sm:text-base leading-tight">{message}</p>
+                        </div>
+                        <button 
+                            onClick={onClose} 
+                            className="text-white/70 hover:text-white mr-4 p-1 hover:bg-white/10 rounded-full transition-colors"
+                        >
+                            <Icons.X />
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- האפליקציה הראשית ---
+        const App = () => {
+            const [categories, setCategories] = useState(initialData);
+            
+            // טעינה עצלה (Lazy Init) כדי למנוע הבהובים ומצב התחלתי שגוי
+            const [completedItems, setCompletedItems] = useState(() => {
+                const saved = localStorage.getItem('parentsChecklist_v2');
+                try {
+                    return saved ? JSON.parse(saved) : {};
+                } catch (e) {
+                    console.error("Error parsing saved data", e);
+                    return {};
+                }
+            });
+
+            const [openCategory, setOpenCategory] = useState('general');
+            const [showResetConfirm, setShowResetConfirm] = useState(false);
+            const [activeHelpModal, setActiveHelpModal] = useState(null); 
+            const [notification, setNotification] = useState(null); // התראה פעילה
+            const [prevProgress, setPrevProgress] = useState(-1); // מעקב אחר ההתקדמות הקודמת
+
+            // שמירת נתונים ל-LocalStorage בכל שינוי
+            useEffect(() => {
+                localStorage.setItem('parentsChecklist_v2', JSON.stringify(completedItems));
+            }, [completedItems]);
+
+            const calculateProgress = () => {
+                const totalItems = categories.reduce((acc, cat) => acc + cat.items.length, 0);
+                const checkedItems = Object.values(completedItems).filter(Boolean).length;
+                if (totalItems === 0) return 0;
+                return Math.round((checkedItems / totalItems) * 100);
+            };
+
+            const progress = calculateProgress();
+
+            // אפקט לבדיקת אבני דרך (Milestones)
+            useEffect(() => {
+                // אתחול ראשוני - לא להציג התראה בטעינת הדף
+                if (prevProgress === -1) {
+                    setPrevProgress(progress);
+                    return;
+                }
+
+                // בדיקת מעבר סף (רק כשמתקדמים למעלה)
+                const milestones = [25, 50, 75, 100];
+                const crossedMilestone = milestones.find(m => prevProgress < m && progress >= m);
+
+                if (crossedMilestone) {
+                    const messages = MILESTONE_MESSAGES[crossedMilestone];
+                    if (messages) {
+                        const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+                        setNotification(randomMsg);
+                    }
+                }
+                
+                setPrevProgress(progress);
+            }, [progress]); // תלות ב-progress בלבד (prevProgress מנוהל בפנים)
+
+            const toggleItem = (itemId) => {
+                setCompletedItems(prev => ({
+                    ...prev,
+                    [itemId]: !prev[itemId]
+                }));
+            };
+
+            const toggleCategory = (catId) => {
+                setOpenCategory(openCategory === catId ? null : catId);
+            };
+
+            const resetAll = () => {
+                if (confirm('האם אתה בטוח שברצונך למחוק את כל הסימונים? לא ניתן לשחזר פעולה זו.')) {
+                    setCompletedItems({});
+                    setShowResetConfirm(false);
+                    setPrevProgress(0); // איפוס גם של המעקב
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            };
+            
+            const handleHelpClick = (e, category) => {
+                e.stopPropagation();
+                setActiveHelpModal(category);
+            };
+            
+            // Helper function to render correct icon component based on string name
+            const renderIcon = (iconName) => {
+                const IconComponent = Icons[iconName] || Icons.Circle;
+                return <IconComponent />;
+            };
+
+            return (
+                <div className="min-h-screen pb-24">
+                    
+                    {/* Header */}
+                    <header className="bg-white shadow-sm sticky top-0 z-10 border-b border-slate-100">
+                        <div className="max-w-2xl mx-auto px-4 py-4">
+                            <div className="flex justify-between items-center mb-2">
+                                <div>
+                                    <h1 className="text-xl font-bold text-slate-900">הורים פלוס</h1>
+                                    <p className="text-sm text-slate-500">צ'ק ליסט לילדים של הורים מבוגרים</p>
+                                </div>
+                                <div className="text-teal-600 font-bold text-xl font-mono">
+                                    {progress}%
+                                </div>
+                            </div>
+                            
+                            {/* Progress Bar */}
+                            <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                <div 
+                                    className="bg-teal-500 h-2.5 rounded-full transition-all duration-500 ease-out" 
+                                    style={{ width: `${progress}%` }}
+                                ></div>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Main Content */}
+                    <main className="max-w-2xl mx-auto px-4 py-6">
+                        
+                        {/* Intro Card */}
+                        <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-6 text-sm text-indigo-900 shadow-sm">
+                            <div className="flex items-start gap-3">
+                                <div className="mt-0.5 text-indigo-600 shrink-0"><Icons.Info /></div>
+                                <div>
+                                    <p className="font-semibold mb-1">טיפ זהב:</p>
+                                    <p>
+                                        אם ההורים מתנגדים לעזרה ("אני מסתדר לבד"), כדאי להציג את הפעולות כ"זה בשבילי, שיהיה לי שקט נפשי" ולא כ"זה בשבילך כי אתה מזדקן".
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Categories */}
+                        <div className="space-y-4">
+                            {categories.map((category) => {
+                                const isOpen = openCategory === category.id;
+                                const categoryItems = category.items;
+                                const completedCount = categoryItems.filter(i => completedItems[i.id]).length;
+                                const totalCount = categoryItems.length;
+                                const isFullyComplete = completedCount === totalCount && totalCount > 0;
+
+                                return (
+                                    <div 
+                                        key={category.id} 
+                                        className={`bg-white rounded-xl border transition-all duration-300 overflow-hidden
+                                            ${isOpen ? 'ring-2 ring-teal-500/20 border-teal-500/30 shadow-md' : 'border-slate-200 shadow-sm hover:border-teal-200'}
+                                        `}
+                                    >
+                                        {/* Category Header */}
+                                        <div
+                                            className="w-full flex items-center justify-between p-4 bg-white cursor-pointer select-none"
+                                            onClick={() => toggleCategory(category.id)}
+                                        >
+                                            <div className="flex items-center gap-3 flex-1">
+                                                <div className={`p-2 rounded-lg transition-colors ${isFullyComplete ? 'bg-teal-100 text-teal-600' : 'bg-slate-100 text-slate-600'}`}>
+                                                    {renderIcon(category.icon)}
+                                                </div>
+                                                <div>
+                                                    <h2 className={`font-semibold text-base ${isFullyComplete ? 'text-teal-700' : 'text-slate-800'}`}>
+                                                        {category.title}
+                                                    </h2>
+                                                    <span className="text-xs text-slate-400 font-medium">
+                                                        {completedCount} מתוך {totalCount} הושלמו
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex items-center gap-2">
+                                                {/* Help Button */}
+                                                <button 
+                                                    onClick={(e) => handleHelpClick(e, category)}
+                                                    className="p-2 text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded-full transition-all"
+                                                    title="מידע נוסף ועזרה"
+                                                >
+                                                    <Icons.HelpCircle />
+                                                </button>
+                                                
+                                                <div className="text-slate-300 px-1">|</div>
+
+                                                <div className="text-slate-400">
+                                                    {isOpen ? <Icons.ChevronUp /> : <Icons.ChevronDown />}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Checklist Items */}
+                                        {isOpen && (
+                                            <div className="border-t border-slate-50 bg-slate-50/50 animate-fade-in">
+                                                <div className="p-4 pt-2 space-y-2">
+                                                    {categoryItems.map((item) => (
+                                                        <div 
+                                                            key={item.id}
+                                                            onClick={() => toggleItem(item.id)}
+                                                            className="flex items-start gap-3 p-3 rounded-lg cursor-pointer hover:bg-white hover:shadow-sm transition-all select-none group border border-transparent hover:border-slate-100"
+                                                        >
+                                                            <div className={`mt-0.5 transition-colors ${completedItems[item.id] ? 'text-teal-500' : 'text-slate-300 group-hover:text-teal-300'}`}>
+                                                                {completedItems[item.id] ? <Icons.CheckCircle2 /> : <Icons.Circle />}
+                                                            </div>
+                                                            <span className={`text-sm leading-relaxed transition-colors ${completedItems[item.id] ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+                                                                {item.text}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Footer Actions */}
+                        <div className="mt-12 text-center pb-8">
+                            <button 
+                                onClick={resetAll}
+                                className="text-slate-400 hover:text-red-500 text-sm flex items-center justify-center gap-2 mx-auto transition-colors px-4 py-2 hover:bg-red-50 rounded-lg"
+                            >
+                                <Icons.RotateCcw />
+                                איפוס כל הסימונים
+                            </button>
+                            
+                            <div className="space-y-4 mt-6">
+                                <p className="text-xs text-slate-400 px-4 leading-relaxed">
+                                    * המידע באפליקציה זו מבוסס על מסמך המלצות כללי. אין לראות בו ייעוץ משפטי או רפואי.
+                                    <br/>
+                                    הנתונים נשמרים מקומית על המכשיר שלך בלבד.
+                                </p>
+                                
+                                <p className="text-xs text-slate-500 px-4 font-medium border-t border-slate-100 pt-4 w-fit mx-auto">
+                                    כל הזכויות שמורות לצביקה אבנרי. פותח רק כהדגמה על ידי OBN
+                                </p>
+                            </div>
+                        </div>
+                    </main>
+
+                    {/* Notification Toast */}
+                    <Notification 
+                        message={notification} 
+                        isVisible={!!notification} 
+                        onClose={() => setNotification(null)} 
+                    />
+
+                    {/* Modal Instance */}
+                    <Modal 
+                        isOpen={!!activeHelpModal} 
+                        onClose={() => setActiveHelpModal(null)}
+                        title={activeHelpModal?.title}
+                        content={activeHelpModal?.helpContent}
+                    />
+
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+    
+    <style>
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.2s ease-out forwards;
+        }
+        .animate-slide-up {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+    </style>
+</body>
+</html>
