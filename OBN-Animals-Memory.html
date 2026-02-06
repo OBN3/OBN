@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>משחק זיכרון - חיות</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #e0f7fa;
+            margin: 0;
+            padding: 20px;
+        }
+        #game {
+            display: grid;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .card {
+            width: 80px;
+            height: 80px;
+            background-color: #ffd54f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            cursor: pointer;
+            border-radius: 8px;
+            user-select: none;
+        }
+        .card.flip {
+            background-color: #fff;
+        }
+        .card.matched {
+            background-color: #c8e6c9;
+            cursor: default;
+        }
+    </style>
+</head>
+<body>
+    <h1>משחק זיכרון - חיות</h1>
+    <div>
+        <label for="difficulty">בחר דרגת קושי:</label>
+        <select id="difficulty">
+            <option value="easy">קלה 3x3</option>
+            <option value="hard">קשה 4x4</option>
+        </select>
+        <button id="startBtn">התחל</button>
+    </div>
+    <div>זמן: <span id="time">0</span> שניות | מהלכים: <span id="moves">0</span></div>
+    <div id="game"></div>
+    <audio id="winSound" src="win.wav"></audio>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <script>
+        const animals = ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔'];
+
+        let firstCard, secondCard, lockBoard = false, matches = 0, moves = 0, timer, startTime;
+
+        function startGame() {
+            const diff = document.getElementById('difficulty').value;
+            const game = document.getElementById('game');
+            game.innerHTML = '';
+            matches = 0; moves = 0; lockBoard = false; firstCard = null; secondCard = null;
+            document.getElementById('moves').textContent = 0;
+            document.getElementById('time').textContent = 0;
+            clearInterval(timer);
+            startTime = null;
+
+            let size = diff === 'easy' ? 3 : 4;
+            let pairCount = (size * size) / 2;
+            let cards = [];
+            if (diff === 'easy') {
+                pairCount = 4; // 8 cards, one empty spot
+                cards = animals.slice(0, pairCount);
+                cards = cards.concat(cards);
+                cards.push(null); // placeholder for 9th cell
+            } else {
+                cards = animals.slice(0, pairCount);
+                cards = cards.concat(cards);
+            }
+            shuffle(cards);
+
+            game.style.gridTemplateColumns = `repeat(${size}, 80px)`;
+            game.style.gridTemplateRows = `repeat(${size}, 80px)`;
+
+            cards.forEach(animal => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                if (animal) {
+                    card.dataset.animal = animal;
+                    card.addEventListener('click', flipCard);
+                } else {
+                    card.style.visibility = 'hidden';
+                }
+                game.appendChild(card);
+            });
+        }
+
+        function flipCard() {
+            if (lockBoard || this === firstCard) return;
+            this.textContent = this.dataset.animal;
+            this.classList.add('flip');
+            if (!startTime) {
+                startTime = Date.now();
+                timer = setInterval(() => {
+                    const t = Math.floor((Date.now() - startTime) / 1000);
+                    document.getElementById('time').textContent = t;
+                }, 1000);
+            }
+            if (!firstCard) {
+                firstCard = this;
+                return;
+            }
+            secondCard = this;
+            lockBoard = true;
+            moves++;
+            document.getElementById('moves').textContent = moves;
+
+            if (firstCard.dataset.animal === secondCard.dataset.animal) {
+                disableCards();
+            } else {
+                unflipCards();
+            }
+        }
+
+        function disableCards() {
+            firstCard.classList.add('matched');
+            secondCard.classList.add('matched');
+            resetBoard();
+            matches++;
+            const needed = document.getElementById('difficulty').value === 'easy' ? 4 : 8;
+            if (matches === needed) endGame();
+        }
+
+        function unflipCards() {
+            setTimeout(() => {
+                firstCard.textContent = '';
+                secondCard.textContent = '';
+                firstCard.classList.remove('flip');
+                secondCard.classList.remove('flip');
+                resetBoard();
+            }, 1000);
+        }
+
+        function resetBoard() {
+            [firstCard, secondCard, lockBoard] = [null, null, false];
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function endGame() {
+            clearInterval(timer);
+            const duration = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById('time').textContent = duration;
+            confetti();
+            document.getElementById('winSound').play();
+            alert(`כל הכבוד! סיימת ב-${duration} שניות וב-${moves} מהלכים!`);
+        }
+
+        document.getElementById('startBtn').addEventListener('click', startGame);
+    </script>
+</body>
+</html>
