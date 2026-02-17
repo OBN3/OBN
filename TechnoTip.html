@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OBN-Tips - מאגר הטכנוטיפים של אופיר בן נתן</title>
+    
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap');
+        
+        body { 
+            font-family: 'Assistant', sans-serif; 
+            direction: rtl;
+        }
+
+        .line-clamp-8 {
+            display: -webkit-box;
+            -webkit-line-clamp: 8;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .modal-enter {
+            animation: fadeIn 0.25s ease-out forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-50 antialiased">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useEffect, useRef } = React;
+
+        /**
+         * הגדרת מיפוי חכם לקטגוריות:
+         * כל מפתח הוא השם שיופיע בכפתור, והערך הוא מערך של מילות מפתח לחיפוש.
+         */
+        const CATEGORY_MAP = {
+            "ווטסאפ": ["ווטסאפ", "whatsapp", "ווצאפ", "הודעות"],
+            "סמארטפון": ["סמארטפון", "טלפון", "נייד", "אפליקציה", "אנדרואיד", "אייפון", "מכשיר"],
+            "צילום": ["צילום", "תמונה", "מצלמה", "וידאו", "עריכה", "גלריה"],
+            "בינה מלאכותית": ["בינה מלאכותית", "ai", "chatgpt", "claude", "gemini", "בינה", "מודל", "בינה", "grok", "gpt", "gpts"],
+            "וורד": ["וורד", "word", "מסמך", "כתיבה", "office", "windows", "חלונות"],
+			"פאורפוינט": ["פאורפוינט", "powerpoint", "מצגת", "מצגות", "שקף", "שקפים", "office", "windows", "חלונות"],
+            "אקסל": ["אקסל", "excel", "טבלה", "נוסחה", "גיליון", "data", "windows", "חלונות"]
+        };
+
+        const CATEGORIES = Object.keys(CATEGORY_MAP);
+
+        const Icon = ({ name, size = 18, className = "" }) => {
+            const containerRef = useRef(null);
+            useEffect(() => {
+                if (window.lucide && containerRef.current) {
+                    window.lucide.createIcons({
+                        attrs: { class: className, 'stroke-width': 2, width: size, height: size },
+                        nameAttr: 'data-lucide'
+                    });
+                }
+            }, [name, className, size]);
+            return <span ref={containerRef} key={name} className="inline-flex items-center justify-center"><i data-lucide={name}></i></span>;
+        };
+
+        const App = () => {
+            const [notes, setNotes] = useState([]);
+            const [isLoading, setIsLoading] = useState(true);
+            const [error, setError] = useState(null);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [activeCategory, setActiveCategory] = useState(null);
+            const [copySuccess, setCopySuccess] = useState(null);
+            const [activeNote, setActiveNote] = useState(null);
+            const [showManualInput, setShowManualInput] = useState(false);
+            const [manualJson, setManualJson] = useState('');
+
+            useEffect(() => {
+                const loadData = async () => {
+                    try {
+                        const response = await fetch('data.json');
+                        if (!response.ok) throw new Error('קובץ data.json לא נמצא.');
+                        const data = await response.json();
+                        setNotes(Array.isArray(data) ? data : []);
+                    } catch (err) {
+                        if (window.location.protocol === 'file:') {
+                            setError('מגבלת אבטחה: דפדפנים חוסמים קבצים בהרצה מקומית. השתמש בשרת או הדבק נתונים ידנית.');
+                        } else {
+                            setError(err.message || 'שגיאה בטעינת המאגר.');
+                        }
+                    } finally {
+                        setIsLoading(false);
+                    }
+                };
+                loadData();
+            }, []);
+
+            const handleManualSubmit = () => {
+                try {
+                    const data = JSON.parse(manualJson);
+                    setNotes(Array.isArray(data) ? data : []);
+                    setError(null);
+                    setShowManualInput(false);
+                } catch (e) {
+                    alert('פורמט JSON לא תקין.');
+                }
+            };
+
+            const getNoteColor = (labels = []) => {
+                if (labels.includes('ai')) return 'border-t-4 border-t-blue-400 bg-blue-50/30';
+                if (labels.includes('טיפ')) return 'border-t-4 border-t-yellow-400 bg-yellow-50/30';
+                return 'border-t-4 border-t-slate-200 bg-white';
+            };
+
+            const copyToClipboard = (e, text, id) => {
+                if (e) e.stopPropagation();
+                navigator.clipboard.writeText(text).then(() => {
+                    setCopySuccess(id);
+                    setTimeout(() => setCopySuccess(null), 2000);
+                });
+            };
+
+            /**
+             * לוגיקת סינון משופרת:
+             * בודק אם לפחות אחת ממילות המפתח של הקטגוריה מופיעה בטקסט.
+             */
+            const filteredNotes = useMemo(() => {
+                return notes.filter(note => {
+                    const combinedText = (note.title + " " + note.content).toLowerCase();
+                    const matchesSearch = combinedText.includes(searchTerm.toLowerCase());
+                    
+                    let matchesCategory = true;
+                    if (activeCategory) {
+                        const keywords = CATEGORY_MAP[activeCategory] || [activeCategory];
+                        matchesCategory = keywords.some(keyword => combinedText.includes(keyword.toLowerCase()));
+                    }
+                    
+                    return matchesSearch && matchesCategory;
+                });
+            }, [notes, searchTerm, activeCategory]);
+
+            useEffect(() => {
+                const handleEsc = (e) => { if (e.key === 'Escape') setActiveNote(null); };
+                window.addEventListener('keydown', handleEsc);
+                return () => window.removeEventListener('keydown', handleEsc);
+            }, []);
+
+            if (isLoading) return (
+                <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                    <div className="flex flex-col items-center">
+                        <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <p className="text-slate-600 font-bold">טוען את המאגר...</p>
+                    </div>
+                </div>
+            );
+
+            if (error) return (
+                <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+                    <div className="bg-white p-8 rounded-[2.5rem] shadow-xl max-w-xl w-full text-center border border-red-100">
+                        <Icon name="alert-triangle" className="text-red-500 mb-6" size={48} />
+                        <h2 className="text-2xl font-black text-slate-800 mb-4">בעיה בטעינה</h2>
+                        <p className="text-slate-600 mb-8">{error}</p>
+                        {!showManualInput ? (
+                            <button onClick={() => setShowManualInput(true)} className="bg-slate-800 text-white px-8 py-3 rounded-full font-bold w-full active:scale-95">הדבק נתונים ידנית</button>
+                        ) : (
+                            <div className="mt-4 animate-in slide-in-from-top-4">
+                                <textarea className="w-full h-32 p-4 border rounded-2xl bg-slate-50 text-sm font-mono mb-4 text-left" dir="ltr" placeholder="Paste data.json content here..." value={manualJson} onChange={(e) => setManualJson(e.target.value)} />
+                                <div className="flex gap-2">
+                                    <button onClick={handleManualSubmit} className="flex-1 bg-yellow-400 text-slate-900 px-6 py-3 rounded-full font-bold">טען מאגר</button>
+                                    <button onClick={() => setShowManualInput(false)} className="px-6 py-3 rounded-full font-bold text-slate-500 hover:bg-slate-100">ביטול</button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="min-h-screen flex flex-col">
+                    <header className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
+                        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-yellow-400 p-2 rounded-xl shadow-inner text-white">
+                                    <Icon name="brain-circuit" size={24} />
+                                </div>
+                                <div>
+                                    <h1 className="text-xl font-bold text-slate-800 leading-none">OBN-Tips - מאגר הטכנוטיפים של אופיר בן נתן</h1>
+                                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest mt-1">Knowledge Hub</p>
+                                </div>
+                            </div>
+                            <div className="text-slate-500 text-sm hidden sm:flex items-center gap-2 bg-slate-50 px-4 py-1.5 rounded-full border border-slate-100 font-semibold">
+                                <Icon name="list" size={14} /> <span>{notes.length} טכנוטיפים & counting...</span>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="max-w-7xl mx-auto px-4 py-8 flex-1 w-full">
+                        <div className="space-y-6">
+                            <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 space-y-4">
+                                <div className="relative w-full text-right">
+                                    <Icon name="search" className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                                    <input 
+                                        type="text" 
+                                        placeholder="מה תרצו לחפש? (כתבו מילת מפתח)" 
+                                        className="w-full pr-12 pl-12 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-yellow-100 focus:border-yellow-400 outline-none transition-all text-lg shadow-inner" 
+                                        value={searchTerm} 
+                                        onChange={(e) => setSearchTerm(e.target.value)} 
+                                    />
+                                    {searchTerm && (
+                                        <button onClick={() => setSearchTerm('')} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                                            <Icon name="x" size={18} />
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="flex flex-wrap gap-2 items-center overflow-x-auto no-scrollbar py-1">
+                                    <span className="text-xs font-bold text-slate-400 ml-2 tracking-widest uppercase">קטגוריות חכמות:</span>
+                                    <button 
+                                        onClick={() => setActiveCategory(null)} 
+                                        className={`px-5 py-2 rounded-full text-sm font-bold border transition-all ${!activeCategory ? 'bg-slate-800 text-white border-slate-800 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400'}`}
+                                    >
+                                        הכל
+                                    </button>
+                                    {CATEGORIES.map(cat => (
+                                        <button 
+                                            key={cat} 
+                                            onClick={() => setActiveCategory(cat === activeCategory ? null : cat)} 
+                                            className={`px-5 py-2 rounded-full text-sm font-bold border whitespace-nowrap transition-all ${activeCategory === cat ? 'bg-yellow-400 text-slate-900 border-yellow-400 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400'}`}
+                                        >
+                                            {cat}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between px-2">
+                                <h2 className="text-slate-500 font-medium text-lg text-right w-full">
+                                    {(searchTerm || activeCategory) ? (
+                                        <span>נמצאו <span className="text-slate-900 font-black">{filteredNotes.length}</span> טכנוטיפים מתוך <span className="text-slate-900 font-black">{notes.length}</span></span>
+                                    ) : (
+                                        <span>מציג את כל <span className="text-slate-900 font-black">{notes.length}</span> הטכנוטיפים</span>
+                                    )}
+                                </h2>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {filteredNotes.map(note => (
+                                    <div 
+                                        key={note.id} 
+                                        onClick={() => setActiveNote(note)} 
+                                        className={`group relative rounded-[2rem] p-6 border border-slate-200 shadow-sm flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer ${getNoteColor(note.labels)}`}
+                                    >
+                                        <div className="flex justify-between items-start mb-4">
+                                            <h3 className="font-bold text-xl leading-tight text-slate-800 group-hover:text-yellow-700 transition-colors">{note.title}</h3>
+                                            <div className="flex items-center gap-2">
+                                                <div className="bg-white/60 px-2 py-1 rounded-lg text-[10px] font-bold text-slate-400 shadow-sm whitespace-nowrap">
+                                                    {note.date}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="text-slate-600 text-base whitespace-pre-wrap flex-1 mb-2 line-clamp-8 leading-relaxed relative text-right">
+                                            {note.content}
+                                            {(note.content.split('\n').length > 8 || note.content.length > 300) && (
+                                                <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white/95 via-white/40 to-transparent pointer-events-none"></div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {filteredNotes.length === 0 && (
+                                <div className="py-32 text-center bg-white rounded-[3rem] border border-slate-100 shadow-inner">
+                                    <Icon name="search-x" className="text-slate-200 mb-6" size={64} />
+                                    <h3 className="text-xl font-bold text-slate-800">לא מצאנו את מה שחיפשת</h3>
+                                    <p className="text-slate-500 mt-2">נסה לשנות את מילת החיפוש או לנקות את הקטגוריה.</p>
+                                    <button onClick={() => {setSearchTerm(''); setActiveCategory(null);}} className="mt-6 text-yellow-600 font-bold hover:underline">הצג את כל המאגר</button>
+                                </div>
+                            )}
+                        </div>
+                    </main>
+
+                    {activeNote && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 md:p-12 animate-in fade-in duration-300" style={{ backgroundColor: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(8px)' }} onClick={() => setActiveNote(null)}>
+                            <div className="bg-white w-full max-w-4xl max-h-full rounded-[3rem] shadow-2xl flex flex-col overflow-hidden modal-enter" onClick={(e) => e.stopPropagation()}>
+                                <div className="px-10 py-8 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50">
+                                    <h3 className="text-2xl font-black text-slate-800 leading-tight">{activeNote.title}</h3>
+                                    <div className="flex items-center gap-3">
+                                        <button 
+                                            onClick={(e) => copyToClipboard(e, activeNote.content, 'modal')} 
+                                            className={`flex items-center gap-2 px-6 py-2.5 rounded-2xl font-bold text-sm shadow-sm transition-all active:scale-95 ${copySuccess === 'modal' ? 'bg-green-500 text-white' : 'bg-slate-800 text-white hover:bg-slate-700'}`}
+                                        >
+                                            <Icon name={copySuccess === 'modal' ? "check" : "copy"} size={16} /> 
+                                            {copySuccess === 'modal' ? 'הועתק!' : 'העתק הכל'}
+                                        </button>
+                                        <button onClick={() => setActiveNote(null)} className="p-2 text-slate-400 hover:text-slate-800 transition-colors">
+                                            <Icon name="x" size={32} />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="p-10 overflow-y-auto flex-1 bg-slate-50/20 custom-scrollbar">
+                                    <div className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm text-xl leading-relaxed text-slate-700 whitespace-pre-wrap text-right">
+                                        {activeNote.content}
+                                    </div>
+                                </div>
+                                <div className="px-10 py-5 bg-white border-t border-slate-100 text-sm text-slate-400 flex justify-between items-center shrink-0">
+                                    <span className="font-semibold">עודכן בתאריך: {activeNote.date}</span>
+                                    <span className="flex items-center gap-1.5 opacity-60"><Icon name="info" size={14} /> לחץ ESC או מחוץ לחלון כדי לסגור</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <footer className="py-10 text-center text-slate-400 text-[11px] font-bold tracking-[0.2em] uppercase border-t border-slate-100">
+                        אוסף טכנוטיפים - כל הזכויות שמורות OBN 2026
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
