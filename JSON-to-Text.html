@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעבד קבצי תוכן</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap');
+        body {
+            font-family: 'Assistant', sans-serif;
+            background-color: #f8fafc;
+        }
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+    <div class="max-w-2xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-slate-800 mb-2">מעבד רשימות משימות</h1>
+            <p class="text-slate-600">העלו את קובץ ה-JSON כדי להציג ולהעתיק את התוכן</p>
+        </header>
+
+        <!-- Upload Section -->
+        <div class="glass-morphism rounded-2xl p-6 shadow-sm mb-6 border border-slate-200">
+            <label class="block mb-4 text-sm font-semibold text-slate-700">בחר קובץ JSON:</label>
+            <input type="file" id="jsonFileInput" accept=".json" 
+                class="block w-full text-sm text-slate-500 file:mr-0 file:ml-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer" />
+            
+            <div class="mt-4 flex gap-2">
+                <button onclick="processFile()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold shadow-md hover:bg-blue-700 transition-all active:scale-95">
+                    עבד קובץ
+                </button>
+                <button onclick="clearAll()" class="px-4 py-3 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 transition-all">
+                    נקה
+                </button>
+            </div>
+        </div>
+
+        <!-- Feedback Messages -->
+        <div id="statusMessage" class="hidden mb-4 p-3 rounded-lg text-center text-sm font-medium"></div>
+
+        <!-- Result Section -->
+        <div id="resultArea" class="hidden">
+            <div class="flex items-center justify-between mb-2 px-1">
+                <h2 class="text-lg font-bold text-slate-700">תוכן מעובד:</h2>
+                <button onclick="copyToClipboard()" class="flex items-center gap-1 text-blue-600 text-sm font-bold bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="Wait 8 2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2m3 3h10M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    העתק הכל
+                </button>
+            </div>
+            
+            <div id="outputContainer" class="bg-white rounded-2xl p-5 shadow-lg border border-slate-200 min-h-[200px] whitespace-pre-wrap leading-relaxed text-slate-800 text-right overflow-auto max-h-[60vh]">
+                <!-- Content will appear here -->
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="text-center py-12 text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <p>העלו קובץ כדי להתחיל</p>
+        </div>
+    </div>
+
+    <script>
+        function showMessage(text, isError = false) {
+            const msg = document.getElementById('statusMessage');
+            msg.textContent = text;
+            msg.className = `mb-4 p-3 rounded-lg text-center text-sm font-medium ${isError ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`;
+            msg.classList.remove('hidden');
+            setTimeout(() => msg.classList.add('hidden'), 3000);
+        }
+
+        function clearAll() {
+            document.getElementById('jsonFileInput').value = '';
+            document.getElementById('outputContainer').innerHTML = '';
+            document.getElementById('resultArea').classList.add('hidden');
+            document.getElementById('emptyState').classList.remove('hidden');
+        }
+
+        async function processFile() {
+            const fileInput = document.getElementById('jsonFileInput');
+            const outputContainer = document.getElementById('outputContainer');
+            const resultArea = document.getElementById('resultArea');
+            const emptyState = document.getElementById('emptyState');
+
+            if (!fileInput.files.length) {
+                showMessage('אנא בחר קובץ תחילה', true);
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    let formattedText = "";
+
+                    if (data.blocks && Array.isArray(data.blocks)) {
+                        data.blocks.forEach(block => {
+                            const pageName = block['page-name'];
+                            const children = block.children || [];
+                            
+                            // Only process blocks that have a name or meaningful children
+                            const validChildren = children.filter(child => child.content && child.content.trim() !== "");
+                            
+                            if (validChildren.length > 0) {
+                                if (pageName && pageName !== "Contents") {
+                                    formattedText += `--- ${pageName} ---\n`;
+                                }
+                                
+                                validChildren.forEach(child => {
+                                    formattedText += `• ${child.content}\n`;
+                                });
+                                
+                                formattedText += `\n`;
+                            }
+                        });
+                    }
+
+                    if (formattedText.trim() === "") {
+                        showMessage('לא נמצא תוכן רלוונטי בקובץ', true);
+                    } else {
+                        outputContainer.textContent = formattedText.trim();
+                        resultArea.classList.remove('hidden');
+                        emptyState.classList.add('hidden');
+                        showMessage('הקובץ עובד בהצלחה');
+                    }
+
+                } catch (error) {
+                    console.error(error);
+                    showMessage('שגיאה בפענוח הקובץ. וודא שמדובר ב-JSON תקין.', true);
+                }
+            };
+
+            reader.readAsText(file);
+        }
+
+        function copyToClipboard() {
+            const text = document.getElementById('outputContainer').textContent;
+            if (!text) return;
+
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showMessage('התוכן הועתק ללוח!');
+            } catch (err) {
+                showMessage('שגיאה בהעתקה', true);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+    </script>
+</body>
+</html>
