@@ -342,19 +342,11 @@
             foundJSONs.forEach(json => {
                 const filename = `manual_paste_${uploadedFilesData.length + 1}.json`;
                 uploadedFilesData.push({ filename: filename, content: json });
-                
-                const li = document.createElement('li');
-                li.className = "flex justify-between items-center bg-white p-2 rounded border border-gray-100 mb-1";
-                li.innerHTML = `
-                    <span class="flex items-center gap-2">
-                        <i class="fas fa-keyboard text-purple-500"></i>
-                        <span class="font-medium">${json.participants.evaluator}</span>
-                    </span> 
-                    <span class="text-xs text-gray-400">הדבקה ידנית</span>
-                `;
-                filesUl.appendChild(li);
                 addedCount++;
             });
+
+            // Update List UI
+            renderFileList();
 
             // Feedback
             fileList.classList.remove('hidden');
@@ -372,45 +364,102 @@
         function handleFiles(files) {
             if (files.length === 0) return;
 
-            uploadedFilesData = []; // Reset
-            filesUl.innerHTML = '';
             let loadedCount = 0;
-
-            Array.from(files).forEach(file => {
-                if (file.type !== "application/json" && !file.name.endsWith('.json')) {
-                    alert(`הקובץ ${file.name} אינו קובץ JSON תקין`);
-                    return;
-                }
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const json = JSON.parse(e.target.result);
-                        uploadedFilesData.push({ filename: file.name, content: json });
-                        
-                        // Add to UI list
-                        const li = document.createElement('li');
-                        li.className = "flex justify-between items-center bg-white p-2 rounded border border-gray-100 mb-1";
-                        li.innerHTML = `
-                            <span class="flex items-center gap-2">
-                                <i class="fas fa-file-alt text-blue-500"></i>
-                                <span class="font-medium">${json.participants.evaluator}</span>
-                            </span> 
-                            <span class="text-xs text-gray-400 opacity-70">${file.name}</span>
-                        `;
-                        filesUl.appendChild(li);
-
-                        loadedCount++;
-                        if (loadedCount > 0) {
-                            fileList.classList.remove('hidden');
-                        }
-                    } catch (err) {
-                        console.error("Error parsing JSON", err);
-                        alert("שגיאה בקריאת הקובץ: " + file.name);
+            const filesArray = Array.from(files);
+            
+            // Promise based loading to ensure order
+            const filePromises = filesArray.map(file => {
+                return new Promise((resolve) => {
+                    if (file.type !== "application/json" && !file.name.endsWith('.json')) {
+                        alert(`הקובץ ${file.name} אינו קובץ JSON תקין`);
+                        resolve(null);
+                        return;
                     }
-                };
-                reader.readAsText(file);
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const json = JSON.parse(e.target.result);
+                            resolve({ filename: file.name, content: json });
+                        } catch (err) {
+                            console.error("Error parsing JSON", err);
+                            alert("שגיאה בקריאת הקובץ: " + file.name);
+                            resolve(null);
+                        }
+                    };
+                    reader.readAsText(file);
+                });
             });
+
+            Promise.all(filePromises).then(results => {
+                results.forEach(result => {
+                    if (result) {
+                        uploadedFilesData.push(result);
+                        loadedCount++;
+                    }
+                });
+
+                if (loadedCount > 0) {
+                    renderFileList();
+                    fileList.classList.remove('hidden');
+                }
+            });
+        }
+
+        // New function to render the list with delete buttons
+        function renderFileList() {
+            filesUl.innerHTML = '';
+            
+            if (uploadedFilesData.length === 0) {
+                fileList.classList.add('hidden');
+                // Optional: clear dashboard if no files
+                document.getElementById('dashboard').classList.add('hidden');
+                document.getElementById('upload-section').classList.remove('hidden');
+                return;
+            }
+
+            uploadedFilesData.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.className = "flex justify-between items-center bg-white p-2 rounded border border-gray-100 mb-1 group hover:border-blue-100 transition-colors";
+                
+                const isManual = item.filename.startsWith('manual_paste');
+                const iconClass = isManual ? 'fa-keyboard text-purple-500' : 'fa-file-alt text-blue-500';
+                const sourceText = isManual ? 'הדבקה ידנית' : item.filename;
+
+                li.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="flex-shrink-0 w-6 text-center">
+                            <i class="fas ${iconClass}"></i>
+                        </div>
+                        <div class="flex flex-col overflow-hidden">
+                            <span class="font-medium text-gray-800 truncate">${item.content.participants.evaluator || 'אנונימי'}</span>
+                            <span class="text-xs text-gray-400 truncate">${sourceText}</span>
+                        </div>
+                    </div>
+                    <button onclick="removeFile(${index})" class="text-gray-300 hover:text-red-500 p-2 rounded-full hover:bg-red-50 transition-all" title="מחק משיב זה">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                `;
+                filesUl.appendChild(li);
+            });
+        }
+
+        function removeFile(index) {
+            if (index >= 0 && index < uploadedFilesData.length) {
+                uploadedFilesData.splice(index, 1);
+                renderFileList();
+                
+                // If dashboard is already visible, re-process to update charts
+                if (!document.getElementById('dashboard').classList.contains('hidden')) {
+                    if (uploadedFilesData.length > 0) {
+                        processFiles(); // Re-run analysis
+                    } else {
+                        // Go back to upload screen if list empty
+                        document.getElementById('dashboard').classList.add('hidden');
+                        document.getElementById('upload-section').classList.remove('hidden');
+                    }
+                }
+            }
         }
 
         function printReport() {
@@ -512,9 +561,18 @@
 
         // --- Charts Rendering ---
 
+        // Variables to hold chart instances
+        let radarChartInstance = null;
+        let strengthsBarChartInstance = null;
+        let improvementsBarChartInstance = null;
+
         function renderRadarChart(catStats) {
             const ctx = document.getElementById('radarChart').getContext('2d');
             
+            if (radarChartInstance) {
+                radarChartInstance.destroy();
+            }
+
             // Generate arrays dynamically from ALL keys in the current catStats (which includes defaults)
             const keys = Object.keys(catStats); // Will be 3 keys if initialized correctly
             const labels = keys.map(k => catStats[k].title);
@@ -532,7 +590,7 @@
             const dataS = keys.map(k => ((catStats[k].s / grandTotal) * 100).toFixed(1));
             const dataI = keys.map(k => ((catStats[k].i / grandTotal) * 100).toFixed(1));
 
-            new Chart(ctx, {
+            radarChartInstance = new Chart(ctx, {
                 type: 'radar',
                 data: {
                     labels: labels,
@@ -608,7 +666,8 @@
                 .filter(item => item.improvementCount > 0)
                 .slice(0, 5);
 
-            createHorizontalBar(
+            if (strengthsBarChartInstance) strengthsBarChartInstance.destroy();
+            strengthsBarChartInstance = createHorizontalBar(
                 document.getElementById('strengthsBarChart'), 
                 topStrengths.map(i => i.title), 
                 topStrengths.map(i => i.strengthCount),
@@ -616,7 +675,8 @@
                 'חוזקות'
             );
 
-            createHorizontalBar(
+            if (improvementsBarChartInstance) improvementsBarChartInstance.destroy();
+            improvementsBarChartInstance = createHorizontalBar(
                 document.getElementById('improvementsBarChart'), 
                 topImprovements.map(i => i.title), 
                 topImprovements.map(i => i.improvementCount),
@@ -626,7 +686,7 @@
         }
 
         function createHorizontalBar(canvas, labels, data, color, label) {
-            new Chart(canvas, {
+            return new Chart(canvas, {
                 type: 'bar',
                 data: {
                     labels: labels,

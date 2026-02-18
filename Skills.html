@@ -126,7 +126,7 @@
         <!-- Instructions -->
         <div class="bg-white rounded-lg p-4 mb-6 shadow-sm border border-gray-100 text-sm text-gray-600">
             <p>
-                אנא סקור/סקרי את הכישורים הבאים וסמן/י 
+                בשאלון זה הנכם מתבקשים לתת משוב למוערך/ת לגבי 16 כישורים בין אישיים שלו/ה, המחולקים ל-3 קטגוריות. אנא קראו את כלל ההיגדים לפני שתתחילו להשיב ולאחר מכן בחרו 
                 <span class="font-bold text-green-700">3-5 תחומים לשימור (חוזקות)</span> 
                 ו-
                 <span class="font-bold text-red-700">3-5 תחומים לשיפור</span>
@@ -141,9 +141,9 @@
 
         <!-- Free Text Area -->
         <div class="bg-white rounded-xl shadow-sm p-6 mt-6 border-t-4 border-gray-400">
-            <h3 id="free-text-title" class="text-lg font-bold text-gray-800 mb-2">הכרה והבעה של מגוון רגשות</h3>
+            <h3 id="free-text-title" class="text-lg font-bold text-gray-800 mb-2">התנהגויות נוספות שמשפיעות על יחסיו/ה עם אחרים</h3>
             <p id="free-text-desc" class="text-sm text-gray-500 mb-3">
-                האם ישנם רגשות שהמוערך/ת אינו/ה נוטה להרגיש או שקשה לו/ה להביע? רגשות חיוביים? רגשות שליליים? רגשות של פגיעות? האם הוא/היא רוצה לזהות או להביע יותר רגשות?
+                במידה ויש לך דברים נוספים לציין לגבי האופן בו המוערך/ת מתייחס לאחרים, שלא הופיע בשאלות הקודמות - אנא פרט/י
             </p>
             <textarea id="free-text" rows="5" 
                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
@@ -210,7 +210,7 @@
                 <!-- Free Text Section -->
                 <div id="report-notes-section" class="hidden">
                     <h2 id="report-free-text-title" class="flex items-center gap-3 text-xl font-bold text-gray-700 border-b pb-2 border-gray-200">
-                        <i class="fas fa-comment-alt"></i> הכרה והבעה של מגוון רגשות
+                        <i class="fas fa-comment-alt"></i> התנהגויות נוספות שמשפיעות על יחסיו/ה עם אחרים
                     </h2>
                     <div id="report-free-text" class="mt-4 text-gray-700 whitespace-pre-wrap leading-relaxed bg-gray-50 p-4 rounded-lg"></div>
                 </div>
@@ -238,7 +238,7 @@
         const MAX_SELECTION = 5;
         const MIN_SELECTION = 3;
 
-        // Data Structure - Updated with third-person phrasing
+        // Data Structure - Updated with third-person phrasing and new texts
         const categories = [
             {
                 id: 'self',
@@ -249,7 +249,7 @@
                     { id: 'aspects', title: 'ביטוי היבטים רבים של העצמי', desc: 'עד כמה הוא/היא נותן/ת לעצמו/ה להיות ידוע/ה במלואו/ה מול הצגת תדמית?' },
                     { id: 'acceptance', title: 'קבלה עצמית', desc: 'האם יש חלקים בעצמו/ה שקשה לו/ה לקבל? האם הוא/היא חש/ה בושה לגביהם?' },
                     { id: 'intuition', title: 'אמון באינטואיציה', desc: 'האם הוא/היא נוטה להיות אנליטי/ת מדי ולזלזל בתחושות הבטן שלו/ה? האם יש לו/ה ספק עצמי רב?' },
-                    { id: 'needs', title: 'מילוי הצרכים האישיים', desc: 'עד כמה הוא/היא מכבד/ת את הצרכים שלו/ה, או נוטה "לוותר עליהם" כשהם מתנגשים עם רצון אחרים?' },
+                    { id: 'needs', title: 'מילוי הצרכים האישיים', desc: 'עד כמה הוא/היא מכבד/ת את הצרכים שלו/ה, או נוטה "לוותר עליהם" כשהם מתנגשים עם רצון אחרים? האם הוא/היא מתקשרים את הצרכים שלהם או יודעים לשים גבולות לאחרים?' },
                     { id: 'direct', title: 'תקשורת ישירה והלימה', desc: 'האם הוא/היא מתקשר/ת באופן פתוח ותואם, או שולח/ת מסרים כפולים (למשל, חיוך בעת כעס)?' },
                     { id: 'approval', title: 'צורך באישור', desc: 'עד כמה הצורך שלו/ה בקבלה ואישור חזק עד כדי כך שהוא/היא "מוותר/ת על עצמו/ה"?' }
                 ]
@@ -259,7 +259,7 @@
                 title: 'קטגוריה 2: בניית מערכות יחסים',
                 color: 'indigo',
                 items: [
-                    { id: 'others_acceptance', title: 'קבלת האחר', desc: 'עד כמה הוא/היא מקבל/ת אחרים, במיוחד אלו עם ערכים שונים? האם הוא/היא נוטה לשיפוטיות?' },
+                    { id: 'others_acceptance', title: 'קבלת האחר', desc: 'עד כמה הוא/היא מקבל/ת אחרים, במיוחד אלו עם התנהגויות או ערכים שונים? האם הוא/היא נוטה לשיפוטיות?' },
                     { id: 'empathy', title: 'אמפתיה', desc: 'כמה קל לו/ה לחוש אמפתיה לאחרים? האם הוא/היא מצליח/ה להבין אנשים שונים ממנו/ה?' },
                     { id: 'confronting', title: 'עימות עם אחרים', desc: 'האם יש התנהגויות של אחרים שמפריעות לו/ה אך קשה לו/ה להעלות ולהציף אותן?' },
                     { id: 'conflict', title: 'ניהול קונפליקטים', desc: 'האם קשה לו/ה עם קונפליקטים? האם הוא/היא נוטה להיתקע בהם? האם הוא/היא פועל/ת לפתרון הדדי?' },
@@ -271,9 +271,9 @@
                 title: 'קטגוריה 3: תהליך למידה',
                 color: 'purple',
                 items: [
-                    { id: 'risks', title: 'לקיחת סיכונים וטעויות', desc: 'נכונות להתנסות בהתנהגות חדשה. האם קל לו/ה לקבל טעויות של עצמו/ה? האם חשוב לו/ה "לשמור פנים"?' },
-                    { id: 'receiving_feedback', title: 'קבלת משוב', desc: 'האם הוא/היא נפגע/ת בקלות ממשוב שלילי? הודפ/ת משוב חיובי? עד כמה הוא/היא לומד/ת ממשוב?' },
-                    { id: 'giving_feedback', title: 'מתן משוב', desc: 'האם הוא/היא מייפה את המציאות במשוב שלילי? נמנע/ת ממשוב חיובי? האם זה נעשה במיומנות?' },
+                    { id: 'risks', title: 'לקיחת סיכונים וטעויות', desc: 'נכונות להתנסות בהתנהגות חדשה. האם קל לו/ה לקבל טעויות של עצמו/ה? האם חשוב לו/ה להציג מראית עין של צודק, עד כדי כך שקשה לו להודות בטעות?' },
+                    { id: 'receiving_feedback', title: 'קבלת משוב', desc: 'האם הוא/היא נפגע/ת בקלות ממשוב שלילי? הודף/ת משוב חיובי? האם הוא מתעלם, "מתרסק" מזה? עד כמה הוא/היא לומד/ת ממשוב?' },
+                    { id: 'giving_feedback', title: 'מתן משוב', desc: 'עד כמה קל לו לתת משוב? האם הוא/היא מייפה משוב שלילי? נמנע/ת ממשוב חיובי? האם נותן את המשוב באלגנטיות או באופן מגושם?' },
                     { id: 'help', title: 'בקשת/קבלת עזרה', desc: 'כמה קל לו/ה לבקש או לקבל עזרה מאחרים בעת הצורך?' }
                 ]
             }
@@ -355,8 +355,6 @@
             }
 
             // Validation Logic (Check limit BEFORE adding)
-            // If we are trying to add a 'plus', ensure we haven't reached max plus
-            // Note: If switching from minus to plus, we don't need to check minus limit, only plus limit.
             
             if (type === 'plus') {
                 if (counts.plus >= MAX_SELECTION) {
@@ -569,23 +567,6 @@
             };
         }
 
-        function downloadJSON() {
-            const { data, filename } = getExportData();
-            const jsonString = JSON.stringify(data, null, 2);
-            
-            const blob = new Blob([jsonString], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            
-            a.download = filename;
-            a.href = url;
-            document.body.appendChild(a);
-            a.click();
-            
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
         async function shareJSONToWhatsApp() {
             const { data, filename } = getExportData();
             const jsonString = JSON.stringify(data, null, 2); // Pretty print for readability if sent as text
@@ -623,7 +604,6 @@
             }, 1000);
         }
 
-        // Removed the old shareToWhatsApp function to avoid confusion
         // Initialize App
         window.addEventListener('DOMContentLoaded', init);
 
