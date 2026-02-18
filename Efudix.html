@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעקב טיפול יומי</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Rubik', sans-serif;
+            background-color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Custom Checkbox Styling */
+        .custom-checkbox input:checked + div {
+            background-color: #059669; /* emerald-600 */
+            border-color: #059669;
+        }
+        
+        /* Smooth transitions */
+        .progress-bar {
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.5s ease;
+        }
+
+        .phase-divider {
+            position: relative;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        .phase-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: #e2e8f0;
+            z-index: 0;
+        }
+        .phase-divider span {
+            position: relative;
+            background: #f8fafc;
+            padding: 0 1rem;
+            color: #64748b;
+            font-size: 0.875rem;
+            font-weight: 500;
+            z-index: 1;
+        }
+
+        /* Modal Animation */
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .modal-content {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+    </style>
+</head>
+<body class="text-slate-800 pb-20">
+
+    <!-- Sticky Header with Progress -->
+    <header class="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur shadow-sm z-50 transition-all duration-300">
+        <div class="max-w-md mx-auto px-4 py-3">
+            <div class="flex justify-between items-end mb-2">
+                <div>
+                    <h1 class="text-lg font-bold text-slate-900">המסע שלי</h1>
+                    <p class="text-xs text-slate-500">מתחילים ב-16.2.26</p>
+                </div>
+                <div class="text-2xl font-bold transition-colors duration-300" id="percent-display">0%</div>
+            </div>
+            
+            <div class="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div id="progress-bar" class="h-full w-0 progress-bar rounded-full" style="background-color: #ef4444;"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-md mx-auto px-4 pt-24 space-y-3" id="app-container">
+        <!-- Content will be injected here by JS -->
+    </main>
+
+    <!-- Motivational Modal -->
+    <div id="modal" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-6 text-center max-w-xs w-full shadow-2xl modal-content">
+            <div class="text-4xl mb-4">🏆</div>
+            <h2 class="text-xl font-bold text-slate-900 mb-2" id="modal-title">כל הכבוד!</h2>
+            <p class="text-slate-600 mb-6" id="modal-message">הגעת ל-10% מהדרך!</p>
+            <button onclick="closeModal()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-medium active:scale-95 transition-transform">
+                ממשיכים בכל הכוח
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const START_DATE = new Date(2026, 1, 16); // Month is 0-indexed (1 = February)
+        const PHASE_1_DAYS = 21;
+        const PHASE_2_DAYS = 14;
+        const TOTAL_DAYS = PHASE_1_DAYS + PHASE_2_DAYS;
+        const TOTAL_CHECKS = TOTAL_DAYS * 2; // Morning + Evening
+        
+        // --- State Management ---
+        let state = JSON.parse(localStorage.getItem('treatmentState')) || {};
+        let lastMilestone = parseInt(localStorage.getItem('lastMilestone')) || 0;
+
+        // --- Encouragement Messages ---
+        const messages = {
+            10: "התחלה נהדרת! 10% כבר מאחורייך.",
+            20: "וואו! חמישית מהדרך הושלמה. גאה בך!",
+            30: "ההתמדה שלך משתלמת. ממשיכים!",
+            40: "כמעט בחצי הדרך, איזה כוח רצון!",
+            50: "חצי דרך! זה הזמן לטפוח לעצמך על השכם.",
+            60: "עברת את החצי, הירידה מתחילה מעכשיו.",
+            70: "נשאר רק עוד קצת, התוצאות כבר נראות.",
+            80: "ממש קרובים לקו הסיום! 80% הושלמו.",
+            90: "זהו, הסוף בפתח! עוד מאמץ קטן.",
+            100: "ניצחון! סיימת את כל הטיפולים בהצלחה אדירה!"
+        };
+
+        // --- Initialization ---
+        function init() {
+            const container = document.getElementById('app-container');
+            container.innerHTML = '';
+
+            let currentDate = new Date(START_DATE);
+
+            for (let i = 1; i <= TOTAL_DAYS; i++) {
+                // Add Phase Divider
+                if (i === PHASE_1_DAYS + 1) {
+                    const divider = document.createElement('div');
+                    divider.className = 'phase-divider';
+                    divider.innerHTML = '<span>שלב ב\' - חיזוק (14 יום נוספים)</span>';
+                    container.appendChild(divider);
+                }
+
+                const dayId = `day-${i}`;
+                const dateStr = formatDate(currentDate);
+                
+                // Create Card
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-xl p-4 shadow-sm border border-slate-100 ${i > PHASE_1_DAYS ? 'bg-slate-50' : ''}`;
+                
+                // Card Header
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'flex justify-between items-center mb-3 pb-2 border-b border-slate-50';
+                dayHeader.innerHTML = `
+                    <span class="font-bold text-slate-800">יום ${i}</span>
+                    <span class="text-sm text-slate-400 font-mono bg-slate-50 px-2 py-1 rounded">${dateStr}</span>
+                `;
+                card.appendChild(dayHeader);
+
+                // Inputs Container
+                const inputsGrid = document.createElement('div');
+                inputsGrid.className = 'grid grid-cols-2 gap-4';
+
+                // Morning Checkbox
+                inputsGrid.appendChild(createCheckbox(i, 'morning', 'בוקר', '☀️'));
+                // Evening Checkbox
+                inputsGrid.appendChild(createCheckbox(i, 'evening', 'ערב', '🌙'));
+
+                card.appendChild(inputsGrid);
+                container.appendChild(card);
+
+                // Increment Date
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            updateProgress(false); // Initial calculation without triggering modal
+        }
+
+        // --- Helper Functions ---
+
+        function formatDate(date) {
+            const d = date.getDate();
+            const m = date.getMonth() + 1;
+            const y = date.getFullYear().toString().slice(-2);
+            return `${d}.${m}.${y}`;
+        }
+
+        function createCheckbox(day, time, labelText, icon) {
+            const id = `${day}-${time}`;
+            const isChecked = state[id] === true;
+
+            const wrapper = document.createElement('label');
+            wrapper.className = 'custom-checkbox cursor-pointer relative group';
+
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.className = 'sr-only'; // hidden
+            input.checked = isChecked;
+            input.onchange = (e) => toggleCheck(id, e.target.checked);
+
+            const visual = document.createElement('div');
+            visual.className = `
+                h-14 rounded-lg border-2 transition-all duration-200 flex items-center px-3 gap-3
+                ${isChecked ? 'bg-emerald-600 border-emerald-600' : 'bg-white border-slate-200 hover:border-slate-300'}
+            `;
+            
+            // Icon / Checkmark Logic
+            const checkIcon = `
+                <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors
+                    ${isChecked ? 'bg-white border-white' : 'border-slate-300 bg-white'}">
+                    ${isChecked ? '<svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>' : ''}
+                </div>
+            `;
+
+            visual.innerHTML = `
+                ${checkIcon}
+                <div class="flex flex-col">
+                    <span class="text-xs font-medium ${isChecked ? 'text-emerald-50' : 'text-slate-400'}">${icon} ${labelText}</span>
+                    <span class="text-sm font-semibold ${isChecked ? 'text-white' : 'text-slate-600'}">
+                        ${isChecked ? 'בוצע' : 'לביצוע'}
+                    </span>
+                </div>
+            `;
+
+            wrapper.appendChild(input);
+            wrapper.appendChild(visual);
+
+            // Re-render visual on change manually for instant feedback
+            input.addEventListener('change', () => {
+                 const isNowChecked = input.checked;
+                 const div = wrapper.querySelector('div');
+                 const iconDiv = div.firstElementChild;
+                 const labelSpan = div.lastElementChild.firstElementChild;
+                 const statusSpan = div.lastElementChild.lastElementChild;
+
+                 if (isNowChecked) {
+                     div.className = 'h-14 rounded-lg border-2 transition-all duration-200 flex items-center px-3 gap-3 bg-emerald-600 border-emerald-600';
+                     iconDiv.className = 'w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors bg-white border-white';
+                     iconDiv.innerHTML = '<svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>';
+                     labelSpan.className = 'text-xs font-medium text-emerald-50';
+                     statusSpan.className = 'text-sm font-semibold text-white';
+                     statusSpan.innerText = 'בוצע';
+                 } else {
+                     div.className = 'h-14 rounded-lg border-2 transition-all duration-200 flex items-center px-3 gap-3 bg-white border-slate-200 hover:border-slate-300';
+                     iconDiv.className = 'w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors border-slate-300 bg-white';
+                     iconDiv.innerHTML = '';
+                     labelSpan.className = 'text-xs font-medium text-slate-400';
+                     statusSpan.className = 'text-sm font-semibold text-slate-600';
+                     statusSpan.innerText = 'לביצוע';
+                 }
+            });
+
+            return wrapper;
+        }
+
+        function toggleCheck(id, isChecked) {
+            state[id] = isChecked;
+            localStorage.setItem('treatmentState', JSON.stringify(state));
+            updateProgress(true);
+        }
+
+        function updateProgress(showModal) {
+            const checkedCount = Object.values(state).filter(Boolean).length;
+            const percentage = Math.floor((checkedCount / TOTAL_CHECKS) * 100);
+
+            // Update UI
+            document.getElementById('percent-display').innerText = `${percentage}%`;
+            
+            const progressBar = document.getElementById('progress-bar');
+            progressBar.style.width = `${percentage}%`;
+
+            // Color Interpolation (Red -> Yellow -> Green)
+            const hue = (percentage / 100) * 120; 
+            progressBar.style.backgroundColor = `hsl(${hue}, 80%, 50%)`;
+            document.getElementById('percent-display').style.color = `hsl(${hue}, 70%, 35%)`;
+
+            // Milestone Logic
+            if (showModal) {
+                if (percentage > lastMilestone && percentage % 10 === 0) {
+                    showMilestoneModal(percentage);
+                    lastMilestone = percentage;
+                    localStorage.setItem('lastMilestone', lastMilestone);
+                } 
+                else if (percentage < lastMilestone) {
+                    lastMilestone = Math.floor(percentage / 10) * 10;
+                    localStorage.setItem('lastMilestone', lastMilestone);
+                }
+            }
+        }
+
+        function showMilestoneModal(percent) {
+            const modal = document.getElementById('modal');
+            const title = document.getElementById('modal-title');
+            const msg = document.getElementById('modal-message');
+
+            title.innerText = `הגעת ל-${percent}%!`;
+            msg.innerText = messages[percent] || "התקדמות מדהימה, להמשיך כך!";
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+
+        // Run App
+        init();
+
+    </script>
+</body>
+</html>
