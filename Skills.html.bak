@@ -29,7 +29,6 @@
                 margin: 0;
                 padding: 0;
             }
-            textarea { border: none; resize: none; }
         }
 
         .print-only { display: none; }
@@ -53,35 +52,28 @@
             font-weight: bold;
         }
 
-        /* Toast Notification - Updated for better mobile visibility */
+        /* Toast Notification */
         #toast {
             visibility: hidden;
-            min-width: 300px;
+            min-width: 250px;
             background-color: #333;
             color: #fff;
             text-align: center;
             border-radius: 8px;
             padding: 16px;
             position: fixed;
-            z-index: 9999; /* Max z-index */
+            z-index: 100;
             left: 50%;
-            top: 20px; /* Moved to top to avoid keyboard/footer overlap */
+            bottom: 80px;
             transform: translateX(-50%);
             opacity: 0;
-            transition: opacity 0.3s;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            font-weight: bold;
+            transition: opacity 0.3s, bottom 0.3s;
         }
 
         #toast.show {
             visibility: visible;
             opacity: 1;
-        }
-
-        /* Dynamic Name Styling */
-        .name-placeholder {
-            font-weight: 600;
-            color: #2563eb; /* blue-600 */
+            bottom: 100px;
         }
     </style>
 </head>
@@ -123,9 +115,9 @@
             <div class="bg-blue-50 rounded-xl shadow-sm p-5 border-t-4 border-blue-600">
                 <div class="flex items-center gap-2 mb-3 text-blue-900">
                     <i class="fas fa-user text-blue-600"></i>
-                    <h2 class="font-bold text-sm uppercase tracking-wide">פרטי המוערכת</h2>
+                    <h2 class="font-bold text-sm uppercase tracking-wide">פרטי המוערך/ת</h2>
                 </div>
-                <label for="evaluatee-name" class="block text-xs font-medium text-blue-600 mb-1">שם המוערכת (יעדכן את השאלות):</label>
+                <label for="evaluatee-name" class="block text-xs font-medium text-blue-600 mb-1">שם האדם המוערך:</label>
                 <input type="text" id="evaluatee-name" placeholder="על מי המשוב?" 
                     class="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors">
             </div>
@@ -134,11 +126,11 @@
         <!-- Instructions -->
         <div class="bg-white rounded-lg p-4 mb-6 shadow-sm border border-gray-100 text-sm text-gray-600">
             <p>
-                בשאלון זה הנכם מתבקשים לתת משוב למוערכת לגבי 16 כישורים בין אישיים שלה, המחולקים ל-3 קטגוריות. אנא קראו את כלל ההיגדים לפני שתתחילו להשיב ולאחר מכן בחרו 
+                בשאלון זה הנכם מתבקשים לתת משוב למוערך/ת לגבי 16 כישורים בין אישיים שלו/ה, המחולקים ל-3 קטגוריות. אנא קראו את כלל ההיגדים לפני שתתחילו להשיב ולאחר מכן בחרו 
                 <span class="font-bold text-green-700">3-5 תחומים לשימור (חוזקות)</span> 
                 ו-
                 <span class="font-bold text-red-700">3-5 תחומים לשיפור</span>
-                אצל המוערכת.
+                אצל המוערך/ת.
             </p>
         </div>
 
@@ -147,43 +139,16 @@
             <!-- Questions will be injected here by JS -->
         </div>
 
-        <!-- Extra Open Questions -->
-        <div class="space-y-6 mt-8">
-            
-            <div class="bg-white rounded-xl shadow-sm p-6 border-t-4 border-gray-400">
-                <h3 class="text-lg font-bold text-gray-800 mb-2">התנהגויות נוספות</h3>
-                <p class="text-sm text-gray-500 mb-3">
-                    במידה ויש לך דברים נוספים לציין לגבי האופן בו <span class="name-display">המוערכת</span> מתייחסת לאחרים, שלא הופיע בשאלות הקודמות - אנא פרט/י
-                </p>
-                <textarea id="free-text" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
-            </div>
-
-            <div class="bg-indigo-50 rounded-xl shadow-sm p-6 border-t-4 border-indigo-400">
-                <h3 class="text-lg font-bold text-indigo-900 mb-2">איכות מיוחדת</h3>
-                <p class="text-sm text-indigo-700 mb-3">
-                    כאשר <span class="name-display">היא</span> במיטבה, איזו איכות מיוחדת, אנרגיה או ערך מוסף היא מביאה איתה 'לחדר'? מהו הדבר האחד שחסר כאשר היא לא שם, ושמבדיל אותה מאנשים אחרים?
-                </p>
-                <textarea id="q-special-quality" rows="3" class="w-full px-4 py-3 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
-            </div>
-
-            <div class="bg-purple-50 rounded-xl shadow-sm p-6 border-t-4 border-purple-400">
-                <h3 class="text-lg font-bold text-purple-900 mb-2">חסמים ופוטנציאל</h3>
-                <p class="text-sm text-purple-700 mb-3">
-                    מה לדעתך עשוי לעכב או למנוע ממנה לממש את מלוא הפוטנציאל המקצועי שלה? (האם יש דפוס התנהגות, פחד או הרגל שכדאי לה להיות מודעת אליו ולעבוד עליו?)
-                </p>
-                <textarea id="q-barriers" rows="3" class="w-full px-4 py-3 border border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"></textarea>
-            </div>
-
-            <div class="bg-green-50 rounded-xl shadow-sm p-6 border-t-4 border-green-400">
-                <h3 class="text-lg font-bold text-green-900 mb-2">תפקיד החלומות</h3>
-                <p class="text-sm text-green-700 mb-3">
-                    אם הייתה לך אפשרות לשבץ אותה בכל תפקיד, סביבת עבודה או עיסוק בעולם, ללא מגבלות של כסף או ניסיון – איפה הכי טבעי ונכון לה להיות? באיזה תפקיד העיניים שלה ינצצו?
-                </p>
-                <textarea id="q-dream-role" rows="3" class="w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"></textarea>
-            </div>
-
+        <!-- Free Text Area -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mt-6 border-t-4 border-gray-400">
+            <h3 id="free-text-title" class="text-lg font-bold text-gray-800 mb-2">התנהגויות נוספות שמשפיעות על יחסיו/ה עם אחרים</h3>
+            <p id="free-text-desc" class="text-sm text-gray-500 mb-3">
+                במידה ויש לך דברים נוספים לציין לגבי האופן בו המוערך/ת מתייחס לאחרים, שלא הופיע בשאלות הקודמות - אנא פרט/י
+            </p>
+            <textarea id="free-text" rows="5" 
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                placeholder="כתוב/כתבי את תשובתך כאן..."></textarea>
         </div>
-
 
         <!-- Action Button -->
         <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-40">
@@ -242,32 +207,12 @@
                     <ul id="report-improvements-list" class="mt-4 space-y-3 pr-4"></ul>
                 </div>
 
-                <!-- Free Text Section (Original) -->
+                <!-- Free Text Section -->
                 <div id="report-notes-section" class="hidden">
-                    <h2 class="flex items-center gap-3 text-xl font-bold text-gray-700 border-b pb-2 border-gray-200">
-                        <i class="fas fa-comment-alt"></i> הערות נוספות
+                    <h2 id="report-free-text-title" class="flex items-center gap-3 text-xl font-bold text-gray-700 border-b pb-2 border-gray-200">
+                        <i class="fas fa-comment-alt"></i> התנהגויות נוספות שמשפיעות על יחסיו/ה עם אחרים
                     </h2>
                     <div id="report-free-text" class="mt-4 text-gray-700 whitespace-pre-wrap leading-relaxed bg-gray-50 p-4 rounded-lg"></div>
-                </div>
-
-                <!-- New Open Questions Sections -->
-                <div id="report-extra-questions" class="space-y-6 hidden">
-                    
-                    <div id="wrapper-special-quality" class="hidden">
-                        <h2 class="text-lg font-bold text-indigo-800 border-b border-indigo-100 pb-1 mb-2">איכות מיוחדת / ערך מוסף</h2>
-                        <div id="report-special-quality" class="text-gray-700 bg-indigo-50 p-4 rounded-lg"></div>
-                    </div>
-
-                    <div id="wrapper-barriers" class="hidden">
-                        <h2 class="text-lg font-bold text-purple-800 border-b border-purple-100 pb-1 mb-2">חסמים ופוטנציאל</h2>
-                        <div id="report-barriers" class="text-gray-700 bg-purple-50 p-4 rounded-lg"></div>
-                    </div>
-
-                    <div id="wrapper-dream-role" class="hidden">
-                        <h2 class="text-lg font-bold text-green-800 border-b border-green-100 pb-1 mb-2">תפקיד החלומות</h2>
-                        <div id="report-dream-role" class="text-gray-700 bg-green-50 p-4 rounded-lg"></div>
-                    </div>
-
                 </div>
                 
             </div>
@@ -279,9 +224,6 @@
                 </button>
                 <button onclick="shareJSONToWhatsApp()" class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium shadow-md">
                     <i class="fab fa-whatsapp"></i> שלח נתונים בווטסאפ
-                </button>
-                <button onclick="copyToClipboard()" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium shadow-md">
-                    <i class="fas fa-copy"></i> העתק נתונים
                 </button>
             </div>
         </div>
@@ -296,20 +238,20 @@
         const MAX_SELECTION = 5;
         const MIN_SELECTION = 3;
 
-        // Data Structure - Updated with placeholders {{name}} and Female Gender
+        // Data Structure - Updated with third-person phrasing and new texts
         const categories = [
             {
                 id: 'self',
                 title: 'קטגוריה 1: להיות עצמך באופן מלא',
                 color: 'blue',
                 items: [
-                    { id: 'emotions', title: 'זיהוי והבעת מגוון רגשות', desc: 'האם <span class="name-display">היא</span> מזהה ומביעה מגוון רגשות? האם יש רגשות שקשה לה להביע (חיוביים, שליליים, פגיעות)?' },
-                    { id: 'aspects', title: 'ביטוי היבטים רבים של העצמי', desc: 'עד כמה <span class="name-display">היא</span> נותנת לעצמה להיות ידועה במלואה מול הצגת תדמית?' },
-                    { id: 'acceptance', title: 'קבלה עצמית', desc: 'האם יש חלקים בעצמה שקשה לה לקבל? האם <span class="name-display">היא</span> חשה בושה לגביהם?' },
-                    { id: 'intuition', title: 'אמון באינטואיציה', desc: 'האם <span class="name-display">היא</span> נוטה להיות אנליטית מדי ולזלזל בתחושות הבטן שלה? האם יש לה ספק עצמי רב?' },
-                    { id: 'needs', title: 'מילוי הצרכים האישיים', desc: 'עד כמה <span class="name-display">היא</span> מכבדת את הצרכים שלה, או נוטה "לוותר עליהם" כשהם מתנגשים עם רצון אחרים? האם <span class="name-display">היא</span> מתקשרת את הצרכים שלה או יודעת לשים גבולות לאחרים?' },
-                    { id: 'direct', title: 'תקשורת ישירה והלימה', desc: 'האם <span class="name-display">היא</span> מתקשרת באופן פתוח ותואם, או שולחת מסרים כפולים (למשל, חיוך בעת כעס)?' },
-                    { id: 'approval', title: 'צורך באישור', desc: 'עד כמה הצורך שלה בקבלה ואישור חזק עד כדי כך ש<span class="name-display">היא</span> "מוותרת על עצמה"?' }
+                    { id: 'emotions', title: 'זיהוי והבעת מגוון רגשות', desc: 'האם המוערך/ת מזהה ומביע/ה מגוון רגשות? האם יש רגשות שקשה לו/ה להביע (חיוביים, שליליים, פגיעות)?' },
+                    { id: 'aspects', title: 'ביטוי היבטים רבים של העצמי', desc: 'עד כמה הוא/היא נותן/ת לעצמו/ה להיות ידוע/ה במלואו/ה מול הצגת תדמית?' },
+                    { id: 'acceptance', title: 'קבלה עצמית', desc: 'האם יש חלקים בעצמו/ה שקשה לו/ה לקבל? האם הוא/היא חש/ה בושה לגביהם?' },
+                    { id: 'intuition', title: 'אמון באינטואיציה', desc: 'האם הוא/היא נוטה להיות אנליטי/ת מדי ולזלזל בתחושות הבטן שלו/ה? האם יש לו/ה ספק עצמי רב?' },
+                    { id: 'needs', title: 'מילוי הצרכים האישיים', desc: 'עד כמה הוא/היא מכבד/ת את הצרכים שלו/ה, או נוטה "לוותר עליהם" כשהם מתנגשים עם רצון אחרים? האם הוא/היא מתקשרים את הצרכים שלהם או יודעים לשים גבולות לאחרים?' },
+                    { id: 'direct', title: 'תקשורת ישירה והלימה', desc: 'האם הוא/היא מתקשר/ת באופן פתוח ותואם, או שולח/ת מסרים כפולים (למשל, חיוך בעת כעס)?' },
+                    { id: 'approval', title: 'צורך באישור', desc: 'עד כמה הצורך שלו/ה בקבלה ואישור חזק עד כדי כך שהוא/היא "מוותר/ת על עצמו/ה"?' }
                 ]
             },
             {
@@ -317,11 +259,11 @@
                 title: 'קטגוריה 2: בניית מערכות יחסים',
                 color: 'indigo',
                 items: [
-                    { id: 'others_acceptance', title: 'קבלת האחר', desc: 'עד כמה <span class="name-display">היא</span> מקבלת אחרים, במיוחד אלו עם התנהגויות או ערכים שונים? האם <span class="name-display">היא</span> נוטה לשיפוטיות?' },
-                    { id: 'empathy', title: 'אמפתיה', desc: 'כמה קל לה לחוש אמפתיה לאחרים? האם <span class="name-display">היא</span> מצליחה להבין אנשים שונים ממנה?' },
-                    { id: 'confronting', title: 'עימות עם אחרים', desc: 'האם יש התנהגויות של אחרים שמפריעות לה אך קשה לה להעלות ולהציף אותן?' },
-                    { id: 'conflict', title: 'ניהול קונפליקטים', desc: 'האם קשה לה עם קונפליקטים? האם <span class="name-display">היא</span> נוטה להיתקע בהם? האם <span class="name-display">היא</span> פועלת לפתרון הדדי?' },
-                    { id: 'influence', title: 'יכולת השפעה', desc: 'האם <span class="name-display">היא</span> מוותרת על הכוח שלה? או להפך, דוחפת את דעתה חזק מדי ומתנגדת להשפעה של אחרים?' }
+                    { id: 'others_acceptance', title: 'קבלת האחר', desc: 'עד כמה הוא/היא מקבל/ת אחרים, במיוחד אלו עם התנהגויות או ערכים שונים? האם הוא/היא נוטה לשיפוטיות?' },
+                    { id: 'empathy', title: 'אמפתיה', desc: 'כמה קל לו/ה לחוש אמפתיה לאחרים? האם הוא/היא מצליח/ה להבין אנשים שונים ממנו/ה?' },
+                    { id: 'confronting', title: 'עימות עם אחרים', desc: 'האם יש התנהגויות של אחרים שמפריעות לו/ה אך קשה לו/ה להעלות ולהציף אותן?' },
+                    { id: 'conflict', title: 'ניהול קונפליקטים', desc: 'האם קשה לו/ה עם קונפליקטים? האם הוא/היא נוטה להיתקע בהם? האם הוא/היא פועל/ת לפתרון הדדי?' },
+                    { id: 'influence', title: 'יכולת השפעה', desc: 'האם הוא/היא מוותר/ת על הכוח שלו/ה? או להפך, דוחף/ת את דעתו/ה חזק מדי ומתנגד/ת להשפעה של אחרים?' }
                 ]
             },
             {
@@ -329,10 +271,10 @@
                 title: 'קטגוריה 3: תהליך למידה',
                 color: 'purple',
                 items: [
-                    { id: 'risks', title: 'לקיחת סיכונים וטעויות', desc: 'נכונות להתנסות בהתנהגות חדשה. האם קל לה לקבל טעויות של עצמה? האם חשוב לה להציג מראית עין של צודקת, עד כדי כך שקשה לה להודות בטעות?' },
-                    { id: 'receiving_feedback', title: 'קבלת משוב', desc: 'האם <span class="name-display">היא</span> נפגעת בקלות ממשוב שלילי? הודפת משוב חיובי? האם <span class="name-display">היא</span> מתעלמת, "מתרסקת" מזה? עד כמה <span class="name-display">היא</span> לומדת ממשוב?' },
-                    { id: 'giving_feedback', title: 'מתן משוב', desc: 'עד כמה קל לה לתת משוב? האם <span class="name-display">היא</span> מייפה משוב שלילי? נמנעת ממשוב חיובי? האם נותנת את המשוב באלגנטיות או באופן מגושם?' },
-                    { id: 'help', title: 'בקשת/קבלת עזרה', desc: 'כמה קל לה לבקש או לקבל עזרה מאחרים בעת הצורך?' }
+                    { id: 'risks', title: 'לקיחת סיכונים וטעויות', desc: 'נכונות להתנסות בהתנהגות חדשה. האם קל לו/ה לקבל טעויות של עצמו/ה? האם חשוב לו/ה להציג מראית עין של צודק, עד כדי כך שקשה לו להודות בטעות?' },
+                    { id: 'receiving_feedback', title: 'קבלת משוב', desc: 'האם הוא/היא נפגע/ת בקלות ממשוב שלילי? הודף/ת משוב חיובי? האם הוא מתעלם, "מתרסק" מזה? עד כמה הוא/היא לומד/ת ממשוב?' },
+                    { id: 'giving_feedback', title: 'מתן משוב', desc: 'עד כמה קל לו לתת משוב? האם הוא/היא מייפה משוב שלילי? נמנע/ת ממשוב חיובי? האם נותן את המשוב באלגנטיות או באופן מגושם?' },
+                    { id: 'help', title: 'בקשת/קבלת עזרה', desc: 'כמה קל לו/ה לבקש או לקבל עזרה מאחרים בעת הצורך?' }
                 ]
             }
         ];
@@ -355,13 +297,6 @@
         // Render Functions
         function init() {
             const container = document.getElementById('questions-container');
-            const nameInput = document.getElementById('evaluatee-name');
-
-            // Name Update Listener
-            nameInput.addEventListener('input', (e) => {
-                const name = e.target.value.trim() || 'היא';
-                updateNameInDOM(name);
-            });
             
             categories.forEach(category => {
                 const catDiv = document.createElement('div');
@@ -404,14 +339,6 @@
                 html += `</div>`;
                 catDiv.innerHTML = html;
                 container.appendChild(catDiv);
-            });
-        }
-
-        function updateNameInDOM(name) {
-            const elements = document.querySelectorAll('.name-display');
-            elements.forEach(el => {
-                el.textContent = name;
-                el.classList.add('name-placeholder');
             });
         }
 
@@ -495,151 +422,99 @@
             toast.innerText = message;
             toast.className = 'show'; // Reset classes
             if (type === 'error') {
-                toast.style.backgroundColor = '#d32f2f'; // Red for errors
+                toast.style.backgroundColor = '#d32f2f';
             } else {
                 toast.style.backgroundColor = '#333';
             }
             
-            setTimeout(function(){ toast.className = toast.className.replace('show', ''); }, 3500);
+            setTimeout(function(){ toast.className = toast.className.replace('show', ''); }, 3000);
         }
 
         // Report Generation
         function generateReport() {
-            try {
-                const counts = getCounts();
+            const counts = getCounts();
 
-                // Validate Minimums
-                if (counts.plus < MIN_SELECTION) {
-                    showToast(`⚠️ חסרות בחירות: בחרת ${counts.plus} חוזקות (נדרש 3-5)`, 'error');
-                    return;
-                }
-                if (counts.minus < MIN_SELECTION) {
-                    showToast(`⚠️ חסרות בחירות: בחרת ${counts.minus} נקודות לשיפור (נדרש 3-5)`, 'error');
-                    return;
-                }
-
-                const evaluateeName = document.getElementById('evaluatee-name').value || "ללא שם";
-                const evaluatorName = document.getElementById('evaluator-name').value || "לא צוין";
-                const freeText = document.getElementById('free-text').value;
-                const qSpecial = document.getElementById('q-special-quality').value;
-                const qBarriers = document.getElementById('q-barriers').value;
-                const qDream = document.getElementById('q-dream-role').value;
-                
-                const dateStr = new Date().toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric' });
-
-                // Populate Report Header
-                document.getElementById('report-for-name').innerText = evaluateeName;
-                document.getElementById('report-by-name').innerText = evaluatorName;
-                document.getElementById('report-date').innerText = dateStr;
-
-                // Gather Items
-                const strengths = [];
-                const improvements = [];
-                
-                const safeName = evaluateeName || 'היא';
-
-                categories.forEach(cat => {
-                    cat.items.forEach(item => {
-                        // Replace placeholder span logic with actual name for the report text
-                        let descText = item.desc.replace(/<span class="name-display">.*?<\/span>/g, safeName);
-                        
-                        const itemObj = { title: item.title, desc: descText };
-
-                        if (state[item.id] === 'plus') strengths.push(itemObj);
-                        if (state[item.id] === 'minus') improvements.push(itemObj);
-                    });
-                });
-
-                // Populate Lists
-                const sList = document.getElementById('report-strengths-list');
-                const iList = document.getElementById('report-improvements-list');
-                
-                sList.innerHTML = '';
-                iList.innerHTML = '';
-
-                // Visibility Logic
-                const sSection = document.getElementById('report-strengths-section');
-                const iSection = document.getElementById('report-improvements-section');
-                const nSection = document.getElementById('report-notes-section');
-                const extraQSection = document.getElementById('report-extra-questions');
-                
-                // Strengths
-                if (strengths.length > 0) {
-                    sSection.classList.remove('hidden');
-                    strengths.forEach(item => {
-                        sList.innerHTML += `
-                            <li class="bg-green-50 p-3 rounded-lg border-r-4 border-green-500">
-                                <span class="font-bold text-green-900">${item.title}</span>
-                                <div class="text-xs text-green-700 mt-1">${item.desc}</div>
-                            </li>`;
-                    });
-                } else {
-                    sSection.classList.add('hidden');
-                }
-
-                // Improvements
-                if (improvements.length > 0) {
-                    iSection.classList.remove('hidden');
-                    improvements.forEach(item => {
-                        iList.innerHTML += `
-                            <li class="bg-red-50 p-3 rounded-lg border-r-4 border-red-500">
-                                <span class="font-bold text-red-900">${item.title}</span>
-                                <div class="text-xs text-red-700 mt-1">${item.desc}</div>
-                            </li>`;
-                    });
-                } else {
-                    iSection.classList.add('hidden');
-                }
-
-                // Free Text
-                if (freeText.trim().length > 0) {
-                    nSection.classList.remove('hidden');
-                    document.getElementById('report-free-text').innerText = freeText;
-                } else {
-                    nSection.classList.add('hidden');
-                }
-
-                // Extra Questions
-                let hasExtra = false;
-                
-                if (qSpecial.trim()) {
-                    document.getElementById('wrapper-special-quality').classList.remove('hidden');
-                    document.getElementById('report-special-quality').innerText = qSpecial;
-                    hasExtra = true;
-                } else {
-                    document.getElementById('wrapper-special-quality').classList.add('hidden');
-                }
-
-                if (qBarriers.trim()) {
-                    document.getElementById('wrapper-barriers').classList.remove('hidden');
-                    document.getElementById('report-barriers').innerText = qBarriers;
-                    hasExtra = true;
-                } else {
-                    document.getElementById('wrapper-barriers').classList.add('hidden');
-                }
-
-                if (qDream.trim()) {
-                    document.getElementById('wrapper-dream-role').classList.remove('hidden');
-                    document.getElementById('report-dream-role').innerText = qDream;
-                    hasExtra = true;
-                } else {
-                    document.getElementById('wrapper-dream-role').classList.add('hidden');
-                }
-
-                if (hasExtra) {
-                    extraQSection.classList.remove('hidden');
-                } else {
-                    extraQSection.classList.add('hidden');
-                }
-
-                // Show Report Modal
-                const reportView = document.getElementById('report-view');
-                reportView.classList.remove('hidden');
-                reportView.scrollTop = 0;
-            } catch (e) {
-                console.error(e);
-                alert("שגיאה במערכת: אנא נסה שוב או רענן את העמוד.");
+            // Validate Minimums
+            if (counts.plus < MIN_SELECTION) {
+                showToast(`אנא בחר/י לפחות ${MIN_SELECTION} חוזקות (סימנת ${counts.plus})`, 'error');
+                return;
             }
+            if (counts.minus < MIN_SELECTION) {
+                showToast(`אנא בחר/י לפחות ${MIN_SELECTION} נקודות לשיפור (סימנת ${counts.minus})`, 'error');
+                return;
+            }
+
+            const evaluateeName = document.getElementById('evaluatee-name').value || "ללא שם";
+            const evaluatorName = document.getElementById('evaluator-name').value || "לא צוין";
+            const freeText = document.getElementById('free-text').value;
+            const dateStr = new Date().toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            // Populate Report Header
+            document.getElementById('report-for-name').innerText = evaluateeName;
+            document.getElementById('report-by-name').innerText = evaluatorName;
+            document.getElementById('report-date').innerText = dateStr;
+
+            // Gather Items
+            const strengths = [];
+            const improvements = [];
+
+            categories.forEach(cat => {
+                cat.items.forEach(item => {
+                    if (state[item.id] === 'plus') strengths.push(item);
+                    if (state[item.id] === 'minus') improvements.push(item);
+                });
+            });
+
+            // Populate Lists
+            const sList = document.getElementById('report-strengths-list');
+            const iList = document.getElementById('report-improvements-list');
+            
+            sList.innerHTML = '';
+            iList.innerHTML = '';
+
+            // Visibility Logic
+            const sSection = document.getElementById('report-strengths-section');
+            const iSection = document.getElementById('report-improvements-section');
+            const nSection = document.getElementById('report-notes-section');
+            
+            // Should always have content due to validation, but good to be safe
+            if (strengths.length > 0) {
+                sSection.classList.remove('hidden');
+                strengths.forEach(item => {
+                    sList.innerHTML += `
+                        <li class="bg-green-50 p-3 rounded-lg border-r-4 border-green-500">
+                            <span class="font-bold text-green-900">${item.title}</span>
+                            <div class="text-xs text-green-700 mt-1">${item.desc}</div>
+                        </li>`;
+                });
+            } else {
+                sSection.classList.add('hidden');
+            }
+
+            if (improvements.length > 0) {
+                iSection.classList.remove('hidden');
+                improvements.forEach(item => {
+                    iList.innerHTML += `
+                        <li class="bg-red-50 p-3 rounded-lg border-r-4 border-red-500">
+                            <span class="font-bold text-red-900">${item.title}</span>
+                            <div class="text-xs text-red-700 mt-1">${item.desc}</div>
+                        </li>`;
+                });
+            } else {
+                iSection.classList.add('hidden');
+            }
+
+            if (freeText.trim().length > 0) {
+                nSection.classList.remove('hidden');
+                document.getElementById('report-free-text').innerText = freeText;
+            } else {
+                nSection.classList.add('hidden');
+            }
+
+            // Show Report Modal
+            const reportView = document.getElementById('report-view');
+            reportView.classList.remove('hidden');
+            reportView.scrollTop = 0;
         }
 
         function closeReport() {
@@ -651,27 +526,19 @@
             const evaluateeName = document.getElementById('evaluatee-name').value || "ללא שם";
             const evaluatorName = document.getElementById('evaluator-name').value || "לא צוין";
             const freeText = document.getElementById('free-text').value;
-            const qSpecial = document.getElementById('q-special-quality').value;
-            const qBarriers = document.getElementById('q-barriers').value;
-            const qDream = document.getElementById('q-dream-role').value;
-            
             const dateStr = new Date().toISOString();
-            const safeName = evaluateeName || 'היא';
 
             const strengths = [];
             const improvements = [];
 
             categories.forEach(cat => {
                 cat.items.forEach(item => {
-                    // Clean description for export
-                    let descText = item.desc.replace(/<span class="name-display">.*?<\/span>/g, safeName);
-
                     const itemData = {
                         id: item.id,
                         categoryId: cat.id,
                         categoryTitle: cat.title,
                         title: item.title,
-                        description: descText
+                        description: item.desc
                     };
 
                     if (state[item.id] === 'plus') strengths.push(itemData);
@@ -682,9 +549,9 @@
             return {
                 data: {
                     meta: {
-                        version: "1.1", // Bump version
+                        version: "1.0",
                         exportDate: dateStr,
-                        source: "Stanford Interpersonal Skills Feedback Form (Fem)"
+                        source: "Stanford Interpersonal Skills Feedback Form"
                     },
                     participants: {
                         evaluator: evaluatorName,
@@ -693,12 +560,7 @@
                     feedback: {
                         strengths: strengths,
                         improvements: improvements,
-                        generalNotes: freeText,
-                        extraQuestions: {
-                            specialQuality: qSpecial,
-                            barriers: qBarriers,
-                            dreamRole: qDream
-                        }
+                        generalNotes: freeText
                     }
                 },
                 filename: `feedback_${evaluateeName.replace(/[^a-z0-9א-ת]/gi, '_').substring(0, 20)}.json`
@@ -740,30 +602,6 @@
             setTimeout(() => {
                 window.open(whatsappUrl, '_blank');
             }, 1000);
-        }
-        
-        async function copyToClipboard() {
-             const { data } = getExportData();
-             const jsonString = JSON.stringify(data, null, 2);
-             
-             try {
-                 await navigator.clipboard.writeText(jsonString);
-                 showToast("הנתונים הועתקו ללוח בהצלחה!", "success");
-             } catch (err) {
-                 console.error("Failed to copy", err);
-                 // Fallback for older browsers
-                 const textArea = document.createElement("textarea");
-                 textArea.value = jsonString;
-                 document.body.appendChild(textArea);
-                 textArea.select();
-                 try {
-                    document.execCommand('copy');
-                    showToast("הנתונים הועתקו ללוח בהצלחה!", "success");
-                 } catch (err) {
-                    showToast("שגיאה בהעתקה ללוח", "error");
-                 }
-                 document.body.removeChild(textArea);
-             }
         }
 
         // Initialize App
