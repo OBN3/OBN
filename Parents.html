@@ -119,7 +119,9 @@
             HelpCircle: () => <Icon name="HelpCircle" className="w-5 h-5" />,
             RotateCcw: () => <Icon name="RotateCcw" className="w-4 h-4" />,
             X: () => <Icon name="X" className="w-5 h-5" />,
-            PartyPopper: () => <Icon name="PartyPopper" className="w-6 h-6 text-yellow-300" />
+            PartyPopper: () => <Icon name="PartyPopper" className="w-6 h-6 text-yellow-300" />,
+            Plus: () => <Icon name="Plus" className="w-5 h-5" />,
+            Trash2: () => <Icon name="Trash2" className="w-4 h-4" />
         };
 
         // --- נתונים (Data) ---
@@ -365,11 +367,43 @@
             );
         };
 
+        // --- קומפוננטת קלט למשימה חדשה ---
+        const NewTaskInput = ({ onAdd }) => {
+            const [text, setText] = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (text.trim()) {
+                    onAdd(text.trim());
+                    setText('');
+                }
+            };
+
+            return (
+                <form onSubmit={handleSubmit} className="mt-3 flex gap-2">
+                    <input
+                        type="text"
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        placeholder="הוסף משימה אישית..."
+                        className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all placeholder:text-slate-400"
+                    />
+                    <button 
+                        type="submit"
+                        disabled={!text.trim()}
+                        className="px-3 py-2 bg-teal-50 text-teal-600 rounded-lg hover:bg-teal-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        <Icons.Plus />
+                    </button>
+                </form>
+            );
+        };
+
         // --- האפליקציה הראשית ---
         const App = () => {
             const [categories, setCategories] = useState(initialData);
             
-            // טעינה עצלה (Lazy Init) כדי למנוע הבהובים ומצב התחלתי שגוי
+            // טעינת סימונים
             const [completedItems, setCompletedItems] = useState(() => {
                 const saved = localStorage.getItem('parentsChecklist_v2');
                 try {
@@ -380,35 +414,59 @@
                 }
             });
 
+            // טעינת משימות מותאמות אישית
+            const [customItems, setCustomItems] = useState(() => {
+                const saved = localStorage.getItem('parentsChecklist_custom_v1');
+                try {
+                    return saved ? JSON.parse(saved) : {};
+                } catch (e) {
+                    console.error("Error parsing custom items", e);
+                    return {};
+                }
+            });
+
             const [openCategory, setOpenCategory] = useState('general');
             const [showResetConfirm, setShowResetConfirm] = useState(false);
             const [activeHelpModal, setActiveHelpModal] = useState(null); 
-            const [notification, setNotification] = useState(null); // התראה פעילה
-            const [prevProgress, setPrevProgress] = useState(-1); // מעקב אחר ההתקדמות הקודמת
+            const [notification, setNotification] = useState(null); 
+            const [prevProgress, setPrevProgress] = useState(-1);
 
-            // שמירת נתונים ל-LocalStorage בכל שינוי
+            // שמירת נתונים ל-LocalStorage
             useEffect(() => {
                 localStorage.setItem('parentsChecklist_v2', JSON.stringify(completedItems));
             }, [completedItems]);
 
+            useEffect(() => {
+                localStorage.setItem('parentsChecklist_custom_v1', JSON.stringify(customItems));
+            }, [customItems]);
+
             const calculateProgress = () => {
-                const totalItems = categories.reduce((acc, cat) => acc + cat.items.length, 0);
+                // ספירת פריטים סטטיים
+                let totalItems = categories.reduce((acc, cat) => acc + cat.items.length, 0);
+                
+                // הוספת ספירת פריטים אישיים
+                Object.values(customItems).forEach(items => {
+                    totalItems += items.length;
+                });
+
                 const checkedItems = Object.values(completedItems).filter(Boolean).length;
+                
                 if (totalItems === 0) return 0;
-                return Math.round((checkedItems / totalItems) * 100);
+                
+                // וידוא שלא עוברים את ה-100 במקרה של מחיקות
+                const result = Math.round((checkedItems / totalItems) * 100);
+                return result > 100 ? 100 : result;
             };
 
             const progress = calculateProgress();
 
-            // אפקט לבדיקת אבני דרך (Milestones)
+            // אפקט לבדיקת אבני דרך
             useEffect(() => {
-                // אתחול ראשוני - לא להציג התראה בטעינת הדף
                 if (prevProgress === -1) {
                     setPrevProgress(progress);
                     return;
                 }
 
-                // בדיקת מעבר סף (רק כשמתקדמים למעלה)
                 const milestones = [25, 50, 75, 100];
                 const crossedMilestone = milestones.find(m => prevProgress < m && progress >= m);
 
@@ -421,13 +479,49 @@
                 }
                 
                 setPrevProgress(progress);
-            }, [progress]); // תלות ב-progress בלבד (prevProgress מנוהל בפנים)
+            }, [progress]);
 
             const toggleItem = (itemId) => {
-                setCompletedItems(prev => ({
+                setCompletedItems(prev => {
+                    // אם מסירים סימון ממשהו שלא קיים (למשל נמחק), מנקים אותו
+                    if (prev[itemId] && !document.getElementById(`item-${itemId}`)) {
+                       // כאן יכולה להיות לוגיקת ניקוי, אבל כרגע זה בסדר להשאיר
+                    }
+                    return {
+                        ...prev,
+                        [itemId]: !prev[itemId]
+                    };
+                });
+            };
+
+            const handleAddCustomItem = (categoryId, text) => {
+                const newItem = {
+                    id: `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    text: text
+                };
+
+                setCustomItems(prev => ({
                     ...prev,
-                    [itemId]: !prev[itemId]
+                    [categoryId]: [...(prev[categoryId] || []), newItem]
                 }));
+            };
+
+            const handleDeleteCustomItem = (e, categoryId, itemId) => {
+                e.stopPropagation();
+                if (confirm('למחוק את המשימה הזו?')) {
+                    // הסרה מהרשימה
+                    setCustomItems(prev => ({
+                        ...prev,
+                        [categoryId]: prev[categoryId].filter(item => item.id !== itemId)
+                    }));
+                    
+                    // הסרה מהסימונים (כדי לא לפגוע בחישוב האחוזים)
+                    setCompletedItems(prev => {
+                        const newState = { ...prev };
+                        delete newState[itemId];
+                        return newState;
+                    });
+                }
             };
 
             const toggleCategory = (catId) => {
@@ -437,8 +531,9 @@
             const resetAll = () => {
                 if (confirm('האם אתה בטוח שברצונך למחוק את כל הסימונים? לא ניתן לשחזר פעולה זו.')) {
                     setCompletedItems({});
+                    // לא מוחקים את המשימות האישיות, רק את הסימונים שלהן
                     setShowResetConfirm(false);
-                    setPrevProgress(0); // איפוס גם של המעקב
+                    setPrevProgress(0);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
             };
@@ -448,7 +543,6 @@
                 setActiveHelpModal(category);
             };
             
-            // Helper function to render correct icon component based on string name
             const renderIcon = (iconName) => {
                 const IconComponent = Icons[iconName] || Icons.Circle;
                 return <IconComponent />;
@@ -490,9 +584,8 @@
                                 <div>
 									<p className="font-semibold mb-1">אופן השימוש:</p>
                                     <p>
-                                        עברו בין הסעיפים וסמנו מה כבר בוצע. אפשר ללחוץ שוב לביטול הסימון. אפשר לחזור לרשימה מאותו מכשיר בכל זמן נתון. לחצו על סימן השאלה בכל קבוצה להסבר נוסף.
-									</p>									
-									<br></br>
+                                        עברו בין הסעיפים וסמנו מה כבר בוצע. אפשר ללחוץ שוב לביטול הסימון. אפשר לחזור לרשימה מאותו מכשיר בכל זמן נתון. לחצו על סימן השאלה בכל קבוצה להסבר נוסף. ניתן להוסיף ולמחוק משימות מותאמות אישית.
+									</p><br></br>																	 
                                     <p className="font-semibold mb-1">טיפ זהב:</p>
                                     <p>
                                         אם ההורים מתנגדים לעזרה ("אני מסתדר לבד"), כדאי להציג את הפעולות כ"זה בשבילי, שיהיה לי שקט נפשי" ולא כ"זה בשבילך כי אתה מזדקן".
@@ -505,9 +598,14 @@
                         <div className="space-y-4">
                             {categories.map((category) => {
                                 const isOpen = openCategory === category.id;
-                                const categoryItems = category.items;
-                                const completedCount = categoryItems.filter(i => completedItems[i.id]).length;
-                                const totalCount = categoryItems.length;
+                                
+                                // שילוב פריטים סטטיים ואישיים לחישובים
+                                const staticItems = category.items;
+                                const personalItems = customItems[category.id] || [];
+                                const allItems = [...staticItems, ...personalItems];
+                                
+                                const completedCount = allItems.filter(i => completedItems[i.id]).length;
+                                const totalCount = allItems.length;
                                 const isFullyComplete = completedCount === totalCount && totalCount > 0;
 
                                 return (
@@ -558,9 +656,11 @@
                                         {isOpen && (
                                             <div className="border-t border-slate-50 bg-slate-50/50 animate-fade-in">
                                                 <div className="p-4 pt-2 space-y-2">
-                                                    {categoryItems.map((item) => (
+                                                    {/* פריטים מקוריים */}
+                                                    {staticItems.map((item) => (
                                                         <div 
                                                             key={item.id}
+                                                            id={`item-${item.id}`}
                                                             onClick={() => toggleItem(item.id)}
                                                             className="flex items-start gap-3 p-3 rounded-lg cursor-pointer hover:bg-white hover:shadow-sm transition-all select-none group border border-transparent hover:border-slate-100"
                                                         >
@@ -572,6 +672,35 @@
                                                             </span>
                                                         </div>
                                                     ))}
+
+                                                    {/* פריטים אישיים */}
+                                                    {personalItems.map((item) => (
+                                                        <div 
+                                                            key={item.id}
+                                                            id={`item-${item.id}`}
+                                                            onClick={() => toggleItem(item.id)}
+                                                            className="flex items-start gap-3 p-3 rounded-lg cursor-pointer bg-amber-50/50 hover:bg-amber-50 hover:shadow-sm transition-all select-none group border border-amber-100/50 relative"
+                                                        >
+                                                            <div className={`mt-0.5 transition-colors ${completedItems[item.id] ? 'text-teal-500' : 'text-slate-300 group-hover:text-teal-300'}`}>
+                                                                {completedItems[item.id] ? <Icons.CheckCircle2 /> : <Icons.Circle />}
+                                                            </div>
+                                                            <span className={`text-sm leading-relaxed flex-1 transition-colors ${completedItems[item.id] ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+                                                                {item.text}
+                                                            </span>
+                                                            <button 
+                                                                onClick={(e) => handleDeleteCustomItem(e, category.id, item.id)}
+                                                                className="text-slate-300 hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                title="מחק משימה"
+                                                            >
+                                                                <Icons.Trash2 />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+
+                                                    {/* הוספת משימה חדשה */}
+                                                    <div className="pt-2 mt-2 border-t border-slate-100">
+                                                        <NewTaskInput onAdd={(text) => handleAddCustomItem(category.id, text)} />
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}
