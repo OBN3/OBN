@@ -177,7 +177,7 @@
                         <canvas id="radarChart"></canvas>
                     </div>
                     <p class="text-xs text-gray-400 text-center mt-2">
-                        * מציג את סך כל הבחירות בכל קטגוריה (חוזקות מול שיפור)
+                        * מציג את אחוז התשובות בכל קטגוריה מסך כל התשובות (נפח הפעילות)
                     </p>
                 </div>
 
@@ -250,14 +250,12 @@
         let uploadedFilesData = [];
         
         // ---------------------------------------------------------
-        // Configuration: Define all 5 Categories here
+        // Configuration: Define all 3 Categories here
         // ---------------------------------------------------------
         const categoriesMap = {
-            'self': 'להיות עצמך (Self)',
-            'relationships': 'מערכות יחסים (Rel)',
-            'learning': 'למידה (Learning)',
-            'leadership': 'מנהיגות והשפעה (Leadership)', // New
-            'emotions': 'עולם הרגש (Emotions)'           // New
+            'self': 'להיות יותר עצמך',
+            'relationships': 'לבנות מערכות יחסים',
+            'learning': 'תהליכי למידה'
         };
 
         // DOM Elements
@@ -518,10 +516,21 @@
             const ctx = document.getElementById('radarChart').getContext('2d');
             
             // Generate arrays dynamically from ALL keys in the current catStats (which includes defaults)
-            const keys = Object.keys(catStats); // Will be 5 keys if initialized correctly
+            const keys = Object.keys(catStats); // Will be 3 keys if initialized correctly
             const labels = keys.map(k => catStats[k].title);
-            const dataS = keys.map(k => catStats[k].s);
-            const dataI = keys.map(k => catStats[k].i);
+            
+            // Calculate Grand Total for Percentages
+            let grandTotal = 0;
+            keys.forEach(k => {
+                grandTotal += catStats[k].s + catStats[k].i;
+            });
+
+            // Avoid division by zero
+            if (grandTotal === 0) grandTotal = 1;
+
+            // Calculate Percentages
+            const dataS = keys.map(k => ((catStats[k].s / grandTotal) * 100).toFixed(1));
+            const dataI = keys.map(k => ((catStats[k].i / grandTotal) * 100).toFixed(1));
 
             new Chart(ctx, {
                 type: 'radar',
@@ -529,7 +538,7 @@
                     labels: labels,
                     datasets: [
                         {
-                            label: 'חוזקות',
+                            label: 'חוזקות (%)',
                             data: dataS,
                             fill: true,
                             backgroundColor: 'rgba(34, 197, 94, 0.2)',
@@ -540,7 +549,7 @@
                             pointHoverBorderColor: 'rgba(34, 197, 94, 1)'
                         },
                         {
-                            label: 'לשיפור',
+                            label: 'לשיפור (%)',
                             data: dataI,
                             fill: true,
                             backgroundColor: 'rgba(239, 68, 68, 0.2)',
@@ -566,11 +575,21 @@
                                 color: '#1e293b'
                             },
                             suggestedMin: 0,
-                            ticks: { backdropColor: 'transparent', stepSize: 1 }
+                            ticks: { 
+                                backdropColor: 'transparent',
+                                callback: function(value) { return value + '%' } // Add % sign to axis
+                            }
                         }
                     },
                     plugins: {
-                        legend: { position: 'bottom', labels: { font: { family: 'Heebo' } } }
+                        legend: { position: 'bottom', labels: { font: { family: 'Heebo' } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.raw + '%';
+                                }
+                            }
+                        }
                     }
                 }
             });
