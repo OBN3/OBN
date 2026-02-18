@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>דשבורד ניתוח משובים | סטנפורד</title>
+    
+    <!-- ספריות עיצוב וגרפים -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Heebo', sans-serif;
+            background-color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .drop-zone {
+            border: 2px dashed #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+
+        /* עיצוב מותאם להדפסה */
+        @media print {
+            @page { margin: 1cm; } /* הגדרת שוליים לדף עצמו */
+            
+            .no-print { display: none !important; }
+            body { 
+                background-color: white; 
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact; 
+                font-size: 12pt;
+            }
+            .shadow-sm, .shadow-md, .shadow-lg { box-shadow: none !important; }
+            
+            /* איפוס מרווחים מיותרים בהדפסה */
+            main { padding: 0 !important; margin: 0 !important; }
+            .max-w-5xl { max-width: 100% !important; }
+            
+            /* הקטנת רווחים פנימיים כדי שייכנס יותר בעמוד */
+            .p-6 { padding: 1rem !important; }
+            .gap-6 { gap: 1rem !important; }
+            .space-y-6 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; margin-top: 1rem !important; margin-bottom: 0 !important; }
+            
+            /* הסתרת מסך העלאה */
+            #upload-section { display: none !important; }
+            /* הצגת הדשבורד */
+            #dashboard { display: block !important; opacity: 1 !important; transform: none !important; }
+            
+            /* מניעת חיתוך כרטיסים באמצע - מוחל על כרטיסים בודדים */
+            .print-break-inside-avoid { break-inside: avoid; page-break-inside: avoid; }
+        }
+
+        /* אנימציה לכרטיסים */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- Navbar -->
+    <nav class="bg-blue-900 text-white shadow-md sticky top-0 z-50 no-print">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-chart-pie text-xl"></i>
+                <h1 class="text-xl font-bold leading-tight">ניתוח משובים קבוצתי</h1>
+            </div>
+            <button onclick="printReport()" class="text-sm bg-blue-800 hover:bg-blue-700 px-3 py-1 rounded transition border border-blue-700">
+                <i class="fas fa-print"></i> הדפס דוח
+            </button>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto px-4 py-8">
+
+        <!-- 1. Upload Section -->
+        <section id="upload-section" class="max-w-2xl mx-auto text-center mb-12">
+            <div class="bg-white rounded-2xl shadow-lg p-8">
+                <div class="mb-6">
+                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-cloud-upload-alt text-3xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">העלאת קבצי משוב</h2>
+                    <p class="text-gray-500">
+                        גרור לכאן את קבצי ה-JSON שקיבלת מהמשיבים,<br>
+                        או לחץ לבחירה (ניתן לבחור מספר קבצים יחד).
+                    </p>
+                </div>
+
+                <div id="drop-zone" class="drop-zone rounded-xl p-10 cursor-pointer relative">
+                    <input type="file" id="file-input" multiple accept=".json" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    <div class="text-gray-400">
+                        <i class="fas fa-file-code text-4xl mb-3 block"></i>
+                        <span class="font-medium">לחץ או גרור קבצים לכאן</span>
+                    </div>
+                </div>
+
+                <!-- Paste Option -->
+                <div class="relative my-6">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white text-gray-500">או</span>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 text-right">
+                    <h3 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                        <i class="fas fa-paste text-gray-500"></i>
+                        הדבקת תוכן (מ-WhatsApp וכד')
+                    </h3>
+                    <textarea id="json-paste-area" rows="3" 
+                        class="w-full p-3 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow"
+                        placeholder='הדבק כאן את הטקסט שהתקבל (אפשר להדביק גם מספר תשובות ברצף)'></textarea>
+                    <button onclick="handlePaste()" class="mt-2 w-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 font-medium py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center gap-2 shadow-sm">
+                        <i class="fas fa-plus-circle text-purple-600"></i> הוסף נתונים מהדבקה
+                    </button>
+                    <p id="paste-status" class="text-xs text-center mt-2 font-medium hidden"></p>
+                </div>
+
+                <div id="file-list" class="mt-4 text-right hidden">
+                    <h3 class="text-sm font-bold text-gray-700 mb-2">קבצים שנקלטו:</h3>
+                    <ul id="files-ul" class="text-sm text-gray-600 space-y-1 bg-gray-50 p-3 rounded-lg"></ul>
+                    <button onclick="processFiles()" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow transition-colors">
+                        <i class="fas fa-magic"></i> בצע ניתוח נתונים
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Dashboard Results (Hidden initially) -->
+        <div id="dashboard" class="hidden space-y-8 fade-in">
+            
+            <!-- Summary Header -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border-r-4 border-blue-500 flex flex-wrap justify-between items-center gap-4 print-break-inside-avoid">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">סיכום עבור: <span id="subject-name" class="text-blue-600"></span></h2>
+                    <p class="text-gray-500 text-sm mt-1">
+                        הנתונים שוקללו מתוך <span id="total-respondents" class="font-bold text-gray-900">0</span> משיבים
+                    </p>
+                </div>
+                <div class="flex gap-2 text-sm">
+                    <div class="bg-green-50 text-green-800 px-3 py-1 rounded-full border border-green-200">
+                        <i class="fas fa-plus-circle"></i> חוזקות
+                    </div>
+                    <div class="bg-red-50 text-red-800 px-3 py-1 rounded-full border border-red-200">
+                        <i class="fas fa-arrow-circle-up"></i> לשיפור
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <!-- Removed 'break-inside-avoid' from the parent grid container to allow flow -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- Spider Chart (Categories) -->
+                <!-- Added 'print-break-inside-avoid' to individual card -->
+                <div class="bg-white rounded-xl shadow-sm p-6 print-break-inside-avoid">
+                    <h3 class="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2">
+                        <i class="fas fa-project-diagram text-purple-500"></i>
+                        מבט על: פילוח לפי קטגוריות
+                    </h3>
+                    <div class="relative h-64 sm:h-80 w-full">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                    <p class="text-xs text-gray-400 text-center mt-2">
+                        * מציג את סך כל הבחירות בכל קטגוריה (חוזקות מול שיפור)
+                    </p>
+                </div>
+
+                <!-- Consensus Highlights (Bar Charts) -->
+                <div class="space-y-6">
+                    <!-- Top Strengths -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 print-break-inside-avoid">
+                        <h3 class="text-lg font-bold text-green-700 mb-4 border-b border-green-100 pb-2">
+                            <i class="fas fa-trophy"></i> חוזקות בולטות (הסכמה רחבה)
+                        </h3>
+                        <canvas id="strengthsBarChart" height="150"></canvas>
+                    </div>
+
+                    <!-- Top Improvements -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 print-break-inside-avoid">
+                        <h3 class="text-lg font-bold text-red-700 mb-4 border-b border-red-100 pb-2">
+                            <i class="fas fa-tools"></i> אזורי מיקוד לשיפור
+                        </h3>
+                        <canvas id="improvementsBarChart" height="150"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Breakdown Table -->
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden print-break-inside-avoid">
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-100">
+                    <h3 class="font-bold text-gray-800">פירוט מלא של התשובות</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-right">
+                        <thead class="bg-gray-50 text-gray-500 font-medium">
+                            <tr>
+                                <th class="px-6 py-3 w-1/2">הכישור/ההתנהגות</th>
+                                <th class="px-6 py-3 text-center text-green-700">חוזקה (מס' משיבים)</th>
+                                <th class="px-6 py-3 text-center text-red-700">לשיפור (מס' משיבים)</th>
+                                <th class="px-6 py-3 text-center text-gray-500">מתוך סה"כ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="breakdown-table-body" class="divide-y divide-gray-100">
+                            <!-- Rows injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Free Text Comments -->
+            <!-- Removed 'break-inside-avoid' from parent to allow comments to flow across pages -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border-t-4 border-gray-400">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <i class="fas fa-comments text-gray-500"></i>
+                    הערות מילוליות (רגשות והבעה)
+                </h3>
+                <div id="comments-container" class="grid gap-4 grid-cols-1 md:grid-cols-2">
+                    <!-- Cards injected here -->
+                </div>
+            </div>
+            
+            <div class="text-center mt-12 pb-12 no-print">
+                <button onclick="location.reload()" class="text-blue-600 hover:text-blue-800 font-medium">
+                    <i class="fas fa-redo"></i> התחל ניתוח חדש
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- App Logic -->
+    <script>
+        // Data Handling Variables
+        let uploadedFilesData = [];
+        
+        // ---------------------------------------------------------
+        // Configuration: Define all 5 Categories here
+        // ---------------------------------------------------------
+        const categoriesMap = {
+            'self': 'להיות עצמך (Self)',
+            'relationships': 'מערכות יחסים (Rel)',
+            'learning': 'למידה (Learning)',
+            'leadership': 'מנהיגות והשפעה (Leadership)', // New
+            'emotions': 'עולם הרגש (Emotions)'           // New
+        };
+
+        // DOM Elements
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileList = document.getElementById('file-list');
+        const filesUl = document.getElementById('files-ul');
+        const pasteStatus = document.getElementById('paste-status');
+
+        // Drag & Drop Handlers
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        // Helper to extract JSON objects from mixed text (handles pasted chat logs etc.)
+        function extractJSONs(text) {
+            const results = [];
+            let braceCount = 0;
+            let startIndex = -1;
+
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                
+                if (char === '{') {
+                    if (braceCount === 0) startIndex = i;
+                    braceCount++;
+                } else if (char === '}') {
+                    braceCount--;
+                    if (braceCount === 0 && startIndex !== -1) {
+                        // Potential JSON found
+                        const jsonStr = text.substring(startIndex, i + 1);
+                        try {
+                            const obj = JSON.parse(jsonStr);
+                            // Basic schema check
+                            if (obj.participants && obj.feedback) {
+                                results.push(obj);
+                            }
+                        } catch (e) {
+                            // Ignore invalid JSON chunks
+                        }
+                        startIndex = -1;
+                    }
+                }
+            }
+            return results;
+        }
+
+        function handlePaste() {
+            const textarea = document.getElementById('json-paste-area');
+            const content = textarea.value.trim();
+            pasteStatus.classList.add('hidden');
+            
+            if (!content) {
+                alert("אנא הדבק תוכן בתיבה");
+                return;
+            }
+
+            // Attempt to extract one or more JSONs
+            const foundJSONs = extractJSONs(content);
+
+            if (foundJSONs.length === 0) {
+                // If extraction failed, try strict parse as fallback
+                try {
+                    const json = JSON.parse(content);
+                     if (json.participants && json.feedback) {
+                         foundJSONs.push(json);
+                     } else {
+                         throw new Error("Invalid structure");
+                     }
+                } catch (e) {
+                    alert("לא נמצא מידע תקין. וודא שהעתקת את כל הטקסט (כולל סוגריים מסולסלים) ושהמבנה תקין.");
+                    console.error(e);
+                    return;
+                }
+            }
+
+            // Add found items
+            let addedCount = 0;
+            foundJSONs.forEach(json => {
+                const filename = `manual_paste_${uploadedFilesData.length + 1}.json`;
+                uploadedFilesData.push({ filename: filename, content: json });
+                
+                const li = document.createElement('li');
+                li.className = "flex justify-between items-center bg-white p-2 rounded border border-gray-100 mb-1";
+                li.innerHTML = `
+                    <span class="flex items-center gap-2">
+                        <i class="fas fa-keyboard text-purple-500"></i>
+                        <span class="font-medium">${json.participants.evaluator}</span>
+                    </span> 
+                    <span class="text-xs text-gray-400">הדבקה ידנית</span>
+                `;
+                filesUl.appendChild(li);
+                addedCount++;
+            });
+
+            // Feedback
+            fileList.classList.remove('hidden');
+            textarea.value = '';
+            
+            pasteStatus.innerText = `נוספו בהצלחה ${addedCount} משוב/ים.`;
+            pasteStatus.classList.remove('hidden');
+            pasteStatus.className = "text-xs text-center mt-2 font-bold text-green-600";
+            
+            setTimeout(() => {
+                pasteStatus.classList.add('hidden');
+            }, 3000);
+        }
+
+        function handleFiles(files) {
+            if (files.length === 0) return;
+
+            uploadedFilesData = []; // Reset
+            filesUl.innerHTML = '';
+            let loadedCount = 0;
+
+            Array.from(files).forEach(file => {
+                if (file.type !== "application/json" && !file.name.endsWith('.json')) {
+                    alert(`הקובץ ${file.name} אינו קובץ JSON תקין`);
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const json = JSON.parse(e.target.result);
+                        uploadedFilesData.push({ filename: file.name, content: json });
+                        
+                        // Add to UI list
+                        const li = document.createElement('li');
+                        li.className = "flex justify-between items-center bg-white p-2 rounded border border-gray-100 mb-1";
+                        li.innerHTML = `
+                            <span class="flex items-center gap-2">
+                                <i class="fas fa-file-alt text-blue-500"></i>
+                                <span class="font-medium">${json.participants.evaluator}</span>
+                            </span> 
+                            <span class="text-xs text-gray-400 opacity-70">${file.name}</span>
+                        `;
+                        filesUl.appendChild(li);
+
+                        loadedCount++;
+                        if (loadedCount > 0) {
+                            fileList.classList.remove('hidden');
+                        }
+                    } catch (err) {
+                        console.error("Error parsing JSON", err);
+                        alert("שגיאה בקריאת הקובץ: " + file.name);
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        function printReport() {
+            if (uploadedFilesData.length === 0) {
+                alert("אין נתונים להדפסה. אנא טען קבצי משוב וצור דוח תחילה.");
+                return;
+            }
+            window.print();
+        }
+
+        function processFiles() {
+            if (uploadedFilesData.length === 0) return;
+
+            // 1. Aggregation Structures
+            let subjectName = "לא ידוע";
+            if (uploadedFilesData[0] && uploadedFilesData[0].content && uploadedFilesData[0].content.participants) {
+                subjectName = uploadedFilesData[0].content.participants.evaluatee;
+            }
+
+            const totalRespondents = uploadedFilesData.length;
+            
+            // Map: ItemID -> { title, categoryId, strengthCount, improvementCount }
+            const itemsMap = {};
+            
+            // Map: CategoryID -> { strengthTotal, improvementTotal }
+            // Initialize for ALL categories in the map (even those not in the JSONs)
+            const categoryStats = {};
+            Object.keys(categoriesMap).forEach(key => {
+                categoryStats[key] = { s: 0, i: 0, title: categoriesMap[key] };
+            });
+
+            const comments = [];
+
+            // 2. Iterate and Aggregate
+            uploadedFilesData.forEach(file => {
+                const data = file.content;
+                const evaluator = data.participants ? data.participants.evaluator : "אנונימי";
+
+                // Process Strengths
+                if (data.feedback && data.feedback.strengths) {
+                    data.feedback.strengths.forEach(item => {
+                        initItem(itemsMap, item);
+                        itemsMap[item.id].strengthCount++;
+                        // Accumulate category stats (safely)
+                        if (categoryStats[item.categoryId]) {
+                            categoryStats[item.categoryId].s++;
+                        } else {
+                            // Fallback if an unknown category appears in JSON
+                            categoryStats[item.categoryId] = { s: 1, i: 0, title: item.categoryTitle || item.categoryId };
+                        }
+                    });
+                }
+
+                // Process Improvements
+                if (data.feedback && data.feedback.improvements) {
+                    data.feedback.improvements.forEach(item => {
+                        initItem(itemsMap, item);
+                        itemsMap[item.id].improvementCount++;
+                        if (categoryStats[item.categoryId]) {
+                            categoryStats[item.categoryId].i++;
+                        } else {
+                            categoryStats[item.categoryId] = { s: 0, i: 1, title: item.categoryTitle || item.categoryId };
+                        }
+                    });
+                }
+
+                // Process Comments
+                if (data.feedback && data.feedback.generalNotes && data.feedback.generalNotes.trim() !== "") {
+                    comments.push({
+                        author: evaluator,
+                        text: data.feedback.generalNotes
+                    });
+                }
+            });
+
+            // 3. Update UI Headers
+            document.getElementById('subject-name').innerText = subjectName;
+            document.getElementById('total-respondents').innerText = totalRespondents;
+            document.getElementById('upload-section').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+
+            // 4. Render Charts
+            renderRadarChart(categoryStats);
+            renderBarCharts(itemsMap);
+            renderTable(itemsMap, totalRespondents);
+            renderComments(comments);
+        }
+
+        function initItem(map, itemData) {
+            if (!map[itemData.id]) {
+                map[itemData.id] = {
+                    title: itemData.title,
+                    categoryId: itemData.categoryId,
+                    strengthCount: 0,
+                    improvementCount: 0
+                };
+            }
+        }
+
+        // --- Charts Rendering ---
+
+        function renderRadarChart(catStats) {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            
+            // Generate arrays dynamically from ALL keys in the current catStats (which includes defaults)
+            const keys = Object.keys(catStats); // Will be 5 keys if initialized correctly
+            const labels = keys.map(k => catStats[k].title);
+            const dataS = keys.map(k => catStats[k].s);
+            const dataI = keys.map(k => catStats[k].i);
+
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'חוזקות',
+                            data: dataS,
+                            fill: true,
+                            backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                            borderColor: 'rgba(34, 197, 94, 1)',
+                            pointBackgroundColor: 'rgba(34, 197, 94, 1)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgba(34, 197, 94, 1)'
+                        },
+                        {
+                            label: 'לשיפור',
+                            data: dataI,
+                            fill: true,
+                            backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                            borderColor: 'rgba(239, 68, 68, 1)',
+                            pointBackgroundColor: 'rgba(239, 68, 68, 1)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgba(239, 68, 68, 1)'
+                        }
+                    ]
+                },
+                options: {
+                    animation: { duration: 0 },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    elements: { line: { tension: 0.3 } },
+                    scales: {
+                        r: {
+                            angleLines: { color: '#e2e8f0' },
+                            grid: { color: '#e2e8f0' },
+                            pointLabels: {
+                                font: { size: 14, family: 'Heebo' },
+                                color: '#1e293b'
+                            },
+                            suggestedMin: 0,
+                            ticks: { backdropColor: 'transparent', stepSize: 1 }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family: 'Heebo' } } }
+                    }
+                }
+            });
+        }
+
+        function renderBarCharts(itemsMap) {
+            const itemsArray = Object.values(itemsMap);
+            
+            const topStrengths = [...itemsArray]
+                .sort((a, b) => b.strengthCount - a.strengthCount)
+                .filter(item => item.strengthCount > 0)
+                .slice(0, 5);
+
+            const topImprovements = [...itemsArray]
+                .sort((a, b) => b.improvementCount - a.improvementCount)
+                .filter(item => item.improvementCount > 0)
+                .slice(0, 5);
+
+            createHorizontalBar(
+                document.getElementById('strengthsBarChart'), 
+                topStrengths.map(i => i.title), 
+                topStrengths.map(i => i.strengthCount),
+                'rgba(34, 197, 94, 0.7)',
+                'חוזקות'
+            );
+
+            createHorizontalBar(
+                document.getElementById('improvementsBarChart'), 
+                topImprovements.map(i => i.title), 
+                topImprovements.map(i => i.improvementCount),
+                'rgba(239, 68, 68, 0.7)',
+                'נקודות לשיפור'
+            );
+        }
+
+        function createHorizontalBar(canvas, labels, data, color, label) {
+            new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        backgroundColor: color,
+                        borderRadius: 4,
+                        barThickness: 20
+                    }]
+                },
+                options: {
+                    animation: { duration: 0 },
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { stepSize: 1 } },
+                        y: { ticks: { font: { family: 'Heebo' }, autoSkip: false } }
+                    }
+                }
+            });
+        }
+
+        function renderTable(itemsMap, total) {
+            const tbody = document.getElementById('breakdown-table-body');
+            tbody.innerHTML = '';
+            
+            const sortedItems = Object.values(itemsMap).sort((a, b) => 
+                (b.strengthCount + b.improvementCount) - (a.strengthCount + a.improvementCount)
+            );
+
+            sortedItems.forEach(item => {
+                const totalMentions = item.strengthCount + item.improvementCount;
+                if (totalMentions === 0) return;
+                
+                const row = `
+                    <tr class="hover:bg-gray-50 transition-colors print-break-inside-avoid">
+                        <td class="px-6 py-4 border-b border-gray-100 font-medium text-gray-800">${item.title}</td>
+                        <td class="px-6 py-4 border-b border-gray-100 text-center">
+                            ${item.strengthCount > 0 ? `<span class="bg-green-100 text-green-800 font-bold px-3 py-1 rounded-full border border-green-200">${item.strengthCount}</span>` : '-'}
+                        </td>
+                        <td class="px-6 py-4 border-b border-gray-100 text-center">
+                            ${item.improvementCount > 0 ? `<span class="bg-red-100 text-red-800 font-bold px-3 py-1 rounded-full border border-red-200">${item.improvementCount}</span>` : '-'}
+                        </td>
+                        <td class="px-6 py-4 border-b border-gray-100 text-center text-xs text-gray-400">
+                           ${totalMentions} אזכורים
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function renderComments(comments) {
+            const container = document.getElementById('comments-container');
+            container.innerHTML = '';
+
+            if (comments.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 italic p-4">לא התקבלו הערות מילוליות.</p>';
+                return;
+            }
+
+            comments.forEach(c => {
+                const card = document.createElement('div');
+                card.className = "bg-gray-50 p-4 rounded-lg border border-gray-200 print-break-inside-avoid";
+                card.innerHTML = `
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs border border-blue-200">
+                            ${c.author.charAt(0)}
+                        </div>
+                        <span class="text-sm font-bold text-gray-700">${c.author}</span>
+                    </div>
+                    <p class="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">"${c.text}"</p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+    </script>
+</body>
+</html>

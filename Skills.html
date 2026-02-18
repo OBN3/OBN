@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>שאלון כישורים בין-אישיים | סטנפורד</title>
+    
+    <!-- ייבוא גופנים וספריות עיצוב -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Heebo', sans-serif;
+            background-color: #f3f4f6;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* עיצוב מותאם להדפסה */
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background-color: white; }
+            #report-container { 
+                box-shadow: none; 
+                border: none;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+        }
+
+        .print-only { display: none; }
+
+        /* אנימציות עדינות */
+        .selection-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .selection-btn.active-plus {
+            background-color: #dcfce7; /* green-100 */
+            border-color: #16a34a; /* green-600 */
+            color: #15803d; /* green-700 */
+            font-weight: bold;
+        }
+
+        .selection-btn.active-minus {
+            background-color: #fee2e2; /* red-100 */
+            border-color: #dc2626; /* red-600 */
+            color: #b91c1c; /* red-700 */
+            font-weight: bold;
+        }
+
+        /* Toast Notification */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 100;
+            left: 50%;
+            bottom: 80px;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+        }
+
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 100px;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50 no-print">
+        <div class="max-w-3xl mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-lg font-bold text-blue-900 leading-tight">שאלון כישורים</h1>
+            <div class="text-xs flex gap-2 sm:gap-3">
+                <span id="badge-plus" class="px-2 py-1 bg-green-50 text-green-800 rounded-full border border-green-200 transition-colors duration-300">
+                    חוזקות: <span id="count-plus" class="font-bold">0</span>/5
+                </span>
+                <span id="badge-minus" class="px-2 py-1 bg-red-50 text-red-800 rounded-full border border-red-200 transition-colors duration-300">
+                    לשיפור: <span id="count-minus" class="font-bold">0</span>/5
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-3xl mx-auto px-4 py-6 pb-24 no-print" id="form-container">
+        
+        <!-- Names Input Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            
+            <!-- Evaluator Input (The person filling the form) -->
+            <div class="bg-gray-100 rounded-xl shadow-sm p-5 border-t-4 border-gray-500">
+                <div class="flex items-center gap-2 mb-3 text-gray-700">
+                    <i class="fas fa-user-edit text-gray-500"></i>
+                    <h2 class="font-bold text-sm uppercase tracking-wide">פרטי המעריך/ה (אני)</h2>
+                </div>
+                <label for="evaluator-name" class="block text-xs font-medium text-gray-500 mb-1">שמך המלא:</label>
+                <input type="text" id="evaluator-name" placeholder="מי ממלא/ת את השאלון?" 
+                    class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none transition-colors">
+            </div>
+
+            <!-- Evaluatee Input (The subject) -->
+            <div class="bg-blue-50 rounded-xl shadow-sm p-5 border-t-4 border-blue-600">
+                <div class="flex items-center gap-2 mb-3 text-blue-900">
+                    <i class="fas fa-user text-blue-600"></i>
+                    <h2 class="font-bold text-sm uppercase tracking-wide">פרטי המוערך/ת</h2>
+                </div>
+                <label for="evaluatee-name" class="block text-xs font-medium text-blue-600 mb-1">שם האדם המוערך:</label>
+                <input type="text" id="evaluatee-name" placeholder="על מי המשוב?" 
+                    class="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors">
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="bg-white rounded-lg p-4 mb-6 shadow-sm border border-gray-100 text-sm text-gray-600">
+            <p>
+                אנא סקור/סקרי את הכישורים הבאים וסמן/י 
+                <span class="font-bold text-green-700">3-5 תחומים לשימור (חוזקות)</span> 
+                ו-
+                <span class="font-bold text-red-700">3-5 תחומים לשיפור</span>
+                אצל המוערך/ת.
+            </p>
+        </div>
+
+        <!-- Form Generation Area -->
+        <div id="questions-container" class="space-y-6">
+            <!-- Questions will be injected here by JS -->
+        </div>
+
+        <!-- Free Text Area -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mt-6 border-t-4 border-gray-400">
+            <h3 id="free-text-title" class="text-lg font-bold text-gray-800 mb-2">הכרה והבעה של מגוון רגשות</h3>
+            <p id="free-text-desc" class="text-sm text-gray-500 mb-3">
+                האם ישנם רגשות שהמוערך/ת אינו/ה נוטה להרגיש או שקשה לו/ה להביע? רגשות חיוביים? רגשות שליליים? רגשות של פגיעות? האם הוא/היא רוצה לזהות או להביע יותר רגשות?
+            </p>
+            <textarea id="free-text" rows="5" 
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                placeholder="כתוב/כתבי את תשובתך כאן..."></textarea>
+        </div>
+
+        <!-- Action Button -->
+        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-40">
+            <div class="max-w-3xl mx-auto">
+                <button onclick="generateReport()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow transition-colors flex items-center justify-center gap-2">
+                    <i class="fas fa-check-circle"></i> סיימתי - צור סיכום
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Report View (Hidden initially) -->
+    <div id="report-view" class="hidden min-h-screen bg-gray-100 fixed inset-0 z-50 overflow-y-auto print-only-container">
+        <div class="max-w-3xl mx-auto bg-white min-h-screen shadow-2xl relative">
+            
+            <!-- Report Header -->
+            <div class="bg-blue-900 text-white p-8">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h1 class="text-3xl font-bold mb-2">משוב כישורים בין-אישיים</h1>
+                        <p class="opacity-90 text-sm">סיכום הערכה</p>
+                    </div>
+                    <div class="text-left text-sm opacity-80">
+                        <div id="report-date"></div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 grid grid-cols-2 gap-6">
+                    <div class="bg-blue-800 bg-opacity-50 p-3 rounded">
+                        <span class="block text-xs uppercase opacity-70 mb-1">הוכן עבור</span>
+                        <span id="report-for-name" class="font-bold text-lg block truncate"></span>
+                    </div>
+                    <div class="bg-blue-800 bg-opacity-50 p-3 rounded">
+                        <span class="block text-xs uppercase opacity-70 mb-1">הוכן על ידי</span>
+                        <span id="report-by-name" class="font-bold text-lg block truncate"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Content -->
+            <div class="p-8 space-y-8">
+                
+                <!-- Strengths Section -->
+                <div id="report-strengths-section" class="hidden">
+                    <h2 class="flex items-center gap-3 text-xl font-bold text-green-700 border-b pb-2 border-green-200">
+                        <i class="fas fa-plus-circle"></i> חוזקות לשימור
+                    </h2>
+                    <ul id="report-strengths-list" class="mt-4 space-y-3 pr-4"></ul>
+                </div>
+
+                <!-- Improvements Section -->
+                <div id="report-improvements-section" class="hidden">
+                    <h2 class="flex items-center gap-3 text-xl font-bold text-red-700 border-b pb-2 border-red-200">
+                        <i class="fas fa-arrow-circle-up"></i> נקודות לשיפור
+                    </h2>
+                    <ul id="report-improvements-list" class="mt-4 space-y-3 pr-4"></ul>
+                </div>
+
+                <!-- Free Text Section -->
+                <div id="report-notes-section" class="hidden">
+                    <h2 id="report-free-text-title" class="flex items-center gap-3 text-xl font-bold text-gray-700 border-b pb-2 border-gray-200">
+                        <i class="fas fa-comment-alt"></i> הכרה והבעה של מגוון רגשות
+                    </h2>
+                    <div id="report-free-text" class="mt-4 text-gray-700 whitespace-pre-wrap leading-relaxed bg-gray-50 p-4 rounded-lg"></div>
+                </div>
+                
+            </div>
+
+            <!-- Report Footer (Actions) -->
+            <div class="bg-gray-100 p-4 sticky bottom-0 border-t border-gray-300 flex flex-col sm:flex-row gap-3 justify-center no-print">
+                <button onclick="closeReport()" class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 font-medium">
+                    <i class="fas fa-edit"></i> חזור לעריכה
+                </button>
+                <button onclick="shareJSONToWhatsApp()" class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium shadow-md">
+                    <i class="fab fa-whatsapp"></i> שלח נתונים בווטסאפ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Element -->
+    <div id="toast">הודעה</div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Constants
+        const MAX_SELECTION = 5;
+        const MIN_SELECTION = 3;
+
+        // Data Structure - Updated with third-person phrasing
+        const categories = [
+            {
+                id: 'self',
+                title: 'קטגוריה 1: להיות עצמך באופן מלא',
+                color: 'blue',
+                items: [
+                    { id: 'emotions', title: 'זיהוי והבעת מגוון רגשות', desc: 'האם המוערך/ת מזהה ומביע/ה מגוון רגשות? האם יש רגשות שקשה לו/ה להביע (חיוביים, שליליים, פגיעות)?' },
+                    { id: 'aspects', title: 'ביטוי היבטים רבים של העצמי', desc: 'עד כמה הוא/היא נותן/ת לעצמו/ה להיות ידוע/ה במלואו/ה מול הצגת תדמית?' },
+                    { id: 'acceptance', title: 'קבלה עצמית', desc: 'האם יש חלקים בעצמו/ה שקשה לו/ה לקבל? האם הוא/היא חש/ה בושה לגביהם?' },
+                    { id: 'intuition', title: 'אמון באינטואיציה', desc: 'האם הוא/היא נוטה להיות אנליטי/ת מדי ולזלזל בתחושות הבטן שלו/ה? האם יש לו/ה ספק עצמי רב?' },
+                    { id: 'needs', title: 'מילוי הצרכים האישיים', desc: 'עד כמה הוא/היא מכבד/ת את הצרכים שלו/ה, או נוטה "לוותר עליהם" כשהם מתנגשים עם רצון אחרים?' },
+                    { id: 'direct', title: 'תקשורת ישירה והלימה', desc: 'האם הוא/היא מתקשר/ת באופן פתוח ותואם, או שולח/ת מסרים כפולים (למשל, חיוך בעת כעס)?' },
+                    { id: 'approval', title: 'צורך באישור', desc: 'עד כמה הצורך שלו/ה בקבלה ואישור חזק עד כדי כך שהוא/היא "מוותר/ת על עצמו/ה"?' }
+                ]
+            },
+            {
+                id: 'relationships',
+                title: 'קטגוריה 2: בניית מערכות יחסים',
+                color: 'indigo',
+                items: [
+                    { id: 'others_acceptance', title: 'קבלת האחר', desc: 'עד כמה הוא/היא מקבל/ת אחרים, במיוחד אלו עם ערכים שונים? האם הוא/היא נוטה לשיפוטיות?' },
+                    { id: 'empathy', title: 'אמפתיה', desc: 'כמה קל לו/ה לחוש אמפתיה לאחרים? האם הוא/היא מצליח/ה להבין אנשים שונים ממנו/ה?' },
+                    { id: 'confronting', title: 'עימות עם אחרים', desc: 'האם יש התנהגויות של אחרים שמפריעות לו/ה אך קשה לו/ה להעלות ולהציף אותן?' },
+                    { id: 'conflict', title: 'ניהול קונפליקטים', desc: 'האם קשה לו/ה עם קונפליקטים? האם הוא/היא נוטה להיתקע בהם? האם הוא/היא פועל/ת לפתרון הדדי?' },
+                    { id: 'influence', title: 'יכולת השפעה', desc: 'האם הוא/היא מוותר/ת על הכוח שלו/ה? או להפך, דוחף/ת את דעתו/ה חזק מדי ומתנגד/ת להשפעה של אחרים?' }
+                ]
+            },
+            {
+                id: 'learning',
+                title: 'קטגוריה 3: תהליך למידה',
+                color: 'purple',
+                items: [
+                    { id: 'risks', title: 'לקיחת סיכונים וטעויות', desc: 'נכונות להתנסות בהתנהגות חדשה. האם קל לו/ה לקבל טעויות של עצמו/ה? האם חשוב לו/ה "לשמור פנים"?' },
+                    { id: 'receiving_feedback', title: 'קבלת משוב', desc: 'האם הוא/היא נפגע/ת בקלות ממשוב שלילי? הודפ/ת משוב חיובי? עד כמה הוא/היא לומד/ת ממשוב?' },
+                    { id: 'giving_feedback', title: 'מתן משוב', desc: 'האם הוא/היא מייפה את המציאות במשוב שלילי? נמנע/ת ממשוב חיובי? האם זה נעשה במיומנות?' },
+                    { id: 'help', title: 'בקשת/קבלת עזרה', desc: 'כמה קל לו/ה לבקש או לקבל עזרה מאחרים בעת הצורך?' }
+                ]
+            }
+        ];
+
+        // State
+        const state = {}; 
+        categories.forEach(cat => cat.items.forEach(item => state[item.id] = null)); // null, 'plus', 'minus'
+
+        // Helpers for Counting
+        function getCounts() {
+            let plus = 0;
+            let minus = 0;
+            Object.values(state).forEach(val => {
+                if (val === 'plus') plus++;
+                if (val === 'minus') minus++;
+            });
+            return { plus, minus };
+        }
+
+        // Render Functions
+        function init() {
+            const container = document.getElementById('questions-container');
+            
+            categories.forEach(category => {
+                const catDiv = document.createElement('div');
+                catDiv.className = `bg-white rounded-xl shadow-sm border-t-4 border-${category.color}-500 overflow-hidden`;
+                
+                let html = `
+                    <div class="bg-gray-50 px-6 py-4 border-b border-gray-100">
+                        <h2 class="text-xl font-bold text-gray-800">${category.title}</h2>
+                    </div>
+                    <div class="divide-y divide-gray-100">
+                `;
+
+                category.items.forEach(item => {
+                    html += `
+                        <div class="p-6 transition-colors hover:bg-gray-50">
+                            <div class="mb-3">
+                                <h3 class="text-lg font-bold text-gray-900">${item.title}</h3>
+                                <p class="text-sm text-gray-500 mt-1 leading-relaxed">${item.desc}</p>
+                            </div>
+                            
+                            <div class="flex gap-2 mt-4">
+                                <button onclick="selectItem('${item.id}', 'plus')" 
+                                    id="btn-plus-${item.id}"
+                                    class="selection-btn flex-1 py-3 px-4 rounded-lg border border-gray-300 flex items-center justify-center gap-2 hover:bg-green-50 text-gray-600">
+                                    <i class="fas fa-plus"></i>
+                                    <span>לשימור</span>
+                                </button>
+                                
+                                <button onclick="selectItem('${item.id}', 'minus')" 
+                                    id="btn-minus-${item.id}"
+                                    class="selection-btn flex-1 py-3 px-4 rounded-lg border border-gray-300 flex items-center justify-center gap-2 hover:bg-red-50 text-gray-600">
+                                    <i class="fas fa-minus"></i>
+                                    <span>לשיפור</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+                catDiv.innerHTML = html;
+                container.appendChild(catDiv);
+            });
+        }
+
+        function selectItem(itemId, type) {
+            const current = state[itemId];
+            const counts = getCounts();
+
+            // Deselecting logic
+            if (current === type) {
+                state[itemId] = null;
+                updateUI(itemId);
+                updateCounts();
+                return;
+            }
+
+            // Validation Logic (Check limit BEFORE adding)
+            // If we are trying to add a 'plus', ensure we haven't reached max plus
+            // Note: If switching from minus to plus, we don't need to check minus limit, only plus limit.
+            
+            if (type === 'plus') {
+                if (counts.plus >= MAX_SELECTION) {
+                    showToast(`ניתן לבחור עד ${MAX_SELECTION} חוזקות בלבד`, 'error');
+                    return;
+                }
+            } else if (type === 'minus') {
+                if (counts.minus >= MAX_SELECTION) {
+                    showToast(`ניתן לבחור עד ${MAX_SELECTION} נקודות לשיפור בלבד`, 'error');
+                    return;
+                }
+            }
+
+            // If passed validation, set state
+            state[itemId] = type;
+            updateUI(itemId);
+            updateCounts();
+        }
+
+        function updateUI(itemId) {
+            const val = state[itemId];
+            const btnPlus = document.getElementById(`btn-plus-${itemId}`);
+            const btnMinus = document.getElementById(`btn-minus-${itemId}`);
+
+            // Reset classes
+            btnPlus.className = btnPlus.className.replace(' active-plus', '');
+            btnMinus.className = btnMinus.className.replace(' active-minus', '');
+            
+            // Add active class
+            if (val === 'plus') {
+                btnPlus.className += ' active-plus';
+            } else if (val === 'minus') {
+                btnMinus.className += ' active-minus';
+            }
+        }
+
+        function updateCounts() {
+            const counts = getCounts();
+            const badgePlus = document.getElementById('badge-plus');
+            const badgeMinus = document.getElementById('badge-minus');
+
+            document.getElementById('count-plus').innerText = counts.plus;
+            document.getElementById('count-minus').innerText = counts.minus;
+
+            // Visual feedback for limits
+            if (counts.plus >= MIN_SELECTION && counts.plus <= MAX_SELECTION) {
+                badgePlus.classList.add('bg-green-200', 'border-green-400');
+                badgePlus.classList.remove('bg-green-50', 'border-green-200');
+            } else {
+                badgePlus.classList.remove('bg-green-200', 'border-green-400');
+                badgePlus.classList.add('bg-green-50', 'border-green-200');
+            }
+
+            if (counts.minus >= MIN_SELECTION && counts.minus <= MAX_SELECTION) {
+                badgeMinus.classList.add('bg-red-200', 'border-red-400');
+                badgeMinus.classList.remove('bg-red-50', 'border-red-200');
+            } else {
+                badgeMinus.classList.remove('bg-red-200', 'border-red-400');
+                badgeMinus.classList.add('bg-red-50', 'border-red-200');
+            }
+        }
+
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.className = 'show'; // Reset classes
+            if (type === 'error') {
+                toast.style.backgroundColor = '#d32f2f';
+            } else {
+                toast.style.backgroundColor = '#333';
+            }
+            
+            setTimeout(function(){ toast.className = toast.className.replace('show', ''); }, 3000);
+        }
+
+        // Report Generation
+        function generateReport() {
+            const counts = getCounts();
+
+            // Validate Minimums
+            if (counts.plus < MIN_SELECTION) {
+                showToast(`אנא בחר/י לפחות ${MIN_SELECTION} חוזקות (סימנת ${counts.plus})`, 'error');
+                return;
+            }
+            if (counts.minus < MIN_SELECTION) {
+                showToast(`אנא בחר/י לפחות ${MIN_SELECTION} נקודות לשיפור (סימנת ${counts.minus})`, 'error');
+                return;
+            }
+
+            const evaluateeName = document.getElementById('evaluatee-name').value || "ללא שם";
+            const evaluatorName = document.getElementById('evaluator-name').value || "לא צוין";
+            const freeText = document.getElementById('free-text').value;
+            const dateStr = new Date().toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            // Populate Report Header
+            document.getElementById('report-for-name').innerText = evaluateeName;
+            document.getElementById('report-by-name').innerText = evaluatorName;
+            document.getElementById('report-date').innerText = dateStr;
+
+            // Gather Items
+            const strengths = [];
+            const improvements = [];
+
+            categories.forEach(cat => {
+                cat.items.forEach(item => {
+                    if (state[item.id] === 'plus') strengths.push(item);
+                    if (state[item.id] === 'minus') improvements.push(item);
+                });
+            });
+
+            // Populate Lists
+            const sList = document.getElementById('report-strengths-list');
+            const iList = document.getElementById('report-improvements-list');
+            
+            sList.innerHTML = '';
+            iList.innerHTML = '';
+
+            // Visibility Logic
+            const sSection = document.getElementById('report-strengths-section');
+            const iSection = document.getElementById('report-improvements-section');
+            const nSection = document.getElementById('report-notes-section');
+            
+            // Should always have content due to validation, but good to be safe
+            if (strengths.length > 0) {
+                sSection.classList.remove('hidden');
+                strengths.forEach(item => {
+                    sList.innerHTML += `
+                        <li class="bg-green-50 p-3 rounded-lg border-r-4 border-green-500">
+                            <span class="font-bold text-green-900">${item.title}</span>
+                            <div class="text-xs text-green-700 mt-1">${item.desc}</div>
+                        </li>`;
+                });
+            } else {
+                sSection.classList.add('hidden');
+            }
+
+            if (improvements.length > 0) {
+                iSection.classList.remove('hidden');
+                improvements.forEach(item => {
+                    iList.innerHTML += `
+                        <li class="bg-red-50 p-3 rounded-lg border-r-4 border-red-500">
+                            <span class="font-bold text-red-900">${item.title}</span>
+                            <div class="text-xs text-red-700 mt-1">${item.desc}</div>
+                        </li>`;
+                });
+            } else {
+                iSection.classList.add('hidden');
+            }
+
+            if (freeText.trim().length > 0) {
+                nSection.classList.remove('hidden');
+                document.getElementById('report-free-text').innerText = freeText;
+            } else {
+                nSection.classList.add('hidden');
+            }
+
+            // Show Report Modal
+            const reportView = document.getElementById('report-view');
+            reportView.classList.remove('hidden');
+            reportView.scrollTop = 0;
+        }
+
+        function closeReport() {
+            document.getElementById('report-view').classList.add('hidden');
+        }
+
+        // Helper function to generate data
+        function getExportData() {
+            const evaluateeName = document.getElementById('evaluatee-name').value || "ללא שם";
+            const evaluatorName = document.getElementById('evaluator-name').value || "לא צוין";
+            const freeText = document.getElementById('free-text').value;
+            const dateStr = new Date().toISOString();
+
+            const strengths = [];
+            const improvements = [];
+
+            categories.forEach(cat => {
+                cat.items.forEach(item => {
+                    const itemData = {
+                        id: item.id,
+                        categoryId: cat.id,
+                        categoryTitle: cat.title,
+                        title: item.title,
+                        description: item.desc
+                    };
+
+                    if (state[item.id] === 'plus') strengths.push(itemData);
+                    if (state[item.id] === 'minus') improvements.push(itemData);
+                });
+            });
+
+            return {
+                data: {
+                    meta: {
+                        version: "1.0",
+                        exportDate: dateStr,
+                        source: "Stanford Interpersonal Skills Feedback Form"
+                    },
+                    participants: {
+                        evaluator: evaluatorName,
+                        evaluatee: evaluateeName
+                    },
+                    feedback: {
+                        strengths: strengths,
+                        improvements: improvements,
+                        generalNotes: freeText
+                    }
+                },
+                filename: `feedback_${evaluateeName.replace(/[^a-z0-9א-ת]/gi, '_').substring(0, 20)}.json`
+            };
+        }
+
+        function downloadJSON() {
+            const { data, filename } = getExportData();
+            const jsonString = JSON.stringify(data, null, 2);
+            
+            const blob = new Blob([jsonString], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            a.download = filename;
+            a.href = url;
+            document.body.appendChild(a);
+            a.click();
+            
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        async function shareJSONToWhatsApp() {
+            const { data, filename } = getExportData();
+            const jsonString = JSON.stringify(data, null, 2); // Pretty print for readability if sent as text
+            const compactJson = JSON.stringify(data); // Compact for URL
+
+            // 1. Try Native File Share (Mobile approach)
+            if (navigator.canShare && navigator.share) {
+                try {
+                    const blob = new Blob([jsonString], { type: "application/json" });
+                    const file = new File([blob], filename, { type: "application/json" });
+                    
+                    if (navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: 'משוב כישורים - קובץ נתונים',
+                            text: 'מצורף קובץ נתוני המשוב (JSON)'
+                        });
+                        return; // Success, exit
+                    }
+                } catch (err) {
+                    console.log("Share API error or cancelled:", err);
+                    // Continue to fallback if share failed/cancelled
+                }
+            }
+
+            // 2. Fallback: Send JSON Text via WhatsApp URL (Desktop/Unsupported)
+            // Note: URL length limits exist, so this works best for smaller payloads
+            const encodedJson = encodeURIComponent(compactJson);
+            const whatsappUrl = `https://wa.me/?text=${encodedJson}`;
+            
+            // Notify user about fallback
+            showToast("נשלח כטקסט (שיתוף קבצים לא נתמך בדפדפן זה)", "info");
+            setTimeout(() => {
+                window.open(whatsappUrl, '_blank');
+            }, 1000);
+        }
+
+        // Removed the old shareToWhatsApp function to avoid confusion
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>
