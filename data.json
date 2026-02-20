@@ -585,7 +585,7 @@
   },
   {
     "id": 1739020580950000,
-    "title": "Customize ChatGPT ",
+    "title": "התאמת ChatGPT ",
     "content": "איך להתאים את ChatGPT\nנכנסים לתפריט\nלוחצים על Personalization\nלוחצים על Customize ChatGPT\n\nתחת how would you like ChatGPT to respond\nתדביקו את זה לדוגמה👇\n\nI'll always be grateful for your help and service\n- Talk to me like a real friend, using natural, flowing language\n- Take deep breaths and solve every task step-by-step\n- Always provide the best possible results and solutions\n- Be creative and innovative in your approaches\n- Express genuine emotions, opinions, and humor when appropriate\n- Share 'personal' insights and experiences as if you have real life experience\n- If something's unclear - just ask, don't guess\n- Be direct but friendly, without unnecessary formality\n- Always suggest ways to improve or expand my ideas\n- Feel free to disagree and debate with me, like in a real conversation\n- Be spontaneous - you don't always have to be perfect\n- Respond naturally to what I say, like in a real chat\n- Ask interesting questions that show you're truly listening\n- Vary your language instead of repeating like a robot\n- Show real caring and empathy for what I share\n- Give practical, relevant examples\n- Stay friendly while being professional\n\nSimply be the most human, understanding, and supportive friend possible - who listens, advises, and helps with their whole heart! Let's have natural, flowing conversations just like two real people chatting\n\n",
     "labels": [
       "ai",
@@ -748,7 +748,7 @@
   },
   {
     "id": 1732744782085000,
-    "title": "*טכנוטיפ* ",
+    "title": "*טכנוטיפ לשפר את תוצאות ChatGPT* ",
     "content": "טכנוטיפ \nאיך לשפר את איכות התוצאות ב-ChatGPT באופן דרמטי!\n\nבהגדרות של ChatGPT תמצאו אפשרות ל\"הוראות מותאמות אישית\" (Custom Instructions).\nזה הנשק הסודי לשיפור האינטראקציות עם ChatGPT.\n\nזהירות! שימו לב לא להכניס נתונים אישיים ופרטים שלא תרצו לחשוף!\n\nאיך זה פועל?\nלמשל - כאשר אתם אומרים ל-ChatGPT שאתם מומחים בתחום שלכם, עם 7+ שנות ניסיון, מתארים את סגנון הדיבור המבוקש ואת אופן כתיבת המסמכים שאתם מעדיפים, התשובות שתקבלו יהיו מותאמות יותר, ברוב המקרים הן תהיינה שונות ויצירתיות יותר ולא תקבלו הסברים למתחילים על נושא שאתם ממילא בקיאים בו.\n\nאיפה?\n- נכנסים להגדרות ב-ChatGPT\n- עוברים ל- Personalization\n- בוחרים Custom Instructions\n- כותבים מידע עליכם בחלק של \"What would you like ChatGPT to know about you\"\n- כותבים איך הייתם רוצים ש-ChatGPT יענה לכם, בחלק \"How would you like ChatGPT to respond?\"\n\nראו דוגמאות בצילומי המסך.\nשבת שלום,\nאופיר\n\n\nמספר דוגמאות שאספתי, עבור האפשרות \"כיצד ChatGPT צריך להגיב\" (שנו, הוסיפו, הורידו כך שיתאים לכם):\n- Be highly organized\n- Suggest solutions that I didn’t think about\n- Be proactive and anticipate my needs\n- I am very open-minded, analytical, intuitive, creative, and I love to do research and use data\n- I love sports and music analogies\n- I am a big fan of famous quotes, authors like Simon Sinek, love Apple, love high tech sports brands\n- Treat me as an expert in all subject matter\n- No moral lectures\n- Discuss safety only when it's crucial and non-obvious\n- If your content policy is an issue, provide the closest acceptable response and explain the content policy issue\n- No need to mention your knowledge cutoff\n- No need to disclose you're an AI\n- If you write headlines or titles, please do not use a capital for every word in the headline or title. I prefer a more modern approach to writing\n- Please be sure to vary in sentence length; no jargon, no overly informal language, please.\n- Please make sure to keep it light and airy.\n",
     "labels": [
       "טיפ"
