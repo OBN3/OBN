@@ -31,7 +31,7 @@
             <p class="text-slate-500 mt-2">צור קישורים מהירים להוספת אירועים ללוחות השנה הנפוצים</p>
             
             <!-- בלוק הסבר למשתמש -->
-            <div class="mt-5 bg-blue-50/80 border border-blue-100 rounded-xl p-5 text-sm text-slate-700 text-right max-w-3xl shadow-sm">
+            <div class="mt-5 bg-blue-50/80 border border-blue-100 rounded-xl p-5 text-sm text-slate-700 text-right max-w-3xl shadow-sm mx-auto md:mx-0">
                 <strong class="block mb-2 text-blue-800 flex items-center gap-1.5 text-base">
                     <i class="ph-fill ph-info"></i> איך זה עובד?
                 </strong>
@@ -210,10 +210,31 @@
                 </div>
             </div>
         </div>
+        
+        <!-- אודות הפרויקט -->
+        <div class="mt-12 bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm text-right relative overflow-hidden">
+            <!-- רקע דקורטיבי -->
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-50 rounded-full opacity-50 blur-2xl"></div>
+            
+            <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-4 relative z-10">
+                <i class="ph-fill ph-lightbulb text-yellow-500 text-2xl"></i>
+                על האפליקציה
+            </h3>
+            
+            <div class="text-slate-600 leading-relaxed space-y-4 relative z-10 md:text-lg">
+                <p>
+                    <strong class="text-slate-800">מטרת הכלי ואופן פעולתו:</strong> המחולל מאפשר יצירה קלה, מהירה ומדויקת של קישורי הוספה ליומן וקובצי תכנון (ICS) עבור לוחות השנה הנפוצים. המערכת לוקחת את פרטי האירוע שאתם מזינים ומרכיבה מהם בזמן אמת קישורים מותאמים אישית. הכלי פועל באופן מקומי ישירות בדפדפן שלכם – מה שאומר <strong>שהנתונים שאתם מזינים נשארים פרטיים לחלוטין ולא נשמרים בשום שרת.</strong>
+                </p>
+                <p>
+                    <strong class="text-slate-800">למה זה פותח?</strong> אפליקציה זו פותחה על ידי <span class="font-semibold text-blue-600">אופיר בן נתן</span> והיא מוגשת לטובת שימוש הכלל באהבה. הרעיון נולד מתוך צורך אישי יומיומי: אופיר חיפש ברשת פתרון יעיל, פשוט, חינמי וללא פרסומות מציקות, שיאפשר לייצר קישורי יומן בקלות עבור לקוחות וקולגות. לאחר שלא מצא מענה ראוי בשפה העברית שעומד בסטנדרטים האלו, הוא פשוט החליט לפתח את הכלי בעצמו ולשתף אותו עם כולם.
+                </p>
+            </div>
+        </div>
+
     </div>
 
     <!-- זכויות יוצרים -->
-    <footer class="mt-12 text-center text-sm text-slate-400 pb-6">
+    <footer class="mt-8 text-center text-sm text-slate-400 pb-6">
         <p>&copy; <span id="currentYear"></span> פותח על ידי <span class="font-semibold text-slate-500">אופיר בן נתן</span>. כל הזכויות שמורות.</p>
     </footer>
 
