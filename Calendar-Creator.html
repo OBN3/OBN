@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מחולל קישורי יומן | Calendar Link Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Assistant', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen p-4 md:p-8 selection:bg-blue-200">
+
+    <div class="max-w-5xl mx-auto">
+        <header class="mb-8 text-center md:text-right">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900 flex items-center justify-center md:justify-start gap-3">
+                <i class="ph-fill ph-calendar-plus text-blue-600"></i>
+                מחולל קישורי יומן
+            </h1>
+            <p class="text-slate-500 mt-2">צור קישורים מהירים להוספת אירועים ללוחות השנה הנפוצים</p>
+            
+            <!-- בלוק הסבר למשתמש -->
+            <div class="mt-5 bg-blue-50/80 border border-blue-100 rounded-xl p-5 text-sm text-slate-700 text-right max-w-3xl shadow-sm">
+                <strong class="block mb-2 text-blue-800 flex items-center gap-1.5 text-base">
+                    <i class="ph-fill ph-info"></i> איך זה עובד?
+                </strong>
+                <ol class="list-decimal list-inside space-y-2">
+                    <li>מלא את פרטי הפגישה בטופס (הקישורים משמאל מתעדכנים בזמן אמת בכל הקלדה).</li>
+                    <li><strong>כדי להוסיף ליומן שלך:</strong> לחץ על הכפתור הראשי (למשל "Google Calendar") כדי לפתוח את היומן שלך בחלון חדש ולשמור את האירוע.</li>
+                    <li><strong>כדי לשתף עם אחרים:</strong> לחץ על סמל ההעתקה (<i class="ph ph-copy inline align-middle text-base text-slate-500 bg-white border border-slate-200 rounded px-1"></i>) ושלח לאנשים אחרים (בוואטסאפ, במייל וכו') כדי שהם יוכלו להוסיף את האירוע ליומן שלהם.</li>
+                    <li><strong>קובץ יומן (.ics):</strong> ניתן להוריד את הקובץ ישירות ולשלוח אותו לאחרים כקובץ מצורף כדי שיוסיפו ליומן שלהם בקלות.</li>
+                </ol>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Form Section -->
+            <div class="lg:col-span-7 glass-panel rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+                <form id="eventForm" class="space-y-5">
+                    
+                    <!-- Title & Location -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold mb-1.5 text-slate-700">כותרת האירוע <span class="text-red-500">*</span></label>
+                            <input type="text" id="title" required placeholder="לדוגמה: פגישת צוות שבועית" 
+                                class="w-full p-3 rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-1.5 text-slate-700">מיקום (אופציונלי)</label>
+                            <div class="relative">
+                                <i class="ph ph-map-pin absolute right-3 top-3.5 text-slate-400 text-lg"></i>
+                                <input type="text" id="location" placeholder="כתובת, חדר ישיבות או קישור לזום" 
+                                    class="w-full p-3 pr-10 rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Details -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-1.5 text-slate-700">פרטים נוספים (אופציונלי)</label>
+                        <textarea id="details" rows="3" placeholder="סדר יום, הערות חשובות..." 
+                            class="w-full p-3 rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all resize-y"></textarea>
+                    </div>
+
+                    <!-- Date & Time Options -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-semibold flex items-center gap-2">
+                                <i class="ph ph-clock text-blue-600"></i>
+                                זמנים ותאריכים
+                            </h3>
+                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                <span class="text-sm text-slate-600">יום שלם</span>
+                                <input type="checkbox" id="allDay" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold mb-1 text-slate-500">התחלה</label>
+                                <div class="flex gap-2">
+                                    <input type="date" id="startDate" required class="w-full p-2.5 rounded-lg border border-slate-300 focus:border-blue-500 outline-none text-sm">
+                                    <input type="time" id="startTime" value="09:00" class="w-full p-2.5 rounded-lg border border-slate-300 focus:border-blue-500 outline-none text-sm time-input">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold mb-1 text-slate-500">סיום</label>
+                                <div class="flex gap-2">
+                                    <input type="date" id="endDate" required class="w-full p-2.5 rounded-lg border border-slate-300 focus:border-blue-500 outline-none text-sm">
+                                    <input type="time" id="endTime" value="10:00" class="w-full p-2.5 rounded-lg border border-slate-300 focus:border-blue-500 outline-none text-sm time-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold mb-1 text-slate-500">אזור זמן</label>
+                            <select id="timezone" class="w-full p-2.5 rounded-lg border border-slate-300 focus:border-blue-500 outline-none text-sm" dir="ltr">
+                                <option value="Asia/Jerusalem" selected>Asia/Jerusalem (Israel)</option>
+                                <option value="UTC">UTC (Coordinated Universal Time)</option>
+                                <option value="America/New_York">America/New_York (EST/EDT)</option>
+                                <option value="America/Los_Angeles">America/Los_Angeles (PST/PDT)</option>
+                                <option value="Europe/London">Europe/London (GMT/BST)</option>
+                                <option value="Europe/Paris">Europe/Paris (CET/CEST)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Recurring Options -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <label class="flex items-center gap-2 cursor-pointer select-none mb-3">
+                            <input type="checkbox" id="isRecurring" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                            <span class="font-semibold text-slate-700 flex items-center gap-2">
+                                <i class="ph ph-arrows-clockwise text-blue-600"></i>
+                                אירוע חוזר
+                            </span>
+                        </label>
+                        
+                        <div id="recurringSettings" class="hidden grid-cols-1 md:grid-cols-2 gap-4 mt-2 border-t border-slate-200 pt-3">
+                            <div>
+                                <label class="block text-xs font-semibold mb-1 text-slate-500">תדירות</label>
+                                <select id="recurFreq" class="w-full p-2.5 rounded-lg border border-slate-300 focus:border-blue-500 outline-none text-sm">
+                                    <option value="DAILY">כל יום</option>
+                                    <option value="WEEKLY" selected>כל שבוע</option>
+                                    <option value="MONTHLY">כל חודש</option>
+                                    <option value="YEARLY">כל שנה</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold mb-1 text-slate-500">עד תאריך (אופציונלי)</label>
+                                <input type="date" id="recurUntil" class="w-full p-2.5 rounded-lg border border-slate-300 focus:border-blue-500 outline-none text-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+
+            <!-- Output Section -->
+            <div class="lg:col-span-5 space-y-4">
+                <div class="glass-panel rounded-2xl shadow-sm border border-slate-200 p-6 sticky top-6">
+                    <h2 class="text-xl font-bold mb-6 text-slate-800 flex items-center gap-2">
+                        <i class="ph-fill ph-export"></i>
+                        ייצוא או שיתוף קישור
+                    </h2>
+                    
+                    <div class="space-y-3">
+                        <!-- Google Calendar -->
+                        <div class="flex gap-2">
+                            <a id="btnGoogle" href="#" target="_blank" class="flex-1 flex items-center justify-center gap-3 bg-white border border-slate-200 hover:border-blue-400 hover:bg-blue-50 text-slate-700 p-3 rounded-xl transition-all shadow-sm font-medium" title="לחץ כאן כדי להוסיף ליומן האישי שלך">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5"><path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34a853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#fbbc05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#ea4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                                Google Calendar
+                            </a>
+                            <button onclick="copyLink('btnGoogle')" class="p-3 border border-slate-200 bg-white rounded-xl hover:bg-slate-100 text-slate-500 transition tooltip-trigger shrink-0" title="העתק את הקישור כדי לשתף עם אחרים">
+                                <i class="ph ph-copy text-lg"></i>
+                            </button>
+                        </div>
+
+                        <!-- Office 365 -->
+                        <div class="flex gap-2">
+                            <a id="btnOffice" href="#" target="_blank" class="flex-1 flex items-center justify-center gap-3 bg-white border border-slate-200 hover:border-orange-400 hover:bg-orange-50 text-slate-700 p-3 rounded-xl transition-all shadow-sm font-medium" title="לחץ כאן כדי להוסיף ליומן האישי שלך">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5"><path fill="#f25022" d="M21 21H12.5V12.5H21V21z"/><path fill="#7fba00" d="M11.5 21H3V12.5H11.5V21z"/><path fill="#00a4ef" d="M21 11.5H12.5V3H21V11.5z"/><path fill="#ffb900" d="M11.5 11.5H3V3H11.5V11.5z"/></svg>
+                                Office 365
+                            </a>
+                            <button onclick="copyLink('btnOffice')" class="p-3 border border-slate-200 bg-white rounded-xl hover:bg-slate-100 text-slate-500 transition tooltip-trigger shrink-0" title="העתק את הקישור כדי לשתף עם אחרים">
+                                <i class="ph ph-copy text-lg"></i>
+                            </button>
+                        </div>
+
+                        <!-- Outlook Web -->
+                        <div class="flex gap-2">
+                            <a id="btnOutlook" href="#" target="_blank" class="flex-1 flex items-center justify-center gap-3 bg-white border border-slate-200 hover:border-sky-400 hover:bg-sky-50 text-slate-700 p-3 rounded-xl transition-all shadow-sm font-medium" title="לחץ כאן כדי להוסיף ליומן האישי שלך">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5"><path fill="#0072C6" d="M22.8,4.2L12,1V23l10.8-3.2c0.7-0.2,1.2-0.8,1.2-1.5V5.7C24,5,23.5,4.4,22.8,4.2z"/><path fill="#005A9E" d="M12,1L0,4.2v15.6L12,23V1z"/><path fill="#FFF" d="M5.5,7.7c1.3,0,2.1,1.1,2.1,2.9c0,1.9-0.9,3.1-2.2,3.1c-1.3,0-2.2-1.1-2.2-2.9C3.3,8.9,4.2,7.7,5.5,7.7z M5.5,12.7c0.8,0,1.2-0.8,1.2-2.1c0-1.2-0.4-2.1-1.2-2.1c-0.8,0-1.2,0.8-1.2,2.1C4.3,11.8,4.7,12.7,5.5,12.7z M9.1,13.6H8.2V7.9h0.9V13.6z"/></svg>
+                                Outlook Web
+                            </a>
+                            <button onclick="copyLink('btnOutlook')" class="p-3 border border-slate-200 bg-white rounded-xl hover:bg-slate-100 text-slate-500 transition tooltip-trigger shrink-0" title="העתק את הקישור כדי לשתף עם אחרים">
+                                <i class="ph ph-copy text-lg"></i>
+                            </button>
+                        </div>
+
+                        <div class="relative py-2">
+                            <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200"></div></div>
+                            <div class="relative flex justify-center"><span class="bg-white px-3 text-xs text-slate-400 rounded-full border border-slate-200">או קובץ</span></div>
+                        </div>
+
+                        <!-- ICS File -->
+                        <button id="btnIcs" class="w-full flex items-center justify-center gap-3 bg-slate-800 hover:bg-slate-900 text-white p-3.5 rounded-xl transition-all shadow-md font-medium">
+                            <i class="ph-fill ph-download-simple text-lg"></i>
+                            הורד קובץ יומן (.ics)
+                        </button>
+                    </div>
+
+                    <!-- Toast Notification -->
+                    <div id="toast" class="hidden absolute -top-12 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded-lg shadow-lg text-sm items-center gap-2 transition-opacity duration-300 z-50 whitespace-nowrap">
+                        <i class="ph-fill ph-check-circle text-green-400"></i>
+                        <span>הקישור הועתק!</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- זכויות יוצרים -->
+    <footer class="mt-12 text-center text-sm text-slate-400 pb-6">
+        <p>&copy; <span id="currentYear"></span> פותח על ידי <span class="font-semibold text-slate-500">אופיר בן נתן</span>. כל הזכויות שמורות.</p>
+    </footer>
+
+    <script>
+        // Set dynamic year in footer
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        // Set default dates to today
+        const today = new Date();
+        document.getElementById('startDate').valueAsDate = today;
+        document.getElementById('endDate').valueAsDate = today;
+        
+        // UI Interactions
+        const allDayCheckbox = document.getElementById('allDay');
+        const timeInputs = document.querySelectorAll('.time-input');
+        const isRecurringCheckbox = document.getElementById('isRecurring');
+        const recurringSettings = document.getElementById('recurringSettings');
+        const form = document.getElementById('eventForm');
+
+        allDayCheckbox.addEventListener('change', (e) => {
+            timeInputs.forEach(input => {
+                input.style.opacity = e.target.checked ? '0.5' : '1';
+                input.disabled = e.target.checked;
+            });
+            generateLinks();
+        });
+
+        isRecurringCheckbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                recurringSettings.classList.remove('hidden');
+                recurringSettings.classList.add('grid');
+            } else {
+                recurringSettings.classList.add('hidden');
+                recurringSettings.classList.remove('grid');
+            }
+            generateLinks();
+        });
+
+        // Listen to all changes in the form
+        form.addEventListener('input', generateLinks);
+        form.addEventListener('change', generateLinks);
+
+        // Smart Date & Time Syncing
+        document.getElementById('startDate').addEventListener('change', function() {
+            // Automatically set end date to match start date
+            document.getElementById('endDate').value = this.value;
+            validateDates();
+        });
+
+        document.getElementById('startTime').addEventListener('change', function() {
+            // Proactive: automatically set end time to 1 hour after start time
+            if (this.value) {
+                const [hours, minutes] = this.value.split(':');
+                const endHours = String((parseInt(hours) + 1) % 24).padStart(2, '0');
+                document.getElementById('endTime').value = `${endHours}:${minutes}`;
+            }
+            validateDates();
+        });
+
+        // Date & Time formatting helpers
+        function formatDateForGoogle(dateStr, timeStr, isAllDay) {
+            const d = new Date(`${dateStr}T${timeStr}`);
+            if (isAllDay) {
+                return dateStr.replace(/-/g, '');
+            }
+            return d.toISOString().replace(/-|:|\.\d\d\d/g, '').substring(0, 15);
+        }
+
+        function formatDateForOutlook(dateStr, timeStr, isAllDay) {
+            if (isAllDay) return `${dateStr}T00:00:00`;
+            return `${dateStr}T${timeStr}:00`;
+        }
+
+        function formatICSDate(dateStr, timeStr, isAllDay) {
+            if (isAllDay) return dateStr.replace(/-/g, '');
+            return dateStr.replace(/-/g, '') + 'T' + timeStr.replace(/:/g, '') + '00';
+        }
+
+        function buildRRule(freq, until) {
+            let rule = `FREQ=${freq}`;
+            if (until) {
+                const untilDate = until.replace(/-/g, '') + 'T235959Z';
+                rule += `;UNTIL=${untilDate}`;
+            }
+            return rule;
+        }
+
+        // Main link generation function
+        function generateLinks() {
+            // Get values
+            const title = document.getElementById('title').value || 'אירוע חדש';
+            const location = document.getElementById('location').value;
+            const details = document.getElementById('details').value;
+            const isAllDay = document.getElementById('allDay').checked;
+            
+            const startDate = document.getElementById('startDate').value;
+            const startTime = document.getElementById('startTime').value || '00:00';
+            let endDate = document.getElementById('endDate').value;
+            const endTime = document.getElementById('endTime').value || '00:00';
+            
+            const timezone = document.getElementById('timezone').value;
+            
+            const isRecur = document.getElementById('isRecurring').checked;
+            const recurFreq = document.getElementById('recurFreq').value;
+            const recurUntil = document.getElementById('recurUntil').value;
+
+            // Fix end date for All Day events (Google requires end date to be exclusive)
+            let googleEndDate = endDate;
+            if (isAllDay) {
+                const ed = new Date(endDate);
+                ed.setDate(ed.getDate() + 1);
+                googleEndDate = ed.toISOString().split('T')[0];
+            }
+
+            // 1. Google Calendar
+            const gStart = formatDateForGoogle(startDate, startTime, isAllDay);
+            const gEnd = formatDateForGoogle(googleEndDate, endTime, isAllDay);
+            let googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${gStart}/${gEnd}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(location)}`;
+            if (!isAllDay) googleUrl += `&ctz=${timezone}`;
+            if (isRecur) googleUrl += `&recur=RRULE:${buildRRule(recurFreq, recurUntil)}`;
+            
+            document.getElementById('btnGoogle').href = googleUrl;
+
+            // 2. Office 365 & Outlook Web
+            const oStart = formatDateForOutlook(startDate, startTime, isAllDay);
+            const oEnd = formatDateForOutlook(endDate, endTime, isAllDay);
+            const outlookBase = `path=/calendar/action/compose&rru=addevent&subject=${encodeURIComponent(title)}&startdt=${encodeURIComponent(oStart)}&enddt=${encodeURIComponent(oEnd)}&body=${encodeURIComponent(details)}&location=${encodeURIComponent(location)}`;
+            
+            let outlookUrl = `https://outlook.live.com/calendar/0/deeplink/compose?${outlookBase}`;
+            let officeUrl = `https://outlook.office.com/calendar/0/deeplink/compose?${outlookBase}`;
+            
+            if (isAllDay) {
+                outlookUrl += '&allday=true';
+                officeUrl += '&allday=true';
+            }
+
+            document.getElementById('btnOutlook').href = outlookUrl;
+            document.getElementById('btnOffice').href = officeUrl;
+
+            // 3. ICS File generation function binding
+            document.getElementById('btnIcs').onclick = () => {
+                const icsStart = formatICSDate(startDate, startTime, isAllDay);
+                const icsEnd = formatICSDate(googleEndDate, endTime, isAllDay); // Use exclusive end date for ICS all-day too
+                
+                let icsContent = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Calendar Generator//HE\r\nBEGIN:VEVENT\r\nSUMMARY:${title}\r\n`;
+                
+                if (location) icsContent += `LOCATION:${location}\r\n`;
+                if (details) icsContent += `DESCRIPTION:${details.replace(/\n/g, '\\n')}\r\n`;
+                
+                if (isAllDay) {
+                    icsContent += `DTSTART;VALUE=DATE:${icsStart}\r\n`;
+                    icsContent += `DTEND;VALUE=DATE:${icsEnd}\r\n`;
+                } else {
+                    icsContent += `DTSTART;TZID=${timezone}:${icsStart}\r\n`;
+                    icsContent += `DTEND;TZID=${timezone}:${icsEnd}\r\n`;
+                }
+
+                if (isRecur) {
+                    icsContent += `RRULE:${buildRRule(recurFreq, recurUntil)}\r\n`;
+                }
+
+                icsContent += `END:VEVENT\r\nEND:VCALENDAR`;
+
+                const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.setAttribute('download', `${title || 'event'}.ics`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+        }
+
+        // Copy link functionality
+        function copyLink(btnId) {
+            const url = document.getElementById(btnId).href;
+            
+            // Create temporary input to copy text
+            const tempInput = document.createElement('input');
+            tempInput.value = url;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            showToast();
+        }
+
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.remove('hidden');
+            toast.classList.add('flex');
+            
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.classList.remove('flex');
+            }, 2500);
+        }
+
+        // Validate End Date/Time is after Start Date/Time
+        function validateDates() {
+            const startStr = document.getElementById('startDate').value;
+            const endStr = document.getElementById('endDate').value;
+            const startTimeStr = document.getElementById('startTime').value || '00:00';
+            const endTimeStr = document.getElementById('endTime').value || '00:00';
+            
+            if (startStr && endStr) {
+                const start = new Date(startStr + 'T' + startTimeStr);
+                const end = new Date(endStr + 'T' + endTimeStr);
+                
+                if (end < start) {
+                    document.getElementById('endDate').value = startStr;
+                    document.getElementById('endTime').value = startTimeStr;
+                }
+            }
+        }
+
+        document.getElementById('endDate').addEventListener('change', validateDates);
+        document.getElementById('endTime').addEventListener('change', validateDates);
+
+        // Initial generation
+        generateLinks();
+    </script>
+</body>
+</html>
