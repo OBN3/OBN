@@ -289,18 +289,18 @@
             if (this.value) {
                 const [hours, minutes] = this.value.split(':');
                 const endHours = String((parseInt(hours) + 1) % 24).padStart(2, '0');
-                document.getElementById('endTime').value = `${endHours}:${minutes}`;
-            }
+        document.getElementById('endTime').addEventListener('change', function() {
             validateDates();
         });
 
         // Date & Time formatting helpers
         function formatDateForGoogle(dateStr, timeStr, isAllDay) {
-            const d = new Date(`${dateStr}T${timeStr}`);
             if (isAllDay) {
                 return dateStr.replace(/-/g, '');
             }
-            return d.toISOString().replace(/-|:|\.\d\d\d/g, '').substring(0, 15);
+            // התיקון: שימוש בזמן המקומי המדויק שהוזן, ללא המרה ל-UTC.
+            // אנו שולחים את הזמן כ-"זמן צף" וגוגל מצמיד לו את אזור הזמן (ctz) שהגדרנו.
+            return dateStr.replace(/-/g, '') + 'T' + timeStr.replace(/:/g, '') + '00';
         }
 
         function formatDateForOutlook(dateStr, timeStr, isAllDay) {
