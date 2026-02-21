@@ -242,10 +242,13 @@
         // Set dynamic year in footer
         document.getElementById('currentYear').textContent = new Date().getFullYear();
 
-        // Set default dates to today
+        // Set default dates to today (Local time format YYYY-MM-DD)
         const today = new Date();
-        document.getElementById('startDate').valueAsDate = today;
-        document.getElementById('endDate').valueAsDate = today;
+        const tzOffset = today.getTimezoneOffset() * 60000;
+        const localISODate = (new Date(today.getTime() - tzOffset)).toISOString().split('T')[0];
+        
+        document.getElementById('startDate').value = localISODate;
+        document.getElementById('endDate').value = localISODate;
         
         // UI Interactions
         const allDayCheckbox = document.getElementById('allDay');
@@ -289,6 +292,11 @@
             if (this.value) {
                 const [hours, minutes] = this.value.split(':');
                 const endHours = String((parseInt(hours) + 1) % 24).padStart(2, '0');
+                document.getElementById('endTime').value = `${endHours}:${minutes}`;
+            }
+            validateDates();
+        });
+
         document.getElementById('endTime').addEventListener('change', function() {
             validateDates();
         });
@@ -453,8 +461,7 @@
         }
 
         document.getElementById('endDate').addEventListener('change', validateDates);
-        document.getElementById('endTime').addEventListener('change', validateDates);
-
+        
         // Initial generation
         generateLinks();
     </script>
