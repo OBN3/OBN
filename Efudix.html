@@ -64,32 +64,39 @@
     <!-- Sticky Header with Progress -->
     <header class="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur shadow-sm z-50 transition-all duration-300">
         <div class="max-w-md mx-auto px-4 py-3">
-            <div class="flex justify-between items-end mb-2">
+            <div class="flex justify-between items-start mb-2">
                 <div>
                     <h1 class="text-lg font-bold text-slate-900">המסע שלי</h1>
                     <p class="text-xs text-slate-500">מתחילים ב-16.2.26</p>
                 </div>
-                <div class="text-2xl font-bold transition-colors duration-300" id="percent-display">0%</div>
+                <div class="flex flex-col items-end gap-1">
+                    <div class="text-2xl font-bold transition-colors duration-300" id="percent-display">0%</div>
+                    <!-- Calendar Button -->
+                    <button onclick="downloadAndShowMessage()" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded-md border border-indigo-100 font-medium active:bg-indigo-100 transition-colors flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        תזכורות ליומן
+                    </button>
+                </div>
             </div>
             
-            <div class="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-3 w-full bg-slate-100 rounded-full overflow-hidden mt-2">
                 <div id="progress-bar" class="h-full w-0 progress-bar rounded-full" style="background-color: #ef4444;"></div>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="max-w-md mx-auto px-4 pt-24 space-y-3" id="app-container">
+    <!-- Main Content (Added back the missing container) -->
+    <main class="max-w-md mx-auto px-4 pt-28 space-y-3" id="app-container">
         <!-- Content will be injected here by JS -->
     </main>
 
-    <!-- Motivational Modal -->
+    <!-- Motivational Modal (Updated for dynamic use) -->
     <div id="modal" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl p-6 text-center max-w-xs w-full shadow-2xl modal-content">
-            <div class="text-4xl mb-4">🏆</div>
+            <div id="modal-icon" class="text-4xl mb-4">🏆</div>
             <h2 class="text-xl font-bold text-slate-900 mb-2" id="modal-title">כל הכבוד!</h2>
-            <p class="text-slate-600 mb-6" id="modal-message">הגעת ל-10% מהדרך!</p>
-            <button onclick="closeModal()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-medium active:scale-95 transition-transform">
+            <div class="text-slate-600 mb-6" id="modal-message">הגעת ל-10% מהדרך!</div>
+            <button id="modal-btn" onclick="closeModal()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-medium active:scale-95 transition-transform">
                 ממשיכים בכל הכוח
             </button>
         </div>
@@ -273,7 +280,7 @@
             // Milestone Logic
             if (showModal) {
                 if (percentage > lastMilestone && percentage % 10 === 0) {
-                    showMilestoneModal(percentage);
+                    showMessageModal(`הגעת ל-${percentage}%!`, messages[percentage] || "התקדמות מדהימה, להמשיך כך!", "ממשיכים בכל הכוח", "🏆");
                     lastMilestone = percentage;
                     localStorage.setItem('lastMilestone', lastMilestone);
                 } 
@@ -284,19 +291,98 @@
             }
         }
 
-        function showMilestoneModal(percent) {
+        // --- UI Modals ---
+        function showMessageModal(title, msgHtml, buttonText, icon = '🏆') {
             const modal = document.getElementById('modal');
-            const title = document.getElementById('modal-title');
-            const msg = document.getElementById('modal-message');
-
-            title.innerText = `הגעת ל-${percent}%!`;
-            msg.innerText = messages[percent] || "התקדמות מדהימה, להמשיך כך!";
-            
+            document.getElementById('modal-icon').innerText = icon;
+            document.getElementById('modal-title').innerText = title;
+            // Changed to innerHTML to support formatted text and lists
+            document.getElementById('modal-message').innerHTML = msgHtml;
+            document.getElementById('modal-btn').innerText = buttonText || 'סגור';
             modal.classList.remove('hidden');
         }
 
         function closeModal() {
             document.getElementById('modal').classList.add('hidden');
+        }
+
+        function downloadAndShowMessage() {
+            downloadCalendar(); // Generates the .ics file
+
+            // Show styled, clear instructions for both mobile and desktop users
+            setTimeout(() => {
+                const msg = `
+                    <div class="text-right space-y-3 mt-2 text-sm bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <p><strong>📱 בסמארטפון:</strong><br> פשוט לחץ על הקובץ שירד כדי להוסיף ליומן.</p>
+                        <hr class="border-slate-200">
+                        <p><strong>💻 במחשב (לגוגל יומן):</strong></p>
+                        <ol class="list-decimal list-inside text-slate-500 pr-1 space-y-1">
+                            <li>פתח את גוגל יומן בדפדפן</li>
+                            <li>לחץ על גלגל השיניים (הגדרות)</li>
+                            <li>בחר ב-"ייבוא וייצוא"</li>
+                            <li>העלה את הקובץ שהורד</li>
+                        </ol>
+                    </div>
+                `;
+                showMessageModal('הקובץ ירד בהצלחה', msg, 'הבנתי, תודה!', '📅');
+            }, 500);
+        }
+
+        // --- Calendar Generator (ICS) ---
+        function downloadCalendar() {
+            // Format dates as YYYYMMDDTHHMMSS (local time format for ICS)
+            const formatDateForICS = (date, hours, minutes) => {
+                const d = new Date(date);
+                const pad = (n) => n < 10 ? '0' + n : n;
+                return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(hours)}${pad(minutes)}00`;
+            };
+
+            const dtStartMorning = formatDateForICS(START_DATE, 7, 30);
+            const dtEndMorning = formatDateForICS(START_DATE, 8, 0); // 30 mins duration
+
+            const dtStartEvening = formatDateForICS(START_DATE, 19, 30);
+            const dtEndEvening = formatDateForICS(START_DATE, 20, 0);
+
+            // Build iCalendar string with recurring rules (RRULE)
+            const icsData = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Tracker App//IL
+BEGIN:VEVENT
+SUMMARY:☀️ המסע שלי - טיפול בוקר
+DTSTART:${dtStartMorning}
+DTEND:${dtEndMorning}
+RRULE:FREQ=DAILY;COUNT=${TOTAL_DAYS}
+DESCRIPTION:אל תשכח/י לסמן באפליקציה!
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:הגיע הזמן לטיפול בוקר
+TRIGGER:-PT0M
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:🌙 המסע שלי - טיפול ערב
+DTSTART:${dtStartEvening}
+DTEND:${dtEndEvening}
+RRULE:FREQ=DAILY;COUNT=${TOTAL_DAYS}
+DESCRIPTION:אל תשכח/י לסמן באפליקציה!
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:הגיע הזמן לטיפול ערב
+TRIGGER:-PT0M
+END:VALARM
+END:VEVENT
+END:VCALENDAR`;
+
+            // Create blob and trigger download
+            const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'treatment_reminders.ics';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         }
 
         // Run App
