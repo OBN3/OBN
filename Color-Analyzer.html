@@ -85,9 +85,9 @@
 
         <!-- אזור התוצאות (מוסתר כברירת מחדל) -->
         <div id="results-area" class="hidden mt-8 fade-in">
-            <!-- תצוגה מקדימה של התמונה -->
-            <div class="relative w-full h-48 sm:h-64 mb-6 rounded-2xl overflow-hidden shadow-md">
-                <img id="image-preview" src="" alt="תצוגה מקדימה" class="w-full h-full object-cover">
+            <!-- תצוגה מקדימה של התמונה (תוקן כדי למנוע חיתוך) -->
+            <div class="relative w-full h-64 sm:h-80 mb-6 rounded-2xl overflow-hidden shadow-inner bg-gray-50 border border-gray-200 flex items-center justify-center">
+                <img id="image-preview" src="" alt="תצוגה מקדימה" class="max-w-full max-h-full">
             </div>
 
             <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
@@ -161,6 +161,22 @@
         </div>
     </div>
 
+    <!-- מודאל אישור התחלה מחדש (החלפת תמונה) -->
+    <div id="reset-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-40 flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-50 mb-6">
+                <i data-lucide="alert-triangle" class="h-8 w-8 text-red-500"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800 mb-2">להתחיל מחדש?</h3>
+            <p class="text-gray-600 mb-8">הפעולה תמחק את הפלטה הנוכחית ותאפשר לך להעלות תמונה חדשה. האם להמשיך?</p>
+            
+            <div class="flex gap-3">
+                <button onclick="confirmReset()" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded-2xl transition-colors">כן, מחק פלטה</button>
+                <button onclick="cancelReset()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 rounded-2xl transition-colors">ביטול</button>
+            </div>
+        </div>
+    </div>
+
     <!-- הודעת טוסט (Toast Notification) -->
     <div id="toast" class="fixed bottom-0 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 z-50">
         <span id="toast-icon-wrapper">
@@ -171,6 +187,9 @@
 
     <!-- שדה טקסט נסתר עבור העתקה ללוח -->
     <textarea id="hidden-clipboard" class="absolute -left-[9999px]"></textarea>
+
+    <!-- זכוכית מגדלת חכמה (קנבס שמצייר את הפיקסלים המוגדלים) -->
+    <canvas id="color-magnifier" width="120" height="120" class="hidden fixed rounded-full border-4 border-white shadow-[0_8px_20px_rgba(0,0,0,0.4)] z-50 pointer-events-none" style="image-rendering: pixelated; left: 0; top: 0;"></canvas>
 
     <script>
         // אתחול אייקונים
@@ -187,12 +206,16 @@
         const hiddenClipboard = document.getElementById('hidden-clipboard');
         const toast = document.getElementById('toast');
         const toastMessage = document.getElementById('toast-message');
+        const colorMagnifier = document.getElementById('color-magnifier');
+        const magCtx = colorMagnifier.getContext('2d'); // הוספת קונטקסט לזכוכית המגדלת
 
         let currentColors = []; // שמירת הצבעים הנוכחיים
         let sourceCanvas = document.createElement('canvas'); // לאחסון התמונה המקורית לדגימה מדויקת
         let sourceCtx = sourceCanvas.getContext('2d');
         let pickingIndex = -1; // אינדקס הצבע שמוחלף כעת
         let pendingNewColor = ''; // הצבע החדש שנדגם
+
+        const resetModal = document.getElementById('reset-modal'); // שמירת רפרנס למודאל האיפוס
 
         // --- ניהול אירועי Drag & Drop ---
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -389,44 +412,144 @@
             showToast('הפלטה הועתקה בהצלחה!');
         });
 
-        // --- מנגנון החלפת צבע ידנית (דגימה מהתמונה) ---
+        // פונקציה להצגת מודאל האישור (משמשת גם את ה-EyeDropper וגם את הידני)
+        function showConfirmationModal(newHex) {
+            pendingNewColor = newHex;
+            const oldHex = currentColors[pickingIndex];
+            
+            document.getElementById('modal-old-color').style.backgroundColor = oldHex;
+            document.getElementById('modal-new-color').style.backgroundColor = newHex;
+            document.getElementById('modal-old-text').textContent = oldHex;
+            document.getElementById('modal-new-text').textContent = newHex;
+            
+            colorMagnifier.classList.add('hidden');
+            replaceModal.classList.remove('hidden');
+        }
+
+        // --- מנגנון החלפת צבע (EyeDropper נטיבי או דגימה ידנית) ---
         const replaceModal = document.getElementById('replace-modal');
         
-        function startReplaceMode(index, e) {
+        async function startReplaceMode(index, e) {
             e.stopPropagation();
             pickingIndex = index;
             
-            // אינדיקציה ויזואלית על התמונה
-            imagePreview.style.cursor = 'crosshair';
+            // פרואקטיביות: שימוש ב-EyeDropper המובנה של הדפדפן (כמו באפליקציה שהראית לי!)
+            if (window.EyeDropper) {
+                try {
+                    const eyeDropper = new EyeDropper();
+                    const result = await eyeDropper.open();
+                    showConfirmationModal(result.sRGBHex.toUpperCase());
+                    return;
+                } catch (err) {
+                    // המשתמש ביטל את הפעולה (למשל לחץ Esc)
+                    if (err.name === 'AbortError') {
+                        cancelReplace();
+                        return;
+                    }
+                }
+            }
+
+            // פולבק (Fallback): לדפדפנים שלא תומכים (Safari/Firefox) או במקרה של שגיאה
+            // העלמת סמן העכבר כדי שלא יהיה בלבול עם זכוכית המגדלת
+            imagePreview.style.cursor = 'none';
             imagePreview.classList.add('ring-4', 'ring-indigo-500', 'ring-opacity-50', 'transition-all');
             showToast('לחץ על אזור בתמונה כדי לדגום צבע חדש', false);
         }
 
+        // פונקציה לעדכון זכוכית המגדלת (מופעלת רק בפולבק הידני)
+        function updateMagnifier(e) {
+            if (pickingIndex === -1) return;
+
+            // תמיכה בעכבר ובמסכי מגע
+            const isTouch = e.type && e.type.startsWith('touch');
+            const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+            const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+
+            // חישוב מיקום הלחיצה יחסית לגודל התמונה
+            const rect = imagePreview.getBoundingClientRect();
+            const scaleX = sourceCanvas.width / rect.width;
+            const scaleY = sourceCanvas.height / rect.height;
+            const x = Math.floor((clientX - rect.left) * scaleX);
+            const y = Math.floor((clientY - rect.top) * scaleY);
+
+            // וידוא שאנחנו בתוך גבולות התמונה
+            if (x < 0 || y < 0 || x >= sourceCanvas.width || y >= sourceCanvas.height) {
+                colorMagnifier.classList.add('hidden');
+                return;
+            }
+
+            // מיקום זכוכית המגדלת
+            const offsetX = 60; // חצי מגודל הקנבס (120)
+            // במובייל נרים את העיגול למעלה כדי שהאצבע לא תסתיר, בעכבר נשים אותו בדיוק על הסמן!
+            const offsetY = isTouch ? 130 : 60; 
+            
+            colorMagnifier.style.transform = `translate(${clientX - offsetX}px, ${clientY - offsetY}px)`;
+            colorMagnifier.classList.remove('hidden');
+
+            // --- ציור הפיקסלים המוגדלים ---
+            const magSize = 120; 
+            const zoomLevel = 11; 
+            const halfZoom = Math.floor(zoomLevel / 2);
+
+            magCtx.clearRect(0, 0, magSize, magSize);
+            magCtx.imageSmoothingEnabled = false;
+
+            magCtx.drawImage(
+                sourceCanvas,
+                x - halfZoom, y - halfZoom, zoomLevel, zoomLevel, 
+                0, 0, magSize, magSize 
+            );
+
+            // ציור גריד
+            const pixelSize = magSize / zoomLevel;
+            magCtx.strokeStyle = 'rgba(0,0,0,0.1)';
+            magCtx.lineWidth = 1;
+            for (let i = 0; i <= magSize; i += pixelSize) {
+                magCtx.beginPath(); magCtx.moveTo(i, 0); magCtx.lineTo(i, magSize); magCtx.stroke(); 
+                magCtx.beginPath(); magCtx.moveTo(0, i); magCtx.lineTo(magSize, i); magCtx.stroke(); 
+            }
+
+            // ציור הריבוע המרכזי
+            const centerPixelX = Math.floor(magSize / 2) - Math.floor(pixelSize / 2);
+            magCtx.lineWidth = 2;
+            magCtx.strokeStyle = 'white';
+            magCtx.strokeRect(centerPixelX, centerPixelX, pixelSize, pixelSize);
+            magCtx.lineWidth = 1;
+            magCtx.strokeStyle = 'black';
+            magCtx.strokeRect(centerPixelX - 1, centerPixelX - 1, pixelSize + 2, pixelSize + 2);
+        }
+
+        // אירועי תזוזה (עכבר ומגע)
+        imagePreview.addEventListener('mousemove', updateMagnifier);
+        imagePreview.addEventListener('touchmove', (e) => {
+            if (pickingIndex !== -1) {
+                e.preventDefault(); 
+                updateMagnifier(e);
+            }
+        }, { passive: false });
+
+        // הסתרת זכוכית המגדלת כשיוצאים מהתמונה
+        imagePreview.addEventListener('mouseleave', () => {
+            if (!window.EyeDropper || pickingIndex !== -1) colorMagnifier.classList.add('hidden');
+        });
+        imagePreview.addEventListener('touchend', () => colorMagnifier.classList.add('hidden'));
+
+        // אירוע לחיצה לבחירת הצבע הסופי (בפולבק הידני)
         imagePreview.addEventListener('click', (e) => {
             if (pickingIndex === -1) return;
 
-            // חישוב מיקום הלחיצה יחסית לגודל התמונה המקורי בקנבס
             const rect = imagePreview.getBoundingClientRect();
+            if(e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) return;
+
             const scaleX = sourceCanvas.width / rect.width;
             const scaleY = sourceCanvas.height / rect.height;
             const x = Math.floor((e.clientX - rect.left) * scaleX);
             const y = Math.floor((e.clientY - rect.top) * scaleY);
 
-            // קריאת הפיקסל מהקנבס הנסתר (שמכיל את התמונה המקורית)
             const pixel = sourceCtx.getImageData(x, y, 1, 1).data;
             const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
 
-            // הכנת המודאל
-            pendingNewColor = hex;
-            const oldHex = currentColors[pickingIndex];
-            
-            document.getElementById('modal-old-color').style.backgroundColor = oldHex;
-            document.getElementById('modal-new-color').style.backgroundColor = hex;
-            document.getElementById('modal-old-text').textContent = oldHex;
-            document.getElementById('modal-new-text').textContent = hex;
-            
-            // הצגת המודאל
-            replaceModal.classList.remove('hidden');
+            showConfirmationModal(hex);
         });
 
         function confirmReplace() {
@@ -443,17 +566,27 @@
             pendingNewColor = '';
             
             // הסרת האינדיקציות הויזואליות
+            colorMagnifier.classList.add('hidden');
             imagePreview.style.cursor = 'default';
             imagePreview.classList.remove('ring-4', 'ring-indigo-500', 'ring-opacity-50');
             replaceModal.classList.add('hidden');
         }
 
-        // --- איפוס תמונה ---
+        // --- איפוס תמונה (עם מודאל אזהרה) ---
         btnReset.addEventListener('click', () => {
+            resetModal.classList.remove('hidden');
+        });
+
+        function confirmReset() {
             fileInput.value = '';
             resultsArea.classList.add('hidden');
             dropZone.classList.remove('hidden');
-        });
+            resetModal.classList.add('hidden');
+        }
+
+        function cancelReset() {
+            resetModal.classList.add('hidden');
+        }
 
         // --- ניהול התראות (Toast) ---
         let toastTimeout;
