@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מחולל פלטת צבעים מתמונה</title>
+    <!-- שימוש ב-Tailwind לעיצוב מודרני, רספונסיבי ומעוגל -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- שילוב אייקונים -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Rubik', sans-serif;
+            background-color: #f3f4f6; /* אפור בהיר */
+        }
+        
+        /* עיצוב לאזור גרירת הקבצים */
+        .drop-zone {
+            transition: all 0.3s ease;
+        }
+        .drop-zone.dragover {
+            background-color: #e0e7ff; /* צבע כחלחל בעת גרירה */
+            border-color: #4f46e5;
+            transform: scale(1.02);
+        }
+
+        /* אפקט ריחוף על ריבועי הצבע */
+        .color-swatch {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .color-swatch:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* אנימציית הופעה */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* טוסט הודעות (Toast) */
+        #toast {
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+        }
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 30px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8">
+
+    <!-- מיכל ראשי -->
+    <main class="w-full max-w-2xl bg-white rounded-3xl shadow-xl p-6 sm:p-10">
+        
+        <!-- כותרת -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-3">
+                <i data-lucide="palette" class="w-8 h-8 text-indigo-600"></i>
+                מחולל פלטת צבעים
+            </h1>
+            <p class="text-gray-600 leading-relaxed max-w-xl mx-auto text-sm sm:text-base mt-4">
+                אפליקציה זו מנתחת תמונות ומוציאה מהן את 5 הצבעים הדומיננטיים ביותר. 
+                ניתן להעתיק כל קוד צבע (HEX) בנפרד, לדגום צבעים חלופיים ישירות מהתמונה בעזרת סמל הטפטפת, או להעתיק את כל הפלטה בבת אחת. 
+                כל העיבוד מתבצע מקומית בדפדפן שלך, ללא שמירת נתונים בשרת חיצוני.
+            </p>
+        </div>
+
+        <!-- אזור העלאת תמונה (Drag & Drop) -->
+        <div id="drop-zone" class="drop-zone border-4 border-dashed border-gray-300 rounded-3xl p-10 text-center cursor-pointer hover:bg-gray-50 flex flex-col items-center justify-center relative overflow-hidden group">
+            <input type="file" id="file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/png, image/jpeg, image/jpg, image/webp">
+            
+            <i data-lucide="image-plus" class="w-16 h-16 text-gray-400 mb-4 group-hover:text-indigo-500 transition-colors"></i>
+            <p class="text-lg font-medium text-gray-700">לחץ להעלאת תמונה</p>
+            <p class="text-sm text-gray-400 mt-1">או גרור ושחרר קובץ לכאן</p>
+        </div>
+
+        <!-- אזור התוצאות (מוסתר כברירת מחדל) -->
+        <div id="results-area" class="hidden mt-8 fade-in">
+            <!-- תצוגה מקדימה של התמונה -->
+            <div class="relative w-full h-48 sm:h-64 mb-6 rounded-2xl overflow-hidden shadow-md">
+                <img id="image-preview" src="" alt="תצוגה מקדימה" class="w-full h-full object-cover">
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+                <h3 class="text-lg font-medium text-gray-700">הפלטה שלך:</h3>
+                <div class="text-xs sm:text-sm text-indigo-700 bg-indigo-50 px-3 py-2 rounded-xl flex items-start sm:items-center gap-2 border border-indigo-100 shadow-sm">
+                    <i data-lucide="lightbulb" class="w-4 h-4 text-amber-500 shrink-0 mt-0.5 sm:mt-0"></i>
+                    <span><strong>טיפ:</strong> רחף על צבע (או לחץ עליו בנייד) ולחץ על סמל הטפטפת כדי לדגום צבע חלופי מהתמונה.</span>
+                </div>
+            </div>
+            
+            <!-- מיכל פלטת הצבעים -->
+            <div id="palette-container" class="grid grid-cols-5 gap-2 sm:gap-4 mb-6">
+                <!-- ריבועי הצבע יוזרקו לכאן על ידי JS -->
+            </div>
+
+            <!-- כפתורי פעולה מתקדמים -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-start mt-4">
+                <div class="flex-1 w-full flex flex-col items-center">
+                    <button id="btn-copy-all" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-2xl transition-colors flex items-center justify-center gap-2">
+                        <i data-lucide="copy-check" class="w-5 h-5"></i>
+                        העתק את כל הפלטה
+                    </button>
+                    <span class="text-xs text-gray-500 mt-2 text-center font-medium">מעתיק את הקודים של כל הצבעים להדבקה</span>
+                </div>
+                <div class="flex-1 w-full flex flex-col items-center">
+                    <button id="btn-reset" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-2xl transition-colors flex items-center justify-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                        תמונה חדשה
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- פוטר (Footer) -->
+    <footer class="mt-8 mb-4 text-center text-sm text-gray-500 font-medium w-full max-w-2xl">
+        <p>
+            כל הזכויות שמורות OBN. שאלות? 
+            <a href="mailto:ofirbn@post.com" class="text-indigo-600 hover:text-indigo-800 underline transition-colors">כתבו לי</a>
+        </p>
+    </footer>
+
+    <!-- מודאל אישור החלפת צבע -->
+    <div id="replace-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-40 flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6">החלפת צבע</h3>
+            
+            <div class="flex items-center justify-center gap-6 mb-8">
+                <div class="flex flex-col items-center">
+                    <div id="modal-old-color" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl shadow-inner border border-gray-200 mb-2"></div>
+                    <span class="text-sm font-medium text-gray-500">נוכחי</span>
+                    <span id="modal-old-text" class="text-xs text-gray-400 mt-1"></span>
+                </div>
+                
+                <i data-lucide="arrow-left" class="w-8 h-8 text-indigo-400"></i>
+                
+                <div class="flex flex-col items-center">
+                    <div id="modal-new-color" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl shadow-inner border border-gray-200 mb-2"></div>
+                    <span class="text-sm font-bold text-indigo-600">חדש</span>
+                    <span id="modal-new-text" class="text-xs text-gray-400 mt-1"></span>
+                </div>
+            </div>
+            
+            <p class="text-gray-600 mb-8">האם ברצונך להחליף לצבע החדש שדגמת?</p>
+            
+            <div class="flex gap-3">
+                <button onclick="confirmReplace()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-2xl transition-colors">כן, החלף</button>
+                <button onclick="cancelReplace()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 rounded-2xl transition-colors">ביטול</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- הודעת טוסט (Toast Notification) -->
+    <div id="toast" class="fixed bottom-0 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 z-50">
+        <span id="toast-icon-wrapper">
+            <i data-lucide="check-circle-2" class="text-green-400"></i>
+        </span>
+        <span id="toast-message">הועתק בהצלחה!</span>
+    </div>
+
+    <!-- שדה טקסט נסתר עבור העתקה ללוח -->
+    <textarea id="hidden-clipboard" class="absolute -left-[9999px]"></textarea>
+
+    <script>
+        // אתחול אייקונים
+        lucide.createIcons();
+
+        // אלמנטים מה-DOM
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const resultsArea = document.getElementById('results-area');
+        const imagePreview = document.getElementById('image-preview');
+        const paletteContainer = document.getElementById('palette-container');
+        const btnReset = document.getElementById('btn-reset');
+        const btnCopyAll = document.getElementById('btn-copy-all');
+        const hiddenClipboard = document.getElementById('hidden-clipboard');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
+
+        let currentColors = []; // שמירת הצבעים הנוכחיים
+        let sourceCanvas = document.createElement('canvas'); // לאחסון התמונה המקורית לדגימה מדויקת
+        let sourceCtx = sourceCanvas.getContext('2d');
+        let pickingIndex = -1; // אינדקס הצבע שמוחלף כעת
+        let pendingNewColor = ''; // הצבע החדש שנדגם
+
+        // --- ניהול אירועי Drag & Drop ---
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length) handleFile(files[0]);
+        });
+
+        fileInput.addEventListener('change', function() {
+            if (this.files.length) handleFile(this.files[0]);
+        });
+
+        // --- עיבוד הקובץ ---
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showToast('אנא העלה קובץ תמונה חוקי.', true);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    imagePreview.src = img.src;
+                    // החבאת אזור הגרירה והצגת אזור התוצאות
+                    dropZone.classList.add('hidden');
+                    resultsArea.classList.remove('hidden');
+                    
+                    // שמירת התמונה המקורית בקנבס נסתר לצורך דגימת פיקסלים מדויקת
+                    sourceCanvas.width = img.width;
+                    sourceCanvas.height = img.height;
+                    sourceCtx.drawImage(img, 0, 0);
+
+                    // חילוץ הצבעים
+                    currentColors = getDominantColors(img, 5);
+                    renderPalette(currentColors);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // --- אלגוריתם חילוץ צבעים עצמאי (ללא ספריות) ---
+        function getDominantColors(imageElement, colorCount = 5) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // הקטנת התמונה משמעותית כדי לשפר ביצועים ולמצוע צבעים (לערבב פיקסלים קרובים)
+            const maxSize = 100; 
+            let width = imageElement.width;
+            let height = imageElement.height;
+            
+            if (width > maxSize || height > maxSize) {
+                const ratio = Math.min(maxSize / width, maxSize / height);
+                width = Math.floor(width * ratio);
+                height = Math.floor(height * ratio);
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(imageElement, 0, 0, width, height);
+            
+            const imageData = ctx.getImageData(0, 0, width, height).data;
+            const colorMap = new Map();
+
+            // דגימת פיקסלים
+            for (let i = 0; i < imageData.length; i += 4) {
+                if (imageData[i+3] < 128) continue; // התעלמות מפיקסלים שקופים
+                
+                // עיגול ערכי RGB כדי לאחד גוונים קרובים (Quantization)
+                const roundingFactor = 24; 
+                const r = Math.round(imageData[i] / roundingFactor) * roundingFactor;
+                const g = Math.round(imageData[i+1] / roundingFactor) * roundingFactor;
+                const b = Math.round(imageData[i+2] / roundingFactor) * roundingFactor;
+                
+                const key = `${r},${g},${b}`;
+                colorMap.set(key, (colorMap.get(key) || 0) + 1);
+            }
+
+            // מיון לפי שכיחות (מהנפוץ ביותר לפחות)
+            const sortedColors = Array.from(colorMap.entries()).sort((a, b) => b[1] - a[1]);
+            const finalColors = [];
+
+            // סינון צבעים דומים מדי (מרחק אוקלידי)
+            for (const [key, count] of sortedColors) {
+                const [r, g, b] = key.split(',').map(Number);
+                let isTooSimilar = false;
+
+                for (const color of finalColors) {
+                    // חישוב מרחק בין הצבעים
+                    const distance = Math.sqrt(Math.pow(r - color.r, 2) + Math.pow(g - color.g, 2) + Math.pow(b - color.b, 2));
+                    if (distance < 55) { // סף שונות - ככל שגבוה יותר הצבעים יהיו שונים יותר
+                        isTooSimilar = true;
+                        break;
+                    }
+                }
+
+                if (!isTooSimilar) {
+                    finalColors.push({ r, g, b });
+                }
+                if (finalColors.length >= colorCount) break;
+            }
+
+            // במקרה קיצון שהתמונה מורכבת מצבע אחד בלבד (למשל ריבוע אדום חלק) ויש פחות מ-5 צבעים
+            if (finalColors.length < colorCount) {
+                 for (const [key, count] of sortedColors) {
+                    const [r, g, b] = key.split(',').map(Number);
+                    if (!finalColors.find(c => c.r === r && c.g === g && c.b === b)) {
+                        finalColors.push({r, g, b});
+                    }
+                    if (finalColors.length >= colorCount) break;
+                 }
+            }
+
+            // המרה להקסדצימלי
+            return finalColors.map(c => rgbToHex(c.r, c.g, c.b));
+        }
+
+        // פונקציית עזר: RGB ל-HEX
+        function rgbToHex(r, g, b) {
+            // מוודא שהערכים לא חורגים מ-255 בגלל פקטור העיגול
+            r = Math.min(255, Math.max(0, r));
+            g = Math.min(255, Math.max(0, g));
+            b = Math.min(255, Math.max(0, b));
+            return "#" + (1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1).toUpperCase();
+        }
+
+        // הפונקציה לקביעת צבע טקסט (שחור/לבן) בהתאם לרקע
+        function getContrastYIQ(hexcolor){
+            hexcolor = hexcolor.replace("#", "");
+            var r = parseInt(hexcolor.substr(0,2),16);
+            var g = parseInt(hexcolor.substr(2,2),16);
+            var b = parseInt(hexcolor.substr(4,2),16);
+            var yiq = ((r*299)+(g*587)+(b*114))/1000;
+            return (yiq >= 128) ? 'black' : 'white';
+        }
+
+        // --- רינדור הצבעים למסך ---
+        function renderPalette(colors) {
+            paletteContainer.innerHTML = '';
+            colors.forEach((hex, index) => {
+                const textColor = getContrastYIQ(hex);
+                const swatchHTML = `
+                    <div class="color-swatch flex flex-col items-center group relative">
+                        <div onclick="copyToClipboard('${hex}')" class="w-full h-20 sm:h-24 rounded-2xl sm:rounded-3xl shadow-sm mb-2 relative overflow-hidden flex items-center justify-center transition-all border border-gray-100 cursor-pointer" style="background-color: ${hex}">
+                            <div class="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity"></div>
+                            <span class="opacity-0 group-hover:opacity-100 transition-opacity font-bold text-sm" style="color: ${textColor}">העתק</span>
+                        </div>
+                        <button onclick="startReplaceMode(${index}, event)" class="absolute top-1 right-1 sm:top-2 sm:right-2 bg-white/90 hover:bg-white text-gray-800 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-10 border border-gray-200" title="דגום צבע חלופי מהתמונה">
+                            <i data-lucide="pipette" class="w-4 h-4 text-indigo-600"></i>
+                        </button>
+                        <span class="text-xs sm:text-sm font-medium text-gray-600 tracking-wider">${hex}</span>
+                    </div>
+                `;
+                paletteContainer.insertAdjacentHTML('beforeend', swatchHTML);
+            });
+            lucide.createIcons(); // רענון אייקונים לאלמנטים החדשים
+        }
+
+        // --- פונקציות העתקה (מותאמות ל-iFrame) ---
+        function copyToClipboard(text) {
+            hiddenClipboard.value = text;
+            hiddenClipboard.select();
+            document.execCommand('copy');
+            showToast(`הצבע ${text} הועתק!`);
+        }
+
+        // העתקת כל הפלטה כטקסט רגיל
+        btnCopyAll.addEventListener('click', () => {
+            if (currentColors.length === 0) return;
+            
+            const plainText = currentColors.join('\n');
+
+            hiddenClipboard.value = plainText;
+            hiddenClipboard.select();
+            document.execCommand('copy');
+            showToast('הפלטה הועתקה בהצלחה!');
+        });
+
+        // --- מנגנון החלפת צבע ידנית (דגימה מהתמונה) ---
+        const replaceModal = document.getElementById('replace-modal');
+        
+        function startReplaceMode(index, e) {
+            e.stopPropagation();
+            pickingIndex = index;
+            
+            // אינדיקציה ויזואלית על התמונה
+            imagePreview.style.cursor = 'crosshair';
+            imagePreview.classList.add('ring-4', 'ring-indigo-500', 'ring-opacity-50', 'transition-all');
+            showToast('לחץ על אזור בתמונה כדי לדגום צבע חדש', false);
+        }
+
+        imagePreview.addEventListener('click', (e) => {
+            if (pickingIndex === -1) return;
+
+            // חישוב מיקום הלחיצה יחסית לגודל התמונה המקורי בקנבס
+            const rect = imagePreview.getBoundingClientRect();
+            const scaleX = sourceCanvas.width / rect.width;
+            const scaleY = sourceCanvas.height / rect.height;
+            const x = Math.floor((e.clientX - rect.left) * scaleX);
+            const y = Math.floor((e.clientY - rect.top) * scaleY);
+
+            // קריאת הפיקסל מהקנבס הנסתר (שמכיל את התמונה המקורית)
+            const pixel = sourceCtx.getImageData(x, y, 1, 1).data;
+            const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
+
+            // הכנת המודאל
+            pendingNewColor = hex;
+            const oldHex = currentColors[pickingIndex];
+            
+            document.getElementById('modal-old-color').style.backgroundColor = oldHex;
+            document.getElementById('modal-new-color').style.backgroundColor = hex;
+            document.getElementById('modal-old-text').textContent = oldHex;
+            document.getElementById('modal-new-text').textContent = hex;
+            
+            // הצגת המודאל
+            replaceModal.classList.remove('hidden');
+        });
+
+        function confirmReplace() {
+            if (pickingIndex !== -1 && pendingNewColor) {
+                currentColors[pickingIndex] = pendingNewColor;
+                renderPalette(currentColors);
+                showToast('הצבע הוחלף בהצלחה!');
+            }
+            cancelReplace();
+        }
+
+        function cancelReplace() {
+            pickingIndex = -1;
+            pendingNewColor = '';
+            
+            // הסרת האינדיקציות הויזואליות
+            imagePreview.style.cursor = 'default';
+            imagePreview.classList.remove('ring-4', 'ring-indigo-500', 'ring-opacity-50');
+            replaceModal.classList.add('hidden');
+        }
+
+        // --- איפוס תמונה ---
+        btnReset.addEventListener('click', () => {
+            fileInput.value = '';
+            resultsArea.classList.add('hidden');
+            dropZone.classList.remove('hidden');
+        });
+
+        // --- ניהול התראות (Toast) ---
+        let toastTimeout;
+        function showToast(message, isError = false) {
+            toastMessage.textContent = message;
+            
+            // עדכון האייקון בצורה בטוחה דרך העוטף שלו במקום לשנות אלמנט שכבר הוחלף ב-SVG
+            const iconWrapper = document.getElementById('toast-icon-wrapper');
+            if(isError) {
+                iconWrapper.innerHTML = '<i data-lucide="alert-circle" class="text-red-400"></i>';
+            } else {
+                iconWrapper.innerHTML = '<i data-lucide="check-circle-2" class="text-green-400"></i>';
+            }
+            lucide.createIcons();
+
+            toast.classList.add('show');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+    </script>
+</body>
+</html>
