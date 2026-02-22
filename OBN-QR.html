@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מחולל QR חכם עם לוגו</title>
+    <!-- Tailwind CSS לעיצוב מודרני -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- אייקונים -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- ספריית QRious - חלופה יציבה, מהירה ואמינה יותר ליצירת ברקודים -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Rubik', sans-serif;
+            background-color: #f3f4f6;
+        }
+        
+        /* עיצוב גרירת קבצים */
+        .drop-zone {
+            transition: all 0.3s ease;
+        }
+        .drop-zone.dragover {
+            background-color: #e0e7ff;
+            border-color: #4f46e5;
+            transform: scale(1.02);
+        }
+
+        /* עיצוב טאבים מותאם אישית */
+        .tab-radio:checked + label {
+            background-color: white;
+            color: #4f46e5;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8">
+
+    <main class="w-full max-w-4xl bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col md:flex-row">
+        
+        <!-- אזור ההגדרות וההזנה (צד ימין / למעלה) -->
+        <div class="w-full md:w-1/2 p-6 sm:p-10 border-b md:border-b-0 md:border-l border-gray-100 bg-gray-50/50">
+            
+            <div class="mb-8 text-center md:text-right">
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-2 flex items-center justify-center md:justify-start gap-2">
+                    <i data-lucide="qr-code" class="w-7 h-7 text-indigo-600"></i>
+                    מחולל QR חכם
+                </h1>
+                <p class="text-gray-500 text-sm">הכנס פרטים, העלה לוגו (אופציונלי), והורד את הברקוד המעוצב שלך.</p>
+            </div>
+
+            <!-- בורר סוג ה-QR (טאבים) -->
+            <div class="flex bg-gray-200/60 p-1 rounded-xl mb-6">
+                <div class="flex-1 relative">
+                    <input type="radio" name="qr-type" id="type-url" value="url" class="tab-radio hidden" checked>
+                    <label for="type-url" class="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-medium text-gray-600 rounded-lg cursor-pointer transition-all">
+                        <i data-lucide="link" class="w-4 h-4"></i>
+                        קישור לאתר
+                    </label>
+                </div>
+                <div class="flex-1 relative">
+                    <input type="radio" name="qr-type" id="type-vcard" value="vcard" class="tab-radio hidden">
+                    <label for="type-vcard" class="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-medium text-gray-600 rounded-lg cursor-pointer transition-all">
+                        <i data-lucide="contact" class="w-4 h-4"></i>
+                        כרטיס ביקור
+                    </label>
+                </div>
+            </div>
+
+            <!-- אזור הזנת URL (ברירת מחדל) -->
+            <div id="section-url" class="mb-6 block">
+                <label for="qr-text" class="block text-sm font-medium text-gray-700 mb-2">כתובת האתר (URL):</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <i data-lucide="globe" class="h-5 w-5 text-gray-400"></i>
+                    </div>
+                    <input type="url" id="qr-text" class="block w-full pl-3 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 shadow-sm" placeholder="הדביקו את כתובת האתר">
+                </div>
+                <p id="url-helper" class="text-xs mt-2 min-h-[16px] transition-colors duration-300"></p>
+            </div>
+
+            <!-- אזור הזנת כרטיס ביקור (מוסתר כברירת מחדל) -->
+            <div id="section-vcard" class="mb-6 hidden space-y-4">
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <label for="vcard-first-name" class="block text-sm font-medium text-gray-700 mb-1">שם פרטי:</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i data-lucide="user" class="h-4 w-4 text-gray-400"></i>
+                            </div>
+                            <input type="text" id="vcard-first-name" class="block w-full pl-3 pr-9 py-2.5 border border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 text-sm shadow-sm" placeholder="ישראל">
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <label for="vcard-last-name" class="block text-sm font-medium text-gray-700 mb-1">שם משפחה:</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i data-lucide="users" class="h-4 w-4 text-gray-400"></i>
+                            </div>
+                            <input type="text" id="vcard-last-name" class="block w-full pl-3 pr-9 py-2.5 border border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 text-sm shadow-sm" placeholder="ישראלי">
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label for="vcard-phone" class="block text-sm font-medium text-gray-700 mb-1">טלפון:</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <i data-lucide="phone" class="h-4 w-4 text-gray-400"></i>
+                        </div>
+                        <input type="tel" id="vcard-phone" dir="ltr" class="block w-full pl-3 pr-9 py-2.5 border border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 text-sm shadow-sm text-left" placeholder="050-1234567">
+                    </div>
+                </div>
+                <div>
+                    <label for="vcard-email" class="block text-sm font-medium text-gray-700 mb-1">דוא"ל:</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <i data-lucide="mail" class="h-4 w-4 text-gray-400"></i>
+                        </div>
+                        <input type="email" id="vcard-email" dir="ltr" class="block w-full pl-3 pr-9 py-2.5 border border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 text-sm shadow-sm text-left" placeholder="example@mail.com">
+                    </div>
+                </div>
+                <div>
+                    <label for="vcard-website" class="block text-sm font-medium text-gray-700 mb-1">אתר אינטרנט:</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <i data-lucide="link" class="h-4 w-4 text-gray-400"></i>
+                        </div>
+                        <input type="url" id="vcard-website" dir="ltr" class="block w-full pl-3 pr-9 py-2.5 border border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 text-sm shadow-sm text-left" placeholder="www.example.com">
+                    </div>
+                </div>
+            </div>
+
+            <!-- העלאת לוגו -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">שילוב לוגו במרכז ה-QR (אופציונלי):</label>
+                <div id="drop-zone" class="drop-zone border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:bg-white relative overflow-hidden group">
+                    <input type="file" id="logo-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/png, image/jpeg, image/svg+xml, image/webp">
+                    <div id="logo-placeholder" class="flex flex-col items-center">
+                        <i data-lucide="image-up" class="w-8 h-8 text-indigo-400 mb-2 group-hover:text-indigo-600 transition-colors"></i>
+                        <p class="text-sm font-medium text-gray-600">לחץ להעלאת לוגו / אייקון</p>
+                        <p class="text-xs text-gray-400 mt-1">יחס מומלץ 1:1 (ריבוע)</p>
+                    </div>
+                    <!-- תצוגה מקדימה קטנה של הלוגו באזור הגרירה -->
+                    <div id="logo-preview-container" class="hidden flex flex-col items-center">
+                        <img id="logo-preview-img" src="" class="w-12 h-12 object-contain mb-2" alt="לוגו שהועלה">
+                        <button id="btn-remove-logo" class="text-xs text-red-500 hover:text-red-700 font-medium z-10 relative">הסר לוגו</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- אזור התצוגה וההורדה (צד שמאל / למטה) -->
+        <div class="w-full md:w-1/2 p-6 sm:p-10 flex flex-col items-center justify-center bg-white">
+            
+            <div class="bg-gray-50 border border-gray-200 p-4 sm:p-6 rounded-3xl shadow-inner mb-6 flex flex-col items-center relative min-h-[250px] min-w-[250px] justify-center">
+                
+                <!-- הודעה במקרה שאין טקסט -->
+                <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 p-6 text-center z-10 hidden">
+                    <i id="empty-icon" data-lucide="scan-line" class="w-12 h-12 mb-3 opacity-50"></i>
+                    <p id="empty-text">הזן נתונים כדי לראות את ה-QR כאן</p>
+                </div>
+
+                <!-- הקנבס עליו נצייר את ה-QR והלוגו -->
+                <canvas id="qr-canvas" class="max-w-full rounded-lg shadow-sm"></canvas>
+            </div>
+
+            <button id="btn-download" class="w-full max-w-[250px] bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-2xl transition-colors flex items-center justify-center gap-2 shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
+                <i data-lucide="download" class="w-5 h-5"></i>
+                הורד תמונה (PNG)
+            </button>
+            <p class="text-xs text-gray-400 mt-3 text-center px-4 leading-relaxed">
+                <i data-lucide="shield-check" class="inline w-3 h-3 relative -top-0.5"></i>
+                קוד זה מיוצר עם תיקון שגיאות מקסימלי.<br>
+                <span id="vcard-density-warning" class="hidden text-amber-500 mt-1 block">עבור כרטיס ביקור נוצר קוד צפוף, ודא שהלוגו לא מסתיר פרטים.</span>
+            </p>
+        </div>
+
+    </main>
+
+    <!-- פוטר (Footer) -->
+    <footer class="mt-8 mb-4 text-center text-sm text-gray-500 font-medium w-full max-w-4xl">
+        <p>
+            כל הזכויות שמורות OBN. שאלות? 
+            <a href="mailto:ofirbn@post.com" class="text-indigo-600 hover:text-indigo-800 underline transition-colors">כתבו לי</a>
+        </p>
+    </footer>
+
+    <script>
+        // אתחול אייקונים
+        lucide.createIcons();
+
+        // אלמנטים מה-DOM - טאבים ואזורים
+        const radiosType = document.querySelectorAll('input[name="qr-type"]');
+        const sectionUrl = document.getElementById('section-url');
+        const sectionVcard = document.getElementById('section-vcard');
+
+        // אלמנטים מה-DOM - שדות קלט
+        const qrTextInput = document.getElementById('qr-text');
+        const vcardFirstName = document.getElementById('vcard-first-name');
+        const vcardLastName = document.getElementById('vcard-last-name');
+        const vcardPhone = document.getElementById('vcard-phone');
+        const vcardEmail = document.getElementById('vcard-email');
+        const vcardWebsite = document.getElementById('vcard-website');
+        
+        // אלמנטים מה-DOM - לוגו וקנבס
+        const logoInput = document.getElementById('logo-input');
+        const dropZone = document.getElementById('drop-zone');
+        const logoPlaceholder = document.getElementById('logo-placeholder');
+        const logoPreviewContainer = document.getElementById('logo-preview-container');
+        const logoPreviewImg = document.getElementById('logo-preview-img');
+        const btnRemoveLogo = document.getElementById('btn-remove-logo');
+        
+        const qrCanvas = document.getElementById('qr-canvas');
+        const btnDownload = document.getElementById('btn-download');
+        const emptyState = document.getElementById('empty-state');
+        const emptyIcon = document.getElementById('empty-icon');
+        const emptyText = document.getElementById('empty-text');
+        const urlHelper = document.getElementById('url-helper');
+        const densityWarning = document.getElementById('vcard-density-warning');
+
+        let userLogoImg = null; // ישמור את אובייקט תמונת הלוגו אם הועלתה
+
+        // --- ניהול מעבר בין הטאבים (קישור מול כרטיס ביקור) ---
+        radiosType.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const selectedMode = e.target.value;
+                if (selectedMode === 'url') {
+                    sectionUrl.classList.remove('hidden');
+                    sectionVcard.classList.add('hidden');
+                    emptyIcon.setAttribute('data-lucide', 'scan-line');
+                    emptyText.textContent = 'הזן כתובת כדי לראות את ה-QR כאן';
+                    densityWarning.classList.add('hidden');
+                } else {
+                    sectionUrl.classList.add('hidden');
+                    sectionVcard.classList.remove('hidden');
+                    emptyIcon.setAttribute('data-lucide', 'contact');
+                    emptyText.textContent = 'הזן פרטי קשר כדי לראות את ה-QR כאן';
+                    densityWarning.classList.remove('hidden');
+                }
+                lucide.createIcons();
+                generateQRCode(); // עדכון ה-QR בעת החלפת טאב
+            });
+        });
+
+        // --- פונקציית עזר: יצירת מחרוזת vCard תקנית למובייל ---
+        function buildVCardString() {
+            const firstName = vcardFirstName.value.trim();
+            const lastName = vcardLastName.value.trim();
+            const phone = vcardPhone.value.trim();
+            const email = vcardEmail.value.trim();
+            let website = vcardWebsite.value.trim();
+
+            // אם כל השדות ריקים, לא נייצר קוד
+            if (!firstName && !lastName && !phone && !email && !website) return '';
+
+            // טיפול חכם בכתובת האתר של כרטיס הביקור
+            if (website && !website.startsWith('http://') && !website.startsWith('https://')) {
+                website = 'https://' + website;
+            }
+
+            // יצירת vCard נקי ותקני (ללא תגיות מיוחדות שגורמות לאייפון לדלג על שורות)
+            let vcard = `BEGIN:VCARD\nVERSION:3.0\n`;
+            
+            // בניית שדה השם מתוך שני שדות (פרטי ומשפחה)
+            if (firstName || lastName) {
+                // שדה N תמיד מצפה ל: משפחה;פרטי;נוסף;קידומת;סיומת
+                vcard += `N:${lastName};${firstName};;;\n`;
+                
+                // בניית שדה ה-Full Name
+                const fullNameParts = [];
+                if (firstName) fullNameParts.push(firstName);
+                if (lastName) fullNameParts.push(lastName);
+                const fullName = fullNameParts.join(' ');
+                
+                vcard += `FN:${fullName}\n`;
+            }
+
+            if (phone) vcard += `TEL;TYPE=CELL,VOICE:${phone}\n`;
+            if (email) vcard += `EMAIL;TYPE=INTERNET:${email}\n`;
+            if (website) vcard += `URL:${website}\n`;
+            vcard += `END:VCARD`;
+            
+            return vcard;
+        }
+
+        // --- פונקציית הליבה: יצירת ה-QR ושילוב הלוגו בשימוש בספריית QRious ---
+        function generateQRCode() {
+            const mode = document.querySelector('input[name="qr-type"]:checked').value;
+            let finalData = '';
+            urlHelper.textContent = '';
+
+            // שליפת הנתונים בהתאם למצב הנבחר
+            if (mode === 'url') {
+                let text = qrTextInput.value.trim();
+                
+                if (text && !text.startsWith('http://') && !text.startsWith('https://')) {
+                    if (text.includes('.') && !text.includes(' ')) {
+                        text = 'https://' + text;
+                        urlHelper.textContent = 'הוספנו https:// לברקוד כדי שהקישור יפתח אוטומטית.';
+                        urlHelper.className = 'text-xs text-green-600 mt-2 min-h-[16px] transition-colors duration-300';
+                    } else {
+                        urlHelper.textContent = 'שימו לב: הטקסט אינו כתובת אינטרנט תקינה.';
+                        urlHelper.className = 'text-xs text-amber-500 mt-2 min-h-[16px] transition-colors duration-300';
+                    }
+                }
+                finalData = text;
+            } else {
+                finalData = buildVCardString();
+            }
+
+            // אם אין נתונים להציג (השדות ריקים)
+            if (!finalData) {
+                emptyState.classList.remove('hidden');
+                qrCanvas.style.display = 'none';
+                btnDownload.disabled = true;
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            qrCanvas.style.display = 'block';
+            btnDownload.disabled = false;
+
+            const canvasSize = 300; // גודל סופי של הקנבס
+            const fixedColor = '#000000'; // צבע קוד שחור קבוע
+            const fixedBg = '#ffffff'; // רקע לבן קבוע
+
+            try {
+                if (typeof QRious === 'undefined') {
+                    throw new Error("ספריית QRious לא זמינה. אנא רענן את העמוד.");
+                }
+
+                // פתרון קסם לקידוד UTF-8 עבור שפות כמו עברית, שלא נתמכות טבעית בספרייה זו
+                // המרת המחרוזת לקידוד UTF-8 תקני כך שהסורק יקרא אותה כהלכה גם ב-vCard
+                const utf8Data = unescape(encodeURIComponent(finalData));
+
+                // 1. נייצר את ה-QR לקנבס "וירטואלי"
+                const tempCanvas = document.createElement('canvas');
+                new QRious({
+                    element: tempCanvas,
+                    value: utf8Data,
+                    size: canvasSize,
+                    level: 'H', // תיקון שגיאות גבוה - חובה לשילוב לוגו
+                    background: fixedBg,
+                    foreground: fixedColor
+                });
+
+                // 2. נגדיר את הקנבס האמיתי שלנו ונעתיק אליו
+                qrCanvas.width = canvasSize;
+                qrCanvas.height = canvasSize;
+                const ctx = qrCanvas.getContext('2d');
+                ctx.drawImage(tempCanvas, 0, 0);
+
+                // 3. שילוב הלוגו במרכז
+                if (userLogoImg) {
+                    const logoSize = canvasSize * 0.25;
+                    const center = canvasSize / 2;
+                    const logoX = center - (logoSize / 2);
+                    const logoY = center - (logoSize / 2);
+
+                    ctx.beginPath();
+                    ctx.arc(center, center, (logoSize / 2) + 6, 0, 2 * Math.PI);
+                    ctx.fillStyle = fixedBg; 
+                    ctx.fill();
+
+                    ctx.drawImage(userLogoImg, logoX, logoY, logoSize, logoSize);
+                }
+
+            } catch (err) {
+                console.error("שגיאה ביצירת ה-QR:", err);
+            }
+        }
+
+        // --- ניהול העלאת הלוגו ---
+        function handleLogoUpload(file) {
+            if (!file || !file.type.startsWith('image/')) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    userLogoImg = img;
+                    logoPreviewImg.src = img.src;
+                    logoPlaceholder.classList.add('hidden');
+                    logoPreviewContainer.classList.remove('hidden');
+                    generateQRCode();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // --- מאזיני אירועים לשינויים בזמן אמת ---
+        let typingTimer;
+        const triggerGenerate = () => {
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(generateQRCode, 300);
+        };
+
+        // האזנה לשדה ה-URL
+        qrTextInput.addEventListener('input', triggerGenerate);
+
+        // האזנה לשדות כרטיס הביקור
+        [vcardFirstName, vcardLastName, vcardPhone, vcardEmail, vcardWebsite].forEach(input => {
+            input.addEventListener('input', triggerGenerate);
+        });
+
+        // --- אירועי העלאת לוגו (Drag & Drop + Click) ---
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); });
+        });
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'));
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'));
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const file = e.dataTransfer.files[0];
+            handleLogoUpload(file);
+        });
+
+        logoInput.addEventListener('change', function() {
+            handleLogoUpload(this.files[0]);
+        });
+
+        btnRemoveLogo.addEventListener('click', (e) => {
+            e.preventDefault(); 
+            e.stopPropagation();
+            userLogoImg = null;
+            logoInput.value = '';
+            logoPlaceholder.classList.remove('hidden');
+            logoPreviewContainer.classList.add('hidden');
+            generateQRCode();
+        });
+
+        // --- הורדת התמונה המוכנה ---
+        btnDownload.addEventListener('click', () => {
+            const mode = document.querySelector('input[name="qr-type"]:checked').value;
+            const dataExists = mode === 'url' ? qrTextInput.value.trim() !== '' : buildVCardString() !== '';
+            
+            if (!dataExists) return;
+            
+            const imageURL = qrCanvas.toDataURL("image/png");
+            const downloadLink = document.createElement('a');
+            downloadLink.href = imageURL;
+            downloadLink.download = `QR_Code_${new Date().getTime()}.png`;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        });
+
+        // --- אתחול ראשוני ---
+        window.addEventListener('load', generateQRCode);
+
+    </script>
+</body>
+</html>
