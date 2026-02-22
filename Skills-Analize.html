@@ -77,8 +77,8 @@
                 <i class="fas fa-chart-pie text-xl"></i>
                 <h1 class="text-xl font-bold leading-tight">ניתוח משובים קבוצתי</h1>
             </div>
-            <button onclick="printReport()" class="text-sm bg-blue-800 hover:bg-blue-700 px-3 py-1 rounded transition border border-blue-700">
-                <i class="fas fa-print"></i> הדפס דוח
+            <button onclick="printReport()" class="text-sm bg-blue-800 hover:bg-blue-700 px-3 py-2 rounded-lg transition border border-blue-700 flex items-center gap-2">
+                <i class="fas fa-file-pdf"></i> הדפס / שמור כ-PDF
             </button>
         </div>
     </nav>
@@ -95,7 +95,7 @@
                     <h2 class="text-2xl font-bold text-gray-800 mb-2">העלאת קבצי משוב</h2>
                     <p class="text-gray-500">
                         גרור לכאן את קבצי ה-JSON שקיבלת מהמשיבים,<br>
-                        או לחץ לבחירה (ניתן לבחור מספר קבצים יחד).
+                        או לחץ לבחירה (ניתן לבחור מספר קבצים יחד, וגם קבצי גיבוי).
                     </p>
                 </div>
 
@@ -132,8 +132,10 @@
                 </div>
 
                 <div id="file-list" class="mt-4 text-right hidden">
-                    <h3 class="text-sm font-bold text-gray-700 mb-2">קבצים שנקלטו:</h3>
-                    <ul id="files-ul" class="text-sm text-gray-600 space-y-1 bg-gray-50 p-3 rounded-lg"></ul>
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-sm font-bold text-gray-700">קבצים שנקלטו:</h3>
+                    </div>
+                    <ul id="files-ul" class="text-sm text-gray-600 space-y-1 bg-gray-50 p-3 rounded-lg max-h-40 overflow-y-auto border border-gray-200"></ul>
                     <button onclick="processFiles()" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow transition-colors">
                         <i class="fas fa-magic"></i> בצע ניתוח נתונים
                     </button>
@@ -257,10 +259,39 @@
                 <div id="comments-dream-container" class="grid gap-4 grid-cols-1 md:grid-cols-2"></div>
             </div>
             
-            <div class="text-center mt-12 pb-12 no-print">
-                <button onclick="location.reload()" class="text-blue-600 hover:text-blue-800 font-medium">
-                    <i class="fas fa-redo"></i> התחל ניתוח חדש
-                </button>
+            <!-- Dashboard Actions (Save, Export, Clear) -->
+            <div id="dashboard-actions" class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 pb-12 no-print border-t border-gray-200 pt-8">
+                
+                <!-- Action 1: Interactive HTML -->
+                <div class="flex flex-col items-center text-center">
+                    <button onclick="exportInteractiveHTML()" class="w-full justify-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold transition-colors shadow-md flex items-center gap-2">
+                        <i class="fas fa-globe"></i> שמור כדוח אינטראקטיבי (HTML)
+                    </button>
+                    <p class="text-xs text-gray-500 mt-2 leading-relaxed">
+                        מייצר קובץ מוכן לשיתוף <span class="font-bold">לקריאה בלבד</span>. נהדר לשליחה לאדם אחר כדי שיצפה בתוצאות ובגרפים במערכת נוחה מבלי לשנות נתונים.
+                    </p>
+                </div>
+
+                <!-- Action 2: Backup JSON -->
+                <div class="flex flex-col items-center text-center">
+                    <button onclick="downloadBackup()" class="w-full justify-center px-6 py-3 bg-purple-100 text-purple-700 rounded-xl hover:bg-purple-200 font-bold transition-colors shadow-sm flex items-center gap-2 border border-purple-200">
+                        <i class="fas fa-save"></i> שמור גיבוי עבודה כקובץ
+                    </button>
+                    <p class="text-xs text-gray-500 mt-2 leading-relaxed">
+                        אורז את כל המשיבים לקובץ עבודה אחד. מאפשר לך לטעון אותם בחזרה למערכת בעתיד (או במחשב אחר) כדי להמשיך להוסיף או להסיר משיבים.
+                    </p>
+                </div>
+
+                <!-- Action 3: Clear Data -->
+                <div class="flex flex-col items-center text-center">
+                    <button onclick="clearSession()" class="w-full justify-center px-6 py-3 bg-white text-gray-600 rounded-xl hover:bg-red-50 hover:text-red-600 font-bold transition-colors shadow-sm flex items-center gap-2 border border-gray-300 hover:border-red-200">
+                        <i class="fas fa-trash-alt"></i> נקה נתונים
+                    </button>
+                    <p class="text-xs text-gray-500 mt-2 leading-relaxed">
+                        מוחק את כל הנתונים מהזיכרון של הדפדפן הנוכחי, ומאפשר להתחיל לנתח משובים של אדם חדש לגמרי מדף חלק.
+                    </p>
+                </div>
+
             </div>
         </div>
 
@@ -270,6 +301,7 @@
     <script>
         // Data Handling Variables
         let uploadedFilesData = [];
+        const LOCAL_STORAGE_KEY = 'feedback_dashboard_session';
         
         // Configuration: Define all 3 Categories here
         const categoriesMap = {
@@ -284,6 +316,119 @@
         const fileList = document.getElementById('file-list');
         const filesUl = document.getElementById('files-ul');
         const pasteStatus = document.getElementById('paste-status');
+
+        // Check initialization type (Local Storage vs Preloaded HTML)
+        window.addEventListener('DOMContentLoaded', () => {
+            // Check if this is an exported "Read Only" HTML file
+            if (window.__PRELOADED_DATA__) {
+                uploadedFilesData = window.__PRELOADED_DATA__;
+                
+                // Hide inputs and action buttons to create a pure "Read Only" view
+                document.getElementById('upload-section').style.display = 'none';
+                document.getElementById('dashboard-actions').style.display = 'none';
+                
+                processFiles();
+                return; // Stop further initialization
+            }
+
+            // Normal flow: Check Local Storage
+            const savedSession = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (savedSession) {
+                try {
+                    uploadedFilesData = JSON.parse(savedSession);
+                    if (uploadedFilesData.length > 0) {
+                        renderFileList();
+                        fileList.classList.remove('hidden');
+                        processFiles(); // Auto render dashboard
+                    }
+                } catch (e) {
+                    console.error("Failed to restore session", e);
+                }
+            }
+        });
+
+        // Save to Local Storage
+        function saveSession() {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(uploadedFilesData));
+        }
+
+        // Clear Session
+        function clearSession() {
+            if(confirm('האם אתה בטוח שברצונך למחוק את כל הנתונים השמורים ולהתחיל מחדש?')) {
+                localStorage.removeItem(LOCAL_STORAGE_KEY);
+                location.reload();
+            }
+        }
+
+        // Export entire aggregated project (JSON)
+        function downloadBackup() {
+            if (uploadedFilesData.length === 0) return;
+            const dataStr = JSON.stringify(uploadedFilesData, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            let subjectName = "data";
+            if (uploadedFilesData[0].content && uploadedFilesData[0].content.participants) {
+                subjectName = uploadedFilesData[0].content.participants.evaluatee.replace(/[^a-z0-9א-ת]/gi, '_');
+            }
+            
+            a.download = `backup_feedback_${subjectName}_${new Date().toISOString().split('T')[0]}.json`;
+            a.href = url;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Export as interactive HTML file
+        function exportInteractiveHTML() {
+            if (uploadedFilesData.length === 0) return;
+
+            // Clone the entire DOM to avoid modifying the current view
+            const cloneDOM = document.documentElement.cloneNode(true);
+            
+            // Reset the state of the UI in the clone so it looks clean upon opening
+            cloneDOM.querySelector('#dashboard').classList.add('hidden');
+            cloneDOM.querySelector('#upload-section').classList.remove('hidden');
+            
+            // Reset canvases in the clone (Chart.js pollutes them, causing render bugs if reused)
+            const canvases = ['radarChart', 'strengthsBarChart', 'improvementsBarChart'];
+            canvases.forEach(id => {
+                const oldCanvas = cloneDOM.querySelector(`#${id}`);
+                if (oldCanvas) {
+                    const newCanvas = document.createElement('canvas');
+                    newCanvas.id = id;
+                    oldCanvas.parentNode.replaceChild(newCanvas, oldCanvas);
+                }
+            });
+
+            // Remove any previously injected script (prevents infinite loop if exporting an export)
+            const oldScript = cloneDOM.querySelector('#injected-data');
+            if (oldScript) oldScript.remove();
+
+            // Inject the actual data as a script tag into the head of the clone
+            const scriptTag = document.createElement('script');
+            scriptTag.id = 'injected-data';
+            scriptTag.textContent = `window.__PRELOADED_DATA__ = ${JSON.stringify(uploadedFilesData)};`;
+            cloneDOM.querySelector('head').appendChild(scriptTag);
+
+            // Create the final HTML string
+            const finalHTML = '<!DOCTYPE html>\n' + cloneDOM.outerHTML;
+
+            // Trigger download
+            const blob = new Blob([finalHTML], { type: "text/html;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            let subjectName = "data";
+            if (uploadedFilesData[0].content && uploadedFilesData[0].content.participants) {
+                subjectName = uploadedFilesData[0].content.participants.evaluatee.replace(/[^a-z0-9א-ת]/gi, '_');
+            }
+            
+            a.download = `דוח_אינטראקטיבי_${subjectName}.html`;
+            a.href = url;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
 
         // Drag & Drop Handlers
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
@@ -300,6 +445,14 @@
             const results = [];
             let braceCount = 0;
             let startIndex = -1;
+
+            // First check if it's a backup array file "[{...},{...}]"
+            try {
+                const fullParse = JSON.parse(text);
+                if (Array.isArray(fullParse) && fullParse.length > 0 && fullParse[0].filename) {
+                    return fullParse; // Return the array directly if it's a backup
+                }
+            } catch(e) {}
 
             for (let i = 0; i < text.length; i++) {
                 const char = text[i];
@@ -335,7 +488,7 @@
 
             const foundJSONs = extractJSONs(content);
 
-            if (foundJSONs.length === 0) {
+            if (!foundJSONs || foundJSONs.length === 0) {
                 try {
                     const json = JSON.parse(content);
                      if (json.participants && json.feedback) {
@@ -351,12 +504,21 @@
             }
 
             let addedCount = 0;
-            foundJSONs.forEach(json => {
-                const filename = `manual_paste_${uploadedFilesData.length + 1}.json`;
-                uploadedFilesData.push({ filename: filename, content: json });
-                addedCount++;
-            });
+            
+            // Check if it's a backup array
+            if (Array.isArray(foundJSONs) && foundJSONs[0] && foundJSONs[0].filename) {
+                uploadedFilesData.push(...foundJSONs);
+                addedCount = foundJSONs.length;
+            } else {
+                // Regular extracted objects
+                foundJSONs.forEach(json => {
+                    const filename = `manual_paste_${uploadedFilesData.length + 1}.json`;
+                    uploadedFilesData.push({ filename: filename, content: json });
+                    addedCount++;
+                });
+            }
 
+            saveSession();
             renderFileList();
             fileList.classList.remove('hidden');
             textarea.value = '';
@@ -388,7 +550,12 @@
                     reader.onload = (e) => {
                         try {
                             const json = JSON.parse(e.target.result);
-                            resolve({ filename: file.name, content: json });
+                            // Check if this is a backup array
+                            if (Array.isArray(json) && json.length > 0 && json[0].filename) {
+                                resolve({ isBackup: true, items: json });
+                            } else {
+                                resolve({ isBackup: false, item: { filename: file.name, content: json } });
+                            }
                         } catch (err) {
                             console.error("Error parsing JSON", err);
                             alert("שגיאה בקריאת הקובץ: " + file.name);
@@ -402,12 +569,18 @@
             Promise.all(filePromises).then(results => {
                 results.forEach(result => {
                     if (result) {
-                        uploadedFilesData.push(result);
-                        loadedCount++;
+                        if (result.isBackup) {
+                            uploadedFilesData.push(...result.items);
+                            loadedCount += result.items.length;
+                        } else {
+                            uploadedFilesData.push(result.item);
+                            loadedCount++;
+                        }
                     }
                 });
 
                 if (loadedCount > 0) {
+                    saveSession();
                     renderFileList();
                     fileList.classList.remove('hidden');
                 }
@@ -433,16 +606,16 @@
                 const sourceText = isManual ? 'הדבקה ידנית' : item.filename;
 
                 li.innerHTML = `
-                    <div class="flex items-center gap-3 overflow-hidden">
+                    <div class="flex items-center gap-3 overflow-hidden w-full">
                         <div class="flex-shrink-0 w-6 text-center">
                             <i class="fas ${iconClass}"></i>
                         </div>
-                        <div class="flex flex-col overflow-hidden">
+                        <div class="flex flex-col overflow-hidden w-full pr-2 border-r border-gray-100">
                             <span class="font-medium text-gray-800 truncate">${item.content.participants.evaluator || 'אנונימי'}</span>
-                            <span class="text-xs text-gray-400 truncate">${sourceText}</span>
+                            <span class="text-xs text-gray-400 truncate w-[150px] sm:w-auto" dir="ltr">${sourceText}</span>
                         </div>
                     </div>
-                    <button onclick="removeFile(${index})" class="text-gray-300 hover:text-red-500 p-2 rounded-full hover:bg-red-50 transition-all" title="מחק משיב זה">
+                    <button onclick="removeFile(${index})" class="text-gray-300 hover:text-red-500 p-2 rounded-full hover:bg-red-50 transition-all flex-shrink-0 mr-2" title="מחק משיב זה">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 `;
@@ -453,6 +626,7 @@
         function removeFile(index) {
             if (index >= 0 && index < uploadedFilesData.length) {
                 uploadedFilesData.splice(index, 1);
+                saveSession();
                 renderFileList();
                 
                 if (!document.getElementById('dashboard').classList.contains('hidden')) {
@@ -528,7 +702,7 @@
                     commentsGeneral.push({ author: evaluator, text: data.feedback.generalNotes });
                 }
 
-                // Extra Questions (Check if exists first - support older versions)
+                // Extra Questions
                 if (data.feedback && data.feedback.extraQuestions) {
                     const extra = data.feedback.extraQuestions;
                     if (extra.specialQuality && extra.specialQuality.trim()) {
@@ -557,6 +731,11 @@
             renderComments(commentsSpecial, 'comments-special-container');
             renderComments(commentsBarriers, 'comments-barriers-container');
             renderComments(commentsDream, 'comments-dream-container');
+            
+            // Re-save session just to be safe if user triggered process manually
+            if (!window.__PRELOADED_DATA__) {
+                saveSession();
+            }
         }
 
         function initItem(map, itemData) {
