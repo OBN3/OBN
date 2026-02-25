@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>דשבורד ניתוח משובים 2 | סטנפורד</title>
+    <title>דשבורד ניתוח משובים | סטנפורד</title>
     
     <!-- ספריות עיצוב וגרפים -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -29,7 +29,7 @@
 
         /* עיצוב מותאם להדפסה */
         @media print {
-            @page { margin: 1cm; }
+            @page { margin: 1cm; } /* הגדרת שוליים לדף עצמו */
             
             .no-print { display: none !important; }
             body { 
@@ -40,24 +40,22 @@
             }
             .shadow-sm, .shadow-md, .shadow-lg { box-shadow: none !important; }
             
+            /* איפוס מרווחים מיותרים בהדפסה */
             main { padding: 0 !important; margin: 0 !important; }
             .max-w-5xl { max-width: 100% !important; }
             
+            /* הקטנת רווחים פנימיים כדי שייכנס יותר בעמוד */
             .p-6 { padding: 1rem !important; }
             .gap-6 { gap: 1rem !important; }
             .space-y-6 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; margin-top: 1rem !important; margin-bottom: 0 !important; }
             
+            /* הסתרת מסך העלאה */
             #upload-section { display: none !important; }
+            /* הצגת הדשבורד */
             #dashboard { display: block !important; opacity: 1 !important; transform: none !important; }
             
+            /* מניעת חיתוך כרטיסים באמצע - מוחל על כרטיסים בודדים */
             .print-break-inside-avoid { break-inside: avoid; page-break-inside: avoid; }
-            
-            /* עיצוב ייעודי לפוטר בהדפסה */
-            footer {
-                margin-top: 2rem !important;
-                padding-top: 1rem !important;
-                border-top: 1px solid #e5e7eb !important;
-            }
         }
 
         /* אנימציה לכרטיסים */
@@ -70,14 +68,14 @@
         }
     </style>
 </head>
-<body class="text-gray-800 flex flex-col min-h-screen">
+<body class="text-gray-800">
 
     <!-- Navbar -->
     <nav class="bg-blue-900 text-white shadow-md sticky top-0 z-50 no-print">
         <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
                 <i class="fas fa-chart-pie text-xl"></i>
-                <h1 class="text-xl font-bold leading-tight">ניתוח משובים קבוצתי (גרסה 2)</h1>
+                <h1 class="text-xl font-bold leading-tight">ניתוח משובים קבוצתי</h1>
             </div>
             <button onclick="printReport()" class="text-sm bg-blue-800 hover:bg-blue-700 px-3 py-2 rounded-lg transition border border-blue-700 flex items-center gap-2">
                 <i class="fas fa-file-pdf"></i> הדפס / שמור כ-PDF
@@ -85,7 +83,7 @@
         </div>
     </nav>
 
-    <main class="max-w-5xl mx-auto px-4 py-8 flex-grow">
+    <main class="max-w-5xl mx-auto px-4 py-8">
 
         <!-- 1. Upload Section -->
         <section id="upload-section" class="max-w-2xl mx-auto text-center mb-12">
@@ -166,23 +164,63 @@
                 </div>
             </div>
 
-            <!-- Radar Chart (Kept for high-level overview) -->
-            <div class="bg-white rounded-xl shadow-sm p-6 print-break-inside-avoid">
-                <h3 class="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2">
-                    <i class="fas fa-project-diagram text-purple-500"></i>
-                    מבט על: פילוח לפי קטגוריות
-                </h3>
-                <div class="relative h-64 sm:h-80 w-full max-w-2xl mx-auto">
-                    <canvas id="radarChart"></canvas>
+            <!-- Charts Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- Spider Chart (Categories) -->
+                <div class="bg-white rounded-xl shadow-sm p-6 print-break-inside-avoid">
+                    <h3 class="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2">
+                        <i class="fas fa-project-diagram text-purple-500"></i>
+                        מבט על: פילוח לפי קטגוריות
+                    </h3>
+                    <div class="relative h-64 sm:h-80 w-full">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                    <p class="text-xs text-gray-400 text-center mt-2">
+                        * מציג את אחוז התשובות בכל קטגוריה מסך כל התשובות (נפח הפעילות)
+                    </p>
                 </div>
-                <p class="text-xs text-gray-400 text-center mt-2">
-                    * מציג את אחוז התשובות בכל קטגוריה מסך כל התשובות (נפח הפעילות)
-                </p>
+
+                <!-- Consensus Highlights (Bar Charts) -->
+                <div class="space-y-6">
+                    <!-- Top Strengths -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 print-break-inside-avoid">
+                        <h3 class="text-lg font-bold text-green-700 mb-4 border-b border-green-100 pb-2">
+                            <i class="fas fa-trophy"></i> חוזקות בולטות (הסכמה רחבה)
+                        </h3>
+                        <canvas id="strengthsBarChart" height="150"></canvas>
+                    </div>
+
+                    <!-- Top Improvements -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 print-break-inside-avoid">
+                        <h3 class="text-lg font-bold text-red-700 mb-4 border-b border-red-100 pb-2">
+                            <i class="fas fa-tools"></i> אזורי מיקוד לשיפור
+                        </h3>
+                        <canvas id="improvementsBarChart" height="150"></canvas>
+                    </div>
+                </div>
             </div>
 
-            <!-- New Category Breakdown Container -->
-            <div id="category-breakdown-container" class="space-y-8">
-                <!-- Categories will be injected here dynamically -->
+            <!-- Detailed Breakdown Table -->
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden print-break-inside-avoid">
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-100">
+                    <h3 class="font-bold text-gray-800">פירוט מלא של התשובות</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-right">
+                        <thead class="bg-gray-50 text-gray-500 font-medium">
+                            <tr>
+                                <th class="px-6 py-3 w-1/2">הכישור/ההתנהגות</th>
+                                <th class="px-6 py-3 text-center text-green-700">חוזקה (מס' משיבים)</th>
+                                <th class="px-6 py-3 text-center text-red-700">לשיפור (מס' משיבים)</th>
+                                <th class="px-6 py-3 text-center text-gray-500">מתוך סה"כ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="breakdown-table-body" class="divide-y divide-gray-100">
+                            <!-- Rows injected here -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Free Text Comments (General) -->
@@ -194,7 +232,7 @@
                 <div id="comments-container" class="grid gap-4 grid-cols-1 md:grid-cols-2"></div>
             </div>
 
-            <!-- Special Quality -->
+            <!-- New: Special Quality -->
             <div class="bg-indigo-50 rounded-xl shadow-sm p-6 border-t-4 border-indigo-400 print-break-inside-avoid">
                 <h3 class="text-lg font-bold text-indigo-900 mb-4 flex items-center gap-2">
                     <i class="fas fa-star text-indigo-500"></i>
@@ -203,7 +241,7 @@
                 <div id="comments-special-container" class="grid gap-4 grid-cols-1 md:grid-cols-2"></div>
             </div>
 
-            <!-- Barriers -->
+            <!-- New: Barriers -->
             <div class="bg-purple-50 rounded-xl shadow-sm p-6 border-t-4 border-purple-400 print-break-inside-avoid">
                 <h3 class="text-lg font-bold text-purple-900 mb-4 flex items-center gap-2">
                     <i class="fas fa-exclamation-triangle text-purple-500"></i>
@@ -212,7 +250,7 @@
                 <div id="comments-barriers-container" class="grid gap-4 grid-cols-1 md:grid-cols-2"></div>
             </div>
 
-            <!-- Dream Role -->
+            <!-- New: Dream Role -->
             <div class="bg-green-50 rounded-xl shadow-sm p-6 border-t-4 border-green-400 print-break-inside-avoid">
                 <h3 class="text-lg font-bold text-green-900 mb-4 flex items-center gap-2">
                     <i class="fas fa-rocket text-green-500"></i>
@@ -224,6 +262,7 @@
             <!-- Dashboard Actions (Save, Export, Clear) -->
             <div id="dashboard-actions" class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 pb-12 no-print border-t border-gray-200 pt-8">
                 
+                <!-- Action 1: Interactive HTML -->
                 <div class="flex flex-col items-center text-center">
                     <button onclick="exportInteractiveHTML()" class="w-full justify-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold transition-colors shadow-md flex items-center gap-2">
                         <i class="fas fa-globe"></i> שמור כדוח אינטראקטיבי (HTML)
@@ -233,15 +272,17 @@
                     </p>
                 </div>
 
+                <!-- Action 2: Backup JSON -->
                 <div class="flex flex-col items-center text-center">
                     <button onclick="downloadBackup()" class="w-full justify-center px-6 py-3 bg-purple-100 text-purple-700 rounded-xl hover:bg-purple-200 font-bold transition-colors shadow-sm flex items-center gap-2 border border-purple-200">
                         <i class="fas fa-save"></i> שמור גיבוי עבודה כקובץ
                     </button>
                     <p class="text-xs text-gray-500 mt-2 leading-relaxed">
-                        אורז את כל המשיבים לקובץ עבודה אחד. מאפשר לך לטעון אותם בחזרה למערכת בעתיד (או במחשב אחר).
+                        אורז את כל המשיבים לקובץ עבודה אחד. מאפשר לך לטעון אותם בחזרה למערכת בעתיד (או במחשב אחר) כדי להמשיך להוסיף או להסיר משיבים.
                     </p>
                 </div>
 
+                <!-- Action 3: Clear Data -->
                 <div class="flex flex-col items-center text-center">
                     <button onclick="clearSession()" class="w-full justify-center px-6 py-3 bg-white text-gray-600 rounded-xl hover:bg-red-50 hover:text-red-600 font-bold transition-colors shadow-sm flex items-center gap-2 border border-gray-300 hover:border-red-200">
                         <i class="fas fa-trash-alt"></i> נקה נתונים
@@ -256,62 +297,18 @@
 
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-white border-t border-gray-200 mt-auto py-6 print-break-inside-avoid">
-        <div class="max-w-5xl mx-auto px-4 text-center text-gray-500 text-sm">
-            פותח על ידי אופיר בן נתן. 
-            <a href="mailto:ofirbn@post.com" class="text-blue-600 hover:text-blue-800 hover:underline font-medium transition-colors">לשאלות פנו במייל</a> 
-        </div>
-    </footer>
-
     <!-- App Logic -->
     <script>
         // Data Handling Variables
         let uploadedFilesData = [];
-        const LOCAL_STORAGE_KEY = 'feedback_dashboard_v2_session';
+        const LOCAL_STORAGE_KEY = 'feedback_dashboard_session';
         
-        // ------------------------------------------------------------------
-        // Full Questionnaire Structure (Needed to display unselected items)
-        // ------------------------------------------------------------------
-        const questionnaireStructure = [
-            {
-                id: 'self',
-                title: 'קטגוריה 1: להיות יותר עצמך',
-                color: 'blue',
-                items: [
-                    { id: 'emotions', title: 'זיהוי והבעת מגוון רגשות', desc: 'האם {name} מזהה ומביעה מגוון רגשות? האם יש רגשות שקשה לה להביע (חיוביים, שליליים, פגיעות)?' },
-                    { id: 'aspects', title: 'ביטוי היבטים רבים של העצמי', desc: 'עד כמה {name} נותנת לעצמה להיות ידועה במלואה מול הצגת תדמית?' },
-                    { id: 'acceptance', title: 'קבלה עצמית', desc: 'האם יש חלקים בעצמה שקשה לה לקבל? האם {name} חשה בושה לגביהם?' },
-                    { id: 'intuition', title: 'אמון באינטואיציה', desc: 'האם {name} נוטה להיות אנליטית מדי ולזלזל בתחושות הבטן שלה? האם יש לה ספק עצמי רב?' },
-                    { id: 'needs', title: 'מילוי הצרכים האישיים', desc: 'עד כמה {name} מכבדת את הצרכים שלה, או נוטה "לוותר עליהם" כשהם מתנגשים עם רצון אחרים? האם {name} מתקשרת את הצרכים שלה או יודעת לשים גבולות לאחרים?' },
-                    { id: 'direct', title: 'תקשורת ישירה והלימה', desc: 'האם {name} מתקשרת באופן פתוח ותואם, או שולחת מסרים כפולים (למשל, חיוך בעת כעס)?' },
-                    { id: 'approval', title: 'צורך באישור', desc: 'עד כמה הצורך שלה בקבלה ואישור חזק עד כדי כך ש{name} "מוותרת על עצמה"?' }
-                ]
-            },
-            {
-                id: 'relationships',
-                title: 'קטגוריה 2: לבנות מערכות יחסים',
-                color: 'indigo',
-                items: [
-                    { id: 'others_acceptance', title: 'קבלת האחר', desc: 'עד כמה {name} מקבלת אחרים, במיוחד אלו עם התנהגויות או ערכים שונים? האם {name} נוטה לשיפוטיות?' },
-                    { id: 'empathy', title: 'אמפתיה', desc: 'כמה קל לה לחוש אמפתיה לאחרים? האם {name} מצליחה להבין אנשים שונים ממנה?' },
-                    { id: 'confronting', title: 'עימות עם אחרים', desc: 'האם יש התנהגויות של אחרים שמפריעות לה אך קשה לה להעלות ולהציף אותן?' },
-                    { id: 'conflict', title: 'ניהול קונפליקטים', desc: 'האם קשה לה עם קונפליקטים? האם {name} נוטה להיתקע בהם? האם {name} פועלת לפתרון הדדי?' },
-                    { id: 'influence', title: 'יכולת השפעה', desc: 'האם {name} מוותרת על הכוח שלה? או להפך, דוחפת את דעתה חזק מדי ומתנגדת להשפעה של אחרים?' }
-                ]
-            },
-            {
-                id: 'learning',
-                title: 'קטגוריה 3: תהליכי למידה',
-                color: 'purple',
-                items: [
-                    { id: 'risks', title: 'לקיחת סיכונים וטעויות', desc: 'נכונות להתנסות בהתנהגות חדשה. האם קל לה לקבל טעויות של עצמה? האם חשוב לה להציג מראית עין של צודקת, עד כדי כך שקשה לה להודות בטעות?' },
-                    { id: 'receiving_feedback', title: 'קבלת משוב', desc: 'האם {name} נפגעת בקלות ממשוב שלילי? הודפת משוב חיובי? האם {name} מתעלמת, "מתרסקת" מזה? עד כמה {name} לומדת ממשוב?' },
-                    { id: 'giving_feedback', title: 'מתן משוב', desc: 'עד כמה קל לה לתת משוב? האם {name} מייפה משוב שלילי? נמנעת ממשוב חיובי? האם נותנת את המשוב באלגנטיות או באופן מגושם?' },
-                    { id: 'help', title: 'בקשת/קבלת עזרה', desc: 'כמה קל לה לבקש או לקבל עזרה מאחרים בעת הצורך?' }
-                ]
-            }
-        ];
+        // Configuration: Define all 3 Categories here
+        const categoriesMap = {
+            'self': 'להיות יותר עצמך',
+            'relationships': 'לבנות מערכות יחסים',
+            'learning': 'תהליכי למידה'
+        };
 
         // DOM Elements
         const dropZone = document.getElementById('drop-zone');
@@ -322,14 +319,19 @@
 
         // Check initialization type (Local Storage vs Preloaded HTML)
         window.addEventListener('DOMContentLoaded', () => {
+            // Check if this is an exported "Read Only" HTML file
             if (window.__PRELOADED_DATA__) {
                 uploadedFilesData = window.__PRELOADED_DATA__;
+                
+                // Hide inputs and action buttons to create a pure "Read Only" view
                 document.getElementById('upload-section').style.display = 'none';
                 document.getElementById('dashboard-actions').style.display = 'none';
+                
                 processFiles();
-                return;
+                return; // Stop further initialization
             }
 
+            // Normal flow: Check Local Storage
             const savedSession = localStorage.getItem(LOCAL_STORAGE_KEY);
             if (savedSession) {
                 try {
@@ -337,7 +339,7 @@
                     if (uploadedFilesData.length > 0) {
                         renderFileList();
                         fileList.classList.remove('hidden');
-                        processFiles(); 
+                        processFiles(); // Auto render dashboard
                     }
                 } catch (e) {
                     console.error("Failed to restore session", e);
@@ -345,10 +347,12 @@
             }
         });
 
+        // Save to Local Storage
         function saveSession() {
             localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(uploadedFilesData));
         }
 
+        // Clear Session
         function clearSession() {
             if(confirm('האם אתה בטוח שברצונך למחוק את כל הנתונים השמורים ולהתחיל מחדש?')) {
                 localStorage.removeItem(LOCAL_STORAGE_KEY);
@@ -356,6 +360,7 @@
             }
         }
 
+        // Export entire aggregated project (JSON)
         function downloadBackup() {
             if (uploadedFilesData.length === 0) return;
             const dataStr = JSON.stringify(uploadedFilesData, null, 2);
@@ -365,7 +370,7 @@
             
             let subjectName = "data";
             if (uploadedFilesData[0].content && uploadedFilesData[0].content.participants) {
-                subjectName = uploadedFilesData[0].content.participants.evaluatee.replace(/[\s\/\\\:\*\?"<>\|]/g, '_');
+                subjectName = uploadedFilesData[0].content.participants.evaluatee.replace(/[^a-z0-9א-ת]/gi, '_');
             }
             
             a.download = `backup_feedback_${subjectName}_${new Date().toISOString().split('T')[0]}.json`;
@@ -374,14 +379,19 @@
             URL.revokeObjectURL(url);
         }
 
+        // Export as interactive HTML file
         function exportInteractiveHTML() {
             if (uploadedFilesData.length === 0) return;
 
+            // Clone the entire DOM to avoid modifying the current view
             const cloneDOM = document.documentElement.cloneNode(true);
+            
+            // Reset the state of the UI in the clone so it looks clean upon opening
             cloneDOM.querySelector('#dashboard').classList.add('hidden');
             cloneDOM.querySelector('#upload-section').classList.remove('hidden');
             
-            const canvases = ['radarChart'];
+            // Reset canvases in the clone (Chart.js pollutes them, causing render bugs if reused)
+            const canvases = ['radarChart', 'strengthsBarChart', 'improvementsBarChart'];
             canvases.forEach(id => {
                 const oldCanvas = cloneDOM.querySelector(`#${id}`);
                 if (oldCanvas) {
@@ -391,24 +401,27 @@
                 }
             });
 
+            // Remove any previously injected script (prevents infinite loop if exporting an export)
             const oldScript = cloneDOM.querySelector('#injected-data');
             if (oldScript) oldScript.remove();
 
+            // Inject the actual data as a script tag into the head of the clone
             const scriptTag = document.createElement('script');
             scriptTag.id = 'injected-data';
             scriptTag.textContent = `window.__PRELOADED_DATA__ = ${JSON.stringify(uploadedFilesData)};`;
             cloneDOM.querySelector('head').appendChild(scriptTag);
 
+            // Create the final HTML string
             const finalHTML = '<!DOCTYPE html>\n' + cloneDOM.outerHTML;
 
+            // Trigger download
             const blob = new Blob([finalHTML], { type: "text/html;charset=utf-8" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             
             let subjectName = "data";
             if (uploadedFilesData[0].content && uploadedFilesData[0].content.participants) {
-                // מנקה תווים בעייתיים משם הקובץ
-                subjectName = uploadedFilesData[0].content.participants.evaluatee.replace(/[\s\/\\\:\*\?"<>\|]/g, '_');
+                subjectName = uploadedFilesData[0].content.participants.evaluatee.replace(/[^a-z0-9א-ת]/gi, '_');
             }
             
             a.download = `דוח_אינטראקטיבי_${subjectName}.html`;
@@ -417,6 +430,7 @@
             URL.revokeObjectURL(url);
         }
 
+        // Drag & Drop Handlers
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
         dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
         dropZone.addEventListener('drop', (e) => {
@@ -426,15 +440,17 @@
         });
         fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
+        // Helper to extract JSON objects from mixed text
         function extractJSONs(text) {
             const results = [];
             let braceCount = 0;
             let startIndex = -1;
 
+            // First check if it's a backup array file "[{...},{...}]"
             try {
                 const fullParse = JSON.parse(text);
                 if (Array.isArray(fullParse) && fullParse.length > 0 && fullParse[0].filename) {
-                    return fullParse; 
+                    return fullParse; // Return the array directly if it's a backup
                 }
             } catch(e) {}
 
@@ -465,7 +481,10 @@
             const content = textarea.value.trim();
             pasteStatus.classList.add('hidden');
             
-            if (!content) { alert("אנא הדבק תוכן בתיבה"); return; }
+            if (!content) {
+                alert("אנא הדבק תוכן בתיבה");
+                return;
+            }
 
             const foundJSONs = extractJSONs(content);
 
@@ -479,16 +498,19 @@
                      }
                 } catch (e) {
                     alert("לא נמצא מידע תקין. וודא שהעתקת את כל הטקסט (כולל סוגריים מסולסלים) ושהמבנה תקין.");
+                    console.error(e);
                     return;
                 }
             }
 
             let addedCount = 0;
             
+            // Check if it's a backup array
             if (Array.isArray(foundJSONs) && foundJSONs[0] && foundJSONs[0].filename) {
                 uploadedFilesData.push(...foundJSONs);
                 addedCount = foundJSONs.length;
             } else {
+                // Regular extracted objects
                 foundJSONs.forEach(json => {
                     const filename = `manual_paste_${uploadedFilesData.length + 1}.json`;
                     uploadedFilesData.push({ filename: filename, content: json });
@@ -504,7 +526,10 @@
             pasteStatus.innerText = `נוספו בהצלחה ${addedCount} משוב/ים.`;
             pasteStatus.classList.remove('hidden');
             pasteStatus.className = "text-xs text-center mt-2 font-bold text-green-600";
-            setTimeout(() => { pasteStatus.classList.add('hidden'); }, 3000);
+            
+            setTimeout(() => {
+                pasteStatus.classList.add('hidden');
+            }, 3000);
         }
 
         function handleFiles(files) {
@@ -525,12 +550,14 @@
                     reader.onload = (e) => {
                         try {
                             const json = JSON.parse(e.target.result);
+                            // Check if this is a backup array
                             if (Array.isArray(json) && json.length > 0 && json[0].filename) {
                                 resolve({ isBackup: true, items: json });
                             } else {
                                 resolve({ isBackup: false, item: { filename: file.name, content: json } });
                             }
                         } catch (err) {
+                            console.error("Error parsing JSON", err);
                             alert("שגיאה בקריאת הקובץ: " + file.name);
                             resolve(null);
                         }
@@ -615,7 +642,7 @@
 
         function printReport() {
             if (uploadedFilesData.length === 0) {
-                alert("אין נתונים להדפסה.");
+                alert("אין נתונים להדפסה. אנא טען קבצי משוב וצור דוח תחילה.");
                 return;
             }
             window.print();
@@ -630,56 +657,63 @@
             }
 
             const totalRespondents = uploadedFilesData.length;
-            
-            // Stats Tracking
-            const itemStatsMap = {}; 
-            const categoryStatsMap = {};
-            let globalTotalStrengths = 0;
-            let globalTotalImprovements = 0;
-
-            // Initialize all possible items from structure with 0 to ensure display
-            questionnaireStructure.forEach(cat => {
-                categoryStatsMap[cat.id] = { s: 0, i: 0, title: cat.title, color: cat.color };
-                cat.items.forEach(item => {
-                    itemStatsMap[item.id] = { s: 0, i: 0 };
-                });
+            const itemsMap = {};
+            const categoryStats = {};
+            Object.keys(categoriesMap).forEach(key => {
+                categoryStats[key] = { s: 0, i: 0, title: categoriesMap[key] };
             });
 
+            // Comment Arrays
             const commentsGeneral = [];
             const commentsSpecial = [];
             const commentsBarriers = [];
             const commentsDream = [];
 
-            // Aggregate Data
             uploadedFilesData.forEach(file => {
                 const data = file.content;
                 const evaluator = data.participants ? data.participants.evaluator : "אנונימי";
 
                 if (data.feedback && data.feedback.strengths) {
                     data.feedback.strengths.forEach(item => {
-                        if (itemStatsMap[item.id]) itemStatsMap[item.id].s++;
-                        if (categoryStatsMap[item.categoryId]) categoryStatsMap[item.categoryId].s++;
-                        globalTotalStrengths++;
+                        initItem(itemsMap, item);
+                        itemsMap[item.id].strengthCount++;
+                        if (categoryStats[item.categoryId]) {
+                            categoryStats[item.categoryId].s++;
+                        } else {
+                            categoryStats[item.categoryId] = { s: 1, i: 0, title: item.categoryTitle || item.categoryId };
+                        }
                     });
                 }
 
                 if (data.feedback && data.feedback.improvements) {
                     data.feedback.improvements.forEach(item => {
-                        if (itemStatsMap[item.id]) itemStatsMap[item.id].i++;
-                        if (categoryStatsMap[item.categoryId]) categoryStatsMap[item.categoryId].i++;
-                        globalTotalImprovements++;
+                        initItem(itemsMap, item);
+                        itemsMap[item.id].improvementCount++;
+                        if (categoryStats[item.categoryId]) {
+                            categoryStats[item.categoryId].i++;
+                        } else {
+                            categoryStats[item.categoryId] = { s: 0, i: 1, title: item.categoryTitle || item.categoryId };
+                        }
                     });
                 }
 
+                // General Notes
                 if (data.feedback && data.feedback.generalNotes && data.feedback.generalNotes.trim() !== "") {
                     commentsGeneral.push({ author: evaluator, text: data.feedback.generalNotes });
                 }
 
+                // Extra Questions
                 if (data.feedback && data.feedback.extraQuestions) {
                     const extra = data.feedback.extraQuestions;
-                    if (extra.specialQuality && extra.specialQuality.trim()) commentsSpecial.push({ author: evaluator, text: extra.specialQuality });
-                    if (extra.barriers && extra.barriers.trim()) commentsBarriers.push({ author: evaluator, text: extra.barriers });
-                    if (extra.dreamRole && extra.dreamRole.trim()) commentsDream.push({ author: evaluator, text: extra.dreamRole });
+                    if (extra.specialQuality && extra.specialQuality.trim()) {
+                        commentsSpecial.push({ author: evaluator, text: extra.specialQuality });
+                    }
+                    if (extra.barriers && extra.barriers.trim()) {
+                        commentsBarriers.push({ author: evaluator, text: extra.barriers });
+                    }
+                    if (extra.dreamRole && extra.dreamRole.trim()) {
+                        commentsDream.push({ author: evaluator, text: extra.dreamRole });
+                    }
                 }
             });
 
@@ -688,108 +722,45 @@
             document.getElementById('upload-section').classList.add('hidden');
             document.getElementById('dashboard').classList.remove('hidden');
 
-            renderRadarChart(categoryStatsMap);
-            renderCategoryBreakdown(categoryStatsMap, itemStatsMap, totalRespondents, globalTotalStrengths, globalTotalImprovements, subjectName);
+            renderRadarChart(categoryStats);
+            renderBarCharts(itemsMap);
+            renderTable(itemsMap, totalRespondents);
             
+            // Render all comment sections
             renderComments(commentsGeneral, 'comments-container');
             renderComments(commentsSpecial, 'comments-special-container');
             renderComments(commentsBarriers, 'comments-barriers-container');
             renderComments(commentsDream, 'comments-dream-container');
             
-            if (!window.__PRELOADED_DATA__) { saveSession(); }
+            // Re-save session just to be safe if user triggered process manually
+            if (!window.__PRELOADED_DATA__) {
+                saveSession();
+            }
         }
 
-        // --- Render Detailed Category Breakdown (New in V2) ---
-        function renderCategoryBreakdown(catStats, itemStats, totalRespondents, globalS, globalI, subjectName) {
-            const container = document.getElementById('category-breakdown-container');
-            container.innerHTML = '';
-
-            const safeName = subjectName && subjectName !== "לא ידוע" ? subjectName : 'היא';
-            
-            // חישוב מכלל הסימונים (חוזקות + לשיפור יחד) - לבקשתך
-            const globalTotalSelections = globalS + globalI;
-
-            questionnaireStructure.forEach(cat => {
-                const stats = catStats[cat.id];
-                
-                // האחוזים כעת מחושבים מתוך סך כל התשובות בשאלון (ולא רק מתוך קבוצת החוזקות/לשיפור בנפרד)
-                const pctS = globalTotalSelections > 0 ? Math.round((stats.s / globalTotalSelections) * 100) : 0;
-                const pctI = globalTotalSelections > 0 ? Math.round((stats.i / globalTotalSelections) * 100) : 0;
-
-                let html = `
-                    <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-8 print-break-inside-avoid border border-gray-100">
-                        <div class="bg-${cat.color}-50 px-6 py-4 border-b border-${cat.color}-100">
-                            <h2 class="text-xl font-bold text-${cat.color}-900">${cat.title}</h2>
-                        </div>
-                        
-                        <div class="p-6">
-                            <!-- Category Percentages -->
-                            <div class="flex flex-col md:flex-row gap-4 mb-8 bg-gray-50 p-5 rounded-xl border border-gray-200">
-                                <div class="flex-1 md:border-l border-gray-200 md:pl-4">
-                                    <p class="text-sm text-gray-600 mb-1">אחוז סימוני <span class="font-bold">"חוזקות"</span> בקטגוריה זו מכלל הסימונים של החוזקות ולשיפור בכלל בשאלון:</p>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-3xl font-bold text-green-600">${pctS}%</span>
-                                        <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden mr-2">
-                                            <div class="h-full bg-green-500" style="width: ${pctS}%"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="flex-1 md:pr-4">
-                                    <p class="text-sm text-gray-600 mb-1">אחוז סימוני <span class="font-bold">"לשיפור"</span> בקטגוריה זו מכלל הסימונים של החוזקות ולשיפור בכלל בשאלון:</p>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-3xl font-bold text-red-600">${pctI}%</span>
-                                        <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden mr-2">
-                                            <div class="h-full bg-red-500" style="width: ${pctI}%"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Questions List -->
-                            <div class="space-y-4">
-                `;
-
-                cat.items.forEach((item, index) => {
-                    const iStats = itemStats[item.id];
-                    // Replace {name} placeholder with actual subject name
-                    const description = item.desc.replace(/\{name\}/g, safeName);
-
-                    html += `
-                        <div class="border border-gray-100 rounded-lg p-5 hover:border-${cat.color}-200 hover:bg-${cat.color}-50/30 transition-colors">
-                            <h3 class="font-bold text-lg text-gray-800 mb-2">שאלה ${index + 1}: ${item.title}</h3>
-                            <p class="text-sm text-gray-600 mb-4 leading-relaxed">${description}</p>
-                            
-                            <div class="flex flex-wrap gap-4 text-sm mt-3 border-t border-gray-100 pt-4">
-                                <div class="flex items-center gap-2 bg-green-50 text-green-800 px-4 py-2 rounded-lg border border-green-100 w-full sm:w-auto">
-                                    <i class="fas fa-plus-circle text-green-600"></i>
-                                    <span class="font-medium">סימוני חוזקות:</span>
-                                    <span class="font-bold text-lg mr-auto sm:mr-2">${iStats.s} מתוך ${totalRespondents}</span>
-                                </div>
-                                
-                                <div class="flex items-center gap-2 bg-red-50 text-red-800 px-4 py-2 rounded-lg border border-red-100 w-full sm:w-auto">
-                                    <i class="fas fa-arrow-circle-up text-red-600"></i>
-                                    <span class="font-medium">סימוני לשיפור:</span>
-                                    <span class="font-bold text-lg mr-auto sm:mr-2">${iStats.i} מתוך ${totalRespondents}</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-
-                html += `</div></div></div>`;
-                container.innerHTML += html;
-            });
+        function initItem(map, itemData) {
+            if (!map[itemData.id]) {
+                map[itemData.id] = {
+                    title: itemData.title,
+                    categoryId: itemData.categoryId,
+                    strengthCount: 0,
+                    improvementCount: 0
+                };
+            }
         }
 
         // --- Charts Rendering ---
         let radarChartInstance = null;
+        let strengthsBarChartInstance = null;
+        let improvementsBarChartInstance = null;
 
         function renderRadarChart(catStats) {
             const ctx = document.getElementById('radarChart').getContext('2d');
+            
             if (radarChartInstance) { radarChartInstance.destroy(); }
 
             const keys = Object.keys(catStats);
-            const labels = keys.map(k => catStats[k].title.replace(/קטגוריה \d: /, '')); // Shorter labels for radar
+            const labels = keys.map(k => catStats[k].title);
             
             let grandTotal = 0;
             keys.forEach(k => { grandTotal += catStats[k].s + catStats[k].i; });
@@ -804,14 +775,26 @@
                     labels: labels,
                     datasets: [
                         {
-                            label: 'חוזקות (%)', data: dataS, fill: true,
-                            backgroundColor: 'rgba(34, 197, 94, 0.2)', borderColor: 'rgba(34, 197, 94, 1)',
-                            pointBackgroundColor: 'rgba(34, 197, 94, 1)', pointBorderColor: '#fff',
+                            label: 'חוזקות (%)',
+                            data: dataS,
+                            fill: true,
+                            backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                            borderColor: 'rgba(34, 197, 94, 1)',
+                            pointBackgroundColor: 'rgba(34, 197, 94, 1)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgba(34, 197, 94, 1)'
                         },
                         {
-                            label: 'לשיפור (%)', data: dataI, fill: true,
-                            backgroundColor: 'rgba(239, 68, 68, 0.2)', borderColor: 'rgba(239, 68, 68, 1)',
-                            pointBackgroundColor: 'rgba(239, 68, 68, 1)', pointBorderColor: '#fff',
+                            label: 'לשיפור (%)',
+                            data: dataI,
+                            fill: true,
+                            backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                            borderColor: 'rgba(239, 68, 68, 1)',
+                            pointBackgroundColor: 'rgba(239, 68, 68, 1)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgba(239, 68, 68, 1)'
                         }
                     ]
                 },
@@ -822,17 +805,100 @@
                     elements: { line: { tension: 0.3 } },
                     scales: {
                         r: {
-                            angleLines: { color: '#e2e8f0' }, grid: { color: '#e2e8f0' },
+                            angleLines: { color: '#e2e8f0' },
+                            grid: { color: '#e2e8f0' },
                             pointLabels: { font: { size: 14, family: 'Heebo' }, color: '#1e293b' },
                             suggestedMin: 0,
-                            ticks: { backdropColor: 'transparent', callback: function(val) { return val + '%' } }
+                            ticks: { 
+                                backdropColor: 'transparent',
+                                callback: function(value) { return value + '%' }
+                            }
                         }
                     },
                     plugins: {
                         legend: { position: 'bottom', labels: { font: { family: 'Heebo' } } },
-                        tooltip: { callbacks: { label: function(c) { return c.dataset.label + ': ' + c.raw + '%'; } } }
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) { return context.dataset.label + ': ' + context.raw + '%'; }
+                            }
+                        }
                     }
                 }
+            });
+        }
+
+        function renderBarCharts(itemsMap) {
+            const itemsArray = Object.values(itemsMap);
+            
+            const topStrengths = [...itemsArray].sort((a, b) => b.strengthCount - a.strengthCount).filter(item => item.strengthCount > 0).slice(0, 5);
+            const topImprovements = [...itemsArray].sort((a, b) => b.improvementCount - a.improvementCount).filter(item => item.improvementCount > 0).slice(0, 5);
+
+            if (strengthsBarChartInstance) strengthsBarChartInstance.destroy();
+            strengthsBarChartInstance = createHorizontalBar(
+                document.getElementById('strengthsBarChart'), 
+                topStrengths.map(i => i.title), 
+                topStrengths.map(i => i.strengthCount),
+                'rgba(34, 197, 94, 0.7)', 'חוזקות'
+            );
+
+            if (improvementsBarChartInstance) improvementsBarChartInstance.destroy();
+            improvementsBarChartInstance = createHorizontalBar(
+                document.getElementById('improvementsBarChart'), 
+                topImprovements.map(i => i.title), 
+                topImprovements.map(i => i.improvementCount),
+                'rgba(239, 68, 68, 0.7)', 'נקודות לשיפור'
+            );
+        }
+
+        function createHorizontalBar(canvas, labels, data, color, label) {
+            return new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label, data: data, backgroundColor: color, borderRadius: 4, barThickness: 20
+                    }]
+                },
+                options: {
+                    animation: { duration: 0 },
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { stepSize: 1 } },
+                        y: { ticks: { font: { family: 'Heebo' }, autoSkip: false } }
+                    }
+                }
+            });
+        }
+
+        function renderTable(itemsMap, total) {
+            const tbody = document.getElementById('breakdown-table-body');
+            tbody.innerHTML = '';
+            
+            const sortedItems = Object.values(itemsMap).sort((a, b) => 
+                (b.strengthCount + b.improvementCount) - (a.strengthCount + a.improvementCount)
+            );
+
+            sortedItems.forEach(item => {
+                const totalMentions = item.strengthCount + item.improvementCount;
+                if (totalMentions === 0) return;
+                
+                const row = `
+                    <tr class="hover:bg-gray-50 transition-colors print-break-inside-avoid">
+                        <td class="px-6 py-4 border-b border-gray-100 font-medium text-gray-800">${item.title}</td>
+                        <td class="px-6 py-4 border-b border-gray-100 text-center">
+                            ${item.strengthCount > 0 ? `<span class="bg-green-100 text-green-800 font-bold px-3 py-1 rounded-full border border-green-200">${item.strengthCount}</span>` : '-'}
+                        </td>
+                        <td class="px-6 py-4 border-b border-gray-100 text-center">
+                            ${item.improvementCount > 0 ? `<span class="bg-red-100 text-red-800 font-bold px-3 py-1 rounded-full border border-red-200">${item.improvementCount}</span>` : '-'}
+                        </td>
+                        <td class="px-6 py-4 border-b border-gray-100 text-center text-xs text-gray-400">
+                           ${totalMentions} אזכורים
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
             });
         }
 
