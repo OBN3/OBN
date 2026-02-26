@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>דשבורד ניתוח משובים 2 | סטנפורד</title>
+    
+    <!-- ספריות עיצוב וגרפים -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Heebo', sans-serif;
+            background-color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .drop-zone {
+            border: 2px dashed #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+
+        /* עיצוב מותאם להדפסה */
+        @media print {
+            @page { margin: 1cm; }
+            
+            .no-print { display: none !important; }
+            body { 
+                background-color: white; 
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact; 
+                font-size: 12pt;
+            }
+            .shadow-sm, .shadow-md, .shadow-lg { box-shadow: none !important; }
+            
+            main { padding: 0 !important; margin: 0 !important; }
+            .max-w-5xl { max-width: 100% !important; }
+            
+            .p-6 { padding: 1rem !important; }
+            .gap-6 { gap: 1rem !important; }
+            .space-y-6 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; margin-top: 1rem !important; margin-bottom: 0 !important; }
+            
+            #upload-section { display: none !important; }
+            #dashboard { display: block !important; opacity: 1 !important; transform: none !important; }
+            
+            .print-break-inside-avoid { break-inside: avoid; page-break-inside: avoid; }
+        }
+
+        /* אנימציה לכרטיסים */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* עיצוב לפלט AI */
+        .ai-prose h3 { font-size: 1.25rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #1e3a8a; }
+        .ai-prose p { margin-bottom: 1rem; }
+        .ai-prose ul { list-style-type: disc; margin-right: 1.5rem; margin-bottom: 1rem; }
+        .ai-prose li { margin-bottom: 0.25rem; }
+        .ai-prose strong { color: #111827; }
+
+        /* Toast Notification */
+        #toast {
+            visibility: hidden;
+            min-width: 300px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 9999;
+            left: 50%;
+            top: 20px;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            font-weight: bold;
+        }
+
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Input error shake animation */
+        .input-error {
+            animation: shake 0.5s;
+            border-color: #ef4444 !important;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- Navbar -->
+    <nav class="bg-blue-900 text-white shadow-md sticky top-0 z-50 no-print">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-chart-pie text-xl"></i>
+                <h1 class="text-xl font-bold leading-tight">ניתוח משובים קבוצתי (גרסה 2)</h1>
+            </div>
+            <button onclick="printReport()" class="text-sm bg-blue-800 hover:bg-blue-700 px-3 py-2 rounded-lg transition border border-blue-700 flex items-center gap-2">
+                <i class="fas fa-file-pdf"></i> הדפס / שמור כ-PDF
+            </button>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto px-4 py-8">
+
+        <!-- 1. Upload Section -->
+        <section id="upload-section" class="max-w-2xl mx-auto text-center mb-12">
+            <div class="bg-white rounded-2xl shadow-lg p-8">
+                <div class="mb-6">
+                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-cloud-upload-alt text-3xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">העלאת קבצי משוב</h2>
+                    <p class="text-gray-500">
+                        גרור לכאן את קבצי ה-JSON שקיבלת מהמשיבים,<br>
+                        או לחץ לבחירה (ניתן לבחור מספר קבצים יחד, וגם קבצי גיבוי).
+                    </p>
+                </div>
+
+                <div id="drop-zone" class="drop-zone rounded-xl p-10 cursor-pointer relative">
+                    <input type="file" id="file-input" multiple accept=".json" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    <div class="text-gray-400">
+                        <i class="fas fa-file-code text-4xl mb-3 block"></i>
+                        <span class="font-medium">לחץ או גרור קבצים לכאן</span>
+                    </div>
+                </div>
+
+                <!-- Paste Option -->
+                <div class="relative my-6">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white text-gray-500">או</span>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 text-right">
+                    <h3 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                        <i class="fas fa-paste text-gray-500"></i>
+                        הדבקת תוכן (מ-WhatsApp וכד')
+                    </h3>
+                    <textarea id="json-paste-area" rows="3" 
+                        class="w-full p-3 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow"
+                        placeholder='הדבק כאן את הטקסט שהתקבל (אפשר להדביק גם מספר תשובות ברצף)'></textarea>
+                    <button onclick="handlePaste()" class="mt-2 w-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 font-medium py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center gap-2 shadow-sm">
+                        <i class="fas fa-plus-circle text-purple-600"></i> הוסף נתונים מהדבקה
+                    </button>
+                    <p id="paste-status" class="text-xs text-center mt-2 font-medium hidden"></p>
+                </div>
+
+                <div id="file-list" class="mt-4 text-right hidden">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-sm font-bold text-gray-700">קבצים שנקלטו:</h3>
+                    </div>
+                    <ul id="files-ul" class="text-sm text-gray-600 space-y-1 bg-gray-50 p-3 rounded-lg max-h-40 overflow-y-auto border border-gray-200"></ul>
+                    <button onclick="processFiles()" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow transition-colors">
+                        <i class="fas fa-magic"></i> בצע ניתוח נתונים
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Dashboard Results (Hidden initially) -->
+        <div id="dashboard" class="hidden space-y-8 fade-in">
+            
+            <!-- Summary Header -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border-r-4 border-blue-500 flex flex-wrap justify-between items-center gap-4 print-break-inside-avoid">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">סיכום עבור: <span id="subject-name" class="text-blue-600"></span></h2>
+                    <p class="text-gray-500 text-sm mt-1">
+                        הנתונים שוקללו מתוך <span id="total-respondents" class="font-bold text-gray-900">0</span> משיבים
+                    </p>
+                </div>
+                <div class="flex gap-2 text-sm">
+                    <div class="bg-green-50 text-green-800 px-3 py-1 rounded-full border border-green-200">
+                        <i class="fas fa-plus-circle"></i> חוזקות
+                    </div>
+                    <div class="bg-red-50 text-red-800 px-3 py-1 rounded-full border border-red-200">
+                        <i class="fas fa-arrow-circle-up"></i> לשיפור
+                    </div>
+                </div>
+            </div>
+
+            <!-- Radar Chart (Kept for high-level overview) -->
+            <div class="bg-white rounded-xl shadow-sm p-6 print-break-inside-avoid">
+                <h3 class="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2">
+                    <i class="fas fa-project-diagram text-purple-500"></i>
+                    מבט על: פילוח לפי קטגוריות
+                </h3>
+                <div class="relative h-64 sm:h-80 w-full max-w-2xl mx-auto">
+                    <canvas id="radarChart"></canvas>
+                </div>
+                <p class="text-xs text-gray-400 text-center mt-2">
+                    * מציג את אחוז התשובות בכל קטגוריה מסך כל התשובות (נפח הפעילות)
+                </p>
+            </div>
+
+            <!-- New Category Breakdown Container -->
+            <div id="category-breakdown-container" class="space-y-8">
+                <!-- Categories will be injected here dynamically -->
+            </div>
+
+            <!-- Free Text Comments (General) -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border-t-4 border-gray-400">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <i class="fas fa-comments text-gray-500"></i>
+                    הערות מילוליות והתנהגויות נוספות
+                </h3>
+                <div id="comments-container" class="grid gap-4 grid-cols-1 md:grid-cols-2"></div>
+            </div>
+
+            <!-- Special Quality -->
+            <div class="bg-indigo-50 rounded-xl shadow-sm p-6 border-t-4 border-indigo-400 print-break-inside-avoid">
+                <h3 class="text-lg font-bold text-indigo-900 mb-4 flex items-center gap-2">
+                    <i class="fas fa-star text-indigo-500"></i>
+                    איכות מיוחדת / ערך מוסף
+                </h3>
+                <div id="comments-special-container" class="grid gap-4 grid-cols-1 md:grid-cols-2"></div>
+            </div>
+
+            <!-- Barriers -->
+            <div class="bg-purple-50 rounded-xl shadow-sm p-6 border-t-4 border-purple-400 print-break-inside-avoid">
+                <h3 class="text-lg font-bold text-purple-900 mb-4 flex items-center gap-2">
+                    <i class="fas fa-exclamation-triangle text-purple-500"></i>
+                    חסמים ופוטנציאל
+                </h3>
+                <div id="comments-barriers-container" class="grid gap-4 grid-cols-1 md:grid-cols-2"></div>
+            </div>
+
+            <!-- Dream Role -->
+            <div class="bg-green-50 rounded-xl shadow-sm p-6 border-t-4 border-green-400 print-break-inside-avoid">
+                <h3 class="text-lg font-bold text-green-900 mb-4 flex items-center gap-2">
+                    <i class="fas fa-rocket text-green-500"></i>
+                    תפקיד החלומות
+                </h3>
+                <div id="comments-dream-container" class="grid gap-4 grid-cols-1 md:grid-cols-2"></div>
+            </div>
+
+            <!-- AI Integration Section -->
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-sm p-6 border-t-4 border-blue-500 no-print" id="ai-section">
+                <h3 class="text-xl font-bold text-blue-900 mb-2 flex items-center gap-2">
+                    <i class="fas fa-robot text-blue-600"></i> ניתוח חכם באמצעות בינה מלאכותית (Groq)
+                </h3>
+                <p class="text-sm text-gray-600 mb-6">
+                    המערכת תרכיב אוטומטית פקודה (Prompt) המכילה את כל הנתונים, ותשלח אותה למודל של Groq כדי לקבל ניתוח פסיכולוגי-ארגוני.
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <!-- Key Input & Model Selection -->
+                    <div class="md:col-span-1">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Groq API Key:</label>
+                        <input type="password" id="groq-api-key" placeholder="gsk_..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-left" dir="ltr">
+                        <p class="text-xs text-gray-500 mt-2">המפתח נשמר בדפדפן שלך בלבד. <a href="https://console.groq.com/keys" target="_blank" class="text-blue-500 underline">להפקת מפתח חינמי</a>.</p>
+                        
+                        <label class="block text-sm font-bold text-gray-700 mt-4 mb-2">בחר מודל לניתוח:</label>
+                        <select id="groq-model-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-left font-mono text-sm" dir="ltr">
+                            <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile (מומלץ)</option>
+                            <option value="llama-3.1-8b-instant">llama-3.1-8b-instant (מהיר)</option>
+                            <option value="openai/gpt-oss-120b">openai/gpt-oss-120b</option>
+                            <option value="openai/gpt-oss-20b">openai/gpt-oss-20b</option>
+                            <option value="meta-llama/llama-4-scout-17b-16e-instruct">meta-llama/llama-4-scout-17b-16e-instruct</option>
+                            <option value="moonshotai/kimi-k2-instruct-0905">moonshotai/kimi-k2-instruct-0905</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Prompt Area -->
+                    <div class="md:col-span-2">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-sm font-bold text-gray-700">פרומפט מותאם אישית (נוצר אוטומטית, ניתן לערוך):</label>
+                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">נוצר אוטומטית מנתוני המשוב</span>
+                        </div>
+                        <textarea id="ai-prompt" rows="6" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono leading-relaxed" dir="rtl"></textarea>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <button onclick="generateAIReport()" id="btn-generate-ai" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-magic"></i> הפק דוח מנהלים (AI)
+                    </button>
+                    <div id="ai-loading" class="hidden text-blue-700 font-medium flex items-center gap-2">
+                        <i class="fas fa-circle-notch fa-spin text-xl"></i> מנתח נתונים, אנא המתן...
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Output Section -->
+            <div id="ai-output-section" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 mt-8 print-break-inside-avoid">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 rounded-t-xl flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fas fa-brain"></i> סיכום מנהלים - פסיכולוג ארגוני (AI)
+                    </h2>
+                    <div id="ai-model-badge" class="text-xs bg-white/20 text-white px-3 py-1 rounded-full border border-white/30 font-mono shadow-sm" dir="ltr"></div>
+                </div>
+                <div class="p-8">
+                    <div id="ai-output-content" class="ai-prose text-gray-800 leading-relaxed whitespace-pre-wrap"></div>
+                </div>
+            </div>
+            
+            <!-- Dashboard Actions (Save, Export, Clear) -->
+            <div id="dashboard-actions" class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 pb-12 no-print border-t border-gray-200 pt-8">
+                
+                <div class="flex flex-col items-center text-center">
+                    <button onclick="exportInteractiveHTML()" class="w-full justify-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold transition-colors shadow-md flex items-center gap-2">
+                        <i class="fas fa-globe"></i> שמור כדוח אינטראקטיבי (HTML)
+                    </button>
+                    <p class="text-xs text-gray-500 mt-2 leading-relaxed">
+                        מייצר קובץ מוכן לשיתוף <span class="font-bold">לקריאה בלבד</span>. נהדר לשליחה לאדם אחר כדי שיצפה בתוצאות ובגרפים במערכת נוחה מבלי לשנות נתונים.
+                    </p>
+                </div>
+
+                <div class="flex flex-col items-center text-center">
+                    <button onclick="downloadBackup()" class="w-full justify-center px-6 py-3 bg-purple-100 text-purple-700 rounded-xl hover:bg-purple-200 font-bold transition-colors shadow-sm flex items-center gap-2 border border-purple-200">
+                        <i class="fas fa-save"></i> שמור גיבוי עבודה כקובץ
+                    </button>
+                    <p class="text-xs text-gray-500 mt-2 leading-relaxed">
+                        אורז את כל המשיבים לקובץ עבודה אחד. מאפשר לך לטעון אותם בחזרה למערכת בעתיד (או במחשב אחר).
+                    </p>
+                </div>
+
+                <div class="flex flex-col items-center text-center">
+                    <button onclick="clearSession()" class="w-full justify-center px-6 py-3 bg-white text-gray-600 rounded-xl hover:bg-red-50 hover:text-red-600 font-bold transition-colors shadow-sm flex items-center gap-2 border border-gray-300 hover:border-red-200">
+                        <i class="fas fa-trash-alt"></i> נקה נתונים
+                    </button>
+                    <p class="text-xs text-gray-500 mt-2 leading-relaxed">
+                        מוחק את כל הנתונים מהזיכרון של הדפדפן הנוכחי, ומאפשר להתחיל לנתח משובים של אדם חדש לגמרי מדף חלק.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Toast Notification Element -->
+    <div id="toast">הודעה</div>
+
+    <!-- App Logic -->
+    <script>
+        // Data Handling Variables
+        let uploadedFilesData = [];
+        const LOCAL_STORAGE_KEY = 'feedback_dashboard_v2_session';
+        const GROQ_KEY_STORAGE = 'groq_api_key_stored';
+        const GROQ_MODEL_STORAGE = 'groq_model_stored';
+        
+        // ------------------------------------------------------------------
+        // Full Questionnaire Structure (Needed to display unselected items)
+        // ------------------------------------------------------------------
+        const questionnaireStructure = [
+            {
+                id: 'self',
+                title: 'קטגוריה 1: להיות יותר עצמך',
+                color: 'blue',
+                items: [
+                    { id: 'emotions', title: 'זיהוי והבעת מגוון רגשות', desc: 'האם {name} מזהה ומביעה מגוון רגשות? האם יש רגשות שקשה לה להביע (חיוביים, שליליים, פגיעות)?' },
+                    { id: 'aspects', title: 'ביטוי היבטים רבים של העצמי', desc: 'עד כמה {name} נותנת לעצמה להיות ידועה במלואה מול הצגת תדמית?' },
+                    { id: 'acceptance', title: 'קבלה עצמית', desc: 'האם יש חלקים בעצמה שקשה לה לקבל? האם {name} חשה בושה לגביהם?' },
+                    { id: 'intuition', title: 'אמון באינטואיציה', desc: 'האם {name} נוטה להיות אנליטית מדי ולזלזל בתחושות הבטן שלה? האם יש לה ספק עצמי רב?' },
+                    { id: 'needs', title: 'מילוי הצרכים האישיים', desc: 'עד כמה {name} מכבדת את הצרכים שלה, או נוטה "לוותר עליהם" כשהם מתנגשים עם רצון אחרים? האם {name} מתקשרת את הצרכים שלה או יודעת לשים גבולות לאחרים?' },
+                    { id: 'direct', title: 'תקשורת ישירה והלימה', desc: 'האם {name} מתקשרת באופן פתוח ותואם, או שולחת מסרים כפולים (למשל, חיוך בעת כעס)?' },
+                    { id: 'approval', title: 'צורך באישור', desc: 'עד כמה הצורך שלה בקבלה ואישור חזק עד כדי כך ש{name} "מוותרת על עצמה"?' }
+                ]
+            },
+            {
+                id: 'relationships',
+                title: 'קטגוריה 2: לבנות מערכות יחסים',
+                color: 'indigo',
+                items: [
+                    { id: 'others_acceptance', title: 'קבלת האחר', desc: 'עד כמה {name} מקבלת אחרים, במיוחד אלו עם התנהגויות או ערכים שונים? האם {name} נוטה לשיפוטיות?' },
+                    { id: 'empathy', title: 'אמפתיה', desc: 'כמה קל לה לחוש אמפתיה לאחרים? האם {name} מצליחה להבין אנשים שונים ממנה?' },
+                    { id: 'confronting', title: 'עימות עם אחרים', desc: 'האם יש התנהגויות של אחרים שמפריעות לה אך קשה לה להעלות ולהציף אותן?' },
+                    { id: 'conflict', title: 'ניהול קונפליקטים', desc: 'האם קשה לה עם קונפליקטים? האם {name} נוטה להיתקע בהם? האם {name} פועלת לפתרון הדדי?' },
+                    { id: 'influence', title: 'יכולת השפעה', desc: 'האם {name} מוותרת על הכוח שלה? או להפך, דוחפת את דעתה חזק מדי ומתנגדת להשפעה של אחרים?' }
+                ]
+            },
+            {
+                id: 'learning',
+                title: 'קטגוריה 3: תהליכי למידה',
+                color: 'purple',
+                items: [
+                    { id: 'risks', title: 'לקיחת סיכונים וטעויות', desc: 'נכונות להתנסות בהתנהגות חדשה. האם קל לה לקבל טעויות של עצמה? האם חשוב לה להציג מראית עין של צודקת, עד כדי כך שקשה לה להודות בטעות?' },
+                    { id: 'receiving_feedback', title: 'קבלת משוב', desc: 'האם {name} נפגעת בקלות ממשוב שלילי? הודפת משוב חיובי? האם {name} מתעלמת, "מתרסקת" מזה? עד כמה {name} לומדת ממשוב?' },
+                    { id: 'giving_feedback', title: 'מתן משוב', desc: 'עד כמה קל לה לתת משוב? האם {name} מייפה משוב שלילי? נמנעת ממשוב חיובי? האם נותנת את המשוב באלגנטיות או באופן מגושם?' },
+                    { id: 'help', title: 'בקשת/קבלת עזרה', desc: 'כמה קל לה לבקש או לקבל עזרה מאחרים בעת הצורך?' }
+                ]
+            }
+        ];
+
+        // DOM Elements
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileList = document.getElementById('file-list');
+        const filesUl = document.getElementById('files-ul');
+        const pasteStatus = document.getElementById('paste-status');
+
+        // Check initialization type (Local Storage vs Preloaded HTML)
+        window.addEventListener('DOMContentLoaded', () => {
+            // Restore Groq Key & Model if exists
+            const savedKey = localStorage.getItem(GROQ_KEY_STORAGE);
+            if (savedKey) document.getElementById('groq-api-key').value = savedKey;
+            
+            const savedModel = localStorage.getItem(GROQ_MODEL_STORAGE);
+            if (savedModel) document.getElementById('groq-model-select').value = savedModel;
+
+            if (window.__PRELOADED_DATA__) {
+                uploadedFilesData = window.__PRELOADED_DATA__;
+                document.getElementById('upload-section').style.display = 'none';
+                document.getElementById('dashboard-actions').style.display = 'none';
+                
+                // Hide AI section logic if it's read only, unless there is already output
+                document.getElementById('ai-section').style.display = 'none';
+                
+                processFiles();
+                
+                // If there is preloaded AI output, show it
+                if (window.__PRELOADED_AI_DATA__) {
+                    document.getElementById('ai-output-section').classList.remove('hidden');
+                    document.getElementById('ai-output-content').innerHTML = parseMarkdown(window.__PRELOADED_AI_DATA__.text);
+                    document.getElementById('ai-model-badge').innerText = window.__PRELOADED_AI_DATA__.model;
+                }
+
+                return;
+            }
+
+            const savedSession = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (savedSession) {
+                try {
+                    uploadedFilesData = JSON.parse(savedSession);
+                    if (uploadedFilesData.length > 0) {
+                        renderFileList();
+                        fileList.classList.remove('hidden');
+                        processFiles(); 
+                    }
+                } catch (e) {
+                    console.error("Failed to restore session", e);
+                }
+            }
+        });
+
+        // Save Groq Key on change
+        document.getElementById('groq-api-key').addEventListener('input', (e) => {
+            localStorage.setItem(GROQ_KEY_STORAGE, e.target.value.trim());
+        });
+
+        // Save Groq Model on change
+        document.getElementById('groq-model-select').addEventListener('change', (e) => {
+            localStorage.setItem(GROQ_MODEL_STORAGE, e.target.value);
+        });
+
+        // Global Toast Notification Function
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.className = 'show'; 
+            if (type === 'error') {
+                toast.style.backgroundColor = '#d32f2f'; // Red for errors
+            } else if (type === 'success') {
+                toast.style.backgroundColor = '#16a34a'; // Green for success
+            } else {
+                toast.style.backgroundColor = '#333';
+            }
+            
+            setTimeout(function(){ toast.className = toast.className.replace('show', ''); }, 3500);
+        }
+
+        function saveSession() {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(uploadedFilesData));
+        }
+
+        function clearSession() {
+            if(confirm('האם אתה בטוח שברצונך למחוק את כל הנתונים השמורים ולהתחיל מחדש?')) {
+                localStorage.removeItem(LOCAL_STORAGE_KEY);
+                location.reload();
+            }
+        }
+
+        function downloadBackup() {
+            if (uploadedFilesData.length === 0) return;
+            const dataStr = JSON.stringify(uploadedFilesData, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            let subjectName = "data";
+            if (uploadedFilesData[0].content && uploadedFilesData[0].content.participants) {
+                subjectName = uploadedFilesData[0].content.participants.evaluatee.replace(/[^a-z0-9א-ת]/gi, '_');
+            }
+            
+            a.download = `backup_feedback_${subjectName}_${new Date().toISOString().split('T')[0]}.json`;
+            a.href = url;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportInteractiveHTML() {
+            if (uploadedFilesData.length === 0) return;
+
+            const cloneDOM = document.documentElement.cloneNode(true);
+            cloneDOM.querySelector('#dashboard').classList.add('hidden');
+            cloneDOM.querySelector('#upload-section').classList.remove('hidden');
+            
+            const canvases = ['radarChart'];
+            canvases.forEach(id => {
+                const oldCanvas = cloneDOM.querySelector(`#${id}`);
+                if (oldCanvas) {
+                    const newCanvas = document.createElement('canvas');
+                    newCanvas.id = id;
+                    oldCanvas.parentNode.replaceChild(newCanvas, oldCanvas);
+                }
+            });
+
+            // Remove old injected scripts
+            cloneDOM.querySelectorAll('#injected-data, #injected-ai').forEach(el => el.remove());
+
+            // Inject the data
+            const scriptTag = document.createElement('script');
+            scriptTag.id = 'injected-data';
+            scriptTag.textContent = `window.__PRELOADED_DATA__ = ${JSON.stringify(uploadedFilesData)};`;
+            cloneDOM.querySelector('head').appendChild(scriptTag);
+
+            // Inject AI text if generated
+            if (window.lastGeneratedAIData) {
+                const aiScriptTag = document.createElement('script');
+                aiScriptTag.id = 'injected-ai';
+                aiScriptTag.textContent = `window.__PRELOADED_AI_DATA__ = ${JSON.stringify(window.lastGeneratedAIData)};`;
+                cloneDOM.querySelector('head').appendChild(aiScriptTag);
+            }
+
+            const finalHTML = '<!DOCTYPE html>\n' + cloneDOM.outerHTML;
+
+            const blob = new Blob([finalHTML], { type: "text/html;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            let subjectName = "data";
+            if (uploadedFilesData[0].content && uploadedFilesData[0].content.participants) {
+                subjectName = uploadedFilesData[0].content.participants.evaluatee.replace(/[^a-z0-9א-ת]/gi, '_');
+            }
+            
+            a.download = `דוח_אינטראקטיבי_${subjectName}.html`;
+            a.href = url;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        function extractJSONs(text) {
+            const results = [];
+            let braceCount = 0;
+            let startIndex = -1;
+
+            try {
+                const fullParse = JSON.parse(text);
+                if (Array.isArray(fullParse) && fullParse.length > 0 && fullParse[0].filename) {
+                    return fullParse; 
+                }
+            } catch(e) {}
+
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                if (char === '{') {
+                    if (braceCount === 0) startIndex = i;
+                    braceCount++;
+                } else if (char === '}') {
+                    braceCount--;
+                    if (braceCount === 0 && startIndex !== -1) {
+                        const jsonStr = text.substring(startIndex, i + 1);
+                        try {
+                            const obj = JSON.parse(jsonStr);
+                            if (obj.participants && obj.feedback) {
+                                results.push(obj);
+                            }
+                        } catch (e) {}
+                        startIndex = -1;
+                    }
+                }
+            }
+            return results;
+        }
+
+        function handlePaste() {
+            const textarea = document.getElementById('json-paste-area');
+            const content = textarea.value.trim();
+            pasteStatus.classList.add('hidden');
+            
+            if (!content) { showToast("אנא הדבק תוכן בתיבה", "error"); return; }
+
+            const foundJSONs = extractJSONs(content);
+
+            if (!foundJSONs || foundJSONs.length === 0) {
+                try {
+                    const json = JSON.parse(content);
+                     if (json.participants && json.feedback) {
+                         foundJSONs.push(json);
+                     } else {
+                         throw new Error("Invalid structure");
+                     }
+                } catch (e) {
+                    showToast("לא נמצא מידע תקין. וודא שהעתקת את כל הטקסט (כולל סוגריים מסולסלים) ושהמבנה תקין.", "error");
+                    return;
+                }
+            }
+
+            let addedCount = 0;
+            
+            if (Array.isArray(foundJSONs) && foundJSONs[0] && foundJSONs[0].filename) {
+                uploadedFilesData.push(...foundJSONs);
+                addedCount = foundJSONs.length;
+            } else {
+                foundJSONs.forEach(json => {
+                    const filename = `manual_paste_${uploadedFilesData.length + 1}.json`;
+                    uploadedFilesData.push({ filename: filename, content: json });
+                    addedCount++;
+                });
+            }
+
+            saveSession();
+            renderFileList();
+            fileList.classList.remove('hidden');
+            textarea.value = '';
+            
+            pasteStatus.innerText = `נוספו בהצלחה ${addedCount} משוב/ים.`;
+            pasteStatus.classList.remove('hidden');
+            pasteStatus.className = "text-xs text-center mt-2 font-bold text-green-600";
+            setTimeout(() => { pasteStatus.classList.add('hidden'); }, 3000);
+        }
+
+        function handleFiles(files) {
+            if (files.length === 0) return;
+
+            let loadedCount = 0;
+            const filesArray = Array.from(files);
+            
+            const filePromises = filesArray.map(file => {
+                return new Promise((resolve) => {
+                    if (file.type !== "application/json" && !file.name.endsWith('.json')) {
+                        showToast(`הקובץ ${file.name} אינו קובץ JSON תקין`, "error");
+                        resolve(null);
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const json = JSON.parse(e.target.result);
+                            if (Array.isArray(json) && json.length > 0 && json[0].filename) {
+                                resolve({ isBackup: true, items: json });
+                            } else {
+                                resolve({ isBackup: false, item: { filename: file.name, content: json } });
+                            }
+                        } catch (err) {
+                            showToast("שגיאה בקריאת הקובץ: " + file.name, "error");
+                            resolve(null);
+                        }
+                    };
+                    reader.readAsText(file);
+                });
+            });
+
+            Promise.all(filePromises).then(results => {
+                results.forEach(result => {
+                    if (result) {
+                        if (result.isBackup) {
+                            uploadedFilesData.push(...result.items);
+                            loadedCount += result.items.length;
+                        } else {
+                            uploadedFilesData.push(result.item);
+                            loadedCount++;
+                        }
+                    }
+                });
+
+                if (loadedCount > 0) {
+                    saveSession();
+                    renderFileList();
+                    fileList.classList.remove('hidden');
+                }
+            });
+        }
+
+        function renderFileList() {
+            filesUl.innerHTML = '';
+            
+            if (uploadedFilesData.length === 0) {
+                fileList.classList.add('hidden');
+                document.getElementById('dashboard').classList.add('hidden');
+                document.getElementById('upload-section').classList.remove('hidden');
+                return;
+            }
+
+            uploadedFilesData.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.className = "flex justify-between items-center bg-white p-2 rounded border border-gray-100 mb-1 group hover:border-blue-100 transition-colors";
+                
+                const isManual = item.filename.startsWith('manual_paste');
+                const iconClass = isManual ? 'fa-keyboard text-purple-500' : 'fa-file-alt text-blue-500';
+                const sourceText = isManual ? 'הדבקה ידנית' : item.filename;
+
+                li.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden w-full">
+                        <div class="flex-shrink-0 w-6 text-center">
+                            <i class="fas ${iconClass}"></i>
+                        </div>
+                        <div class="flex flex-col overflow-hidden w-full pr-2 border-r border-gray-100">
+                            <span class="font-medium text-gray-800 truncate">${item.content.participants.evaluator || 'אנונימי'}</span>
+                            <span class="text-xs text-gray-400 truncate w-[150px] sm:w-auto" dir="ltr">${sourceText}</span>
+                        </div>
+                    </div>
+                    <button onclick="removeFile(${index})" class="text-gray-300 hover:text-red-500 p-2 rounded-full hover:bg-red-50 transition-all flex-shrink-0 mr-2" title="מחק משיב זה">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                `;
+                filesUl.appendChild(li);
+            });
+        }
+
+        function removeFile(index) {
+            if (index >= 0 && index < uploadedFilesData.length) {
+                uploadedFilesData.splice(index, 1);
+                saveSession();
+                renderFileList();
+                
+                if (!document.getElementById('dashboard').classList.contains('hidden')) {
+                    if (uploadedFilesData.length > 0) {
+                        processFiles();
+                    } else {
+                        document.getElementById('dashboard').classList.add('hidden');
+                        document.getElementById('upload-section').classList.remove('hidden');
+                    }
+                }
+            }
+        }
+
+        function printReport() {
+            if (uploadedFilesData.length === 0) {
+                showToast("אין נתונים להדפסה.", "error");
+                return;
+            }
+            window.print();
+        }
+
+        function processFiles() {
+            if (uploadedFilesData.length === 0) return;
+
+            let subjectName = "לא ידוע";
+            if (uploadedFilesData[0] && uploadedFilesData[0].content && uploadedFilesData[0].content.participants) {
+                subjectName = uploadedFilesData[0].content.participants.evaluatee;
+            }
+
+            const totalRespondents = uploadedFilesData.length;
+            
+            // Stats Tracking
+            const itemStatsMap = {}; 
+            const categoryStatsMap = {};
+            let globalTotalStrengths = 0;
+            let globalTotalImprovements = 0;
+
+            // Initialize all possible items from structure with 0 to ensure display
+            questionnaireStructure.forEach(cat => {
+                categoryStatsMap[cat.id] = { s: 0, i: 0, title: cat.title, color: cat.color };
+                cat.items.forEach(item => {
+                    itemStatsMap[item.id] = { s: 0, i: 0, title: item.title };
+                });
+            });
+
+            const commentsGeneral = [];
+            const commentsSpecial = [];
+            const commentsBarriers = [];
+            const commentsDream = [];
+
+            // Aggregate Data
+            uploadedFilesData.forEach(file => {
+                const data = file.content;
+                const evaluator = data.participants ? data.participants.evaluator : "אנונימי";
+
+                if (data.feedback && data.feedback.strengths) {
+                    data.feedback.strengths.forEach(item => {
+                        if (itemStatsMap[item.id]) itemStatsMap[item.id].s++;
+                        if (categoryStatsMap[item.categoryId]) categoryStatsMap[item.categoryId].s++;
+                        globalTotalStrengths++;
+                    });
+                }
+
+                if (data.feedback && data.feedback.improvements) {
+                    data.feedback.improvements.forEach(item => {
+                        if (itemStatsMap[item.id]) itemStatsMap[item.id].i++;
+                        if (categoryStatsMap[item.categoryId]) categoryStatsMap[item.categoryId].i++;
+                        globalTotalImprovements++;
+                    });
+                }
+
+                if (data.feedback && data.feedback.generalNotes && data.feedback.generalNotes.trim() !== "") {
+                    commentsGeneral.push({ author: evaluator, text: data.feedback.generalNotes });
+                }
+
+                if (data.feedback && data.feedback.extraQuestions) {
+                    const extra = data.feedback.extraQuestions;
+                    if (extra.specialQuality && extra.specialQuality.trim()) commentsSpecial.push({ author: evaluator, text: extra.specialQuality });
+                    if (extra.barriers && extra.barriers.trim()) commentsBarriers.push({ author: evaluator, text: extra.barriers });
+                    if (extra.dreamRole && extra.dreamRole.trim()) commentsDream.push({ author: evaluator, text: extra.dreamRole });
+                }
+            });
+
+            document.getElementById('subject-name').innerText = subjectName;
+            document.getElementById('total-respondents').innerText = totalRespondents;
+            document.getElementById('upload-section').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+
+            renderRadarChart(categoryStatsMap);
+            renderCategoryBreakdown(categoryStatsMap, itemStatsMap, totalRespondents, globalTotalStrengths, globalTotalImprovements, subjectName);
+            
+            renderComments(commentsGeneral, 'comments-container');
+            renderComments(commentsSpecial, 'comments-special-container');
+            renderComments(commentsBarriers, 'comments-barriers-container');
+            renderComments(commentsDream, 'comments-dream-container');
+            
+            // Build AI Prompt
+            buildAIPrompt(subjectName, totalRespondents, itemStatsMap, commentsGeneral, commentsSpecial, commentsBarriers, commentsDream);
+
+            if (!window.__PRELOADED_DATA__) { saveSession(); }
+        }
+
+        // --- Build AI Prompt ---
+        function buildAIPrompt(subjectName, totalRespondents, itemStatsMap, general, special, barriers, dream) {
+            const name = subjectName && subjectName !== "לא ידוע" ? subjectName : 'המוערכת';
+            
+            let promptText = `פעל כפסיכולוג ארגוני ויועץ מנהלים בכיר.
+להלן נתונים שנאספו מתוך שאלון משוב 360 עבור ${name} מ-${totalRespondents} משיבים שונים.
+
+# נתונים כמותיים (מתוך רשימת כישורים):
+`;
+            
+            // Get top strengths and improvements
+            const itemsArray = Object.values(itemStatsMap);
+            const topStrengths = [...itemsArray].sort((a, b) => b.s - a.s).filter(i => i.s > 0);
+            const topImprovements = [...itemsArray].sort((a, b) => b.i - a.i).filter(i => i.i > 0);
+
+            promptText += "החוזקות הבולטות ביותר (כמה משיבים סימנו כישור זה כחוזקה):\n";
+            topStrengths.slice(0, 5).forEach(i => promptText += `- ${i.title} (${i.s} משיבים)\n`);
+            
+            promptText += "\nהתחומים הבולטים ביותר לשיפור (כמה משיבים סימנו כישור זה כדורש שיפור):\n";
+            topImprovements.slice(0, 5).forEach(i => promptText += `- ${i.title} (${i.i} משיבים)\n`);
+
+            promptText += `\n# תשובות חופשיות של המשיבים:\n`;
+            
+            if (general.length > 0) {
+                promptText += `\nהערות כלליות והתנהגויות נוספות:\n`;
+                general.forEach(c => promptText += `* "${c.text}"\n`);
+            }
+            if (special.length > 0) {
+                promptText += `\nאיכות מיוחדת / ערך מוסף ש-${name} מביאה לחדר:\n`;
+                special.forEach(c => promptText += `* "${c.text}"\n`);
+            }
+            if (barriers.length > 0) {
+                promptText += `\nחסמים ופוטנציאל (מה עשוי לעכב אותה):\n`;
+                barriers.forEach(c => promptText += `* "${c.text}"\n`);
+            }
+            if (dream.length > 0) {
+                promptText += `\nתפקיד החלומות / המקום בו הכי נכון לה להיות:\n`;
+                dream.forEach(c => promptText += `* "${c.text}"\n`);
+            }
+
+            promptText += `
+\n# המשימה שלך:
+המשימה שלך היא לערוך ניתוח הוליסטי ומפורט של שאלון הכישורים והתשובות הפתוחות לכדי דו"ח אסטרטגי מובנה, המדגיש את החוזקות, מפרק את החסמים ומשרטט את אופק הייעוד של ${name}. עליך לקבל את הנתונים האלה ולהתיך אותם לכדי דו"ח נרטיבי, מעורר השראה ומובנה, המשמש הן את ${name} (המוערכת) והן את הקואוצ'ר המלווה אותה.
+
+השתמש במקורות אלה להשראה לניתוח:
+1. The Hero’s Journey (Joseph Campbell) - כנרטיב לצמיחה.
+2. Radical Candor (Kim Scott) - למתן משוב ישיר ומכבד.
+3. Blue Ocean Strategy - למציאת הייחודיות של ${name}.
+4. Systems Thinking - להבנת השפעתה על הארגון.
+5. Psychological Safety (Amy Edmondson) - ליצירת מרחב לצמיחה.
+
+# כללי ברזל לכתיבת הדוח (חובה ליישם):
+* ציטוטים: עליך לצטט מתוך התשובות הפתוחות כדי לתקף ולבסס כל תובנה.
+* טון הדיבור: לעולם אל תשתמש בשפה ביקורתית או מקטינה; שמור על טון של "שותף לצמיחה", מעצים ומכבד.
+* מבנה: הימנע מרשימות מכולת יבשות; השתמש בחיבורים נרטיביים בין הסעיפים.
+* אמינות (Zero Hallucination): אל תמציא נתונים שלא מופיעים בתשובות הנתונות.
+* פרקטיקה: אל תיתן עצות גנריות; כל המלצה חייבת להיגזר ישירות מתוך המשוב הספציפי שעלה.
+
+השתמש בכותרות ברורות. נסח את הניתוח על ${name} בגוף שלישי נקבה.`;
+
+            document.getElementById('ai-prompt').value = promptText;
+        }
+
+        // --- Call Groq API ---
+        async function generateAIReport() {
+            const apiKey = document.getElementById('groq-api-key').value.trim();
+            const promptText = document.getElementById('ai-prompt').value.trim();
+            const selectedModel = document.getElementById('groq-model-select').value;
+            const btn = document.getElementById('btn-generate-ai');
+            const loading = document.getElementById('ai-loading');
+            const outputSection = document.getElementById('ai-output-section');
+            const outputContent = document.getElementById('ai-output-content');
+            const modelBadge = document.getElementById('ai-model-badge');
+
+            if (!apiKey) {
+                showToast("⚠️ אנא הזן מפתח Groq API תחילה כדי להפיק את הדוח.", "error");
+                const keyInput = document.getElementById('groq-api-key');
+                keyInput.classList.add('input-error');
+                keyInput.focus();
+                setTimeout(() => keyInput.classList.remove('input-error'), 1500);
+                return;
+            }
+            if (!promptText) {
+                showToast("⚠️ הפרומפט ריק, לא ניתן לנתח נתונים.", "error");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+            loading.classList.remove('hidden');
+            outputSection.classList.add('hidden');
+
+            try {
+                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: selectedModel,
+                        messages: [
+                            { role: 'system', content: 'You are an expert organizational psychologist. Respond in Hebrew using Markdown formatting.' },
+                            { role: 'user', content: promptText }
+                        ],
+                        temperature: 0.6,
+                        max_tokens: 2000
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error?.message || "שגיאה בתקשורת מול שרת ה-AI");
+                }
+
+                const data = await response.json();
+                const aiText = data.choices[0].message.content;
+                
+                // Store globally for interactive HTML export
+                window.lastGeneratedAIData = {
+                    text: aiText,
+                    model: selectedModel
+                };
+
+                // Simple Markdown Parser (Headers, Bold, Lists)
+                outputContent.innerHTML = parseMarkdown(aiText);
+                modelBadge.innerText = selectedModel;
+                outputSection.classList.remove('hidden');
+
+                // Scroll to result
+                outputSection.scrollIntoView({ behavior: 'smooth' });
+
+            } catch (error) {
+                console.error(error);
+                showToast("שגיאה ביצירת הדוח: " + error.message, "error");
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+                loading.classList.add('hidden');
+            }
+        }
+
+        function parseMarkdown(text) {
+            let html = text
+                // Headers
+                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                .replace(/^## (.*$)/gim, '<h3>$1</h3>')
+                .replace(/^# (.*$)/gim, '<h3 style="font-size:1.5rem; color:#1e3a8a;">$1</h3>')
+                // Bold
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                // Unordered lists
+                .replace(/^\* (.*$)/gim, '<ul><li>$1</li></ul>')
+                .replace(/^- (.*$)/gim, '<ul><li>$1</li></ul>')
+                // Fix list groups
+                .replace(/<\/ul>\n<ul>/g, '\n')
+                // New lines
+                .replace(/\n$/gim, '<br/>');
+            
+            return html;
+        }
+
+        // --- Render Detailed Category Breakdown (New in V2) ---
+        function renderCategoryBreakdown(catStats, itemStats, totalRespondents, globalS, globalI, subjectName) {
+            const container = document.getElementById('category-breakdown-container');
+            container.innerHTML = '';
+
+            const safeName = subjectName && subjectName !== "לא ידוע" ? subjectName : 'היא';
+
+            questionnaireStructure.forEach(cat => {
+                const stats = catStats[cat.id];
+                const pctS = globalS > 0 ? Math.round((stats.s / globalS) * 100) : 0;
+                const pctI = globalI > 0 ? Math.round((stats.i / globalI) * 100) : 0;
+
+                let html = `
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-8 print-break-inside-avoid border border-gray-100">
+                        <div class="bg-${cat.color}-50 px-6 py-4 border-b border-${cat.color}-100">
+                            <h2 class="text-xl font-bold text-${cat.color}-900">${cat.title}</h2>
+                        </div>
+                        
+                        <div class="p-6">
+                            <!-- Category Percentages -->
+                            <div class="flex flex-col md:flex-row gap-4 mb-8 bg-gray-50 p-5 rounded-xl border border-gray-200">
+                                <div class="flex-1 md:border-l border-gray-200 md:pl-4">
+                                    <p class="text-sm text-gray-600 mb-1">אחוז סימוני <span class="font-bold">"חוזקות"</span> בקטגוריה זו מכלל סימוני החוזקות בשאלון:</p>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-3xl font-bold text-green-600">${pctS}%</span>
+                                        <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden mr-2">
+                                            <div class="h-full bg-green-500" style="width: ${pctS}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex-1 md:pr-4">
+                                    <p class="text-sm text-gray-600 mb-1">אחוז סימוני <span class="font-bold">"לשיפור"</span> בקטגוריה זו מכלל סימוני לשיפור בשאלון:</p>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-3xl font-bold text-red-600">${pctI}%</span>
+                                        <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden mr-2">
+                                            <div class="h-full bg-red-500" style="width: ${pctI}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Questions List -->
+                            <div class="space-y-4">
+                `;
+
+                cat.items.forEach((item, index) => {
+                    const iStats = itemStats[item.id];
+                    // Replace {name} placeholder with actual subject name
+                    const description = item.desc.replace(/\{name\}/g, safeName);
+
+                    html += `
+                        <div class="border border-gray-100 rounded-lg p-5 hover:border-${cat.color}-200 hover:bg-${cat.color}-50/30 transition-colors">
+                            <h3 class="font-bold text-lg text-gray-800 mb-2">שאלה ${index + 1}: ${item.title}</h3>
+                            <p class="text-sm text-gray-600 mb-4 leading-relaxed">${description}</p>
+                            
+                            <div class="flex flex-wrap gap-4 text-sm mt-3 border-t border-gray-100 pt-4">
+                                <div class="flex items-center gap-2 bg-green-50 text-green-800 px-4 py-2 rounded-lg border border-green-100 w-full sm:w-auto">
+                                    <i class="fas fa-plus-circle text-green-600"></i>
+                                    <span class="font-medium">סימוני חוזקות:</span>
+                                    <span class="font-bold text-lg mr-auto sm:mr-2">${iStats.s} מתוך ${totalRespondents}</span>
+                                </div>
+                                
+                                <div class="flex items-center gap-2 bg-red-50 text-red-800 px-4 py-2 rounded-lg border border-red-100 w-full sm:w-auto">
+                                    <i class="fas fa-arrow-circle-up text-red-600"></i>
+                                    <span class="font-medium">סימוני לשיפור:</span>
+                                    <span class="font-bold text-lg mr-auto sm:mr-2">${iStats.i} מתוך ${totalRespondents}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div></div></div>`;
+                container.innerHTML += html;
+            });
+        }
+
+        // --- Charts Rendering ---
+        let radarChartInstance = null;
+
+        function renderRadarChart(catStats) {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            if (radarChartInstance) { radarChartInstance.destroy(); }
+
+            const keys = Object.keys(catStats);
+            const labels = keys.map(k => catStats[k].title.replace(/קטגוריה \d: /, '')); // Shorter labels for radar
+            
+            let grandTotal = 0;
+            keys.forEach(k => { grandTotal += catStats[k].s + catStats[k].i; });
+            if (grandTotal === 0) grandTotal = 1;
+
+            const dataS = keys.map(k => ((catStats[k].s / grandTotal) * 100).toFixed(1));
+            const dataI = keys.map(k => ((catStats[k].i / grandTotal) * 100).toFixed(1));
+
+            radarChartInstance = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'חוזקות (%)', data: dataS, fill: true,
+                            backgroundColor: 'rgba(34, 197, 94, 0.2)', borderColor: 'rgba(34, 197, 94, 1)',
+                            pointBackgroundColor: 'rgba(34, 197, 94, 1)', pointBorderColor: '#fff',
+                        },
+                        {
+                            label: 'לשיפור (%)', data: dataI, fill: true,
+                            backgroundColor: 'rgba(239, 68, 68, 0.2)', borderColor: 'rgba(239, 68, 68, 1)',
+                            pointBackgroundColor: 'rgba(239, 68, 68, 1)', pointBorderColor: '#fff',
+                        }
+                    ]
+                },
+                options: {
+                    animation: { duration: 0 },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    elements: { line: { tension: 0.3 } },
+                    scales: {
+                        r: {
+                            angleLines: { color: '#e2e8f0' }, grid: { color: '#e2e8f0' },
+                            pointLabels: { font: { size: 14, family: 'Heebo' }, color: '#1e293b' },
+                            suggestedMin: 0,
+                            ticks: { backdropColor: 'transparent', callback: function(val) { return val + '%' } }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family: 'Heebo' } } },
+                        tooltip: { callbacks: { label: function(c) { return c.dataset.label + ': ' + c.raw + '%'; } } }
+                    }
+                }
+            });
+        }
+
+        function renderComments(comments, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            if (comments.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 italic p-4 text-xs">לא התקבלו תשובות לשאלה זו.</p>';
+                return;
+            }
+
+            comments.forEach(c => {
+                const card = document.createElement('div');
+                card.className = "bg-gray-50 p-4 rounded-lg border border-gray-200 print-break-inside-avoid";
+                card.innerHTML = `
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs border border-blue-200">
+                            ${c.author.charAt(0)}
+                        </div>
+                        <span class="text-sm font-bold text-gray-700">${c.author}</span>
+                    </div>
+                    <p class="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">"${c.text}"</p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+    </script>
+</body>
+</html>
