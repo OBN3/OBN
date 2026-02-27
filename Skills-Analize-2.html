@@ -262,28 +262,44 @@
             <!-- AI Integration Section -->
             <div class="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-sm p-6 border-t-4 border-blue-500 no-print" id="ai-section">
                 <h3 class="text-xl font-bold text-blue-900 mb-2 flex items-center gap-2">
-                    <i class="fas fa-robot text-blue-600"></i> ניתוח חכם באמצעות בינה מלאכותית (Groq)
+                    <i class="fas fa-robot text-blue-600"></i> ניתוח חכם באמצעות בינה מלאכותית (Groq / Gemini)
                 </h3>
                 <p class="text-sm text-gray-600 mb-6">
-                    המערכת תרכיב אוטומטית פקודה (Prompt) המכילה את כל הנתונים, ותשלח אותה למודל של Groq כדי לקבל ניתוח פסיכולוגי-ארגוני.
+                    המערכת תרכיב אוטומטית פקודה (Prompt) המכילה את כל הנתונים, ותשלח אותה למודל שבחרת כדי לקבל ניתוח מבוסס משוב.
                 </p>
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <!-- Key Input & Model Selection -->
                     <div class="md:col-span-1">
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Groq API Key:</label>
-                        <input type="password" id="groq-api-key" placeholder="gsk_..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-left" dir="ltr">
-                        <p class="text-xs text-gray-500 mt-2">המפתח נשמר בדפדפן שלך בלבד. <a href="https://console.groq.com/keys" target="_blank" class="text-blue-500 underline">להפקת מפתח חינמי</a>.</p>
-                        
-                        <label class="block text-sm font-bold text-gray-700 mt-4 mb-2">בחר מודל לניתוח:</label>
-                        <select id="groq-model-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-left font-mono text-sm" dir="ltr">
-                            <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile (מומלץ)</option>
-                            <option value="llama-3.1-8b-instant">llama-3.1-8b-instant (מהיר)</option>
-                            <option value="openai/gpt-oss-120b">openai/gpt-oss-120b</option>
-                            <option value="openai/gpt-oss-20b">openai/gpt-oss-20b</option>
-                            <option value="meta-llama/llama-4-scout-17b-16e-instruct">meta-llama/llama-4-scout-17b-16e-instruct</option>
-                            <option value="moonshotai/kimi-k2-instruct-0905">moonshotai/kimi-k2-instruct-0905</option>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">בחר מודל לניתוח:</label>
+                        <select id="ai-model-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-left font-mono text-sm mb-4" dir="ltr">
+                            <optgroup label="Google Gemini (חכם ומתקדם)">
+                                <option value="google|gemini-2.5-pro">Gemini 2.5 Pro (מומלץ)</option>
+                                <option value="google|gemini-2.5-flash">Gemini 2.5 Flash (מהיר)</option>
+                            </optgroup>
+                            <optgroup label="Groq (מהיר קוד פתוח)">
+                                <option value="groq|llama-3.3-70b-versatile">llama-3.3-70b-versatile</option>
+                                <option value="groq|llama-3.1-8b-instant">llama-3.1-8b-instant</option>
+                                <option value="groq|openai/gpt-oss-120b">openai/gpt-oss-120b</option>
+                                <option value="groq|openai/gpt-oss-20b">openai/gpt-oss-20b</option>
+                                <option value="groq|meta-llama/llama-4-scout-17b-16e-instruct">meta-llama/llama-4-scout-17b-16e-instruct</option>
+                                <option value="groq|moonshotai/kimi-k2-instruct-0905">moonshotai/kimi-k2-instruct-0905</option>
+                            </optgroup>
                         </select>
+
+                        <!-- Groq API Key Input -->
+                        <div id="groq-key-container" class="hidden">
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Groq API Key:</label>
+                            <input type="password" id="groq-api-key" placeholder="gsk_..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-left" dir="ltr">
+                            <p class="text-xs text-gray-500 mt-2">המפתח נשמר בדפדפן שלך בלבד. <a href="https://console.groq.com/keys" target="_blank" class="text-blue-500 underline">להפקת מפתח Groq</a>.</p>
+                        </div>
+
+                        <!-- Google API Key Input -->
+                        <div id="google-key-container" class="hidden">
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Google Gemini API Key:</label>
+                            <input type="password" id="google-api-key" placeholder="AIza..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-left" dir="ltr">
+                            <p class="text-xs text-gray-500 mt-2">המפתח נשמר בדפדפן שלך בלבד. <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-500 underline">להפקת מפתח Google</a>.</p>
+                        </div>
                     </div>
                     
                     <!-- Prompt Area -->
@@ -310,7 +326,7 @@
             <div id="ai-output-section" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 mt-8 print-break-inside-avoid">
                 <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 rounded-t-xl flex justify-between items-center">
                     <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                        <i class="fas fa-brain"></i> סיכום מנהלים - פסיכולוג ארגוני (AI)
+                        <i class="fas fa-brain"></i> סיכום משוב
                     </h2>
                     <div id="ai-model-badge" class="text-xs bg-white/20 text-white px-3 py-1 rounded-full border border-white/30 font-mono shadow-sm" dir="ltr"></div>
                 </div>
@@ -357,14 +373,39 @@
     <!-- Toast Notification Element -->
     <div id="toast">הודעה</div>
 
+    <!-- Custom Error Modal -->
+    <div id="error-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4 no-print">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 text-center transform transition-all border-t-4 border-red-500">
+            <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">הודעת מערכת</h3>
+            <p id="error-modal-message" class="text-gray-600 mb-6 text-sm leading-relaxed whitespace-pre-wrap" dir="rtl"></p>
+            <button onclick="closeErrorModal()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+                הבנתי, סגור
+            </button>
+        </div>
+    </div>
+
     <!-- App Logic -->
     <script>
         // Data Handling Variables
         let uploadedFilesData = [];
         const LOCAL_STORAGE_KEY = 'feedback_dashboard_v2_session';
         const GROQ_KEY_STORAGE = 'groq_api_key_stored';
-        const GROQ_MODEL_STORAGE = 'groq_model_stored';
+        const GOOGLE_KEY_STORAGE = 'google_api_key_stored';
+        const AI_MODEL_STORAGE = 'ai_model_stored';
         
+        // --- UI Modal Helpers ---
+        function showErrorModal(message) {
+            document.getElementById('error-modal-message').innerText = message;
+            document.getElementById('error-modal').classList.remove('hidden');
+        }
+
+        function closeErrorModal() {
+            document.getElementById('error-modal').classList.add('hidden');
+        }
+
         // ------------------------------------------------------------------
         // Full Questionnaire Structure (Needed to display unselected items)
         // ------------------------------------------------------------------
@@ -417,12 +458,23 @@
 
         // Check initialization type (Local Storage vs Preloaded HTML)
         window.addEventListener('DOMContentLoaded', () => {
-            // Restore Groq Key & Model if exists
-            const savedKey = localStorage.getItem(GROQ_KEY_STORAGE);
-            if (savedKey) document.getElementById('groq-api-key').value = savedKey;
+            // Restore Keys & Model if exists
+            const savedGroqKey = localStorage.getItem(GROQ_KEY_STORAGE);
+            if (savedGroqKey) document.getElementById('groq-api-key').value = savedGroqKey;
             
-            const savedModel = localStorage.getItem(GROQ_MODEL_STORAGE);
-            if (savedModel) document.getElementById('groq-model-select').value = savedModel;
+            const savedGoogleKey = localStorage.getItem(GOOGLE_KEY_STORAGE);
+            if (savedGoogleKey) document.getElementById('google-api-key').value = savedGoogleKey;
+            
+            const savedModel = localStorage.getItem(AI_MODEL_STORAGE);
+            if (savedModel) {
+                const selectEl = document.getElementById('ai-model-select');
+                // Ensure the saved option actually exists in the current list
+                const optionExists = Array.from(selectEl.options).some(opt => opt.value === savedModel);
+                if (optionExists) selectEl.value = savedModel;
+            }
+
+            // Update UI based on selected model
+            updateKeyInputVisibility();
 
             if (window.__PRELOADED_DATA__) {
                 uploadedFilesData = window.__PRELOADED_DATA__;
@@ -464,25 +516,28 @@
             localStorage.setItem(GROQ_KEY_STORAGE, e.target.value.trim());
         });
 
-        // Save Groq Model on change
-        document.getElementById('groq-model-select').addEventListener('change', (e) => {
-            localStorage.setItem(GROQ_MODEL_STORAGE, e.target.value);
+        // Save Google Key on change
+        document.getElementById('google-api-key').addEventListener('input', (e) => {
+            localStorage.setItem(GOOGLE_KEY_STORAGE, e.target.value.trim());
         });
 
-        // Global Toast Notification Function
-        function showToast(message, type) {
-            const toast = document.getElementById('toast');
-            toast.innerText = message;
-            toast.className = 'show'; 
-            if (type === 'error') {
-                toast.style.backgroundColor = '#d32f2f'; // Red for errors
-            } else if (type === 'success') {
-                toast.style.backgroundColor = '#16a34a'; // Green for success
-            } else {
-                toast.style.backgroundColor = '#333';
-            }
+        // Save Model on change & toggle key input visibility
+        document.getElementById('ai-model-select').addEventListener('change', (e) => {
+            localStorage.setItem(AI_MODEL_STORAGE, e.target.value);
+            updateKeyInputVisibility();
+        });
+
+        function updateKeyInputVisibility() {
+            const selectedValue = document.getElementById('ai-model-select').value;
+            const provider = selectedValue.split('|')[0];
             
-            setTimeout(function(){ toast.className = toast.className.replace('show', ''); }, 3500);
+            if (provider === 'google') {
+                document.getElementById('google-key-container').classList.remove('hidden');
+                document.getElementById('groq-key-container').classList.add('hidden');
+            } else {
+                document.getElementById('groq-key-container').classList.remove('hidden');
+                document.getElementById('google-key-container').classList.add('hidden');
+            }
         }
 
         function saveSession() {
@@ -613,7 +668,7 @@
             const content = textarea.value.trim();
             pasteStatus.classList.add('hidden');
             
-            if (!content) { showToast("אנא הדבק תוכן בתיבה", "error"); return; }
+            if (!content) { showErrorModal("אנא הדבק תוכן בתיבה"); return; }
 
             const foundJSONs = extractJSONs(content);
 
@@ -626,7 +681,7 @@
                          throw new Error("Invalid structure");
                      }
                 } catch (e) {
-                    showToast("לא נמצא מידע תקין. וודא שהעתקת את כל הטקסט (כולל סוגריים מסולסלים) ושהמבנה תקין.", "error");
+                    showErrorModal("לא נמצא מידע תקין. וודא שהעתקת את כל הטקסט (כולל סוגריים מסולסלים) ושהמבנה תקין.");
                     return;
                 }
             }
@@ -664,7 +719,7 @@
             const filePromises = filesArray.map(file => {
                 return new Promise((resolve) => {
                     if (file.type !== "application/json" && !file.name.endsWith('.json')) {
-                        showToast(`הקובץ ${file.name} אינו קובץ JSON תקין`, "error");
+                        showErrorModal(`הקובץ ${file.name} אינו קובץ JSON תקין`);
                         resolve(null);
                         return;
                     }
@@ -679,7 +734,7 @@
                                 resolve({ isBackup: false, item: { filename: file.name, content: json } });
                             }
                         } catch (err) {
-                            showToast("שגיאה בקריאת הקובץ: " + file.name, "error");
+                            showErrorModal("שגיאה בקריאת הקובץ: " + file.name);
                             resolve(null);
                         }
                     };
@@ -763,7 +818,7 @@
 
         function printReport() {
             if (uploadedFilesData.length === 0) {
-                showToast("אין נתונים להדפסה.", "error");
+                showErrorModal("אין נתונים להדפסה. אנא טען קבצי משוב תחילה.");
                 return;
             }
             window.print();
@@ -854,7 +909,7 @@
         function buildAIPrompt(subjectName, totalRespondents, itemStatsMap, general, special, barriers, dream) {
             const name = subjectName && subjectName !== "לא ידוע" ? subjectName : 'המוערכת';
             
-            let promptText = `פעל כפסיכולוג ארגוני ויועץ מנהלים בכיר.
+            let promptText = `פעל כקואוצ'ר מלווה תהליכי צמיחה ויועץ מנהלים בכיר.
 להלן נתונים שנאספו מתוך שאלון משוב 360 עבור ${name} מ-${totalRespondents} משיבים שונים.
 
 # נתונים כמותיים (מתוך רשימת כישורים):
@@ -892,14 +947,13 @@
 
             promptText += `
 \n# המשימה שלך:
-המשימה שלך היא לערוך ניתוח הוליסטי ומפורט של שאלון הכישורים והתשובות הפתוחות לכדי דו"ח אסטרטגי מובנה, המדגיש את החוזקות, מפרק את החסמים ומשרטט את אופק הייעוד של ${name}. עליך לקבל את הנתונים האלה ולהתיך אותם לכדי דו"ח נרטיבי, מעורר השראה ומובנה, המשמש הן את ${name} (המוערכת) והן את הקואוצ'ר המלווה אותה.
+המשימה שלך היא לערוך ניתוח הוליסטי ומפורט של שאלון הכישורים והתשובות הפתוחות לכדי דו"ח אסטרטגי מובנה, המדגיש את החוזקות, מפרק את החסמים ומשרטט את אופק הייעוד של ${name}. עליך לקבל את הנתונים האלה ולהתיך אותם לכדי דו"ח מובנה, המשמש הן את ${name} (המוערכת) והן את הקואוצ'ר המלווה אותה.
 
 השתמש במקורות אלה להשראה לניתוח:
-1. The Hero’s Journey (Joseph Campbell) - כנרטיב לצמיחה.
-2. Radical Candor (Kim Scott) - למתן משוב ישיר ומכבד.
-3. Blue Ocean Strategy - למציאת הייחודיות של ${name}.
-4. Systems Thinking - להבנת השפעתה על הארגון.
-5. Psychological Safety (Amy Edmondson) - ליצירת מרחב לצמיחה.
+1. Radical Candor (Kim Scott) - למתן משוב ישיר ומכבד.
+2. Blue Ocean Strategy - למציאת הייחודיות של ${name}.
+3. Systems Thinking - להבנת השפעתה על הארגון.
+4. Psychological Safety (Amy Edmondson) - ליצירת מרחב לצמיחה.
 
 # כללי ברזל לכתיבת הדוח (חובה ליישם):
 * ציטוטים: עליך לצטט מתוך התשובות הפתוחות כדי לתקף ולבסס כל תובנה.
@@ -915,9 +969,17 @@
 
         // --- Call Groq API ---
         async function generateAIReport() {
-            const apiKey = document.getElementById('groq-api-key').value.trim();
+            const selectedValue = document.getElementById('ai-model-select').value;
+            const [provider, modelName] = selectedValue.split('|');
+            
+            let apiKey = "";
+            if (provider === 'google') {
+                apiKey = document.getElementById('google-api-key').value.trim();
+            } else {
+                apiKey = document.getElementById('groq-api-key').value.trim();
+            }
+
             const promptText = document.getElementById('ai-prompt').value.trim();
-            const selectedModel = document.getElementById('groq-model-select').value;
             const btn = document.getElementById('btn-generate-ai');
             const loading = document.getElementById('ai-loading');
             const outputSection = document.getElementById('ai-output-section');
@@ -925,15 +987,11 @@
             const modelBadge = document.getElementById('ai-model-badge');
 
             if (!apiKey) {
-                showToast("⚠️ אנא הזן מפתח Groq API תחילה כדי להפיק את הדוח.", "error");
-                const keyInput = document.getElementById('groq-api-key');
-                keyInput.classList.add('input-error');
-                keyInput.focus();
-                setTimeout(() => keyInput.classList.remove('input-error'), 1500);
+                showErrorModal(`אנא הזן מפתח ${provider === 'google' ? 'Google' : 'Groq'} API תחילה.`);
                 return;
             }
             if (!promptText) {
-                showToast("⚠️ הפרומפט ריק, לא ניתן לנתח נתונים.", "error");
+                showErrorModal("הפרומפט ריק.");
                 return;
             }
 
@@ -943,40 +1001,74 @@
             outputSection.classList.add('hidden');
 
             try {
-                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${apiKey}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model: selectedModel,
-                        messages: [
-                            { role: 'system', content: 'You are an expert organizational psychologist. Respond in Hebrew using Markdown formatting.' },
-                            { role: 'user', content: promptText }
-                        ],
-                        temperature: 0.6,
-                        max_tokens: 2000
-                    })
-                });
+                let aiText = "";
 
-                if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.error?.message || "שגיאה בתקשורת מול שרת ה-AI");
+                if (provider === 'groq') {
+                    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${apiKey}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            model: modelName,
+                            messages: [
+                                { role: 'system', content: 'You are an expert executive coach and growth facilitator. Respond in Hebrew using Markdown formatting.' },
+                                { role: 'user', content: promptText }
+                            ],
+                            temperature: 0.6,
+                            max_tokens: 8192
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const err = await response.json();
+                        throw new Error(err.error?.message || "שגיאה בתקשורת מול שרת ה-AI של Groq");
+                    }
+
+                    const data = await response.json();
+                    aiText = data.choices[0].message.content;
+
+                } else if (provider === 'google') {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            systemInstruction: {
+                                parts: [{ text: 'You are an expert executive coach and growth facilitator. Respond in Hebrew using Markdown formatting.' }]
+                            },
+                            contents: [
+                                { parts: [{ text: promptText }] }
+                            ],
+                            generationConfig: {
+                                temperature: 0.6,
+                                maxOutputTokens: 8192
+                            }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const err = await response.json();
+                        throw new Error(err.error?.message || "שגיאה בתקשורת מול שרת ה-AI של Google");
+                    }
+
+                    const data = await response.json();
+                    if (!data.candidates || data.candidates.length === 0) {
+                        throw new Error("לא התקבלה תשובה מ-Gemini.");
+                    }
+                    aiText = data.candidates[0].content.parts[0].text;
                 }
-
-                const data = await response.json();
-                const aiText = data.choices[0].message.content;
                 
                 // Store globally for interactive HTML export
                 window.lastGeneratedAIData = {
                     text: aiText,
-                    model: selectedModel
+                    model: modelName
                 };
 
                 // Simple Markdown Parser (Headers, Bold, Lists)
                 outputContent.innerHTML = parseMarkdown(aiText);
-                modelBadge.innerText = selectedModel;
+                modelBadge.innerText = modelName;
                 outputSection.classList.remove('hidden');
 
                 // Scroll to result
@@ -984,7 +1076,14 @@
 
             } catch (error) {
                 console.error(error);
-                showToast("שגיאה ביצירת הדוח: " + error.message, "error");
+                let errorMsg = error.message;
+                
+                // Proactively translate common API errors to user-friendly Hebrew
+                if (errorMsg.toLowerCase().includes('quota') || errorMsg.includes('429') || errorMsg.toLowerCase().includes('too many requests')) {
+                    errorMsg = "עברת את מגבלת השימוש החינמי של המודל (Quota Exceeded) או שיש עומס כבד על השרתים.\n\nאנא נסה שוב מאוחר יותר, או השתמש במפתח API עם יתרה פעילה.\n\nפירוט טכני:\n" + errorMsg;
+                }
+                
+                showErrorModal("שגיאה ביצירת הדוח:\n\n" + errorMsg);
             } finally {
                 btn.disabled = false;
                 btn.classList.remove('opacity-50');
