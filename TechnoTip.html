@@ -143,7 +143,6 @@
                 document.body.className = isDark ? 'theme-dark bg-[#121212] text-gray-100' : 'theme-light bg-slate-50 text-slate-900';
             }, [theme]);
 
-            // Function for manual submission (Fixing the ReferenceError)
             const handleManualSubmit = () => {
                 try {
                     const data = JSON.parse(manualJson);
@@ -377,36 +376,39 @@
                         </div>
                     </footer>
 
-                    {/* Modal - Theme Aware */}
+                    {/* Modal - Improved Mobile X Visibility */}
                     {activeNote && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-10 md:p-20 animate-in fade-in duration-400" style={{ backgroundColor: isDark ? 'rgba(0, 0, 0, 0.95)' : 'rgba(15, 23, 42, 0.9)', backdropFilter: 'blur(15px)' }} onClick={() => setActiveNote(null)}>
-                            <div className={`w-full max-w-5xl max-h-full rounded-[3.5rem] shadow-2xl flex flex-col overflow-hidden modal-enter border transition-colors ${isDark ? 'bg-[#161616] border-white/10' : 'bg-white border-slate-200'}`} onClick={(e) => e.stopPropagation()}>
-                                <div className={`px-10 py-8 border-b flex items-center justify-between shrink-0 transition-colors ${isDark ? 'bg-[#1c1c1c] border-white/5' : 'bg-slate-50 border-slate-100'}`}>
-                                    <h3 className={`text-2xl md:text-3xl font-black leading-tight flex items-center gap-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                        <span className="text-4xl">💎</span> {activeNote.title}
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-10 md:p-20 animate-in fade-in duration-400" style={{ backgroundColor: isDark ? 'rgba(0, 0, 0, 0.95)' : 'rgba(15, 23, 42, 0.9)', backdropFilter: 'blur(15px)' }} onClick={() => setActiveNote(null)}>
+                            <div className={`w-full max-w-5xl max-h-full rounded-[2rem] md:rounded-[3.5rem] shadow-2xl flex flex-col overflow-hidden modal-enter border transition-colors ${isDark ? 'bg-[#161616] border-white/10' : 'bg-white border-slate-200'}`} onClick={(e) => e.stopPropagation()}>
+                                <div className={`px-6 py-5 md:px-10 md:py-8 border-b flex items-start justify-between shrink-0 transition-colors ${isDark ? 'bg-[#1c1c1c] border-white/5' : 'bg-slate-50 border-slate-100'}`}>
+                                    <h3 className={`text-xl md:text-3xl font-black leading-tight flex items-start gap-3 md:gap-4 flex-1 pr-2 ${isDark ? 'text-white' : 'text-slate-900'} line-clamp-3 md:line-clamp-none`}>
+                                        <span className="text-2xl md:text-4xl shrink-0">💎</span> {activeNote.title}
                                     </h3>
-                                    <div className="flex items-center gap-4">
-                                        <button onClick={(e) => copyToClipboard(e, activeNote.content, 'modal')} className={`px-8 py-3 rounded-2xl font-bold text-sm shadow-2xl transition-all active:scale-95 ${isDark ? 'bg-green-600 text-white hover:bg-green-500' : 'bg-slate-900 text-white hover:bg-slate-800'}`}>
-                                            {copySuccess === 'modal' ? 'הועתק!' : 'העתק טכנוטיפ'}
+                                    <div className="flex items-center gap-2 md:gap-4 shrink-0">
+                                        <button onClick={(e) => copyToClipboard(e, activeNote.content, 'modal')} className={`hidden sm:block px-6 py-2.5 rounded-2xl font-bold text-sm shadow-2xl transition-all active:scale-95 ${isDark ? 'bg-green-600 text-white hover:bg-green-500' : 'bg-slate-900 text-white hover:bg-slate-800'}`}>
+                                            {copySuccess === 'modal' ? 'הועתק!' : 'העתק'}
                                         </button>
-                                        <button onClick={() => setActiveNote(null)} className={`p-2 transition-colors ${isDark ? 'text-gray-500 hover:text-white' : 'text-slate-400 hover:text-slate-900'}`}>
-                                            <Icon name="x" size={40} />
+                                        <button onClick={() => setActiveNote(null)} className={`p-1.5 md:p-2 transition-colors rounded-full ${isDark ? 'text-gray-400 hover:text-white hover:bg-white/5' : 'text-slate-400 hover:text-slate-900 hover:bg-slate-100'}`} aria-label="Close">
+                                            <Icon name="x" size={32} className="md:w-10 md:h-10" />
                                         </button>
                                     </div>
                                 </div>
-                                <div className="p-10 md:p-14 overflow-y-auto flex-1 custom-scrollbar">
-                                    <div className={`text-xl md:text-2xl leading-[1.7] whitespace-pre-wrap text-right ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+                                <div className="p-6 md:p-14 overflow-y-auto flex-1 custom-scrollbar">
+                                    <div className={`text-lg md:text-2xl leading-[1.6] md:leading-[1.7] whitespace-pre-wrap text-right ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
                                         {activeNote.content}
                                     </div>
                                 </div>
-                                <div className={`px-12 py-8 border-t flex justify-between items-center shrink-0 transition-colors ${isDark ? 'bg-[#161616] border-white/5' : 'bg-slate-50 border-slate-100'}`}>
+                                <div className={`px-6 py-4 md:px-12 md:py-8 border-t flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0 transition-colors ${isDark ? 'bg-[#161616] border-white/5' : 'bg-slate-50 border-slate-100'}`}>
                                     <div className="flex items-center gap-3">
                                         <Icon name="calendar" size={14} className={isDark ? 'text-gray-600' : 'text-slate-400'} />
-                                        <span className={`text-sm font-bold uppercase tracking-widest font-mono ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>UPDATED: {activeNote.date}</span>
+                                        <span className={`text-xs md:text-sm font-bold uppercase tracking-widest font-mono ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>UPDATED: {activeNote.date}</span>
                                     </div>
                                     <div className="flex gap-2">
                                         {activeNote.labels.map(l => <LabelBadge key={l} text={l} theme={theme} />)}
                                     </div>
+                                    <button onClick={(e) => copyToClipboard(e, activeNote.content, 'modal')} className={`sm:hidden w-full py-3 rounded-xl font-bold text-sm transition-all active:scale-95 ${copySuccess === 'modal' ? 'bg-green-600 text-white' : (isDark ? 'bg-white text-black' : 'bg-slate-900 text-white')}`}>
+                                        {copySuccess === 'modal' ? 'הועתק!' : 'העתק תוכן'}
+                                    </button>
                                 </div>
                             </div>
                         </div>
