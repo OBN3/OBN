@@ -905,12 +905,29 @@
             if (!window.__PRELOADED_DATA__) { saveSession(); }
         }
 
-        // --- Helper for Initials ---
+        // --- Helper for Initials (Adds periods) ---
         function getInitials(name) {
             if (!name || name === "לא ידוע" || name === "אנונימי") return "אנונימי";
             const words = name.trim().split(/\s+/);
-            if (words.length === 1) return words[0].charAt(0);
-            return words[0].charAt(0) + words[words.length - 1].charAt(0);
+            if (words.length === 1) return words[0].charAt(0) + ".";
+            return words[0].charAt(0) + "." + words[words.length - 1].charAt(0) + ".";
+        }
+
+        // --- Helper to Sanitize Free Text (Removes evaluatee name from comments) ---
+        function sanitizeCommentText(text, subjectName, subjectInitials) {
+            if (!subjectName || subjectName === "לא ידוע") return text;
+            let sanitized = text;
+            
+            // Replace the full name if it appears
+            sanitized = sanitized.split(subjectName).join(subjectInitials);
+            
+            // Try to replace just the first name as well (if the user typed just the first name)
+            const firstName = subjectName.trim().split(/\s+/)[0];
+            if (firstName && firstName !== subjectName && firstName.length > 1) {
+                sanitized = sanitized.split(firstName).join(subjectInitials);
+            }
+            
+            return sanitized;
         }
 
         // --- Build AI Prompt ---
@@ -938,19 +955,19 @@
             
             if (general.length > 0) {
                 promptText += `\nהערות כלליות והתנהגויות נוספות:\n`;
-                general.forEach(c => promptText += `* "${c.text}" (מאת: ${getInitials(c.author)})\n`);
+                general.forEach(c => promptText += `* "${sanitizeCommentText(c.text, subjectName, subjectInitials)}" (מאת: ${getInitials(c.author)})\n`);
             }
             if (special.length > 0) {
                 promptText += `\nאיכות מיוחדת / ערך מוסף שאני מביא/ה לחדר:\n`;
-                special.forEach(c => promptText += `* "${c.text}" (מאת: ${getInitials(c.author)})\n`);
+                special.forEach(c => promptText += `* "${sanitizeCommentText(c.text, subjectName, subjectInitials)}" (מאת: ${getInitials(c.author)})\n`);
             }
             if (barriers.length > 0) {
                 promptText += `\nחסמים ופוטנציאל (מה עשוי לעכב אותי):\n`;
-                barriers.forEach(c => promptText += `* "${c.text}" (מאת: ${getInitials(c.author)})\n`);
+                barriers.forEach(c => promptText += `* "${sanitizeCommentText(c.text, subjectName, subjectInitials)}" (מאת: ${getInitials(c.author)})\n`);
             }
             if (dream.length > 0) {
                 promptText += `\nתפקיד החלומות / המקום בו הכי נכון לי להיות:\n`;
-                dream.forEach(c => promptText += `* "${c.text}" (מאת: ${getInitials(c.author)})\n`);
+                dream.forEach(c => promptText += `* "${sanitizeCommentText(c.text, subjectName, subjectInitials)}" (מאת: ${getInitials(c.author)})\n`);
             }
 
             promptText += `
@@ -964,7 +981,7 @@
 4. Psychological Safety (Amy Edmondson) - ליצירת מרחב לצמיחה.
 
 # כללי ברזל לכתיבת הדוח (חובה ליישם):
-* ציטוטים: עליך לצטט מתוך התשובות הפתוחות כדי לתקף ולבסס כל תובנה. שים לב ששמות המשיבים צומצמו לראשי תיבות לשם אנונימיות, התייחס אליהם בהתאם.
+* ציטוטים: עליך לצטט מתוך התשובות הפתוחות כדי לתקף ולבסס כל תובנה. שים לב ששמות המשיבים, וכן השם שלי כמוערכ/ת בתוך הטקסטים, צומצמו לראשי תיבות לשם אנונימיות, התייחס אליהם בהתאם ואל תנסה להמציא להם שמות מלאים.
 * טון הדיבור: לעולם אל תשתמש בשפה ביקורתית או מקטינה; שמור על טון של "שותף לצמיחה", מעצים ומכבד.
 * מבנה: הימנע מרשימות מכולת יבשות; השתמש בחיבורים נרטיביים בין הסעיפים.
 * אמינות (Zero Hallucination): אל תמציא נתונים שלא מופיעים בתשובות הנתונות.
