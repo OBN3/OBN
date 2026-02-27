@@ -271,6 +271,19 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <!-- Key Input & Model Selection -->
                     <div class="md:col-span-1">
+                        
+                        <label class="block text-sm font-bold text-gray-700 mb-2">מין המוערך/ת (לדיוק הטקסט):</label>
+                        <div class="flex gap-4 mb-4 bg-white p-2 rounded-lg border border-gray-300">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="subject-gender" value="female" checked class="text-blue-600 focus:ring-blue-500 w-4 h-4" onchange="updatePromptGender()">
+                                <span class="text-sm text-gray-700 font-medium">אישה</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="subject-gender" value="male" class="text-blue-600 focus:ring-blue-500 w-4 h-4" onchange="updatePromptGender()">
+                                <span class="text-sm text-gray-700 font-medium">גבר</span>
+                            </label>
+                        </div>
+
                         <label class="block text-sm font-bold text-gray-700 mb-2">בחר מודל לניתוח:</label>
                         <select id="ai-model-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-left font-mono text-sm mb-4" dir="ltr">
                             <optgroup label="Google Gemini (חכם ומתקדם)">
@@ -308,7 +321,7 @@
                             <label class="block text-sm font-bold text-gray-700">פרומפט מותאם אישית (נוצר אוטומטית, ניתן לערוך):</label>
                             <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">נוצר אוטומטית מנתוני המשוב</span>
                         </div>
-                        <textarea id="ai-prompt" rows="6" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono leading-relaxed" dir="rtl"></textarea>
+                        <textarea id="ai-prompt" rows="11" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono leading-relaxed" dir="rtl"></textarea>
                     </div>
                 </div>
                 
@@ -391,10 +404,13 @@
     <script>
         // Data Handling Variables
         let uploadedFilesData = [];
+        let currentPromptData = null; // Store current data for re-building prompt dynamically
+        
         const LOCAL_STORAGE_KEY = 'feedback_dashboard_v2_session';
         const GROQ_KEY_STORAGE = 'groq_api_key_stored';
         const GOOGLE_KEY_STORAGE = 'google_api_key_stored';
         const AI_MODEL_STORAGE = 'ai_model_stored';
+        const SUBJECT_GENDER_STORAGE = 'subject_gender_stored';
         
         // --- UI Modal Helpers ---
         function showErrorModal(message) {
@@ -468,9 +484,13 @@
             const savedModel = localStorage.getItem(AI_MODEL_STORAGE);
             if (savedModel) {
                 const selectEl = document.getElementById('ai-model-select');
-                // Ensure the saved option actually exists in the current list
                 const optionExists = Array.from(selectEl.options).some(opt => opt.value === savedModel);
                 if (optionExists) selectEl.value = savedModel;
+            }
+
+            const savedGender = localStorage.getItem(SUBJECT_GENDER_STORAGE);
+            if (savedGender === 'male') {
+                document.querySelector('input[name="subject-gender"][value="male"]').checked = true;
             }
 
             // Update UI based on selected model
@@ -511,21 +531,22 @@
             }
         });
 
-        // Save Groq Key on change
-        document.getElementById('groq-api-key').addEventListener('input', (e) => {
-            localStorage.setItem(GROQ_KEY_STORAGE, e.target.value.trim());
-        });
-
-        // Save Google Key on change
-        document.getElementById('google-api-key').addEventListener('input', (e) => {
-            localStorage.setItem(GOOGLE_KEY_STORAGE, e.target.value.trim());
-        });
-
-        // Save Model on change & toggle key input visibility
+        // Event Listeners for inputs
+        document.getElementById('groq-api-key').addEventListener('input', (e) => localStorage.setItem(GROQ_KEY_STORAGE, e.target.value.trim()));
+        document.getElementById('google-api-key').addEventListener('input', (e) => localStorage.setItem(GOOGLE_KEY_STORAGE, e.target.value.trim()));
+        
         document.getElementById('ai-model-select').addEventListener('change', (e) => {
             localStorage.setItem(AI_MODEL_STORAGE, e.target.value);
             updateKeyInputVisibility();
         });
+
+        function updatePromptGender() {
+            const gender = document.querySelector('input[name="subject-gender"]:checked').value;
+            localStorage.setItem(SUBJECT_GENDER_STORAGE, gender);
+            if (currentPromptData) {
+                buildAIPrompt(currentPromptData);
+            }
+        }
 
         function updateKeyInputVisibility() {
             const selectedValue = document.getElementById('ai-model-select').value;
@@ -899,8 +920,18 @@
             renderComments(commentsBarriers, 'comments-barriers-container');
             renderComments(commentsDream, 'comments-dream-container');
             
-            // Build AI Prompt
-            buildAIPrompt(subjectName, totalRespondents, itemStatsMap, commentsGeneral, commentsSpecial, commentsBarriers, commentsDream);
+            // Store data globally and trigger AI prompt generation
+            currentPromptData = {
+                subjectName: subjectName,
+                totalRespondents: totalRespondents,
+                itemStatsMap: itemStatsMap,
+                general: commentsGeneral,
+                special: commentsSpecial,
+                barriers: commentsBarriers,
+                dream: commentsDream
+            };
+            
+            buildAIPrompt(currentPromptData);
 
             if (!window.__PRELOADED_DATA__) { saveSession(); }
         }
@@ -931,11 +962,20 @@
         }
 
         // --- Build AI Prompt ---
-        function buildAIPrompt(subjectName, totalRespondents, itemStatsMap, general, special, barriers, dream) {
+        function buildAIPrompt(data) {
+            const { subjectName, totalRespondents, itemStatsMap, general, special, barriers, dream } = data;
             const subjectInitials = getInitials(subjectName);
+            const isFemale = document.querySelector('input[name="subject-gender"]:checked').value === 'female';
             
+            const nounSubject = isFemale ? "המוערכת" : "המוערך";
+            const verbBring = isFemale ? "שאת מביאה" : "שאתה מביא";
+            const personalAddress = isFemale ? "אליה" : "אליו";
+            const genderInstruction = isFemale 
+                ? 'נסח את הניתוח בגוף שני נקבה (לדוגמה: "את מראה יכולות...", "החוזקה שלך היא...").'
+                : 'נסח את הניתוח בגוף שני זכר (לדוגמה: "אתה מראה יכולות...", "החוזקה שלך היא...").';
+
             let promptText = `פעל כקואוצ'ר מלווה תהליכי צמיחה ויועץ מנהלים בכיר.
-להלן נתונים שנאספו מתוך שאלון משוב 360 עבורי (${subjectInitials}) מ-${totalRespondents} משיבים שונים.
+להלן נתונים שנאספו מתוך שאלון משוב 360 עבורך (${subjectInitials}) מ-${totalRespondents} משיבים שונים.
 
 # נתונים כמותיים (מתוך רשימת כישורים):
 `;
@@ -958,36 +998,36 @@
                 general.forEach(c => promptText += `* "${sanitizeCommentText(c.text, subjectName, subjectInitials)}" (מאת: ${getInitials(c.author)})\n`);
             }
             if (special.length > 0) {
-                promptText += `\nאיכות מיוחדת / ערך מוסף שאני מביא/ה לחדר:\n`;
+                promptText += `\nאיכות מיוחדת / ערך מוסף ${verbBring} לחדר:\n`;
                 special.forEach(c => promptText += `* "${sanitizeCommentText(c.text, subjectName, subjectInitials)}" (מאת: ${getInitials(c.author)})\n`);
             }
             if (barriers.length > 0) {
-                promptText += `\nחסמים ופוטנציאל (מה עשוי לעכב אותי):\n`;
+                promptText += `\nחסמים ופוטנציאל (מה עשוי לעכב אותך):\n`;
                 barriers.forEach(c => promptText += `* "${sanitizeCommentText(c.text, subjectName, subjectInitials)}" (מאת: ${getInitials(c.author)})\n`);
             }
             if (dream.length > 0) {
-                promptText += `\nתפקיד החלומות / המקום בו הכי נכון לי להיות:\n`;
+                promptText += `\nתפקיד החלומות / המקום בו הכי נכון לך להיות:\n`;
                 dream.forEach(c => promptText += `* "${sanitizeCommentText(c.text, subjectName, subjectInitials)}" (מאת: ${getInitials(c.author)})\n`);
             }
 
             promptText += `
 \n# המשימה שלך:
-המשימה שלך היא לערוך ניתוח הוליסטי ומפורט של שאלון הכישורים והתשובות הפתוחות לכדי דו"ח אסטרטגי מובנה, המדגיש את החוזקות, מפרק את החסמים ומשרטט את אופק הייעוד שלי. עליך לקבל את הנתונים האלה ולהתיך אותם לכדי דו"ח מובנה, המשמש אותי (המוערכ/ת) ואת הקואוצ'ר המלווה אותי.
+המשימה שלך היא לערוך ניתוח הוליסטי ומפורט של שאלון הכישורים והתשובות הפתוחות לכדי דו"ח אסטרטגי מובנה, המדגיש את החוזקות, מפרק את החסמים ומשרטט את אופק הייעוד שלך. עליך לקבל את הנתונים האלה ולהתיך אותם לכדי דו"ח מובנה, המיועד לקריאה ישירה על ידי ${nounSubject} (${subjectInitials}).
 
 השתמש במקורות אלה להשראה לניתוח:
 1. Radical Candor (Kim Scott) - למתן משוב ישיר ומכבד.
-2. Blue Ocean Strategy - למציאת הייחודיות שלי.
-3. Systems Thinking - להבנת ההשפעה שלי על הארגון.
+2. Blue Ocean Strategy - למציאת הייחודיות שלך.
+3. Systems Thinking - להבנת ההשפעה שלך על הארגון.
 4. Psychological Safety (Amy Edmondson) - ליצירת מרחב לצמיחה.
 
 # כללי ברזל לכתיבת הדוח (חובה ליישם):
-* ציטוטים: עליך לצטט מתוך התשובות הפתוחות כדי לתקף ולבסס כל תובנה. שים לב ששמות המשיבים, וכן השם שלי כמוערכ/ת בתוך הטקסטים, צומצמו לראשי תיבות לשם אנונימיות, התייחס אליהם בהתאם ואל תנסה להמציא להם שמות מלאים.
+* ציטוטים: עליך לצטט מתוך התשובות הפתוחות כדי לתקף ולבסס כל תובנה. שים לב ששמות המשיבים, וכן השם שלך כ${nounSubject} בתוך הטקסטים, צומצמו לראשי תיבות לשם אנונימיות, התייחס אליהם בהתאם ואל תנסה להמציא להם שמות מלאים.
 * טון הדיבור: לעולם אל תשתמש בשפה ביקורתית או מקטינה; שמור על טון של "שותף לצמיחה", מעצים ומכבד.
-* מבנה: הימנע מרשימות מכולת יבשות; השתמש בחיבורים נרטיביים בין הסעיפים.
+* מבנה: הימנע מרשימות מכולת יבשות; השתמש בחיבורים נרטיביים בין הסעיפים. התחל את הדוח בפנייה אישית ${personalAddress} (לדוגמה: "שלום ${subjectInitials}, הנה סיכום המשוב שלך...").
 * אמינות (Zero Hallucination): אל תמציא נתונים שלא מופיעים בתשובות הנתונות.
 * פרקטיקה: אל תיתן עצות גנריות; כל המלצה חייבת להיגזר ישירות מתוך המשוב הספציפי שעלה.
 
-השתמש בכותרות ברורות. נסח את הניתוח בגוף ראשון (בלי מגדר).`;
+השתמש בכותרות ברורות. ${genderInstruction}`;
 
             document.getElementById('ai-prompt').value = promptText;
         }
@@ -996,6 +1036,8 @@
         async function generateAIReport() {
             const selectedValue = document.getElementById('ai-model-select').value;
             const [provider, modelName] = selectedValue.split('|');
+            const isFemale = document.querySelector('input[name="subject-gender"]:checked').value === 'female';
+            const clientGenderText = isFemale ? 'female client' : 'male client';
             
             let apiKey = "";
             if (provider === 'google') {
@@ -1038,7 +1080,7 @@
                         body: JSON.stringify({
                             model: modelName,
                             messages: [
-                                { role: 'system', content: 'You are an expert executive coach and growth facilitator. Respond in Hebrew using Markdown formatting.' },
+                                { role: 'system', content: `You are an expert executive coach and growth facilitator speaking directly to your ${clientGenderText}. Respond in Hebrew using Markdown formatting.` },
                                 { role: 'user', content: promptText }
                             ],
                             temperature: 0.6,
@@ -1061,7 +1103,7 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             systemInstruction: {
-                                parts: [{ text: 'You are an expert executive coach and growth facilitator. Respond in Hebrew using Markdown formatting.' }]
+                                parts: [{ text: `You are an expert executive coach and growth facilitator speaking directly to your ${clientGenderText}. Respond in Hebrew using Markdown formatting.` }]
                             },
                             contents: [
                                 { parts: [{ text: promptText }] }
@@ -1140,7 +1182,7 @@
             const container = document.getElementById('category-breakdown-container');
             container.innerHTML = '';
 
-            const safeName = subjectName && subjectName !== "לא ידוע" ? subjectName : 'היא';
+            const safeName = subjectName && subjectName !== "לא ידוע" ? subjectName : 'היא/הוא';
 
             questionnaireStructure.forEach(cat => {
                 const stats = catStats[cat.id];
