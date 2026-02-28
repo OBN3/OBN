@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ממיר קבצי דלק</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: #f6f8fa;
+      color: #1f2937;
+    }
+
+    header {
+      background: #111827;
+      color: #f9fafb;
+      padding: 18px 24px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.4rem;
+      letter-spacing: 0.4px;
+    }
+
+    main {
+      max-width: 760px;
+      margin: 32px auto;
+      padding: 24px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+    }
+
+    section + section {
+      margin-top: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      cursor: pointer;
+      background: #f9fafb;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+      padding: 10px 16px;
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .note, .status {
+      margin-top: 10px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: #f3f4f6;
+      border: 1px dashed #d1d5db;
+      line-height: 1.5;
+    }
+
+    .status.success {
+      background: #ecfdf3;
+      border-color: #bbf7d0;
+      color: #166534;
+    }
+
+    .status.error {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #991b1b;
+    }
+
+    ul {
+      margin: 0 0 0 20px;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha512-csJhS9WytVmevtQSZoLOGXPs09ZEDMZtO4kCQGwngnPt4rktRBM6pL3XDaNxKFIp2dRe5B77ao9stXKbrR5RXw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+  <header>
+    <h1>ממיר קובץ תדלוק לפורמט יעד</h1>
+  </header>
+  <main>
+    <section>
+      <p>
+        העלה את קובץ ה-Excel עם העמודות: תאריך, ליטר, עלות, קילומטר, שם משתמש, מספר רכב.
+        הסקריפט ימחק את עמודת שם המשתמש, יחליף שמות שדות לאנגלית,
+        וישמור את "קילומטר" בעמודת ManualDistance בקובץ החדש.
+      </p>
+    </section>
+
+    <section>
+      <label for="fileInput">בחר קובץ Excel להמרה</label>
+      <input type="file" id="fileInput" accept=".xlsx,.xls" />
+      <button id="convertBtn" disabled>המר והורד קובץ חדש</button>
+      <div id="status" class="status" aria-live="polite"></div>
+    </section>
+
+    <section class="note">
+      <strong>שדות ביצוא:</strong>
+      <ul>
+        <li>Date</li>
+        <li>Liters</li>
+        <li>Cost</li>
+        <li>Odometer</li>
+        <li>CarNumber</li>
+        <li>ManualDistance (מקביל לעמודת "קילומטר" בקובץ המקורי)</li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const convertBtn = document.getElementById('convertBtn');
+    const statusBox = document.getElementById('status');
+
+    const FIELD_MAP = {
+      'תאריך': 'Date',
+      'ליטר': 'Liters',
+      'עלות': 'Cost',
+      'קילומטר': 'ManualDistance',
+      'מספר רכב': 'CarNumber',
+    };
+
+    const OUTPUT_HEADERS = ['Date', 'Liters', 'Cost', 'Odometer', 'CarNumber', 'ManualDistance'];
+
+    function setStatus(message, type = '') {
+      statusBox.textContent = message;
+      statusBox.className = `status ${type}`.trim();
+    }
+
+    fileInput.addEventListener('change', () => {
+      setStatus(fileInput.files.length ? 'קובץ נטען, אפשר להמיר.' : '');
+      convertBtn.disabled = fileInput.files.length === 0;
+    });
+
+    convertBtn.addEventListener('click', async () => {
+      if (!fileInput.files.length) return;
+      const file = fileInput.files[0];
+
+      try {
+        setStatus('מעבד את הקובץ...', '');
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+        const transformed = rows.map((row) => {
+          const output = { Odometer: '' };
+
+          Object.entries(row).forEach(([key, value]) => {
+            const trimmedKey = String(key).trim();
+            const mapped = FIELD_MAP[trimmedKey];
+            if (mapped) {
+              output[mapped] = value;
+            }
+          });
+
+          OUTPUT_HEADERS.forEach((header) => {
+            if (output[header] === undefined) {
+              output[header] = '';
+            }
+          });
+
+          return output;
+        });
+
+        const newSheet = XLSX.utils.json_to_sheet(transformed, { header: OUTPUT_HEADERS });
+        const newBook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(newBook, newSheet, 'Converted');
+        const outputFile = XLSX.write(newBook, { bookType: 'xlsx', type: 'array' });
+
+        const blob = new Blob([outputFile], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `converted_${file.name}`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+
+        setStatus('הקובץ הומר בהצלחה. ההורדה החלה.', 'success');
+      } catch (error) {
+        console.error(error);
+        setStatus('אירעה שגיאה בהמרה. ודא שקובץ ה-Excel בפורמט תקין.', 'error');
+      }
+    });
+  </script>
+</body>
+</html>
