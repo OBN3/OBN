@@ -83,16 +83,11 @@
 
         // Persistent Theme Logic
         const getInitialTheme = () => {
-            // 1. Check for saved preference
             const savedTheme = localStorage.getItem('obn-tips-theme');
             if (savedTheme) return savedTheme;
-            
-            // 2. Fallback to system preference
             if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
                 return 'light';
             }
-            
-            // 3. Default to dark mode
             return 'dark';
         };
 
@@ -155,7 +150,11 @@
 
             const isDark = theme === 'dark';
 
-            // Function to handle manual JSON loading
+            useEffect(() => {
+                document.body.className = isDark ? 'theme-dark bg-[#121212] text-gray-100' : 'theme-light bg-slate-50 text-slate-900';
+                localStorage.setItem('obn-tips-theme', theme);
+            }, [theme]);
+
             const handleManualSubmit = () => {
                 try {
                     const data = JSON.parse(manualJson);
@@ -167,13 +166,6 @@
                 }
             };
 
-            // Sync theme with persistence and body class
-            useEffect(() => {
-                document.body.className = isDark ? 'theme-dark bg-[#121212] text-gray-100' : 'theme-light bg-slate-50 text-slate-900';
-                localStorage.setItem('obn-tips-theme', theme);
-            }, [theme]);
-
-            // Initial Data Fetch
             useEffect(() => {
                 const loadData = async () => {
                     try {
@@ -188,7 +180,6 @@
                 loadData();
             }, []);
 
-            // Search Logic with Performance Debouncing
             useEffect(() => {
                 const timer = setTimeout(() => { 
                     setDebouncedSearch(searchTerm); 
@@ -208,7 +199,6 @@
                 });
             }, [notes, debouncedSearch, activeCategory]);
 
-            // Pagination calculation
             const totalPages = Math.ceil(filteredNotes.length / pageSize);
             const safeCurrentPage = (currentPage > totalPages && totalPages > 0) ? 1 : currentPage;
             const pagedNotes = useMemo(() => {
@@ -303,7 +293,7 @@
                             </div>
                         ) : (
                             <div className="space-y-8 animate-in fade-in duration-700">
-                                {/* Search & Filters */}
+                                {/* Search & Filters Area */}
                                 <div className={`p-8 rounded-[2.5rem] border shadow-2xl space-y-8 transition-colors ${isDark ? 'bg-[#1a1a1a] border-[#2a2a2a]' : 'bg-white border-slate-200'}`}>
                                     <div className="relative group">
                                         <div className={`absolute right-6 top-1/2 -translate-y-1/2 transition-colors pointer-events-none ${isDark ? 'text-gray-600 group-focus-within:text-yellow-500' : 'text-slate-300 group-focus-within:text-slate-600'}`}>
@@ -333,7 +323,20 @@
 
                                 <div className="flex items-center justify-between px-4">
                                     <h2 className={`text-lg italic font-medium ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
-                                        {(debouncedSearch || activeCategory) ? <span>נמצאו <span className={`${isDark ? 'text-white' : 'text-slate-900'} font-black not-italic`}>{filteredNotes.length}</span> טכנוטיפים מתאימים</span> : <span>כל המאגר ({notes.length})</span>}
+                                        {(debouncedSearch || activeCategory) ? (
+                                            <span>
+                                                נמצאו <span className={`${isDark ? 'text-white' : 'text-slate-900'} font-black not-italic`}>{filteredNotes.length}</span> טכנוטיפים
+                                                {debouncedSearch && (
+                                                    <> עבור חיפוש: <span className="text-yellow-500 font-bold not-italic">"{debouncedSearch}"</span></>
+                                                )}
+                                                {debouncedSearch && activeCategory && <> + </>}
+                                                {activeCategory && (
+                                                    <> בקטגוריית <span className="text-purple-500 font-bold not-italic">{activeCategory}</span></>
+                                                )}
+                                            </span>
+                                        ) : (
+                                            <span>כל המאגר ({notes.length})</span>
+                                        )}
                                     </h2>
                                     <div className={`text-[10px] font-black font-mono tracking-tighter uppercase ${isDark ? 'text-gray-700' : 'text-slate-300'}`}>PAGE {safeCurrentPage} of {totalPages || 1}</div>
                                 </div>
