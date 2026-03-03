@@ -89,6 +89,41 @@
             padding-bottom: 0;
             border: none;
         }
+
+        /* Interactive Color Markers */
+        .color-marker {
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            border: 3px solid white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.3);
+            pointer-events: auto; 
+            cursor: grab;
+            transition: transform 0.1s ease, left 0.3s ease-out, top 0.3s ease-out; /* Smooth transition for reset */
+            z-index: 10;
+        }
+        .color-marker.dragging {
+            transition: none; /* remove transition during drag for immediate follow */
+            cursor: grabbing;
+            transform: translate(-50%, -50%) scale(1.2);
+            z-index: 20;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.8), 0 8px 12px rgba(0,0,0,0.4);
+        }
+        /* Inner dot for precision */
+        .color-marker::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 4px;
+            height: 4px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 50%;
+            box-shadow: 0 0 2px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col font-sans">
@@ -136,19 +171,18 @@
                         <i data-lucide="chevron-down" id="explanation-icon" class="w-5 h-5 transition-transform duration-300 transform"></i>
                     </button>
                     
-                    <!-- Added 'collapsed' class here -->
                     <div id="explanation-content" class="collapse-content collapsed px-6 py-4 border-t border-blue-100 text-sm md:text-base text-gray-800 leading-relaxed space-y-4">
                         <p><strong>המטרה:</strong> המערכת נועדה לעזור ליוצרי תוכן, מעצבים ומפתחים לבחור, להתאים ולבדוק צבעים בקלות, תוך הבטחה שהתוצר קריא ונגיש לכלל האוכלוסייה.</p>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <ul class="list-disc marker:text-blue-500 pr-5 space-y-2">
-                                <li><strong>1. בחירת צבע בסיס:</strong> התחילו בבחירת צבע מגלגל הצבעים, הזינו קוד HEX מדוייק, או העלו תמונה והמערכת תחלץ ממנה אוטומטית את 5 הצבעים השולטים!</li>
+                                <li><strong>1. בחירת צבע בסיס:</strong> התחילו בבחירת צבע מגלגל הצבעים, הזינו קוד HEX מדוייק, או העלו תמונה. אם העליתם תמונה, המערכת תחלץ ממנה את 5 הצבעים השולטים! <br><em>חדש:</em> ניתן לגרור את הסימניות (📍) על התמונה המועלית כדי לדגום צבעים מנקודות ספציפיות באופן חופשי.</li>
                                 <li><strong>2. הרמוניות אוטומטיות:</strong> המערכת תייצר מיד עשרות צבעים המחולקים לפלטות מדעיות (אנלוגי, טריאדי, משלים-מפוצל וגוונים).</li>
-                                <li><strong>3. בדיקת קריאות (WCAG):</strong> מתחת לכל צבע מוצג ציון קריאות. בדקו אם טקסט שחור או לבן מתאים, והשתמשו ב<strong>"צבע משלים מומלץ"</strong> שהמערכת יצרה עבורכם לניגודיות מושלמת.</li>
+                                <li><strong>3. בדיקת קריאות (WCAG):</strong> מתחת לכל צבע מוצג ציון קריאות. בדקו אם טקסט שחור או לבן מתאים, והשתמשו ב<strong>"צבע משלים מומלץ"</strong> לניגודיות מושלמת.</li>
                             </ul>
                             <ul class="list-disc marker:text-blue-500 pr-5 space-y-2">
-                                <li><strong>4. תצוגה מקדימה בשקף:</strong> לחיצה על כל ריבוע צבע בפלטות למטה, תעדכן מיד את שקף המצגת הענק. כך תוכלו לראות בזמן אמת איך הטקסט מרגיש על הרקע הנבחר.</li>
-                                <li><strong>5. שמירה ומועדפים:</strong> לחצו על כפתור "שמור" מעל כל פלטה. <em>הפלטה תישמר במועדפים בתחתית האפליקציה</em> (הנתונים נשמרים בדפדפן שלכם לגישה עתידית). לחיצה על פלטה במועדפים תטען אותה חזרה למסך!</li>
+                                <li><strong>4. תצוגה מקדימה בשקף:</strong> לחיצה על כל ריבוע צבע בפלטות למטה, תעדכן מיד את שקף המצגת הענק לראות איך הטקסט מרגיש על הרקע הנבחר.</li>
+                                <li><strong>5. שמירה ומועדפים:</strong> לחצו על כפתור "שמור" מעל כל פלטה. <em>הפלטה תישמר במועדפים בתחתית האפליקציה</em> (הנתונים נשמרים בדפדפן שלכם לגישה עתידית).</li>
                                 <li><strong>6. ייצוא קוד או תמונה:</strong> ניתן להוריד כל פלטה כתמונה (PNG) מרהיבה ונסטלית, או להעתיק את קוד ה-CSS שלה להדבקה ישירה בפרויקט שלכם.</li>
                             </ul>
                         </div>
@@ -164,10 +198,10 @@
             <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 grid grid-cols-1 lg:grid-cols-12 gap-8">
                 
                 <!-- Input & Sliders -->
-                <div class="lg:col-span-5 space-y-6">
+                <div class="lg:col-span-4 space-y-6">
                     <div>
                         <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900">
-                            <i data-lucide="crosshair" class="w-5 h-5 text-primary"></i> 1. צבע בסיס וכוונון עדין
+                            <i data-lucide="crosshair" class="w-5 h-5 text-primary"></i> 1. צבע בסיס וכוונון
                         </h2>
                         
                         <div class="flex items-center gap-4 mb-6">
@@ -196,32 +230,10 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="hidden lg:block lg:col-span-1 border-r border-gray-100"></div>
-
-                <!-- Utilities: Image, Blindness -->
-                <div class="lg:col-span-6 space-y-6 flex flex-col justify-center">
                     
-                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                        <label class="block text-sm font-bold text-gray-700 mb-2">או: דגימה חכמה מתמונה</label>
-                        <label class="flex items-center justify-center px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors w-full font-medium shadow-sm">
-                            <i data-lucide="image-plus" class="w-5 h-5 ml-2"></i>
-                            <span>העלה תמונה לחילוץ צבעים</span>
-                            <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
-                        </label>
-                        <img id="sourceImage" class="hidden" alt="Source">
-                        <div id="imagePaletteContainer" class="mt-4 hidden">
-                            <div class="flex h-10 rounded-lg overflow-hidden shadow-sm" id="extractedColorsRow"></div>
-                        </div>
-                    </div>
-
-                    <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">הדמיית לקויות ראייה וגיל</label>
-                            <p class="text-xs text-gray-500">בדוק איך הפלטות נראות לעיניים שונות</p>
-                        </div>
-                        <select id="colorBlindnessSelect" onchange="applyColorBlindness()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full sm:w-48 bg-white">
+                    <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mt-6">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">הדמיית לקויות ראייה וגיל</label>
+                        <select id="colorBlindnessSelect" onchange="applyColorBlindness()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full bg-white">
                             <optgroup label="תצוגה רגילה">
                                 <option value="none">תצוגה רגילה</option>
                             </optgroup>
@@ -239,7 +251,51 @@
                             </optgroup>
                         </select>
                     </div>
+                </div>
 
+                <div class="hidden lg:block lg:col-span-1 border-r border-gray-100"></div>
+
+                <!-- Utilities: Interactive Image -->
+                <div class="lg:col-span-7 flex flex-col">
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 flex-grow flex flex-col">
+                        <div class="flex justify-between items-center mb-3">
+                            <label class="text-sm font-bold text-gray-700">או: דגימה חכמה מתמונה</label>
+                            <label class="flex items-center justify-center px-4 py-1.5 bg-white text-gray-900 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors text-sm font-medium shadow-sm">
+                                <i data-lucide="image-plus" class="w-4 h-4 ml-2"></i>
+                                <span>העלה תמונה</span>
+                                <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                            </label>
+                        </div>
+                        
+                        <img id="sourceImage" class="hidden" alt="Source">
+                        
+                        <!-- Interactive Canvas Container -->
+                        <div id="imageInteractiveContainer" class="hidden mt-2 flex-col gap-4">
+                            <!-- Image Canvas & Overlays -->
+                            <div class="relative w-full rounded-lg overflow-hidden border border-gray-200 bg-gray-200 shadow-inner touch-none select-none">
+                                <canvas id="imageCanvas" class="w-full h-auto block"></canvas>
+                                <!-- The marker pins will be injected here -->
+                                <div id="markersContainer" class="absolute inset-0 w-full h-full pointer-events-none"></div>
+                            </div>
+
+                            <!-- Interactive Palette Controls -->
+                            <div>
+                                <div class="flex justify-between items-center mb-2 px-1">
+                                    <span class="text-xs text-gray-500 font-bold">הצבעים שנדגמו (ניתן לגרור את הסימניות בתמונה ☝️)</span>
+                                    <button id="resetColorsBtn" onclick="resetImageColors()" class="text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded">
+                                        <i data-lucide="rotate-ccw" class="w-3 h-3"></i> אפס למקור
+                                    </button>
+                                </div>
+                                <div class="flex h-12 rounded-lg overflow-hidden shadow-sm border border-gray-200" id="extractedColorsRow"></div>
+                            </div>
+                        </div>
+
+                        <!-- Empty State placeholder -->
+                        <div id="imageEmptyState" class="flex-grow flex flex-col items-center justify-center text-gray-400 py-8 border-2 border-dashed border-gray-300 rounded-lg mt-2">
+                            <i data-lucide="image" class="w-12 h-12 mb-2 opacity-50"></i>
+                            <span class="text-sm">העלה תמונה לניתוח צבעים חכם</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -258,7 +314,6 @@
 
                 <!-- Slide Canvas -->
                 <div id="slide-preview" class="aspect-[16/9] md:aspect-[21/9] rounded-xl shadow-lg flex flex-col justify-center p-8 md:p-16 transition-colors duration-500 relative overflow-hidden group">
-                    <!-- Decorator pattern -->
                     <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
                     
                     <h1 id="slide-title" class="text-3xl md:text-5xl font-extrabold mb-6 leading-tight transition-colors duration-500 relative z-10">כותרת מרשימה שמושכת את העין</h1>
@@ -270,9 +325,7 @@
                 </div>
 
                 <!-- Contrast Status Footer -->
-                <div id="slide-status-container" class="mt-4">
-                    <!-- Injected dynamically by JS based on slide colors -->
-                </div>
+                <div id="slide-status-container" class="mt-4"></div>
             </div>
 
             <!-- SECTION 3: The Unified Dashboard (Palettes + Contrast) -->
@@ -312,10 +365,16 @@
     <script>
         // --- State Management ---
         let currentBaseColor = '#3b82f6';
-        let currentSlideBgColor = '#3b82f6'; // Added standalone state for the slide
-        let currentSlideTextColorMode = 'auto'; // 'auto', 'white', 'black'
+        let currentSlideBgColor = '#3b82f6'; 
+        let currentSlideTextColorMode = 'auto'; 
         let generatedPalettes = {};
         const colorThief = new ColorThief();
+
+        // Image Interactive State
+        let imageCanvasCtx = null;
+        let originalImageMarkers = []; // [{pctX, pctY, hex}]
+        let currentImageMarkers = []; 
+        let activeDragMarkerIndex = null;
 
         // Initialize Lucide Icons
         lucide.createIcons();
@@ -334,12 +393,11 @@
         }
 
         // --- Core Logic & Color Updating ---
-        
         function handleManualColorChange(colorValue) {
             try {
                 if(chroma.valid(colorValue)) {
                     currentBaseColor = chroma(colorValue).hex();
-                    currentSlideBgColor = currentBaseColor; // Reset slide bg when base changes
+                    currentSlideBgColor = currentBaseColor; 
                     updateInputsFromState();
                     processAll();
                 }
@@ -356,7 +414,7 @@
             const l = document.getElementById('lightnessSlider').value / 100;
             
             currentBaseColor = chroma.hsl(h, s, l).hex();
-            currentSlideBgColor = currentBaseColor; // Reset slide bg
+            currentSlideBgColor = currentBaseColor; 
             
             document.getElementById('colorPicker').value = currentBaseColor;
             document.getElementById('hexInput').value = currentBaseColor;
@@ -376,9 +434,227 @@
         function updateSlideBgColor(hex) {
             currentSlideBgColor = hex;
             renderPowerPoint();
-            // Smoothly scroll to the presentation section so the user sees the change
             document.getElementById('presentation-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             showToast("צבע הרקע של השקף עודכן!");
+        }
+
+        // --- Interactive Image Logic ---
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('sourceImage');
+                img.onload = function() {
+                    try {
+                        // Extract 5 colors using ColorThief
+                        const paletteRGB = colorThief.getPalette(img, 5);
+                        
+                        // Setup Canvas
+                        const canvas = document.getElementById('imageCanvas');
+                        imageCanvasCtx = canvas.getContext('2d', { willReadFrequently: true });
+                        
+                        // Limit canvas internal resolution for performance while keeping aspect ratio
+                        const MAX_DIM = 800;
+                        let scale = 1;
+                        if (img.naturalWidth > MAX_DIM || img.naturalHeight > MAX_DIM) {
+                            scale = Math.min(MAX_DIM / img.naturalWidth, MAX_DIM / img.naturalHeight);
+                        }
+                        canvas.width = img.naturalWidth * scale;
+                        canvas.height = img.naturalHeight * scale;
+                        
+                        // Draw image to canvas
+                        imageCanvasCtx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                        // Find best coordinates for each extracted color
+                        originalImageMarkers = paletteRGB.map(rgb => {
+                            const hex = chroma(rgb).hex();
+                            const coords = findColorCoordinates(imageCanvasCtx, canvas.width, canvas.height, rgb);
+                            return { ...coords, hex };
+                        });
+                        
+                        // Clone to current state
+                        currentImageMarkers = JSON.parse(JSON.stringify(originalImageMarkers));
+
+                        // Switch UI
+                        document.getElementById('imageEmptyState').classList.add('hidden');
+                        document.getElementById('imageInteractiveContainer').classList.remove('hidden');
+                        document.getElementById('imageInteractiveContainer').classList.add('flex');
+
+                        renderImageMarkers();
+                        updateExtractedColorsRowSilently();
+                        
+                        // Select primary color
+                        if(currentImageMarkers.length > 0) handleManualColorChange(currentImageMarkers[0].hex);
+                        showToast("התמונה נותחה בהצלחה! גרור את הסמנים כדי לדגום");
+
+                    } catch (error) {
+                        console.error(error);
+                        showToast("שגיאה בניתוח התמונה.", true);
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Finds the approximate (pctX, pctY) in the canvas that matches the target RGB closely
+        function findColorCoordinates(ctx, width, height, targetRgb) {
+            const imgData = ctx.getImageData(0, 0, width, height).data;
+            let bestDist = Infinity;
+            let bestX = width / 2;
+            let bestY = height / 2;
+            const step = 4; // Check every 4th pixel for speed
+
+            for (let y = 0; y < height; y += step) {
+                for (let x = 0; x < width; x += step) {
+                    const i = (y * width + x) * 4;
+                    if (imgData[i+3] < 128) continue; // skip transparent
+                    
+                    const dist = Math.pow(imgData[i] - targetRgb[0], 2) + 
+                                 Math.pow(imgData[i+1] - targetRgb[1], 2) + 
+                                 Math.pow(imgData[i+2] - targetRgb[2], 2);
+                    
+                    if (dist < bestDist) {
+                        bestDist = dist;
+                        bestX = x;
+                        bestY = y;
+                        if(dist === 0) break; 
+                    }
+                }
+            }
+            return { pctX: (bestX / width) * 100, pctY: (bestY / height) * 100 };
+        }
+
+        function renderImageMarkers() {
+            const container = document.getElementById('markersContainer');
+            container.innerHTML = '';
+            
+            currentImageMarkers.forEach((marker, index) => {
+                const el = document.createElement('div');
+                el.className = 'color-marker';
+                el.dataset.index = index;
+                el.style.left = `${marker.pctX}%`;
+                el.style.top = `${marker.pctY}%`;
+                el.style.backgroundColor = marker.hex;
+                // dynamic border color based on lightness
+                el.style.borderColor = chroma.contrast(marker.hex, 'white') > 2 ? 'white' : '#1f2937';
+                
+                // Clicking marker sets it as main color
+                el.onclick = (e) => {
+                    handleManualColorChange(currentImageMarkers[index].hex);
+                    showToast("הצבע נבחר כצבע בסיס");
+                }
+                
+                container.appendChild(el);
+            });
+        }
+
+        function updateExtractedColorsRowSilently() {
+            const row = document.getElementById('extractedColorsRow');
+            row.innerHTML = '';
+            currentImageMarkers.forEach((marker, index) => {
+                const div = document.createElement('div');
+                div.className = 'flex-1 cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center group relative';
+                div.style.backgroundColor = marker.hex;
+                div.onclick = () => {
+                    handleManualColorChange(marker.hex);
+                    showToast("הצבע נבחר כצבע בסיס");
+                };
+                
+                const textColor = chroma.contrast(marker.hex, 'white') > 4.5 ? 'white' : 'black';
+                div.innerHTML = `<span class="opacity-0 group-hover:opacity-100 font-mono text-sm font-bold tracking-wider absolute drop-shadow-md" style="color: ${textColor}">${marker.hex.toUpperCase()}</span>`;
+                row.appendChild(div);
+            });
+            
+            // Re-render markers colors in case they changed
+            const markerEls = document.querySelectorAll('.color-marker');
+            markerEls.forEach((el, index) => {
+                el.style.backgroundColor = currentImageMarkers[index].hex;
+                el.style.borderColor = chroma.contrast(currentImageMarkers[index].hex, 'white') > 2 ? 'white' : '#1f2937';
+            });
+        }
+
+        function resetImageColors() {
+            currentImageMarkers = JSON.parse(JSON.stringify(originalImageMarkers));
+            // Apply coordinates with transition
+            const markerEls = document.querySelectorAll('.color-marker');
+            markerEls.forEach((el, index) => {
+                el.style.left = `${currentImageMarkers[index].pctX}%`;
+                el.style.top = `${currentImageMarkers[index].pctY}%`;
+            });
+            
+            // Small delay to allow CSS transition, then update colors
+            setTimeout(() => {
+                updateExtractedColorsRowSilently();
+            }, 300);
+            
+            showToast("הצבעים אופסו לבחירה המקורית");
+        }
+
+        function initMarkerDrag() {
+            const container = document.getElementById('markersContainer');
+            const canvas = document.getElementById('imageCanvas');
+            
+            container.addEventListener('pointerdown', (e) => {
+                if (e.target.classList.contains('color-marker')) {
+                    activeDragMarkerIndex = parseInt(e.target.dataset.index);
+                    e.target.classList.add('dragging');
+                    e.target.setPointerCapture(e.pointerId);
+                    e.preventDefault(); // prevent scrolling on mobile
+                }
+            });
+
+            container.addEventListener('pointermove', (e) => {
+                if (activeDragMarkerIndex !== null && imageCanvasCtx) {
+                    const rect = canvas.getBoundingClientRect();
+                    // Clamp coordinates to canvas boundaries
+                    let x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+                    let y = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
+
+                    let pctX = (x / rect.width);
+                    let pctY = (y / rect.height);
+
+                    // Read pixel from internal canvas
+                    let intX = Math.floor(pctX * canvas.width);
+                    let intY = Math.floor(pctY * canvas.height);
+                    intX = Math.min(intX, canvas.width - 1);
+                    intY = Math.min(intY, canvas.height - 1);
+
+                    const pixel = imageCanvasCtx.getImageData(intX, intY, 1, 1).data;
+                    const hex = chroma([pixel[0], pixel[1], pixel[2]]).hex();
+
+                    // Update state
+                    currentImageMarkers[activeDragMarkerIndex].pctX = pctX * 100;
+                    currentImageMarkers[activeDragMarkerIndex].pctY = pctY * 100;
+                    currentImageMarkers[activeDragMarkerIndex].hex = hex;
+
+                    // Update DOM marker position visually immediately
+                    e.target.style.left = `${pctX * 100}%`;
+                    e.target.style.top = `${pctY * 100}%`;
+                    e.target.style.backgroundColor = hex;
+                    e.target.style.borderColor = chroma.contrast(hex, 'white') > 2 ? 'white' : '#1f2937';
+
+                    // Update bottom row colors smoothly
+                    updateExtractedColorsRowSilently();
+                }
+            });
+
+            const endDrag = (e) => {
+                if (activeDragMarkerIndex !== null) {
+                    const el = container.querySelector(`[data-index="${activeDragMarkerIndex}"]`);
+                    if(el) {
+                        el.classList.remove('dragging');
+                        el.releasePointerCapture(e.pointerId);
+                    }
+                    activeDragMarkerIndex = null;
+                }
+            };
+
+            container.addEventListener('pointerup', endDrag);
+            container.addEventListener('pointercancel', endDrag);
         }
 
         // --- Utilities for Contrast & Complementary ---
@@ -388,23 +664,16 @@
             let compChroma = baseChroma.set('hsl.h', '+180');
             const bgLum = baseChroma.luminance();
 
-            // Push lightness to ensure > 4.5 ratio
             if (bgLum > 0.3) {
-                // background is relatively light, make complementary very dark
                 while(chroma.contrast(bgHex, compChroma) < 4.5 && compChroma.luminance() > 0.01) {
                     compChroma = compChroma.darken(0.2);
                 }
             } else {
-                // background is dark, make complementary very light
                 while(chroma.contrast(bgHex, compChroma) < 4.5 && compChroma.luminance() < 0.99) {
                     compChroma = compChroma.brighten(0.2);
                 }
             }
-            
-            // Ultimate fallback
-            if (chroma.contrast(bgHex, compChroma) < 4.5) {
-               return bgLum > 0.5 ? '#111111' : '#F8F9FA';
-            }
+            if (chroma.contrast(bgHex, compChroma) < 4.5) return bgLum > 0.5 ? '#111111' : '#F8F9FA';
             return compChroma.hex();
         }
 
@@ -466,19 +735,12 @@
             };
         }
 
-        // --- View Rendering ---
-
         function updateSlideTextColor(mode) {
             currentSlideTextColorMode = mode;
-            
-            // Update Buttons UI
             ['auto', 'white', 'black'].forEach(m => {
                 const btn = document.getElementById(`btn-text-${m}`);
-                if(m === mode) {
-                    btn.className = 'px-3 py-1.5 text-sm font-medium rounded-md bg-white shadow-sm text-gray-900 transition-all';
-                } else {
-                    btn.className = 'px-3 py-1.5 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-200 transition-all';
-                }
+                if(m === mode) btn.className = 'px-3 py-1.5 text-sm font-medium rounded-md bg-white shadow-sm text-gray-900 transition-all';
+                else btn.className = 'px-3 py-1.5 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-200 transition-all';
             });
             renderPowerPoint();
         }
@@ -499,7 +761,6 @@
             title.style.color = textColor;
             bullets.style.color = textColor;
             
-            // Evaluate contrast for the new status bar
             const evalObj = evaluateContrast(currentSlideBgColor, textColor);
             
             statusContainer.innerHTML = `
@@ -523,8 +784,6 @@
                     </div>
                 </div>
             `;
-            
-            // Ensure icons take the color too
             lucide.createIcons();
         }
 
@@ -532,17 +791,16 @@
             const container = document.getElementById('dashboardContainer');
             container.innerHTML = '';
 
-            Object.entries(generatedPalettes).forEach(([name, colors], paletteIndex) => {
+            Object.entries(generatedPalettes).forEach(([name, colors]) => {
                 const section = document.createElement('div');
                 section.className = 'bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden';
                 
-                // Header with actions
                 const headerHtml = `
                     <div class="bg-gray-50/80 px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <h3 class="text-xl font-extrabold text-gray-900">${name}</h3>
                         <div class="flex flex-wrap gap-2">
                             <button onclick="downloadCleanPalette('${name}', '${colors.join(',')}')" class="px-3 py-1.5 text-xs font-medium bg-white border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition flex items-center gap-1 shadow-sm">
-                                <i data-lucide="image" class="w-3 h-3"></i> הורד כתמונה
+                                <i data-lucide="image" class="w-3 h-3"></i> הורד
                             </button>
                             <button onclick="exportCSS('${name}', '${colors.join(',')}')" class="px-3 py-1.5 text-xs font-medium bg-white border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition flex items-center gap-1 shadow-sm">
                                 <i data-lucide="code" class="w-3 h-3"></i> העתק CSS
@@ -554,7 +812,6 @@
                     </div>
                 `;
 
-                // The 5-Color Grid
                 let gridHtml = '<div class="grid grid-cols-1 lg:grid-cols-5 divide-y lg:divide-y-0 lg:divide-x lg:divide-x-reverse divide-gray-100">';
                 
                 colors.forEach((bgHex) => {
@@ -562,12 +819,10 @@
                     const evalWhite = evaluateContrast(bgHex, '#FFFFFF');
                     const evalBlack = evaluateContrast(bgHex, '#000000');
                     const evalComp = evaluateContrast(bgHex, compHex);
-                    
                     const optimalText = chroma.contrast(bgHex, 'white') > chroma.contrast(bgHex, 'black') ? '#FFFFFF' : '#000000';
 
                     gridHtml += `
                         <div class="flex flex-col">
-                            <!-- Top: Color Swatch -->
                             <div class="h-32 flex flex-col justify-between p-4 transition-transform hover:scale-[1.02] origin-bottom relative group cursor-pointer" style="background-color: ${bgHex}; color: ${optimalText}" onclick="updateSlideBgColor('${bgHex}')" title="לחץ כדי להציג בשקף התצוגה למעלה">
                                 <div class="text-3xl font-bold tracking-tight opacity-90">Aa</div>
                                 <div class="flex justify-between items-end">
@@ -578,10 +833,7 @@
                                 </div>
                             </div>
                             
-                            <!-- Bottom: Contrast Stats -->
                             <div class="p-4 bg-white space-y-3 flex-grow border-t-2 border-dashed border-gray-50">
-                                
-                                <!-- Auto/Comp -->
                                 <div class="flex justify-between items-center text-sm mb-2 pb-2 border-b border-gray-50">
                                     <div class="flex items-center gap-2">
                                         <div class="w-4 h-4 rounded-full shadow-inner border border-gray-200 cursor-pointer hover:scale-110 transition-transform" style="background-color: ${compHex};" onclick="copyToClipboard('${compHex}')" title="העתק צבע טקסט מומלץ"></div>
@@ -593,7 +845,6 @@
                                     </div>
                                 </div>
 
-                                <!-- White test -->
                                 <div class="flex justify-between items-center text-xs">
                                     <div class="flex items-center gap-1.5 text-gray-600">
                                         <div class="w-3 h-3 rounded-full border border-gray-300 bg-white"></div>
@@ -605,7 +856,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Black test -->
                                 <div class="flex justify-between items-center text-xs">
                                     <div class="flex items-center gap-1.5 text-gray-600">
                                         <div class="w-3 h-3 rounded-full border border-gray-300 bg-black"></div>
@@ -616,7 +866,6 @@
                                         ${evalBlack.html}
                                     </div>
                                 </div>
-                                
                             </div>
                         </div>
                     `;
@@ -628,69 +877,22 @@
             });
 
             lucide.createIcons();
-            renderFavorites(); // Update favorites if needed
+            renderFavorites(); 
         }
 
-        // --- Features: Color Blindness & Age Simulation ---
         function applyColorBlindness() {
             const filter = document.getElementById('colorBlindnessSelect').value;
             const wrapper = document.getElementById('main-wrapper');
-            if (filter === 'none') {
-                wrapper.style.filter = 'none';
-            } else {
-                wrapper.style.filter = `url(#${filter})`;
-            }
-        }
-
-        // --- Features: Image Upload ---
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = document.getElementById('sourceImage');
-                img.onload = function() {
-                    try {
-                        const paletteRGB = colorThief.getPalette(img, 5);
-                        const paletteHex = paletteRGB.map(rgb => chroma(rgb).hex());
-                        
-                        const container = document.getElementById('imagePaletteContainer');
-                        const row = document.getElementById('extractedColorsRow');
-                        container.classList.remove('hidden');
-                        row.innerHTML = '';
-
-                        paletteHex.forEach(hex => {
-                            const div = document.createElement('div');
-                            div.className = 'flex-1 cursor-pointer hover:opacity-90 transition-opacity';
-                            div.style.backgroundColor = hex;
-                            div.onclick = () => {
-                                handleManualColorChange(hex);
-                                showToast("הצבע נבחר כצבע בסיס");
-                            };
-                            row.appendChild(div);
-                        });
-
-                        if(paletteHex.length > 0) handleManualColorChange(paletteHex[0]);
-                        showToast("התמונה נותחה בהצלחה");
-                    } catch (error) {
-                        showToast("שגיאה בניתוח התמונה.", true);
-                    }
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
+            if (filter === 'none') wrapper.style.filter = 'none';
+            else wrapper.style.filter = `url(#${filter})`;
         }
 
         // --- Features: Exports & Favorites ---
-
         function exportCSS(name, colorsStr) {
             const colors = colorsStr.split(',');
             const cleanName = name.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
             let css = `/* ${name} Palette */\n:root {\n`;
-            colors.forEach((c, i) => {
-                css += `  --color-${cleanName}-${i+1}: ${c.toUpperCase()};\n`;
-            });
+            colors.forEach((c, i) => css += `  --color-${cleanName}-${i+1}: ${c.toUpperCase()};\n`);
             css += `}`;
             copyToClipboard(css);
             showToast("קוד CSS הועתק!");
@@ -698,7 +900,6 @@
 
         function downloadCleanPalette(name, colorsStr) {
             const colors = colorsStr.split(',');
-            // Create a temporary hidden container just for the PNG (to keep it clean and beautiful)
             const tempDiv = document.createElement('div');
             tempDiv.style.position = 'fixed';
             tempDiv.style.top = '-9999px';
@@ -729,7 +930,6 @@
             });
 
             document.body.appendChild(tempDiv);
-
             html2canvas(tempDiv, { scale: 2 }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = `Palette-${name.split(' ')[0]}.png`;
@@ -742,15 +942,11 @@
 
         function savePalette(name, colorsStr) {
             let favs = JSON.parse(localStorage.getItem('colorAppFavs') || '[]');
-            
-            // בדיקה אם הפלטה כבר קיימת במועדפים
             const exists = favs.find(f => f.name === name && f.colors.join(',') === colorsStr);
             if(exists) {
                 showToast("הפלטה כבר נוספה למועדפים!", true);
                 return;
             }
-            
-            // הגדלת המגבלה ל-24 מועדפים
             if(favs.length >= 24) favs.pop(); 
             favs.unshift({ name, colors: colorsStr.split(','), id: Date.now() });
             localStorage.setItem('colorAppFavs', JSON.stringify(favs));
@@ -836,6 +1032,7 @@
 
         // Initial setup
         window.onload = () => {
+            initMarkerDrag();
             updateInputsFromState();
             processAll();
         };
