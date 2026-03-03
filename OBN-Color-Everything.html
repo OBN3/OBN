@@ -467,24 +467,31 @@
         // --- Utilities ---
 
         function copyToClipboard(text) {
-            // Using modern clipboard API if available, fallback to execCommand
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(text).then(() => showToast(`קוד ${text} הועתק!`));
-            } else {
-                const textArea = document.createElement("textarea");
-                textArea.value = text;
-                textArea.style.position = "fixed";
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                try {
-                    document.execCommand('copy');
+            // Use execCommand as fallback for iframes since navigator.clipboard may be blocked
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            // Prevent scrolling to bottom of page in MS Edge
+            textArea.style.position = "fixed";
+            textArea.style.opacity = "0";
+            
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
                     showToast(`קוד ${text} הועתק!`);
-                } catch (err) {
-                    console.error('Copy failed', err);
+                } else {
+                    console.error('Fallback: Copying text command was unsuccessful');
+                    showToast('העתקה נכשלה', true);
                 }
-                document.body.removeChild(textArea);
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                showToast('העתקה נכשלה', true);
             }
+            
+            document.body.removeChild(textArea);
         }
 
         function downloadPalettePNG(elementId, name) {
