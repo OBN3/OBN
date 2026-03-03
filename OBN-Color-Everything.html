@@ -257,8 +257,10 @@
 
                 <!-- Utilities: Interactive Image -->
                 <div class="lg:col-span-7 flex flex-col">
-                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 flex-grow flex flex-col">
-                        <div class="flex justify-between items-center mb-3">
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 flex flex-col">
+                        
+                        <!-- Upload Button (Always Visible) -->
+                        <div class="flex justify-between items-center">
                             <label class="text-sm font-bold text-gray-700">או: דגימה חכמה מתמונה</label>
                             <label class="flex items-center justify-center px-4 py-1.5 bg-white text-gray-900 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors text-sm font-medium shadow-sm">
                                 <i data-lucide="image-plus" class="w-4 h-4 ml-2"></i>
@@ -269,13 +271,15 @@
                         
                         <img id="sourceImage" class="hidden" alt="Source">
                         
-                        <!-- Interactive Canvas Container -->
-                        <div id="imageInteractiveContainer" class="hidden mt-2 flex-col gap-4">
+                        <!-- Interactive Canvas Container (Hidden until upload) -->
+                        <div id="imageInteractiveContainer" class="hidden mt-4 flex-col gap-4">
                             <!-- Image Canvas & Overlays -->
-                            <div class="relative w-full rounded-lg overflow-hidden border border-gray-200 bg-gray-200 shadow-inner touch-none select-none">
-                                <canvas id="imageCanvas" class="w-full h-auto block"></canvas>
-                                <!-- The marker pins will be injected here -->
-                                <div id="markersContainer" class="absolute inset-0 w-full h-full pointer-events-none"></div>
+                            <div class="flex justify-center w-full bg-gray-200/50 rounded-lg p-2 border border-gray-200">
+                                <div class="relative shadow-sm touch-none select-none rounded overflow-hidden">
+                                    <canvas id="imageCanvas" class="block" style="max-width: 100%; max-height: 300px; width: auto; height: auto;"></canvas>
+                                    <!-- The marker pins will be injected here -->
+                                    <div id="markersContainer" class="absolute inset-0 w-full h-full pointer-events-none"></div>
+                                </div>
                             </div>
 
                             <!-- Interactive Palette Controls -->
@@ -289,12 +293,8 @@
                                 <div class="flex h-12 rounded-lg overflow-hidden shadow-sm border border-gray-200" id="extractedColorsRow"></div>
                             </div>
                         </div>
+                        <!-- Empty State removed so the box stays compact initially -->
 
-                        <!-- Empty State placeholder -->
-                        <div id="imageEmptyState" class="flex-grow flex flex-col items-center justify-center text-gray-400 py-8 border-2 border-dashed border-gray-300 rounded-lg mt-2">
-                            <i data-lucide="image" class="w-12 h-12 mb-2 opacity-50"></i>
-                            <span class="text-sm">העלה תמונה לניתוח צבעים חכם</span>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -479,7 +479,6 @@
                         currentImageMarkers = JSON.parse(JSON.stringify(originalImageMarkers));
 
                         // Switch UI
-                        document.getElementById('imageEmptyState').classList.add('hidden');
                         document.getElementById('imageInteractiveContainer').classList.remove('hidden');
                         document.getElementById('imageInteractiveContainer').classList.add('flex');
 
