@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>כל מה שרציתם לדעת על צבעים - המהדורה המקצועית</title>
+    <title>OBN - המעבדה לצבע ונגישות</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -74,17 +74,51 @@
             to { transform: translateY(0); opacity: 1; }
         }
         .toast-enter { animation: slideIn 0.3s ease-out forwards; }
+        
+        /* Transition for collapsible element */
+        .collapse-content {
+            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, padding 0.3s ease-in-out;
+            max-height: 1000px;
+            opacity: 1;
+            overflow: hidden;
+        }
+        .collapse-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            border: none;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col font-sans">
 
-    <!-- Color Blindness SVG Filters -->
+    <!-- Color Blindness & Age SVG Filters -->
     <svg style="display: none;">
         <defs>
+            <!-- Classic Color Blindness -->
             <filter id="protanopia"><feColorMatrix type="matrix" values="0.567, 0.433, 0, 0, 0, 0.558, 0.442, 0, 0, 0, 0, 0.242, 0.758, 0, 0, 0, 0, 0, 1, 0"/></filter>
             <filter id="deuteranopia"><feColorMatrix type="matrix" values="0.625, 0.375, 0, 0, 0, 0.7, 0.3, 0, 0, 0, 0, 0.3, 0.7, 0, 0, 0, 0, 0, 1, 0"/></filter>
             <filter id="tritanopia"><feColorMatrix type="matrix" values="0.95, 0.05, 0, 0, 0, 0, 0.433, 0.567, 0, 0, 0, 0.475, 0.525, 0, 0, 0, 0, 0, 1, 0"/></filter>
             <filter id="achromatopsia"><feColorMatrix type="matrix" values="0.299, 0.587, 0.114, 0, 0, 0.299, 0.587, 0.114, 0, 0, 0.299, 0.587, 0.114, 0, 0, 0, 0, 0, 1, 0"/></filter>
+            
+            <!-- Age Simulation (Yellowing of lens, loss of blue light, slight contrast loss, and blur) -->
+            <filter id="age50">
+                <feColorMatrix type="matrix" values="0.95 0 0 0 0.02   0 0.95 0 0 0.02   0 0 0.85 0 0.02   0 0 0 1 0"/>
+                <feGaussianBlur stdDeviation="0.5" result="blur"/>
+            </filter>
+            <filter id="age60">
+                <feColorMatrix type="matrix" values="0.9 0 0 0 0.04   0 0.9 0 0 0.04   0 0 0.7 0 0.04   0 0 0 1 0"/>
+                <feGaussianBlur stdDeviation="1" result="blur"/>
+            </filter>
+            <filter id="age70">
+                <feColorMatrix type="matrix" values="0.85 0 0 0 0.06   0 0.85 0 0 0.06   0 0 0.5 0 0.06   0 0 0 1 0"/>
+                <feGaussianBlur stdDeviation="1.5" result="blur"/>
+            </filter>
+            <filter id="age80">
+                <feColorMatrix type="matrix" values="0.8 0 0 0 0.08   0 0.8 0 0 0.08   0 0 0.3 0 0.08   0 0 0 1 0"/>
+                <feGaussianBlur stdDeviation="2" result="blur"/>
+            </filter>
         </defs>
     </svg>
 
@@ -92,8 +126,33 @@
         <!-- Header -->
         <header class="bg-white shadow-sm py-8 px-4 mb-6 relative z-10">
             <div class="max-w-6xl mx-auto text-center">
-                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">המעבדה לצבע ונגישות</h1>
-                <p class="text-gray-500 mt-2 text-sm md:text-base">תכנון פלטות הרמוניות ובדיקת נגישות (WCAG) במקום אחד.</p>
+                <h1 class="text-3xl md:text-5xl font-extrabold text-gray-900 tracking-tight mb-2">OBN - המעבדה לצבע ונגישות</h1>
+                <p class="text-gray-500 text-sm md:text-lg mb-6">תכנון פלטות הרמוניות ובדיקת נגישות (WCAG) במקום אחד.</p>
+                
+                <!-- Explanation Box (Collapsible) -->
+                <div class="max-w-4xl mx-auto text-right bg-blue-50 border border-blue-100 rounded-xl overflow-hidden shadow-sm">
+                    <button onclick="toggleExplanation()" class="w-full px-6 py-4 flex justify-between items-center text-blue-900 font-bold hover:bg-blue-100/50 transition-colors">
+                        <span class="flex items-center gap-2"><i data-lucide="info" class="w-5 h-5"></i> איך משתמשים במערכת? (מדריך קצר)</span>
+                        <i data-lucide="chevron-down" id="explanation-icon" class="w-5 h-5 transition-transform duration-300 transform rotate-180"></i>
+                    </button>
+                    
+                    <div id="explanation-content" class="collapse-content px-6 py-4 border-t border-blue-100 text-sm md:text-base text-gray-800 leading-relaxed space-y-4">
+                        <p><strong>המטרה:</strong> המערכת נועדה לעזור ליוצרי תוכן, מעצבים ומפתחים לבחור, להתאים ולבדוק צבעים בקלות, תוך הבטחה שהתוצר קריא ונגיש לכלל האוכלוסייה.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <ul class="list-disc marker:text-blue-500 pr-5 space-y-2">
+                                <li><strong>1. בחירת צבע בסיס:</strong> התחילו בבחירת צבע מגלגל הצבעים, הזינו קוד HEX מדוייק, או העלו תמונה והמערכת תחלץ ממנה אוטומטית את 5 הצבעים השולטים!</li>
+                                <li><strong>2. הרמוניות אוטומטיות:</strong> המערכת תייצר מיד עשרות צבעים המחולקים לפלטות מדעיות (אנלוגי, טריאדי, משלים-מפוצל וגוונים).</li>
+                                <li><strong>3. בדיקת קריאות (WCAG):</strong> מתחת לכל צבע מוצג ציון קריאות. בדקו אם טקסט שחור או לבן מתאים, והשתמשו ב<strong>"צבע משלים מומלץ"</strong> שהמערכת יצרה עבורכם לניגודיות מושלמת.</li>
+                            </ul>
+                            <ul class="list-disc marker:text-blue-500 pr-5 space-y-2">
+                                <li><strong>4. תצוגה מקדימה בשקף:</strong> לחיצה על כל ריבוע צבע בפלטות למטה, תעדכן מיד את שקף המצגת הענק. כך תוכלו לראות בזמן אמת איך הטקסט מרגיש על הרקע הנבחר.</li>
+                                <li><strong>5. שמירה ומועדפים:</strong> לחצו על כפתור "שמור" מעל כל פלטה. <em>הפלטה תישמר במועדפים בתחתית האפליקציה</em> (הנתונים נשמרים בדפדפן שלכם לגישה עתידית). לחיצה על פלטה במועדפים תטען אותה חזרה למסך!</li>
+                                <li><strong>6. ייצוא קוד או תמונה:</strong> ניתן להוריד כל פלטה כתמונה (PNG) מרהיבה ונסטלית, או להעתיק את קוד ה-CSS שלה להדבקה ישירה בפרויקט שלכם.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -107,7 +166,7 @@
                 <div class="lg:col-span-5 space-y-6">
                     <div>
                         <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900">
-                            <i data-lucide="crosshair" class="w-5 h-5 text-primary"></i> צבע בסיס וכוונון עדין
+                            <i data-lucide="crosshair" class="w-5 h-5 text-primary"></i> 1. צבע בסיס וכוונון עדין
                         </h2>
                         
                         <div class="flex items-center gap-4 mb-6">
@@ -144,7 +203,7 @@
                 <div class="lg:col-span-6 space-y-6 flex flex-col justify-center">
                     
                     <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                        <label class="block text-sm font-bold text-gray-700 mb-2">דגימה מתמונה</label>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">או: דגימה חכמה מתמונה</label>
                         <label class="flex items-center justify-center px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors w-full font-medium shadow-sm">
                             <i data-lucide="image-plus" class="w-5 h-5 ml-2"></i>
                             <span>העלה תמונה לחילוץ צבעים</span>
@@ -156,17 +215,27 @@
                         </div>
                     </div>
 
-                    <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex items-center justify-between gap-4">
+                    <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">הדמיית עיוורון צבעים</label>
-                            <p class="text-xs text-gray-500">בדוק איך הפלטות שלך נראות לאנשים שונים</p>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">הדמיית לקויות ראייה וגיל</label>
+                            <p class="text-xs text-gray-500">בדוק איך הפלטות נראות לעיניים שונות</p>
                         </div>
-                        <select id="colorBlindnessSelect" onchange="applyColorBlindness()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-40">
-                            <option value="none">תצוגה רגילה</option>
-                            <option value="protanopia">עיוורון לאדום (Protanopia)</option>
-                            <option value="deuteranopia">עיוורון לירוק (Deuteranopia)</option>
-                            <option value="tritanopia">עיוורון לכחול (Tritanopia)</option>
-                            <option value="achromatopsia">גיוון אפור (Achromatopsia)</option>
+                        <select id="colorBlindnessSelect" onchange="applyColorBlindness()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full sm:w-48 bg-white">
+                            <optgroup label="תצוגה רגילה">
+                                <option value="none">תצוגה רגילה</option>
+                            </optgroup>
+                            <optgroup label="גילאים (הצהבה וטשטוש)">
+                                <option value="age50">הדמיית ראייה בגיל 50</option>
+                                <option value="age60">הדמיית ראייה בגיל 60</option>
+                                <option value="age70">הדמיית ראייה בגיל 70</option>
+                                <option value="age80">הדמיית ראייה בגיל 80</option>
+                            </optgroup>
+                            <optgroup label="עיוורון צבעים">
+                                <option value="protanopia">עיוורון לאדום (Protanopia)</option>
+                                <option value="deuteranopia">עיוורון לירוק (Deuteranopia)</option>
+                                <option value="tritanopia">עיוורון לכחול (Tritanopia)</option>
+                                <option value="achromatopsia">גיוון אפור (Achromatopsia)</option>
+                            </optgroup>
                         </select>
                     </div>
 
@@ -177,7 +246,7 @@
             <div id="presentation-section" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 scroll-mt-6">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <h2 class="text-lg font-bold flex items-center gap-2 text-gray-900">
-                        <i data-lucide="presentation" class="w-5 h-5 text-primary"></i> תצוגה מקדימה - שקופית
+                        <i data-lucide="presentation" class="w-5 h-5 text-primary"></i> 2. תצוגה מקדימה - שקופית
                     </h2>
                     <div class="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
                         <button onclick="updateSlideTextColor('auto')" id="btn-text-auto" class="px-3 py-1.5 text-sm font-medium rounded-md bg-white shadow-sm text-gray-900 transition-all">המשלים המומלץ</button>
@@ -206,14 +275,19 @@
             </div>
 
             <!-- SECTION 3: The Unified Dashboard (Palettes + Contrast) -->
-            <div id="dashboardContainer" class="space-y-10">
-                <!-- Generated dynamically via JS -->
+            <div>
+                <h2 class="text-lg font-bold flex items-center gap-2 text-gray-900 mb-6 px-2">
+                    <i data-lucide="palette" class="w-5 h-5 text-primary"></i> 3. פלטות והרמוניות (לחץ על צבע כדי לבחון אותו בשקף)
+                </h2>
+                <div id="dashboardContainer" class="space-y-10">
+                    <!-- Generated dynamically via JS -->
+                </div>
             </div>
 
             <!-- SECTION 4: Favorites -->
             <div id="favoritesSection" class="bg-gray-900 text-white p-6 md:p-8 rounded-2xl shadow-lg mt-12 hidden">
                 <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
-                    <i data-lucide="heart" class="w-5 h-5 text-red-400"></i> הפלטות השמורות שלי
+                    <i data-lucide="heart" class="w-5 h-5 text-red-400 fill-current"></i> הפלטות השמורות שלי
                 </h2>
                 <div id="favoritesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <!-- Favorites injected here -->
@@ -244,6 +318,19 @@
 
         // Initialize Lucide Icons
         lucide.createIcons();
+        
+        // --- UI Interactions ---
+        function toggleExplanation() {
+            const content = document.getElementById('explanation-content');
+            const icon = document.getElementById('explanation-icon');
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                icon.classList.add('rotate-180');
+            } else {
+                content.classList.add('collapsed');
+                icon.classList.remove('rotate-180');
+            }
+        }
 
         // --- Core Logic & Color Updating ---
         
@@ -543,7 +630,7 @@
             renderFavorites(); // Update favorites if needed
         }
 
-        // --- Features: Color Blindness ---
+        // --- Features: Color Blindness & Age Simulation ---
         function applyColorBlindness() {
             const filter = document.getElementById('colorBlindnessSelect').value;
             const wrapper = document.getElementById('main-wrapper');
@@ -654,11 +741,19 @@
 
         function savePalette(name, colorsStr) {
             let favs = JSON.parse(localStorage.getItem('colorAppFavs') || '[]');
+            
+            // בדיקה אם הפלטה כבר קיימת במועדפים
+            const exists = favs.find(f => f.name === name && f.colors.join(',') === colorsStr);
+            if(exists) {
+                showToast("הפלטה כבר נוספה למועדפים!", true);
+                return;
+            }
+            
             // limit to 6 favorites
             if(favs.length >= 6) favs.pop(); 
             favs.unshift({ name, colors: colorsStr.split(','), id: Date.now() });
             localStorage.setItem('colorAppFavs', JSON.stringify(favs));
-            showToast("הפלטה נשמרה במועדפים!");
+            showToast("הפלטה נשמרה במועדפים בתחתית האפליקציה!");
             renderFavorites();
         }
 
