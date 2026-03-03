@@ -174,7 +174,7 @@
             </div>
 
             <!-- SECTION 2: PowerPoint / UI Preview -->
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <div id="presentation-section" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 scroll-mt-6">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <h2 class="text-lg font-bold flex items-center gap-2 text-gray-900">
                         <i data-lucide="presentation" class="w-5 h-5 text-primary"></i> תצוגה מקדימה - שקופית
@@ -197,6 +197,11 @@
                         <li class="flex items-center gap-3"><i data-lucide="check-circle" class="w-6 h-6 opacity-70"></i> <span>מידע חשוב שחייבים לקרוא</span></li>
                         <li class="flex items-center gap-3"><i data-lucide="check-circle" class="w-6 h-6 opacity-70"></i> <span>הכל קריא ונגיש לחלוטין</span></li>
                     </ul>
+                </div>
+
+                <!-- Contrast Status Footer -->
+                <div id="slide-status-container" class="mt-4">
+                    <!-- Injected dynamically by JS based on slide colors -->
                 </div>
             </div>
 
@@ -232,6 +237,7 @@
     <script>
         // --- State Management ---
         let currentBaseColor = '#3b82f6';
+        let currentSlideBgColor = '#3b82f6'; // Added standalone state for the slide
         let currentSlideTextColorMode = 'auto'; // 'auto', 'white', 'black'
         let generatedPalettes = {};
         const colorThief = new ColorThief();
@@ -245,6 +251,7 @@
             try {
                 if(chroma.valid(colorValue)) {
                     currentBaseColor = chroma(colorValue).hex();
+                    currentSlideBgColor = currentBaseColor; // Reset slide bg when base changes
                     updateInputsFromState();
                     processAll();
                 }
@@ -261,6 +268,7 @@
             const l = document.getElementById('lightnessSlider').value / 100;
             
             currentBaseColor = chroma.hsl(h, s, l).hex();
+            currentSlideBgColor = currentBaseColor; // Reset slide bg
             
             document.getElementById('colorPicker').value = currentBaseColor;
             document.getElementById('hexInput').value = currentBaseColor;
@@ -275,6 +283,14 @@
             const hsl = chroma(currentBaseColor).hsl();
             document.getElementById('saturationSlider').value = (hsl[1] * 100) || 0;
             document.getElementById('lightnessSlider').value = (hsl[2] * 100) || 0;
+        }
+
+        function updateSlideBgColor(hex) {
+            currentSlideBgColor = hex;
+            renderPowerPoint();
+            // Smoothly scroll to the presentation section so the user sees the change
+            document.getElementById('presentation-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            showToast("צבע הרקע של השקף עודכן!");
         }
 
         // --- Utilities for Contrast & Complementary ---
@@ -383,16 +399,42 @@
             const slide = document.getElementById('slide-preview');
             const title = document.getElementById('slide-title');
             const bullets = document.getElementById('slide-bullets');
+            const statusContainer = document.getElementById('slide-status-container');
             
-            slide.style.backgroundColor = currentBaseColor;
+            slide.style.backgroundColor = currentSlideBgColor;
             
             let textColor;
             if (currentSlideTextColorMode === 'white') textColor = '#ffffff';
             else if (currentSlideTextColorMode === 'black') textColor = '#000000';
-            else textColor = getAccessibleComplementary(currentBaseColor);
+            else textColor = getAccessibleComplementary(currentSlideBgColor);
 
             title.style.color = textColor;
             bullets.style.color = textColor;
+            
+            // Evaluate contrast for the new status bar
+            const evalObj = evaluateContrast(currentSlideBgColor, textColor);
+            
+            statusContainer.innerHTML = `
+                <div class="flex flex-wrap items-center justify-between bg-gray-50 border border-gray-100 rounded-lg p-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-medium text-gray-700">בדיקת קריאות נוכחית:</span>
+                        <div class="flex items-center gap-1.5 text-xs text-gray-500 font-mono">
+                            <span class="inline-block w-4 h-4 rounded-full border border-gray-300 shadow-sm" style="background-color: ${currentSlideBgColor}"></span> 
+                            <span>רקע</span>
+                            <span class="mx-1">vs</span>
+                            <span class="inline-block w-4 h-4 rounded-full border border-gray-300 shadow-sm" style="background-color: ${textColor}"></span> 
+                            <span>טקסט</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 mt-2 sm:mt-0">
+                        <span class="text-sm font-mono text-gray-900 font-bold" dir="ltr">יחס ${evalObj.ratio}:1</span>
+                        ${evalObj.pass ? 
+                            '<span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-bold flex items-center gap-1"><i data-lucide="check" class="w-3.5 h-3.5"></i> עבר (WCAG AA)</span>' : 
+                            '<span class="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-bold flex items-center gap-1"><i data-lucide="x" class="w-3.5 h-3.5"></i> נכשל</span>'
+                        }
+                    </div>
+                </div>
+            `;
             
             // Ensure icons take the color too
             lucide.createIcons();
@@ -438,11 +480,11 @@
                     gridHtml += `
                         <div class="flex flex-col">
                             <!-- Top: Color Swatch -->
-                            <div class="h-32 flex flex-col justify-between p-4 transition-transform hover:scale-[1.02] origin-bottom relative group" style="background-color: ${bgHex}; color: ${optimalText}">
+                            <div class="h-32 flex flex-col justify-between p-4 transition-transform hover:scale-[1.02] origin-bottom relative group cursor-pointer" style="background-color: ${bgHex}; color: ${optimalText}" onclick="updateSlideBgColor('${bgHex}')" title="לחץ כדי להציג בשקף התצוגה למעלה">
                                 <div class="text-3xl font-bold tracking-tight opacity-90">Aa</div>
                                 <div class="flex justify-between items-end">
                                     <span class="font-mono text-sm tracking-widest font-bold bg-black/10 px-2 py-0.5 rounded backdrop-blur-sm shadow-sm" dir="ltr">${bgHex.toUpperCase()}</span>
-                                    <button onclick="copyToClipboard('${bgHex}')" class="p-1.5 bg-black/10 rounded-full hover:bg-black/20 transition-colors backdrop-blur-sm" title="העתק קוד רקע">
+                                    <button onclick="event.stopPropagation(); copyToClipboard('${bgHex}')" class="p-1.5 bg-black/10 rounded-full hover:bg-black/20 transition-colors backdrop-blur-sm" title="העתק קוד רקע">
                                         <i data-lucide="copy" class="w-4 h-4"></i>
                                     </button>
                                 </div>
