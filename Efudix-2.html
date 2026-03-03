@@ -93,7 +93,7 @@
                     <div class="flex flex-wrap justify-end gap-1.5 mt-0.5">
                         <!-- Settings Button -->
                         <button onclick="openSettings()" class="text-[11px] bg-slate-100 text-slate-600 px-2 py-1.5 rounded-md border border-slate-200 font-medium active:bg-slate-200 transition-colors flex items-center gap-1 shadow-sm">
-                            ⚙️
+                            ⚙️ הגדרות
                         </button>
                         <!-- Documentation/Gallery Button -->
                         <button onclick="openGallery()" class="text-[11px] bg-teal-50 text-teal-600 px-2 py-1.5 rounded-md border border-teal-100 font-medium active:bg-teal-100 transition-colors flex items-center gap-1 shadow-sm">
@@ -129,7 +129,7 @@
         <!-- Content will be injected here by JS -->
     </main>
 
-    <!-- Settings Modal (New!) -->
+    <!-- Settings Modal (Updated for Google Drive) -->
     <div id="settings-modal" class="fixed inset-0 bg-slate-900/60 z-[90] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl modal-content flex flex-col overflow-hidden">
             <div class="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50">
@@ -148,9 +148,9 @@
                 <div class="bg-blue-50/50 p-3 rounded-lg border border-blue-100">
                     <h4 class="text-sm font-bold text-blue-800 mb-2 flex items-center gap-1">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.19-.08-.05-.19-.02-.27 0-.12.03-1.98 1.26-5.59 3.7-.53.36-1.01.54-1.44.53-.47-.01-1.38-.27-2.06-.49-.83-.27-1.49-.42-1.43-.89.03-.25.38-.51 1.05-.78 4.11-1.79 6.85-2.97 8.22-3.54 3.92-1.64 4.73-1.93 5.26-1.94.12 0 .38.03.53.15.12.1.17.24.19.34.01.07.03.22.02.3z"/></svg>
-                        גיבוי לטלגרם (אופציונלי)
+                        גיבוי לקבוצת טלגרם
                     </h4>
-                    <p class="text-[11px] text-blue-600 mb-3 leading-tight">הזן את הנתונים מ-BotFather ו-userinfobot כדי שהתמונות יישלחו אליך אוטומטית לטלגרם במקביל לשמירה באפליקציה.</p>
+                    <p class="text-[11px] text-blue-600 mb-3 leading-tight">הזן את פרטי הבוט והקבוצה הייעודית של המטופל. (Chat ID של קבוצה לרוב מתחיל במינוס -)</p>
                     
                     <div class="space-y-3">
                         <div>
@@ -158,8 +158,8 @@
                             <input type="text" id="setting-token" placeholder="123456789:ABCdef..." class="w-full text-xs text-slate-800 bg-white border border-slate-300 rounded-md py-1.5 px-2 focus:outline-none focus:border-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Chat ID (שלך או של הקבוצה):</label>
-                            <input type="text" id="setting-chatid" placeholder="123456789" class="w-full text-xs text-slate-800 bg-white border border-slate-300 rounded-md py-1.5 px-2 focus:outline-none focus:border-blue-500">
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Chat ID של הקבוצה:</label>
+                            <input type="text" id="setting-chatid" placeholder="-100123456789" class="w-full text-xs text-slate-800 bg-white border border-slate-300 rounded-md py-1.5 px-2 focus:outline-none focus:border-blue-500">
                         </div>
                     </div>
                 </div>
@@ -172,7 +172,6 @@
 
     <!-- Motivational Modal -->
     <div id="modal" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <!-- ... existing modal ... -->
         <div class="bg-white rounded-2xl p-6 text-center max-w-xs w-full shadow-2xl modal-content">
             <div id="modal-icon" class="text-4xl mb-4">🏆</div>
             <h2 class="text-xl font-bold text-slate-900 mb-2" id="modal-title">כל הכבוד!</h2>
@@ -404,7 +403,6 @@
 
         function saveSettings() {
             patientName = document.getElementById('setting-name').value.trim();
-            // מסירים את המילה 'bot' אם הועתקה בטעות בתחילת הטוקן
             telegramToken = document.getElementById('setting-token').value.trim().replace(/^bot/i, '');
             telegramChatId = document.getElementById('setting-chatid').value.trim();
 
@@ -608,7 +606,7 @@
             }
         }
 
-        // --- Gallery, Camera & Telegram ---
+        // --- Gallery, Camera & Google Drive ---
         async function openGallery() {
             document.getElementById('gallery-modal').classList.remove('hidden');
             await renderGallery();
@@ -630,7 +628,7 @@
                         <div class="flex flex-col items-center justify-center py-16 text-slate-400">
                             <svg class="w-16 h-16 mb-4 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                             <p>עוד אין תמונות בתיעוד.</p>
-                            <p class="text-sm mt-1">לחיצה על 'הוסף תמונה' תגבה אוטומטית לטלגרם אם הגדרת זאת.</p>
+                            <p class="text-sm mt-1">לחיצה על 'הוסף תמונה' תגבה אוטומטית לענן אם הגדרת זאת.</p>
                         </div>
                     `;
                     return;
@@ -666,7 +664,7 @@
         }
 
         async function handleDeletePhoto(id) {
-            if(confirm("האם למחוק תמונה זו מהמכשיר? (התמונה לא תימחק מהטלגרם אם כבר נשלחה)")) {
+            if(confirm("האם למחוק תמונה זו מהמכשיר? (התמונה לא תימחק מהענן אם כבר נשלחה)")) {
                 await deletePhotoFromDB(id);
                 renderGallery(); 
             }
@@ -771,7 +769,7 @@
                         if (errorData.error_code === 404) {
                             alert('שגיאה בחיבור לטלגרם (404): ה-Token שהוזן שגוי. אנא היכנס להגדרות וודא שהעתקת אותו נכון מ-BotFather.');
                         } else if (errorData.error_code === 400) {
-                            alert(`שגיאה בחיבור לטלגרם: ה-Chat ID שגוי או שעוד לא התחלת שיחה עם הבוט שלך. (${errorData.description})`);
+                            alert(`שגיאה בחיבור לטלגרם: ה-Chat ID שגוי או שהבוט לא נוסף לקבוצה. (${errorData.description})`);
                         } else {
                             alert('שגיאה מטלגרם: ' + errorData.description);
                         }
@@ -809,12 +807,9 @@
             if (telegramToken && telegramChatId) {
                 saveBtn.innerHTML = `
                     <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    שומר ושולח לטלגרם...
+                    שולח לקבוצה...
                 `;
-            }
-
-            // Send to Telegram (if configured)
-            if (telegramToken && telegramChatId) {
+                
                 await sendPhotoToTelegram(currentTempPhoto, dateStr, dayLabel);
             }
 
