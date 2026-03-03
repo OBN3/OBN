@@ -27,7 +27,7 @@
         .phase-divider {
             position: relative;
             text-align: center;
-            margin: 2rem 0;
+            margin: 2.5rem 0 1.5rem 0;
         }
         .phase-divider::before {
             content: '';
@@ -35,17 +35,19 @@
             top: 50%;
             left: 0;
             width: 100%;
-            height: 1px;
-            background: #e2e8f0;
+            height: 2px;
+            background: #cbd5e1;
             z-index: 0;
         }
         .phase-divider span {
             position: relative;
             background: #f8fafc;
-            padding: 0 1rem;
-            color: #64748b;
-            font-size: 0.875rem;
-            font-weight: 500;
+            padding: 0.5rem 1.25rem;
+            color: #0f172a; /* Black/Dark Slate */
+            font-size: 1.125rem; /* Larger */
+            font-weight: 700; /* Bold */
+            border: 2px solid #cbd5e1;
+            border-radius: 999px;
             z-index: 1;
         }
 
@@ -88,11 +90,16 @@
             <div class="h-3 w-full bg-slate-100 rounded-full overflow-hidden mt-2">
                 <div id="progress-bar" class="h-full w-0 progress-bar rounded-full" style="background-color: #ef4444;"></div>
             </div>
+
+            <!-- New Phase Remaining Status -->
+            <div id="phase-status" class="mt-3 text-xs text-slate-600 bg-slate-50 p-2.5 rounded-lg space-y-1.5 border border-slate-100 shadow-inner">
+                <!-- Content injected by JS -->
+            </div>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="max-w-md mx-auto px-4 pt-28 space-y-3" id="app-container">
+    <!-- Main Content - padding increased to pt-44 to accommodate taller header -->
+    <main class="max-w-md mx-auto px-4 pt-44 space-y-4" id="app-container">
         <!-- Content will be injected here by JS -->
     </main>
 
@@ -119,7 +126,7 @@
         // --- State Management ---
         let state = JSON.parse(localStorage.getItem('treatmentState')) || {};
         let lastMilestone = parseInt(localStorage.getItem('lastMilestone')) || 0;
-        let lastTipIndex = -1; // To avoid showing the same tip twice in a row
+        let lastTipIndex = -1; 
 
         // --- Hardcoded Data ---
         const milestoneMessages = {
@@ -182,13 +189,14 @@
                 const dateStr = formatDate(currentDate);
                 
                 const card = document.createElement('div');
-                card.className = `bg-white rounded-xl p-4 shadow-sm border border-slate-100 ${i > PHASE_1_DAYS ? 'bg-slate-50' : ''}`;
+                card.className = `bg-white rounded-xl p-4 shadow-sm border border-slate-200 ${i > PHASE_1_DAYS ? 'bg-indigo-50/30' : ''}`;
                 
                 const dayHeader = document.createElement('div');
-                dayHeader.className = 'flex justify-between items-center mb-3 pb-2 border-b border-slate-50';
+                dayHeader.className = 'flex justify-between items-center mb-3 pb-2 border-b border-slate-100';
+                // Date changed to match "Day X" styling as requested
                 dayHeader.innerHTML = `
-                    <span class="font-bold text-slate-800">יום ${i}</span>
-                    <span class="text-sm text-slate-400 font-mono bg-slate-50 px-2 py-1 rounded">${dateStr}</span>
+                    <span class="font-bold text-slate-900">יום ${i}</span>
+                    <span class="font-bold text-slate-900">${dateStr}</span>
                 `;
                 card.appendChild(dayHeader);
 
@@ -216,6 +224,14 @@
             return `${d}.${m}.${y}`;
         }
 
+        function formatDaysRemaining(days) {
+            if (days === 0) return '0 ימים';
+            if (days % 1 === 0.5) {
+                return Math.floor(days) === 0 ? 'חצי יום' : `${Math.floor(days)} וחצי ימים`;
+            }
+            return `${days} ימים`;
+        }
+
         function createCheckbox(day, time, labelText, icon) {
             const id = `${day}-${time}`;
             const isChecked = state[id] === true;
@@ -232,7 +248,7 @@
             const visual = document.createElement('div');
             visual.className = `
                 h-14 rounded-lg border-2 transition-all duration-200 flex items-center px-3 gap-3
-                ${isChecked ? 'bg-emerald-600 border-emerald-600' : 'bg-white border-slate-200 hover:border-slate-300'}
+                ${isChecked ? 'bg-emerald-600 border-emerald-600' : 'bg-white border-slate-300 hover:border-slate-400'}
             `;
             
             const checkIcon = `
@@ -245,8 +261,8 @@
             visual.innerHTML = `
                 ${checkIcon}
                 <div class="flex flex-col">
-                    <span class="text-xs font-medium ${isChecked ? 'text-emerald-50' : 'text-slate-400'}">${icon} ${labelText}</span>
-                    <span class="text-sm font-semibold ${isChecked ? 'text-white' : 'text-slate-600'}">
+                    <span class="text-xs font-medium ${isChecked ? 'text-emerald-50' : 'text-slate-500'}">${icon} ${labelText}</span>
+                    <span class="text-sm font-semibold ${isChecked ? 'text-white' : 'text-slate-700'}">
                         ${isChecked ? 'בוצע' : 'לביצוע'}
                     </span>
                 </div>
@@ -270,11 +286,11 @@
                      statusSpan.className = 'text-sm font-semibold text-white';
                      statusSpan.innerText = 'בוצע';
                  } else {
-                     div.className = 'h-14 rounded-lg border-2 transition-all duration-200 flex items-center px-3 gap-3 bg-white border-slate-200 hover:border-slate-300';
+                     div.className = 'h-14 rounded-lg border-2 transition-all duration-200 flex items-center px-3 gap-3 bg-white border-slate-300 hover:border-slate-400';
                      iconDiv.className = 'w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors border-slate-300 bg-white';
                      iconDiv.innerHTML = '';
-                     labelSpan.className = 'text-xs font-medium text-slate-400';
-                     statusSpan.className = 'text-sm font-semibold text-slate-600';
+                     labelSpan.className = 'text-xs font-medium text-slate-500';
+                     statusSpan.className = 'text-sm font-semibold text-slate-700';
                      statusSpan.innerText = 'לביצוע';
                  }
             });
@@ -289,18 +305,82 @@
         }
 
         function updateProgress(showModal) {
+            // Overall calculation
             const checkedCount = Object.values(state).filter(Boolean).length;
             const percentage = Math.floor((checkedCount / TOTAL_CHECKS) * 100);
 
+            // Update UI Total
             document.getElementById('percent-display').innerText = `${percentage}%`;
-            
             const progressBar = document.getElementById('progress-bar');
             progressBar.style.width = `${percentage}%`;
-
             const hue = (percentage / 100) * 120; 
             progressBar.style.backgroundColor = `hsl(${hue}, 80%, 50%)`;
             document.getElementById('percent-display').style.color = `hsl(${hue}, 70%, 35%)`;
 
+            // Phase Calculations
+            let p1Checked = 0;
+            let p2Checked = 0;
+
+            for (let i = 1; i <= PHASE_1_DAYS; i++) {
+                if (state[`${i}-morning`]) p1Checked++;
+                if (state[`${i}-evening`]) p1Checked++;
+            }
+            for (let i = PHASE_1_DAYS + 1; i <= TOTAL_DAYS; i++) {
+                if (state[`${i}-morning`]) p2Checked++;
+                if (state[`${i}-evening`]) p2Checked++;
+            }
+
+            const p1TotalChecks = PHASE_1_DAYS * 2;
+            const p2TotalChecks = PHASE_2_DAYS * 2;
+
+            const p1RemChecks = p1TotalChecks - p1Checked;
+            const p2RemChecks = p2TotalChecks - p2Checked;
+
+            const p1RemPct = Math.round((p1RemChecks / p1TotalChecks) * 100);
+            const p2RemPct = Math.round((p2RemChecks / p2TotalChecks) * 100);
+
+            // Update Phase Status Box
+            let statusHtml = '';
+
+            // Phase 1 Display
+            if (p1RemChecks > 0) {
+                statusHtml += `
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-500">עד סוף שלב א':</span>
+                        <span class="font-bold text-slate-800">${formatDaysRemaining(p1RemChecks / 2)} ו-${p1RemPct}%</span>
+                    </div>`;
+            } else {
+                statusHtml += `
+                    <div class="flex justify-between items-center text-emerald-600 font-medium">
+                        <span>סוף שלב א':</span>
+                        <span>✅ הושלם בהצלחה!</span>
+                    </div>`;
+            }
+
+            // Phase 2 Display
+            if (p2RemChecks > 0) {
+                statusHtml += `
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-500">עד סיום הטיפול (שלב ב'):</span>
+                        <span class="font-bold text-slate-800">${formatDaysRemaining(p2RemChecks / 2)} ו-${p2RemPct}%</span>
+                    </div>`;
+            } else if (p1RemChecks === 0 && p2RemChecks === 0) {
+                 statusHtml += `
+                    <div class="flex justify-between items-center text-emerald-600 font-medium border-t border-emerald-100 pt-1 mt-1">
+                        <span>סיום הטיפול (שלב ב'):</span>
+                        <span>🏆 סיימת הכל!</span>
+                    </div>`;
+            } else {
+                 statusHtml += `
+                    <div class="flex justify-between items-center text-emerald-600 font-medium border-t border-emerald-100 pt-1 mt-1">
+                        <span>סיום הטיפול (שלב ב'):</span>
+                        <span>✅ שלב ב' הושלם!</span>
+                    </div>`;
+            }
+
+            document.getElementById('phase-status').innerHTML = statusHtml;
+
+            // Milestones logic
             if (showModal) {
                 if (percentage > lastMilestone && percentage % 10 === 0) {
                     lastMilestone = percentage;
@@ -328,7 +408,6 @@
 
         function showDailyTip() {
             let randomIndex;
-            // Prevent showing the same tip twice in a row
             do {
                 randomIndex = Math.floor(Math.random() * dailyTips.length);
             } while (randomIndex === lastTipIndex && dailyTips.length > 1);
