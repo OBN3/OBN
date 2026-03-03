@@ -103,21 +103,21 @@
             <filter id="achromatopsia"><feColorMatrix type="matrix" values="0.299, 0.587, 0.114, 0, 0, 0.299, 0.587, 0.114, 0, 0, 0.299, 0.587, 0.114, 0, 0, 0, 0, 0, 1, 0"/></filter>
             
             <!-- Age Simulation (Yellowing of lens, loss of blue light, slight contrast loss, and blur) -->
-            <filter id="age50">
+            <filter id="age60">
                 <feColorMatrix type="matrix" values="0.95 0 0 0 0.02   0 0.95 0 0 0.02   0 0 0.85 0 0.02   0 0 0 1 0"/>
                 <feGaussianBlur stdDeviation="0.5" result="blur"/>
             </filter>
-            <filter id="age60">
+            <filter id="age70">
                 <feColorMatrix type="matrix" values="0.9 0 0 0 0.04   0 0.9 0 0 0.04   0 0 0.7 0 0.04   0 0 0 1 0"/>
                 <feGaussianBlur stdDeviation="1" result="blur"/>
             </filter>
-            <filter id="age70">
+            <filter id="age80">
                 <feColorMatrix type="matrix" values="0.85 0 0 0 0.06   0 0.85 0 0 0.06   0 0 0.5 0 0.06   0 0 0 1 0"/>
                 <feGaussianBlur stdDeviation="1.5" result="blur"/>
             </filter>
-            <filter id="age80">
-                <feColorMatrix type="matrix" values="0.8 0 0 0 0.08   0 0.8 0 0 0.08   0 0 0.3 0 0.08   0 0 0 1 0"/>
-                <feGaussianBlur stdDeviation="2" result="blur"/>
+            <filter id="age90">
+                <feColorMatrix type="matrix" values="0.75 0 0 0 0.1   0 0.75 0 0 0.1   0 0 0.2 0 0.1   0 0 0 1 0"/>
+                <feGaussianBlur stdDeviation="2.5" result="blur"/>
             </filter>
         </defs>
     </svg>
@@ -129,14 +129,15 @@
                 <h1 class="text-3xl md:text-5xl font-extrabold text-gray-900 tracking-tight mb-2">OBN - המעבדה לצבע ונגישות</h1>
                 <p class="text-gray-500 text-sm md:text-lg mb-6">תכנון פלטות הרמוניות ובדיקת נגישות (WCAG) במקום אחד.</p>
                 
-                <!-- Explanation Box (Collapsible) -->
+                <!-- Explanation Box (Collapsible - Collapsed by default) -->
                 <div class="max-w-4xl mx-auto text-right bg-blue-50 border border-blue-100 rounded-xl overflow-hidden shadow-sm">
                     <button onclick="toggleExplanation()" class="w-full px-6 py-4 flex justify-between items-center text-blue-900 font-bold hover:bg-blue-100/50 transition-colors">
                         <span class="flex items-center gap-2"><i data-lucide="info" class="w-5 h-5"></i> איך משתמשים במערכת? (מדריך קצר)</span>
-                        <i data-lucide="chevron-down" id="explanation-icon" class="w-5 h-5 transition-transform duration-300 transform rotate-180"></i>
+                        <i data-lucide="chevron-down" id="explanation-icon" class="w-5 h-5 transition-transform duration-300 transform"></i>
                     </button>
                     
-                    <div id="explanation-content" class="collapse-content px-6 py-4 border-t border-blue-100 text-sm md:text-base text-gray-800 leading-relaxed space-y-4">
+                    <!-- Added 'collapsed' class here -->
+                    <div id="explanation-content" class="collapse-content collapsed px-6 py-4 border-t border-blue-100 text-sm md:text-base text-gray-800 leading-relaxed space-y-4">
                         <p><strong>המטרה:</strong> המערכת נועדה לעזור ליוצרי תוכן, מעצבים ומפתחים לבחור, להתאים ולבדוק צבעים בקלות, תוך הבטחה שהתוצר קריא ונגיש לכלל האוכלוסייה.</p>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -225,10 +226,10 @@
                                 <option value="none">תצוגה רגילה</option>
                             </optgroup>
                             <optgroup label="גילאים (הצהבה וטשטוש)">
-                                <option value="age50">הדמיית ראייה בגיל 50</option>
-                                <option value="age60">הדמיית ראייה בגיל 60</option>
-                                <option value="age70">הדמיית ראייה בגיל 70</option>
-                                <option value="age80">הדמיית ראייה בגיל 80</option>
+                                <option value="age60">הדמיית ראייה בגיל 60+</option>
+                                <option value="age70">הדמיית ראייה בגיל 70+</option>
+                                <option value="age80">הדמיית ראייה בגיל 80+</option>
+                                <option value="age90">הדמיית ראייה בגיל 90+</option>
                             </optgroup>
                             <optgroup label="עיוורון צבעים">
                                 <option value="protanopia">עיוורון לאדום (Protanopia)</option>
@@ -289,7 +290,7 @@
                 <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
                     <i data-lucide="heart" class="w-5 h-5 text-red-400 fill-current"></i> הפלטות השמורות שלי
                 </h2>
-                <div id="favoritesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div id="favoritesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <!-- Favorites injected here -->
                 </div>
             </div>
@@ -749,8 +750,8 @@
                 return;
             }
             
-            // limit to 6 favorites
-            if(favs.length >= 6) favs.pop(); 
+            // הגדלת המגבלה ל-24 מועדפים
+            if(favs.length >= 24) favs.pop(); 
             favs.unshift({ name, colors: colorsStr.split(','), id: Date.now() });
             localStorage.setItem('colorAppFavs', JSON.stringify(favs));
             showToast("הפלטה נשמרה במועדפים בתחתית האפליקציה!");
