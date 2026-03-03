@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעקב טיפול יומי</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Rubik', sans-serif;
+            background-color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Custom Checkbox Styling */
+        .custom-checkbox input:checked + div {
+            background-color: #059669; /* emerald-600 */
+            border-color: #059669;
+        }
+        
+        /* Smooth transitions */
+        .progress-bar {
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.5s ease;
+        }
+
+        .phase-divider {
+            position: relative;
+            text-align: center;
+            margin: 2.5rem 0 1.5rem 0;
+        }
+        .phase-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #cbd5e1;
+            z-index: 0;
+        }
+        .phase-divider span {
+            position: relative;
+            background: #f8fafc;
+            padding: 0.5rem 1.25rem;
+            color: #0f172a; /* Black/Dark Slate */
+            font-size: 1.125rem; /* Larger */
+            font-weight: 700; /* Bold */
+            border: 2px solid #cbd5e1;
+            border-radius: 999px;
+            z-index: 1;
+        }
+
+        /* Modal Animation */
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes slideUp {
+            0% { transform: translateY(100%); }
+            100% { transform: translateY(0); }
+        }
+        .modal-content {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .gallery-modal-content {
+            animation: slideUp 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+        }
+
+        /* Hide scrollbar for gallery */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="text-slate-800 pb-20">
+
+    <!-- Sticky Header with Progress -->
+    <header class="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur shadow-sm z-50 transition-all duration-300">
+        <div class="max-w-md mx-auto px-4 py-3">
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                    <h1 class="text-lg font-bold text-slate-900">המסע שלי</h1>
+                    <p class="text-xs text-slate-500">מתחילים ב-16.2.26</p>
+                </div>
+                <div class="flex flex-col items-end gap-1.5">
+                    <div class="text-2xl font-bold transition-colors duration-300" id="percent-display">0%</div>
+                    <!-- Compact Buttons Row -->
+                    <div class="flex flex-wrap justify-end gap-1.5 mt-0.5">
+                        <!-- Documentation/Gallery Button -->
+                        <button onclick="openGallery()" class="text-[11px] bg-teal-50 text-teal-600 px-2 py-1.5 rounded-md border border-teal-100 font-medium active:bg-teal-100 transition-colors flex items-center gap-1 shadow-sm">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            תיעוד
+                        </button>
+                        <!-- Daily Tip Button -->
+                        <button onclick="showDailyTip()" class="text-[11px] bg-amber-50 text-amber-600 px-2 py-1.5 rounded-md border border-amber-100 font-medium active:bg-amber-100 transition-colors flex items-center gap-1 shadow-sm">
+                            ✨ טיפ
+                        </button>
+                        <!-- Calendar Button -->
+                        <button onclick="downloadAndShowMessage()" class="text-[11px] bg-indigo-50 text-indigo-600 px-2 py-1.5 rounded-md border border-indigo-100 font-medium active:bg-indigo-100 transition-colors flex items-center gap-1 shadow-sm">
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            יומן
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="h-3 w-full bg-slate-100 rounded-full overflow-hidden mt-1">
+                <div id="progress-bar" class="h-full w-0 progress-bar rounded-full" style="background-color: #ef4444;"></div>
+            </div>
+
+            <!-- New Phase Remaining Status -->
+            <div id="phase-status" class="mt-3 text-xs text-slate-600 bg-slate-50 p-2.5 rounded-lg space-y-1.5 border border-slate-100 shadow-inner">
+                <!-- Content injected by JS -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-md mx-auto px-4 pt-[11.5rem] space-y-4" id="app-container">
+        <!-- Content will be injected here by JS -->
+    </main>
+
+    <!-- Motivational Modal -->
+    <div id="modal" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-6 text-center max-w-xs w-full shadow-2xl modal-content">
+            <div id="modal-icon" class="text-4xl mb-4">🏆</div>
+            <h2 class="text-xl font-bold text-slate-900 mb-2" id="modal-title">כל הכבוד!</h2>
+            <div class="text-slate-600 mb-6" id="modal-message">הגעת ל-10% מהדרך!</div>
+            <button id="modal-btn" onclick="closeModal()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-medium active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed">
+                ממשיכים בכל הכוח
+            </button>
+        </div>
+    </div>
+
+    <!-- Gallery / Documentation Modal -->
+    <div id="gallery-modal" class="fixed inset-0 bg-slate-900/40 z-[70] hidden flex items-end sm:items-center justify-center sm:p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md h-[85vh] sm:h-[80vh] shadow-2xl gallery-modal-content flex flex-col">
+            <!-- Gallery Header -->
+            <div class="flex justify-between items-center p-4 border-b border-slate-100">
+                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    תיעוד המסע
+                </h2>
+                <button onclick="closeGallery()" class="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-50 transition-colors">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <!-- Gallery Content -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 no-scrollbar" id="gallery-container">
+                <!-- Images injected here by JS -->
+            </div>
+
+            <!-- Gallery Footer (Add Image Btn) -->
+            <div class="p-4 bg-white border-t border-slate-100">
+                <!-- Hidden file input (Accepts images, allows camera capture on Android) -->
+                <input type="file" id="photo-upload" accept="image/*" class="hidden" onchange="handlePhotoSelected(event)">
+                <button onclick="document.getElementById('photo-upload').click()" class="w-full bg-teal-600 text-white py-3.5 rounded-xl font-medium active:scale-95 transition-transform shadow-md flex justify-center items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" style="display:none;"/></svg>
+                    הוסף תמונה חדשה
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Photo Date Modal -->
+    <div id="photo-date-modal" class="fixed inset-0 bg-slate-900/60 z-[80] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl w-full max-w-xs shadow-2xl modal-content flex flex-col overflow-hidden">
+            <div class="bg-slate-100 w-full h-48 flex items-center justify-center overflow-hidden">
+                <img id="photo-preview" src="" alt="Preview" class="w-full h-full object-cover">
+            </div>
+            <div class="p-5 text-center">
+                <h3 class="text-lg font-bold text-slate-900 mb-1">מתי התמונה צולמה?</h3>
+                <p class="text-xs text-slate-500 mb-4">תוכל לתקן את התאריך אם הועלתה מאלבום</p>
+                
+                <input type="date" id="photo-date-input" class="w-full text-center text-lg font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-lg py-2 mb-2 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+                <p id="photo-day-preview" class="text-sm font-bold text-teal-600 mb-5 bg-teal-50 py-1 rounded-md"></p>
+                
+                <div class="flex gap-3">
+                    <button onclick="cancelPhotoUpload()" class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl font-medium active:bg-slate-200 transition-colors">
+                        ביטול
+                    </button>
+                    <button onclick="savePhotoWithDate()" class="flex-1 bg-teal-600 text-white py-2.5 rounded-xl font-medium active:bg-teal-700 transition-colors shadow-sm">
+                        שמור תמונה
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const START_DATE = new Date(2026, 1, 16); // Month is 0-indexed (1 = February)
+        const PHASE_1_DAYS = 21;
+        const PHASE_2_DAYS = 14;
+        const TOTAL_DAYS = PHASE_1_DAYS + PHASE_2_DAYS;
+        const TOTAL_CHECKS = TOTAL_DAYS * 2; // Morning + Evening
+        
+        // --- State Management ---
+        let state = JSON.parse(localStorage.getItem('treatmentState')) || {};
+        let lastMilestone = parseInt(localStorage.getItem('lastMilestone')) || 0;
+        let lastTipIndex = -1; 
+        
+        // Temporary photo hold before saving
+        let currentTempPhoto = null;
+
+        // --- Database Setup (IndexedDB for storing photos safely) ---
+        let db;
+        const dbName = "TreatmentTrackerDB";
+        
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(dbName, 1);
+                request.onerror = (event) => {
+                    console.error("Database error:", event.target.error);
+                    reject(event.target.error);
+                };
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    resolve(db);
+                };
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    // Create object store for photos with auto-incrementing ID
+                    if (!db.objectStoreNames.contains("photos")) {
+                        const store = db.createObjectStore("photos", { keyPath: "id", autoIncrement: true });
+                        store.createIndex("date", "date", { unique: false });
+                    }
+                };
+            });
+        }
+
+        function savePhotoToDB(photoData) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(["photos"], "readwrite");
+                const store = transaction.objectStore("photos");
+                const request = store.add(photoData);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject();
+            });
+        }
+
+        function getPhotosFromDB() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(["photos"], "readonly");
+                const store = transaction.objectStore("photos");
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject();
+            });
+        }
+
+        function deletePhotoFromDB(id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(["photos"], "readwrite");
+                const store = transaction.objectStore("photos");
+                const request = store.delete(id);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject();
+            });
+        }
+
+        // --- Hardcoded Data ---
+        const milestoneMessages = {
+            10: "התחלה נהדרת! 10% כבר מאחורייך. כל מסע גדול מתחיל בצעד קטן.",
+            20: "וואו! חמישית מהדרך הושלמה. ההתמדה שלך מרשימה מאוד!",
+            30: "30% מאחורייך! ההרגל כבר מתחיל להתבסס, תמשיך ככה.",
+            40: "כמעט בחצי הדרך! איזה כוח רצון ונחישות אתה מפגין.",
+            50: "חצי דרך! זה הזמן לטפוח לעצמך על השכם. חצי מהעבודה כבר מאחורייך.",
+            60: "עברת את החצי! הירידה מתחילה מעכשיו, והתוצאות כבר בדרך.",
+            70: "70% הושלמו! נשאר רק עוד קצת, אל תוריד את הרגל מהגז.",
+            80: "ממש קרובים לקו הסיום! 80% מאחורייך, זה כבר ממש קרוב.",
+            90: "זהו, הישורת האחרונה! עוד מאמץ קטן וסיימנו.",
+            100: "ניצחון! סיימת את כל הטיפולים בהצלחה אדירה! מגיע לך לחגוג."
+        };
+
+        const dailyTips = [
+            "תזכורת קטנה: שתיית כוס מים עם הטיפול עוזרת לספיגה ולתחושת רעננות!",
+            "כל צעד קטן נחשב. ההתמדה שלך היום בונה את הבריאות של מחר.",
+            "כדאי לשים לעצמך תזכורת קבועה בטלפון, ככה לא צריך לזכור הכל בראש.",
+            "חבר את הטיפול להרגל קיים - למשל מיד אחרי צחצוח שיניים או עם קפה של בוקר.",
+            "יום קשה? זה בסדר. העיקר שסימנת 'בוצע' והמשכת במסע.",
+            "הגוף שלך מודה לך על כל טיפול שאתה לא מפספס.",
+            "גם אם פספסת פעם אחת, לא נורא. פשוט ממשיכים כרגיל בטיפול הבא!",
+            "הוקר תודה לעצמך על ההשקעה בבריאות שלך. זה לא מובן מאליו.",
+            "טיפ אלופים: שים את הטיפול במקום בולט לעין שאי אפשר לפספס.",
+            "שגרה היא המפתח להצלחה. אתה בונה עכשיו שגרה מנצחת!",
+            "קח נשימה עמוקה לפני הטיפול - זה עוזר להוריד מתח ולהרפות.",
+            "עשית כבר דרך נהדרת! אל תשכח להסתכל אחורה ולהיות גאה.",
+            "שינה טובה עוזרת לגוף להתאושש. נסה ללכת לישון חצי שעה מוקדם יותר היום.",
+            "תגמל את עצמך! קבע פרס קטן לעצמך על כל שבוע של התמדה.",
+            "הוסף חיוך לפעולה - מחקרים מראים שזה משפר את ההרגשה המיידית.",
+            "תכנון מראש מונע לחץ. ודא שיש לך מספיק מהטיפול גם לסופ\"ש.",
+            "אתה לא לבד במסע הזה. כל סימון 'בוצע' מחזק את המחויבות שלך לעצמך.",
+            "שתף אדם קרוב בהתקדמות שלך, תמיכה חברתית עושה פלאים.",
+            "תזכור את ה'למה' שלך - למה התחלת את הטיפול הזה מלכתחילה?",
+            "הבריאות שלך היא הנכס הכי חשוב שלך. כל הכבוד שאתה שומר עליה.",
+            "לפעמים החלק הכי קשה הוא פשוט לזכור. היומן שהורדת יכול לעזור מאוד!",
+            "הייה סבלני עם עצמך. שינויים לוקחים זמן, אבל הם קורים כל יום.",
+            "רשום לעצמך משפט מחזק על פתק ושים על המראה באמבטיה.",
+            "אל תחכה למוטיבציה כדי לפעול. הפעולה עצמה מייצרת מוטיבציה!",
+            "גאה בך על המאמץ. המשך כך, אתה בדרך הנכונה למטרה!"
+        ];
+
+        // --- Initialization ---
+        async function init() {
+            // Wait for DB to be ready before letting user upload photos
+            try {
+                await initDB();
+            } catch(e) {
+                console.error("Could not initialize IndexedDB. Photo saving might fail.");
+            }
+
+            const container = document.getElementById('app-container');
+            container.innerHTML = '';
+
+            let currentDate = new Date(START_DATE);
+
+            for (let i = 1; i <= TOTAL_DAYS; i++) {
+                if (i === PHASE_1_DAYS + 1) {
+                    const divider = document.createElement('div');
+                    divider.className = 'phase-divider';
+                    divider.innerHTML = '<span>שלב ב\' - חיזוק (14 יום נוספים)</span>';
+                    container.appendChild(divider);
+                }
+
+                const dayId = `day-${i}`;
+                const dateStr = formatDisplayDate(currentDate);
+                
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-xl p-4 shadow-sm border border-slate-200 ${i > PHASE_1_DAYS ? 'bg-indigo-50/30' : ''}`;
+                
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'flex justify-between items-center mb-3 pb-2 border-b border-slate-100';
+                
+                dayHeader.innerHTML = `
+                    <span class="font-bold text-slate-900">יום ${i}</span>
+                    <span class="font-bold text-slate-900">${dateStr}</span>
+                `;
+                card.appendChild(dayHeader);
+
+                const inputsGrid = document.createElement('div');
+                inputsGrid.className = 'grid grid-cols-2 gap-4';
+
+                inputsGrid.appendChild(createCheckbox(i, 'morning', 'בוקר', '☀️'));
+                inputsGrid.appendChild(createCheckbox(i, 'evening', 'ערב', '🌙'));
+
+                card.appendChild(inputsGrid);
+                container.appendChild(card);
+
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            updateProgress(false); 
+        }
+
+        // --- Helper Functions ---
+
+        // Returns DD.MM.YY
+        function formatDisplayDate(date) {
+            const d = date.getDate();
+            const m = date.getMonth() + 1;
+            const y = date.getFullYear().toString().slice(-2);
+            return `${d}.${m}.${y}`;
+        }
+        
+        // Returns YYYY-MM-DD for input[type=date]
+        function formatInputDate(date) {
+            const d = String(date.getDate()).padStart(2, '0');
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const y = date.getFullYear();
+            return `${y}-${m}-${d}`;
+        }
+
+        // Calculate logical day from date string (YYYY-MM-DD)
+        function calculateDayFromDateStr(dateStr) {
+            const [y, m, d] = dateStr.split('-');
+            const selectedDate = new Date(y, m - 1, d);
+            selectedDate.setHours(0,0,0,0);
+            
+            const startDate = new Date(START_DATE);
+            startDate.setHours(0,0,0,0);
+            
+            const diffTime = selectedDate - startDate;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays < 0) return "לפני תחילת הטיפול";
+            if (diffDays >= TOTAL_DAYS) return `יום ${diffDays + 1} (לאחר סיום)`;
+            return `יום ${diffDays + 1}`;
+        }
+
+        function formatDaysRemaining(days) {
+            if (days === 0) return '0 ימים';
+            if (days % 1 === 0.5) {
+                return Math.floor(days) === 0 ? 'חצי יום' : `${Math.floor(days)} וחצי ימים`;
+            }
+            return `${days} ימים`;
+        }
+
+        function createCheckbox(day, time, labelText, icon) {
+            const id = `${day}-${time}`;
+            const isChecked = state[id] === true;
+
+            const wrapper = document.createElement('label');
+            wrapper.className = 'custom-checkbox cursor-pointer relative group';
+
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.className = 'sr-only'; 
+            input.checked = isChecked;
+            input.onchange = (e) => toggleCheck(id, e.target.checked);
+
+            const visual = document.createElement('div');
+            visual.className = `
+                h-14 rounded-lg border-2 transition-all duration-200 flex items-center px-3 gap-3
+                ${isChecked ? 'bg-emerald-600 border-emerald-600' : 'bg-white border-slate-300 hover:border-slate-400'}
+            `;
+            
+            const checkIcon = `
+                <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors
+                    ${isChecked ? 'bg-white border-white' : 'border-slate-300 bg-white'}">
+                    ${isChecked ? '<svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>' : ''}
+                </div>
+            `;
+
+            visual.innerHTML = `
+                ${checkIcon}
+                <div class="flex flex-col">
+                    <span class="text-xs font-medium ${isChecked ? 'text-emerald-50' : 'text-slate-500'}">${icon} ${labelText}</span>
+                    <span class="text-sm font-semibold ${isChecked ? 'text-white' : 'text-slate-700'}">
+                        ${isChecked ? 'בוצע' : 'לביצוע'}
+                    </span>
+                </div>
+            `;
+
+            wrapper.appendChild(input);
+            wrapper.appendChild(visual);
+
+            input.addEventListener('change', () => {
+                 const isNowChecked = input.checked;
+                 const div = wrapper.querySelector('div');
+                 const iconDiv = div.firstElementChild;
+                 const labelSpan = div.lastElementChild.firstElementChild;
+                 const statusSpan = div.lastElementChild.lastElementChild;
+
+                 if (isNowChecked) {
+                     div.className = 'h-14 rounded-lg border-2 transition-all duration-200 flex items-center px-3 gap-3 bg-emerald-600 border-emerald-600';
+                     iconDiv.className = 'w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors bg-white border-white';
+                     iconDiv.innerHTML = '<svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>';
+                     labelSpan.className = 'text-xs font-medium text-emerald-50';
+                     statusSpan.className = 'text-sm font-semibold text-white';
+                     statusSpan.innerText = 'בוצע';
+                 } else {
+                     div.className = 'h-14 rounded-lg border-2 transition-all duration-200 flex items-center px-3 gap-3 bg-white border-slate-300 hover:border-slate-400';
+                     iconDiv.className = 'w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors border-slate-300 bg-white';
+                     iconDiv.innerHTML = '';
+                     labelSpan.className = 'text-xs font-medium text-slate-500';
+                     statusSpan.className = 'text-sm font-semibold text-slate-700';
+                     statusSpan.innerText = 'לביצוע';
+                 }
+            });
+
+            return wrapper;
+        }
+
+        function toggleCheck(id, isChecked) {
+            state[id] = isChecked;
+            localStorage.setItem('treatmentState', JSON.stringify(state));
+            updateProgress(true);
+        }
+
+        function updateProgress(showModal) {
+            const checkedCount = Object.values(state).filter(Boolean).length;
+            const percentage = Math.floor((checkedCount / TOTAL_CHECKS) * 100);
+
+            document.getElementById('percent-display').innerText = `${percentage}%`;
+            const progressBar = document.getElementById('progress-bar');
+            progressBar.style.width = `${percentage}%`;
+            const hue = (percentage / 100) * 120; 
+            progressBar.style.backgroundColor = `hsl(${hue}, 80%, 50%)`;
+            document.getElementById('percent-display').style.color = `hsl(${hue}, 70%, 35%)`;
+
+            let p1Checked = 0;
+            let p2Checked = 0;
+
+            for (let i = 1; i <= PHASE_1_DAYS; i++) {
+                if (state[`${i}-morning`]) p1Checked++;
+                if (state[`${i}-evening`]) p1Checked++;
+            }
+            for (let i = PHASE_1_DAYS + 1; i <= TOTAL_DAYS; i++) {
+                if (state[`${i}-morning`]) p2Checked++;
+                if (state[`${i}-evening`]) p2Checked++;
+            }
+
+            const p1TotalChecks = PHASE_1_DAYS * 2;
+            const p2TotalChecks = PHASE_2_DAYS * 2;
+
+            const p1RemChecks = p1TotalChecks - p1Checked;
+            const p2RemChecks = p2TotalChecks - p2Checked;
+
+            const p1RemPct = Math.round((p1RemChecks / p1TotalChecks) * 100);
+            const p2RemPct = Math.round((p2RemChecks / p2TotalChecks) * 100);
+
+            let statusHtml = '';
+
+            if (p1RemChecks > 0) {
+                statusHtml += `
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-500">עד סוף שלב א':</span>
+                        <span class="font-bold text-slate-800">${formatDaysRemaining(p1RemChecks / 2)} ו-${p1RemPct}%</span>
+                    </div>`;
+            } else {
+                statusHtml += `
+                    <div class="flex justify-between items-center text-emerald-600 font-medium">
+                        <span>סוף שלב א':</span>
+                        <span>✅ הושלם בהצלחה!</span>
+                    </div>`;
+            }
+
+            if (p2RemChecks > 0) {
+                statusHtml += `
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-500">עד סיום הטיפול (שלב ב'):</span>
+                        <span class="font-bold text-slate-800">${formatDaysRemaining(p2RemChecks / 2)} ו-${p2RemPct}%</span>
+                    </div>`;
+            } else if (p1RemChecks === 0 && p2RemChecks === 0) {
+                 statusHtml += `
+                    <div class="flex justify-between items-center text-emerald-600 font-medium border-t border-emerald-100 pt-1 mt-1">
+                        <span>סיום הטיפול (שלב ב'):</span>
+                        <span>🏆 סיימת הכל!</span>
+                    </div>`;
+            } else {
+                 statusHtml += `
+                    <div class="flex justify-between items-center text-emerald-600 font-medium border-t border-emerald-100 pt-1 mt-1">
+                        <span>סיום הטיפול (שלב ב'):</span>
+                        <span>✅ שלב ב' הושלם!</span>
+                    </div>`;
+            }
+
+            document.getElementById('phase-status').innerHTML = statusHtml;
+
+            if (showModal) {
+                if (percentage > lastMilestone && percentage % 10 === 0) {
+                    lastMilestone = percentage;
+                    localStorage.setItem('lastMilestone', lastMilestone);
+                    triggerEncouragement(percentage);
+                } 
+                else if (percentage < lastMilestone) {
+                    lastMilestone = Math.floor(percentage / 10) * 10;
+                    localStorage.setItem('lastMilestone', lastMilestone);
+                }
+            }
+        }
+
+        // --- Gallery & Camera Functions ---
+        async function openGallery() {
+            document.getElementById('gallery-modal').classList.remove('hidden');
+            await renderGallery();
+        }
+
+        function closeGallery() {
+            document.getElementById('gallery-modal').classList.add('hidden');
+        }
+
+        async function renderGallery() {
+            const container = document.getElementById('gallery-container');
+            container.innerHTML = '<div class="text-center text-slate-400 py-10">טוען תמונות...</div>';
+            
+            try {
+                let photos = await getPhotosFromDB();
+                
+                if (photos.length === 0) {
+                    container.innerHTML = `
+                        <div class="flex flex-col items-center justify-center py-16 text-slate-400">
+                            <svg class="w-16 h-16 mb-4 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            <p>עוד אין תמונות בתיעוד.</p>
+                            <p class="text-sm">לחץ על הוסף תמונה כדי להתחיל!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Sort by date ascending (oldest to newest)
+                photos.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                container.innerHTML = '';
+                
+                photos.forEach(photo => {
+                    // Format display date
+                    const [y, m, d] = photo.date.split('-');
+                    const displayDate = `${d}.${m}.${y.slice(-2)}`;
+                    
+                    const card = document.createElement('div');
+                    card.className = 'bg-white rounded-xl overflow-hidden shadow-sm border border-slate-200';
+                    card.innerHTML = `
+                        <div class="h-64 bg-slate-100 relative group">
+                            <img src="${photo.imageData}" class="w-full h-full object-cover" alt="תיעוד">
+                            <button onclick="handleDeletePhoto(${photo.id})" class="absolute top-2 left-2 bg-white/90 p-2 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-50">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                        </div>
+                        <div class="p-3 bg-white flex justify-between items-center">
+                            <span class="font-bold text-teal-700">${photo.dayLabel}</span>
+                            <span class="text-sm font-medium text-slate-500">${displayDate}</span>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+
+            } catch (error) {
+                container.innerHTML = '<div class="text-center text-red-400 py-10">שגיאה בטעינת התמונות.</div>';
+            }
+        }
+
+        async function handleDeletePhoto(id) {
+            if(confirm("האם אתה בטוח שברצונך למחוק תמונה זו?")) {
+                await deletePhotoFromDB(id);
+                renderGallery(); // Refresh
+            }
+        }
+
+        // Image compression to avoid filling up the phone's memory
+        function compressImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const MAX_DIM = 1200;
+
+                        if (width > height && width > MAX_DIM) {
+                            height *= MAX_DIM / width;
+                            width = MAX_DIM;
+                        } else if (height > MAX_DIM) {
+                            width *= MAX_DIM / height;
+                            height = MAX_DIM;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Output compressed base64 JPEG
+                        resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+                    };
+                };
+            });
+        }
+
+        async function handlePhotoSelected(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Reset input so the same file can be selected again if needed
+            event.target.value = '';
+
+            // Show loading overlay (optional, compression is usually fast)
+            document.getElementById('photo-preview').src = "";
+            document.getElementById('photo-date-modal').classList.remove('hidden');
+            
+            // Compress Image
+            const base64Image = await compressImage(file);
+            currentTempPhoto = base64Image;
+
+            // Show in modal
+            document.getElementById('photo-preview').src = base64Image;
+            
+            // Set default date to today
+            const dateInput = document.getElementById('photo-date-input');
+            dateInput.value = formatInputDate(new Date());
+            
+            // Trigger day calculation
+            updatePhotoDayPreview();
+        }
+
+        // Updates the "Will be saved as: Day X" label dynamically
+        function updatePhotoDayPreview() {
+            const dateStr = document.getElementById('photo-date-input').value;
+            if(!dateStr) return;
+            const dayLabel = calculateDayFromDateStr(dateStr);
+            document.getElementById('photo-day-preview').innerText = `תמונה זו תסומן כ: ${dayLabel}`;
+        }
+        
+        // Listen to date changes
+        document.getElementById('photo-date-input').addEventListener('change', updatePhotoDayPreview);
+
+        function cancelPhotoUpload() {
+            currentTempPhoto = null;
+            document.getElementById('photo-date-modal').classList.add('hidden');
+        }
+
+        async function savePhotoWithDate() {
+            if (!currentTempPhoto) return;
+            
+            const dateStr = document.getElementById('photo-date-input').value;
+            if (!dateStr) {
+                alert("אנא בחר תאריך לתמונה");
+                return;
+            }
+
+            const dayLabel = calculateDayFromDateStr(dateStr);
+            
+            const newPhoto = {
+                date: dateStr,
+                dayLabel: dayLabel,
+                imageData: currentTempPhoto
+            };
+
+            await savePhotoToDB(newPhoto);
+            
+            // Cleanup and close
+            currentTempPhoto = null;
+            document.getElementById('photo-date-modal').classList.add('hidden');
+            
+            // Refresh gallery if it's open
+            if (!document.getElementById('gallery-modal').classList.contains('hidden')) {
+                renderGallery();
+            } else {
+                // If they somehow uploaded without opening gallery (not possible right now, but safe)
+                openGallery();
+            }
+        }
+
+
+        // --- UI Modals & Instant Feedback ---
+        
+        function triggerEncouragement(percentage) {
+            const msg = milestoneMessages[percentage] || "התקדמות מדהימה!";
+            showMessageModal(
+                `הגעת ל-${percentage}%!`, 
+                `<p class="text-lg leading-relaxed text-slate-700">${msg}</p>`, 
+                "ממשיכים בכל הכוח", 
+                "🏆"
+            );
+        }
+
+        function showDailyTip() {
+            let randomIndex;
+            do {
+                randomIndex = Math.floor(Math.random() * dailyTips.length);
+            } while (randomIndex === lastTipIndex && dailyTips.length > 1);
+            
+            lastTipIndex = randomIndex;
+            const tip = dailyTips[randomIndex];
+
+            showMessageModal(
+                "טיפ יומי 💡", 
+                `<p class="text-lg leading-relaxed text-slate-700 font-medium bg-amber-50 p-4 rounded-xl border border-amber-100">${tip}</p>`, 
+                "תודה רבה!", 
+                "✨"
+            );
+        }
+
+        function showMessageModal(title, msgHtml, buttonText, icon = '🏆') {
+            const modal = document.getElementById('modal');
+            document.getElementById('modal-icon').innerText = icon;
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerHTML = msgHtml;
+            const btn = document.getElementById('modal-btn');
+            btn.innerText = buttonText || 'סגור';
+            btn.disabled = false;
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+
+        function downloadAndShowMessage() {
+            downloadCalendar();
+
+            setTimeout(() => {
+                const msg = `
+                    <div class="text-right space-y-3 mt-2 text-sm bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <p><strong>📱 בסמארטפון:</strong><br> פשוט לחץ על הקובץ שירד כדי להוסיף ליומן.</p>
+                        <hr class="border-slate-200">
+                        <p><strong>💻 במחשב (לגוגל יומן):</strong></p>
+                        <ol class="list-decimal list-inside text-slate-500 pr-1 space-y-1">
+                            <li>פתח את גוגל יומן בדפדפן</li>
+                            <li>לחץ על גלגל השיניים (הגדרות)</li>
+                            <li>בחר ב-"ייבוא וייצוא"</li>
+                            <li>העלה את הקובץ שהורד</li>
+                        </ol>
+                    </div>
+                `;
+                showMessageModal('הקובץ ירד בהצלחה', msg, 'הבנתי, תודה!', '📅');
+            }, 500);
+        }
+
+        // --- Calendar Generator (ICS) ---
+        function downloadCalendar() {
+            const formatDateForICS = (date, hours, minutes) => {
+                const d = new Date(date);
+                const pad = (n) => n < 10 ? '0' + n : n;
+                return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(hours)}${pad(minutes)}00`;
+            };
+
+            const dtStartMorning = formatDateForICS(START_DATE, 7, 30);
+            const dtEndMorning = formatDateForICS(START_DATE, 8, 0); 
+
+            const dtStartEvening = formatDateForICS(START_DATE, 19, 30);
+            const dtEndEvening = formatDateForICS(START_DATE, 20, 0);
+
+            const icsData = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Tracker App//IL
+BEGIN:VEVENT
+SUMMARY:☀️ המסע שלי - טיפול בוקר
+DTSTART:${dtStartMorning}
+DTEND:${dtEndMorning}
+RRULE:FREQ=DAILY;COUNT=${TOTAL_DAYS}
+DESCRIPTION:אל תשכח/י לסמן באפליקציה!
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:הגיע הזמן לטיפול בוקר
+TRIGGER:-PT0M
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:🌙 המסע שלי - טיפול ערב
+DTSTART:${dtStartEvening}
+DTEND:${dtEndEvening}
+RRULE:FREQ=DAILY;COUNT=${TOTAL_DAYS}
+DESCRIPTION:אל תשכח/י לסמן באפליקציה!
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:הגיע הזמן לטיפול ערב
+TRIGGER:-PT0M
+END:VALARM
+END:VEVENT
+END:VCALENDAR`;
+
+            const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'treatment_reminders.ics';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // Run App
+        init();
+
+    </script>
+</body>
+</html>
