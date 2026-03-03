@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>יוצר תמונות מאימוג'ים</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700;800&display=swap');
+        
+        body {
+            font-family: 'Assistant', sans-serif;
+        }
+
+        .checkerboard {
+            background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
+                              linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
+                              linear-gradient(45deg, transparent 75%, #f0f0f0 75%),
+                              linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px 10px, 10px 0;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-runnable-track {
+            background: #e2e8f0;
+            height: 6px;
+            border-radius: 3px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            margin-top: -5px;
+            background-color: #2563eb;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* סגנון למקשי מקלדת להדגשה */
+        kbd {
+            background-color: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.2), inset 0 0 0 1px #fff;
+            color: #334155;
+            display: inline-block;
+            font-family: sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1;
+            padding: 2px 5px;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-2 sm:p-4">
+
+    <div class="bg-white rounded-2xl shadow-xl max-w-4xl w-full overflow-hidden flex flex-col max-h-[98vh] md:max-h-[92vh]">
+        
+        <!-- Header Section -->
+        <header class="bg-white border-b border-slate-100 px-5 py-4 shrink-0">
+            <h1 class="text-xl sm:text-2xl font-black text-slate-800 leading-tight">יוצר תמונות מאימוג'ים</h1>
+            <p class="text-sm font-bold text-blue-600 mt-1">עיצוב אייקונים ותמונות בקליק</p>
+            <p class="text-xs sm:text-sm text-slate-500 mt-2 max-w-2xl leading-relaxed">
+                בעזרת אפליקציה זו אפשר לבחור אימוג'ים ולהפוך אותם לתמונות איכותיות ברזולוציות שונות. תוכלו להשתמש בתוצאה כ-Favicon לאתר, אייקון לאפליקציה, או כאלמנט עיצובי לפרויקטים שלכם, עם שליטה מלאה על המיקום, הצבע והשקיפות.
+            </p>
+        </header>
+
+        <div class="flex flex-col md:flex-row overflow-y-auto md:overflow-hidden">
+            
+            <!-- Preview Section -->
+            <div class="md:w-2/5 bg-slate-50 p-4 sm:p-6 flex flex-col items-center justify-center border-l border-slate-100 shrink-0">
+                <div class="relative">
+                    <div id="previewContainer" class="p-1.5 sm:p-2 rounded-xl bg-white shadow-sm border-2">
+                        <canvas id="previewCanvas" width="512" height="512" class="w-36 h-36 xs:w-44 xs:h-44 sm:w-60 sm:h-60 shadow-lg rounded-md"></canvas>
+                    </div>
+                    <div id="ghostIcon" class="hidden absolute -top-2 -right-2 bg-indigo-600 text-white p-1 rounded-full shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"/></svg>
+                    </div>
+                </div>
+                <div class="mt-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">תצוגה מקדימה</div>
+            </div>
+
+            <!-- Controls Section -->
+            <div class="flex-1 p-4 sm:p-6 space-y-5 overflow-y-auto no-scrollbar">
+                
+                <!-- Emoji Input -->
+                <div class="space-y-2">
+                    <div class="flex items-center flex-wrap gap-x-2 gap-y-1">
+                        <label class="text-xs font-bold text-slate-600 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                            בחר אימוג'י
+                        </label>
+                        <!-- טיפ בולט יותר וצמוד לכותרת -->
+                        <span class="text-[11px] font-bold text-blue-600">
+                            (טיפ: לחצו <kbd>Win</kbd> + <kbd>.</kbd> למקלדת המלאה)
+                        </span>
+                    </div>
+                    <div class="flex gap-2">
+                        <input id="emojiInput" type="text" value="✨" class="w-14 p-2 bg-slate-50 border border-slate-200 rounded-lg text-center text-2xl focus:ring-2 focus:ring-blue-500 outline-none">
+                        <div id="quickEmojiContainer" class="flex-1 flex items-center gap-1 overflow-x-auto pb-1 no-scrollbar border-r border-slate-100 pr-2">
+                            <!-- Emojis will be injected here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Background -->
+                <div class="space-y-1.5">
+                    <label class="text-xs font-bold text-slate-600 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
+                        הגדרות רקע
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <button id="transparencyBtn" class="flex-1 py-2 px-3 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-2 bg-white border-slate-200 text-slate-600 hover:bg-slate-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"/></svg>
+                            <span>לחצו לרקע שקוף</span>
+                        </button>
+                        <input id="colorInput" type="color" value="#3b82f6" class="w-12 h-9 p-1 bg-white border border-slate-200 rounded-lg cursor-pointer">
+                    </div>
+                </div>
+
+                <!-- Sliders -->
+                <div class="bg-slate-50 p-4 rounded-xl space-y-4 border border-slate-100">
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[11px] font-bold text-slate-600">
+                            <span class="flex items-center gap-1">גודל האימוג'י בתוך המסגרת</span>
+                            <span id="scaleLabel">85%</span>
+                        </div>
+                        <input id="scaleSlider" type="range" min="20" max="150" step="5" value="85" class="w-full">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <div class="flex justify-between items-center text-[10px] font-bold text-slate-500">
+                                <span>הסטה אנכית (Y)</span>
+                                <div class="flex items-center gap-2">
+                                    <span id="offsetYLabel" class="bg-slate-200 text-slate-600 px-1.5 rounded font-mono">+5</span>
+                                    <button onclick="resetY()" class="text-slate-400 hover:text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+                                </div>
+                            </div>
+                            <input id="offsetYSlider" type="range" min="-40" max="40" step="1" value="5" class="w-full">
+                        </div>
+                        
+                        <div class="space-y-1">
+                            <div class="flex justify-between items-center text-[10px] font-bold text-slate-500">
+                                <span>הסטה אופקית (X)</span>
+                                <div class="flex items-center gap-2">
+                                    <span id="offsetXLabel" class="bg-green-100 text-green-700 px-1.5 rounded font-mono">0</span>
+                                    <button onclick="resetX()" class="text-slate-400 hover:text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+                                </div>
+                            </div>
+                            <input id="offsetXSlider" type="range" min="-40" max="40" step="1" value="0" class="w-full">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resolution -->
+                <div class="space-y-2 pt-1">
+                    <div class="flex justify-between text-[11px] font-bold text-blue-600 uppercase">
+                        <span>גודל התמונה (רזולוציה)</span>
+                        <span id="resolutionLabel" class="bg-blue-100 px-2 py-0.5 rounded text-[10px] font-mono">512px</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-[10px] text-slate-400 w-8">64px</span>
+                        <input id="resolutionSlider" type="range" min="64" max="1024" step="64" value="512" class="w-full">
+                        <span class="text-[10px] text-slate-400 w-12 text-left font-bold">1024px</span>
+                    </div>
+                </div>
+
+                <!-- Download -->
+                <button id="downloadBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-lg shadow-blue-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    הורד קובץ PNG
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-slate-50 border-t border-slate-100 p-4 text-center text-xs text-slate-400 shrink-0">
+            פותח על ידי ONB. 
+            <a href="mailto:ofirbn@post.com" class="text-blue-500 hover:text-blue-700 font-bold underline transition-colors inline-flex items-center gap-1 mr-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                לחצו ליצירת קשר
+            </a>
+        </footer>
+    </div>
+
+    <script>
+        // DOM Elements
+        const canvas = document.getElementById('previewCanvas');
+        const ctx = canvas.getContext('2d');
+        const emojiInput = document.getElementById('emojiInput');
+        const colorInput = document.getElementById('colorInput');
+        const transparencyBtn = document.getElementById('transparencyBtn');
+        const scaleSlider = document.getElementById('scaleSlider');
+        const offsetYSlider = document.getElementById('offsetYSlider');
+        const offsetXSlider = document.getElementById('offsetXSlider');
+        const resolutionSlider = document.getElementById('resolutionSlider');
+        const downloadBtn = document.getElementById('downloadBtn');
+        
+        const scaleLabel = document.getElementById('scaleLabel');
+        const offsetYLabel = document.getElementById('offsetYLabel');
+        const offsetXLabel = document.getElementById('offsetXLabel');
+        const resolutionLabel = document.getElementById('resolutionLabel');
+        const previewContainer = document.getElementById('previewContainer');
+        const ghostIcon = document.getElementById('ghostIcon');
+        const quickEmojiContainer = document.getElementById('quickEmojiContainer');
+
+        // State
+        let isTransparent = false;
+        const quickEmojis = ['✨', '🚀', '🔥', '💡', '❤️', '✅', '🌈', '🎨', '🎯', '📱'];
+
+        // Initialize Quick Picker
+        quickEmojis.forEach(e => {
+            const btn = document.createElement('button');
+            btn.innerText = e;
+            btn.className = "hover:scale-125 transition-transform text-lg p-1";
+            btn.onclick = () => {
+                emojiInput.value = e;
+                draw();
+            };
+            quickEmojiContainer.appendChild(btn);
+        });
+
+        function draw(targetCanvas = canvas, targetSize = 512) {
+            const tCtx = targetCanvas.getContext('2d');
+            const emoji = emojiInput.value;
+            const bg = colorInput.value;
+            const scale = scaleSlider.value / 100;
+            const offX = parseInt(offsetXSlider.value);
+            const offY = parseInt(offsetYSlider.value);
+
+            tCtx.clearRect(0, 0, targetSize, targetSize);
+
+            if (!isTransparent) {
+                tCtx.fillStyle = bg;
+                tCtx.fillRect(0, 0, targetSize, targetSize);
+            }
+
+            const fontSize = targetSize * scale;
+            tCtx.font = `${fontSize}px sans-serif`;
+            tCtx.textAlign = 'center';
+            tCtx.textBaseline = 'middle';
+            
+            const posX = (targetSize / 2) + (offX * (targetSize / 100));
+            const posY = (targetSize / 2) + (offY * (targetSize / 100));
+            
+            tCtx.fillText(emoji, posX, posY);
+
+            // Update Labels (only if drawing to preview)
+            if (targetCanvas === canvas) {
+                scaleLabel.innerText = `${Math.round(scale * 100)}%`;
+                offsetYLabel.innerText = offY > 0 ? `+${offY}` : offY;
+                offsetXLabel.innerText = offX > 0 ? `+${offX}` : offX;
+                
+                // Color formatting for indicators
+                offsetYLabel.className = offY === 0 ? "bg-green-100 text-green-700 px-1.5 rounded font-mono" : "bg-slate-200 text-slate-600 px-1.5 rounded font-mono";
+                offsetXLabel.className = offX === 0 ? "bg-green-100 text-green-700 px-1.5 rounded font-mono" : "bg-slate-200 text-slate-600 px-1.5 rounded font-mono";
+            }
+        }
+
+        function resetY() { offsetYSlider.value = 0; draw(); }
+        function resetX() { offsetXSlider.value = 0; draw(); }
+
+        transparencyBtn.onclick = () => {
+            isTransparent = !isTransparent;
+            if (isTransparent) {
+                transparencyBtn.classList.add('bg-indigo-50', 'border-indigo-200', 'text-indigo-700');
+                transparencyBtn.classList.remove('bg-white', 'border-slate-200', 'text-slate-600');
+                transparencyBtn.querySelector('span').innerText = 'לחצו לצבע רקע';
+                colorInput.classList.add('opacity-20', 'grayscale', 'cursor-not-allowed');
+                colorInput.disabled = true;
+                previewContainer.classList.add('checkerboard');
+                ghostIcon.classList.remove('hidden');
+            } else {
+                transparencyBtn.classList.remove('bg-indigo-50', 'border-indigo-200', 'text-indigo-700');
+                transparencyBtn.classList.add('bg-white', 'border-slate-200', 'text-slate-600');
+                transparencyBtn.querySelector('span').innerText = 'לחצו לרקע שקוף';
+                colorInput.classList.remove('opacity-20', 'grayscale', 'cursor-not-allowed');
+                colorInput.disabled = false;
+                previewContainer.classList.remove('checkerboard');
+                ghostIcon.classList.add('hidden');
+            }
+            draw();
+        };
+
+        resolutionSlider.oninput = () => {
+            resolutionLabel.innerText = `${resolutionSlider.value}px`;
+        };
+
+        downloadBtn.onclick = () => {
+            const dSize = parseInt(resolutionSlider.value);
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = dSize;
+            tempCanvas.height = dSize;
+            
+            draw(tempCanvas, dSize);
+            
+            const link = document.createElement('a');
+            link.download = `icon-${emojiInput.value}-${dSize}px.png`;
+            link.href = tempCanvas.toDataURL('image/png');
+            link.click();
+        };
+
+        // Listeners
+        [emojiInput, colorInput, scaleSlider, offsetYSlider, offsetXSlider].forEach(el => {
+            el.addEventListener('input', () => draw());
+        });
+
+        // Start
+        window.onload = () => draw();
+    </script>
+</body>
+</html>
