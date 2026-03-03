@@ -49,9 +49,10 @@
         input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
         input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
         
-        .tab-active { border-bottom: 2px solid #3b82f6; color: #3b82f6; font-weight: 500; }
+        /* Updated Tab Styles for more prominent black text */
+        .tab-active { border-bottom: 3px solid #000000; color: #000000; }
         .tab-inactive { color: #6b7280; }
-        .tab-inactive:hover { color: #374151; }
+        .tab-inactive:hover { color: #000000; border-bottom: 3px solid #e5e7eb; }
         
         /* Toast animation */
         @keyframes slideIn {
@@ -76,13 +77,13 @@
         
         <!-- Tabs Navigation -->
         <div class="flex border-b border-gray-200 mb-6">
-            <button onclick="switchTab('harmonies')" id="tab-harmonies" class="flex-1 py-3 text-center tab-active transition-colors flex items-center justify-center gap-2">
-                <i data-lucide="palette" class="w-5 h-5"></i>
-                הרמוניות וצבעים
+            <button onclick="switchTab('harmonies')" id="tab-harmonies" class="flex-1 py-3 text-center tab-active transition-colors flex items-center justify-center gap-2 text-lg font-bold">
+                <i data-lucide="palette" class="w-6 h-6"></i>
+                1. הרמוניות וצבעים
             </button>
-            <button onclick="switchTab('contrast')" id="tab-contrast" class="flex-1 py-3 text-center tab-inactive transition-colors flex items-center justify-center gap-2">
-                <i data-lucide="eye" class="w-5 h-5"></i>
-                בדיקת ניגודיות וטקסט
+            <button onclick="switchTab('contrast')" id="tab-contrast" class="flex-1 py-3 text-center tab-inactive transition-colors flex items-center justify-center gap-2 text-lg font-bold">
+                <i data-lucide="eye" class="w-6 h-6"></i>
+                2. בדיקת ניגודיות וטקסט
             </button>
         </div>
 
@@ -91,7 +92,7 @@
             
             <!-- Controls Card -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i data-lucide="settings-2" class="w-5 h-5 text-primary"></i> בחר צבע בסיס</h2>
+                <h2 class="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900"><i data-lucide="settings-2" class="w-5 h-5 text-primary"></i> בחר צבע בסיס</h2>
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Method 1: Color Picker & Hex -->
@@ -101,9 +102,9 @@
                             <div class="relative w-12 h-12 rounded-full shadow-inner border border-gray-200 flex items-center justify-center bg-white overflow-hidden">
                                 <input type="color" id="colorPicker" value="#3b82f6" class="absolute inset-0 w-full h-full scale-150" onchange="handleManualColorChange(this.value)">
                             </div>
-                            <input type="text" id="hexInput" value="#3b82f6" class="border border-gray-300 rounded-lg px-4 py-2 w-32 focus:outline-none focus:ring-2 focus:ring-primary text-left" dir="ltr" onchange="handleManualColorChange(this.value)">
+                            <input type="text" id="hexInput" value="#3b82f6" class="border border-gray-300 rounded-lg px-4 py-2 w-32 focus:outline-none focus:ring-2 focus:ring-gray-900 text-left" dir="ltr" onchange="handleManualColorChange(this.value)">
                             <button onclick="generateRandomColor()" class="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors tooltip" title="צבע אקראי">
-                                <i data-lucide="dices" class="w-5 h-5 text-gray-600"></i>
+                                <i data-lucide="dices" class="w-5 h-5 text-gray-900"></i>
                             </button>
                         </div>
                     </div>
@@ -111,7 +112,7 @@
                     <!-- Method 2: Image Upload -->
                     <div class="space-y-3">
                         <label class="block text-sm text-gray-600">או העלה תמונה לדגימה</label>
-                        <label class="flex items-center justify-center px-4 py-2 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors w-full">
+                        <label class="flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-900 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors w-full font-medium">
                             <i data-lucide="image-plus" class="w-5 h-5 ml-2"></i>
                             <span>בחר תמונה</span>
                             <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
@@ -142,19 +143,28 @@
         <div id="content-contrast" class="hidden space-y-6">
             
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <h2 class="text-lg font-semibold mb-4">בדיקת קריאות (WCAG)</h2>
-                <p class="text-sm text-gray-600 mb-4">בחר פלטה שייצרת, הזן טקסט, ובדוק אילו צבעי פונט מתאימים כדי לעמוד בתקן הנגישות (יחס של 4.5:1 לפחות).</p>
+                <h2 class="text-lg font-semibold mb-4 text-gray-900">בדיקת קריאות (WCAG)</h2>
+                <p class="text-sm text-gray-600 mb-4">בחר פלטה שייצרת, הזן טקסט, ובדוק אילו צבעי פונט מתאימים כדי לעמוד בתקן הנגישות (יחס של 4.5:1 לפחות). המערכת גם מציעה צבע משלים מותאם לכל רקע!</p>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">בחר פלטה לבדיקה</label>
-                        <select id="paletteSelect" onchange="renderContrastTester()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                        <label class="block text-sm font-medium text-gray-900 mb-2">בחר פלטה לבדיקה</label>
+                        <select id="paletteSelect" onchange="renderContrastTester()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900">
                             <!-- Options injected via JS -->
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">טקסט לדוגמה</label>
-                        <input type="text" id="sampleText" value="הטקסט שלך יופיע כאן" oninput="renderContrastTester()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                        <label class="block text-sm font-medium text-gray-900 mb-2">טקסט לדוגמה</label>
+                        <input type="text" id="sampleText" value="הטקסט שלך יופיע כאן" oninput="renderContrastTester()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-900 mb-2">צבע טקסט בתצוגה</label>
+                        <select id="textColorSelect" onchange="renderContrastTester()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900">
+                            <option value="auto">המומלץ ביותר (אוטומטי)</option>
+                            <option value="white">טקסט לבן תמיד</option>
+                            <option value="black">טקסט שחור תמיד</option>
+                            <option value="extra">הצבע המשלים המוצע</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -172,7 +182,7 @@
     <footer class="bg-white border-t border-gray-200 mt-auto py-6 text-center">
         <p class="text-gray-500 text-sm">
             פותח על ידי OBN. 
-            <a href="mailto:ofirbn@post.com" class="text-primary hover:underline font-medium">ליצירת קשר</a>
+            <a href="mailto:ofirbn@post.com" class="text-gray-900 hover:underline font-bold">ליצירת קשר</a>
         </p>
     </footer>
 
@@ -193,11 +203,12 @@
             document.getElementById('content-harmonies').classList.add('hidden');
             document.getElementById('content-contrast').classList.add('hidden');
             
-            document.getElementById('tab-harmonies').className = 'flex-1 py-3 text-center tab-inactive transition-colors flex items-center justify-center gap-2';
-            document.getElementById('tab-contrast').className = 'flex-1 py-3 text-center tab-inactive transition-colors flex items-center justify-center gap-2';
+            const baseTabClass = 'flex-1 py-3 text-center transition-colors flex items-center justify-center gap-2 text-lg font-bold';
+            
+            document.getElementById('tab-harmonies').className = `${baseTabClass} ${tabId === 'harmonies' ? 'tab-active' : 'tab-inactive'}`;
+            document.getElementById('tab-contrast').className = `${baseTabClass} ${tabId === 'contrast' ? 'tab-active' : 'tab-inactive'}`;
             
             document.getElementById(`content-${tabId}`).classList.remove('hidden');
-            document.getElementById(`tab-${tabId}`).className = 'flex-1 py-3 text-center tab-active transition-colors flex items-center justify-center gap-2 border-b-2 border-primary';
 
             if(tabId === 'contrast') {
                 updatePaletteSelect();
@@ -353,14 +364,14 @@
 
                 section.innerHTML = `
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-medium text-gray-800">${name}</h3>
-                        <button onclick="downloadPalettePNG('${paletteId}', '${name}')" class="text-sm text-primary hover:text-blue-700 flex items-center gap-1">
+                        <h3 class="text-lg font-medium text-gray-900">${name}</h3>
+                        <button onclick="downloadPalettePNG('${paletteId}', '${name}')" class="text-sm font-medium text-gray-600 hover:text-gray-900 flex items-center gap-1">
                             <i data-lucide="download" class="w-4 h-4"></i> שמור כתמונה
                         </button>
                     </div>
                     <!-- Wrapper for HTML2Canvas -->
-                    <div id="${paletteId}" class="p-2 bg-white rounded-xl">
-                        <div class="flex h-32 rounded-lg overflow-hidden shadow-inner">
+                    <div id="${paletteId}" class="p-2 bg-white rounded-xl border border-gray-100">
+                        <div class="flex h-32 rounded-lg overflow-hidden shadow-sm">
                             ${colorsHtml}
                         </div>
                     </div>
@@ -395,6 +406,7 @@
             const select = document.getElementById('paletteSelect');
             const paletteName = select.value;
             const text = document.getElementById('sampleText').value || 'הטקסט שלך יופיע כאן';
+            const textColorChoice = document.getElementById('textColorSelect').value;
             const container = document.getElementById('contrastResults');
             
             if(!paletteName || !generatedPalettes[paletteName]) return;
@@ -407,53 +419,104 @@
                 const contrastBlack = chroma.contrast(bgHex, 'black');
                 
                 const optimalColor = contrastWhite > contrastBlack ? 'white' : 'black';
-                const optimalHex = contrastWhite > contrastBlack ? '#FFFFFF' : '#000000';
                 
                 const passWhite = contrastWhite >= 4.5;
                 const passBlack = contrastBlack >= 4.5;
 
+                // --- Generate proactive extra color (Complementary based) ---
+                let baseChroma = chroma(bgHex);
+                // Get complementary hue
+                let extraColorChroma = baseChroma.set('hsl.h', '+180'); 
+                
+                // Adjust lightness to pass contrast safely
+                if (optimalColor === 'black') {
+                    // Background is light, extra needs to be very dark
+                    extraColorChroma = extraColorChroma.darken(3);
+                    if (chroma.contrast(bgHex, extraColorChroma) < 4.5) {
+                        extraColorChroma = extraColorChroma.darken(2);
+                    }
+                } else {
+                    // Background is dark, extra needs to be very light
+                    extraColorChroma = extraColorChroma.brighten(3);
+                    if (chroma.contrast(bgHex, extraColorChroma) < 4.5) {
+                        extraColorChroma = extraColorChroma.brighten(2);
+                    }
+                }
+                
+                // Ultimate fallback if contrast is still poor (very rare)
+                if (chroma.contrast(bgHex, extraColorChroma) < 4.5) {
+                    extraColorChroma = optimalColor === 'black' ? chroma('#111111') : chroma('#F8F9FA');
+                }
+                
+                const extraColorHex = extraColorChroma.hex().toUpperCase();
+
+                // --- Determine displayed color in square ---
+                let displayTextColorHex;
+                if (textColorChoice === 'white') displayTextColorHex = '#FFFFFF';
+                else if (textColorChoice === 'black') displayTextColorHex = '#000000';
+                else if (textColorChoice === 'extra') displayTextColorHex = extraColorHex;
+                else displayTextColorHex = optimalColor === 'white' ? '#FFFFFF' : '#000000';
+
+                // --- Build Card ---
                 const card = document.createElement('div');
                 card.className = 'rounded-2xl overflow-hidden shadow-md border border-gray-100 bg-white flex flex-col';
                 
                 card.innerHTML = `
-                    <div class="p-8 flex-grow flex items-center justify-center text-center transition-colors" style="background-color: ${bgHex}; color: ${optimalColor}">
-                        <p class="text-2xl font-medium leading-tight">${text}</p>
+                    <div class="p-8 flex-grow flex items-center justify-center text-center transition-colors relative group" style="background-color: ${bgHex}; color: ${displayTextColorHex}">
+                        <p class="text-3xl font-bold leading-tight drop-shadow-sm">${text}</p>
                     </div>
                     
-                    <div class="p-4 bg-white border-t border-gray-100 space-y-3">
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-gray-500 font-mono" dir="ltr">BG: ${bgHex.toUpperCase()}</span>
-                            <span class="text-xs font-semibold px-2 py-1 bg-gray-100 rounded text-gray-700 flex items-center gap-1">
-                                מומלץ: ${optimalColor === 'white' ? 'לבן' : 'שחור'}
-                                <button onclick="copyToClipboard('${optimalHex}')" class="hover:text-primary"><i data-lucide="copy" class="w-3 h-3"></i></button>
-                            </span>
+                    <div class="p-5 bg-white border-t border-gray-100 space-y-4">
+                        <div class="flex justify-between items-center text-sm mb-1 pb-2 border-b border-gray-50">
+                            <span class="text-gray-900 font-bold">רקע:</span>
+                            <span class="text-gray-700 font-mono font-medium" dir="ltr">${bgHex.toUpperCase()}</span>
                         </div>
                         
-                        <div class="space-y-2">
+                        <div class="space-y-3">
                             <!-- White Text Test -->
-                            <div class="flex justify-between items-center text-sm">
+                            <div class="flex justify-between items-center text-sm ${textColorChoice === 'white' ? 'font-bold' : ''}">
                                 <div class="flex items-center gap-2">
                                     <div class="w-4 h-4 rounded-full border border-gray-300" style="background-color: white;"></div>
-                                    <span>טקסט לבן</span>
+                                    <span class="text-gray-800">טקסט לבן</span>
+                                    ${optimalColor === 'white' ? '<span class="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-bold">מומלץ</span>' : ''}
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="font-mono text-xs text-gray-500" dir="ltr">${contrastWhite.toFixed(2)}:1</span>
+                                    <span class="font-mono text-xs text-gray-500 w-10 text-right" dir="ltr">${contrastWhite.toFixed(1)}</span>
                                     ${passWhite ? 
-                                        '<span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-medium">עובר ✓</span>' : 
-                                        '<span class="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-medium">נכשל ✗</span>'}
+                                        '<span class="w-14 text-center px-1 py-0.5 bg-green-100 text-green-800 rounded text-xs font-bold">עובר ✓</span>' : 
+                                        '<span class="w-14 text-center px-1 py-0.5 bg-red-100 text-red-800 rounded text-xs font-bold">נכשל ✗</span>'}
                                 </div>
                             </div>
+                            
                             <!-- Black Text Test -->
-                            <div class="flex justify-between items-center text-sm">
+                            <div class="flex justify-between items-center text-sm ${textColorChoice === 'black' ? 'font-bold' : ''}">
                                 <div class="flex items-center gap-2">
                                     <div class="w-4 h-4 rounded-full border border-gray-300" style="background-color: black;"></div>
-                                    <span>טקסט שחור</span>
+                                    <span class="text-gray-800">טקסט שחור</span>
+                                    ${optimalColor === 'black' ? '<span class="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-bold">מומלץ</span>' : ''}
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="font-mono text-xs text-gray-500" dir="ltr">${contrastBlack.toFixed(2)}:1</span>
+                                    <span class="font-mono text-xs text-gray-500 w-10 text-right" dir="ltr">${contrastBlack.toFixed(1)}</span>
                                     ${passBlack ? 
-                                        '<span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-medium">עובר ✓</span>' : 
-                                        '<span class="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-medium">נכשל ✗</span>'}
+                                        '<span class="w-14 text-center px-1 py-0.5 bg-green-100 text-green-800 rounded text-xs font-bold">עובר ✓</span>' : 
+                                        '<span class="w-14 text-center px-1 py-0.5 bg-red-100 text-red-800 rounded text-xs font-bold">נכשל ✗</span>'}
+                                </div>
+                            </div>
+
+                            <!-- Extra Compliment Color Test -->
+                            <div class="flex justify-between items-center text-sm pt-3 mt-3 border-t border-gray-100 ${textColorChoice === 'extra' ? 'font-bold' : ''}">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center cursor-pointer shadow-sm hover:scale-110 transition-transform" style="background-color: ${extraColorHex};" onclick="copyToClipboard('${extraColorHex}')" title="לחץ להעתקת הקוד">
+                                        <i data-lucide="copy" class="w-2.5 h-2.5 text-white mix-blend-difference"></i>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-gray-900 font-medium">צבע משלים מותאם</span>
+                                        <span class="text-[10px] text-gray-400 font-mono" dir="ltr">${extraColorHex}</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-mono text-xs text-gray-500 w-10 text-right" dir="ltr">${chroma.contrast(bgHex, extraColorHex).toFixed(1)}</span>
+                                    <span class="w-14 text-center px-1 py-0.5 bg-green-100 text-green-800 rounded text-xs font-bold">עובר ✓</span>
                                 </div>
                             </div>
                         </div>
