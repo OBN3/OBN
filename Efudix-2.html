@@ -15,7 +15,7 @@
         
         /* Custom Checkbox Styling */
         .custom-checkbox input:checked + div {
-            background-color: #059669; /* emerald-600 */
+            background-color: #059669;
             border-color: #059669;
         }
         
@@ -43,9 +43,9 @@
             position: relative;
             background: #f8fafc;
             padding: 0.5rem 1.25rem;
-            color: #0f172a; /* Black/Dark Slate */
-            font-size: 1.125rem; /* Larger */
-            font-weight: 700; /* Bold */
+            color: #0f172a;
+            font-size: 1.125rem;
+            font-weight: 700;
             border: 2px solid #cbd5e1;
             border-radius: 999px;
             z-index: 1;
@@ -84,13 +84,17 @@
         <div class="max-w-md mx-auto px-4 py-3">
             <div class="flex justify-between items-start mb-2">
                 <div>
-                    <h1 class="text-lg font-bold text-slate-900">המסע שלי</h1>
+                    <h1 class="text-lg font-bold text-slate-900" id="header-title">המסע שלי</h1>
                     <p class="text-xs text-slate-500">מתחילים ב-16.2.26</p>
                 </div>
                 <div class="flex flex-col items-end gap-1.5">
                     <div class="text-2xl font-bold transition-colors duration-300" id="percent-display">0%</div>
                     <!-- Compact Buttons Row -->
                     <div class="flex flex-wrap justify-end gap-1.5 mt-0.5">
+                        <!-- Settings Button -->
+                        <button onclick="openSettings()" class="text-[11px] bg-slate-100 text-slate-600 px-2 py-1.5 rounded-md border border-slate-200 font-medium active:bg-slate-200 transition-colors flex items-center gap-1 shadow-sm">
+                            ⚙️
+                        </button>
                         <!-- Documentation/Gallery Button -->
                         <button onclick="openGallery()" class="text-[11px] bg-teal-50 text-teal-600 px-2 py-1.5 rounded-md border border-teal-100 font-medium active:bg-teal-100 transition-colors flex items-center gap-1 shadow-sm">
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -125,8 +129,50 @@
         <!-- Content will be injected here by JS -->
     </main>
 
+    <!-- Settings Modal (New!) -->
+    <div id="settings-modal" class="fixed inset-0 bg-slate-900/60 z-[90] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl modal-content flex flex-col overflow-hidden">
+            <div class="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50">
+                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    ⚙️ הגדרות אפליקציה
+                </h2>
+                <button onclick="closeSettings()" class="text-slate-400 hover:text-slate-600 p-1 rounded-full transition-colors">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-5 space-y-4 text-right">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">שם המטופל (יופיע בתיעוד):</label>
+                    <input type="text" id="setting-name" placeholder="למשל: ישראל ישראלי" class="w-full text-sm text-slate-800 bg-white border border-slate-300 rounded-lg py-2 px-3 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+                </div>
+                <div class="bg-blue-50/50 p-3 rounded-lg border border-blue-100">
+                    <h4 class="text-sm font-bold text-blue-800 mb-2 flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.19-.08-.05-.19-.02-.27 0-.12.03-1.98 1.26-5.59 3.7-.53.36-1.01.54-1.44.53-.47-.01-1.38-.27-2.06-.49-.83-.27-1.49-.42-1.43-.89.03-.25.38-.51 1.05-.78 4.11-1.79 6.85-2.97 8.22-3.54 3.92-1.64 4.73-1.93 5.26-1.94.12 0 .38.03.53.15.12.1.17.24.19.34.01.07.03.22.02.3z"/></svg>
+                        גיבוי לטלגרם (אופציונלי)
+                    </h4>
+                    <p class="text-[11px] text-blue-600 mb-3 leading-tight">הזן את הנתונים מ-BotFather ו-userinfobot כדי שהתמונות יישלחו אליך אוטומטית לטלגרם במקביל לשמירה באפליקציה.</p>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Bot Token:</label>
+                            <input type="text" id="setting-token" placeholder="123456789:ABCdef..." class="w-full text-xs text-slate-800 bg-white border border-slate-300 rounded-md py-1.5 px-2 focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Chat ID (שלך או של הקבוצה):</label>
+                            <input type="text" id="setting-chatid" placeholder="123456789" class="w-full text-xs text-slate-800 bg-white border border-slate-300 rounded-md py-1.5 px-2 focus:outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+                </div>
+                <button onclick="saveSettings()" class="w-full bg-slate-800 text-white py-2.5 rounded-xl font-medium active:scale-95 transition-transform shadow-sm">
+                    שמור הגדרות
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Motivational Modal -->
     <div id="modal" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <!-- ... existing modal ... -->
         <div class="bg-white rounded-2xl p-6 text-center max-w-xs w-full shadow-2xl modal-content">
             <div id="modal-icon" class="text-4xl mb-4">🏆</div>
             <h2 class="text-xl font-bold text-slate-900 mb-2" id="modal-title">כל הכבוד!</h2>
@@ -137,10 +183,9 @@
         </div>
     </div>
 
-    <!-- Gallery / Documentation Modal -->
+    <!-- Gallery Modal -->
     <div id="gallery-modal" class="fixed inset-0 bg-slate-900/40 z-[70] hidden flex items-end sm:items-center justify-center sm:p-4 backdrop-blur-sm">
         <div class="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md h-[85vh] sm:h-[80vh] shadow-2xl gallery-modal-content flex flex-col">
-            <!-- Gallery Header -->
             <div class="flex justify-between items-center p-4 border-b border-slate-100">
                 <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
                     <svg class="w-5 h-5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -151,17 +196,13 @@
                 </button>
             </div>
             
-            <!-- Gallery Content -->
             <div class="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-100 no-scrollbar" id="gallery-container">
-                <!-- Images injected here by JS -->
             </div>
 
-            <!-- Gallery Footer (Add Image Btn) -->
             <div class="p-4 bg-white border-t border-slate-100">
-                <!-- Hidden file input (Accepts images, allows camera capture on Android) -->
                 <input type="file" id="photo-upload" accept="image/*" class="hidden" onchange="handlePhotoSelected(event)">
                 <button onclick="document.getElementById('photo-upload').click()" class="w-full bg-teal-600 text-white py-3.5 rounded-xl font-medium active:scale-95 transition-transform shadow-md flex justify-center items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" style="display:none;"/></svg>
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
                     הוסף תמונה חדשה
                 </button>
             </div>
@@ -172,7 +213,6 @@
     <div id="photo-date-modal" class="fixed inset-0 bg-slate-900/80 z-[80] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl modal-content flex flex-col overflow-hidden">
             <div class="bg-slate-900 w-full max-h-[50vh] flex items-center justify-center overflow-hidden">
-                <!-- object-contain ensures the entire image is visible without cropping -->
                 <img id="photo-preview" src="" alt="Preview" class="w-full h-full object-contain">
             </div>
             <div class="p-5 text-center">
@@ -183,11 +223,11 @@
                 <p id="photo-day-preview" class="text-sm font-bold text-teal-600 mb-5 bg-teal-50 py-1 rounded-md"></p>
                 
                 <div class="flex gap-3">
-                    <button onclick="cancelPhotoUpload()" class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl font-medium active:bg-slate-200 transition-colors">
+                    <button id="cancel-photo-btn" onclick="cancelPhotoUpload()" class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl font-medium active:bg-slate-200 transition-colors">
                         ביטול
                     </button>
-                    <button onclick="savePhotoWithDate()" class="flex-1 bg-teal-600 text-white py-2.5 rounded-xl font-medium active:bg-teal-700 transition-colors shadow-sm">
-                        שמור תמונה
+                    <button id="save-photo-btn" onclick="savePhotoWithDate()" class="flex-1 bg-teal-600 text-white py-2.5 rounded-xl font-medium active:bg-teal-700 transition-colors shadow-sm flex items-center justify-center gap-2">
+                        <span>שמור בתיעוד</span>
                     </button>
                 </div>
             </div>
@@ -196,38 +236,37 @@
 
     <script>
         // --- Configuration ---
-        const START_DATE = new Date(2026, 1, 16); // Month is 0-indexed (1 = February)
+        const START_DATE = new Date(2026, 1, 16);
         const PHASE_1_DAYS = 21;
         const PHASE_2_DAYS = 14;
         const TOTAL_DAYS = PHASE_1_DAYS + PHASE_2_DAYS;
-        const TOTAL_CHECKS = TOTAL_DAYS * 2; // Morning + Evening
+        const TOTAL_CHECKS = TOTAL_DAYS * 2; 
         
         // --- State Management ---
         let state = JSON.parse(localStorage.getItem('treatmentState')) || {};
         let lastMilestone = parseInt(localStorage.getItem('lastMilestone')) || 0;
         let lastTipIndex = -1; 
-        
-        // Temporary photo hold before saving
         let currentTempPhoto = null;
 
-        // --- Database Setup (IndexedDB for storing photos safely) ---
+        // Settings
+        let patientName = localStorage.getItem('patientName') || '';
+        let telegramToken = localStorage.getItem('telegramToken') || '';
+        let telegramChatId = localStorage.getItem('telegramChatId') || '';
+
+        // --- Database Setup ---
         let db;
         const dbName = "TreatmentTrackerDB";
         
         function initDB() {
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open(dbName, 1);
-                request.onerror = (event) => {
-                    console.error("Database error:", event.target.error);
-                    reject(event.target.error);
-                };
+                request.onerror = (event) => reject(event.target.error);
                 request.onsuccess = (event) => {
                     db = event.target.result;
                     resolve(db);
                 };
                 request.onupgradeneeded = (event) => {
                     const db = event.target.result;
-                    // Create object store for photos with auto-incrementing ID
                     if (!db.objectStoreNames.contains("photos")) {
                         const store = db.createObjectStore("photos", { keyPath: "id", autoIncrement: true });
                         store.createIndex("date", "date", { unique: false });
@@ -266,7 +305,7 @@
             });
         }
 
-        // --- Hardcoded Data ---
+        // --- Daily Tips & Milestones ---
         const milestoneMessages = {
             10: "התחלה נהדרת! 10% כבר מאחורייך. כל מסע גדול מתחיל בצעד קטן.",
             20: "וואו! חמישית מהדרך הושלמה. ההתמדה שלך מרשימה מאוד!",
@@ -290,31 +329,17 @@
             "גם אם פספסת פעם אחת, לא נורא. פשוט ממשיכים כרגיל בטיפול הבא!",
             "הוקר תודה לעצמך על ההשקעה בבריאות שלך. זה לא מובן מאליו.",
             "טיפ אלופים: שים את הטיפול במקום בולט לעין שאי אפשר לפספס.",
-            "שגרה היא המפתח להצלחה. אתה בונה עכשיו שגרה מנצחת!",
-            "קח נשימה עמוקה לפני הטיפול - זה עוזר להוריד מתח ולהרפות.",
-            "עשית כבר דרך נהדרת! אל תשכח להסתכל אחורה ולהיות גאה.",
-            "שינה טובה עוזרת לגוף להתאושש. נסה ללכת לישון חצי שעה מוקדם יותר היום.",
-            "תגמל את עצמך! קבע פרס קטן לעצמך על כל שבוע של התמדה.",
-            "הוסף חיוך לפעולה - מחקרים מראים שזה משפר את ההרגשה המיידית.",
-            "תכנון מראש מונע לחץ. ודא שיש לך מספיק מהטיפול גם לסופ\"ש.",
-            "אתה לא לבד במסע הזה. כל סימון 'בוצע' מחזק את המחויבות שלך לעצמך.",
-            "שתף אדם קרוב בהתקדמות שלך, תמיכה חברתית עושה פלאים.",
-            "תזכור את ה'למה' שלך - למה התחלת את הטיפול הזה מלכתחילה?",
-            "הבריאות שלך היא הנכס הכי חשוב שלך. כל הכבוד שאתה שומר עליה.",
-            "לפעמים החלק הכי קשה הוא פשוט לזכור. היומן שהורדת יכול לעזור מאוד!",
-            "הייה סבלני עם עצמך. שינויים לוקחים זמן, אבל הם קורים כל יום.",
-            "רשום לעצמך משפט מחזק על פתק ושים על המראה באמבטיה.",
-            "אל תחכה למוטיבציה כדי לפעול. הפעולה עצמה מייצרת מוטיבציה!",
-            "גאה בך על המאמץ. המשך כך, אתה בדרך הנכונה למטרה!"
+            "שגרה היא המפתח להצלחה. אתה בונה עכשיו שגרה מנצחת!"
         ];
 
         // --- Initialization ---
         async function init() {
-            // Wait for DB to be ready before letting user upload photos
+            updateHeaderTitle();
+            
             try {
                 await initDB();
             } catch(e) {
-                console.error("Could not initialize IndexedDB. Photo saving might fail.");
+                console.error("Could not initialize IndexedDB.");
             }
 
             const container = document.getElementById('app-container');
@@ -360,9 +385,38 @@
             updateProgress(false); 
         }
 
-        // --- Helper Functions ---
+        // --- Settings Management ---
+        function updateHeaderTitle() {
+            const titleEl = document.getElementById('header-title');
+            titleEl.innerText = patientName ? `המסע של ${patientName}` : 'המסע שלי';
+        }
 
-        // Returns DD.MM.YY
+        function openSettings() {
+            document.getElementById('setting-name').value = patientName;
+            document.getElementById('setting-token').value = telegramToken;
+            document.getElementById('setting-chatid').value = telegramChatId;
+            document.getElementById('settings-modal').classList.remove('hidden');
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+
+        function saveSettings() {
+            patientName = document.getElementById('setting-name').value.trim();
+            // מסירים את המילה 'bot' אם הועתקה בטעות בתחילת הטוקן
+            telegramToken = document.getElementById('setting-token').value.trim().replace(/^bot/i, '');
+            telegramChatId = document.getElementById('setting-chatid').value.trim();
+
+            localStorage.setItem('patientName', patientName);
+            localStorage.setItem('telegramToken', telegramToken);
+            localStorage.setItem('telegramChatId', telegramChatId);
+
+            updateHeaderTitle();
+            closeSettings();
+        }
+
+        // --- Main Functions (Checkboxes, Progress, Dates) ---
         function formatDisplayDate(date) {
             const d = date.getDate();
             const m = date.getMonth() + 1;
@@ -370,7 +424,6 @@
             return `${d}.${m}.${y}`;
         }
         
-        // Returns YYYY-MM-DD for input[type=date]
         function formatInputDate(date) {
             const d = String(date.getDate()).padStart(2, '0');
             const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -378,7 +431,6 @@
             return `${y}-${m}-${d}`;
         }
 
-        // Calculate logical day from date string (YYYY-MM-DD)
         function calculateDayFromDateStr(dateStr) {
             const [y, m, d] = dateStr.split('-');
             const selectedDate = new Date(y, m - 1, d);
@@ -500,10 +552,8 @@
 
             const p1TotalChecks = PHASE_1_DAYS * 2;
             const p2TotalChecks = PHASE_2_DAYS * 2;
-
             const p1RemChecks = p1TotalChecks - p1Checked;
             const p2RemChecks = p2TotalChecks - p2Checked;
-
             const p1RemPct = Math.round((p1RemChecks / p1TotalChecks) * 100);
             const p2RemPct = Math.round((p2RemChecks / p2TotalChecks) * 100);
 
@@ -526,19 +576,19 @@
             if (p2RemChecks > 0) {
                 statusHtml += `
                     <div class="flex justify-between items-center">
-                        <span class="text-slate-500">עד סיום הטיפול (שלב ב'):</span>
+                        <span class="text-slate-500">עד סיום (שלב ב'):</span>
                         <span class="font-bold text-slate-800">${formatDaysRemaining(p2RemChecks / 2)} ו-${p2RemPct}%</span>
                     </div>`;
             } else if (p1RemChecks === 0 && p2RemChecks === 0) {
                  statusHtml += `
                     <div class="flex justify-between items-center text-emerald-600 font-medium border-t border-emerald-100 pt-1 mt-1">
-                        <span>סיום הטיפול (שלב ב'):</span>
+                        <span>סיום (שלב ב'):</span>
                         <span>🏆 סיימת הכל!</span>
                     </div>`;
             } else {
                  statusHtml += `
                     <div class="flex justify-between items-center text-emerald-600 font-medium border-t border-emerald-100 pt-1 mt-1">
-                        <span>סיום הטיפול (שלב ב'):</span>
+                        <span>סיום (שלב ב'):</span>
                         <span>✅ שלב ב' הושלם!</span>
                     </div>`;
             }
@@ -558,7 +608,7 @@
             }
         }
 
-        // --- Gallery & Camera Functions ---
+        // --- Gallery, Camera & Telegram ---
         async function openGallery() {
             document.getElementById('gallery-modal').classList.remove('hidden');
             await renderGallery();
@@ -580,38 +630,29 @@
                         <div class="flex flex-col items-center justify-center py-16 text-slate-400">
                             <svg class="w-16 h-16 mb-4 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                             <p>עוד אין תמונות בתיעוד.</p>
-                            <p class="text-sm">לחץ על הוסף תמונה כדי להתחיל!</p>
+                            <p class="text-sm mt-1">לחיצה על 'הוסף תמונה' תגבה אוטומטית לטלגרם אם הגדרת זאת.</p>
                         </div>
                     `;
                     return;
                 }
 
-                // Sort by date ascending (oldest to newest)
                 photos.sort((a, b) => new Date(a.date) - new Date(b.date));
-
                 container.innerHTML = '';
                 
                 photos.forEach(photo => {
-                    // Format display date
                     const [y, m, d] = photo.date.split('-');
                     const displayDate = `${d}.${m}.${y.slice(-2)}`;
                     
                     const card = document.createElement('div');
-                    // Removed overflow-hidden to let natural borders work, background is dark to frame images if they aren't standard ratio
                     card.className = 'bg-black rounded-xl shadow-md border border-slate-200 relative group flex flex-col items-center justify-center overflow-hidden';
                     
-                    // The image is now object-contain with full width and auto height so it doesn't crop
                     card.innerHTML = `
                         <img src="${photo.imageData}" class="w-full h-auto max-h-[70vh] object-contain" alt="תיעוד">
-                        
-                        <!-- Gradient Overlay for Text -->
                         <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 pt-12 pointer-events-none flex justify-center text-center">
                             <span class="font-bold text-white text-lg tracking-wide shadow-sm" style="text-shadow: 0px 1px 3px rgba(0,0,0,0.8);">
                                 ${photo.dayLabel}, ${displayDate}
                             </span>
                         </div>
-                        
-                        <!-- Delete Button (Top Left) -->
                         <button onclick="handleDeletePhoto(${photo.id})" class="absolute top-3 left-3 bg-white/90 p-2.5 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-50 z-10">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
@@ -625,13 +666,12 @@
         }
 
         async function handleDeletePhoto(id) {
-            if(confirm("האם אתה בטוח שברצונך למחוק תמונה זו?")) {
+            if(confirm("האם למחוק תמונה זו מהמכשיר? (התמונה לא תימחק מהטלגרם אם כבר נשלחה)")) {
                 await deletePhotoFromDB(id);
-                renderGallery(); // Refresh
+                renderGallery(); 
             }
         }
 
-        // Image compression - Improved for Medical visual tracking
         function compressImage(file) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
@@ -643,8 +683,6 @@
                         const canvas = document.createElement('canvas');
                         let width = img.width;
                         let height = img.height;
-                        
-                        // Increased max dimension for better medical detail retention
                         const MAX_DIM = 1600;
 
                         if (width > height && width > MAX_DIM) {
@@ -659,8 +697,6 @@
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
-                        
-                        // Output compressed base64 JPEG - Increased quality from 0.7 to 0.85
                         resolve(canvas.toDataURL('image/jpeg', 0.85)); 
                     };
                 };
@@ -671,42 +707,85 @@
             const file = event.target.files[0];
             if (!file) return;
 
-            // Reset input so the same file can be selected again if needed
             event.target.value = '';
 
-            // Show loading overlay (optional, compression is usually fast)
             document.getElementById('photo-preview').src = "";
             document.getElementById('photo-date-modal').classList.remove('hidden');
             
-            // Compress Image
             const base64Image = await compressImage(file);
             currentTempPhoto = base64Image;
 
-            // Show in modal
             document.getElementById('photo-preview').src = base64Image;
             
-            // Set default date to today
             const dateInput = document.getElementById('photo-date-input');
             dateInput.value = formatInputDate(new Date());
             
-            // Trigger day calculation
             updatePhotoDayPreview();
         }
 
-        // Updates the "Will be saved as: Day X" label dynamically
         function updatePhotoDayPreview() {
             const dateStr = document.getElementById('photo-date-input').value;
             if(!dateStr) return;
             const dayLabel = calculateDayFromDateStr(dateStr);
-            document.getElementById('photo-day-preview').innerText = `תמונה זו תסומן כ: ${dayLabel}`;
+            document.getElementById('photo-day-preview').innerText = `תסומן כ: ${dayLabel}`;
         }
         
-        // Listen to date changes
         document.getElementById('photo-date-input').addEventListener('change', updatePhotoDayPreview);
 
         function cancelPhotoUpload() {
             currentTempPhoto = null;
             document.getElementById('photo-date-modal').classList.add('hidden');
+        }
+
+        // Send to Telegram Logic
+        async function sendPhotoToTelegram(base64Data, dateStr, dayLabel) {
+            if (!telegramToken || !telegramChatId) return false;
+
+            try {
+                // Convert Base64 to Blob
+                const res = await fetch(base64Data);
+                const blob = await res.blob();
+
+                const [y, m, d] = dateStr.split('-');
+                const displayDate = `${d}.${m}.${y.slice(-2)}`;
+                const dispName = patientName || 'לא הוגדר שם';
+
+                const caption = `📸 תיעוד רפואי חדש\n👤 מטופל: ${dispName}\n📅 תאריך: ${displayDate}\n⏳ שלב: ${dayLabel}`;
+
+                const formData = new FormData();
+                formData.append('chat_id', telegramChatId);
+                formData.append('photo', blob, 'photo.jpg');
+                formData.append('caption', caption);
+
+                const response = await fetch(`https://api.telegram.org/bot${telegramToken}/sendPhoto`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Telegram error:', errorText);
+                    
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        if (errorData.error_code === 404) {
+                            alert('שגיאה בחיבור לטלגרם (404): ה-Token שהוזן שגוי. אנא היכנס להגדרות וודא שהעתקת אותו נכון מ-BotFather.');
+                        } else if (errorData.error_code === 400) {
+                            alert(`שגיאה בחיבור לטלגרם: ה-Chat ID שגוי או שעוד לא התחלת שיחה עם הבוט שלך. (${errorData.description})`);
+                        } else {
+                            alert('שגיאה מטלגרם: ' + errorData.description);
+                        }
+                    } catch (e) {
+                        alert('שגיאה בלתי צפויה מטלגרם בעת שליחת התמונה.');
+                    }
+                    return false;
+                }
+                return true;
+            } catch (err) {
+                console.error('Fetch error:', err);
+                alert('שגיאת תקשורת עם טלגרם. אנא בדוק את החיבור לאינטרנט.');
+                return false;
+            }
         }
 
         async function savePhotoWithDate() {
@@ -720,65 +799,54 @@
 
             const dayLabel = calculateDayFromDateStr(dateStr);
             
+            // UI Loading state
+            const saveBtn = document.getElementById('save-photo-btn');
+            const cancelBtn = document.getElementById('cancel-photo-btn');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.disabled = true;
+            cancelBtn.disabled = true;
+            
+            if (telegramToken && telegramChatId) {
+                saveBtn.innerHTML = `
+                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    שומר ושולח לטלגרם...
+                `;
+            }
+
+            // Send to Telegram (if configured)
+            if (telegramToken && telegramChatId) {
+                await sendPhotoToTelegram(currentTempPhoto, dateStr, dayLabel);
+            }
+
+            // Save to Local DB
             const newPhoto = {
                 date: dateStr,
                 dayLabel: dayLabel,
                 imageData: currentTempPhoto
             };
-
             await savePhotoToDB(newPhoto);
             
-            // Cleanup and close
+            // Cleanup
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+            cancelBtn.disabled = false;
             currentTempPhoto = null;
             document.getElementById('photo-date-modal').classList.add('hidden');
             
-            // Refresh gallery if it's open
             if (!document.getElementById('gallery-modal').classList.contains('hidden')) {
                 renderGallery();
             } else {
-                // If they somehow uploaded without opening gallery (not possible right now, but safe)
                 openGallery();
             }
         }
 
-
-        // --- UI Modals & Instant Feedback ---
-        
-        function triggerEncouragement(percentage) {
-            const msg = milestoneMessages[percentage] || "התקדמות מדהימה!";
-            showMessageModal(
-                `הגעת ל-${percentage}%!`, 
-                `<p class="text-lg leading-relaxed text-slate-700">${msg}</p>`, 
-                "ממשיכים בכל הכוח", 
-                "🏆"
-            );
-        }
-
-        function showDailyTip() {
-            let randomIndex;
-            do {
-                randomIndex = Math.floor(Math.random() * dailyTips.length);
-            } while (randomIndex === lastTipIndex && dailyTips.length > 1);
-            
-            lastTipIndex = randomIndex;
-            const tip = dailyTips[randomIndex];
-
-            showMessageModal(
-                "טיפ יומי 💡", 
-                `<p class="text-lg leading-relaxed text-slate-700 font-medium bg-amber-50 p-4 rounded-xl border border-amber-100">${tip}</p>`, 
-                "תודה רבה!", 
-                "✨"
-            );
-        }
-
+        // --- Modals & Utilities ---
         function showMessageModal(title, msgHtml, buttonText, icon = '🏆') {
             const modal = document.getElementById('modal');
             document.getElementById('modal-icon').innerText = icon;
             document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-message').innerHTML = msgHtml;
-            const btn = document.getElementById('modal-btn');
-            btn.innerText = buttonText || 'סגור';
-            btn.disabled = false;
+            document.getElementById('modal-btn').innerText = buttonText || 'סגור';
             modal.classList.remove('hidden');
         }
 
@@ -786,28 +854,31 @@
             document.getElementById('modal').classList.add('hidden');
         }
 
+        function showDailyTip() {
+            let randomIndex;
+            do {
+                randomIndex = Math.floor(Math.random() * dailyTips.length);
+            } while (randomIndex === lastTipIndex && dailyTips.length > 1);
+            lastTipIndex = randomIndex;
+            
+            showMessageModal(
+                "טיפ יומי 💡", 
+                `<p class="text-lg leading-relaxed text-slate-700 font-medium bg-amber-50 p-4 rounded-xl border border-amber-100">${dailyTips[randomIndex]}</p>`, 
+                "תודה רבה!", 
+                "✨"
+            );
+        }
+
         function downloadAndShowMessage() {
             downloadCalendar();
-
             setTimeout(() => {
-                const msg = `
-                    <div class="text-right space-y-3 mt-2 text-sm bg-slate-50 p-3 rounded-lg border border-slate-100">
+                showMessageModal('הקובץ ירד בהצלחה', 
+                    `<div class="text-right space-y-3 mt-2 text-sm bg-slate-50 p-3 rounded-lg border border-slate-100">
                         <p><strong>📱 בסמארטפון:</strong><br> פשוט לחץ על הקובץ שירד כדי להוסיף ליומן.</p>
-                        <hr class="border-slate-200">
-                        <p><strong>💻 במחשב (לגוגל יומן):</strong></p>
-                        <ol class="list-decimal list-inside text-slate-500 pr-1 space-y-1">
-                            <li>פתח את גוגל יומן בדפדפן</li>
-                            <li>לחץ על גלגל השיניים (הגדרות)</li>
-                            <li>בחר ב-"ייבוא וייצוא"</li>
-                            <li>העלה את הקובץ שהורד</li>
-                        </ol>
-                    </div>
-                `;
-                showMessageModal('הקובץ ירד בהצלחה', msg, 'הבנתי, תודה!', '📅');
+                    </div>`, 'הבנתי, תודה!', '📅');
             }, 500);
         }
 
-        // --- Calendar Generator (ICS) ---
         function downloadCalendar() {
             const formatDateForICS = (date, hours, minutes) => {
                 const d = new Date(date);
@@ -817,7 +888,6 @@
 
             const dtStartMorning = formatDateForICS(START_DATE, 7, 30);
             const dtEndMorning = formatDateForICS(START_DATE, 8, 0); 
-
             const dtStartEvening = formatDateForICS(START_DATE, 19, 30);
             const dtEndEvening = formatDateForICS(START_DATE, 20, 0);
 
@@ -861,9 +931,7 @@ END:VCALENDAR`;
             URL.revokeObjectURL(url);
         }
 
-        // Run App
         init();
-
     </script>
 </body>
 </html>
