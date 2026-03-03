@@ -1,0 +1,537 @@
+<!-- filename: color-app.html -->
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>כל מה שרציתם לדעת על צבעים ולא העזתם לשאול</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Heebo', 'sans-serif'] },
+                    colors: { primary: '#3b82f6' }
+                }
+            }
+        }
+    </script>
+
+    <!-- External Libraries -->
+    <!-- Chroma.js for advanced color manipulation and contrast checking -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.4.2/chroma.min.js"></script>
+    <!-- ColorThief for extracting colors from images -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+    <!-- Html2Canvas for downloading palettes as PNG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Custom Styles for inputs and scrollbars to keep it minimalist */
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            cursor: pointer;
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
+        
+        .tab-active { border-bottom: 2px solid #3b82f6; color: #3b82f6; font-weight: 500; }
+        .tab-inactive { color: #6b7280; }
+        .tab-inactive:hover { color: #374151; }
+        
+        /* Toast animation */
+        @keyframes slideIn {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .toast-enter { animation: slideIn 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col font-sans">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm py-6 px-4 mb-6">
+        <div class="max-w-4xl mx-auto text-center">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900">כל מה שרציתם לדעת על צבעים ולא העזתם לשאול</h1>
+            <p class="text-gray-500 mt-2 text-sm md:text-base">גלו הרמוניות, בדקו ניגודיות וצרו פלטות מרהיבות</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-4xl w-full mx-auto px-4 mb-12">
+        
+        <!-- Tabs Navigation -->
+        <div class="flex border-b border-gray-200 mb-6">
+            <button onclick="switchTab('harmonies')" id="tab-harmonies" class="flex-1 py-3 text-center tab-active transition-colors flex items-center justify-center gap-2">
+                <i data-lucide="palette" class="w-5 h-5"></i>
+                הרמוניות וצבעים
+            </button>
+            <button onclick="switchTab('contrast')" id="tab-contrast" class="flex-1 py-3 text-center tab-inactive transition-colors flex items-center justify-center gap-2">
+                <i data-lucide="eye" class="w-5 h-5"></i>
+                בדיקת ניגודיות וטקסט
+            </button>
+        </div>
+
+        <!-- Tab 1: Color Selection and Harmonies -->
+        <div id="content-harmonies" class="space-y-8">
+            
+            <!-- Controls Card -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i data-lucide="settings-2" class="w-5 h-5 text-primary"></i> בחר צבע בסיס</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Method 1: Color Picker & Hex -->
+                    <div class="space-y-3 col-span-1 md:col-span-2">
+                        <label class="block text-sm text-gray-600">הזן קוד HEX או בחר מגלגל הצבעים</label>
+                        <div class="flex items-center gap-4">
+                            <div class="relative w-12 h-12 rounded-full shadow-inner border border-gray-200 flex items-center justify-center bg-white overflow-hidden">
+                                <input type="color" id="colorPicker" value="#3b82f6" class="absolute inset-0 w-full h-full scale-150" onchange="handleManualColorChange(this.value)">
+                            </div>
+                            <input type="text" id="hexInput" value="#3b82f6" class="border border-gray-300 rounded-lg px-4 py-2 w-32 focus:outline-none focus:ring-2 focus:ring-primary text-left" dir="ltr" onchange="handleManualColorChange(this.value)">
+                            <button onclick="generateRandomColor()" class="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors tooltip" title="צבע אקראי">
+                                <i data-lucide="dices" class="w-5 h-5 text-gray-600"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Method 2: Image Upload -->
+                    <div class="space-y-3">
+                        <label class="block text-sm text-gray-600">או העלה תמונה לדגימה</label>
+                        <label class="flex items-center justify-center px-4 py-2 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors w-full">
+                            <i data-lucide="image-plus" class="w-5 h-5 ml-2"></i>
+                            <span>בחר תמונה</span>
+                            <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Hidden Image for ColorThief -->
+                <img id="sourceImage" class="hidden" alt="Source">
+
+                <!-- Extracted Image Palette (Hidden by default) -->
+                <div id="imagePaletteContainer" class="mt-6 hidden border-t pt-4">
+                    <p class="text-sm text-gray-600 mb-3">5 הצבעים הבולטים מהתמונה. לחץ על צבע כדי לבנות עליו הרמוניות:</p>
+                    <div class="flex h-16 rounded-lg overflow-hidden shadow-sm" id="extractedColorsRow">
+                        <!-- Colors will be injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Harmonies Display Container -->
+            <div id="harmoniesContainer" class="space-y-8">
+                <!-- Generated dynamically via JS -->
+            </div>
+
+        </div>
+
+        <!-- Tab 2: Contrast Checker -->
+        <div id="content-contrast" class="hidden space-y-6">
+            
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <h2 class="text-lg font-semibold mb-4">בדיקת קריאות (WCAG)</h2>
+                <p class="text-sm text-gray-600 mb-4">בחר פלטה שייצרת, הזן טקסט, ובדוק אילו צבעי פונט מתאימים כדי לעמוד בתקן הנגישות (יחס של 4.5:1 לפחות).</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">בחר פלטה לבדיקה</label>
+                        <select id="paletteSelect" onchange="renderContrastTester()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                            <!-- Options injected via JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">טקסט לדוגמה</label>
+                        <input type="text" id="sampleText" value="הטקסט שלך יופיע כאן" oninput="renderContrastTester()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contrast Results Grid -->
+            <div id="contrastResults" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Contrast cards injected via JS -->
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-auto py-6 text-center">
+        <p class="text-gray-500 text-sm">
+            פותח על ידי OBN. 
+            <a href="mailto:ofirbn@post.com" class="text-primary hover:underline font-medium">ליצירת קשר</a>
+        </p>
+    </footer>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 flex flex-col gap-2"></div>
+
+    <script>
+        // --- State Management ---
+        let currentBaseColor = '#3b82f6';
+        let generatedPalettes = {};
+        const colorThief = new ColorThief();
+
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // --- Tab Logic ---
+        function switchTab(tabId) {
+            document.getElementById('content-harmonies').classList.add('hidden');
+            document.getElementById('content-contrast').classList.add('hidden');
+            
+            document.getElementById('tab-harmonies').className = 'flex-1 py-3 text-center tab-inactive transition-colors flex items-center justify-center gap-2';
+            document.getElementById('tab-contrast').className = 'flex-1 py-3 text-center tab-inactive transition-colors flex items-center justify-center gap-2';
+            
+            document.getElementById(`content-${tabId}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabId}`).className = 'flex-1 py-3 text-center tab-active transition-colors flex items-center justify-center gap-2 border-b-2 border-primary';
+
+            if(tabId === 'contrast') {
+                updatePaletteSelect();
+                renderContrastTester();
+            }
+        }
+
+        // --- Core Color Logic ---
+        
+        // Handles input from Color Picker or Hex text input
+        function handleManualColorChange(colorValue) {
+            try {
+                // Validate color with chroma
+                if(chroma.valid(colorValue)) {
+                    currentBaseColor = chroma(colorValue).hex();
+                    document.getElementById('colorPicker').value = currentBaseColor;
+                    document.getElementById('hexInput').value = currentBaseColor;
+                    processColorAndGenerateUI();
+                }
+            } catch (e) {
+                console.warn("Invalid color input");
+            }
+        }
+
+        function generateRandomColor() {
+            handleManualColorChange(chroma.random().hex());
+        }
+
+        // Handles Image Upload and Color Extraction
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('sourceImage');
+                img.onload = function() {
+                    try {
+                        // Extract 5 colors
+                        const paletteRGB = colorThief.getPalette(img, 5);
+                        const paletteHex = paletteRGB.map(rgb => chroma(rgb).hex());
+                        
+                        showExtractedImagePalette(paletteHex);
+                        // Automatically select the dominant (first) color
+                        if(paletteHex.length > 0) {
+                            handleManualColorChange(paletteHex[0]);
+                            showToast("צבעים נדגמו בהצלחה מהתמונה");
+                        }
+                    } catch (error) {
+                        showToast("שגיאה בניתוח התמונה. נסה תמונה אחרת.", true);
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Display the extracted colors from image
+        function showExtractedImagePalette(colorsHex) {
+            const container = document.getElementById('imagePaletteContainer');
+            const row = document.getElementById('extractedColorsRow');
+            container.classList.remove('hidden');
+            row.innerHTML = '';
+
+            colorsHex.forEach(hex => {
+                const div = document.createElement('div');
+                div.className = 'flex-1 cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center group';
+                div.style.backgroundColor = hex;
+                div.onclick = () => handleManualColorChange(hex);
+                
+                // Determine text color for hex code
+                const textColor = chroma.contrast(hex, 'white') > 4.5 ? 'white' : 'black';
+                div.innerHTML = `<span class="opacity-0 group-hover:opacity-100 font-mono text-sm tracking-wider" style="color: ${textColor}">${hex.toUpperCase()}</span>`;
+                
+                row.appendChild(div);
+            });
+        }
+
+        // Generates the harmonies using Chroma.js
+        function generateHarmonies(baseHex) {
+            const base = chroma(baseHex);
+            const h = base.get('hsl.h') || 0; // handle grays where h is NaN
+            const s = base.get('hsl.s');
+            const l = base.get('hsl.l');
+
+            // Helper to create exactly 5 colors per row
+            return {
+                'אנלוגית (Analogous)': [
+                    chroma.hsl((h - 60 + 360) % 360, s, l).hex(),
+                    chroma.hsl((h - 30 + 360) % 360, s, l).hex(),
+                    baseHex,
+                    chroma.hsl((h + 30) % 360, s, l).hex(),
+                    chroma.hsl((h + 60) % 360, s, l).hex()
+                ],
+                'טריאדית (Triadic)': [
+                    base.brighten(1).hex(),
+                    baseHex,
+                    chroma.hsl((h + 120) % 360, s, l).hex(),
+                    chroma.hsl((h + 240) % 360, s, l).hex(),
+                    base.darken(1).hex()
+                ],
+                'משלימה מפוצלת (Split-Comp)': [
+                    base.brighten(1).hex(),
+                    baseHex,
+                    chroma.hsl((h + 150) % 360, s, l).hex(),
+                    chroma.hsl((h + 210) % 360, s, l).hex(),
+                    base.darken(1).hex()
+                ],
+                'טטרדית (Tetradic)': [
+                    baseHex,
+                    chroma.hsl((h + 90) % 360, s, l).hex(),
+                    chroma.hsl((h + 180) % 360, s, l).hex(),
+                    chroma.hsl((h + 270) % 360, s, l).hex(),
+                    chroma.hsl((h + 180) % 360, s, l).brighten(1).hex() // Added a tint of complement for 5th color
+                ],
+                'מונוכרומטית (Shades)': [
+                    base.brighten(2).hex(),
+                    base.brighten(1).hex(),
+                    baseHex,
+                    base.darken(1).hex(),
+                    base.darken(2).hex()
+                ]
+            };
+        }
+
+        // Main pipeline to update UI when color changes
+        function processColorAndGenerateUI() {
+            generatedPalettes = generateHarmonies(currentBaseColor);
+            
+            const container = document.getElementById('harmoniesContainer');
+            container.innerHTML = ''; // Clear existing
+
+            Object.entries(generatedPalettes).forEach(([name, colors], index) => {
+                const section = document.createElement('div');
+                section.className = 'bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative';
+                
+                const paletteId = `palette-render-${index}`;
+                
+                let colorsHtml = '';
+                colors.forEach(color => {
+                    const textColor = chroma.contrast(color, 'white') > 4.5 ? 'white' : '#1f2937';
+                    colorsHtml += `
+                        <div class="flex-1 flex flex-col items-center justify-center relative group min-h-[120px] transition-all hover:flex-[1.2]" style="background-color: ${color}">
+                            <div class="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center gap-2">
+                                <span class="font-mono font-medium tracking-wider" style="color: ${textColor}">${color.toUpperCase()}</span>
+                                <button onclick="copyToClipboard('${color}')" class="p-2 rounded-full hover:bg-black/10 transition-colors" title="העתק קוד">
+                                    <i data-lucide="copy" class="w-4 h-4" style="color: ${textColor}"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                section.innerHTML = `
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium text-gray-800">${name}</h3>
+                        <button onclick="downloadPalettePNG('${paletteId}', '${name}')" class="text-sm text-primary hover:text-blue-700 flex items-center gap-1">
+                            <i data-lucide="download" class="w-4 h-4"></i> שמור כתמונה
+                        </button>
+                    </div>
+                    <!-- Wrapper for HTML2Canvas -->
+                    <div id="${paletteId}" class="p-2 bg-white rounded-xl">
+                        <div class="flex h-32 rounded-lg overflow-hidden shadow-inner">
+                            ${colorsHtml}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(section);
+            });
+            
+            // Re-render icons for newly added HTML
+            lucide.createIcons();
+
+            // If we are on the contrast tab, update it too
+            if(!document.getElementById('content-contrast').classList.contains('hidden')) {
+                updatePaletteSelect();
+                renderContrastTester();
+            }
+        }
+
+        // --- Contrast Checker Logic ---
+
+        function updatePaletteSelect() {
+            const select = document.getElementById('paletteSelect');
+            select.innerHTML = '';
+            Object.keys(generatedPalettes).forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                select.appendChild(option);
+            });
+        }
+
+        function renderContrastTester() {
+            const select = document.getElementById('paletteSelect');
+            const paletteName = select.value;
+            const text = document.getElementById('sampleText').value || 'הטקסט שלך יופיע כאן';
+            const container = document.getElementById('contrastResults');
+            
+            if(!paletteName || !generatedPalettes[paletteName]) return;
+
+            const colors = generatedPalettes[paletteName];
+            container.innerHTML = '';
+
+            colors.forEach(bgHex => {
+                const contrastWhite = chroma.contrast(bgHex, 'white');
+                const contrastBlack = chroma.contrast(bgHex, 'black');
+                
+                const optimalColor = contrastWhite > contrastBlack ? 'white' : 'black';
+                const optimalHex = contrastWhite > contrastBlack ? '#FFFFFF' : '#000000';
+                
+                const passWhite = contrastWhite >= 4.5;
+                const passBlack = contrastBlack >= 4.5;
+
+                const card = document.createElement('div');
+                card.className = 'rounded-2xl overflow-hidden shadow-md border border-gray-100 bg-white flex flex-col';
+                
+                card.innerHTML = `
+                    <div class="p-8 flex-grow flex items-center justify-center text-center transition-colors" style="background-color: ${bgHex}; color: ${optimalColor}">
+                        <p class="text-2xl font-medium leading-tight">${text}</p>
+                    </div>
+                    
+                    <div class="p-4 bg-white border-t border-gray-100 space-y-3">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-500 font-mono" dir="ltr">BG: ${bgHex.toUpperCase()}</span>
+                            <span class="text-xs font-semibold px-2 py-1 bg-gray-100 rounded text-gray-700 flex items-center gap-1">
+                                מומלץ: ${optimalColor === 'white' ? 'לבן' : 'שחור'}
+                                <button onclick="copyToClipboard('${optimalHex}')" class="hover:text-primary"><i data-lucide="copy" class="w-3 h-3"></i></button>
+                            </span>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <!-- White Text Test -->
+                            <div class="flex justify-between items-center text-sm">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-4 h-4 rounded-full border border-gray-300" style="background-color: white;"></div>
+                                    <span>טקסט לבן</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-mono text-xs text-gray-500" dir="ltr">${contrastWhite.toFixed(2)}:1</span>
+                                    ${passWhite ? 
+                                        '<span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-medium">עובר ✓</span>' : 
+                                        '<span class="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-medium">נכשל ✗</span>'}
+                                </div>
+                            </div>
+                            <!-- Black Text Test -->
+                            <div class="flex justify-between items-center text-sm">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-4 h-4 rounded-full border border-gray-300" style="background-color: black;"></div>
+                                    <span>טקסט שחור</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-mono text-xs text-gray-500" dir="ltr">${contrastBlack.toFixed(2)}:1</span>
+                                    ${passBlack ? 
+                                        '<span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-medium">עובר ✓</span>' : 
+                                        '<span class="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-medium">נכשל ✗</span>'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        // --- Utilities ---
+
+        function copyToClipboard(text) {
+            // Using modern clipboard API if available, fallback to execCommand
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => showToast(`קוד ${text} הועתק!`));
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast(`קוד ${text} הועתק!`);
+                } catch (err) {
+                    console.error('Copy failed', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+
+        function downloadPalettePNG(elementId, name) {
+            const element = document.getElementById(elementId);
+            
+            // Add a small temporary style to make sure rendering is clean
+            element.style.padding = '20px';
+            element.style.background = '#ffffff';
+
+            html2canvas(element, { backgroundColor: '#ffffff', scale: 2 }).then(canvas => {
+                // Remove temp style
+                element.style.padding = '';
+                
+                const link = document.createElement('a');
+                link.download = `Palette-${name.split(' ')[0]}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast("הפלטה הורדה בהצלחה!");
+            });
+        }
+
+        function showToast(message, isError = false) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            toast.className = `toast-enter px-6 py-3 rounded-full shadow-lg text-sm font-medium flex items-center gap-2 text-white ${isError ? 'bg-red-500' : 'bg-gray-800'}`;
+            toast.innerHTML = `
+                <i data-lucide="${isError ? 'alert-circle' : 'check-circle-2'}" class="w-4 h-4"></i>
+                ${message}
+            `;
+            
+            container.appendChild(toast);
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Initial generation on load
+        window.onload = () => {
+            processColorAndGenerateUI();
+        };
+
+    </script>
+</body>
+</html>
