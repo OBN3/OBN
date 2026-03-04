@@ -60,11 +60,18 @@
             0% { transform: translateY(100%); }
             100% { transform: translateY(0); }
         }
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
         .modal-content {
             animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         .gallery-modal-content {
             animation: slideUp 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+        }
+        .fade-in-anim {
+            animation: fadeIn 0.2s ease-out;
         }
 
         /* Hide scrollbar for gallery */
@@ -234,6 +241,16 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Image Viewer Modal -->
+    <div id="fullscreen-image-modal" class="fixed inset-0 bg-black/95 z-[120] hidden overflow-auto backdrop-blur-md fade-in-anim">
+        <button onclick="closeFullscreenImage()" class="fixed top-5 left-5 z-[130] text-white p-2.5 bg-black/50 hover:bg-black/80 rounded-full border border-white/20 transition-colors shadow-lg">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        <div class="min-h-full min-w-full flex items-center justify-center p-2">
+            <img id="fullscreen-img-element" src="" class="w-full h-auto rounded-lg shadow-2xl" alt="תמונה במסך מלא">
         </div>
     </div>
 
@@ -660,6 +677,20 @@
             document.getElementById('gallery-modal').classList.add('hidden');
         }
 
+        // פונקציות מסך מלא לתמונות
+        function viewImageFullscreen(src) {
+            const modal = document.getElementById('fullscreen-image-modal');
+            const imgElement = document.getElementById('fullscreen-img-element');
+            imgElement.src = src;
+            modal.classList.remove('hidden');
+        }
+
+        function closeFullscreenImage() {
+            const modal = document.getElementById('fullscreen-image-modal');
+            modal.classList.add('hidden');
+            document.getElementById('fullscreen-img-element').src = "";
+        }
+
         async function renderGallery() {
             const container = document.getElementById('gallery-container');
             container.innerHTML = '<div class="text-center text-slate-400 py-10">טוען תמונות...</div>';
@@ -686,16 +717,26 @@
                     const displayDate = `${d}.${m}.${y.slice(-2)}`;
                     
                     const card = document.createElement('div');
-                    card.className = 'bg-black rounded-xl shadow-md border border-slate-200 relative group flex flex-col items-center justify-center overflow-hidden';
+                    card.className = 'bg-black rounded-xl shadow-md border border-slate-200 relative flex flex-col items-center justify-center overflow-hidden';
                     
+                    // The main image is now clickable for fullscreen, and buttons are explicit.
                     card.innerHTML = `
-                        <img src="${photo.imageData}" class="w-full h-auto max-h-[70vh] object-contain" alt="תיעוד">
+                        <img src="${photo.imageData}" class="w-full h-auto max-h-[70vh] object-contain cursor-pointer" alt="תיעוד" onclick="viewImageFullscreen('${photo.imageData}')">
+                        
+                        <!-- Gradient Overlay for Text -->
                         <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 pt-12 pointer-events-none flex justify-center text-center">
                             <span class="font-bold text-white text-lg tracking-wide shadow-sm" style="text-shadow: 0px 1px 3px rgba(0,0,0,0.8);">
                                 ${photo.dayLabel}, ${displayDate}
                             </span>
                         </div>
-                        <button onclick="handleDeletePhoto(${photo.id})" class="absolute top-3 left-3 bg-white/90 p-2.5 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-50 z-10">
+                        
+                        <!-- View Button (Top Right) -->
+                        <button onclick="viewImageFullscreen('${photo.imageData}')" class="absolute top-3 right-3 bg-black/60 p-2.5 rounded-full text-white hover:bg-black/80 transition-colors shadow-lg z-10 border border-white/20 backdrop-blur-sm">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
+                        </button>
+
+                        <!-- Delete Button (Top Left) -->
+                        <button onclick="handleDeletePhoto(${photo.id}, event)" class="absolute top-3 left-3 bg-black/60 p-2.5 rounded-full text-red-400 hover:text-red-500 hover:bg-black/80 transition-colors shadow-lg z-10 border border-white/20 backdrop-blur-sm">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
                     `;
@@ -707,7 +748,10 @@
             }
         }
 
-        async function handleDeletePhoto(id) {
+        async function handleDeletePhoto(id, event) {
+            // Stop click event from bubbling up to the image (which would open fullscreen)
+            if (event) event.stopPropagation(); 
+            
             if(confirm("האם למחוק תמונה זו מהמכשיר? (התמונה לא תימחק מהענן אם כבר נשלחה)")) {
                 await deletePhotoFromDB(id);
                 renderGallery(); 
@@ -908,13 +952,11 @@
                 
                 uploadSuccess = await sendPhotoToTelegram(currentTempPhoto, dateStr, dayLabel);
                 
-                // If telegram upload failed, we still want to give the user a chance to cancel or retry,
-                // so we don't save to local DB and close the modal automatically if it failed to send to telegram (when configured).
                 if (!uploadSuccess) {
                     saveBtn.innerHTML = originalText;
                     saveBtn.disabled = false;
                     cancelBtn.disabled = false;
-                    return; // Stop here if telegram failed
+                    return; 
                 }
             }
 
@@ -940,7 +982,6 @@
             }
 
             if (telegramToken && telegramChatId && uploadSuccess) {
-                // Modified to use high z-index modal logic to ensure it appears above everything
                 setTimeout(() => {
                     showMessageModal('הצלחנו! 🎉', '<p class="text-slate-600 font-medium">התמונה נשמרה באפליקציה ונשלחה בהצלחה לנושא הייעודי של המטופל בטלגרם.</p>', 'מעולה!', '🚀');
                 }, 400);
