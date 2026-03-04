@@ -593,6 +593,17 @@
             updateProgress(true);
         }
 
+        // Function definition for triggerEncouragement
+        function triggerEncouragement(percentage) {
+            const msg = milestoneMessages[percentage] || "התקדמות מדהימה!";
+            showMessageModal(
+                `הגעת ל-${percentage}%!`, 
+                `<p class="text-lg leading-relaxed text-slate-700">${msg}</p>`, 
+                "ממשיכים בכל הכוח", 
+                "🏆"
+            );
+        }
+
         function updateProgress(showModal) {
             const checkedCount = Object.values(state).filter(Boolean).length;
             const percentage = Math.floor((checkedCount / TOTAL_CHECKS) * 100);
@@ -618,44 +629,44 @@
 
             const p1TotalChecks = PHASE_1_DAYS * 2;
             const p2TotalChecks = PHASE_2_DAYS * 2;
-            const p1RemChecks = p1TotalChecks - p1Checked;
-            const p2RemChecks = p2TotalChecks - p2Checked;
-            const p1RemPct = Math.round((p1RemChecks / p1TotalChecks) * 100);
-            const p2RemPct = Math.round((p2RemChecks / p2TotalChecks) * 100);
+            
+            // חישוב אחוזי *השלמה* במקום מה שנותר
+            const p1CompletedPct = Math.round((p1Checked / p1TotalChecks) * 100);
+            const p2CompletedPct = Math.round((p2Checked / p2TotalChecks) * 100);
 
             let statusHtml = '';
 
-            if (p1RemChecks > 0) {
+            if (p1Checked < p1TotalChecks) {
                 statusHtml += `
                     <div class="flex justify-between items-center">
-                        <span class="text-slate-500">עד סוף שלב א':</span>
-                        <span class="font-bold text-slate-800">${formatDaysRemaining(p1RemChecks / 2)} ו-${p1RemPct}%</span>
+                        <span class="text-slate-500">שלב א' (בוצע):</span>
+                        <span class="font-bold text-slate-800"><span dir="ltr">${p1Checked / 2}/${PHASE_1_DAYS}</span> ימים (${p1CompletedPct}%)</span>
                     </div>`;
             } else {
                 statusHtml += `
                     <div class="flex justify-between items-center text-emerald-600 font-medium">
-                        <span>סוף שלב א':</span>
+                        <span>שלב א' (בוצע):</span>
                         <span>✅ הושלם בהצלחה!</span>
                     </div>`;
             }
 
-            if (p2RemChecks > 0) {
+            if (p2Checked < p2TotalChecks) {
                 statusHtml += `
                     <div class="flex justify-between items-center">
-                        <span class="text-slate-500">עד סיום (שלב ב'):</span>
-                        <span class="font-bold text-slate-800">${formatDaysRemaining(p2RemChecks / 2)} ו-${p2RemPct}%</span>
+                        <span class="text-slate-500">שלב ב' (בוצע):</span>
+                        <span class="font-bold text-slate-800"><span dir="ltr">${p2Checked / 2}/${PHASE_2_DAYS}</span> ימים (${p2CompletedPct}%)</span>
                     </div>`;
-            } else if (p1RemChecks === 0 && p2RemChecks === 0) {
+            } else if (p1Checked === p1TotalChecks && p2Checked === p2TotalChecks) {
                  statusHtml += `
                     <div class="flex justify-between items-center text-emerald-600 font-medium border-t border-emerald-100 pt-1 mt-1">
-                        <span>סיום (שלב ב'):</span>
+                        <span>סיום הטיפול:</span>
                         <span>🏆 סיימת הכל!</span>
                     </div>`;
             } else {
                  statusHtml += `
                     <div class="flex justify-between items-center text-emerald-600 font-medium border-t border-emerald-100 pt-1 mt-1">
-                        <span>סיום (שלב ב'):</span>
-                        <span>✅ שלב ב' הושלם!</span>
+                        <span>שלב ב' (בוצע):</span>
+                        <span>✅ הושלם!</span>
                     </div>`;
             }
 
