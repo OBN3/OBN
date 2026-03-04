@@ -161,6 +161,10 @@
                             <label class="block text-xs font-medium text-slate-600 mb-1">Chat ID של הקבוצה:</label>
                             <input type="text" id="setting-chatid" placeholder="-100123456789" class="w-full text-xs text-slate-800 bg-white border border-slate-300 rounded-md py-1.5 px-2 focus:outline-none focus:border-blue-500">
                         </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Topic ID (אופציונלי - לנושא קיים):</label>
+                            <input type="text" id="setting-topicid" placeholder="לדוגמה: 13" class="w-full text-xs text-slate-800 bg-white border border-slate-300 rounded-md py-1.5 px-2 focus:outline-none focus:border-blue-500">
+                        </div>
                     </div>
                 </div>
                 <button onclick="saveSettings()" class="w-full bg-slate-800 text-white py-2.5 rounded-xl font-medium active:scale-95 transition-transform shadow-sm">
@@ -251,6 +255,7 @@
         let patientName = localStorage.getItem('patientName') || '';
         let telegramToken = localStorage.getItem('telegramToken') || '';
         let telegramChatId = localStorage.getItem('telegramChatId') || '';
+        let telegramTopicId = localStorage.getItem('telegramTopicId') || '';
 
         // --- Database Setup ---
         let db;
@@ -394,6 +399,7 @@
             document.getElementById('setting-name').value = patientName;
             document.getElementById('setting-token').value = telegramToken;
             document.getElementById('setting-chatid').value = telegramChatId;
+            document.getElementById('setting-topicid').value = telegramTopicId;
             document.getElementById('settings-modal').classList.remove('hidden');
         }
 
@@ -403,8 +409,30 @@
 
         function saveSettings() {
             const newPatientName = document.getElementById('setting-name').value.trim();
-            const newTelegramToken = document.getElementById('setting-token').value.trim().replace(/^bot/i, '');
-            const newTelegramChatId = document.getElementById('setting-chatid').value.trim();
+            
+            // חילוץ חכם של הטוקן גם אם המשתמש הדביק בטעות קישור מלא
+            let rawToken = document.getElementById('setting-token').value.trim();
+            let newTelegramToken = rawToken;
+            const tokenMatch = rawToken.match(/([0-9]+:[a-zA-Z0-9_-]+)/);
+            if (tokenMatch) {
+                newTelegramToken = tokenMatch[1];
+            }
+
+            // חילוץ חכם של מזהה הקבוצה - מוריד שאריות כמו _8 שמועתקות בטעות
+            let rawChatId = document.getElementById('setting-chatid').value.trim();
+            let newTelegramChatId = rawChatId.split('_')[0]; 
+            const chatMatch = newTelegramChatId.match(/(-?\d+)/);
+            if(chatMatch){
+                newTelegramChatId = chatMatch[1];
+            }
+
+            // חילוץ חכם של מזהה הנושא (Topic ID) לוודא שזה רק מספר
+            let rawTopicId = document.getElementById('setting-topicid').value.trim();
+            let newTelegramTopicId = rawTopicId;
+            const topicMatch = rawTopicId.match(/(\d+)/);
+            if(topicMatch){
+                newTelegramTopicId = topicMatch[1];
+            }
 
             if (newTelegramChatId !== telegramChatId) {
                 localStorage.removeItem('telegramThreadId');
@@ -413,10 +441,12 @@
             patientName = newPatientName;
             telegramToken = newTelegramToken;
             telegramChatId = newTelegramChatId;
+            telegramTopicId = newTelegramTopicId;
 
             localStorage.setItem('patientName', patientName);
             localStorage.setItem('telegramToken', telegramToken);
             localStorage.setItem('telegramChatId', telegramChatId);
+            localStorage.setItem('telegramTopicId', telegramTopicId);
 
             updateHeaderTitle();
             closeSettings();
@@ -764,8 +794,6 @@
                 
                 if (!response.ok || !data.ok) {
                     console.error('Error creating topic:', data);
-                    // Instead of throwing an error here, check if it's the "not enough rights" error
-                    // which means the bot isn't an admin in the group.
                     if (data.error_code === 400 && data.description.includes("not enough rights")) {
                        throw new Error("לבוט אין הרשאת 'ניהול נושאים' (Manage Topics) בקבוצה. אנא הגדר את הבוט כמנהל בקבוצה בטלגרם עם הרשאה זו ונסה שוב.");
                     }
@@ -785,7 +813,11 @@
             if (!telegramToken || !telegramChatId) return false;
 
             try {
-                const threadId = await getOrCreateTelegramTopic();
+                // נשתמש ב-Topic ID שהוזן ידנית בהגדרות. אם לא הוזן, האפליקציה תנסה ליצור נושא חדש
+                let threadId = telegramTopicId;
+                if (!threadId) {
+                    threadId = await getOrCreateTelegramTopic();
+                }
 
                 const res = await fetch(base64Data);
                 const blob = await res.blob();
@@ -797,8 +829,11 @@
                 const caption = `📸 תיעוד רפואי חדש\n👤 מטופל: ${dispName}\n📅 תאריך: ${displayDate}\n⏳ שלב: ${dayLabel}`;
 
                 const formData = new FormData();
+                
                 formData.append('chat_id', telegramChatId);
-                formData.append('message_thread_id', threadId);
+                if (threadId) {
+                    formData.append('message_thread_id', threadId);
+                }
                 formData.append('photo', blob, 'photo.jpg');
                 formData.append('caption', caption);
 
@@ -814,13 +849,13 @@
                     try {
                         const errorData = JSON.parse(errorText);
                         if (errorData.error_code === 404) {
-                            alert('שגיאה: ה-Token שגוי. אנא בדוק בהגדרות.');
+                            alert('שגיאה: ה-Token שגוי. אנא היכנס להגדרות וודא שהעתקת את הטוקן נכון (ללא רווחים מיותרים).');
                         } else if (errorData.error_code === 400) {
                             if (errorData.description.includes("forum")) {
                                 alert('שגיאה: קבוצת הטלגרם אינה מוגדרת כפורום! פתח את הגדרות הקבוצה בטלגרם והפעל "Topics/נושאים".');
                             } else if (errorData.description.includes("thread not found")) {
                                 localStorage.removeItem('telegramThreadId');
-                                alert('הנושא (Topic) נמחק בטלגרם. נסה ללחוץ שוב לשמירה כדי שניצור אותו מחדש.');
+                                alert('הנושא (Topic) שמספרו ' + threadId + ' לא נמצא בטלגרם. בדוק את ה-Topic ID בהגדרות או נקה אותו כדי שהמערכת תיצור נושא חדש.');
                             } else {
                                 alert(`שגיאה בחיבור לטלגרם: ${errorData.description}`);
                             }
@@ -862,7 +897,7 @@
             if (telegramToken && telegramChatId) {
                 saveBtn.innerHTML = `
                     <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    פותח נושא ושולח...
+                    שולח נושא...
                 `;
                 
                 uploadSuccess = await sendPhotoToTelegram(currentTempPhoto, dateStr, dayLabel);
