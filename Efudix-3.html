@@ -230,8 +230,14 @@
                 <p class="text-xs text-slate-500 mb-4">תוכל לתקן את התאריך אם הועלתה מאלבום</p>
                 
                 <input type="date" id="photo-date-input" class="w-full text-center text-lg font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-lg py-2 mb-2 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
-                <p id="photo-day-preview" class="text-sm font-bold text-teal-600 mb-5 bg-teal-50 py-1 rounded-md"></p>
+                <p id="photo-day-preview" class="text-sm font-bold text-teal-600 mb-3 bg-teal-50 py-1 rounded-md"></p>
                 
+                <!-- Telegram Toggle -->
+                <div id="telegram-toggle-container" class="flex items-center justify-center gap-2 mb-4 hidden">
+                    <input type="checkbox" id="send-to-telegram-checkbox" class="w-4 h-4 text-teal-600 bg-slate-100 border-slate-300 rounded focus:ring-teal-500 cursor-pointer">
+                    <label for="send-to-telegram-checkbox" class="text-sm text-slate-700 font-medium cursor-pointer">שלח עותק לגיבוי בטלגרם</label>
+                </div>
+
                 <div class="flex gap-3">
                     <button id="cancel-photo-btn" onclick="cancelPhotoUpload()" class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl font-medium active:bg-slate-200 transition-colors">
                         ביטול
@@ -267,6 +273,7 @@
         let lastMilestone = parseInt(localStorage.getItem('lastMilestone')) || 0;
         let lastTipIndex = -1; 
         let currentTempPhoto = null;
+        let defaultSendToTelegram = localStorage.getItem('defaultSendToTelegram') !== 'false'; // Default true if not set
 
         // Settings
         let patientName = localStorage.getItem('patientName') || '';
@@ -703,7 +710,7 @@
                         <div class="flex flex-col items-center justify-center py-16 text-slate-400">
                             <svg class="w-16 h-16 mb-4 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                             <p>עוד אין תמונות בתיעוד.</p>
-                            <p class="text-sm mt-1">לחיצה על 'הוסף תמונה' תגבה אוטומטית לענן אם הגדרת זאת.</p>
+                            <p class="text-sm mt-1">לחיצה על 'הוסף תמונה' תאפשר לשמור גיבוי לענן או למכשיר.</p>
                         </div>
                     `;
                     return;
@@ -805,6 +812,17 @@
             
             const dateInput = document.getElementById('photo-date-input');
             dateInput.value = formatInputDate(new Date());
+            
+            // Show or hide telegram toggle based on configuration
+            const tgToggle = document.getElementById('telegram-toggle-container');
+            const tgCheckbox = document.getElementById('send-to-telegram-checkbox');
+            if (telegramToken && telegramChatId) {
+                tgToggle.classList.remove('hidden');
+                tgCheckbox.checked = defaultSendToTelegram;
+            } else {
+                tgToggle.classList.add('hidden');
+                tgCheckbox.checked = false;
+            }
             
             updatePhotoDayPreview();
         }
@@ -935,7 +953,15 @@
             }
 
             const dayLabel = calculateDayFromDateStr(dateStr);
+            const tgCheckbox = document.getElementById('send-to-telegram-checkbox');
+            const shouldSendToTelegram = telegramToken && telegramChatId && tgCheckbox.checked;
             
+            // זכור את הבחירה לפעם הבאה
+            if (telegramToken && telegramChatId) {
+                localStorage.setItem('defaultSendToTelegram', tgCheckbox.checked);
+                defaultSendToTelegram = tgCheckbox.checked;
+            }
+
             const saveBtn = document.getElementById('save-photo-btn');
             const cancelBtn = document.getElementById('cancel-photo-btn');
             const originalText = saveBtn.innerHTML;
@@ -944,10 +970,10 @@
             
             let uploadSuccess = false;
 
-            if (telegramToken && telegramChatId) {
+            if (shouldSendToTelegram) {
                 saveBtn.innerHTML = `
                     <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    שולח נושא...
+                    שולח לגיבוי...
                 `;
                 
                 uploadSuccess = await sendPhotoToTelegram(currentTempPhoto, dateStr, dayLabel);
@@ -981,9 +1007,14 @@
                 openGallery();
             }
 
-            if (telegramToken && telegramChatId && uploadSuccess) {
+            // הצגת הודעת הצלחה מתאימה
+            if (shouldSendToTelegram && uploadSuccess) {
                 setTimeout(() => {
-                    showMessageModal('הצלחנו! 🎉', '<p class="text-slate-600 font-medium">התמונה נשמרה באפליקציה ונשלחה בהצלחה לנושא הייעודי של המטופל בטלגרם.</p>', 'מעולה!', '🚀');
+                    showMessageModal('הצלחנו! 🎉', '<p class="text-slate-600 font-medium">התמונה נשמרה באפליקציה ונשלחה בהצלחה לטלגרם כפי שביקשת.</p>', 'מעולה!', '🚀');
+                }, 400);
+            } else if (!shouldSendToTelegram) {
+                setTimeout(() => {
+                    showMessageModal('נשמר בהצלחה! ✅', '<p class="text-slate-600 font-medium">התמונה נשמרה בגלריה המקומית של האפליקציה (ללא שליחה לענן).</p>', 'מעולה!', '📱');
                 }, 400);
             }
         }
