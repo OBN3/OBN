@@ -162,7 +162,7 @@
                             <input type="text" id="setting-chatid" placeholder="-100123456789" class="w-full text-xs text-slate-800 bg-white border border-slate-300 rounded-md py-1.5 px-2 focus:outline-none focus:border-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Topic ID (אופציונלי - לנושא קיים):</label>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Topic ID (חובה - לנושא קיים):</label>
                             <input type="text" id="setting-topicid" placeholder="לדוגמה: 13" class="w-full text-xs text-slate-800 bg-white border border-slate-300 rounded-md py-1.5 px-2 focus:outline-none focus:border-blue-500">
                         </div>
                     </div>
@@ -174,8 +174,8 @@
         </div>
     </div>
 
-    <!-- Motivational Modal -->
-    <div id="modal" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+    <!-- Motivational & Message Modal (High z-index to appear above gallery) -->
+    <div id="modal" class="fixed inset-0 bg-black/50 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl p-6 text-center max-w-xs w-full shadow-2xl modal-content">
             <div id="modal-icon" class="text-4xl mb-4">🏆</div>
             <h2 class="text-xl font-bold text-slate-900 mb-2" id="modal-title">כל הכבוד!</h2>
@@ -432,6 +432,12 @@
             const topicMatch = rawTopicId.match(/(\d+)/);
             if(topicMatch){
                 newTelegramTopicId = topicMatch[1];
+            }
+
+            // Validation check to ensure Topic ID is provided if token and chat ID are present
+            if (newTelegramToken && newTelegramChatId && !newTelegramTopicId) {
+                alert("שדה Topic ID הוא שדה חובה בעת הגדרת טלגרם.");
+                return; // Stop saving if topic ID is missing
             }
 
             if (newTelegramChatId !== telegramChatId) {
@@ -934,6 +940,7 @@
             }
 
             if (telegramToken && telegramChatId && uploadSuccess) {
+                // Modified to use high z-index modal logic to ensure it appears above everything
                 setTimeout(() => {
                     showMessageModal('הצלחנו! 🎉', '<p class="text-slate-600 font-medium">התמונה נשמרה באפליקציה ונשלחה בהצלחה לנושא הייעודי של המטופל בטלגרם.</p>', 'מעולה!', '🚀');
                 }, 400);
