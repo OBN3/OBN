@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl" id="htmlTag">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>אופטימיזציה לסמארטפון בחירום - OBN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&family=Inter:wght@400;700&display=swap');
+        
+        :root {
+            --bg-color: #050505;
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-secondary: #e2e8f0;
+            --border-color: rgba(255, 255, 255, 0.4);
+            --accent: #3b82f6;
+            --modal-bg: #121212;
+        }
+
+        .light-mode {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-secondary: #334155;
+            --border-color: rgba(15, 23, 42, 0.2);
+            --accent: #2563eb;
+            --modal-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Assistant', 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            transition: all 0.3s ease;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1.5px solid var(--border-color);
+            border-radius: 20px;
+        }
+
+        .battery-container {
+            position: relative;
+            width: 70px;
+            height: 32px;
+            border: 2.5px solid var(--text-main);
+            border-radius: 8px;
+            padding: 2px;
+        }
+
+        .battery-container::after {
+            content: '';
+            position: absolute;
+            right: -7px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 5px;
+            height: 12px;
+            background: var(--text-main);
+            border-radius: 0 3px 3px 0;
+        }
+
+        [dir="ltr"] .battery-container::after {
+            right: auto;
+            left: -7px;
+            border-radius: 3px 0 0 3px;
+        }
+
+        .battery-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .task-item {
+            transition: all 0.25s ease;
+            border-width: 2px;
+        }
+
+        .task-item.completed {
+            background-color: rgba(16, 185, 129, 0.15);
+            border-color: #10b981;
+            opacity: 0.9;
+        }
+
+        .checkbox-custom {
+            width: 28px;
+            height: 28px;
+            border: 2px solid var(--text-main);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            font-weight: bold;
+        }
+
+        input:checked + .checkbox-custom {
+            background-color: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+
+        .modal-container {
+            background-color: var(--modal-bg);
+            color: var(--text-main);
+        }
+
+        .how-btn {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--text-main);
+            border: 1.5px solid var(--accent);
+            font-weight: 800;
+        }
+
+        /* Tooltip simple simulation */
+        [title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+            z-index: 50;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body class="p-4 max-w-md mx-auto min-h-screen flex flex-col pb-6">
+
+    <!-- Top Navigation -->
+    <div class="flex justify-between items-center mb-6">
+        <div class="flex gap-3">
+            <button id="btnTheme" onclick="toggleTheme()" class="p-2 glass-card rounded-full w-12 h-12 flex items-center justify-center shadow-lg relative" title="החלפת מצב כהה/בהיר">
+                <span id="themeIcon" class="text-xl">🌙</span>
+            </button>
+            <button id="btnLang" onclick="openLanguageMenu()" class="p-2 glass-card rounded-full w-12 h-12 flex items-center justify-center text-xl shadow-lg relative" title="שינוי שפה">
+                🌐
+            </button>
+        </div>
+        <div class="flex gap-2">
+            <button id="btnWA" onclick="shareWhatsApp()" class="p-2 glass-card rounded-full w-12 h-12 flex items-center justify-center shadow-lg text-emerald-500 relative" title="העברת הקישור לאפליקציה בווטסאפ">
+                <svg viewBox="0 0 24 24" class="w-6 h-6 fill-current"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.937 3.659 1.432 5.631 1.433h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            </button>
+            <button id="btnReset" onclick="confirmReset()" class="text-xs font-bold px-5 py-2 glass-card rounded-full hover:bg-white/20 relative" title="איפוס התקדמות">איפוס</button>
+        </div>
+    </div>
+
+    <!-- Header Section -->
+    <header class="flex flex-col items-center mb-8">
+        <h1 class="text-3xl font-black mb-2 text-center" id="appTitle">אופטימיזציה לסמארטפון בחירום - OBN</h1>
+        <p class="text-sm font-medium opacity-90 text-center mb-8 px-4 leading-relaxed" id="appDesc">
+            ניהול חכם של סוללה ומידע קריטי למצבים ללא גישה קבועה לחשמל.
+        </p>
+        
+        <div class="flex items-center gap-6 p-6 rounded-3xl w-full justify-around shadow-2xl glass-card">
+            <div class="battery-container">
+                <div id="batteryFill" class="battery-fill w-0 bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]"></div>
+            </div>
+            <div class="text-right flex flex-col">
+                <span id="percentageText" class="text-4xl font-black tabular-nums">0%</span>
+                <span class="text-[10px] uppercase font-black tracking-widest opacity-60" id="labelOptimized">שיפור מבוצע</span>
+            </div>
+        </div>
+
+        <div id="encouragementMsg" class="mt-4 h-6 text-sm font-extrabold text-emerald-500 text-center transition-all"></div>
+    </header>
+
+    <!-- Main List -->
+    <main class="flex-grow space-y-8">
+        <div id="activeTasks" class="space-y-4"></div>
+
+        <div id="completedSection" class="hidden">
+            <h2 class="text-[12px] font-black uppercase tracking-[0.25em] opacity-60 mb-4 px-2 border-t border-[var(--border-color)] pt-8 text-center" id="labelCompletedHeader">בוצעה אופטימיזציה</h2>
+            <div id="completedTasks" class="space-y-4"></div>
+        </div>
+    </main>
+
+    <!-- Footer SOS -->
+    <footer class="mt-12 mb-8 text-center flex flex-col items-center gap-8">
+        <button onclick="toggleSOS()" class="bg-red-600 hover:bg-red-700 text-white font-black py-5 px-14 rounded-full shadow-2xl shadow-red-900/40 active:scale-95 transition-all w-full max-w-xs text-lg" id="btnSOS">
+            🚨 SOS / פנס חירום
+        </button>
+        
+        <div class="text-[11px] font-bold opacity-70 leading-relaxed" id="copyrightFooter">
+            כל הזכויות שמורות לאופיר בן נתן. 
+            <a href="mailto:ofirbn@post.com" class="underline hover:opacity-80">ליצירת קשר</a>
+        </div>
+    </footer>
+
+    <!-- MODALS -->
+
+    <!-- Details Modal -->
+    <div id="modalOverlay" class="fixed inset-0 bg-black/80 backdrop-blur-xl z-[200] hidden flex items-center justify-center p-6" onclick="closeModal()">
+        <div class="modal-container w-full max-w-sm p-8 rounded-[40px] border-2 border-[var(--border-color)] shadow-2xl" onclick="event.stopPropagation()">
+            <h3 id="modalTitle" class="text-2xl font-black mb-6 text-center"></h3>
+            <div id="modalContent" class="space-y-5 text-base leading-relaxed overflow-y-auto max-h-[50vh] px-2 opacity-90"></div>
+            <button onclick="closeModal()" class="w-full mt-10 bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-2xl shadow-xl" id="btnGotIt">הבנתי, תודה</button>
+        </div>
+    </div>
+
+    <!-- Confirm Reset Modal -->
+    <div id="resetOverlay" class="fixed inset-0 bg-black/80 backdrop-blur-xl z-[200] hidden flex items-center justify-center p-6" onclick="closeResetModal()">
+        <div class="modal-container w-full max-w-sm p-10 rounded-[40px] border-2 border-red-500/50 shadow-2xl" onclick="event.stopPropagation()">
+            <h3 class="text-2xl font-black mb-4 text-center" id="resetTitle">איפוס רשימה?</h3>
+            <p class="text-sm font-medium opacity-80 mb-10 text-center leading-relaxed" id="resetDesc">כל הסימונים ימחקו ותצטרכו להתחיל מחדש.</p>
+            <div class="flex gap-4">
+                <button onclick="closeResetModal()" class="flex-1 py-4 glass-card font-black rounded-2xl" id="btnCancel">ביטול</button>
+                <button onclick="resetApp()" class="flex-1 py-4 bg-red-600 text-white font-black rounded-2xl shadow-xl" id="btnConfirmReset">אפס עכשיו</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Language Selector -->
+    <div id="langOverlay" class="fixed inset-0 bg-black/80 backdrop-blur-xl z-[200] hidden flex items-center justify-center p-6" onclick="closeLangMenu()">
+        <div class="modal-container glass-card w-full max-w-xs p-8 rounded-[40px] relative" onclick="event.stopPropagation()">
+            <!-- Close X Button -->
+            <button onclick="closeLangMenu()" class="absolute top-4 left-4 p-2 opacity-60 hover:opacity-100 font-bold text-xl">✕</button>
+            
+            <h3 class="text-xl font-black mb-8 text-center">בחר שפה / Language</h3>
+            <div class="grid grid-cols-1 gap-4">
+                <button onclick="setLang('he')" class="p-5 glass-card rounded-2xl flex justify-between items-center font-bold"><span>עברית</span><span class="text-2xl">🇮🇱</span></button>
+                <button onclick="setLang('en')" class="p-5 glass-card rounded-2xl flex justify-between items-center font-bold"><span>English</span><span class="text-2xl">🇺🇸</span></button>
+                <button onclick="setLang('ar')" class="p-5 glass-card rounded-2xl flex justify-between items-center font-bold"><span>العربية</span><span class="text-2xl">🇦🇪</span></button>
+                <button onclick="setLang('ru')" class="p-5 glass-card rounded-2xl flex justify-between items-center font-bold"><span>Русский</span><span class="text-2xl">🇷🇺</span></button>
+                <button onclick="setLang('am')" class="p-5 glass-card rounded-2xl flex justify-between items-center font-bold"><span>አማርኛ</span><span class="text-2xl">🇪🇹</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SOS Screen Overlay -->
+    <div id="sosOverlay" onclick="toggleSOS()" class="fixed inset-0 bg-white z-[300] hidden flex items-center justify-center">
+        <div class="text-black font-black text-5xl animate-pulse text-center p-12 leading-tight">
+            🔦 פנס חירום פעיל<br>
+            <span class="text-2xl font-bold opacity-70 mt-6 block">לחץ לכיבוי</span>
+        </div>
+    </div>
+
+    <script>
+        const UI = {
+            he: {
+                appTitle: "אופטימיזציה לסמארטפון בחירום - OBN", appDesc: "ניהול חכם של סוללה ומידע קריטי למצבים ללא גישה קבועה לחשמל.", labelOptimized: "שיפור מבוצע",
+                labelCompletedHeader: "בוצעה אופטימיזציה", btnReset: "איפוס", resetTitle: "איפוס רשימה?", resetDesc: "כל הסימונים ימחקו ותצטרכו להתחיל מחדש.",
+                btnCancel: "ביטול", btnConfirmReset: "אפס עכשיו", btnSOS: "🚨 SOS / פנס חירום", btnGotIt: "הבנתי, תודה", how: "איך?", critical: "קריטי",
+                cat_battery: "סוללה", cat_network: "קישוריות", cat_display: "תצוגה", cat_info: "מידע", cat_apps: "אפליקציות", cat_backup: "גיבוי",
+                m_100: "וואו! המכשיר בשיא האופטימיזציה!", m_75: "מצוין! חסכת זמן יקר.", m_50: "חצי דרך עברה!", m_25: "התחלה טובה!",
+                copyright: "כל הזכויות שמורות לאופיר בן נתן.", contact: "ליצירת קשר",
+                wa_share: "אפליקצייה לאופטימיזציית טלפון נייד:\nניהול חכם של סוללה ומידע קריטי למצבים ללא גישה קבועה לחשמל"
+            },
+            en: {
+                appTitle: "Smartphone Emergency Optimizer - OBN", appDesc: "Smart battery and info management for power-limited situations.", labelOptimized: "Optimization Applied",
+                labelCompletedHeader: "Optimized Items", btnReset: "Reset", resetTitle: "Reset Progress?", resetDesc: "All checkboxes will be cleared.",
+                btnCancel: "Cancel", btnConfirmReset: "Reset Now", btnSOS: "🚨 SOS / Flashlight", btnGotIt: "Got it", how: "How?", critical: "CRITICAL",
+                cat_battery: "Battery", cat_network: "Network", cat_display: "Display", cat_info: "Info", cat_apps: "Apps", cat_backup: "Backup",
+                m_100: "Wow! Max efficiency reached!", m_75: "Great! Power saved.", m_50: "Halfway there!", m_25: "Good start!",
+                copyright: "All rights reserved to Ofir Ben Natan.", contact: "Contact",
+                wa_share: "Mobile Optimization App:\nSmart battery and info management for power-limited situations"
+            },
+            ar: {
+                appTitle: "محسن الهاتف للطوارئ - OBN", appDesc: "إدارة ذكية للبطارية والمعلومات لحالات نقص الكهرباء.", labelOptimized: "تم التحسين",
+                labelCompletedHeader: "تم الانتهاء منها", btnReset: "إعادة", resetTitle: "إعادة التعيين؟", resetDesc: "سيتم مسح جميع العلامات.",
+                btnCancel: "إلغاء", btnConfirmReset: "إعادة الآن", btnSOS: "🚨 وضع الطوارئ", btnGotIt: "فهمت", how: "كيف؟", critical: "عاجل",
+                cat_battery: "البطارية", cat_network: "الشبكة", cat_display: "الشاشة", cat_info: "معلومات", cat_apps: "تطبيقات", cat_backup: "نسخ",
+                m_100: "واو! أقصى قدر من الكفاءة!", m_75: "ممتاز! تم توفير الطاقة.", m_50: "منتصف الطريق!", m_25: "بداية جيدة!",
+                copyright: "جميع الحقوق محفوظة لأوفير بن ناتان.", contact: "اتصل بنا",
+                wa_share: "تطبيق تحسين الهاتف المحمول:\nإدارة ذكية للبطارية والمعلومات لحالات نقص الكهرباء"
+            },
+            ru: {
+                appTitle: "Оптимизатор Смартфона - OBN", appDesc: "Умное управление батареей и информацией при дефиците энергии.", labelOptimized: "Оптимизация",
+                labelCompletedHeader: "Выполнено", btnReset: "Сброс", resetTitle: "Сбросить список?", resetDesc: "Все отметки будут удалены.",
+                btnCancel: "Отмена", btnConfirmReset: "Сбросить", btnSOS: "🚨 Режим SOS", btnGotIt: "Понятно", how: "Как?", critical: "ВАЖНО",
+                cat_battery: "Батарея", cat_network: "Связь", cat_display: "Экран", cat_info: "Инфо", cat_apps: "Приложения", cat_backup: "Бекап",
+                m_100: "Вау! Максимум энергии!", m_75: "Отлично! Заряд спасен.", m_50: "Половина пути!", m_25: "Хорошее начало!",
+                copyright: "Все права защищены Офиром Бен Натаном.", contact: "Контакт",
+                wa_share: "Приложение для оптимизации мобильных устройств:\nУмное управление батареей и информацией в условиях дефицита энергии"
+            },
+            am: {
+                appTitle: "የስማርትፎን አደጋ ጊዜ ማመቻቻ - OBN", appDesc: "ኃይል በማይኖርበት ጊዜ ባትሪን እና መረጃን ማስተዳደር።", labelOptimized: "ተስተካክሏል",
+                labelCompletedHeader: "ተጠናቅቋል", btnReset: "አስጀምር", resetTitle: "ዳግም ላስጀምር?", resetDesc: "ሁሉም ምልክቶች ይጠፋሉ።",
+                btnCancel: "ተመለስ", btnConfirmReset: "አስጀምር", btnSOS: "🚨 የድንገተኛ መብራት", btnGotIt: "ገባኝ", how: "እንዴት?", critical: "አስቸኳይ",
+                cat_battery: "ባትሪ", cat_network: "ኔትወርክ", cat_display: "ስክሪን", cat_info: "መረጃ", cat_apps: "አፕሊኬሽን", cat_backup: "ምትክ",
+                m_100: "ድንቅ! ተጠናቋል!", m_75: "በጣም ጥሩ!", m_50: "ግማሹ ደርሷል!", m_25: "ጥሩ ጅምር!",
+                copyright: "መብቱ በኦፊር ቤን ናታን የተጠበቀ ነው።", contact: "ግንኙነት",
+                wa_share: "የሞባይል ማመቻቻ መተግበሪያ:\nባትሪን እና መረጃን በአግባቡ ለማስተዳደር የሚረዳ"
+            }
+        };
+
+        const TASK_DATA = [
+            { id: 1, cat: 'cat_battery', urgent: true, keys: {
+                he: { t: 'מצב חיסכון בסוללה (הגדרות)', h: '<strong>אייפון:</strong> הגדרות > סוללה > מצב סוללה חלשה.<br><strong>אנדרואיד:</strong> הגדרות > סוללה > חיסכון בחשמל. ודאו שהמתג Limit apps מופעל.' },
+                en: { t: 'Battery Saver Mode', h: '<strong>iPhone:</strong> Settings > Battery > Low Power Mode.<br><strong>Android:</strong> Settings > Battery > Battery Saver. Ensure "Limit apps" is ON.' },
+                ar: { t: 'وضع توفير البطارية', h: 'إذهب إلى الإعدادات ثم البطارية وفعل وضع توفير الطاقة.' },
+                ru: { t: 'Энергосбережение', h: 'Настройки > Аккумулятор > Режим энергосбережения.' },
+                am: { t: 'ባትሪ ቆጣቢ', h: 'ሴቲንግ ውስጥ ባትሪ ቆጣቢ የሚለውን ያብሩ።' }
+            }},
+            { id: 2, cat: 'cat_network', urgent: true, keys: {
+                he: { t: 'מצב טיסה (בדיקה יזומה)', h: 'הפעילו מצב טיסה. פתחו קליטה רק לדקה אחת בכל חצי שעה לבדיקת הודעות והחזירו מיד.' },
+                en: { t: 'Airplane Mode (Strategy)', h: 'Turn on Airplane Mode. Only disable it for 1 minute every 30 mins to check messages.' },
+                ar: { t: 'وضع الطائرة', h: 'فعل وضع الطائرة وافتحه فقط لدقيقة واحدة كل نصف ساعة.' },
+                ru: { t: 'Авиарежим', h: 'Включайте связь на 1 минуту раз в полчаса.' },
+                am: { t: 'የአውሮፕላን ሁነታ', h: 'ሁልጊዜ ያብሩት፣ መልእክት ለማየት ብቻ ለትንሽ ሰከንድ ይክፈቱት።' }
+            }},
+            { id: 3, cat: 'cat_display', keys: {
+                he: { t: 'הנמכת בהירות למינימום', h: 'גררו את סמן הבהירות למינימום האפשרי ובטלו "בהירות אוטומטית".' },
+                en: { t: 'Brightness to Minimum', h: 'Slide brightness to zero and disable auto-brightness in accessibility settings.' },
+                ar: { t: 'تقليل السطوع', h: 'قلل سطوع الشاشة إلى أدنى حد ممكن.' },
+                ru: { t: 'Минимальная яркость', h: 'Снизьте яркость до минимума.' },
+                am: { t: 'ዝቅተኛ ብርሃን', h: 'የስክሪኑን ብርሃን በጣም ዝቅ ያድርጉት።' }
+            }},
+            { id: 4, cat: 'cat_display', keys: {
+                he: { t: 'מצב כהה (Dark Mode)', h: 'הגדרות > תצוגה > כהה. חוסך המון סוללה במסכי OLED.' },
+                en: { t: 'Dark Mode', h: 'Settings > Display > Dark. Saves power on OLED screens.' },
+                ar: { t: 'الوضع الداكن', h: 'فعل الوضع الداكن لتوفير الطاقة.' },
+                ru: { t: 'Темная тема', h: 'Настройки > Экран > Темная тема.' },
+                am: { t: 'ጥቁር ሁነታ', h: 'ስልኩን ወደ ጥቁር ሁነታ ይቀይሩት።' }
+            }},
+            { id: 5, cat: 'cat_network', keys: {
+                he: { t: 'כיבוי Bluetooth ו-Wi-Fi', h: 'כבו דרך ההגדרות (לא רק במרכז הבקרה) למניעת סריקה ברקע.' },
+                en: { t: 'Disable BT & Wi-Fi', h: 'Turn OFF in Settings (not just Control Center) to stop background scanning.' },
+                ar: { t: 'إيقاف البلوتوث والواي فاي', h: 'أوقف تشغيل البلوتوث والواي فاي تماماً.' },
+                ru: { t: 'Отключить BT и Wi-Fi', h: 'Выключите в настройках, чтобы остановить поиск сетей.' },
+                am: { t: 'ብሉቱዝ እና ዋይፋይ', h: 'ብሉቱዝ እና ዋይፋይ ያጥፉ።' }
+            }},
+            { id: 6, cat: 'cat_network', keys: {
+                he: { t: 'כיבוי שירותי מיקום (GPS)', h: 'הגדרות > פרטיות > מיקום > כבוי. GPS צורך המון חשמל.' },
+                en: { t: 'Turn OFF Location (GPS)', h: 'Settings > Privacy > Location Services > OFF.' },
+                ar: { t: 'إيقاف نظام تحديد المواقع', h: 'أوقف تشغيل الـ GPS.' },
+                ru: { t: 'Выключить GPS', h: 'Настройки > Конфиденциальность > Геолокация > Выкл.' },
+                am: { t: 'ጂፒኤስ ያጥፉ', h: 'ጂፒኤስ በጣም ባትሪ ስለሚበላ ያጥፉት።' }
+            }},
+            { id: 7, cat: 'cat_info', keys: {
+                he: { t: 'הורדת מפות אופליין', h: 'גוגל מפות > תמונת פרופיל > מפות אופליין. הורידו את האזור שלכם.' },
+                en: { t: 'Download Offline Maps', h: 'Google Maps > Profile > Offline Maps. Select your area.' },
+                ar: { t: 'خرائط بدون إنترنت', h: 'حمل خرائط منطقتك من جوجل ماب للاستخدام بدون إنترنت.' },
+                ru: { t: 'Офлайн-карты', h: 'Скачайте карты вашего района в Google Maps.' },
+                am: { t: 'የመሬት ካርታ ማውረድ', h: 'ኢንተርኔት በማይኖርበት ጊዜ ለመጠቀም ካርታ ዳውንሎድ ያድርጉ።' }
+            }},
+            { id: 8, cat: 'cat_info', keys: {
+                he: { t: 'צילומי מסך של מסמכים', h: 'צלמו ת"ז, מרשמים רפואיים ואנשי קשר חשובים לגלריה.' },
+                en: { t: 'Screenshot Documents', h: 'Capture ID, prescriptions, and critical contacts to your gallery.' },
+                ar: { t: 'لقطات شاشة للوثائق', h: 'صور هويتك وجهات اتصالك المهمة لتبقى معك بدون إنترنت.' },
+                ru: { t: 'Скриншоты документов', h: 'Сфотографируйте паспорт, рецепты и контакты.' },
+                am: { t: 'የሰነዶች ፎቶ', h: 'መታወቂያ እና አስፈላጊ ስልኮችን ፎቶ አንስተው ያስቀምጡ።' }
+            }},
+            { id: 9, cat: 'cat_backup', keys: {
+                he: { t: 'פתק פיזי בכיסוי הטלפון', h: 'רשמו 3 מספרי חירום על נייר והכניסו למגן הטלפון.' },
+                en: { t: 'Emergency Note in Case', h: 'Write 3 emergency numbers on paper and put it inside your case.' },
+                ar: { t: 'ملاحظة ورقية', h: 'اكتب أرقام الطوارئ على ورقة وضعها في غطاء الهاتف.' },
+                ru: { t: 'Записка под чехол', h: 'Напишите 3 номера на бумаге и положите под чехол.' },
+                am: { t: 'የስልክ ቁጥር በወረቀት', h: '3 ስልኮችን በወረቀት ጽፈው ስልኩ ከቨር ውስጥ ያስቀምጡ።' }
+            }},
+            { id: 10, cat: 'cat_info', keys: {
+                he: { t: 'אפליקציית פיקוד העורף', h: 'הגדירו עיר ידנית ושנו מיקום ל"בעת שימוש בלבד".' },
+                en: { t: 'Alert App Settings', h: 'Set manual city and change location to "While using only".' },
+                ar: { t: 'تطبيق الجبهة الداخلية', h: 'حدد مدينتك يدوياً في التطبيق لتوفير البطارية.' },
+                ru: { t: 'Приложение оповещений', h: 'Укажите город вручную и ограничьте доступ к геопозиции.' },
+                am: { t: 'የአደጋ መተግበሪያ', h: 'የሚኖሩበትን ከተማ መርጠው ያስቀምጡ።' }
+            }},
+            { id: 11, cat: 'cat_apps', keys: {
+                he: { t: 'סגירת אפליקציות "כבדות"', h: 'סגרו לחלוטין פייסבוק, יוטיוב ואינסטגרם.' },
+                en: { t: 'Close Heavy Apps', h: 'Force close Facebook, YouTube, and Instagram.' },
+                ar: { t: 'إغلاق التطبيقات الكبيرة', h: 'أغلق فيسبوك ويوتيوب وإنستغرام تماماً.' },
+                ru: { t: 'Закрыть тяжелые прил.', h: 'Закройте Facebook, YouTube и Instagram.' },
+                am: { t: 'ከባድ אፖችን ዝጋ', h: 'ፌስቡክ እና ዩቲዩብን ሙሉ በሙሉ ዝጋ።' }
+            }}
+        ];
+
+        let state = JSON.parse(localStorage.getItem('batteryV5')) || { completedIds: [], isLightMode: false, lang: 'he' };
+
+        function save() { localStorage.setItem('batteryV5', JSON.stringify(state)); }
+
+        function setLang(l) {
+            state.lang = l;
+            const html = document.getElementById('htmlTag');
+            html.dir = (l === 'en' || l === 'ru' || l === 'am') ? 'ltr' : 'rtl';
+            html.lang = l;
+            applyUI();
+            closeLangMenu();
+            render();
+            save();
+        }
+
+        function applyUI() {
+            const ui = UI[state.lang];
+            const elementIds = [
+                'appTitle', 'appDesc', 'labelOptimized', 'labelCompletedHeader', 
+                'btnReset', 'resetTitle', 'resetDesc', 'btnCancel', 
+                'btnConfirmReset', 'btnSOS', 'btnGotIt'
+            ];
+            
+            elementIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = ui[id] || "";
+            });
+
+            const tooltips = {
+                he: { theme: "החלפת מצב כהה/בהיר", lang: "שינוי שפה", reset: "איפוס התקדמות", wa: "העברת הקישור לאפליקציה בווטסאפ" },
+                en: { theme: "Toggle Theme", lang: "Change Language", reset: "Reset Progress", wa: "Share App on WhatsApp" },
+                ar: { theme: "تبديل المظهر", lang: "تغيير اللغة", reset: "إعادة التعيين", wa: "مشاركة التطبيق عبر واتساب" },
+                ru: { theme: "Сменить тему", lang: "Сменить язык", reset: "Сбросить прогресс", wa: "Поделиться в WhatsApp" },
+                am: { theme: "ቀለም መቀየር", lang: "ቋንቋ መቀየር", reset: "ዳግም አስጀምር", wa: "በዋትስአፕ አጋራ" }
+            };
+
+            const t = tooltips[state.lang];
+            document.getElementById('btnTheme').title = t.theme;
+            document.getElementById('btnLang').title = t.lang;
+            document.getElementById('btnReset').title = t.reset;
+            document.getElementById('btnWA').title = t.wa;
+
+            document.getElementById('copyrightFooter').innerHTML = `${ui.copyright} <a href="mailto:ofirbn@post.com" class="underline hover:opacity-80">${ui.contact}</a>`;
+        }
+
+        function toggleTheme() {
+            state.isLightMode = !state.isLightMode;
+            document.body.classList.toggle('light-mode', state.isLightMode);
+            document.getElementById('themeIcon').innerText = state.isLightMode ? '☀️' : '🌙';
+            save();
+        }
+
+        function render() {
+            const activeDiv = document.getElementById('activeTasks');
+            const doneDiv = document.getElementById('completedTasks');
+            activeDiv.innerHTML = ''; doneDiv.innerHTML = '';
+
+            const done = TASK_DATA.filter(t => state.completedIds.includes(t.id));
+            const active = TASK_DATA.filter(t => !state.completedIds.includes(t.id));
+
+            active.forEach(t => activeDiv.appendChild(createItem(t, false)));
+            done.forEach(t => doneDiv.appendChild(createItem(t, true)));
+
+            document.getElementById('completedSection').style.display = done.length ? 'block' : 'none';
+            updateProgress();
+        }
+
+        function createItem(task, isDone) {
+            const div = document.createElement('div');
+            const content = task.keys[state.lang];
+            const catLabel = UI[state.lang][task.cat];
+            div.className = `task-item glass-card p-4 flex items-center gap-4 cursor-pointer ${isDone ? 'completed' : ''}`;
+            
+            const badge = (task.urgent && !isDone) ? `<span class="text-[9px] bg-red-600 text-white font-black px-2 py-0.5 rounded-full uppercase tracking-tight">${UI[state.lang].critical}</span>` : '';
+
+            div.innerHTML = `
+                <div onclick="toggleTask(${task.id}); event.stopPropagation();">
+                    <input type="checkbox" class="hidden" ${isDone ? 'checked' : ''}>
+                    <div class="checkbox-custom">${isDone ? '✓' : ''}</div>
+                </div>
+                <div class="flex-grow flex flex-col" onclick="toggleTask(${task.id})">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[10px] font-black uppercase tracking-wider ${isDone ? 'text-emerald-500' : 'text-blue-400'}">${catLabel}</span>
+                        ${badge}
+                    </div>
+                    <div class="text-sm font-bold leading-tight ${isDone ? 'opacity-50 line-through' : ''}">${content.t}</div>
+                </div>
+                <button onclick="openModal(${task.id}); event.stopPropagation();" class="how-btn text-[11px] font-black px-4 py-2 rounded-xl transition-all active:scale-90">${UI[state.lang].how}</button>
+            `;
+            return div;
+        }
+
+        function toggleTask(id) {
+            if (state.completedIds.includes(id)) {
+                state.completedIds = state.completedIds.filter(i => i !== id);
+            } else {
+                state.completedIds.push(id);
+                checkFeedback();
+            }
+            save(); render();
+        }
+
+        function updateProgress() {
+            const p = Math.round((state.completedIds.length / TASK_DATA.length) * 100);
+            const fill = document.getElementById('batteryFill');
+            fill.style.width = `${p}%`;
+            document.getElementById('percentageText').innerText = `${p}%`;
+            fill.style.backgroundColor = p <= 25 ? '#ef4444' : p <= 50 ? '#f97316' : p <= 75 ? '#eab308' : '#10b981';
+        }
+
+        function checkFeedback() {
+            const p = Math.round((state.completedIds.length / TASK_DATA.length) * 100);
+            const ui = UI[state.lang];
+            let m = "";
+            if (p >= 100) { m = ui.m_100; confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } }); }
+            else if (p >= 75) m = ui.m_75; else if (p >= 50) m = ui.m_50; else if (p >= 25) m = ui.m_25;
+            const el = document.getElementById('encouragementMsg');
+            if(m) { el.innerText = m; setTimeout(() => el.innerText = "", 4000); }
+        }
+
+        function shareWhatsApp() {
+            const ui = UI[state.lang];
+            let text = `*${ui.wa_share}*\n\nלמדריך המלא: ${window.location.href}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        function openModal(id) {
+            const t = TASK_DATA.find(x => x.id === id);
+            document.getElementById('modalTitle').innerText = t.keys[state.lang].t;
+            document.getElementById('modalContent').innerHTML = t.keys[state.lang].h;
+            document.getElementById('modalOverlay').classList.remove('hidden');
+        }
+
+        function closeModal() { document.getElementById('modalOverlay').classList.add('hidden'); }
+        function openLanguageMenu() { document.getElementById('langOverlay').classList.remove('hidden'); }
+        function closeLangMenu() { document.getElementById('langOverlay').classList.add('hidden'); }
+        function toggleSOS() { document.getElementById('sosOverlay').classList.toggle('hidden'); }
+        function confirmReset() { document.getElementById('resetOverlay').classList.remove('hidden'); }
+        function closeResetModal() { document.getElementById('resetOverlay').classList.add('hidden'); }
+        function resetApp() { state.completedIds = []; closeResetModal(); save(); render(); }
+
+        if (state.isLightMode) document.body.classList.add('light-mode');
+        setLang(state.lang);
+    </script>
+</body>
+</html>
