@@ -226,14 +226,12 @@
     <!-- Language Selector -->
     <div id="langOverlay" class="fixed inset-0 bg-black/80 backdrop-blur-xl z-[200] hidden flex items-center justify-center p-6" onclick="closeLangMenu()">
         <div class="modal-container glass-card w-full max-w-xs p-8 rounded-[40px] relative" onclick="event.stopPropagation()">
-            <!-- Close X Button -->
             <button onclick="closeLangMenu()" class="absolute top-4 left-4 p-2 opacity-60 hover:opacity-100 font-bold text-xl">✕</button>
-            
             <h3 class="text-xl font-black mb-8 text-center">בחר שפה / Language</h3>
             <div class="grid grid-cols-1 gap-4">
                 <button onclick="setLang('he')" class="p-5 glass-card rounded-2xl flex justify-between items-center font-bold"><span>עברית</span><span class="text-2xl">🇮🇱</span></button>
                 <button onclick="setLang('en')" class="p-5 glass-card rounded-2xl flex justify-between items-center font-bold"><span>English</span><span class="text-2xl">🇺🇸</span></button>
-                <button onclick="setLang('ar')" class="p-5 glass-card rounded-2xl flex justify-between items-center font-bold"><span>العربية</span><span class="text-2xl">SA</span></button>
+                <button onclick="setLang('ar')" class="p-5 glass-card rounded-2xl flex justify-between items-center font-bold"><span>العربية</span><span class="text-2xl">🇸🇦</span></button>
                 <button onclick="setLang('ru')" class="p-5 glass-card rounded-2xl flex justify-between items-center font-bold"><span>Русский</span><span class="text-2xl">🇷🇺</span></button>
                 <button onclick="setLang('am')" class="p-5 glass-card rounded-2xl flex justify-between items-center font-bold"><span>አማርኛ</span><span class="text-2xl">🇪🇹</span></button>
             </div>
@@ -249,12 +247,13 @@
     </div>
 
     <script>
-        // --- הקישור לאפליקציה שיופיע בשיתוף ווטסאפ ---
         const APP_URL_FOR_SHARE = "https://linktr.ee/ofirbn"; 
 
         const UI = {
             he: {
-                appTitle: "אופטימיזציה לסמארטפון בחירום - OBN", appDesc: "ניהול חכם של סוללה ומידע קריטי למצבים ללא גישה קבועה לחשמל.", labelOptimized: "שיפור מבוצע",
+                appTitle: "אופטימיזציה לסמארטפון בחירום - OBN", 
+                appDesc: "טיפים לניהול חכם של סוללה במסארטפון ושמירה על מידע קריטי למצבים ללא גישה קבועה לחשמל. שימו לב! הטיפים הם המלצות בלבד. השימוש בהם הוא על אחריות המשתמש!", 
+                labelOptimized: "שיפור מבוצע",
                 labelCompletedHeader: "בוצעה אופטימיזציה", btnReset: "איפוס", resetTitle: "איפוס רשימה?", resetDesc: "כל הסימונים ימחקו ותצטרכו להתחיל מחדש.",
                 btnCancel: "ביטול", btnConfirmReset: "אפס עכשיו", btnSOS: "🚨 SOS / פנס חירום", btnGotIt: "הבנתי, תודה", how: "איך?", critical: "קריטי",
                 cat_battery: "סוללה", cat_network: "קישוריות", cat_display: "תצוגה", cat_info: "מידע", cat_apps: "אפליקציות", cat_backup: "גיבוי",
@@ -264,7 +263,9 @@
                 wa_link_text: "לאפליקציה"
             },
             en: {
-                appTitle: "Smartphone Emergency Optimizer - OBN", appDesc: "Smart battery and info management for power-limited situations.", labelOptimized: "Optimization Applied",
+                appTitle: "Smartphone Emergency Optimizer - OBN", 
+                appDesc: "Tips for smart battery management and critical info backup for power-limited situations. Note: These are recommendations only. Use at your own risk!", 
+                labelOptimized: "Optimization Applied",
                 labelCompletedHeader: "Optimized Items", btnReset: "Reset", resetTitle: "Reset Progress?", resetDesc: "All checkboxes will be cleared.",
                 btnCancel: "Cancel", btnConfirmReset: "Reset Now", btnSOS: "🚨 SOS / Flashlight", btnGotIt: "Got it", how: "How?", critical: "CRITICAL",
                 cat_battery: "Battery", cat_network: "Network", cat_display: "Display", cat_info: "Info", cat_apps: "Apps", cat_backup: "Backup",
@@ -274,9 +275,11 @@
                 wa_link_text: "To App"
             },
             ar: {
-                appTitle: "محسن الهاتف للطوارئ - OBN", appDesc: "إدارة ذكية للبطارية والمعلومات لحالات نقص الكهرباء.", labelOptimized: "تم التحسين",
+                appTitle: "محسن الهاتف للطوارئ - OBN", 
+                appDesc: "نصائح للإدارة الذكية للبطارية ونسخ المعلومات الهامة. تنبيه: هذه مجرد توصيات، والاستخدام على مسؤوليتك الخاصة!", 
+                labelOptimized: "تم التحسين",
                 labelCompletedHeader: "تم الانتهاء منها", btnReset: "إعادة", resetTitle: "إعادة التعيين؟", resetDesc: "سيتم مسح جميع العلامات.",
-                btnCancel: "إلغاء", btnConfirmReset: "إعادة الآن", btnSOS: "🚨 وضع الطوارئ", btnGotIt: "فهمت", how: "كيف؟", critical: "عاجل",
+                btnCancel: "إلغاء", btnConfirmReset: "إعادة الآن", btnSOS: "🚨 وضع الطوارئ", btnGotIt: "فهمت", how: "كيف؟", critical: "عاجל",
                 cat_battery: "البطارية", cat_network: "الشبكة", cat_display: "الشاشة", cat_info: "معلومات", cat_apps: "تطبيقات", cat_backup: "نسخ",
                 m_100: "واو! أقصى قدر من الكفاءة!", m_75: "ممتاز! تم توفير الطاقة.", m_50: "منتصف الطريق!", m_25: "بداية جيدة!",
                 copyright: "جميع الحقوق محفوظة لأوفير بن ناتان.", contact: "اتصل بنا",
@@ -284,8 +287,10 @@
                 wa_link_text: "إلى التطبيق"
             },
             ru: {
-                appTitle: "Оптимизатор Смартфона - OBN", appDesc: "Умное управление батареей и информацией при дефиците энергии.", labelOptimized: "Оптимизация",
-                labelCompletedHeader: "Выполнено", btnReset: "Сброс", resetTitle: "Сбросить список?", resetDesc: "Все отметки будут удалены.",
+                appTitle: "Оптимизатор Смартфона - OBN", 
+                appDesc: "Советы по управлению батареей и сохранению важной информации. Внимание: это лишь рекомендации, использование на ваш риск!", 
+                labelOptimized: "Оптимизация",
+                labelCompletedHeader: "Выполнено", btnReset: "Сброס", resetTitle: "Сбросить список?", resetDesc: "Все отметки будут удалены.",
                 btnCancel: "Отмена", btnConfirmReset: "Сбросить", btnSOS: "🚨 Режим SOS", btnGotIt: "Понятно", how: "Как?", critical: "ВАЖНО",
                 cat_battery: "Батарея", cat_network: "Связь", cat_display: "Экран", cat_info: "Инфо", cat_apps: "Приложения", cat_backup: "Бекап",
                 m_100: "Вау! Максимум энергии!", m_75: "Отлично! Заряд спасен.", m_50: "Половина пути!", m_25: "Хорошее начало!",
@@ -294,12 +299,14 @@
                 wa_link_text: "К приложению"
             },
             am: {
-                appTitle: "የስማርትፎን አደጋ ጊዜ ማመቻቻ - OBN", appDesc: "ኃይል በማይኖርበት ጊዜ ባትሪን እና መረጃን ማስተዳደር።", labelOptimized: "ተስተካክሏል",
+                appTitle: "የስማርትፎን አደጋ ጊዜ ማመቻቻ - OBN", 
+                appDesc: "የባትሪ አጠቃቀም እና የመረጃ አያያዝ ምክሮች። ማሳሰቢያ፦ ምክሮቹ እንደ አማራጭ የቀረቡ ናቸው፤ አጠቃቀሙ በተጠቃሚው ኃላፊነት ይሆናል!", 
+                labelOptimized: "ተስተካክሏል",
                 labelCompletedHeader: "ተጠናቅቋል", btnReset: "አስጀምር", resetTitle: "ዳግም ላስጀምር?", resetDesc: "ሁሉም ምልክቶች ይጠፋሉ።",
                 btnCancel: "ተመለስ", btnConfirmReset: "አስጀምር", btnSOS: "🚨 የድንገተኛ መብራት", btnGotIt: "ገባኝ", how: "እንዴት?", critical: "አስቸኳይ",
                 cat_battery: "ባትሪ", cat_network: "ኔትወርክ", cat_display: "ስክሪን", cat_info: "መረጃ", cat_apps: "አፕሊኬሽን", cat_backup: "ምትክ",
                 m_100: "ድንቅ! ተጠናቋል!", m_75: "በጣም ጥሩ!", m_50: "ግማሹ ደርሷል!", m_25: "ጥሩ ጅምር!",
-                copyright: "መብቱ በኦፊር ቤን ናታን የተጠበቀ ነው።", contact: "ግንኙነት",
+                copyright: "መብቱ בኦፊר ቤን ናታን የተጠበቀ ነው።", contact: "ግንኙነት",
                 wa_share: "የሞባይል ማመቻቻ መተግበሪያ:\nባትሪን እና መረጃን በአግባቡ ለማስተዳደር የሚረዳ",
                 wa_link_text: "ወደ መተግበሪያ"
             }
@@ -349,7 +356,7 @@
                 am: { t: 'ጂፒኤስ ያጥፉ', h: 'ጂፒኤስ በጣም ባትሪ ስለሚበላ ያጥፉት።' }
             }},
             { id: 7, cat: 'cat_info', keys: {
-                he: { t: 'הורדת מפות אופליין', h: 'גוגל מפות > תמונת הפרופיל > מפות אופליין. הורידו את האזור שלכם.' },
+                he: { t: 'הורדת מפות אופליין', h: 'גוגל מפות > תמונת פרופיל > מפות אופליין. הורידו את האזור שלכם.' },
                 en: { t: 'Download Offline Maps', h: 'Google Maps > Profile > Offline Maps. Select your area.' },
                 ar: { t: 'خرائط بدون إنترنت', h: 'حمل خرائط منطقتك من جوجل ماب للاستخدام بدون إنترنت.' },
                 ru: { t: 'Офлайн-карты', h: 'Скачайте карты вашего района в Google Maps.' },
@@ -367,7 +374,7 @@
                 en: { t: 'Emergency Note in Case', h: 'Write 3 emergency numbers on paper and put it inside your case.' },
                 ar: { t: 'ملاحظة ورقية', h: 'اكتب أرقام الطوارئ على ورقة وضعها في غطاء الهاتف.' },
                 ru: { t: 'Записка под чехол', h: 'Напишите 3 номера на бумаге и положите под чехол.' },
-                am: { t: 'የስልክ ቁጥር በወረቀት', h: '3 ስልኮችን በወረቀት ጽፈው ስልኩ ከቨር ውስጥ ያስቀምጡ።' }
+                am: { t: 'የስልክ ቁጥር בወረቀት', h: '3 ስልኮችን בወረቀት ጽፈው ስልኩ ከቨር ውስጥ ያስቀምጡ።' }
             }},
             { id: 10, cat: 'cat_info', keys: {
                 he: { t: 'אפליקציית פיקוד העורף', h: 'על מנת לחסוך בסוללה, ובמידה ואתם ממוקמים באזור אחד - הגדירו עיר/אזור ידנית ושנו מיקום ל"בעת שימוש בלבד" תמשיכו לקבל התראות על פי האזור שהגדרתם.' },
@@ -381,7 +388,7 @@
                 en: { t: 'Close Heavy Apps', h: 'Force close Facebook, YouTube, and Instagram.' },
                 ar: { t: 'إغلاق التطبيقات الكبيرة', h: 'أغلق فيسبوك ويوتيوب وإنستغرام تماماً.' },
                 ru: { t: 'Закрыть тяжелые прил.', h: 'Закройте Facebook, YouTube и Instagram.' },
-                am: { t: 'ከባድ አፖችን ዝጋ', h: 'ፌስቡክ እና ዩቲዩብን ሙሉ በሙሉ ዝጋ።' }
+                am: { t: 'ከባድ אፖችን ዝጋ', h: 'ፌስቡክ እና ዩቲዩብን ሙሉ በሙሉ ዝጋ።' }
             }}
         ];
 
@@ -416,9 +423,9 @@
             const tooltips = {
                 he: { theme: "החלפת מצב כהה/בהיר", lang: "שינוי שפה", reset: "איפוס התקדמות", wa: "העברת הקישור לאפליקציה בווטסאפ" },
                 en: { theme: "Toggle Theme", lang: "Change Language", reset: "Reset Progress", wa: "Share App on WhatsApp" },
-                ar: { theme: "تبديل المظهر", lang: "تغيير اللغة", reset: "إعادة التعيين", wa: "مشاركة التطبيق عبر واتساب" },
+                ar: { theme: "تبדיל المظهر", lang: "تغيير اللغة", reset: "إعادة التعيين", wa: "مشاركة التطبيق عبر واتساب" },
                 ru: { theme: "Сменить тему", lang: "Сменить язык", reset: "Сбросить прогресс", wa: "Поделиться в WhatsApp" },
-                am: { theme: "ቀለም መቀየር", lang: "ቋንቋ መቀየር", reset: "ዳግም አስጀምር", wa: "በዋትስአፕ አጋራ" }
+                am: { theme: "ቀለም መቀየር", lang: "ቋንቋ መቀየር", reset: "ዳግም አስጀምር", wa: "በዋትስአፕ אጋራ" }
             };
 
             const t = tooltips[state.lang];
@@ -458,21 +465,24 @@
             const catLabel = UI[state.lang][task.cat];
             div.className = `task-item glass-card p-4 flex items-center gap-4 cursor-pointer ${isDone ? 'completed' : ''}`;
             
+            // לחיצה על כל שטח המלבן פותחת את המודאל
+            div.onclick = () => openModal(task.id);
+
             const badge = (task.urgent && !isDone) ? `<span class="text-[9px] bg-red-600 text-white font-black px-2 py-0.5 rounded-full uppercase tracking-tight">${UI[state.lang].critical}</span>` : '';
 
             div.innerHTML = `
-                <div onclick="toggleTask(${task.id}); event.stopPropagation();">
+                <div onclick="toggleTask(${task.id}); event.stopPropagation();" class="relative z-10 p-1">
                     <input type="checkbox" class="hidden" ${isDone ? 'checked' : ''}>
-                    <div class="checkbox-custom">${isDone ? '✓' : ''}</div>
+                    <div class="checkbox-custom text-white">${isDone ? '✓' : ''}</div>
                 </div>
-                <div class="flex-grow flex flex-col" onclick="toggleTask(${task.id})">
+                <div class="flex-grow flex flex-col">
                     <div class="flex items-center gap-2 mb-1">
                         <span class="text-[10px] font-black uppercase tracking-wider ${isDone ? 'text-emerald-500' : 'text-blue-400'}">${catLabel}</span>
                         ${badge}
                     </div>
-                    <div class="text-sm font-bold leading-tight ${isDone ? 'opacity-50 line-through' : ''}">${content.t}</div>
+                    <div class="text-sm font-bold leading-tight text-[var(--text-main)] ${isDone ? 'opacity-50 line-through' : ''}">${content.t}</div>
                 </div>
-                <button onclick="openModal(${task.id}); event.stopPropagation();" class="how-btn text-[11px] font-black px-4 py-2 rounded-xl transition-all active:scale-90">${UI[state.lang].how}</button>
+                <button class="how-btn text-[11px] font-black px-4 py-2 rounded-xl transition-all active:scale-90">${UI[state.lang].how}</button>
             `;
             return div;
         }
@@ -507,10 +517,7 @@
 
         function shareWhatsApp() {
             const ui = UI[state.lang];
-            // הטקסט הבא הוא טקסט גולמי שניתן לעריכה חופשית:
             let message = `*${ui.wa_share}*\n\n${ui.wa_link_text}: ${APP_URL_FOR_SHARE}`;
-            
-            // הפונקציה encodeURIComponent מקודדת את הטקסט לפורמט URL כדי שהדפדפן יעביר אותו תקין לווטסאפ
             window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
         }
 
