@@ -24,7 +24,7 @@
             --card-bg: #ffffff;
             --text-main: #0f172a;
             --text-secondary: #334155;
-            --border-color: rgba(15, 23, 42, 0.2);
+            --border-color: rgba(15, 23, 42, 0.3);
             --accent: #2563eb;
             --modal-bg: #ffffff;
         }
@@ -81,6 +81,7 @@
         .task-item {
             transition: all 0.25s ease;
             border-width: 2px;
+            border-color: var(--border-color);
         }
 
         .task-item.completed {
@@ -120,11 +121,10 @@
             font-weight: 800;
         }
 
-        /* Tooltip simple simulation */
         [title]:hover::after {
             content: attr(title);
             position: absolute;
-            bottom: -40px;
+            bottom: -45px;
             left: 50%;
             transform: translateX(-50%);
             background: #333;
@@ -194,9 +194,9 @@
             🚨 SOS / פנס חירום
         </button>
         
-        <div class="text-[11px] font-bold opacity-70 leading-relaxed" id="copyrightFooter">
+        <div class="text-[11px] font-bold opacity-80 leading-relaxed" id="copyrightFooter">
             כל הזכויות שמורות לאופיר בן נתן. 
-            <a href="mailto:ofirbn@post.com" class="underline hover:opacity-80">ליצירת קשר</a>
+            <a href="mailto:ofirbn@post.com" class="underline hover:opacity-100">ליצירת קשר</a>
         </div>
     </footer>
 
@@ -233,7 +233,7 @@
             <div class="grid grid-cols-1 gap-4">
                 <button onclick="setLang('he')" class="p-5 glass-card rounded-2xl flex justify-between items-center font-bold"><span>עברית</span><span class="text-2xl">🇮🇱</span></button>
                 <button onclick="setLang('en')" class="p-5 glass-card rounded-2xl flex justify-between items-center font-bold"><span>English</span><span class="text-2xl">🇺🇸</span></button>
-                <button onclick="setLang('ar')" class="p-5 glass-card rounded-2xl flex justify-between items-center font-bold"><span>العربية</span><span class="text-2xl">🇦🇪</span></button>
+                <button onclick="setLang('ar')" class="p-5 glass-card rounded-2xl flex justify-between items-center font-bold"><span>العربية</span><span class="text-2xl">🇸🇦</span></button>
                 <button onclick="setLang('ru')" class="p-5 glass-card rounded-2xl flex justify-between items-center font-bold"><span>Русский</span><span class="text-2xl">🇷🇺</span></button>
                 <button onclick="setLang('am')" class="p-5 glass-card rounded-2xl flex justify-between items-center font-bold"><span>አማርኛ</span><span class="text-2xl">🇪🇹</span></button>
             </div>
@@ -249,6 +249,9 @@
     </div>
 
     <script>
+        // --- הקישור לאפליקציה שיופיע בשיתוף ווטסאפ ---
+        const APP_URL_FOR_SHARE = "https://your-custom-link.com"; 
+
         const UI = {
             he: {
                 appTitle: "אופטימיזציה לסמארטפון בחירום - OBN", appDesc: "ניהול חכם של סוללה ומידע קריטי למצבים ללא גישה קבועה לחשמל.", labelOptimized: "שיפור מבוצע",
@@ -257,7 +260,8 @@
                 cat_battery: "סוללה", cat_network: "קישוריות", cat_display: "תצוגה", cat_info: "מידע", cat_apps: "אפליקציות", cat_backup: "גיבוי",
                 m_100: "וואו! המכשיר בשיא האופטימיזציה!", m_75: "מצוין! חסכת זמן יקר.", m_50: "חצי דרך עברה!", m_25: "התחלה טובה!",
                 copyright: "כל הזכויות שמורות לאופיר בן נתן.", contact: "ליצירת קשר",
-                wa_share: "אפליקצייה לאופטימיזציית טלפון נייד:\nניהול חכם של סוללה ומידע קריטי למצבים ללא גישה קבועה לחשמל"
+                wa_share: "אפליקצייה לאופטימיזציית טלפון נייד:\nניהול חכם של סוללה ומידע קריטי למצבים ללא גישה קבועה לחשמל",
+                wa_link_text: "לאפליקציה"
             },
             en: {
                 appTitle: "Smartphone Emergency Optimizer - OBN", appDesc: "Smart battery and info management for power-limited situations.", labelOptimized: "Optimization Applied",
@@ -266,7 +270,8 @@
                 cat_battery: "Battery", cat_network: "Network", cat_display: "Display", cat_info: "Info", cat_apps: "Apps", cat_backup: "Backup",
                 m_100: "Wow! Max efficiency reached!", m_75: "Great! Power saved.", m_50: "Halfway there!", m_25: "Good start!",
                 copyright: "All rights reserved to Ofir Ben Natan.", contact: "Contact",
-                wa_share: "Mobile Optimization App:\nSmart battery and info management for power-limited situations"
+                wa_share: "Mobile Optimization App:\nSmart battery and info management for power-limited situations",
+                wa_link_text: "To App"
             },
             ar: {
                 appTitle: "محسن الهاتف للطوارئ - OBN", appDesc: "إدارة ذكية للبطارية والمعلومات لحالات نقص الكهرباء.", labelOptimized: "تم التحسين",
@@ -275,7 +280,8 @@
                 cat_battery: "البطارية", cat_network: "الشبكة", cat_display: "الشاشة", cat_info: "معلومات", cat_apps: "تطبيقات", cat_backup: "نسخ",
                 m_100: "واو! أقصى قدر من الكفاءة!", m_75: "ممتاز! تم توفير الطاقة.", m_50: "منتصف الطريق!", m_25: "بداية جيدة!",
                 copyright: "جميع الحقوق محفوظة لأوفير بن ناتان.", contact: "اتصل بنا",
-                wa_share: "تطبيق تحسين الهاتف المحمول:\nإدارة ذكية للبطارية والمعلومات لحالات نقص الكهرباء"
+                wa_share: "تطبيق تحسين الهاتف المحمول:\nإدارة ذكية للبطارية والمعلومات لحالات نقص الكهرباء",
+                wa_link_text: "إلى التطبيق"
             },
             ru: {
                 appTitle: "Оптимизатор Смартфона - OBN", appDesc: "Умное управление батареей и информацией при дефиците энергии.", labelOptimized: "Оптимизация",
@@ -284,7 +290,8 @@
                 cat_battery: "Батарея", cat_network: "Связь", cat_display: "Экран", cat_info: "Инфо", cat_apps: "Приложения", cat_backup: "Бекап",
                 m_100: "Вау! Максимум энергии!", m_75: "Отлично! Заряд спасен.", m_50: "Половина пути!", m_25: "Хорошее начало!",
                 copyright: "Все права защищены Офиром Бен Натаном.", contact: "Контакт",
-                wa_share: "Приложение для оптимизации мобильных устройств:\nУмное управление батареей и информацией в условиях дефицита энергии"
+                wa_share: "Приложение для оптимизации мобильных устройств:\nУмное управление батареей и информацией в условиях дефицита энергии",
+                wa_link_text: "К приложению"
             },
             am: {
                 appTitle: "የስማርትፎን አደጋ ጊዜ ማመቻቻ - OBN", appDesc: "ኃይል በማይኖርበት ጊዜ ባትሪን እና መረጃን ማስተዳደር።", labelOptimized: "ተስተካክሏል",
@@ -293,7 +300,8 @@
                 cat_battery: "ባትሪ", cat_network: "ኔትወርክ", cat_display: "ስክሪን", cat_info: "መረጃ", cat_apps: "አፕሊኬሽን", cat_backup: "ምትክ",
                 m_100: "ድንቅ! ተጠናቋል!", m_75: "በጣም ጥሩ!", m_50: "ግማሹ ደርሷል!", m_25: "ጥሩ ጅምር!",
                 copyright: "መብቱ በኦፊር ቤን ናታን የተጠበቀ ነው።", contact: "ግንኙነት",
-                wa_share: "የሞባይል ማመቻቻ መተግበሪያ:\nባትሪን እና መረጃን በአግባቡ ለማስተዳደር የሚረዳ"
+                wa_share: "የሞባይል ማመቻቻ መተግበሪያ:\nባትሪን እና መረጃን በአግባቡ ለማስተዳደር የሚረዳ",
+                wa_link_text: "ወደ መተግበሪያ"
             }
         };
 
@@ -373,7 +381,7 @@
                 en: { t: 'Close Heavy Apps', h: 'Force close Facebook, YouTube, and Instagram.' },
                 ar: { t: 'إغلاق التطبيقات الكبيرة', h: 'أغلق فيسبوك ويوتيوب وإنستغرام تماماً.' },
                 ru: { t: 'Закрыть тяжелые прил.', h: 'Закройте Facebook, YouTube и Instagram.' },
-                am: { t: 'ከባድ אፖችን ዝጋ', h: 'ፌስቡክ እና ዩቲዩብን ሙሉ በሙሉ ዝጋ።' }
+                am: { t: 'ከባድ አፖችን ዝጋ', h: 'ፌስቡክ እና ዩቲዩብን ሙሉ በሙሉ ዝጋ።' }
             }}
         ];
 
@@ -419,7 +427,7 @@
             document.getElementById('btnReset').title = t.reset;
             document.getElementById('btnWA').title = t.wa;
 
-            document.getElementById('copyrightFooter').innerHTML = `${ui.copyright} <a href="mailto:ofirbn@post.com" class="underline hover:opacity-80">${ui.contact}</a>`;
+            document.getElementById('copyrightFooter').innerHTML = `${ui.copyright} <a href="mailto:ofirbn@post.com" class="underline hover:opacity-100">${ui.contact}</a>`;
         }
 
         function toggleTheme() {
@@ -499,8 +507,11 @@
 
         function shareWhatsApp() {
             const ui = UI[state.lang];
-            let text = `*${ui.wa_share}*\n\nלמדריך המלא: ${window.location.href}`;
-            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+            // הטקסט הבא הוא טקסט גולמי שניתן לעריכה חופשית:
+            let message = `*${ui.wa_share}*\n\n${ui.wa_link_text}: ${APP_URL_FOR_SHARE}`;
+            
+            // הפונקציה encodeURIComponent מקודדת את הטקסט לפורמט URL כדי שהדפדפן יעביר אותו תקין לווטסאפ
+            window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
         }
 
         function openModal(id) {
