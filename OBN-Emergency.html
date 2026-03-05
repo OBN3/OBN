@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>אופטימיזציה לסמארטפון בחירום - OBN</title>
+    <title>מדריך צ'ק-ליסט לחיסכון בסוללה בחירום - OBN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -136,6 +136,20 @@
             z-index: 50;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
+
+        .step-badge {
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 6px;
+        }
     </style>
 </head>
 <body class="p-4 max-w-md mx-auto min-h-screen flex flex-col pb-6">
@@ -161,9 +175,19 @@
     <!-- Header Section -->
     <header class="flex flex-col items-center mb-8">
         <h1 class="text-3xl font-black mb-2 text-center" id="appTitle">אופטימיזציה לסמארטפון בחירום - OBN</h1>
-        <p class="text-sm font-medium opacity-90 text-center mb-8 px-4 leading-relaxed" id="appDesc">
-            טיפים לניהול חכם של סוללה במסארטפון ושמירה על מידע קריטי למצבים ללא גישה קבועה לחשמל. לחצו על פריט כדי לקבל הסבר. לחצו על תיבת סימון, כדי לסמן את הפריט כ"בוצע". שימו לב! הטיפים הם המלצות בלבד. השימוש בהם הוא על אחריות המשתמש!
+        <p class="text-sm font-medium opacity-90 text-center mb-4 px-4 leading-relaxed" id="appDesc">
+            טיפים לניהול חכם של סוללה בסמארטפון ושמירה על מידע קריטי למצבים ללא גישה קבועה לחשמל. שימו לב! האפליקציה היא מדריך ידני. עליכם לבצע את הפעולות בטלפון שלכם ולסמן כאן. השימוש הוא על אחריות המשתמש!
         </p>
+
+        <!-- Instructions Banner -->
+        <div class="glass-card w-full p-4 mb-8 bg-blue-500/10 border-blue-500/30">
+            <h2 class="text-xs font-bold uppercase tracking-wider mb-3 opacity-70 text-center" id="howToUseTitle">איך משתמשים במדריך?</h2>
+            <div class="space-y-3 text-[11px] font-medium leading-tight">
+                <div class="flex items-start"><span class="step-badge mt-0.5">1</span> <span id="step1">לחצו על הפריטים ברשימה לקבלת הוראות ביצוע.</span></div>
+                <div class="flex items-start"><span class="step-badge mt-0.5">2</span> <span id="step2">בצעו את הפעולה ידנית בהגדרות הטלפון שלכם.</span></div>
+                <div class="flex items-start"><span class="step-badge mt-0.5">3</span> <span id="step3">לנוחותכם, תוכלו לסמן ב-V את הריבוע לאחר שביצעתם את הפעולה בטלפון.</span></div>
+            </div>
+        </div>
         
         <div class="flex items-center gap-6 p-6 rounded-3xl w-full justify-around shadow-2xl glass-card">
             <div class="battery-container">
@@ -171,7 +195,7 @@
             </div>
             <div class="text-right flex flex-col">
                 <span id="percentageText" class="text-4xl font-black tabular-nums">0%</span>
-                <span class="text-[10px] uppercase font-black tracking-widest opacity-60" id="labelOptimized">שיפור מבוצע</span>
+                <span class="text-[10px] uppercase font-black tracking-widest opacity-60" id="labelOptimized">מד מוכנות המכשיר</span>
             </div>
         </div>
 
@@ -183,21 +207,18 @@
         <div id="activeTasks" class="space-y-4"></div>
 
         <div id="completedSection" class="hidden">
-            <h2 class="text-[12px] font-black uppercase tracking-[0.25em] opacity-60 mb-4 px-2 border-t border-[var(--border-color)] pt-8 text-center" id="labelCompletedHeader">בוצעה אופטימיזציה</h2>
+            <h2 class="text-[12px] font-black uppercase tracking-[0.25em] opacity-60 mb-4 px-2 border-t border-[var(--border-color)] pt-8 text-center" id="labelCompletedHeader">פעולות שבוצעו בהצלחה</h2>
             <div id="completedTasks" class="space-y-4"></div>
         </div>
     </main>
 
-    <!-- Footer SOS -->
-    <footer class="mt-12 mb-8 text-center flex flex-col items-center gap-8">
-        <button onclick="toggleSOS()" class="bg-red-600 hover:bg-red-700 text-white font-black py-5 px-14 rounded-full shadow-2xl shadow-red-900/40 active:scale-95 transition-all w-full max-w-xs text-lg" id="btnSOS">
-            🚨 SOS / פנס חירום
-        </button>
-        
+    <!-- Footer -->
+    <footer class="mt-12 mb-8 text-center flex flex-col items-center gap-4">
         <div class="text-[11px] font-bold opacity-80 leading-relaxed" id="copyrightFooter">
             כל הזכויות שמורות לאופיר בן נתן. 
             <a href="mailto:ofirbn@post.com" class="underline hover:opacity-100">ליצירת קשר</a>
         </div>
+        <div class="text-[9px] opacity-40 uppercase tracking-widest" id="lastUpdateLabel">עודכן לאחרונה: מרץ 2024</div>
     </footer>
 
     <!-- MODALS -->
@@ -205,7 +226,8 @@
     <!-- Details Modal -->
     <div id="modalOverlay" class="fixed inset-0 bg-black/80 backdrop-blur-xl z-[200] hidden flex items-center justify-center p-6" onclick="closeModal()">
         <div class="modal-container w-full max-w-sm p-8 rounded-[40px] border-2 border-[var(--border-color)] shadow-2xl" onclick="event.stopPropagation()">
-            <h3 id="modalTitle" class="text-2xl font-black mb-6 text-center"></h3>
+            <h3 id="modalTitle" class="text-2xl font-black mb-2 text-center"></h3>
+            <div class="text-[10px] text-center uppercase tracking-widest opacity-50 mb-6" id="modalInstructionLabel">הוראות לביצוע ידני</div>
             <div id="modalContent" class="space-y-5 text-base leading-relaxed overflow-y-auto max-h-[50vh] px-2 opacity-90"></div>
             <button onclick="closeModal()" class="w-full mt-10 bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-2xl shadow-xl" id="btnGotIt">הבנתי, תודה</button>
         </div>
@@ -238,76 +260,98 @@
         </div>
     </div>
 
-    <!-- SOS Screen Overlay -->
-    <div id="sosOverlay" onclick="toggleSOS()" class="fixed inset-0 bg-white z-[300] hidden flex items-center justify-center">
-        <div class="text-black font-black text-5xl animate-pulse text-center p-12 leading-tight">
-            🔦 פנס חירום פעיל<br>
-            <span class="text-2xl font-bold opacity-70 mt-6 block">לחץ לכיבוי</span>
-        </div>
-    </div>
-
     <script>
         const APP_URL_FOR_SHARE = "https://linktr.ee/ofirbn"; 
 
         const UI = {
             he: {
                 appTitle: "אופטימיזציה לסמארטפון בחירום - OBN", 
-                appDesc: "טיפים לניהול חכם של סוללה במסארטפון ושמירה על מידע קריטי למצבים ללא גישה קבועה לחשמל. שימו לב! הטיפים הם המלצות בלבד. השימוש בהם הוא על אחריות המשתמש!", 
-                labelOptimized: "שיפור מבוצע",
-                labelCompletedHeader: "בוצעה אופטימיזציה", btnReset: "איפוס", resetTitle: "איפוס רשימה?", resetDesc: "כל הסימונים ימחקו ותצטרכו להתחיל מחדש.",
-                btnCancel: "ביטול", btnConfirmReset: "אפס עכשיו", btnSOS: "🚨 SOS / פנס חירום", btnGotIt: "הבנתי, תודה", how: "איך?", critical: "קריטי",
+                appDesc: "טיפים לניהול חכם של סוללה בסמארטפון ושמירה על מידע קריטי למצבים ללא גישה קבועה לחשמל. שימו לב! האפליקציה היא מדריך ידני. עליכם לבצע את הפעולות בטלפון שלכם ולסמן כאן. השימוש הוא על אחריות המשתמש!", 
+                howToUseTitle: "איך משתמשים במדריך?",
+                step1: "לחצו על הפריטים ברשימה לקבלת הוראות ביצוע.",
+                step2: "בצעו את הפעולה ידנית בהגדרות הטלפון שלכם.",
+                step3: "לנוחותכם, תוכלו לסמן ב-V את הריבוע לאחר שביצעתם את הפעולה בטלפון.",
+                modalInstructionLabel: "הוראות לביצוע ידני",
+                labelOptimized: "מד מוכנות המכשיר",
+                labelCompletedHeader: "פעולות שבוצעו בהצלחה", btnReset: "איפוס", resetTitle: "איפוס רשימה?", resetDesc: "כל הסימונים ימחקו ותצטרכו להתחיל מחדש.",
+                btnCancel: "ביטול", btnConfirmReset: "אפס עכשיו", btnGotIt: "הבנתי, תודה", how: "איך?", critical: "קריטי",
                 cat_battery: "סוללה", cat_network: "קישוריות", cat_display: "תצוגה", cat_info: "מידע", cat_apps: "אפליקציות", cat_backup: "גיבוי",
-                m_100: "וואו! המכשיר בשיא האופטימיזציה!", m_75: "מצוין! חסכת זמן יקר.", m_50: "חצי דרך עברה!", m_25: "התחלה טובה!",
+                m_100: "וואו! המכשיר בשיא המוכנות!", m_75: "מצוין! חסכת זמן יקר.", m_50: "חצי דרך עברה!", m_25: "התחלה טובה!",
                 copyright: "כל הזכויות שמורות לאופיר בן נתן.", contact: "ליצירת קשר",
-                wa_share: "אפליקצייה לאופטימיזציית טלפון נייד:\nניהול חכם של סוללה ומידע קריטי למצבים ללא גישה קבועה לחשמל",
+                lastUpdate: "עודכן לאחרונה: מרץ 2024",
+                wa_share: "מדריך צ'ק-ליסט לחיסכון בסוללה בחירום:\nניהול חכם של סוללה ומידע קריטי למצבים ללא גישה קבועה לחשמל",
                 wa_link_text: "לאפליקציה"
             },
             en: {
-                appTitle: "Smartphone Emergency Optimizer - OBN", 
-                appDesc: "Tips for smart battery management and critical info backup for power-limited situations. Note: These are recommendations only. Use at your own risk!", 
-                labelOptimized: "Optimization Applied",
-                labelCompletedHeader: "Optimized Items", btnReset: "Reset", resetTitle: "Reset Progress?", resetDesc: "All checkboxes will be cleared.",
-                btnCancel: "Cancel", btnConfirmReset: "Reset Now", btnSOS: "🚨 SOS / Flashlight", btnGotIt: "Got it", how: "How?", critical: "CRITICAL",
+                appTitle: "Checklist Guide: Emergency Battery Saver - OBN", 
+                appDesc: "Tips for smart battery management and critical info backup. Note: This app is a manual guide. You must perform the actions on your phone and mark them here. Use at your own risk!", 
+                howToUseTitle: "How to use this guide?",
+                step1: "Click items in the list for instructions.",
+                step2: "Perform the action manually on your phone settings.",
+                step3: "For your convenience, check the box after performing the action on your phone.",
+                modalInstructionLabel: "Manual Instructions",
+                labelOptimized: "Device Readiness Level",
+                labelCompletedHeader: "Actions Successfully Completed", btnReset: "Reset", resetTitle: "Reset Progress?", resetDesc: "All checkboxes will be cleared.",
+                btnCancel: "Cancel", btnConfirmReset: "Reset Now", btnGotIt: "Got it", how: "How?", critical: "CRITICAL",
                 cat_battery: "Battery", cat_network: "Network", cat_display: "Display", cat_info: "Info", cat_apps: "Apps", cat_backup: "Backup",
-                m_100: "Wow! Max efficiency reached!", m_75: "Great! Power saved.", m_50: "Halfway there!", m_25: "Good start!",
+                m_100: "Wow! Device is fully ready!", m_75: "Great! Power saved.", m_50: "Halfway there!", m_25: "Good start!",
                 copyright: "All rights reserved to Ofir Ben Natan.", contact: "Contact",
-                wa_share: "Mobile Optimization App:\nSmart battery and info management for power-limited situations",
+                lastUpdate: "Last updated: March 2024",
+                wa_share: "Emergency Battery Saving Checklist Guide:\nSmart battery and info management for power-limited situations",
                 wa_link_text: "To App"
             },
             ar: {
-                appTitle: "محسن الهاتف للطوارئ - OBN", 
-                appDesc: "نصائح للإدارة الذكية للبطارية ونسخ المعلومات الهامة. تنبيه: هذه مجرد توصيات، والاستخدام على مسؤوليتك الخاصة!", 
-                labelOptimized: "تم التحسين",
-                labelCompletedHeader: "تم الانتهاء منها", btnReset: "إعادة", resetTitle: "إعادة التعيين؟", resetDesc: "سيتم مسح جميع العلامات.",
-                btnCancel: "إلغاء", btnConfirmReset: "إعادة الآن", btnSOS: "🚨 وضع الطوارئ", btnGotIt: "فهمت", how: "كيف؟", critical: "عاجל",
+                appTitle: "دليل المهام: توفير البطارية في حالات الطوارئ - OBN", 
+                appDesc: "نصائح للإدارة الذكية للبطارية. تنبيه: هذا التطبيق هو دليل يدوي. يجب عليك القيام بالإجراءات في هاتفك ووضع علامة هنا. الاستخدام على مسؤوليتك الخاصة!", 
+                howToUseTitle: "كيف تستخدم هذا الدليل؟",
+                step1: "اضغط على العناصر في القائمة للحصول على التعليمات.",
+                step2: "قم بتنفيذ الإجراء يدويًا في إعدادات هاتفك.",
+                step3: "لراحتك، يمكنك تحديد المربع بعد تنفيذ الإجراء على هاتفك.",
+                modalInstructionLabel: "تعليمات يدوية",
+                labelOptimized: "مستوى جاهزية الجهاز",
+                labelCompletedHeader: "الإجراءات التي اكتملت بنجاح", btnReset: "إعادة", resetTitle: "إعادة التعيين؟", resetDesc: "سيتم مسح جميع العلامات.",
+                btnCancel: "إلغاء", btnConfirmReset: "إعادة الآن", btnGotIt: "فهمت", how: "كيف؟", critical: "עاجל",
                 cat_battery: "البطارية", cat_network: "الشبكة", cat_display: "الشاشة", cat_info: "معلومات", cat_apps: "تطبيقات", cat_backup: "نسخ",
-                m_100: "واو! أقصى قدر من الكفاءة!", m_75: "ممتاز! تم توفير الطاقة.", m_50: "منتصف الطريق!", m_25: "بداية جيدة!",
+                m_100: "واو! الجهاز جاهز تمامًا!", m_75: "ممتاز! تم توفير الطاقة.", m_50: "منتصف الطريق!", m_25: "بداية جيدة!",
                 copyright: "جميع الحقوق محفوظة لأوفير بن ناتان.", contact: "اتصل بنا",
-                wa_share: "تطبيق تحسين الهاتف المحمول:\nإدارة ذكية للبطارية والمعلومات لحالات نقص الكهرباء",
+                lastUpdate: "آخر تحديث: مارس 2024",
+                wa_share: "دليل توفير بطارية الهاتف المحمول:\nإدارة ذكية للبطارية والمعلومات لحالات نقص الكهرباء",
                 wa_link_text: "إلى التطبيق"
             },
             ru: {
-                appTitle: "Оптимизатор Смартфона - OBN", 
-                appDesc: "Советы по управлению батареей и сохранению важной информации. Внимание: это лишь рекомендации, использование на ваш риск!", 
-                labelOptimized: "Оптимизация",
-                labelCompletedHeader: "Выполнено", btnReset: "Сброס", resetTitle: "Сбросить список?", resetDesc: "Все отметки будут удалены.",
-                btnCancel: "Отмена", btnConfirmReset: "Сбросить", btnSOS: "🚨 Режим SOS", btnGotIt: "Понятно", how: "Как?", critical: "ВАЖНО",
+                appTitle: "Чек-лист: Экономия заряда в ЧС - OBN", 
+                appDesc: "Советы по управлению батареей. Внимание: это ручное руководство. Вы должны выполнить действия в телефоне и отметить их здесь. Использование на ваш риск!", 
+                howToUseTitle: "Как пользоваться гидом?",
+                step1: "Нажмите на пункт для получения инструкций.",
+                step2: "Выполните действие вручную в настройках телефона.",
+                step3: "Для вашего удобства отметьте галочкой после выполнения действия на телефоне.",
+                modalInstructionLabel: "Ручные инструкции",
+                labelOptimized: "Уровень готовности устройства",
+                labelCompletedHeader: "Успешно выполненные действия", btnReset: "Сброс", resetTitle: "Сбросить список?", resetDesc: "Все отметки будут удалены.",
+                btnCancel: "Отмена", btnConfirmReset: "Сбросить", btnGotIt: "Понятно", how: "Как?", critical: "ВАЖНО",
                 cat_battery: "Батарея", cat_network: "Связь", cat_display: "Экран", cat_info: "Инфо", cat_apps: "Приложения", cat_backup: "Бекап",
-                m_100: "Вау! Максимум энергии!", m_75: "Отлично! Заряд спасен.", m_50: "Половина пути!", m_25: "Хорошее начало!",
+                m_100: "Вау! Устройство полностью готово!", m_75: "Отлично! Заряд спасен.", m_50: "Половина пути!", m_25: "Хорошее начало!",
                 copyright: "Все права защищены Офиром Бен Натаном.", contact: "Контакт",
-                wa_share: "Приложение для оптимизации мобильных устройств:\nУмное управление батареей и информацией в условиях дефицита энергии",
+                lastUpdate: "Последнее обновление: март 2024",
+                wa_share: "Чек-лист по экономии заряда смартфона:\nУмное управление батареей и информацией в условиях дефицита энергии",
                 wa_link_text: "К приложению"
             },
             am: {
-                appTitle: "የስማርትፎን አደጋ ጊዜ ማመቻቻ - OBN", 
-                appDesc: "የባትሪ አጠቃቀም እና የመረጃ አያያዝ ምክሮች። ማሳሰቢያ፦ ምክሮቹ እንደ አማራጭ የቀረቡ ናቸው፤ አጠቃቀሙ በተጠቃሚው ኃላፊነት ይሆናል!", 
-                labelOptimized: "ተስተካክሏል",
-                labelCompletedHeader: "ተጠናቅቋል", btnReset: "አስጀምር", resetTitle: "ዳግም ላስጀምር?", resetDesc: "ሁሉም ምልክቶች ይጠፋሉ።",
-                btnCancel: "ተመለስ", btnConfirmReset: "አስጀምር", btnSOS: "🚨 የድንገተኛ መብራት", btnGotIt: "ገባኝ", how: "እንዴት?", critical: "አስቸኳይ",
+                appTitle: "የቼክ ሊስት መመሪያ: ባትሪ ቆጣቢ - OBN", 
+                appDesc: "የባትሪ አጠቃቀም መመሪያ። ማሳሰቢያ፦ ይህ መተግበሪያ መመሪያ ብቻ ነው። ስልክዎ ላይ እርምጃዎችን መውሰድ እና እዚህ ምልክት ማድረግ አለብዎት። አጠቃቀሙ በኃላፊነትዎ ይሆናል!", 
+                howToUseTitle: "መመሪያውን እንዴት መጠቀም ይቻላል?",
+                step1: "መመሪያዎችን ለማግኘት ዝርዝሩን ይጫኑ።",
+                step2: "በስልክዎ ሴቲንግ ውስጥ እርምጃውን ይውሰዱ።",
+                step3: "ለእርስዎ ምቾት ሲባል እርምጃውን በስልክዎ ላይ ከወሰዱ በኋላ እዚህ ምልክት ያድርጉ።",
+                modalInstructionLabel: "የእጅ መመሪያ",
+                labelOptimized: "የስልክ ዝግጁነት ደረጃ",
+                labelCompletedHeader: "በተሳካ ሁኔታ የተጠናቀቁ እርምጃዎች", btnReset: "አስጀምር", resetTitle: "ዳግም ላስጀምር?", resetDesc: "ሁሉም ምልክቶች ይጠፋሉ።",
+                btnCancel: "ተመለስ", btnConfirmReset: "አስጀምር", btnGotIt: "ገባኝ", how: "እንዴት?", critical: "አስቸኳይ",
                 cat_battery: "ባትሪ", cat_network: "ኔትወርክ", cat_display: "ስክሪን", cat_info: "መረጃ", cat_apps: "አፕሊኬሽን", cat_backup: "ምትክ",
-                m_100: "ድንቅ! ተጠናቋል!", m_75: "በጣም ጥሩ!", m_50: "ግማሹ ደርሷል!", m_25: "ጥሩ ጅምር!",
-                copyright: "መብቱ בኦፊר ቤን ናታን የተጠበቀ ነው።", contact: "ግንኙነት",
-                wa_share: "የሞባይል ማመቻቻ መተግበሪያ:\nባትሪን እና መረጃን በአግባቡ ለማስተዳደር የሚረዳ",
+                m_100: "ድንቅ! ስልኩ ሙሉ በሙሉ ዝግጁ ነው!", m_75: "በጣም ጥሩ!", m_50: "ግማሹ ደርሷል!", m_25: "ጥሩ ጅምር!",
+                copyright: "መብቱ በኦፊር ቤን ናታን የተጠበቀ ነው።", contact: "ግንኙነት",
+                lastUpdate: "መጨረሻ የተሻሻለው፦ መጋቢት 2024",
+                wa_share: "የሞባይል ባትሪ ቆጣቢ መመሪያ:\nባትሪን እና መረጃን በአግባቡ ለማስተዳደር የሚረዳ",
                 wa_link_text: "ወደ መተግበሪያ"
             }
         };
@@ -374,7 +418,7 @@
                 en: { t: 'Emergency Note in Case', h: 'Write 3 emergency numbers on paper and put it inside your case.' },
                 ar: { t: 'ملاحظة ورقية', h: 'اكتب أرقام الطوارئ على ورقة وضعها في غطاء الهاتف.' },
                 ru: { t: 'Записка под чехол', h: 'Напишите 3 номера на бумаге и положите под чехол.' },
-                am: { t: 'የስልክ ቁጥር בወረቀት', h: '3 ስልኮችን בወረቀት ጽፈው ስልኩ ከቨር ውስጥ ያስቀምጡ።' }
+                am: { t: 'የስልክ ቁጥር በወረቀት', h: '3 ስልኮችን በወረቀት ጽፈው ስልኩ ከቨር ውስጥ ያስቀምጡ።' }
             }},
             { id: 10, cat: 'cat_info', keys: {
                 he: { t: 'אפליקציית פיקוד העורף', h: 'על מנת לחסוך בסוללה, ובמידה ואתם ממוקמים באזור אחד - הגדירו עיר/אזור ידנית ושנו מיקום ל"בעת שימוש בלבד" תמשיכו לקבל התראות על פי האזור שהגדרתם.' },
@@ -387,8 +431,8 @@
                 he: { t: 'סגירת אפליקציות "כבדות"', h: 'סגרו או צמצמו כמה שניתן את השימוש באפליקציות כמו פייסבוק, יוטיוב ואינסטגרם.' },
                 en: { t: 'Close Heavy Apps', h: 'Force close Facebook, YouTube, and Instagram.' },
                 ar: { t: 'إغلاق التطبيقات الكبيرة', h: 'أغلق فيسبوك ويوتيوب وإنستغرام تماماً.' },
-                ru: { t: 'Закрыть тяжелые прил.', h: 'Закройте Facebook, YouTube и Instagram.' },
-                am: { t: 'ከባድ אፖችን ዝጋ', h: 'ፌስቡክ እና ዩቲዩብን ሙሉ በሙሉ ዝጋ።' }
+                ru: { t: 'Закрыть тяжелые прил.', h: 'Закройте Facebook, YouTube and Instagram.' },
+                am: { t: 'ከባድ አፖችን ዝጋ', h: 'ፌስቡክ እና ዩቲዩብን ሙሉ በሙሉ ዝጋ።' }
             }}
         ];
 
@@ -410,22 +454,23 @@
         function applyUI() {
             const ui = UI[state.lang];
             const elementIds = [
-                'appTitle', 'appDesc', 'labelOptimized', 'labelCompletedHeader', 
+                'appTitle', 'appDesc', 'howToUseTitle', 'step1', 'step2', 'step3',
+                'labelOptimized', 'labelCompletedHeader', 'modalInstructionLabel',
                 'btnReset', 'resetTitle', 'resetDesc', 'btnCancel', 
-                'btnConfirmReset', 'btnSOS', 'btnGotIt'
+                'btnConfirmReset', 'btnGotIt', 'lastUpdateLabel'
             ];
             
             elementIds.forEach(id => {
                 const el = document.getElementById(id);
-                if (el) el.innerText = ui[id] || "";
+                if (el) el.innerText = ui[id] || ui[id.replace('Label','')];
             });
 
             const tooltips = {
                 he: { theme: "החלפת מצב כהה/בהיר", lang: "שינוי שפה", reset: "איפוס התקדמות", wa: "העברת הקישור לאפליקציה בווטסאפ" },
                 en: { theme: "Toggle Theme", lang: "Change Language", reset: "Reset Progress", wa: "Share App on WhatsApp" },
-                ar: { theme: "تبדיל المظهر", lang: "تغيير اللغة", reset: "إعادة التعيين", wa: "مشاركة التطبيق عبر واتساب" },
+                ar: { theme: "تبديل المظهر", lang: "تغيير اللغة", reset: "إعادة التعيين", wa: "مشاركة التطبيق عبر واتساب" },
                 ru: { theme: "Сменить тему", lang: "Сменить язык", reset: "Сбросить прогресс", wa: "Поделиться в WhatsApp" },
-                am: { theme: "ቀለም መቀየር", lang: "ቋንቋ መቀየር", reset: "ዳግም አስጀምር", wa: "በዋትስአፕ אጋራ" }
+                am: { theme: "ቀለም መቀየር", lang: "ቋንቋ መቀየር", reset: "ዳግም አስጀምር", wa: "በዋትስአፕ አጋራ" }
             };
 
             const t = tooltips[state.lang];
@@ -465,7 +510,6 @@
             const catLabel = UI[state.lang][task.cat];
             div.className = `task-item glass-card p-4 flex items-center gap-4 cursor-pointer ${isDone ? 'completed' : ''}`;
             
-            // לחיצה על כל שטח המלבן פותחת את המודאל
             div.onclick = () => openModal(task.id);
 
             const badge = (task.urgent && !isDone) ? `<span class="text-[9px] bg-red-600 text-white font-black px-2 py-0.5 rounded-full uppercase tracking-tight">${UI[state.lang].critical}</span>` : '';
@@ -531,7 +575,7 @@
         function closeModal() { document.getElementById('modalOverlay').classList.add('hidden'); }
         function openLanguageMenu() { document.getElementById('langOverlay').classList.remove('hidden'); }
         function closeLangMenu() { document.getElementById('langOverlay').classList.add('hidden'); }
-        function toggleSOS() { document.getElementById('sosOverlay').classList.toggle('hidden'); }
+        function toggleSOS() { /* Removed for clarity */ }
         function confirmReset() { document.getElementById('resetOverlay').classList.remove('hidden'); }
         function closeResetModal() { document.getElementById('resetOverlay').classList.add('hidden'); }
         function resetApp() { state.completedIds = []; closeResetModal(); save(); render(); }
