@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מדריך צ'ק-ליסט לחיסכון בסוללה בחירום - OBN</title>
+    <title>מדריך צ'ק-ליסט לחיסכון בסוללת הסאמרטפון בחירום</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -36,6 +36,7 @@
             transition: all 0.3s ease;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
         }
 
         .glass-card {
@@ -79,9 +80,16 @@
         }
 
         .task-item {
-            transition: all 0.25s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             border-width: 2px;
             border-color: var(--border-color);
+        }
+
+        /* אנימציית יציאה דו-כיוונית */
+        .task-item.exit-anim {
+            transform: translateX(40px);
+            opacity: 0;
+            filter: blur(8px) grayscale(1);
         }
 
         .task-item.completed {
@@ -107,6 +115,7 @@
             background-color: #10b981;
             border-color: #10b981;
             color: white;
+            transform: scale(1.1);
         }
 
         .modal-container {
@@ -119,6 +128,34 @@
             color: var(--text-main);
             border: 1.5px solid var(--accent);
             font-weight: 800;
+        }
+
+        .step-badge {
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 6px;
+        }
+
+        /* סגנון להודעת העידוד הצפה */
+        .encouragement-overlay {
+            animation: slideInUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), fadeOut 0.5s ease 1.8s forwards;
+        }
+
+        @keyframes slideInUp {
+            from { transform: translateY(100px) scale(0.5); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateY(-20px) scale(0.9); }
         }
 
         [title]:hover::after {
@@ -135,20 +172,6 @@
             white-space: nowrap;
             z-index: 50;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-
-        .step-badge {
-            background: var(--accent);
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-            margin-left: 6px;
         }
     </style>
 </head>
@@ -173,16 +196,17 @@
     </div>
 
     <!-- Header Section -->
-    <header class="flex flex-col items-center mb-8">
-        <h1 class="text-3xl font-black mb-2 text-center" id="appTitle">מדריך צ'ק-ליסט לחיסכון בסוללה בחירום - OBN</h1>
-        <p class="text-sm font-medium opacity-90 text-center mb-4 px-4 leading-relaxed" id="appDesc">
-            טיפים לניהול חכם של סוללה בסמארטפון ושמירה על מידע קריטי למצבים ללא גישה קבועה לחשמל. שימו לב! האפליקציה היא מדריך ידני. עליכם לבצע את הפעולות בטלפון שלכם ולסמן כאן. השימוש הוא על אחריות המשתמש!
+    <header class="flex flex-col items-center mb-6">
+        <h1 class="text-3xl font-black mb-2 text-center leading-tight px-2" id="appTitle">מדריך צ'ק-ליסט לחיסכון בסוללת הסאמרטפון בחירום</h1>
+        <p class="text-sm font-medium opacity-90 text-center mb-6 px-4 leading-relaxed" id="appDesc">
+            טיפים לחיסכון ולניהול חכם של סוללה בסמארטפון ושמירה על מידע קריטי, למצבים ללא גישה קבועה לחשמל.<br><br>
+            <strong>שימו לב! האפליקציה היא מדריך ידני שמציע מה ניתן לעשות כדי לחסוך בסוללה. ביצוע הפעולות בסמארטפון הוא על אחריות המשתמש!</strong>
         </p>
 
         <!-- Instructions Banner -->
-        <div class="glass-card w-full p-4 mb-8 bg-blue-500/10 border-blue-500/30">
-            <h2 class="text-xs font-bold uppercase tracking-wider mb-3 opacity-70 text-center" id="howToUseTitle">איך משתמשים במדריך?</h2>
-            <div class="space-y-3 text-[11px] font-medium leading-tight">
+        <div class="glass-card w-full p-4 mb-6 bg-blue-500/10 border-blue-500/30">
+            <h2 class="text-xs font-bold uppercase tracking-wider mb-2 opacity-70 text-center" id="howToUseTitle">איך משתמשים במדריך?</h2>
+            <div class="space-y-2 text-[11px] font-medium leading-tight">
                 <div class="flex items-start"><span class="step-badge mt-0.5">1</span> <span id="step1">לחצו על הפריטים ברשימה לקבלת הוראות ביצוע.</span></div>
                 <div class="flex items-start"><span class="step-badge mt-0.5">2</span> <span id="step2">בצעו את הפעולה ידנית בהגדרות הטלפון שלכם.</span></div>
                 <div class="flex items-start"><span class="step-badge mt-0.5">3</span> <span id="step3">לנוחותכם, תוכלו לסמן ב-V את הריבוע לאחר שביצעתם את הפעולה בטלפון.</span></div>
@@ -198,12 +222,10 @@
                 <span class="text-[10px] uppercase font-black tracking-widest opacity-60" id="labelOptimized">מד מוכנות המכשיר</span>
             </div>
         </div>
-
-        <div id="encouragementMsg" class="mt-4 h-6 text-sm font-extrabold text-emerald-500 text-center transition-all"></div>
     </header>
 
     <!-- Main List -->
-    <main class="flex-grow space-y-8">
+    <main class="flex-grow space-y-6">
         <div id="activeTasks" class="space-y-4"></div>
 
         <div id="completedSection" class="hidden">
@@ -221,15 +243,26 @@
         <div class="text-[9px] opacity-40 uppercase tracking-widest" id="lastUpdateLabel">עודכן לאחרונה: מרץ 2024</div>
     </footer>
 
-    <!-- MODALS -->
+    <!-- MODALS & OVERLAYS -->
+
+    <!-- Encouragement Toast Overlay Container -->
+    <div id="toastContainer" class="fixed inset-0 pointer-events-none flex items-center justify-center z-[300]"></div>
 
     <!-- Details Modal -->
     <div id="modalOverlay" class="fixed inset-0 bg-black/80 backdrop-blur-xl z-[200] hidden flex items-center justify-center p-6" onclick="closeModal()">
         <div class="modal-container w-full max-w-sm p-8 rounded-[40px] border-2 border-[var(--border-color)] shadow-2xl" onclick="event.stopPropagation()">
             <h3 id="modalTitle" class="text-2xl font-black mb-2 text-center"></h3>
             <div class="text-[10px] text-center uppercase tracking-widest opacity-50 mb-6" id="modalInstructionLabel">הוראות לביצוע ידני</div>
-            <div id="modalContent" class="space-y-5 text-base leading-relaxed overflow-y-auto max-h-[50vh] px-2 opacity-90"></div>
-            <button onclick="closeModal()" class="w-full mt-10 bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-2xl shadow-xl" id="btnGotIt">הבנתי, תודה</button>
+            <div id="modalContent" class="space-y-5 text-base leading-relaxed overflow-y-auto max-h-[50vh] px-2 opacity-90 text-right"></div>
+            
+            <div class="mt-8 pt-4 border-t border-white/10 text-center">
+                <div class="text-[10px] opacity-50 mb-1">התקדמות הצ'ק ליסט</div>
+                <div class="w-full bg-white/10 h-1 rounded-full overflow-hidden">
+                    <div id="modalMiniProgress" class="h-full bg-emerald-500 transition-all duration-700"></div>
+                </div>
+            </div>
+
+            <button onclick="closeModal()" class="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-2xl shadow-xl" id="btnGotIt">הבנתי, תודה</button>
         </div>
     </div>
 
@@ -265,8 +298,8 @@
 
         const UI = {
             he: {
-                appTitle: "מדריך צ'ק-ליסט לחיסכון בסוללה בחירום - OBN", 
-                appDesc: "טיפים לניהול חכם של סוללה בסמארטפון ושמירה על מידע קריטי למצבים ללא גישה קבועה לחשמל. שימו לב! האפליקציה היא מדריך ידני. עליכם לבצע את הפעולות בטלפון שלכם ולסמן כאן. השימוש הוא על אחריות המשתמש!", 
+                appTitle: "מדריך צ'ק-ליסט לחיסכון בסוללת הסאמרטפון בחירום", 
+                appDesc: "טיפים לחיסכון ולניהול חכם של סוללה בסמארטפון ושמירה על מידע קריטי, למצבים ללא גישה קבועה לחשמל.<br><br><strong>שימו לב! האפליקציה היא מדריך ידני שמציע מה ניתן לעשות כדי לחסוך בסוללה. ביצוע הפעולות בסמארטפון הוא על אחריות המשתמש!</strong>", 
                 howToUseTitle: "איך משתמשים במדריך?",
                 step1: "לחצו על הפריטים ברשימה לקבלת הוראות ביצוע.",
                 step2: "בצעו את הפעולה ידנית בהגדרות הטלפון שלכם.",
@@ -279,12 +312,12 @@
                 m_100: "וואו! המכשיר בשיא המוכנות!", m_75: "מצוין! חסכת זמן יקר.", m_50: "חצי דרך עברה!", m_25: "התחלה טובה!",
                 copyright: "כל הזכויות שמורות לאופיר בן נתן.", contact: "ליצירת קשר",
                 lastUpdate: "עודכן לאחרונה: מרץ 2024",
-                wa_share: "מדריך צ'ק-ליסט לחיסכון בסוללה בחירום:\nניהול חכם של סוללה ומידע קריטי למצבים ללא גישה קבועה לחשמל",
+                wa_share: "אפליקצייה לאופטימיזציית טלפון נייד:\nניהול חכם של סוללה ומידע קריטי למצבים ללא גישה קבועה לחשמל",
                 wa_link_text: "לאפליקציה"
             },
             en: {
-                appTitle: "Checklist Guide: Emergency Battery Saver - OBN", 
-                appDesc: "Tips for smart battery management and critical info backup. Note: This app is a manual guide. You must perform the actions on your phone and mark them here. Use at your own risk!", 
+                appTitle: "Smartphone Emergency Battery Checklist Guide", 
+                appDesc: "Tips for smart battery management and critical info backup for power-limited situations. <br><br><strong>Note: This app is a manual guide suggesting ways to save battery. Performing actions on your smartphone is at the user's own risk!</strong>", 
                 howToUseTitle: "How to use this guide?",
                 step1: "Click items in the list for instructions.",
                 step2: "Perform the action manually on your phone settings.",
@@ -297,12 +330,12 @@
                 m_100: "Wow! Device is fully ready!", m_75: "Great! Power saved.", m_50: "Halfway there!", m_25: "Good start!",
                 copyright: "All rights reserved to Ofir Ben Natan.", contact: "Contact",
                 lastUpdate: "Last updated: March 2024",
-                wa_share: "Emergency Battery Saving Checklist Guide:\nSmart battery and info management for power-limited situations",
+                wa_share: "Mobile Optimization App:\nSmart battery and info management for power-limited situations",
                 wa_link_text: "To App"
             },
             ar: {
-                appTitle: "دليل المهام: توفير البطارية في حالات الطوارئ - OBN", 
-                appDesc: "نصائح للإدارة الذكية للبطارية. تنبيه: هذا التطبيق هو دليل يدوي. يجب عليك القيام بالإجراءات في هاتفك ووضع علامة هنا. الاستخدام على مسؤوليتك الخاصة!", 
+                appTitle: "دليل المهام لتوفير بطارية الهاتف في حالات الطوارئ", 
+                appDesc: "نصائح للإدارة الذكية للبطارية ونسخ المعلومات الهامة. <br><br><strong>تنبيه: هذا التطبيق هو دليل يدوي يقترح ما يمكن فعله لتوفير البطارية. تنفيذ الإجراءات في هاتفك يقع على مسؤوليتك الخاصة!</strong>", 
                 howToUseTitle: "كيف تستخدم هذا الدليل؟",
                 step1: "اضغط على العناصر في القائمة للحصول على التعليمات.",
                 step2: "قم بتنفيذ الإجراء يدويًا في إعدادات هاتفك.",
@@ -312,15 +345,15 @@
                 labelCompletedHeader: "الإجراءات التي اكتملت بنجاح", btnReset: "إعادة", resetTitle: "إعادة التعيين؟", resetDesc: "سيتم مسح جميع العلامات.",
                 btnCancel: "إلغاء", btnConfirmReset: "إعادة الآن", btnGotIt: "فهمت", how: "كيف؟", critical: "עاجל",
                 cat_battery: "البطارية", cat_network: "الشبكة", cat_display: "الشاشة", cat_info: "معلومات", cat_apps: "تطبيقات", cat_backup: "نسخ",
-                m_100: "واو! الجهاز جاهز تمامًا!", m_75: "ممتاز! تم توفير الطاقة.", m_50: "منتصف الطريق!", m_25: "بداية جيدة!",
+                m_100: "واو! أقصى قدر من الكفاءة!", m_75: "ممتاز! تم توفير الطاقة.", m_50: "منتصف الطريق!", m_25: "بداية جيدة!",
                 copyright: "جميع الحقوق محفوظة لأوفير بن ناتان.", contact: "اتصل بنا",
                 lastUpdate: "آخر تحديث: مارس 2024",
-                wa_share: "دليل توفير بطارية الهاتف المحمول:\nإدارة ذكية للبطارية والمعلومات لحالات نقص الكهرباء",
+                wa_share: "تطبيق تحسين الهاتف المحمول:\nإدارة ذكية للبطارية والمعلومات لحالات نقص الكهرباء",
                 wa_link_text: "إلى التطبيق"
             },
             ru: {
-                appTitle: "Чек-лист: Экономия заряда в ЧС - OBN", 
-                appDesc: "Советы по управлению батареей. Внимание: это ручное руководство. Вы должны выполнить действия в телефоне и отметить их здесь. Использование на ваш риск!", 
+                appTitle: "Чек-лист по экономии заряда смартфона в ЧС", 
+                appDesc: "Советы по управлению батареей и сохранению важной информации. <br><br><strong>Внимание: это ручное руководство с рекомендациями по экономии заряда. Выполнение действий на смартфоне остается под ответственность пользователя!</strong>", 
                 howToUseTitle: "Как пользоваться гидом?",
                 step1: "Нажмите на пункт для получения инструкций.",
                 step2: "Выполните действие вручную в настройках телефона.",
@@ -330,15 +363,15 @@
                 labelCompletedHeader: "Успешно выполненные действия", btnReset: "Сброс", resetTitle: "Сбросить список?", resetDesc: "Все отметки будут удалены.",
                 btnCancel: "Отмена", btnConfirmReset: "Сбросить", btnGotIt: "Понятно", how: "Как?", critical: "ВАЖНО",
                 cat_battery: "Батарея", cat_network: "Связь", cat_display: "Экран", cat_info: "Инфо", cat_apps: "Приложения", cat_backup: "Бекап",
-                m_100: "Вау! Устройство полностью готово!", m_75: "Отлично! Заряд спасен.", m_50: "Половина пути!", m_25: "Хорошее начало!",
+                m_100: "Вау! Максимум энергии!", m_75: "Отлично! Заряд спасен.", m_50: "Половина пути!", m_25: "Хорошее начало!",
                 copyright: "Все права защищены Офиром Бен Натаном.", contact: "Контакт",
                 lastUpdate: "Последнее обновление: март 2024",
-                wa_share: "Чек-лист по экономии заряда смартфона:\nУмное управление батареей и информацией в условиях дефицита энергии",
+                wa_share: "Приложение для оптимизации мобильных устройств:\nУмное управление батареей и информацией в условиях дефицита энергии",
                 wa_link_text: "К приложению"
             },
             am: {
-                appTitle: "የቼክ ሊስት መመሪያ: ባትሪ ቆጣቢ - OBN", 
-                appDesc: "የባትሪ አጠቃቀም መመሪያ። ማሳሰቢያ፦ ይህ መተግበሪያ መመሪያ ብቻ ነው። ስልክዎ ላይ እርምጃዎችን መውሰድ እና እዚህ ምልክት ማድረግ አለብዎት። አጠቃቀሙ በኃላፊነትዎ ይሆናል!", 
+                appTitle: "የስማርትፎን ባትሪ ቆጣቢ መመሪያ በድንገተኛ ጊዜ", 
+                appDesc: "የባትሪ አጠቃቀም እና የመረጃ አያያዝ ምክሮች። <br><br><strong>ማሳሰቢያ፦ ይህ መተግበሪያ ባትሪ ለመቆጠብ ምን ማድረግ እንደሚቻል የሚጠቁም መመሪያ ሲሆን እርምጃዎችን በስልኮዎ ላይ መውሰድ በተጠቃሚው ኃላፊነት ይሆናል!</strong>", 
                 howToUseTitle: "መመሪያውን እንዴት መጠቀም ይቻላል?",
                 step1: "መመሪያዎችን ለማግኘት ዝርዝሩን ይጫኑ።",
                 step2: "በስልክዎ ሴቲንግ ውስጥ እርምጃውን ይውሰዱ።",
@@ -348,10 +381,10 @@
                 labelCompletedHeader: "በተሳካ ሁኔታ የተጠናቀቁ እርምጃዎች", btnReset: "አስጀምር", resetTitle: "ዳግም ላስጀምር?", resetDesc: "ሁሉም ምልክቶች ይጠፋሉ።",
                 btnCancel: "ተመለስ", btnConfirmReset: "አስጀምር", btnGotIt: "ገባኝ", how: "እንዴት?", critical: "አስቸኳይ",
                 cat_battery: "ባትሪ", cat_network: "ኔትወርክ", cat_display: "ስክሪን", cat_info: "መረጃ", cat_apps: "አፕሊኬሽን", cat_backup: "ምትክ",
-                m_100: "ድንቅ! ስልኩ ሙሉ በሙሉ ዝግጁ ነው!", m_75: "በጣም ጥሩ!", m_50: "ግማሹ ደርሷል!", m_25: "ጥሩ ጅምር!",
+                m_100: "ድንቅ! ተጠናቋል!", m_75: "በጣም ጥሩ!", m_50: "ግማሹ ደርሷል!", m_25: "ጥሩ ጅምር!",
                 copyright: "መብቱ በኦፊር ቤን ናታን የተጠበቀ ነው።", contact: "ግንኙነት",
                 lastUpdate: "መጨረሻ የተሻሻለው፦ መጋቢት 2024",
-                wa_share: "የሞባይል ባትሪ ቆጣቢ መመሪያ:\nባትሪን እና መረጃን በአግባቡ ለማስተዳደር የሚረዳ",
+                wa_share: "የሞባይል ማመቻቻ መተግበሪያ:\nባትሪን እና መረጃን በአግባቡ ለማስተዳደር የሚረዳ",
                 wa_link_text: "ወደ መተግበሪያ"
             }
         };
@@ -430,13 +463,14 @@
             { id: 11, cat: 'cat_apps', keys: {
                 he: { t: 'סגירת אפליקציות "כבדות"', h: 'סגרו או צמצמו כמה שניתן את השימוש באפליקציות כמו פייסבוק, יוטיוב ואינסטגרם.' },
                 en: { t: 'Close Heavy Apps', h: 'Force close Facebook, YouTube, and Instagram.' },
-                ar: { t: 'إغلاق التطبيقات الكبيرة', h: 'أغلق فيسبوك ويوتيوب وإنستغرام تماماً.' },
+                ar: { t: 'إغلاق التطبيقات الكبيرة', h: 'أغلق فيسبوك ويوتيוב وإنستغرام تماماً.' },
                 ru: { t: 'Закрыть тяжелые прил.', h: 'Закройте Facebook, YouTube and Instagram.' },
                 am: { t: 'ከባድ አፖችን ዝጋ', h: 'ፌስቡክ እና ዩቲዩብን ሙሉ በሙሉ ዝጋ።' }
             }}
         ];
 
         let state = JSON.parse(localStorage.getItem('batteryV5')) || { completedIds: [], isLightMode: false, lang: 'he' };
+        let milestoneShown = 0; // משתנה למניעת חזרה על הודעות
 
         function save() { localStorage.setItem('batteryV5', JSON.stringify(state)); }
 
@@ -454,7 +488,7 @@
         function applyUI() {
             const ui = UI[state.lang];
             const elementIds = [
-                'appTitle', 'appDesc', 'howToUseTitle', 'step1', 'step2', 'step3',
+                'appTitle', 'howToUseTitle', 'step1', 'step2', 'step3',
                 'labelOptimized', 'labelCompletedHeader', 'modalInstructionLabel',
                 'btnReset', 'resetTitle', 'resetDesc', 'btnCancel', 
                 'btnConfirmReset', 'btnGotIt', 'lastUpdateLabel'
@@ -464,6 +498,9 @@
                 const el = document.getElementById(id);
                 if (el) el.innerText = ui[id] || ui[id.replace('Label','')];
             });
+
+            const descEl = document.getElementById('appDesc');
+            if (descEl) descEl.innerHTML = ui.appDesc;
 
             const tooltips = {
                 he: { theme: "החלפת מצב כהה/בהיר", lang: "שינוי שפה", reset: "איפוס התקדמות", wa: "העברת הקישור לאפליקציה בווטסאפ" },
@@ -509,6 +546,7 @@
             const content = task.keys[state.lang];
             const catLabel = UI[state.lang][task.cat];
             div.className = `task-item glass-card p-4 flex items-center gap-4 cursor-pointer ${isDone ? 'completed' : ''}`;
+            div.id = `task-${task.id}`;
             
             div.onclick = () => openModal(task.id);
 
@@ -532,13 +570,23 @@
         }
 
         function toggleTask(id) {
-            if (state.completedIds.includes(id)) {
-                state.completedIds = state.completedIds.filter(i => i !== id);
-            } else {
-                state.completedIds.push(id);
-                checkFeedback();
-            }
-            save(); render();
+            const el = document.getElementById(`task-${id}`);
+            const isAdding = !state.completedIds.includes(id);
+
+            // הפעלת אנימציית יציאה לשני הכיוונים
+            el.classList.add('exit-anim');
+            if (window.navigator.vibrate) window.navigator.vibrate(10);
+            
+            setTimeout(() => {
+                if (isAdding) {
+                    state.completedIds.push(id);
+                    checkFeedback();
+                } else {
+                    state.completedIds = state.completedIds.filter(i => i !== id);
+                }
+                save(); 
+                render();
+            }, 450); 
         }
 
         function updateProgress() {
@@ -547,16 +595,43 @@
             fill.style.width = `${p}%`;
             document.getElementById('percentageText').innerText = `${p}%`;
             fill.style.backgroundColor = p <= 25 ? '#ef4444' : p <= 50 ? '#f97316' : p <= 75 ? '#eab308' : '#10b981';
+            
+            const miniFill = document.getElementById('modalMiniProgress');
+            if (miniFill) miniFill.style.width = `${p}%`;
         }
 
         function checkFeedback() {
             const p = Math.round((state.completedIds.length / TASK_DATA.length) * 100);
             const ui = UI[state.lang];
-            let m = "";
-            if (p >= 100) { m = ui.m_100; confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } }); }
-            else if (p >= 75) m = ui.m_75; else if (p >= 50) m = ui.m_50; else if (p >= 25) m = ui.m_25;
-            const el = document.getElementById('encouragementMsg');
-            if(m) { el.innerText = m; setTimeout(() => el.innerText = "", 4000); }
+            let msg = "";
+
+            // לוגיקה שמציגה הודעה רק כשעוברים את הסף בפעם הראשונה
+            if (p >= 100 && milestoneShown < 100) {
+                msg = ui.m_100;
+                milestoneShown = 100;
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            } else if (p >= 75 && p < 100 && milestoneShown < 75) {
+                msg = ui.m_75;
+                milestoneShown = 75;
+            } else if (p >= 50 && p < 75 && milestoneShown < 50) {
+                msg = ui.m_50;
+                milestoneShown = 50;
+            } else if (p >= 25 && p < 50 && milestoneShown < 25) {
+                msg = ui.m_25;
+                milestoneShown = 25;
+            }
+
+            if (msg) showEncouragementToast(msg);
+        }
+
+        function showEncouragementToast(msg) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = "encouragement-overlay glass-card bg-emerald-500/20 border-emerald-500/50 p-6 rounded-[30px] text-emerald-400 font-black text-xl shadow-2xl text-center pointer-events-auto mx-4";
+            toast.innerText = msg;
+            
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 2300);
         }
 
         function shareWhatsApp() {
@@ -570,15 +645,22 @@
             document.getElementById('modalTitle').innerText = t.keys[state.lang].t;
             document.getElementById('modalContent').innerHTML = t.keys[state.lang].h;
             document.getElementById('modalOverlay').classList.remove('hidden');
+            updateProgress();
         }
 
         function closeModal() { document.getElementById('modalOverlay').classList.add('hidden'); }
         function openLanguageMenu() { document.getElementById('langOverlay').classList.remove('hidden'); }
         function closeLangMenu() { document.getElementById('langOverlay').classList.add('hidden'); }
-        function toggleSOS() { /* Removed for clarity */ }
         function confirmReset() { document.getElementById('resetOverlay').classList.remove('hidden'); }
         function closeResetModal() { document.getElementById('resetOverlay').classList.add('hidden'); }
-        function resetApp() { state.completedIds = []; closeResetModal(); save(); render(); }
+        
+        function resetApp() { 
+            state.completedIds = []; 
+            milestoneShown = 0;
+            closeResetModal(); 
+            save(); 
+            render(); 
+        }
 
         if (state.isLightMode) document.body.classList.add('light-mode');
         setLang(state.lang);
