@@ -21,13 +21,46 @@
             align-items: center;
             justify-content: center;
         }
-        #concept, #api-key {
+        .app-description {
+            text-align: center;
+            max-width: 650px;
+            margin-top: 0;
+            margin-bottom: 25px;
+            color: #444;
+            line-height: 1.6;
+            font-size: 1.05em;
+        }
+        .app-description a {
+            color: #3CAEA3;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .app-description a:hover {
+            text-decoration: underline;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+        .input-group label {
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #20639B;
+        }
+        #concept, .api-key-input {
             width: 300px;
             padding: 10px;
             border: 2px solid #3CAEA3;
             border-radius: 5px;
-            margin-bottom: 10px;
             background-color: #ffffff;
+            transition: all 0.3s ease;
+        }
+        .error-glow {
+            border-color: #FF6B6B !important;
+            box-shadow: 0 0 8px rgba(255, 107, 107, 0.6);
         }
         button {
             background-color: #4ECDC4;
@@ -38,13 +71,10 @@
             cursor: pointer;
             transition: background-color 0.3s;
             margin: 0 5px;
+            font-weight: bold;
         }
         button:hover {
             background-color: #3CAEA3;
-        }
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
         }
         #mynetwork {
             width: 100%;
@@ -60,6 +90,15 @@
             margin-top: 10px;
             border: 1px solid #3CAEA3;
             background-color: #ffffff;
+            box-sizing: border-box;
+        }
+        #error-message {
+            color: #D8000C;
+            background-color: #FFD2D2;
+            border-color: #D8000C;
+            font-weight: bold;
+            display: none;
+            text-align: center;
         }
         #response-display {
             white-space: pre-wrap;
@@ -72,6 +111,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
+            justify-content: center;
         }
         .options label {
             margin-right: 10px;
@@ -83,22 +123,25 @@
         .modal {
             display: none;
             position: fixed;
-            z-index: 1;
+            z-index: 10;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0,0,0,0.4);
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
         }
         .modal-content {
             background-color: #fefefe;
-            margin: 15% auto;
-            padding: 20px;
+            margin: 10% auto;
+            padding: 30px;
             border: 1px solid #888;
-            width: 80%;
-            max-width: 600px;
-            border-radius: 10px;
+            width: 85%;
+            max-width: 700px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            line-height: 1.6;
         }
         .close {
             color: #aaa;
@@ -119,6 +162,8 @@
             display: none;
             text-align: center;
             margin-top: 10px;
+            font-weight: bold;
+            color: #20639B;
         }
         .spinner {
             border: 4px solid #f3f3f3;
@@ -129,6 +174,7 @@
             animation: spin 1s linear infinite;
             display: inline-block;
             margin-right: 10px;
+            vertical-align: middle;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -139,6 +185,8 @@
             text-align: right;
             white-space: pre-wrap;
             font-family: Arial, sans-serif;
+            font-size: 1.1em;
+            line-height: 1.5;
         }
         #copyright {
             text-align: center;
@@ -146,7 +194,7 @@
             font-size: 0.8em;
             color: #666;
         }
-        #nodeSpacing, #levelSeparation, #treeSpacing, #groqModel, #depthLevel, #temperature {
+        #nodeSpacing, #levelSeparation, #treeSpacing, #aiModel, #depthLevel, #temperature {
             padding: 5px;
             border: 1px solid #3CAEA3;
             border-radius: 5px;
@@ -154,19 +202,54 @@
         }
         .control-group {
             margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        optgroup {
+            font-weight: bold;
+            color: #3CAEA3;
+        }
+        option {
+            color: black;
         }
     </style>
 </head>
 <body>
     <div id="container">
         <h1>מנוע מפת חשיבה - MindMap Engine OBN</h1>
-        <input type="text" id="api-key" placeholder="הכנס את מפתח ה-API של Groq">
-        <input type="text" id="concept" placeholder="הכנס מושג">
+        
+        <p class="app-description">
+            ברוכים הבאים למערכת יצירת מפות החשיבה! אפליקציה זו ממירה כל מושג שתבחרו למפת חשיבה עשירה ומסודרת באמצעות בינה מלאכותית. היא מאפשרת להציג את התוצאות באופן ויזואלי ואינטראקטיבי, כרשימת טקסט מדורגת או כקוד JSON המיועד למפתחים.
+            <br>כדי להתחיל, הזינו את מפתח ה-API שלכם ואת המושג שתרצו לחקור. 
+            <a href="#" onclick="showHelp(); return false;">קראו את המדריך המלא בעזרה</a>.
+        </p>
+
+        <div class="input-group">
+            <label id="api-key-label" for="api-key-input">מפתח API (נשמר במחשבך בלבד):</label>
+            <input type="password" id="groq-api-key" class="api-key-input" placeholder="הכנס את מפתח ה-API של Groq">
+            <input type="password" id="google-api-key" class="api-key-input" placeholder="הכנס את מפתח ה-API של Google (Gemini)" style="display: none;">
+        </div>
+
+        <div class="input-group">
+            <label for="concept">מושג למיפוי:</label>
+            <input type="text" id="concept" placeholder="הכנס מושג (עד 3 מילים)">
+        </div>
+        
         <div class="control-group">
             <label>בחרו מודל AI:
-                <select id="groqModel" onchange="saveModelPreference()">
-                    <option value="llama3-70b-8192">llama3-70b-8192</option>
-                    <option value="llama-3.1-70b-versatile">llama-3.1-70b-versatile</option>
+                <select id="aiModel" onchange="handleModelChange()">
+                    <optgroup label="Google (Gemini)">
+                        <option value="google|gemini-2.5-flash">Gemini 2.5 Flash (מומלץ ומהיר)</option>
+                    </optgroup>
+                    <optgroup label="Groq">
+                        <option value="groq|llama-3.1-8b-instant">Llama 3.1 8B Instant</option>
+                        <option value="groq|openai/gpt-oss-120b">GPT-OSS 120B</option>
+                        <option value="groq|openai/gpt-oss-20b">GPT-OSS 20B</option>
+                        <option value="groq|meta-llama/llama-4-scout-17b-16e-instruct">Llama 4 Scout 17B</option>
+                        <option value="groq|moonshotai/kimi-k2-instruct-0905">Kimi K2 Instruct</option>
+                    </optgroup>
                 </select>
             </label>
             <label>רמות עומק:
@@ -176,25 +259,25 @@
                     <option value="3">3</option>
                 </select>
             </label>
-            <label>טמפרטורה:
+            <label>טמפרטורה (יצירתיות):
                 <select id="temperature">
                     <option value="0.1">0.1</option>
                     <option value="0.3">0.3</option>
                     <option value="0.5">0.5</option>
-                    <option value="0.7" selected>0.7</option>
+                    <option value="0.7" selected>0.7 (מומלץ)</option>
                     <option value="0.9">0.9</option>
                 </select>
             </label>
         </div>
         <div>
-            <button id="generate-btn" onclick="generateMindMap()" disabled>צור מפת חשיבה</button>
+            <button id="generate-btn" onclick="generateMindMap()">צור מפת חשיבה</button>
             <button id="help-btn" onclick="showHelp()">עזרה</button>
         </div>
         <div id="error-message"></div>
         <h2 id="mindmap-title"></h2>
         <div id="loader">
             <div class="spinner"></div>
-            <span>מייצר מפה...</span>
+            <span>מנתח את המושג ומייצר מפה... המתן מספר שניות</span>
         </div>
         <div id="mynetwork"></div>
         <div class="options">
@@ -215,24 +298,24 @@
             </label>
             <label><input type="checkbox" id="enableShadows" onchange="updateMindMap()" checked> הפעל צללים</label>
             <label>
-                רווח בין צמתים:
-                <input type="number" id="nodeSpacing" value="150" min="50" max="300" step="10" onchange="updateMindMap()">
+                רווח צמתים:
+                <input type="number" id="nodeSpacing" value="150" min="50" max="300" step="10" style="width: 60px;" onchange="updateMindMap()">
             </label>
             <label>
-                רווח בין רמות:
-                <input type="number" id="levelSeparation" value="150" min="50" max="300" step="10" onchange="updateMindMap()">
+                רווח רמות:
+                <input type="number" id="levelSeparation" value="150" min="50" max="300" step="10" style="width: 60px;" onchange="updateMindMap()">
             </label>
             <label>
-                רווח בין תתי-עצים:
-                <input type="number" id="treeSpacing" value="200" min="50" max="500" step="10" onchange="updateMindMap()">
+                רווח עצים:
+                <input type="number" id="treeSpacing" value="200" min="50" max="500" step="10" style="width: 60px;" onchange="updateMindMap()">
             </label>
-            <button onclick="copyMindMap()">העתק תמונת מפת חשיבה</button>
+            <button onclick="copyMindMap()">העתק תמונת מפה</button>
         </div>
-		<br>
+        <br>
         <div>
-            <button onclick="showAsList()">הצג בצורת רשימה</button>
-            <button onclick="showAsJson()">הצג בפורמט JSON</button>
-            <button onclick="copyResponse()">העתק תוכן</button>
+            <button onclick="showAsList()">הצג כרשימה</button>
+            <button onclick="showAsJson()">הצג כ-JSON</button>
+            <button onclick="copyResponse()">העתק טקסט</button>
         </div>
         <div id="response-display"></div>
     </div>
@@ -240,109 +323,194 @@
     <div id="helpModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeHelp()">&times;</span>
-            <h2>עזרה ביצירת מפת חשיבה</h2>
+            <h2>מדריך למשתמש - מנוע מפת חשיבה</h2>
             <div id="help-content"></div>
         </div>
     </div>
 
-    <div id="copyright">Copyright OBN 2024</div>
+    <div id="copyright">Copyright OBN 2026</div>
 
     <script>
     let network;
     let data;
     let lastConcept = '';
     let jsonData;
-    const apiKeyInput = document.getElementById('api-key');
-    const generateBtn = document.getElementById('generate-btn');
+    
+    const groqKeyInput = document.getElementById('groq-api-key');
+    const googleKeyInput = document.getElementById('google-api-key');
+    
     const help = `
-        <b>ברוכים הבאים ל-OBN Mind Maps!</b><br><br>
-        כדי להשתמש באפליקציה:<br>
-        1. צרו לעצמכם בחינם קוד 
-        <a href="https://console.groq.com/playground" target="_blank">ב-Groq</a> בתפריט API Keys<br>
-        2. שמרו את הקוד אצלכם והדביקו אותו בתיבת הקוד (לא לשתף עם אחרים!)<br>
-        3. הזינו את המושג לו אתם מבקשים ליצור מפת חשיבה. מילה עד 3 מילים.<br>
-        3. בחרו מודל ai. נסו מודלים שונים כדי להתנסות עם תוצאות אחרות.<br>
-        4. בחרו רמות עומק: אפשר קבל רמת ראשונה של מושגים ראשיים, או רמת עומק שניה של נושאים או רמה שלישית של תתי-נושאים.<br>
-		5. לא עבד בפעם הראשונה? יש הודעת שגיאה? נסו שוב!<br>
-		6. אפשר לבחור טמפרטורה: מידת היצירתיות של המודל. 0.7 זה ממוצע.<br><br>
-        שאלות? דברו איתי <a href="mailto:ofirbn@post.com">במייל</a>
+        <b>ברוכים הבאים ל-OBN Mind Maps!</b><br>
+        מטרת האפליקציה היא לקחת כל מושג שתרצו, קטן כגדול, ולפרק אותו בצורה לוגית וחכמה באמצעות בינה מלאכותית. התוצאה עוזרת בלמידה, מחקר, או סיעור מוחות (Brainstorming).<br><br>
+
+        <b>מה האפליקציה יודעת לעשות?</b>
+        <ul>
+            <li><b>מפת חשיבה ויזואלית:</b> פריסה גרפית אינטראקטיבית. ניתן לגרור צמתים, להתקרב ולהתרחק, ואפילו להפעיל "פיזיקה" שיוצרת תנועה זורמת של הרשת.</li>
+            <li><b>תצוגת רשימה טקסטואלית:</b> המרה של המפה לרשימה מדורגת (Bullet points) נוחה לקריאה ולהעתקה למסמכי וורד או מצגות.</li>
+            <li><b>תצוגת JSON:</b> קוד גולמי מובנה עבור מפתחים שרוצים לייבא את הנתונים למערכות אחרות.</li>
+        </ul>
+
+        <b>איך מתחילים?</b><br>
+        כדי לתקשר עם מודלי הבינה המלאכותית, יש להזין מפתח (API Key). המפתח לא נשמר בשרת שלנו בשום שלב, אלא אך ורק בדפדפן האישי שלכם.<br>
+        1. <b>עבור מודלים של Google (מומלץ):</b> צרו מפתח חינמי באתר <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>.<br>
+        2. <b>עבור מודלים של Groq:</b> צרו מפתח חינמי באתר <a href="https://console.groq.com/keys" target="_blank">Groq Console</a>.<br>
+        הדביקו את המפתח שקיבלתם בתיבה העליונה המסומנת כ"מפתח API".<br><br>
+
+        <b>פרמטרים והתאמות אישיות:</b><br>
+        - <b>רמות עומק:</b> קובע כמה רחוק המודל יעמיק. עומק 1 יציג רק את הנושאים הראשיים (טוב לסקירה מהירה). עומק 3 יפרט תתי-נושאים ותתי-תתי-נושאים (טוב למחקר מעמיק).<br>
+        - <b>טמפרטורה (יצירתיות):</b> ערך נמוך (0.1) יפיק תוצאות שמרניות, מבוססות עובדות ומדויקות. ערך גבוה (0.9) ייתן למודל חופש יצירתי להציע רעיונות פחות צפויים.<br>
+        - <b>סוג פריסה:</b> אפשרות לבחור בין פריסה "סטנדרטית" (כוכב שמתפזר לכל הכיוונים) לבין פריסה "היררכית" (עץ מסודר מלמעלה למטה).<br>
+        - <b>משחקים ויזואליים:</b> השתמשו בסליידרים המספריים כדי לרווח את המפה אם היא צפופה מדי, כבו צללים לשיפור מהירות במחשבים חלשים, או שנו את צורת הצמתים לאליפסה.<br><br>
+        
+        נתקלתם בבעיה? שאלות? דברו איתי <a href="mailto:ofirbn@post.com">במייל</a>.
     `;
 
     document.addEventListener('DOMContentLoaded', function() {
-        const savedApiKey = localStorage.getItem('OBN-Groq-API');
-        if (savedApiKey) {
-            apiKeyInput.value = savedApiKey;
-            generateBtn.disabled = false;
+        // Load saved keys
+        const savedGroqKey = localStorage.getItem('OBN-Groq-API');
+        const savedGoogleKey = localStorage.getItem('OBN-Google-API');
+        
+        if (savedGroqKey) groqKeyInput.value = savedGroqKey;
+        if (savedGoogleKey) googleKeyInput.value = savedGoogleKey;
+
+        // Load saved model and setup UI
+        const savedModel = localStorage.getItem('OBN-Model');
+        if (savedModel && document.querySelector(`#aiModel option[value="${savedModel}"]`)) {
+            document.getElementById('aiModel').value = savedModel;
         }
-
-        apiKeyInput.addEventListener('input', function() {
-            const apiKey = apiKeyInput.value.trim();
-            localStorage.setItem('OBN-Groq-API', apiKey);
-            generateBtn.disabled = apiKey === '';
-        });
-
+        
+        handleModelChange();
         document.getElementById('help-content').innerHTML = help;
 
-        const savedModel = localStorage.getItem('OBN-Groq-Model');
-        if (savedModel) {
-            document.getElementById('groqModel').value = savedModel;
-        }
+        // Load visual preferences
+        const loadPref = (id, key) => {
+            const val = localStorage.getItem(key);
+            if (val) document.getElementById(id).value = val;
+        };
+        loadPref('nodeSpacing', 'OBN-NodeSpacing');
+        loadPref('levelSeparation', 'OBN-LevelSeparation');
+        loadPref('treeSpacing', 'OBN-TreeSpacing');
 
-        const savedNodeSpacing = localStorage.getItem('OBN-Groq-NodeSpacing');
-        if (savedNodeSpacing) {
-            document.getElementById('nodeSpacing').value = savedNodeSpacing;
-        }
+        // Event listeners for API inputs
+        groqKeyInput.addEventListener('input', () => {
+            localStorage.setItem('OBN-Groq-API', groqKeyInput.value.trim());
+        });
+        googleKeyInput.addEventListener('input', () => {
+            localStorage.setItem('OBN-Google-API', googleKeyInput.value.trim());
+        });
 
-        const savedLevelSeparation = localStorage.getItem('OBN-Groq-LevelSeparation');
-        if (savedLevelSeparation) {
-            document.getElementById('levelSeparation').value = savedLevelSeparation;
-        }
-
-        const savedTreeSpacing = localStorage.getItem('OBN-Groq-TreeSpacing');
-        if (savedTreeSpacing) {
-            document.getElementById('treeSpacing').value = savedTreeSpacing;
-        }
+        // Trigger generation on 'Enter' key press in concept field
+        document.getElementById('concept').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                generateMindMap();
+            }
+        });
     });
 
-    function saveModelPreference() {
-        const selectedModel = document.getElementById('groqModel').value;
-        localStorage.setItem('OBN-Groq-Model', selectedModel);
+    function isGoogleModel(modelName) {
+        return modelName.toLowerCase().includes('gemini');
     }
 
-    async function delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+    function handleModelChange() {
+        const selectedValue = document.getElementById('aiModel').value;
+        localStorage.setItem('OBN-Model', selectedValue);
+        
+        const provider = selectedValue.includes('|') ? selectedValue.split('|')[0] : isGoogleModel(selectedValue) ? 'google' : 'groq';
+        const apiKeyLabel = document.getElementById('api-key-label');
+        
+        if (provider === 'google') {
+            groqKeyInput.style.display = 'none';
+            googleKeyInput.style.display = 'block';
+            apiKeyLabel.innerText = 'מפתח API - מנוע Google (נשמר במחשבך בלבד):';
+        } else {
+            googleKeyInput.style.display = 'none';
+            groqKeyInput.style.display = 'block';
+            apiKeyLabel.innerText = 'מפתח API - מנוע Groq (נשמר במחשבך בלבד):';
+        }
+    }
+
+    function showError(message) {
+        const errorDiv = document.getElementById('error-message');
+        errorDiv.innerHTML = message;
+        errorDiv.style.display = 'block';
+    }
+
+    function hideError() {
+        document.getElementById('error-message').style.display = 'none';
+        groqKeyInput.classList.remove('error-glow');
+        googleKeyInput.classList.remove('error-glow');
+        document.getElementById('concept').classList.remove('error-glow');
     }
 
     async function generateMindMap(retryCount = 0) {
-        const concept = document.getElementById('concept').value.trim();
-        const selectedModel = document.getElementById('groqModel').value;
+        hideError(); // Reset errors and glow
+
+        const conceptInput = document.getElementById('concept');
+        const concept = conceptInput.value.trim();
+        const selectedValue = document.getElementById('aiModel').value;
+        
+        let provider = 'groq';
+        let modelName = selectedValue;
+        if (selectedValue.includes('|')) {
+            [provider, modelName] = selectedValue.split('|');
+        } else if (isGoogleModel(selectedValue)) {
+            provider = 'google';
+        }
+
         const depthLevel = parseInt(document.getElementById('depthLevel').value);
         const temperature = parseFloat(document.getElementById('temperature').value);
+        const isGoogle = provider === 'google';
         
-        if (concept === lastConcept) {
-            if (!confirm("כבר בוצעה מפת חשיבה על ביטוי זה. האם תרצו לבצע שוב? זה ימחק את המפה הנוכחית!")) {
-                return;
-            }
+        // בחירת תיבת המפתח הפעילה בהתאם למודל שנבחר
+        let currentApiKeyInput = isGoogle ? googleKeyInput : groqKeyInput;
+        let currentApiKey = currentApiKeyInput.value.trim();
+
+        // וולידציה 1: מפתח API חסר
+        if (!currentApiKey) {
+            showError(`לא הוזן מפתח API. אנא הדביקו את מפתח ה-${isGoogle ? 'Google' : 'Groq'} שלכם בתיבה מעל (או לחצו על 'עזרה' להנחיות התחברות).`);
+            currentApiKeyInput.classList.add('error-glow');
+            currentApiKeyInput.focus();
+            return;
         }
-        
+
+        // וולידציה 2: תווים לא חוקיים במפתח API (מונע קריסת ISO)
+        if (/[^\x20-\x7E]/.test(currentApiKey)) {
+            showError("מפתח ה-API שהזנתם מכיל תווים לא חוקיים (כגון אותיות בעברית או רווחים נסתרים).<br>אנא נקו את שדה המפתח לחלוטין והדביקו מחדש בזהירות.");
+            currentApiKeyInput.classList.add('error-glow');
+            currentApiKeyInput.focus();
+            return;
+        }
+
+        // וולידציה 3: מושג חסר
+        if (!concept) {
+            showError("אנא הזינו מושג למיפוי לפני לחיצה על כפתור היצירה.");
+            conceptInput.classList.add('error-glow');
+            conceptInput.focus();
+            return;
+        }
+
+        if (concept === lastConcept && retryCount === 0) {
+            if (!confirm("כבר בוצעה מפת חשיבה על ביטוי זה. האם תרצו לבצע שוב? השלבים הקודמים ימחקו.")) return;
+        }
         lastConcept = concept;
 
         if (retryCount >= 3) {
-            document.getElementById('error-message').textContent = 'בוצעו 3 ניסיונות ללא הצלחה. אנא נסה שוב מאוחר יותר.';
+            showError('בוצעו 3 ניסיונות ללא הצלחה. אנא ודאו שמפתח ה-API תקין (ושיש בו יתרה מספקת) ונסו שוב מאוחר יותר.');
             return;
         }
 
         document.getElementById('response-display').textContent = '';
-        document.getElementById('error-message').textContent = '';
+        
         if (network) {
             network.destroy();
             network = null;
         }
 
-        document.getElementById('mindmap-title').textContent = `מפת חשיבה בנושא: ${concept} (מודל בשימוש: ${selectedModel} )`;
+        document.getElementById('mindmap-title').textContent = `מפת חשיבה: ${concept} (${isGoogle ? 'Google' : 'Groq'})`;
         document.getElementById('loader').style.display = 'block';
 
-        const API_KEY = apiKeyInput.value.trim();
+        const maxMainAspects = depthLevel > 2 ? 6 : 10;
+
         const prompt = `צור מפת חשיבה מפורטת על המושג "${concept}" בפורמט JSON תקין בלבד. הקפד על שימוש במרכאות כפולות לכל המפתחות והערכים. הנה דוגמה למבנה הנדרש:
 {
   "name": "${concept}",
@@ -374,72 +542,90 @@
     }
   ]
 }
-הכן בדיוק 10 היבטים ראשיים${depthLevel > 1 ? `, כל אחד עם לפחות 3 תתי-היבטים` : ''}${depthLevel > 2 ? `, וכל תת-היבט עם לפחות 2 תתי-תתי-היבטים` : ''}.
-אל תכלול מספור בשמות הצמתים. השתמש רק בשמות התוכן עצמם. חשוב מאוד: וודא שה-JSON תקין לחלוטין ומוכן לפרסור.`;
+הכן בדיוק ${maxMainAspects} היבטים ראשיים${depthLevel > 1 ? `, כל אחד עם לפחות 3 תתי-היבטים` : ''}${depthLevel > 2 ? `, וכל תת-היבט עם לפחות 2 תתי-תתי-היבטים` : ''}.
+אל תכלול מספור בשמות הצמתים. השתמש רק בשמות התוכן עצמם. חשוב מאוד: וודא שה-JSON תקין לחלוטין ומוכן לפרסור. אל תוסיף שום טקסט מלבד ה-JSON.`;
 
         try {
-            console.log('שולח בקשה ל-Groq API עם הפרמטרים הבאים:', {
-                model: selectedModel,
-                prompt: prompt,
-                max_tokens: 4000,
-                temperature: temperature
-            });
+            let content = "";
 
-            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${API_KEY}`
-                },
-                body: JSON.stringify({
-                    model: selectedModel,
-                    messages: [{ role: "user", content: prompt }],
-                    max_tokens: 4000,
-                    temperature: temperature
-                })
-            });
-
-            if (!response.ok) {
-                const errorBody = await response.text();
-                console.error('תגובת שגיאה מלאה:', errorBody);
-                throw new Error(`שגיאת HTTP! סטטוס: ${response.status}. תוכן: ${errorBody}`);
-            }
-
-            const data = await response.json();
-            if (data.choices && data.choices[0] && data.choices[0].message) {
-                let content = data.choices[0].message.content;
+            if (isGoogle) {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${currentApiKey}`;
                 
-                console.log("תוכן גולמי מ-Groq:", content);
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: {
+                            temperature: temperature,
+                            responseMimeType: "application/json"
+                        }
+                    })
+                });
 
-                // ניקוי ה-JSON
-                content = content.trim().replace(/[\x00-\x1F\x7F-\x9F]/g, "");
-                content = content.replace(/\n/g, "").replace(/\r/g, "");
-
-                const jsonStartIndex = content.indexOf('{');
-                const jsonEndIndex = content.lastIndexOf('}');
-                if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
-                    content = content.slice(jsonStartIndex, jsonEndIndex + 1);
+                if (!response.ok) throw new Error(`שגיאת HTTP! סטטוס: ${response.status}`);
+                const data = await response.json();
+                
+                if (data.candidates && data.candidates[0].content.parts[0].text) {
+                    content = data.candidates[0].content.parts[0].text;
+                } else {
+                    throw new Error("מבנה תשובה לא תקין מגוגל");
                 }
 
-                console.log("JSON לאחר ניקוי:", content);
-
-                try {
-                    // ניסיון לתקן JSON לא תקין
-                    content = content.replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":');
-                    jsonData = JSON.parse(content);
-                    showAsList();
-                    createMindMap(jsonData);
-                } catch (jsonError) {
-                    console.error("שגיאת פרסור JSON:", jsonError);
-                    console.error("JSON בעייתי:", content);
-                    document.getElementById('error-message').innerHTML = `שגיאה בפרסור JSON: ${jsonError.message}<br><a href="#" onclick="generateMindMap()">נסה שוב</a>`;
-                }
             } else {
-                throw new Error('תגובה לא תקינה מ-API');
+                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentApiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: modelName,
+                        messages: [{ role: "user", content: prompt }],
+                        max_tokens: 4000,
+                        temperature: temperature
+                    })
+                });
+
+                if (!response.ok) throw new Error(`שגיאת HTTP! סטטוס: ${response.status}`);
+                const data = await response.json();
+                
+                if (data.choices && data.choices[0].message) {
+                    content = data.choices[0].message.content;
+                } else {
+                    throw new Error('תגובה לא תקינה מ-Groq');
+                }
             }
+
+            console.log(`תוכן גולמי מ-${isGoogle ? 'Google' : 'Groq'}:`, content);
+
+            content = content.trim().replace(/[\x00-\x1F\x7F-\x9F]/g, "");
+            content = content.replace(/\n/g, "").replace(/\r/g, "");
+
+            const jsonStartIndex = content.indexOf('{');
+            const jsonEndIndex = content.lastIndexOf('}');
+            if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
+                content = content.slice(jsonStartIndex, jsonEndIndex + 1);
+            }
+
+            try {
+                content = content.replace(/(['"])?([a-zA-Z0-9_א-ת\s]+)(['"])?:/g, '"$2":');
+                jsonData = JSON.parse(content);
+                showAsList();
+                createMindMap(jsonData);
+            } catch (jsonError) {
+                console.error("שגיאת פרסור JSON:", jsonError, content);
+                showError(`שגיאה בפרסור המבנה. המודל חתך את התשובה באמצע (חריגה ממגבלת אורך).<br>נסו להוריד את רמת העומק ל-2 ולנסות שוב.<br><button onclick="generateMindMap(${retryCount + 1})" style="margin-top:10px; font-size:12px;">נסה שוב אוטומטית</button>`);
+            }
+            
         } catch (error) {
             console.error('שגיאה מפורטת:', error);
-            document.getElementById('error-message').innerHTML = `שגיאה: ${error.message}<br><a href="#" onclick="generateMindMap()">נסה שוב</a>`;
+            if (error.message.includes("429") || error.message.includes("401")) {
+                showError(`שגיאת תקשורת: מפתח ה-API לא תקין או שחרגתם ממכסת הבקשות (Error ${error.message.match(/\d+/) || ''}).<br>אנא בדקו את המפתח שלכם והגדרות החשבון במערכת שבחרתם.`);
+                currentApiKeyInput.classList.add('error-glow');
+            } else {
+                showError(`שגיאת תקשורת: ${error.message} <br> ייתכן ויש בעיית חיבור לרשת.`);
+            }
         } finally {
             document.getElementById('loader').style.display = 'none';
         }
@@ -484,9 +670,7 @@
     }
 
     function getContrastYIQ(hexcolor) {
-        if (!hexcolor) {
-            return 'black';
-        }
+        if (!hexcolor) return 'black';
         hexcolor = hexcolor.replace("#", "");
         var r = parseInt(hexcolor.substr(0,2),16);
         var g = parseInt(hexcolor.substr(2,2),16);
@@ -528,9 +712,7 @@
             } : false,
             nodes: {
                 shape: nodeShape,
-                font: {
-                    size: 14
-                },
+                font: { size: 14 },
                 borderWidth: 2,
                 shadow: enableShadows
             },
@@ -540,28 +722,20 @@
             }
         };
 
-        if (network) {
-            network.destroy();
-        }
+        if (network) network.destroy();
         network = new vis.Network(container, data, options);
         
-        network.on("stabilizationIterationsDone", function () {
-            setTimeout(resizeNetwork, 1000);
-        });
+        network.on("stabilizationIterationsDone", function () { setTimeout(resizeNetwork, 1000); });
+        network.once("afterDrawing", function() { setTimeout(resizeNetwork, 2000); });
 
-        network.once("afterDrawing", function() {
-            setTimeout(resizeNetwork, 2000);
-        });
-
-        // שמירת ההעדפות
-        localStorage.setItem('OBN-Groq-NodeSpacing', nodeSpacing);
-        localStorage.setItem('OBN-Groq-LevelSeparation', levelSeparation);
-        localStorage.setItem('OBN-Groq-TreeSpacing', treeSpacing);
+        // שמירת ההעדפות הוויזואליות
+        localStorage.setItem('OBN-NodeSpacing', nodeSpacing);
+        localStorage.setItem('OBN-LevelSeparation', levelSeparation);
+        localStorage.setItem('OBN-TreeSpacing', treeSpacing);
     }
 
     function resizeNetwork() {
         if (!network) return;
-
         const container = document.getElementById('mynetwork');
         try {
             const networkBoundingBox = network.getBoundingBox();
@@ -573,52 +747,44 @@
                 container.style.height = '800px';
             }
         } catch (error) {
-            console.error("שגיאה בשינוי גודל הרשת:", error);
             container.style.height = '800px';
         }
     }
 
-    function showHelp() {
-        document.getElementById('helpModal').style.display = 'block';
-    }
-
-    function closeHelp() {
-        document.getElementById('helpModal').style.display = 'none';
-    }
+    function showHelp() { document.getElementById('helpModal').style.display = 'block'; }
+    function closeHelp() { document.getElementById('helpModal').style.display = 'none'; }
 
     window.onclick = function(event) {
         const modal = document.getElementById('helpModal');
-        if (event.target == modal) {
-            modal.style.display = "none";
-        }
+        if (event.target == modal) modal.style.display = "none";
     }
 
     function copyMindMap() {
         const canvas = document.querySelector('#mynetwork canvas');
+        if (!canvas) {
+            alert("לא נמצאה מפה להעתקה.");
+            return;
+        }
         canvas.toBlob(function(blob) {
             const item = new ClipboardItem({ "image/png": blob });
             navigator.clipboard.write([item]).then(function() {
-                alert("המפה הועתקה. אתם יכולים להדביק אותה במסמך וורד או פאורפוינט, למשל");
+                alert("המפה הועתקה. אתם יכולים להדביק אותה במסמך וורד או פאורפוינט.");
             }, function(error) {
-                console.error("לא ניתן להעתיק את התמונה:", error);
+                alert("שגיאה בהעתקת התמונה.");
             });
         });
     }
 
     function showAsList() {
         if (!jsonData) return;
-
         function createList(node, prefix = [], currentDepth = 0) {
             let nodeName = node.name.replace(/^\d+(\.\d+)*\.\s*/, '');
-            
             let result = prefix.join('.') + (prefix.length ? '. ' : '') + nodeName + '\n';
-            
             if (node.children && currentDepth < parseInt(document.getElementById('depthLevel').value)) {
                 node.children.forEach((child, index) => {
                     const newPrefix = [...prefix, index + 1];
                     result += createList(child, newPrefix, currentDepth + 1);
                 });
-                // הוספת שורה ריקה אחרי כל קבוצת תתי-נושאים
                 result += '\n';
             }
             return result;
@@ -630,7 +796,6 @@
                 listContent += createList(child, [index + 1], 0);
             });
         }
-
         document.getElementById('response-display').innerHTML = `<pre id="response-list">${listContent.trim()}</pre>`;
     }
 
@@ -643,10 +808,11 @@
 
     function copyResponse() {
         const responseContent = document.getElementById('response-display').innerText;
+        if (!responseContent) return;
         navigator.clipboard.writeText(responseContent).then(function() {
-            alert("הקוד הועתק. אתם יכולים להדביק אותו במסמך וורד או פאורפוינט, למשל");
+            alert("הטקסט הועתק בהצלחה.");
         }, function(error) {
-            console.error("לא ניתן להעתיק את הטקסט:", error);
+            alert("שגיאה בהעתקת הטקסט.");
         });
     }
     </script>
