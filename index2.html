@@ -42,8 +42,8 @@
         
         <!-- באנר עליון -->
         <div class="w-full mb-8 md:mb-12 rounded-3xl overflow-hidden shadow-lg bg-slate-200 dark:bg-slate-800/50 flex items-center justify-center min-h-[150px] md:min-h-[250px] border border-slate-200 dark:border-slate-700/50">
-            <!-- שימוש בתמונת ברירת מחדל אם הבאנר חסר -->
-            <img src="OBNbanner.jpg" alt="באנר ראשי" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='dafulatimage.png';" />
+            <!-- שימוש בתמונת ברירת מחדל מתיקיית images אם הבאנר חסר -->
+            <img src="images/OBNbanner.jpg" alt="באנר ראשי" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='images/dafulatimage.png';" />
         </div>
 
         <!-- Header Section -->
@@ -159,7 +159,7 @@
                 category: 'כלים',
                 icon: 'wrench',
                 iconColor: 'text-blue-500',
-                image: 'calc-screenshot.png'
+                image: 'images/birthdayapp.png'
             },
             {
                 id: 2,
@@ -170,7 +170,7 @@
                 category: 'משחקים',
                 icon: 'gamepad-2',
                 iconColor: 'text-purple-500',
-                image: 'memory-screenshot.png'
+                image: 'images/parents.png'
             },
             {
                 id: 3,
@@ -181,7 +181,7 @@
                 category: 'כלים',
                 icon: 'code-2',
                 iconColor: 'text-emerald-500',
-                image: 'tasks-screenshot.png'
+                image: 'images/tasks-screenshot.png'
             },
             {
                 id: 4,
@@ -192,7 +192,7 @@
                 category: 'אפליקציות רשת',
                 icon: 'layout-grid',
                 iconColor: 'text-orange-500',
-                image: 'travel-screenshot.png'
+                image: 'images/travel-screenshot.png'
             },
             // --- פרויקטים נוספים (מוסתרים כרגע - שנה ל-true כדי להציג) ---
             {
@@ -204,7 +204,7 @@
                 category: 'כלים',
                 icon: 'cloud-sun',
                 iconColor: 'text-sky-500',
-                image: 'dafulatimage.png'
+                image: 'images/dafulatimage.png'
             },
             {
                 id: 6,
@@ -215,7 +215,7 @@
                 category: 'אפליקציות רשת',
                 icon: 'shopping-cart',
                 iconColor: 'text-pink-500',
-                image: 'dafulatimage.png'
+                image: 'images/dafulatimage.png'
             },
             {
                 id: 7,
@@ -226,7 +226,7 @@
                 category: 'כלים',
                 icon: 'timer',
                 iconColor: 'text-red-500',
-                image: 'dafulatimage.png'
+                image: 'images/dafulatimage.png'
             },
             {
                 id: 8,
@@ -237,7 +237,7 @@
                 category: 'כלים',
                 icon: 'pie-chart',
                 iconColor: 'text-green-500',
-                image: 'dafulatimage.png'
+                image: 'images/dafulatimage.png'
             },
             {
                 id: 9,
@@ -248,7 +248,7 @@
                 category: 'אפליקציות רשת',
                 icon: 'pen-tool',
                 iconColor: 'text-indigo-500',
-                image: 'dafulatimage.png'
+                image: 'images/dafulatimage.png'
             },
             {
                 id: 10,
@@ -259,7 +259,7 @@
                 category: 'כלים',
                 icon: 'key',
                 iconColor: 'text-yellow-500',
-                image: 'dafulatimage.png'
+                image: 'images/dafulatimage.png'
             },
             {
                 id: 11,
@@ -270,7 +270,7 @@
                 category: 'כלים',
                 icon: 'arrow-right-left',
                 iconColor: 'text-cyan-500',
-                image: 'dafulatimage.png'
+                image: 'images/dafulatimage.png'
             },
             {
                 id: 12,
@@ -281,7 +281,7 @@
                 category: 'אפליקציות רשת',
                 icon: 'music',
                 iconColor: 'text-fuchsia-500',
-                image: 'dafulatimage.png'
+                image: 'images/dafulatimage.png'
             },
             {
                 id: 13,
@@ -292,7 +292,7 @@
                 category: 'כלים',
                 icon: 'book-open',
                 iconColor: 'text-blue-400',
-                image: 'dafulatimage.png'
+                image: 'images/dafulatimage.png'
             },
             {
                 id: 14,
@@ -303,7 +303,7 @@
                 category: 'משחקים',
                 icon: 'help-circle',
                 iconColor: 'text-purple-400',
-                image: 'dafulatimage.png'
+                image: 'images/dafulatimage.png'
             },
             {
                 id: 15,
@@ -314,7 +314,7 @@
                 category: 'אפליקציות רשת',
                 icon: 'message-square',
                 iconColor: 'text-teal-500',
-                image: 'dafulatimage.png'
+                image: 'images/dafulatimage.png'
             }
         ];
 
@@ -451,9 +451,9 @@
                             <h3 class="text-xl font-bold">${project.title}</h3>
                         </div>
 
-                        <!-- תמונת מסך של האפליקציה -->
+                        <!-- תמונת מסך של האפליקציה (נטען בצורה עצלנית לשיפור ביצועים) -->
                         <div class="w-full h-40 bg-slate-100 dark:bg-slate-700/50 rounded-xl mb-4 overflow-hidden relative border border-slate-200/50 dark:border-slate-600/50 shrink-0">
-                            <img src="${project.image}" alt="${project.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src='dafulatimage.png';" />
+                            <img src="${project.image}" alt="${project.title}" loading="lazy" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src='images/dafulatimage.png';" />
                         </div>
 
                         <p class="flex-grow mb-6 leading-relaxed text-slate-600 dark:text-slate-400">
