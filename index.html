@@ -1,231 +1,355 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="he" dir="rtl" class="transition-colors duration-500">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>עמוד הבית של OBN</title>
+    <title>האפליקציות שלי | תיק עבודות</title>
+    
+    <!-- Tailwind CSS (via CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Configuration for Dark Mode -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f0f8ff;
-            color: #333;
-        }
-        header {
-            background-color: #0073e6;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-        h1, h2 {
-            margin: 0;
-        }
-        main {
-            padding: 20px;
-        }
-        table {
-            width: auto;
-            margin: 0 auto;
-            border-collapse: collapse;
-            margin-top: 20px;
-            max-width: 100%;
-        }
-        th, td {
-            padding: 10px;
-            text-align: right;
-            border-bottom: 1px solid #ddd;
-            white-space: nowrap;
-        }
-        th {
-            background-color: #e0f7ff;
-        }
-        a {
-            color: #0073e6;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-        footer {
-            background-color: #0073e6;
-            color: white;
-            text-align: center;
-            padding: 10px;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-        }
-        @media (max-width: 600px) {
-            body {
-                padding: 10px;
-            }
-            table {
-                width: 100%;
-                display: block;
-                overflow-x: auto;
-            }
-        }
+        /* Smooth transitions for theme toggle */
+        body { transition: background-color 0.5s ease, color 0.5s ease; }
     </style>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen font-sans relative overflow-x-hidden">
 
-<header>
-    <h1>עמוד הבית של OBN</h1>
-    <h2>פרויקטים שנכתבו באמצעות בינה מלאכותית</h2>
-</header>
+    <!-- רקע גרדיאנט עדין מאחור (Glassmorphism effect) -->
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div id="bg-blob-1" class="absolute -top-[20%] -right-[10%] w-[70%] h-[70%] rounded-full blur-[120px] opacity-30 bg-indigo-200 dark:bg-indigo-900 transition-colors duration-500"></div>
+        <div id="bg-blob-2" class="absolute -bottom-[20%] -left-[10%] w-[60%] h-[60%] rounded-full blur-[100px] opacity-30 bg-purple-200 dark:bg-purple-900 transition-colors duration-500"></div>
+    </div>
 
-<main>
-    <table>
-        <thead>
-            <tr>
-                <th>שם הפרויקט</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><a href="OBN-Travel-001.html">אריזה לטיול</a></td>
-            </tr>									
-            <tr>
-                <td><a href="OBN-Travel-002.html">2 אריזה לטיול</a></td>
-            </tr>												
-            <tr>
-                <td><a href="Parents.html">הורים פלוס</a></td>
-            </tr>												
-            <tr>
-                <td><a href="TechnoTip.html">מאגר הטכנוטיפים</a></td>
-            </tr>												
-            <tr>
-                <td><a href="TechnoTip-Admin.html">ניהול מאגר הטכנוטיפים</a></td>
-            </tr>															
-            <tr>
-                <td><a href="Calendar-Creator.html">יוצר קישורים לאירועים</a></td>
-            </tr>												
-            <tr>
-                <td><a href="Skills.html">שאלון כישורים</a></td>
-            </tr>												
-            <tr>
-                <td><a href="OBN-Emergency.html">צ'ק ליסט לחיסכון סוללה בסמארטפון</a></td>
-            </tr>															
-            <tr>
-                <td><a href="Skills-Analize.html">ניתוח שאלון כישורים</a></td>
-            </tr>															
-            <tr>
-                <td><a href="JSON-to-Text.html">ממיר JSON לטקסט, עבור Logseq</a></td>
-            </tr>												
-            <tr>
-                <td><a href="Efudix.html">Efudix</a></td>
-            </tr>															
-            <tr>
-			<tr>
-                <td><a href="OBN-Color-Everything.html">יוצר פלטות צבעים מקצועי</a></td>
-            </tr>						
-                <td><a href="Color-Analyzer.html">Color Analyzer</a></td>
-            </tr>
-			<tr>
-                <td><a href="Emoji-PNG.html">יוצר תמונות מ-Emoji</a></td>
-            </tr>			
-            <tr>
-                <td><a href="OBN-QR.html">QR Code Generator</a></td>
-            </tr>																		
-            <tr>
-                <td><a href="OBN-Text-to-Sig-Full.html">יצירת חתימה והוספה לתמונה או מסמך, גרסה 2</a></td>
-            </tr>							
-            <tr>
-                <td><a href="OBN-Text-to-Sig.html">יצירת חתימה לשימוש במסמכים או תמונות</a></td>
-            </tr>		
-            <tr>
-                <td><a href="OBN-SIG.html">הוספת חתימה על תמונות</a></td>
-            </tr>
-            <tr>
-                <td><a href="OBN-Eng.html">לימוד אנגלית</a></td>
-            </tr>		
-            <tr>
-                <td><a href="Ourvoice.html">יצירת מפות "הקול שלנו"</a></td>
-            </tr>					
-            <tr>
-                <td><a href="OBN-Eng-02.html">לימוד אנגלית 2</a></td>
-            </tr>					
-            <tr>
-                <td><a href="OBN-Eng-03.html">לימוד אנגלית עם ממשק ניהול</a></td>
-            </tr>								
-			<tr>
-                <td><a href="OBN-Mem-Game.html">משחק זכרון רגיל</a></td>
-			</tr>			
-			<tr>
-                <td><a href="OBN-Mem-Game-02.html">משחק זכרון מתקדם</a></td>	
-			</tr>			
-			<tr>	
-				<td><a href="OBN-Birth.html">מחשבון גיל ותאריך לידה עברי</a></td>	
-			</tr>	
-			<tr>	
-				<td><a href="OBN-Birthday-Heb.html">תזכורן ימי הולדת עם תאריך עברי</a></td>	
-			</tr>	
-			<tr>	
-				<td><a href="OBN-Words-Encrypted.html">משחק ניחוש מילים</a></td>	
-			</tr>            
-			<tr>	
-				<td><a href="OBN-Fortune-Wheel.html">גלגל המזל</a></td>	
-			</tr>	
-			<tr>	
-				<td><a href="OBN-Color-Picker.html">Advanced Color Picker</a></td>	
-			</tr>			
-			<tr>	
-				<td><a href="Loneliness-mindmap-filter.html">מפת חשיבה: בדידות בקרב זקנים</a></td>	
-			</tr>	
-			<tr>	
-				<td><a href="activity-mindmap.html">מפת חשיבה: פעילות גופנית בקרב זקנים</a></td>	
-			</tr>	
-			<tr>	
-				<td><a href="persona-cards.html">דוגמה לכרטיס פרסונה</a></td>			
-			</tr>			
-			<tr>	
-				<td><a href="Health-Questionnaire.html">Health Questionnaire</a></td>		
-			</tr>		
-			<tr>		
-				<td><a href="Scores-Admin.html">אפליקציית ניקוד - חישוב הניקוד</a></td>		
-			</tr>		
-			<tr>		
-				<td><a href="OBN-Scores-Create-Groups-Admin.html">אפליקציית ניקוד - יצירת קובץ ניקוד</a></td>		
-			</tr>			
-			<tr>		
-				<td><a href="Scores-User.html">אפליקציית ניקוד - דוגמה לניקוד</a></td>						
-			</tr>
-			<tr>
-				<td><a href="OBN-Word-Encryptor.html">Word Encryptor</a></td>
-			</tr>
-			<tr>
-				<td><a href="OBN-Expenses.html">ניהול הוצאות</a></td>
-			</tr>
-			<tr>
-				<td><a href="OBN-Budget-Split.html">ניהול הוצאות משותפות</a></td>
-			</tr>
-			<tr>
-				<td><a href="OBN-Transcribe.html">תמלול</a></td>
-			</tr>
-			<tr>
-				<td><a href="OBN-Transcribe-v2.html">תמלול גרסה 2</a></td>
-			</tr>			
-			<tr>
-				<td><a href="OBN-Mindmap-Groq.html">יצירת מפת חשיבה</a></td>
-			</tr>			
-			<tr>
-				<td><a href="OBN-Mindmaps-Engine.html">יצירת מפת חשיבה - גירסה 2</a></td>
-			</tr>			
-        </tbody>
-    </table>
+    <div class="relative z-10 max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-12">
+        
+        <!-- באנר עליון -->
+        <div class="w-full mb-8 md:mb-12 rounded-3xl overflow-hidden shadow-lg bg-slate-200 dark:bg-slate-800/50 flex items-center justify-center min-h-[150px] md:min-h-[250px] border border-slate-200 dark:border-slate-700/50">
+            <!-- שימוש בתמונת ברירת מחדל מתיקיית images אם הבאנר חסר -->
+            <img src="images/OBNbanner.jpg" alt="באנר ראשי" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='images/dafulatimage.png';" />
+        </div>
 
-    <br><br>
+        <!-- Header Section -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-10 md:mb-16 gap-6">
+            <div class="text-center md:text-right">
+                <h1 class="text-3xl md:text-5xl font-extrabold mb-3 tracking-tight">
+                    <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-600">
+                        האפליקציות שלי
+                    </span>
+                </h1>
+                <p class="text-lg text-slate-600 dark:text-slate-400 transition-colors">
+                    אוסף פרויקטים, כלים ומשחקים שפיתחתי.
+                </p>
+            </div>
 
-    <footer>
-     כל הזכויות שמורות OBN 2026
-    </footer>
+            <div class="flex items-center gap-4">
+                <!-- כפתור צור קשר -->
+                <button 
+                    onclick="openContactModal()"
+                    class="px-5 py-2.5 rounded-full font-medium transition-all duration-300 shadow-md bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:shadow-lg hover:shadow-indigo-500/30"
+                >
+                    צור קשר
+                </button>
+                
+                <!-- כפתור מצב לילה/יום -->
+                <button 
+                    id="theme-toggle"
+                    class="p-3 rounded-full transition-all duration-300 shadow-md bg-white text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-yellow-400 dark:hover:bg-slate-700"
+                    aria-label="Toggle Dark Mode"
+                >
+                    <i data-lucide="moon" id="theme-icon"></i>
+                </button>
+                
+                <!-- כפתור פייסבוק במקום גיטהאב -->
+                <a href="https://facebook.com/your-profile" target="_blank" rel="noopener noreferrer" class="p-3 rounded-full transition-all duration-300 shadow-md bg-white text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700" aria-label="פרופיל פייסבוק">
+                    <i data-lucide="facebook"></i>
+                </a>
+            </div>
+        </header>
 
-    <br><br>
+        <!-- Search & Filter Section -->
+        <div class="flex flex-col md:flex-row gap-6 mb-12 justify-between items-center">
+            
+            <!-- קטגוריות צפות ומעוגלות -->
+            <div id="categories-container" class="flex flex-wrap justify-center gap-3">
+                <!-- Buttons will be injected here by JS -->
+            </div>
 
- </main>
+            <!-- שורת חיפוש מעוגלת -->
+            <div class="relative w-full md:w-80 rounded-full shadow-sm bg-white border border-slate-200 dark:bg-slate-800/80 dark:border-slate-700 transition-colors">
+                <input
+                    type="text"
+                    id="search-input"
+                    placeholder="חיפוש פרויקט..."
+                    class="w-full bg-transparent py-3 pr-12 pl-4 rounded-full outline-none focus:ring-2 focus:ring-indigo-500 transition-all dark:text-white"
+                />
+                <i data-lucide="search" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+            </div>
+        </div>
 
+        <!-- Projects Grid -->
+        <div id="projects-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Projects will be injected here by JS -->
+        </div>
+        
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden text-center py-20">
+            <h3 class="text-2xl font-bold text-slate-500 dark:text-slate-400">לא נמצאו פרויקטים התואמים לחיפוש שלך.</h3>
+        </div>
 
- </body>
+        <!-- Footer -->
+        <footer class="mt-20 pt-8 border-t text-center border-slate-200 text-slate-400 dark:border-slate-800 dark:text-slate-500 transition-colors">
+            <p id="copyright-year"></p>
+        </footer>
 
- </html>
+    </div>
+
+    <!-- מודל צור קשר -->
+    <div id="contact-modal" class="fixed inset-0 z-50 hidden opacity-0 transition-opacity duration-300 px-4">
+        <!-- רקע כהה -->
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeContactModal()"></div>
+        
+        <!-- תוכן המודל -->
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md">
+            <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-6 md:p-8 text-center border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300" id="contact-modal-content">
+                <div class="w-16 h-16 mx-auto bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center mb-6 text-indigo-600 dark:text-indigo-400">
+                    <i data-lucide="mail" class="w-8 h-8"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-4 text-slate-900 dark:text-white">בואו נדבר!</h2>
+                <p class="text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">
+                    צרו קשר בכל שאלה, הצעת ייעול, באג שמצאתם או סתם כדי להגיד שלום. אני כאן!
+                </p>
+                <a href="mailto:your-email@example.com" class="inline-block w-full py-3 px-6 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-lg hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300">
+                    your-email@example.com
+                </a>
+                <button onclick="closeContactModal()" class="mt-6 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">
+                    סגור חלון
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Data Configuration (38 Projects)
+        const categories = ['הכל', 'כלים ופרודוקטיביות', 'גרפיקה ועיצוב', 'משחקים', 'פיתוח וניהול', 'שונות'];
+
+        const projects = [
+            { id: 1, isActive: true, title: 'אריזה לטיול', description: 'רשימת ציוד חכמה שתעזור לכם לא לשכוח שום דבר בטיול הבא שלכם.', url:'OBN-Travel-001.html', category: 'כלים ופרודוקטיביות', icon: 'luggage', iconColor: 'text-blue-500', image: 'images/visit01.png' },
+            { id: 2, isActive: true, title: 'אריזה לטיול 2', description: 'הגרסה המתקדמת של רשימת הציוד לטיולים עם אפשרויות חכמות.', url: 'OBN-Travel-002.html', category: 'כלים ופרודוקטיביות', icon: 'luggage', iconColor: 'text-purple-500', image: 'images/visit2.png' },
+            { id: 3, isActive: true, title: 'הורים פלוס', description: 'אפליקציה חכמה לניהול משימות וזמן המותאמת במיוחד להורים.', url: 'Parents.html', category: 'שונות', icon: 'baby', iconColor: 'text-emerald-500', image: 'images/parents.png' },
+            { id: 4, isActive: true, title: 'מאגר הטכנוטיפים', description: 'מאגר עשיר של טיפים טכנולוגיים ושימושיים לחיי היום-יום.', url: 'TechnoTip.html', category: 'פיתוח וניהול', icon: 'database', iconColor: 'text-orange-500', image: 'images/tips.png' },
+            { id: 5, isActive: true, title: 'ניהול מאגר הטכנוטיפים', description: 'מערכת ניהול (CMS) מאחורי הקלעים לשליטה במאגר הטיפים.', url: 'TechnoTip-Admin.html', category: 'פיתוח וניהול', icon: 'settings', iconColor: 'text-cyan-500', image: 'images/tipsadmin.png' },
+            { id: 6, isActive: true, title: 'יוצר קישורים לאירועים', description: 'יצירת קישורים מהירים להוספת אירועים ליומן גוגל, אאוטלוק ועוד.', url: 'Calendar-Creator.html', category: 'כלים ופרודוקטיביות', icon: 'link', iconColor: 'text-indigo-500', image: 'images/calander.png' },
+            { id: 7, isActive: true, title: 'שאלון כישורים', description: 'הערכת כישורים מקצועיים ואישיים באמצעות שאלון אינטראקטיבי.', url: 'Skills.html', category: 'כלים ופרודוקטיביות', icon: 'clipboard-list', iconColor: 'text-pink-500', image: 'images/skills.png' },
+            { id: 8, isActive: true, title: 'צ\'ק ליסט לחיסכון סוללה בסמארטפון', description: 'מדריך ופעולות חיוניות להארכת חיי הסוללה במכשיר הנייד.', url: 'OBN-Emergency.html', category: 'כלים ופרודוקטיביות', icon: 'battery-charging', iconColor: 'text-red-500', image: 'images/smartphone.png' },
+            { id: 9, isActive: true, title: 'ניתוח שאלון כישורים', description: 'כלי לניתוח והצגת תוצאות סטטיסטיות מתוך שאלון הכישורים.', url: 'Skills-Analize.html', category: 'כלים ופרודוקטיביות', icon: 'bar-chart', iconColor: 'text-sky-500', image: 'images/skillsadmin.png' },
+            { id: 10, isActive: true, title: 'ממיר JSON לטקסט, עבור Logseq', description: 'המרת קבצי JSON מורכבים לפורמט טקסטואלי התואם לתוכנת Logseq.', url: 'JSON-to-Text.html', category: 'פיתוח וניהול', icon: 'file-json', iconColor: 'text-teal-500', image: 'images/json.png' },
+            { id: 11, isActive: true, title: 'ניהול Efudix', description: 'מערכת פנימית לניהול ומעקב אחרי נתונים ופרויקטים.', url: 'Efudix.html', category: 'פיתוח וניהול', icon: 'briefcase', iconColor: 'text-amber-500', image: 'images/efudix.png' },
+            { id: 12, isActive: true, title: 'יוצר פלטות צבעים מקצועי', description: 'מחולל פלטות צבעים הרמוניות המסייע למעצבים ומפתחים.', url: 'OBN-Color-Everything.html', category: 'גרפיקה ועיצוב', icon: 'palette', iconColor: 'text-fuchsia-500', image: 'images/colors1.png' },
+            { id: 13, isActive: true, title: 'Color Analyzer', description: 'ניתוח ושליפת הצבעים הדומיננטיים ביותר מתוך תמונות.', url: 'Color-Analyzer.html', category: 'גרפיקה ועיצוב', icon: 'pipette', iconColor: 'text-rose-500', image: 'images/eyedropper.png' },
+            { id: 14, isActive: true, title: 'יוצר תמונות מ-Emoji', description: 'המרת אימוג\'ים לתמונות ברזולוציה גבוהה להורדה ולשימוש חופשי.', url: 'Emoji-PNG.html', category: 'גרפיקה ועיצוב', icon: 'smile', iconColor: 'text-yellow-500', image: 'images/colors2.png' },
+            { id: 15, isActive: true, title: 'QR Code Generator', description: 'יצירת קודי QR מותאמים אישית בקלות עבור טקסטים וקישורים.', url: 'OBN-QR.html', category: 'כלים ופרודוקטיביות', icon: 'qr-code', iconColor: 'text-slate-500', image: 'images/qrcode.png' },
+            { id: 16, isActive: true, title: 'יצירת חתימה והוספה לתמונה או מסמך, גרסה 2', description: 'ציור חתימה אלקטרונית והטמעתה בקבצים - הגרסה המתקדמת.', url: 'OBN-Text-to-Sig-Full.html', category: 'גרפיקה ועיצוב', icon: 'pen-tool', iconColor: 'text-indigo-400', image: 'images/sig2.png' },
+            { id: 17, isActive: true, title: 'יצירת חתימה לשימוש במסמכים או תמונות', description: 'מחולל חתימות מהיר בפורמט PNG שקוף להדבקה במסמכים.', url: 'OBN-Text-to-Sig.html', category: 'גרפיקה ועיצוב', icon: 'pen-tool', iconColor: 'text-blue-600', image: 'images/sig1.png' },
+            { id: 18, isActive: true, title: 'הוספת חתימה על תמונות', description: 'כלי ייעודי וקל לשימוש להטמעת חתימות קיימות על גבי תמונות.', url: 'OBN-SIG.html', category: 'גרפיקה ועיצוב', icon: 'image', iconColor: 'text-emerald-400', image: 'images/stamp.png' },
+            { id: 19, isActive: true, title: 'לימוד אנגלית', description: 'אפליקציה חווייתית להרחבת אוצר המילים ושיפור האנגלית.', url: 'OBN-Eng.html', category: 'שונות', icon: 'book-open', iconColor: 'text-purple-600', image: 'images/english.png' },
+            { id: 20, isActive: true, title: 'יצירת מפות "הקול שלנו"', description: 'יצירת מפות אינטראקטיביות ושיתופיות במסגרת הפרויקט.', url: 'Ourvoice.html', category: 'שונות', icon: 'map', iconColor: 'text-orange-400', image: 'images/ourvoice.png' },
+            { id: 21, isActive: true, title: 'לימוד אנגלית עם ממשק ניהול', description: 'פלטפורמת לימוד הכוללת פאנל אדמין להוספת מילים ותכנים.', url: 'OBN-Eng-03.html', category: 'פיתוח וניהול', icon: 'graduation-cap', iconColor: 'text-cyan-600', image: 'images/englishadmin.png' },
+            { id: 22, isActive: true, title: 'משחק זכרון רגיל', description: 'המשחק הקלאסי המוכר והאהוב לאימון הזיכרון החזותי.', url: 'OBN-Mem-Game.html', category: 'משחקים', icon: 'brain', iconColor: 'text-red-400', image: 'images/memgame.png' },
+            { id: 23, isActive: true, title: 'משחק זכרון מתקדם', description: 'גרסה מאתגרת ומהירה למשחק הזיכרון עם דרגות קושי משתנות.', url: 'OBN-Mem-Game-02.html', category: 'משחקים', icon: 'brain-circuit', iconColor: 'text-rose-600', image: 'images/memgame2.png' },
+            { id: 24, isActive: true, title: 'מחשבון גיל ותאריך לידה עברי', description: 'המרה וחישוב מדויק של תאריכים בין הלוח העברי ללוח הלועזי.', url: 'OBN-Birth.html', category: 'כלים ופרודוקטיביות', icon: 'calendar', iconColor: 'text-blue-400', image: 'images/birthday.png' },
+            { id: 25, isActive: true, title: 'תזכורן ימי הולדת עם תאריך עברי', description: 'מערכת חכמה לתזכורות לימי הולדת על פי חודשי הלוח העברי.', url: 'OBN-Birthday-Heb.html', category: 'כלים ופרודוקטיביות', icon: 'bell', iconColor: 'text-yellow-600', image: 'images/birthdayheb.png' },
+            { id: 26, isActive: true, title: 'משחק ניחוש מילים', description: 'משחק חשיבה ופיצוח מילים מאתגר בסגנון המשחק המוכר Wordle.', url: 'OBN-Words-Encrypted.html', category: 'משחקים', icon: 'message-circle-question', iconColor: 'text-green-500', image: 'images/project-26.png' },
+            { id: 27, isActive: true, title: 'גלגל המזל', description: 'משחק הגרלות מהנה והחלטות אקראיות באמצעות סיבוב גלגל.', url: 'OBN-Fortune-Wheel.html', category: 'משחקים', icon: 'circle-dashed', iconColor: 'text-pink-600', image: 'images/project-27.png' },
+            { id: 28, isActive: true, title: 'Advanced Color Picker', description: 'בוחר צבעים מתקדם למפתחים הכולל ערכי HEX, RGB ו-HSL.', url: 'OBN-Color-Picker.html', category: 'גרפיקה ועיצוב', icon: 'mouse-pointer', iconColor: 'text-indigo-600', image: 'images/project-28.png' },
+            { id: 29, isActive: true, title: 'מפת חשיבה: בדידות בקרב זקנים', description: 'תרשים מפת חשיבה ויזואלי ייעודי המנתח את נושא הבדידות.', url: 'Loneliness-mindmap-filter.html', category: 'שונות', icon: 'network', iconColor: 'text-teal-600', image: 'images/project-29.png' },
+            { id: 30, isActive: true, title: 'Health Questionnaire', description: 'שאלון בריאות מקוון למילוי קל, סקרים ואיסוף נתונים רפואיים.', url: 'Health-Questionnaire.html', category: 'שונות', icon: 'heart-pulse', iconColor: 'text-red-600', image: 'images/project-30.png' },
+            { id: 31, isActive: true, title: 'אפליקציית ניקוד - חישוב הניקוד', description: 'מערכת אלגוריתמית לחישוב וניקוד טקסטים בשפה העברית.', url: 'Scores-Admin.html', category: 'כלים ופרודוקטיביות', icon: 'calculator', iconColor: 'text-sky-600', image: 'images/project-31.png' },
+            { id: 32, isActive: true, title: 'אפליקציית ניקוד - יצירת קובץ ניקוד', description: 'הפקת קבצים ייעודיים להורדה הכוללים את הטקסט המנוקד.', url: 'OBN-Scores-Create-Groups-Admin.html', category: 'כלים ופרודוקטיביות', icon: 'file-plus', iconColor: 'text-blue-500', image: 'images/project-32.png' },
+            { id: 33, isActive: true, title: 'אפליקציית ניקוד - דוגמה לניקוד', description: 'תצוגת תכלית ודוגמאות חיות מתוך פעולתה של מערכת הניקוד.', url: 'Scores-User.html', category: 'כלים ופרודוקטיביות', icon: 'file-text', iconColor: 'text-purple-400', image: 'images/project-33.png' },
+            { id: 34, isActive: true, title: 'Word Encryptor', description: 'כלי מהיר להצפנה ופענוח של מילים, סיסמאות וטקסטים רגישים.', url: 'OBN-Words-Encrypted.html', category: 'כלים ופרודוקטיביות', icon: 'lock', iconColor: 'text-slate-700', image: 'images/project-34.png' },
+            { id: 35, isActive: true, title: 'ניהול הוצאות משותפות', description: 'מעקב, חלוקה וניהול הוצאות כלכליות בין חברים, שותפים ומשפחה.', url: 'OBN-Budget-Split.html', category: 'כלים ופרודוקטיביות', icon: 'wallet', iconColor: 'text-emerald-600', image: 'images/project-35.png' },
+            { id: 36, isActive: true, title: 'תמלול גרסה 2', description: 'אפליקציית תמלול קול לטקסט (Speech to Text) מבוססת זיהוי מתקדם.', url: 'OBN-Transcribe-v2.html', category: 'כלים ופרודוקטיביות', icon: 'mic', iconColor: 'text-amber-600', image: 'images/project-36.png' },
+            { id: 37, isActive: true, title: 'יצירת מפת חשיבה', description: 'כלי ויזואלי לפריקת רעיונות, סיעור מוחות וניהול ידע (Mind Mapping).', url: 'OBN-Mindmap-Groq.html', category: 'כלים ופרודוקטיביות', icon: 'share-2', iconColor: 'text-cyan-400', image: 'images/project-37.png' },
+            { id: 38, isActive: true, title: 'יצירת מפת חשיבה - גירסה 2', description: 'הדור הבא של מחולל מפות החשיבה עם אפשרויות עריכה ויצוא נרחבות.', url: 'OBN-Mindmaps-Engine.html', category: 'כלים ופרודוקטיביות', icon: 'git-merge', iconColor: 'text-fuchsia-600', image: 'images/project-38.png' }
+        ];
+
+        // State
+        let isDarkMode = false;
+        let searchQuery = '';
+        let activeCategory = 'הכל';
+
+        // DOM Elements
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const searchInput = document.getElementById('search-input');
+        const categoriesContainer = document.getElementById('categories-container');
+        const projectsContainer = document.getElementById('projects-container');
+        const emptyState = document.getElementById('empty-state');
+        const htmlElement = document.documentElement;
+        
+        // Modal Elements
+        const contactModal = document.getElementById('contact-modal');
+        const contactModalContent = document.getElementById('contact-modal-content');
+
+        // Modal Functions
+        window.openContactModal = function() {
+            contactModal.classList.remove('hidden');
+            // מאלץ את הדפדפן לעבד מחדש את המסך לפני הפעלת האנימציה
+            void contactModal.offsetWidth;
+            contactModal.classList.remove('opacity-0');
+            contactModalContent.classList.remove('scale-95');
+            contactModalContent.classList.add('scale-100');
+        };
+
+        window.closeContactModal = function() {
+            contactModal.classList.add('opacity-0');
+            contactModalContent.classList.remove('scale-100');
+            contactModalContent.classList.add('scale-95');
+            // ממתין לסיום האנימציה לפני ההסתרה המוחלטת
+            setTimeout(() => {
+                contactModal.classList.add('hidden');
+            }, 300);
+        };
+
+        // Initialize
+        function init() {
+            document.getElementById('copyright-year').innerText = `© ${new Date().getFullYear()} כל הזכויות שמורות. נבנה באהבה.`;
+            renderCategories();
+            renderProjects();
+            lucide.createIcons();
+            
+            // Check system preference for dark mode initially
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                toggleTheme();
+            }
+        }
+
+        // Theme Management
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            if (isDarkMode) {
+                htmlElement.classList.add('dark');
+                themeIcon.setAttribute('data-lucide', 'sun');
+            } else {
+                htmlElement.classList.remove('dark');
+                themeIcon.setAttribute('data-lucide', 'moon');
+            }
+            // Re-render icons since we changed the data-lucide attribute
+            lucide.createIcons();
+        }
+
+        themeToggleBtn.addEventListener('click', toggleTheme);
+
+        // Render Categories
+        function renderCategories() {
+            categoriesContainer.innerHTML = categories.map(category => {
+                const isActive = activeCategory === category;
+                const activeClasses = isActive 
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 border-transparent' 
+                    : 'bg-white text-slate-600 hover:bg-slate-100 shadow-sm border-slate-200 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-slate-700 dark:border-slate-700';
+                
+                return `
+                    <button 
+                        onclick="setCategory('${category}')"
+                        class="px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 border ${activeClasses}"
+                    >
+                        ${category}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        // Set Category and Re-render
+        window.setCategory = function(category) {
+            activeCategory = category;
+            renderCategories();
+            renderProjects();
+        }
+
+        // Search Handling
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value.toLowerCase();
+            renderProjects();
+        });
+
+        // Render Projects
+        function renderProjects() {
+            const filteredProjects = projects.filter(project => {
+                // בדיקה אם הפרויקט פעיל - אם לא, התעלם ממנו והסתר אותו
+                if (project.isActive === false) return false;
+
+                const matchesSearch = project.title.toLowerCase().includes(searchQuery) || 
+                                      project.description.toLowerCase().includes(searchQuery);
+                const matchesCategory = activeCategory === 'הכל' || project.category === activeCategory;
+                return matchesSearch && matchesCategory;
+            });
+
+            if (filteredProjects.length === 0) {
+                projectsContainer.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+            } else {
+                projectsContainer.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+                
+                projectsContainer.innerHTML = filteredProjects.map(project => `
+                    <div class="group flex flex-col relative rounded-3xl p-6 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl backdrop-blur-sm
+                        bg-white/80 border border-slate-100 shadow-xl shadow-slate-200/50 hover:border-indigo-200
+                        dark:bg-slate-800/60 dark:border-slate-700/50 dark:shadow-slate-900/50 dark:hover:border-indigo-500/50">
+                        
+                        <!-- Header of card: Icon and Title aligned horizontally -->
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-inner bg-slate-50 dark:bg-slate-900/80">
+                                <i data-lucide="${project.icon}" class="${project.iconColor} w-7 h-7"></i>
+                            </div>
+                            <h3 class="text-xl font-bold">${project.title}</h3>
+                        </div>
+
+                        <!-- תמונת מסך של האפליקציה (נטען בצורה עצלנית לשיפור ביצועים) -->
+                        <div class="w-full h-40 bg-slate-100 dark:bg-slate-700/50 rounded-xl mb-4 overflow-hidden relative border border-slate-200/50 dark:border-slate-600/50 shrink-0">
+                            <img src="${project.image}" alt="${project.title}" loading="lazy" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src='images/dafulatimage.png';" />
+                        </div>
+
+                        <p class="flex-grow mb-6 leading-relaxed text-slate-600 dark:text-slate-400">
+                            ${project.description}
+                        </p>
+
+                        <!-- כפתור מעבר לאפליקציה -->
+                        <a href="${project.url}" class="mt-auto flex items-center justify-center gap-2 w-full py-3 rounded-2xl font-bold transition-all duration-300
+                            bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-800
+                            dark:bg-slate-700 dark:hover:bg-indigo-600 dark:text-white">
+                            <span>עבור לאפליקציה</span>
+                            <i data-lucide="external-link" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                `).join('');
+                
+                // Initialize icons for newly injected HTML
+                lucide.createIcons();
+            }
+        }
+
+        // Start the app
+        init();
+
+    </script>
+</body>
+</html>

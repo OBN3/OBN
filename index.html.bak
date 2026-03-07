@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>עמוד הבית של OBN</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff;
+            color: #333;
+        }
+        header {
+            background-color: #0073e6;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        h1, h2 {
+            margin: 0;
+        }
+        main {
+            padding: 20px;
+        }
+        table {
+            width: auto;
+            margin: 0 auto;
+            border-collapse: collapse;
+            margin-top: 20px;
+            max-width: 100%;
+        }
+        th, td {
+            padding: 10px;
+            text-align: right;
+            border-bottom: 1px solid #ddd;
+            white-space: nowrap;
+        }
+        th {
+            background-color: #e0f7ff;
+        }
+        a {
+            color: #0073e6;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        footer {
+            background-color: #0073e6;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            table {
+                width: 100%;
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>עמוד הבית של OBN</h1>
+    <h2>פרויקטים שנכתבו באמצעות בינה מלאכותית</h2>
+</header>
+
+<main>
+    <table>
+        <thead>
+            <tr>
+                <th>שם הפרויקט</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><a href="OBN-Travel-001.html">אריזה לטיול</a></td>
+            </tr>									
+            <tr>
+                <td><a href="OBN-Travel-002.html">2 אריזה לטיול</a></td>
+            </tr>												
+            <tr>
+                <td><a href="Parents.html">הורים פלוס</a></td>
+            </tr>												
+            <tr>
+                <td><a href="TechnoTip.html">מאגר הטכנוטיפים</a></td>
+            </tr>												
+            <tr>
+                <td><a href="TechnoTip-Admin.html">ניהול מאגר הטכנוטיפים</a></td>
+            </tr>															
+            <tr>
+                <td><a href="Calendar-Creator.html">יוצר קישורים לאירועים</a></td>
+            </tr>												
+            <tr>
+                <td><a href="Skills.html">שאלון כישורים</a></td>
+            </tr>												
+            <tr>
+                <td><a href="OBN-Emergency.html">צ'ק ליסט לחיסכון סוללה בסמארטפון</a></td>
+            </tr>															
+            <tr>
+                <td><a href="Skills-Analize.html">ניתוח שאלון כישורים</a></td>
+            </tr>															
+            <tr>
+                <td><a href="JSON-to-Text.html">ממיר JSON לטקסט, עבור Logseq</a></td>
+            </tr>												
+            <tr>
+                <td><a href="Efudix.html">Efudix</a></td>
+            </tr>															
+            <tr>
+			<tr>
+                <td><a href="OBN-Color-Everything.html">יוצר פלטות צבעים מקצועי</a></td>
+            </tr>						
+                <td><a href="Color-Analyzer.html">Color Analyzer</a></td>
+            </tr>
+			<tr>
+                <td><a href="Emoji-PNG.html">יוצר תמונות מ-Emoji</a></td>
+            </tr>			
+            <tr>
+                <td><a href="OBN-QR.html">QR Code Generator</a></td>
+            </tr>																		
+            <tr>
+                <td><a href="OBN-Text-to-Sig-Full.html">יצירת חתימה והוספה לתמונה או מסמך, גרסה 2</a></td>
+            </tr>							
+            <tr>
+                <td><a href="OBN-Text-to-Sig.html">יצירת חתימה לשימוש במסמכים או תמונות</a></td>
+            </tr>		
+            <tr>
+                <td><a href="OBN-SIG.html">הוספת חתימה על תמונות</a></td>
+            </tr>
+            <tr>
+                <td><a href="OBN-Eng.html">לימוד אנגלית</a></td>
+            </tr>		
+            <tr>
+                <td><a href="Ourvoice.html">יצירת מפות "הקול שלנו"</a></td>
+            </tr>					
+            <tr>
+                <td><a href="OBN-Eng-02.html">לימוד אנגלית 2</a></td>
+            </tr>					
+            <tr>
+                <td><a href="OBN-Eng-03.html">לימוד אנגלית עם ממשק ניהול</a></td>
+            </tr>								
+			<tr>
+                <td><a href="OBN-Mem-Game.html">משחק זכרון רגיל</a></td>
+			</tr>			
+			<tr>
+                <td><a href="OBN-Mem-Game-02.html">משחק זכרון מתקדם</a></td>	
+			</tr>			
+			<tr>	
+				<td><a href="OBN-Birth.html">מחשבון גיל ותאריך לידה עברי</a></td>	
+			</tr>	
+			<tr>	
+				<td><a href="OBN-Birthday-Heb.html">תזכורן ימי הולדת עם תאריך עברי</a></td>	
+			</tr>	
+			<tr>	
+				<td><a href="OBN-Words-Encrypted.html">משחק ניחוש מילים</a></td>	
+			</tr>            
+			<tr>	
+				<td><a href="OBN-Fortune-Wheel.html">גלגל המזל</a></td>	
+			</tr>	
+			<tr>	
+				<td><a href="OBN-Color-Picker.html">Advanced Color Picker</a></td>	
+			</tr>			
+			<tr>	
+				<td><a href="Loneliness-mindmap-filter.html">מפת חשיבה: בדידות בקרב זקנים</a></td>	
+			</tr>	
+			<tr>	
+				<td><a href="activity-mindmap.html">מפת חשיבה: פעילות גופנית בקרב זקנים</a></td>	
+			</tr>	
+			<tr>	
+				<td><a href="persona-cards.html">דוגמה לכרטיס פרסונה</a></td>			
+			</tr>			
+			<tr>	
+				<td><a href="Health-Questionnaire.html">Health Questionnaire</a></td>		
+			</tr>		
+			<tr>		
+				<td><a href="Scores-Admin.html">אפליקציית ניקוד - חישוב הניקוד</a></td>		
+			</tr>		
+			<tr>		
+				<td><a href="OBN-Scores-Create-Groups-Admin.html">אפליקציית ניקוד - יצירת קובץ ניקוד</a></td>		
+			</tr>			
+			<tr>		
+				<td><a href="Scores-User.html">אפליקציית ניקוד - דוגמה לניקוד</a></td>						
+			</tr>
+			<tr>
+				<td><a href="OBN-Word-Encryptor.html">Word Encryptor</a></td>
+			</tr>
+			<tr>
+				<td><a href="OBN-Expenses.html">ניהול הוצאות</a></td>
+			</tr>
+			<tr>
+				<td><a href="OBN-Budget-Split.html">ניהול הוצאות משותפות</a></td>
+			</tr>
+			<tr>
+				<td><a href="OBN-Transcribe.html">תמלול</a></td>
+			</tr>
+			<tr>
+				<td><a href="OBN-Transcribe-v2.html">תמלול גרסה 2</a></td>
+			</tr>			
+			<tr>
+				<td><a href="OBN-Mindmap-Groq.html">יצירת מפת חשיבה</a></td>
+			</tr>			
+			<tr>
+				<td><a href="OBN-Mindmaps-Engine.html">יצירת מפת חשיבה - גירסה 2</a></td>
+			</tr>			
+        </tbody>
+    </table>
+
+    <br><br>
+
+    <footer>
+     כל הזכויות שמורות OBN 2026
+    </footer>
+
+    <br><br>
+
+ </main>
+
+
+ </body>
+
+ </html>
