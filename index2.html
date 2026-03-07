@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl" class="transition-colors duration-500">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>האפליקציות שלי | תיק עבודות</title>
+    
+    <!-- Tailwind CSS (via CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Configuration for Dark Mode -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        /* Smooth transitions for theme toggle */
+        body { transition: background-color 0.5s ease, color 0.5s ease; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen font-sans relative overflow-x-hidden">
+
+    <!-- רקע גרדיאנט עדין מאחור (Glassmorphism effect) -->
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div id="bg-blob-1" class="absolute -top-[20%] -right-[10%] w-[70%] h-[70%] rounded-full blur-[120px] opacity-30 bg-indigo-200 dark:bg-indigo-900 transition-colors duration-500"></div>
+        <div id="bg-blob-2" class="absolute -bottom-[20%] -left-[10%] w-[60%] h-[60%] rounded-full blur-[100px] opacity-30 bg-purple-200 dark:bg-purple-900 transition-colors duration-500"></div>
+    </div>
+
+    <div class="relative z-10 max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-12">
+        
+        <!-- באנר עליון -->
+        <div class="w-full mb-8 md:mb-12 rounded-3xl overflow-hidden shadow-lg bg-slate-200 dark:bg-slate-800/50 flex items-center justify-center min-h-[150px] md:min-h-[250px] border border-slate-200 dark:border-slate-700/50">
+            <!-- שימוש בתמונת ברירת מחדל אם הבאנר חסר -->
+            <img src="OBNbanner.jpg" alt="באנר ראשי" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='dafulatimage.png';" />
+        </div>
+
+        <!-- Header Section -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-10 md:mb-16 gap-6">
+            <div class="text-center md:text-right">
+                <h1 class="text-3xl md:text-5xl font-extrabold mb-3 tracking-tight">
+                    <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-600">
+                        האפליקציות שלי
+                    </span>
+                </h1>
+                <p class="text-lg text-slate-600 dark:text-slate-400 transition-colors">
+                    אוסף פרויקטים, כלים ומשחקים שפיתחתי.
+                </p>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <!-- כפתור צור קשר -->
+                <button 
+                    onclick="openContactModal()"
+                    class="px-5 py-2.5 rounded-full font-medium transition-all duration-300 shadow-md bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:shadow-lg hover:shadow-indigo-500/30"
+                >
+                    צור קשר
+                </button>
+                
+                <!-- כפתור מצב לילה/יום -->
+                <button 
+                    id="theme-toggle"
+                    class="p-3 rounded-full transition-all duration-300 shadow-md bg-white text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-yellow-400 dark:hover:bg-slate-700"
+                    aria-label="Toggle Dark Mode"
+                >
+                    <i data-lucide="moon" id="theme-icon"></i>
+                </button>
+                
+                <!-- כפתור פייסבוק במקום גיטהאב -->
+                <a href="https://facebook.com/your-profile" target="_blank" rel="noopener noreferrer" class="p-3 rounded-full transition-all duration-300 shadow-md bg-white text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700" aria-label="פרופיל פייסבוק">
+                    <i data-lucide="facebook"></i>
+                </a>
+            </div>
+        </header>
+
+        <!-- Search & Filter Section -->
+        <div class="flex flex-col md:flex-row gap-6 mb-12 justify-between items-center">
+            
+            <!-- קטגוריות צפות ומעוגלות -->
+            <div id="categories-container" class="flex flex-wrap justify-center gap-3">
+                <!-- Buttons will be injected here by JS -->
+            </div>
+
+            <!-- שורת חיפוש מעוגלת -->
+            <div class="relative w-full md:w-80 rounded-full shadow-sm bg-white border border-slate-200 dark:bg-slate-800/80 dark:border-slate-700 transition-colors">
+                <input
+                    type="text"
+                    id="search-input"
+                    placeholder="חיפוש פרויקט..."
+                    class="w-full bg-transparent py-3 pr-12 pl-4 rounded-full outline-none focus:ring-2 focus:ring-indigo-500 transition-all dark:text-white"
+                />
+                <i data-lucide="search" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+            </div>
+        </div>
+
+        <!-- Projects Grid -->
+        <div id="projects-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Projects will be injected here by JS -->
+        </div>
+        
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden text-center py-20">
+            <h3 class="text-2xl font-bold text-slate-500 dark:text-slate-400">לא נמצאו פרויקטים התואמים לחיפוש שלך.</h3>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-20 pt-8 border-t text-center border-slate-200 text-slate-400 dark:border-slate-800 dark:text-slate-500 transition-colors">
+            <p id="copyright-year"></p>
+        </footer>
+
+    </div>
+
+    <!-- מודל צור קשר -->
+    <div id="contact-modal" class="fixed inset-0 z-50 hidden opacity-0 transition-opacity duration-300 px-4">
+        <!-- רקע כהה -->
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeContactModal()"></div>
+        
+        <!-- תוכן המודל -->
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md">
+            <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-6 md:p-8 text-center border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300" id="contact-modal-content">
+                <div class="w-16 h-16 mx-auto bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center mb-6 text-indigo-600 dark:text-indigo-400">
+                    <i data-lucide="mail" class="w-8 h-8"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-4 text-slate-900 dark:text-white">בואו נדבר!</h2>
+                <p class="text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">
+                    צרו קשר בכל שאלה, הצעת ייעול, באג שמצאתם או סתם כדי להגיד שלום. אני כאן!
+                </p>
+                <a href="mailto:your-email@example.com" class="inline-block w-full py-3 px-6 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-lg hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300">
+                    your-email@example.com
+                </a>
+                <button onclick="closeContactModal()" class="mt-6 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">
+                    סגור חלון
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Data
+        const projects = [
+            {
+                id: 1,
+                isActive: true, // true = מוצג באתר
+                title: 'מחשבון חכם',
+                description: 'מחשבון מתקדם המאפשר פתרון משוואות ושמירת היסטוריית חישובים בענן.',
+                url: '#',
+                category: 'כלים',
+                icon: 'wrench',
+                iconColor: 'text-blue-500',
+                image: 'calc-screenshot.png'
+            },
+            {
+                id: 2,
+                isActive: true,
+                title: 'משחק הזיכרון 2.0',
+                description: 'גרסה מודרנית וצבעונית למשחק הזיכרון הקלאסי, כולל טבלת מובילים עולמית.',
+                url: '#',
+                category: 'משחקים',
+                icon: 'gamepad-2',
+                iconColor: 'text-purple-500',
+                image: 'memory-screenshot.png'
+            },
+            {
+                id: 3,
+                isActive: true,
+                title: 'מנהל משימות יומי',
+                description: 'אפליקציית מינימליסטית לניהול זמן בשיטת פומודורו ומעקב אחר משימות.',
+                url: '#',
+                category: 'כלים',
+                icon: 'code-2',
+                iconColor: 'text-emerald-500',
+                image: 'tasks-screenshot.png'
+            },
+            {
+                id: 4,
+                isActive: true,
+                title: 'יומן מסע אישי',
+                description: 'פלטפורמה לשמירת תמונות וחוויות מטיולים, עם תצוגת מפה אינטראקטיבית.',
+                url: '#',
+                category: 'אפליקציות רשת',
+                icon: 'layout-grid',
+                iconColor: 'text-orange-500',
+                image: 'travel-screenshot.png'
+            },
+            // --- פרויקטים נוספים (מוסתרים כרגע - שנה ל-true כדי להציג) ---
+            {
+                id: 5,
+                isActive: false, 
+                title: 'אפליקציית מזג אוויר',
+                description: 'תחזית שבועית מדויקת מבוססת מיקום.',
+                url: '#',
+                category: 'כלים',
+                icon: 'cloud-sun',
+                iconColor: 'text-sky-500',
+                image: 'dafulatimage.png'
+            },
+            {
+                id: 6,
+                isActive: false,
+                title: 'רשימת קניות חכמה',
+                description: 'רשימת קניות שיתופית עם סנכרון בזמן אמת.',
+                url: '#',
+                category: 'אפליקציות רשת',
+                icon: 'shopping-cart',
+                iconColor: 'text-pink-500',
+                image: 'dafulatimage.png'
+            },
+            {
+                id: 7,
+                isActive: false,
+                title: 'טיימר פומודורו',
+                description: 'טכניקת ניהול זמן לשיפור הפרודוקטיביות.',
+                url: '#',
+                category: 'כלים',
+                icon: 'timer',
+                iconColor: 'text-red-500',
+                image: 'dafulatimage.png'
+            },
+            {
+                id: 8,
+                isActive: false,
+                title: 'מעקב הוצאות',
+                description: 'דשבורד חכם לניהול התקציב החודשי.',
+                url: '#',
+                category: 'כלים',
+                icon: 'pie-chart',
+                iconColor: 'text-green-500',
+                image: 'dafulatimage.png'
+            },
+            {
+                id: 9,
+                isActive: false,
+                title: 'בלוג אישי',
+                description: 'מערכת ניהול תוכן (CMS) לכתיבת מאמרים.',
+                url: '#',
+                category: 'אפליקציות רשת',
+                icon: 'pen-tool',
+                iconColor: 'text-indigo-500',
+                image: 'dafulatimage.png'
+            },
+            {
+                id: 10,
+                isActive: false,
+                title: 'מחולל סיסמאות',
+                description: 'יצירת סיסמאות חזקות ומאובטחות בקליק.',
+                url: '#',
+                category: 'כלים',
+                icon: 'key',
+                iconColor: 'text-yellow-500',
+                image: 'dafulatimage.png'
+            },
+            {
+                id: 11,
+                isActive: false,
+                title: 'לוח המרות',
+                description: 'המרה מהירה של מטבעות, משקלים ומידות.',
+                url: '#',
+                category: 'כלים',
+                icon: 'arrow-right-left',
+                iconColor: 'text-cyan-500',
+                image: 'dafulatimage.png'
+            },
+            {
+                id: 12,
+                isActive: false,
+                title: 'נגן מוזיקה',
+                description: 'נגן אודיו מעוצב עם רשימות השמעה מותאמות.',
+                url: '#',
+                category: 'אפליקציות רשת',
+                icon: 'music',
+                iconColor: 'text-fuchsia-500',
+                image: 'dafulatimage.png'
+            },
+            {
+                id: 13,
+                isActive: false,
+                title: 'מילון אנגלי-עברי',
+                description: 'חיפוש מהיר של מילים כולל השמעת הגייה.',
+                url: '#',
+                category: 'כלים',
+                icon: 'book-open',
+                iconColor: 'text-blue-400',
+                image: 'dafulatimage.png'
+            },
+            {
+                id: 14,
+                isActive: false,
+                title: 'חידון טריוויה',
+                description: 'משחק שאלות ידע כללי מול השעון.',
+                url: '#',
+                category: 'משחקים',
+                icon: 'help-circle',
+                iconColor: 'text-purple-400',
+                image: 'dafulatimage.png'
+            },
+            {
+                id: 15,
+                isActive: false,
+                title: 'צ\'אט בוט חכם',
+                description: 'עוזר וירטואלי המבוסס על בינה מלאכותית.',
+                url: '#',
+                category: 'אפליקציות רשת',
+                icon: 'message-square',
+                iconColor: 'text-teal-500',
+                image: 'dafulatimage.png'
+            }
+        ];
+
+        const categories = ['הכל', 'כלים', 'משחקים', 'אפליקציות רשת'];
+
+        // State
+        let isDarkMode = false;
+        let searchQuery = '';
+        let activeCategory = 'הכל';
+
+        // DOM Elements
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const searchInput = document.getElementById('search-input');
+        const categoriesContainer = document.getElementById('categories-container');
+        const projectsContainer = document.getElementById('projects-container');
+        const emptyState = document.getElementById('empty-state');
+        const htmlElement = document.documentElement;
+        
+        // Modal Elements
+        const contactModal = document.getElementById('contact-modal');
+        const contactModalContent = document.getElementById('contact-modal-content');
+
+        // Modal Functions
+        window.openContactModal = function() {
+            contactModal.classList.remove('hidden');
+            // מאלץ את הדפדפן לעבד מחדש את המסך לפני הפעלת האנימציה
+            void contactModal.offsetWidth;
+            contactModal.classList.remove('opacity-0');
+            contactModalContent.classList.remove('scale-95');
+            contactModalContent.classList.add('scale-100');
+        };
+
+        window.closeContactModal = function() {
+            contactModal.classList.add('opacity-0');
+            contactModalContent.classList.remove('scale-100');
+            contactModalContent.classList.add('scale-95');
+            // ממתין לסיום האנימציה לפני ההסתרה המוחלטת
+            setTimeout(() => {
+                contactModal.classList.add('hidden');
+            }, 300);
+        };
+
+        // Initialize
+        function init() {
+            document.getElementById('copyright-year').innerText = `© ${new Date().getFullYear()} כל הזכויות שמורות. נבנה באהבה.`;
+            renderCategories();
+            renderProjects();
+            lucide.createIcons();
+            
+            // Check system preference for dark mode initially
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                toggleTheme();
+            }
+        }
+
+        // Theme Management
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            if (isDarkMode) {
+                htmlElement.classList.add('dark');
+                themeIcon.setAttribute('data-lucide', 'sun');
+            } else {
+                htmlElement.classList.remove('dark');
+                themeIcon.setAttribute('data-lucide', 'moon');
+            }
+            // Re-render icons since we changed the data-lucide attribute
+            lucide.createIcons();
+        }
+
+        themeToggleBtn.addEventListener('click', toggleTheme);
+
+        // Render Categories
+        function renderCategories() {
+            categoriesContainer.innerHTML = categories.map(category => {
+                const isActive = activeCategory === category;
+                const activeClasses = isActive 
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 border-transparent' 
+                    : 'bg-white text-slate-600 hover:bg-slate-100 shadow-sm border-slate-200 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-slate-700 dark:border-slate-700';
+                
+                return `
+                    <button 
+                        onclick="setCategory('${category}')"
+                        class="px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 border ${activeClasses}"
+                    >
+                        ${category}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        // Set Category and Re-render
+        window.setCategory = function(category) {
+            activeCategory = category;
+            renderCategories();
+            renderProjects();
+        }
+
+        // Search Handling
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value.toLowerCase();
+            renderProjects();
+        });
+
+        // Render Projects
+        function renderProjects() {
+            const filteredProjects = projects.filter(project => {
+                // בדיקה אם הפרויקט פעיל - אם לא, התעלם ממנו והסתר אותו
+                if (project.isActive === false) return false;
+
+                const matchesSearch = project.title.toLowerCase().includes(searchQuery) || 
+                                      project.description.toLowerCase().includes(searchQuery);
+                const matchesCategory = activeCategory === 'הכל' || project.category === activeCategory;
+                return matchesSearch && matchesCategory;
+            });
+
+            if (filteredProjects.length === 0) {
+                projectsContainer.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+            } else {
+                projectsContainer.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+                
+                projectsContainer.innerHTML = filteredProjects.map(project => `
+                    <div class="group flex flex-col relative rounded-3xl p-6 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl backdrop-blur-sm
+                        bg-white/80 border border-slate-100 shadow-xl shadow-slate-200/50 hover:border-indigo-200
+                        dark:bg-slate-800/60 dark:border-slate-700/50 dark:shadow-slate-900/50 dark:hover:border-indigo-500/50">
+                        
+                        <!-- Header of card: Icon and Title aligned horizontally -->
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-inner bg-slate-50 dark:bg-slate-900/80">
+                                <i data-lucide="${project.icon}" class="${project.iconColor} w-7 h-7"></i>
+                            </div>
+                            <h3 class="text-xl font-bold">${project.title}</h3>
+                        </div>
+
+                        <!-- תמונת מסך של האפליקציה -->
+                        <div class="w-full h-40 bg-slate-100 dark:bg-slate-700/50 rounded-xl mb-4 overflow-hidden relative border border-slate-200/50 dark:border-slate-600/50 shrink-0">
+                            <img src="${project.image}" alt="${project.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src='dafulatimage.png';" />
+                        </div>
+
+                        <p class="flex-grow mb-6 leading-relaxed text-slate-600 dark:text-slate-400">
+                            ${project.description}
+                        </p>
+
+                        <!-- כפתור מעבר לאפליקציה -->
+                        <a href="${project.url}" class="mt-auto flex items-center justify-center gap-2 w-full py-3 rounded-2xl font-bold transition-all duration-300
+                            bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-800
+                            dark:bg-slate-700 dark:hover:bg-indigo-600 dark:text-white">
+                            <span>עבור לאפליקציה</span>
+                            <i data-lucide="external-link" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                `).join('');
+                
+                // Initialize icons for newly injected HTML
+                lucide.createIcons();
+            }
+        }
+
+        // Start the app
+        init();
+
+    </script>
+</body>
+</html>
