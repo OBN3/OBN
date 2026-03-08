@@ -3,375 +3,421 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OBN Admin - ניהול מאובטח וניטור מכסה</title>
+    <title>OBN-Tips - מאגר הטכנוטיפים של אופיר בן נתן</title>
+    
+    <!-- React & Babel -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
     
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
-        // --- חשוב מאוד: הגדרות ה-Firebase שלך ---
-        // עליך להחליף את האובייקט למטה בנתונים האמיתיים שלך מתוך ה-Firebase Console.
-        // שים לב: ללא מפתח API תקין, תקבל שגיאה 400 בניסיון ההתחברות.
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Firebase Config ---
         let firebaseConfig;
         try {
-            // ניסיון לקרוא מהסביבה המובנית (אם רץ בתוך מערכת תומכת)
             firebaseConfig = JSON.parse(__firebase_config);
-        } catch(e) {
+        } catch (e) {
             firebaseConfig = {
-  apiKey: "AIzaSyA3XNbFY9hKq3r7rxGNWtHxCyouX7AQp2U",
-  authDomain: "obn-tips.firebaseapp.com",
-  projectId: "obn-tips",
-  storageBucket: "obn-tips.firebasestorage.app",
-  messagingSenderId: "421241406616",
-  appId: "1:421241406616:web:fa9bc4b5c719712e823ced",
-  measurementId: "G-R1WVQ75PJS"            };
+                apiKey: "AIzaSyA3XNbFY9hKq3r7rxGNWtHxCyouX7AQp2U",
+                authDomain: "obn-tips.firebaseapp.com",
+                projectId: "obn-tips",
+                storageBucket: "obn-tips.firebasestorage.app",
+                messagingSenderId: "421241406616",
+                appId: "1:421241406616:web:fa9bc4b5c719712e823ced",
+                measurementId: "G-R1WVQ75PJS"
+            };
         }
-
+        
         const appId = 'obn-tips-v1';
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
-        window.firebaseUtils = { 
-            auth, db, appId, 
-            signInWithEmailAndPassword, onAuthStateChanged, signOut,
-            collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query,
-            configReady: firebaseConfig.apiKey !== "YOUR_API_KEY"
-        };
+
+        window.firebaseUtils = { auth, db, appId, onSnapshot, collection, query, signInAnonymously, onAuthStateChanged };
     </script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap');
-        body { font-family: 'Assistant', sans-serif; direction: rtl; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        .usage-bar { transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        body { 
+            font-family: 'Assistant', sans-serif; 
+            direction: rtl;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .line-clamp-8 {
+            display: -webkit-box;
+            -webkit-line-clamp: 6;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* עיצוב פס גלילה מותאם אישית לפי ערכת נושא */
+        .theme-dark ::-webkit-scrollbar-track { background: #1a1a1a; }
+        .theme-dark ::-webkit-scrollbar-thumb { background: #333; }
+        .theme-light ::-webkit-scrollbar-track { background: #f1f1f1; }
+        .theme-light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { border-radius: 10px; }
+
+        .modal-enter {
+            animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .tech-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .tech-card:hover {
+            transform: translateY(-4px);
+        }
+
+        /* הגדרות קריאות במצב בהיר - שחור מוחלט */
+        .theme-light .forced-black {
+            color: #000000 !important;
+            opacity: 1 !important;
+        }
+        .theme-light input::placeholder {
+            color: #000000 !important;
+            opacity: 0.9 !important;
+        }
     </style>
 </head>
-<body class="bg-slate-100 antialiased min-h-screen flex flex-col">
+<body class="antialiased min-h-screen flex flex-col">
     <div id="root" class="flex-1 flex flex-col"></div>
+
     <script type="text/babel">
         const { useState, useMemo, useEffect, useRef } = React;
 
+        // מיפוי מילות מפתח לקטגוריות
+        const CATEGORY_MAP = {
+            "ווטסאפ": ["ווטסאפ", "whatsapp", "ווצאפ", "הודעות", "קבוצה", "סטטוס"],
+            "סמארטפון": ["סמארטפון", "טלפון", "נייד", "אפליקציה", "אנדרואיד", "אייפון", "מכשיר", "הגדרות"],
+            "צילום": ["צילום", "תמונה", "מצלמה", "וידאו", "עריכה", "גלריה", "פילטר"],
+            "בינה מלאכותית": ["ai", "בינה", "chatgpt", "claude", "gemini", "בינה מלאכותית", "gpt", "deepseek", "תומך"],
+            "וורד": ["וורד", "word", "מסמך", "כתיבה", "office", "עיצוב טקסט"],
+            "פאורפוינט": ["פאורפוינט", "powerpoint", "מצגת", "slides", "ppt", "הצגה"],
+            "אקסל": ["אקסל", "excel", "טבלה", "נוסחה", "גיליון", "data", "גרף"]
+        };
+
+        const CATEGORIES = Object.keys(CATEGORY_MAP);
+
+        const getInitialTheme = () => {
+            const savedTheme = localStorage.getItem('obn-tips-theme');
+            if (savedTheme) return savedTheme;
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) return 'light';
+            return 'dark';
+        };
+
         const Icon = ({ name, size = 18, className = "" }) => {
-            const containerRef = useRef(null);
+            const iconRef = useRef(null);
             useEffect(() => {
-                if (window.lucide && containerRef.current) {
-                    window.lucide.createIcons({ attrs: { class: className, 'stroke-width': 2, width: size, height: size }, nameAttr: 'data-lucide' });
+                if (window.lucide && iconRef.current) {
+                    window.lucide.createIcons({
+                        attrs: { class: className, 'stroke-width': 2, width: size, height: size },
+                        nameAttr: 'data-lucide'
+                    });
                 }
             }, [name, size, className]);
-            return <span ref={containerRef} key={name} className="inline-flex items-center justify-center pointer-events-none"><i data-lucide={name}></i></span>;
+            return <span key={`${name}-${size}`} className="inline-flex items-center justify-center"><i ref={iconRef} data-lucide={name}></i></span>;
+        };
+
+        const LabelBadge = ({ text, theme }) => {
+            const lower = text.toLowerCase();
+            const isDark = theme === 'dark';
+            let style = isDark ? "bg-gray-800 text-gray-400 border-gray-700" : "bg-slate-100 text-black border-slate-300 font-bold";
+            
+            if (lower.includes('chatgpt') || lower.includes('gpt')) style = isDark ? "bg-[#10a37f]/10 text-[#10a37f] border-[#10a37f]/20" : "bg-[#10a37f]/10 text-[#0d8567] border-[#10a37f]/40 font-bold";
+            else if (lower.includes('claude')) style = isDark ? "bg-[#d97757]/10 text-[#d97757] border-[#d97757]/20" : "bg-[#d97757]/10 text-[#b65e43] border-[#d97757]/40 font-bold";
+            else if (lower.includes('gemini')) style = isDark ? "bg-[#4285f4]/10 text-[#4285f4] border-[#4285f4]/20" : "bg-[#4285f4]/10 text-[#3367d6] border-[#4285f4]/40 font-bold";
+            else if (lower.includes('ai') || lower.includes('בינה')) style = isDark ? "bg-purple-500/10 text-purple-400 border-purple-500/20" : "bg-purple-500/10 text-purple-700 border-purple-500/40 font-bold";
+            else if (lower.includes('טיפ')) style = isDark ? "bg-amber-500/10 text-amber-400 border-amber-500/20" : "bg-amber-500/10 text-amber-700 border-amber-500/40 font-bold";
+
+            return <span className={`px-2.5 py-1 rounded-md text-[10px] border ${style} uppercase tracking-wider`}>{text}</span>;
         };
 
         const App = () => {
-            const [user, setUser] = useState(null);
+            const [theme, setTheme] = useState(getInitialTheme);
             const [notes, setNotes] = useState([]);
             const [isLoading, setIsLoading] = useState(true);
-            const [email, setEmail] = useState('');
-            const [password, setPassword] = useState('');
-            const [errorMsg, setErrorMsg] = useState(null);
+            const [user, setUser] = useState(null);
             const [searchTerm, setSearchTerm] = useState('');
             const [debouncedSearch, setDebouncedSearch] = useState('');
-            const [editingNote, setEditingNote] = useState(null);
-            const [isAdding, setIsAdding] = useState(false);
-            const [newNote, setNewNote] = useState({ title: '', content: '', labels: ['ai', 'טיפ'] });
-            
-            // ניטור שימוש ומכסה שנשמר בדפדפן (Persistent)
-            const [usage, setUsage] = useState(() => {
-                const saved = localStorage.getItem('obn_daily_usage');
-                const today = new Date().toLocaleDateString();
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    if (parsed.date === today) return parsed;
+            const [activeCategory, setActiveCategory] = useState(null);
+            const [activeNote, setActiveNote] = useState(null);
+            const [copySuccess, setCopySuccess] = useState(null);
+            const [currentPage, setCurrentPage] = useState(1);
+            const [pageSize, setPageSize] = useState(24);
+
+            const isDark = theme === 'dark';
+
+            // מנגנון פענוח תאריכים חזק
+            const parseDateForSorting = (dateStr) => {
+                if (!dateStr || typeof dateStr !== 'string') return 0;
+                const parts = dateStr.trim().split(/[./-]/);
+                if (parts.length === 3) {
+                    const day = parseInt(parts[0], 10);
+                    const month = parseInt(parts[1], 10) - 1;
+                    const year = parseInt(parts[2], 10);
+                    const fullYear = year < 100 ? year + 2000 : year;
+                    return new Date(fullYear, month, day).getTime();
                 }
-                return { date: today, writes: 0, reads: 0 };
-            });
+                return 0;
+            };
 
-            // עדכון הזיכרון המקומי בכל שינוי במונה
             useEffect(() => {
-                localStorage.setItem('obn_daily_usage', JSON.stringify(usage));
-            }, [usage]);
+                document.body.className = isDark ? 'theme-dark bg-[#121212] text-gray-100' : 'theme-light bg-slate-50 text-slate-900';
+                localStorage.setItem('obn-tips-theme', theme);
+            }, [theme]);
 
-            // מעקב אחר מצב התחברות
             useEffect(() => {
-                const { auth, onAuthStateChanged } = window.firebaseUtils;
-                const unsubscribe = onAuthStateChanged(auth, (u) => {
-                    setUser(u);
-                    if (!u) setIsLoading(false);
-                });
-                return () => unsubscribe();
+                const initAuth = async () => {
+                    if (!window.firebaseUtils) return;
+                    const { auth, signInAnonymously, onAuthStateChanged } = window.firebaseUtils;
+                    await signInAnonymously(auth);
+                    const unsubscribe = onAuthStateChanged(auth, setUser);
+                    return unsubscribe;
+                };
+                initAuth();
             }, []);
 
-            // טעינת נתונים חיה מהענן
             useEffect(() => {
-                if (!user) return;
-                setIsLoading(true);
+                if (!user || !window.firebaseUtils) return;
                 const { db, appId, collection, onSnapshot, query } = window.firebaseUtils;
                 const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'techtips');
                 
                 const unsubscribe = onSnapshot(query(colRef), (snapshot) => {
                     const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    setNotes(data.sort((a, b) => (b.rawDate || 0) - (a.rawDate || 0)));
+                    
+                    // מנגנון מיון קריטי: 
+                    // 1. קודם כל בודקים את ה-rawDate (הזמן המדויק מה-DB)
+                    // 2. אם חסר או זהה, מפענחים את מחרוזת התאריך DD.MM.YYYY
+                    const sorted = data.sort((a, b) => {
+                        const valA = Number(a.rawDate) || parseDateForSorting(a.date);
+                        const valB = Number(b.rawDate) || parseDateForSorting(b.date);
+                        return valB - valA; // מהגבוה (חדש) לנמוך (ישן)
+                    });
+                    
+                    setNotes(sorted);
                     setIsLoading(false);
-                    // עדכון מונה קריאות
-                    setUsage(prev => ({ ...prev, reads: prev.reads + snapshot.docs.length }));
                 }, (err) => {
-                    console.error(err);
-                    setErrorMsg("שגיאת הרשאות. וודא שחיברת את ה-Config האמיתי שלך בראש הקוד.");
+                    console.error("Firestore error:", err);
                     setIsLoading(false);
                 });
-                
+
                 return () => unsubscribe();
             }, [user]);
 
             useEffect(() => {
-                const timer = setTimeout(() => { setDebouncedSearch(searchTerm); setCurrentPage(1); }, 300);
+                const timer = setTimeout(() => { 
+                    setDebouncedSearch(searchTerm); 
+                    setCurrentPage(1); 
+                }, 300);
                 return () => clearTimeout(timer);
             }, [searchTerm]);
 
-            const trackWrite = (count = 1) => setUsage(prev => ({ ...prev, writes: prev.writes + count }));
-
-            const handleLogin = async (e) => {
-                e.preventDefault();
-                setErrorMsg(null);
-                if (!window.firebaseUtils.configReady) {
-                    setErrorMsg("שגיאה: עליך להדביק את ה-Firebase Config האמיתי שלך בראש הקוד.");
-                    return;
-                }
-                try {
-                    const { auth, signInWithEmailAndPassword } = window.firebaseUtils;
-                    await signInWithEmailAndPassword(auth, email, password);
-                } catch (err) { 
-                    setErrorMsg("התחברות נכשלה. וודא אימייל/סיסמה או שה-API Key תקין."); 
-                }
-            };
-
-            const handleLogout = () => window.firebaseUtils.signOut(window.firebaseUtils.auth);
-
-            const handleAddNewNote = async () => {
-                if (!newNote.title.trim() || !newNote.content.trim()) return;
-                const { db, appId, collection, addDoc } = window.firebaseUtils;
-                const now = new Date();
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'techtips'), {
-                    title: newNote.title,
-                    content: newNote.content,
-                    labels: newNote.labels,
-                    date: now.toLocaleDateString('he-IL'),
-                    rawDate: now.getTime()
-                });
-                trackWrite();
-                setIsAdding(false);
-                setNewNote({ title: '', content: '', labels: ['ai', 'טיפ'] });
-            };
-
-            const handleSaveEdit = async () => {
-                const { db, appId, doc, updateDoc } = window.firebaseUtils;
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'techtips', editingNote.id), {
-                    title: editingNote.title,
-                    content: editingNote.content
-                });
-                trackWrite();
-                setEditingNote(null);
-            };
-
-            const handleDelete = async (id) => {
-                if(!confirm('למחוק לצמיתות?')) return;
-                const { db, appId, doc, deleteDoc } = window.firebaseUtils;
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'techtips', id));
-                trackWrite();
-            };
-
-            // ייצוא המאגר לקובץ JSON להורדה
-            const handleExportBackup = () => {
-                if (notes.length === 0) {
-                    alert("אין נתונים לייצוא.");
-                    return;
-                }
-                const dataStr = JSON.stringify(notes, null, 2);
-                const blob = new Blob([dataStr], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                const date = new Date().toLocaleDateString('he-IL').replace(/\./g, '-');
-                link.href = url;
-                link.download = `obn_tips_backup_${date}.json`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            };
+            useEffect(() => { setCurrentPage(1); }, [activeCategory]);
 
             const filteredNotes = useMemo(() => {
-                const lower = debouncedSearch.toLowerCase();
-                return notes.filter(n => (n.title || "").toLowerCase().includes(lower) || (n.content || "").toLowerCase().includes(lower));
-            }, [notes, debouncedSearch]);
+                return notes.filter(note => {
+                    const combinedText = ((note.title || "") + " " + (note.content || "")).toLowerCase();
+                    const matchesSearch = combinedText.includes(debouncedSearch.toLowerCase());
+                    let matchesCategory = !activeCategory || (CATEGORY_MAP[activeCategory] || [activeCategory]).some(kw => combinedText.includes(kw.toLowerCase()));
+                    return matchesSearch && matchesCategory;
+                });
+            }, [notes, debouncedSearch, activeCategory]);
 
-            const [currentPage, setCurrentPage] = useState(1);
-            const pageSize = 50;
-            const pagedNotes = filteredNotes.slice((currentPage-1)*pageSize, currentPage*pageSize);
             const totalPages = Math.ceil(filteredNotes.length / pageSize);
+            const safeCurrentPage = (currentPage > totalPages && totalPages > 0) ? 1 : currentPage;
+            const pagedNotes = useMemo(() => {
+                const start = (safeCurrentPage - 1) * pageSize;
+                return filteredNotes.slice(start, start + pageSize);
+            }, [filteredNotes, safeCurrentPage, pageSize]);
 
-            // מסך התחברות
-            if (!user) {
-                return (
-                    <div className="min-h-screen flex items-center justify-center p-6 bg-slate-900">
-                        <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-md w-full text-right">
-                            <div className="text-center mb-8">
-                                <div className="bg-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center text-white mx-auto mb-4 shadow-lg"><Icon name="shield-check" size={32} /></div>
-                                <h2 className="text-3xl font-black text-slate-800">OBN Admin</h2>
-                                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1 italic">Live Data Center</p>
-                            </div>
+            const copyToClipboard = (e, text, id) => {
+                if (e) e.stopPropagation();
+                const tempInput = document.createElement("textarea");
+                tempInput.value = text;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempInput);
+                setCopySuccess(id);
+                setTimeout(() => setCopySuccess(null), 2000);
+            };
 
-                            {!window.firebaseUtils.configReady && (
-                                <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-xl text-xs mb-6 font-bold leading-relaxed">
-                                    ⚠️ שגיאת קונפיגורציה: מפתח ה-API חסר. עליך להחליף את "YOUR_API_KEY" בקוד ה-admin.html בנתונים האמיתיים שלך.
-                                </div>
-                            )}
+            const shareToWhatsApp = (e, note) => {
+                if (e) e.stopPropagation();
+                const text = `*${note.title}*\n\n${note.content}\n\n_נשלח ממאגר הטכנוטיפים של אופיר בן נתן_`;
+                const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+                window.open(url, '_blank');
+            };
 
-                            <form onSubmit={handleLogin} className="space-y-4">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase mr-1">אימייל מנהל</label>
-                                    <input type="email" required placeholder="admin@obn.tips" className="w-full p-4 bg-slate-50 border rounded-xl outline-none focus:ring-4 focus:ring-blue-100 font-mono text-sm transition-all text-left" dir="ltr" value={email} onChange={e => setEmail(e.target.value)} />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase mr-1">סיסמה</label>
-                                    <input type="password" required placeholder="••••••••" className="w-full p-4 bg-slate-50 border rounded-xl outline-none focus:ring-4 focus:ring-blue-100 transition-all text-left" dir="ltr" value={password} onChange={e => setPassword(e.target.value)} />
-                                </div>
-                                {errorMsg && <p className="text-red-500 text-xs font-bold bg-red-50 p-3 rounded-lg text-center leading-relaxed">{errorMsg}</p>}
-                                <button type="submit" className="w-full bg-slate-900 text-white py-4 rounded-xl font-black text-lg hover:bg-black transition-all active:scale-95 shadow-xl">התחבר למערכת</button>
-                            </form>
+            const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+
+            const PaginationControls = ({ isTop = false }) => (
+                <div className={`flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-[2rem] border shadow-sm transition-colors ${isDark ? 'bg-[#1e1e1e] border-[#2a2a2a]' : 'bg-white border-slate-300'} ${isTop ? 'mb-6' : 'mt-12 mb-8'}`}>
+                    <div className="flex items-center gap-4">
+                        <button disabled={safeCurrentPage === 1} onClick={() => {setCurrentPage(p => p - 1); window.scrollTo({top: 0, behavior: 'smooth'});}} className={`p-3 disabled:opacity-20 rounded-full transition-all border ${isDark ? 'hover:bg-[#2a2a2a] text-white border-white/5' : 'hover:bg-slate-100 forced-black border-slate-900'}`}><Icon name="chevron-right" size={24} /></button>
+                        <div className="flex items-center gap-2">
+                            <span className={isDark ? 'text-gray-500' : 'forced-black font-bold'}>עמוד</span>
+                            <span className={`font-black text-2xl ${isDark ? 'text-white' : 'text-slate-900'}`}>{safeCurrentPage}</span>
+                            <span className={isDark ? 'text-gray-500' : 'forced-black font-bold'}>מתוך {totalPages || 1}</span>
+                        </div>
+                        <button disabled={safeCurrentPage === totalPages || totalPages === 0} onClick={() => {setCurrentPage(p => p + 1); window.scrollTo({top: 0, behavior: 'smooth'});}} className={`p-3 disabled:opacity-20 rounded-full transition-all border ${isDark ? 'hover:bg-[#2a2a2a] text-white border-white/5' : 'hover:bg-slate-100 forced-black border-slate-900'}`}><Icon name="chevron-left" size={24} /></button>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-gray-600' : 'forced-black font-black'}`}>להציג:</span>
+                        <div className={`flex p-1 rounded-xl border ${isDark ? 'bg-[#121212] border-white/5' : 'bg-slate-50 border-slate-300'}`}>
+                            {[24, 48, 96].map(size => (<button key={size} onClick={() => {setPageSize(size); setCurrentPage(1);}} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${pageSize === size ? (isDark ? 'bg-[#2a2a2a] text-white shadow-lg' : 'bg-white text-slate-900 shadow-md border border-slate-300') : (isDark ? 'text-gray-600 hover:text-gray-400' : 'text-slate-500 hover:text-black')}`}>{size}</button>))}
                         </div>
                     </div>
-                );
-            }
+                </div>
+            );
 
-            if (isLoading) return <div className="min-h-screen flex items-center justify-center font-bold italic tracking-widest text-slate-400 animate-pulse text-center">ADMIN: CONNECTING TO CLOUD...</div>;
+            if (isLoading) return <div className={`min-h-screen flex items-center justify-center italic tracking-widest ${isDark ? 'bg-[#121212] text-white' : 'bg-slate-50 text-slate-900'}`}>OBN-TIPS CONNECTING TO CLOUD...</div>;
 
             return (
-                <div className="flex-1 flex flex-col pb-10">
-                    <header className="bg-slate-900 text-white p-4 shadow-xl sticky top-0 z-30 border-b border-white/5">
-                        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex-1 flex flex-col">
+                    <header className={`backdrop-blur-md border-b sticky top-0 z-20 shadow-2xl transition-colors ${isDark ? 'bg-[#1a1a1a]/80 border-[#2a2a2a]' : 'bg-white/95 border-slate-300'}`}>
+                        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+                            <div className="flex flex-col text-right">
+                                <h1 className={`text-xl md:text-2xl font-black leading-none tracking-tight ${isDark ? 'text-white' : 'forced-black'}`}>OBN-Tips - המאגר הדינמי</h1>
+                                <p className={`text-[10px] font-bold uppercase tracking-[0.2em] mt-1 italic ${isDark ? 'text-gray-500 opacity-60' : 'forced-black font-black'}`}>Quality Knowledge Hub &bull; V5.4 Live</p>
+                            </div>
                             <div className="flex items-center gap-4">
-                                <div className="bg-yellow-400 p-2 rounded-lg text-slate-900"><Icon name="settings" /></div>
-                                <div>
-                                    <h1 className="text-xl font-bold">OBN Dashboard <span className="text-slate-500 font-normal text-sm">| {notes.length} פריטים</span></h1>
-                                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Signed in: {user.email}</p>
-                                </div>
-                            </div>
-
-                            {/* ווידג'ט ניטור מכסה יומי */}
-                            <div className="flex items-center gap-4 bg-white/5 px-5 py-2.5 rounded-2xl border border-white/10 shadow-inner">
-                                <div className="text-right">
-                                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">שימוש יומי (Writes)</div>
-                                    <div className="flex items-center gap-3 mt-0.5">
-                                        <div className="w-32 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                                            <div className={`usage-bar h-full rounded-full ${usage.writes > 500 ? 'bg-red-400' : 'bg-green-400'}`} style={{ width: `${Math.max(5, (usage.writes / 20000) * 100)}%` }}></div>
-                                        </div>
-                                        <span className={`text-sm font-black ${usage.writes > 500 ? 'text-red-400' : 'text-green-400'}`}>{usage.writes.toLocaleString()}</span>
-                                        <span className="text-[10px] text-slate-600 font-bold uppercase tracking-tighter">/ 20K</span>
-                                    </div>
-                                </div>
-                                <div className="w-px h-10 bg-white/10 mx-1"></div>
-                                <div className="flex flex-col gap-1 items-center">
-                                    <a href="https://console.firebase.google.com/" target="_blank" className="text-slate-500 hover:text-yellow-400 transition-colors" title="Firebase Console">
-                                        <Icon name="activity" size={16} />
-                                    </a>
-                                    <button onClick={handleLogout} className="text-slate-600 hover:text-white transition-colors" title="Log Out"><Icon name="log-out" size={16} /></button>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <button onClick={handleExportBackup} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 transition-all active:scale-95 border border-white/5 shadow-lg">
-                                    <Icon name="download" size={16} /> ייצוא לגיבוי
-                                </button>
-                                <button onClick={() => setIsAdding(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-black text-sm flex items-center gap-2 shadow-lg transition-all active:scale-95"><Icon name="plus" size={16} /> הוסף טיפ</button>
+                                <button onClick={toggleTheme} className={`p-2.5 rounded-xl border transition-all active:scale-90 ${isDark ? 'bg-white/5 border-white/10 text-yellow-400 hover:bg-white/10' : 'bg-slate-100 border-slate-900 text-black hover:bg-slate-200'}`} title={isDark ? "מצב בהיר" : "מצב כהה"}><Icon name={isDark ? "sun" : "moon"} size={20} /></button>
+                                <div className={`px-6 py-2 rounded-full border text-xs font-bold hidden md:block italic ${isDark ? 'bg-white/5 border-white/10 text-gray-300' : 'bg-slate-50 border-slate-900 forced-black font-black'}`}>{notes.length} טכנוטיפים & counting...</div>
                             </div>
                         </div>
                     </header>
 
-                    <main className="max-w-7xl mx-auto w-full p-6 flex-1 space-y-6 animate-in fade-in duration-500 text-right">
-                        {/* שורת חיפוש */}
-                        <div className="bg-white p-4 rounded-3xl shadow-sm border border-slate-200 flex gap-4">
-                            <div className="relative flex-1">
-                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300"><Icon name="search" size={20} /></span>
-                                <input type="text" placeholder="חפש במאגר הטיפים..." className="w-full pr-12 pl-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-blue-100 transition-all text-lg shadow-inner" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}/>
+                    <main className="max-w-7xl mx-auto px-6 py-10 flex-1 w-full text-right">
+                        <div className="space-y-8 animate-in fade-in duration-700">
+                            {/* חיפוש וסינון */}
+                            <div className={`p-8 rounded-[2.5rem] border shadow-2xl space-y-8 transition-colors ${isDark ? 'bg-[#1a1a1a] border-[#2a2a2a]' : 'bg-white border-slate-300'}`}>
+                                <div className="relative group">
+                                    <div className={`absolute right-6 top-1/2 -translate-y-1/2 transition-colors pointer-events-none ${isDark ? 'text-gray-600 group-focus-within:text-yellow-500' : 'forced-black group-focus-within:text-blue-600'}`}><Icon name="search" size={26} /></div>
+                                    <input 
+                                        type="text" 
+                                        placeholder="מה תרצו לחפש?" 
+                                        className={`w-full pr-16 pl-14 py-6 border rounded-[1.5rem] focus:ring-4 outline-none transition-all text-xl shadow-inner ${isDark ? 'bg-[#121212] border-[#2a2a2a] focus:ring-white/5 focus:border-white/20 text-white placeholder-gray-700' : 'bg-slate-50 border-slate-900 focus:ring-blue-100 focus:border-blue-500 forced-black font-semibold'}`} 
+                                        value={searchTerm} 
+                                        onChange={(e) => setSearchTerm(e.target.value)} 
+                                    />
+                                    {searchTerm && (<button onClick={() => setSearchTerm('')} className={`absolute left-6 top-1/2 -translate-y-1/2 transition-colors ${isDark ? 'text-gray-600 hover:text-white' : 'forced-black hover:text-red-500'}`}><Icon name="x" size={20} /></button>)}
+                                </div>
+                                <div className={`flex flex-wrap gap-2 items-center border-t pt-6 ${isDark ? 'border-white/5' : 'border-slate-300'}`}>
+                                    <button onClick={() => setActiveCategory(null)} className={`px-6 py-2.5 rounded-xl text-sm font-bold border transition-all ${!activeCategory ? (isDark ? 'bg-white text-black border-white shadow-xl shadow-white/5' : 'bg-slate-900 text-white border-slate-900 shadow-xl shadow-slate-200') : (isDark ? 'bg-[#121212] text-gray-500 border-[#2a2a2a] hover:text-gray-300' : 'bg-slate-50 forced-black border-slate-400 hover:bg-slate-100 font-black')}`}>הכל</button>
+                                    {CATEGORIES.map(cat => (<button key={cat} onClick={() => setActiveCategory(cat === activeCategory ? null : cat)} className={`px-6 py-2.5 rounded-xl text-sm font-bold border transition-all whitespace-nowrap ${activeCategory === cat ? (isDark ? 'bg-yellow-500 text-black border-yellow-500 shadow-xl shadow-yellow-500/10' : 'bg-yellow-400 text-slate-900 border-yellow-400 shadow-xl shadow-yellow-100') : (isDark ? 'bg-[#121212] text-gray-500 border-[#2a2a2a] hover:text-gray-300' : 'bg-slate-50 forced-black border-slate-400 hover:bg-slate-100 font-black')}`}>{cat}</button>))}
+                                </div>
                             </div>
-                        </div>
 
-                        {/* טבלת הנתונים */}
-                        <div className="bg-white rounded-[2.5rem] shadow-sm overflow-hidden border border-slate-200">
-                            <table className="w-full text-right table-fixed">
-                                <thead className="bg-slate-50 border-b border-slate-200 text-slate-400 text-[10px] font-black uppercase tracking-widest">
-                                    <tr>
-                                        <th className="p-5 w-1/4">כותרת</th>
-                                        <th className="p-5 w-1/2">תוכן</th>
-                                        <th className="p-5 w-32 text-center">תאריך</th>
-                                        <th className="p-5 w-24 text-center">פעולות</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {pagedNotes.map(note => (
-                                        <tr key={note.id} className="hover:bg-slate-50/50 transition-colors group">
-                                            <td className="p-5 font-bold text-slate-800 align-top truncate">{note.title}</td>
-                                            <td className="p-5 text-slate-500 text-sm align-top leading-relaxed"><div className="line-clamp-3 whitespace-pre-wrap">{note.content}</div></td>
-                                            <td className="p-5 text-slate-400 text-[10px] align-top text-center font-mono uppercase italic tracking-tighter">{note.date}</td>
-                                            <td className="p-5 align-top">
-                                                <div className="flex gap-1 justify-center">
-                                                    <button onClick={() => setEditingNote(note)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-xl transition-all" title="ערוך"><Icon name="edit-3" size={18} /></button>
-                                                    <button onClick={() => handleDelete(note.id)} className="p-2 text-red-400 hover:bg-red-50 rounded-xl transition-all" title="מחק"><Icon name="trash-2" size={18} /></button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {/* פקדי עימוד */}
-                        <div className="flex items-center justify-between px-4 text-slate-500 text-sm font-bold">
-                            <div className="flex gap-2">
-                                <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="p-2 bg-white border rounded-xl disabled:opacity-30 hover:bg-slate-50"><Icon name="chevron-right" /></button>
-                                <span className="bg-white px-5 py-2 border rounded-xl shadow-sm text-slate-800">עמוד {currentPage} מתוך {totalPages || 1}</span>
-                                <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="p-2 bg-white border rounded-xl disabled:opacity-30 hover:bg-slate-50"><Icon name="chevron-left" /></button>
+                            {/* סיכום תוצאות */}
+                            <div className="flex items-center justify-between px-4">
+                                <h2 className={`text-lg italic font-medium ${isDark ? 'text-gray-500' : 'forced-black font-black'}`}>
+                                    {(debouncedSearch || activeCategory) ? (
+                                        <span>
+                                            נמצאו <span className={`${isDark ? 'text-white' : 'text-blue-600'} font-black not-italic`}>{filteredNotes.length}</span> טכנוטיפים 
+                                            {debouncedSearch && (<> עבור חיפוש: <span className="text-yellow-600 font-bold not-italic">"{debouncedSearch}"</span></>)}
+                                            {activeCategory && (<> בקטגוריית <span className="text-purple-600 font-bold not-italic">{activeCategory}</span></>)}
+                                        </span>
+                                    ) : (<span>מציג את כל המאגר ({notes.length} טיפים)</span>)}
+                                </h2>
+                                <div className={`text-[10px] font-black font-mono tracking-tighter uppercase ${isDark ? 'text-gray-700' : 'forced-black font-black'}`}>Newest First Sync Active</div>
                             </div>
-                            <div className="text-[10px] font-black uppercase tracking-[0.2em] opacity-30 italic">OBN Cloud Security & Usage Monitoring Active</div>
+
+                            {totalPages > 1 && <PaginationControls isTop={true} />}
+
+                            {/* גריד הכרטיסים */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-right">
+                                {pagedNotes.map(note => (
+                                    <div key={note.id} onClick={() => setActiveNote(note)} className={`tech-card relative rounded-[2.5rem] p-8 flex flex-col cursor-pointer border ${isDark ? 'bg-[#1e1e1e] border-[#2a2a2a] hover:border-[#444] hover:bg-[#252525] shadow-2xl shadow-black/20' : 'bg-white border-slate-300 hover:border-slate-400 hover:bg-slate-50 shadow-sm'}`}>
+                                        <div className={`absolute top-6 left-6 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider shadow-xl z-10 ${isDark ? 'bg-white text-black' : 'bg-slate-900 text-white'}`}>{note.date}</div>
+                                        <div className="mt-4 mb-6"><h3 className={`font-bold text-2xl leading-tight flex items-start gap-3 transition-colors ${isDark ? 'text-white/90 group-hover:text-white' : 'forced-black'}`}><span className="shrink-0 text-2xl filter saturate-50">💡</span>{note.title}</h3></div>
+                                        
+                                        {/* תוכן כרטיס - מבוטל Bold */}
+                                        <div className={`text-lg whitespace-pre-wrap flex-1 mb-8 line-clamp-8 leading-relaxed font-normal ${isDark ? 'text-gray-400' : 'text-slate-800'}`}>{note.content}</div>
+                                        
+                                        <div className="flex items-center justify-between pt-6 border-t border-current border-opacity-5">
+                                            <div className="flex flex-wrap gap-2">
+                                                {(note.labels || []).map(l => <LabelBadge key={l} text={l} theme={theme} />)}
+                                            </div>
+                                            <button 
+                                                onClick={(e) => shareToWhatsApp(e, note)} 
+                                                className={`p-2.5 rounded-xl transition-all active:scale-90 ${isDark ? 'bg-green-600/10 text-green-400 hover:bg-green-600/20' : 'bg-green-50 text-green-800 hover:bg-green-100 border border-green-200'}`}
+                                                title="שתף בוואטסאפ"
+                                            >
+                                                <Icon name="share-2" size={18} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {totalPages > 1 && <PaginationControls />}
+
+                            {/* מצב ריק */}
+                            {filteredNotes.length === 0 && (
+                                <div className={`py-40 text-center rounded-[4rem] border shadow-inner transition-colors ${isDark ? 'bg-[#1a1a1a] border-[#2a2a2a]' : 'bg-slate-50 border-slate-300'}`}>
+                                    <Icon name="search-x" className={isDark ? 'text-gray-800' : 'forced-black opacity-30'} size={80} />
+                                    <h3 className={`text-3xl font-bold uppercase tracking-widest ${isDark ? 'text-white/20' : 'forced-black font-black'}`}>No Results Found</h3>
+                                    <p className={`mt-4 text-xl ${isDark ? 'text-gray-600' : 'forced-black font-bold'}`}>נסו חיפוש אחר או ניקוי קטגוריה.</p>
+                                </div>
+                            )}
                         </div>
                     </main>
 
-                    {/* מודאל הוספה / עריכה */}
-                    {(editingNote || isAdding) && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-in fade-in duration-300">
-                            <div className="bg-white w-full max-w-3xl rounded-[3rem] shadow-2xl flex flex-col max-h-[92vh] overflow-hidden border border-white/20">
-                                <div className={`p-8 border-b flex items-center justify-between ${isAdding ? 'bg-yellow-50/50' : 'bg-blue-50/50'}`}>
-                                    <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-xl ${isAdding ? 'bg-yellow-400 text-slate-900' : 'bg-blue-500 text-white'}`}><Icon name={isAdding ? "plus-circle" : "edit-3"} /></div>
-                                        <h2 className="text-3xl font-black text-slate-800">{isAdding ? "הוספת טכנוטיפ" : "עריכת תוכן"}</h2>
+                    <footer className={`py-16 px-6 border-t mt-20 transition-colors ${isDark ? 'bg-[#0a0a0a] text-gray-600 border-white/5' : 'bg-slate-900 text-white border-slate-800'}`}>
+                        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
+                            <div className="text-sm font-bold tracking-[0.15em] uppercase text-center md:text-right leading-loose">
+                                © אוסף טכנוטיפים - כל הזכויות שמורות <br className="md:hidden" /> 
+                                <a href="mailto:ofirbn@post.com" className={`underline underline-offset-8 transition-all ${isDark ? 'text-gray-400 hover:text-white decoration-gray-800 hover:decoration-white' : 'text-slate-100 hover:text-yellow-400 decoration-slate-600 hover:decoration-yellow-400'}`}>Ofir Ben Natan</a> 2026
+                            </div>
+                            <div className="flex flex-col items-center md:items-end gap-2 opacity-30">
+                                <span className="text-[10px] font-mono tracking-widest uppercase">OBN-TECH-SYSTEM-V5.4-LIVE</span>
+                                <div className={`h-px w-20 ${isDark ? 'bg-gray-800' : 'bg-slate-700'}`}></div>
+                                <span className="text-[8px] italic uppercase tracking-tighter">Real-time Priority Sort Active</span>
+                            </div>
+                        </div>
+                    </footer>
+
+                    {/* חלון מודאל - מבוטל Bold בתוכן */}
+                    {activeNote && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-10 md:p-20 animate-in fade-in duration-400" style={{ backgroundColor: isDark ? 'rgba(0, 0, 0, 0.95)' : 'rgba(15, 23, 42, 0.9)', backdropFilter: 'blur(15px)' }} onClick={() => setActiveNote(null)}>
+                            <div className={`w-full max-w-5xl max-h-full rounded-[2rem] md:rounded-[3.5rem] shadow-2xl flex flex-col overflow-hidden modal-enter border transition-colors ${isDark ? 'bg-[#161616] border-white/10' : 'bg-white border-slate-300'}`} onClick={(e) => e.stopPropagation()}>
+                                <div className={`px-6 py-5 md:px-10 md:py-8 border-b flex items-start justify-between shrink-0 transition-colors ${isDark ? 'bg-[#1c1c1c] border-white/5' : 'bg-slate-50 border-slate-200'}`}>
+                                    <h3 className={`text-xl md:text-3xl font-black leading-tight flex items-start gap-3 md:gap-4 flex-1 pr-2 ${isDark ? 'text-white' : 'text-black'} line-clamp-3 md:line-clamp-none`}><span className="text-2xl md:text-4xl shrink-0">💎</span> {activeNote.title}</h3>
+                                    <div className="flex items-center gap-2 md:gap-4 shrink-0">
+                                        <button onClick={(e) => copyToClipboard(e, activeNote.content, 'modal')} className={`hidden sm:block px-6 py-2.5 rounded-2xl font-bold text-sm shadow-2xl transition-all active:scale-95 ${isDark ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-slate-900 text-white hover:bg-slate-800'}`}>{copySuccess === 'modal' ? 'הועתק!' : 'העתק'}</button>
+                                        <button onClick={(e) => shareToWhatsApp(e, activeNote)} className="p-2.5 transition-colors rounded-full bg-green-500 text-white hover:bg-green-600 shadow-lg" title="שתף בוואטסאפ"><Icon name="message-circle" size={24} /></button>
+                                        <button onClick={() => setActiveNote(null)} className={`p-1.5 md:p-2 transition-colors rounded-full ${isDark ? 'text-gray-400 hover:text-white hover:bg-white/5' : 'text-black hover:bg-slate-100'}`} aria-label="Close"><Icon name="x" size={32} className="md:w-10 md:h-10" /></button>
                                     </div>
-                                    <button onClick={() => { setEditingNote(null); setIsAdding(false); }} className="p-2 hover:bg-slate-200 rounded-full transition-all active:scale-90"><Icon name="x" size={32} /></button>
                                 </div>
-                                <div className="p-10 overflow-y-auto space-y-8 text-right custom-scrollbar bg-white">
-                                    <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest mr-2">כותרת הטיפ</label>
-                                        <input className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-2xl outline-none focus:ring-4 focus:ring-blue-100 transition-all shadow-inner" placeholder="הכנס כותרת..." value={isAdding ? newNote.title : editingNote.title} onChange={e => isAdding ? setNewNote({...newNote, title: e.target.value}) : setEditingNote({...editingNote, title: e.target.value})}/>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest mr-2">תוכן הטיפ</label>
-                                        <textarea className="w-full h-80 p-6 bg-slate-50 border border-slate-200 rounded-3xl resize-none outline-none focus:ring-4 focus:ring-blue-100 transition-all text-xl leading-relaxed shadow-inner" placeholder="כתוב כאן את הטיפ שלך..." value={isAdding ? newNote.content : editingNote.content} onChange={e => isAdding ? setNewNote({...newNote, content: e.target.value}) : setEditingNote({...editingNote, content: e.target.value})}/>
-                                    </div>
+                                <div className="p-6 md:p-14 overflow-y-auto flex-1 custom-scrollbar">
+                                    <div className={`text-lg md:text-2xl leading-[1.6] md:leading-[1.7] whitespace-pre-wrap text-right font-normal ${isDark ? 'text-gray-300' : 'text-black'}`}>{activeNote.content}</div>
                                 </div>
-                                <div className="p-10 border-t bg-slate-50/80 flex justify-end gap-5 shrink-0">
-                                    <button onClick={isAdding ? handleAddNewNote : handleSaveEdit} className={`px-16 py-5 rounded-2xl font-black text-xl shadow-2xl transition-all active:scale-95 ${isAdding ? 'bg-yellow-400 text-slate-900 shadow-yellow-200 hover:bg-yellow-500' : 'bg-slate-900 text-white shadow-slate-300 hover:bg-black'}`}>
-                                        {isAdding ? "פרסם במאגר" : "שמור שינויים"}
-                                    </button>
-                                    <button onClick={() => { setEditingNote(null); setIsAdding(false); }} className="px-10 py-5 font-bold text-slate-400 hover:text-slate-800 transition-colors">ביטול</button>
+                                <div className={`px-6 py-4 md:px-12 md:py-8 border-t flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0 transition-colors ${isDark ? 'bg-[#161616] border-white/5' : 'bg-slate-50 border-slate-200'}`}>
+                                    <div className="flex items-center gap-3"><Icon name="calendar" size={14} className={isDark ? 'text-gray-600' : 'forced-black font-bold'} /><span className={`text-xs md:text-sm font-bold uppercase tracking-widest font-mono ${isDark ? 'text-gray-600' : 'forced-black font-black'}`}>עודכן: {activeNote.date}</span></div>
+                                    <div className="flex gap-2">{(activeNote.labels || []).map(l => <LabelBadge key={l} text={l} theme={theme} />)}</div>
+                                    <button onClick={(e) => copyToClipboard(e, activeNote.content, 'modal')} className={`sm:hidden w-full py-3 rounded-xl font-bold text-sm transition-all active:scale-95 ${copySuccess === 'modal' ? 'bg-green-600 text-white' : (isDark ? 'bg-white text-black' : 'bg-slate-900 text-white')}`}>{copySuccess === 'modal' ? 'הועתק!' : 'העתק תוכן'}</button>
                                 </div>
                             </div>
                         </div>
@@ -379,6 +425,7 @@
                 </div>
             );
         };
+
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
