@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OBN-Tips - מאגר הטכנוטיפים של אופיר בן נתן</title>
+    
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap');
+        
+        body { 
+            font-family: 'Assistant', sans-serif; 
+            direction: rtl;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .line-clamp-8 {
+            display: -webkit-box;
+            -webkit-line-clamp: 6;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Custom Scrollbar Styles based on theme */
+        .theme-dark ::-webkit-scrollbar-track { background: #1a1a1a; }
+        .theme-dark ::-webkit-scrollbar-thumb { background: #333; }
+        
+        .theme-light ::-webkit-scrollbar-track { background: #f1f1f1; }
+        .theme-light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { border-radius: 10px; }
+
+        .modal-enter {
+            animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .tech-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .tech-card:hover {
+            transform: translateY(-4px);
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+    <div id="root" class="flex-1 flex flex-col"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useEffect, useRef } = React;
+
+        // Smart mapping for categories and keywords
+        const CATEGORY_MAP = {
+            "ווטסאפ": ["ווטסאפ", "whatsapp", "ווצאפ", "הודעות", "קבוצה", "סטטוס"],
+            "סמארטפון": ["סמארטפון", "טלפון", "נייד", "אפליקציה", "אנדרואיד", "אייפון", "מכשיר", "הגדרות"],
+            "צילום": ["צילום", "תמונה", "מצלמה", "וידאו", "עריכה", "גלריה", "פילטר"],
+            "בינה מלאכותית": ["ai", "בינה", "chatgpt", "claude", "gemini", "בינה מלאכותית", "gpt", "deepseek", "תומך"],
+            "וורד": ["וורד", "word", "מסמך", "כתיבה", "office", "עיצוב טקסט"],
+            "פאורפוינט": ["פאורפוינט", "powerpoint", "מצגת", "slides", "ppt", "הצגה"],
+            "אקסל": ["אקסל", "excel", "טבלה", "נוסחה", "גיליון", "data", "גרף"]
+        };
+
+        const CATEGORIES = Object.keys(CATEGORY_MAP);
+
+        // Persistent Theme Logic
+        const getInitialTheme = () => {
+            const savedTheme = localStorage.getItem('obn-tips-theme');
+            if (savedTheme) return savedTheme;
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                return 'light';
+            }
+            return 'dark';
+        };
+
+        const Icon = ({ name, size = 18, className = "" }) => {
+            const iconRef = useRef(null);
+            useEffect(() => {
+                if (window.lucide && iconRef.current) {
+                    window.lucide.createIcons({
+                        attrs: { class: className, 'stroke-width': 2, width: size, height: size },
+                        nameAttr: 'data-lucide'
+                    });
+                }
+            }, [name, size, className]);
+            return (
+                <span key={`${name}-${size}`} className="inline-flex items-center justify-center">
+                    <i ref={iconRef} data-lucide={name}></i>
+                </span>
+            );
+        };
+
+        const LabelBadge = ({ text, theme }) => {
+            const lower = text.toLowerCase();
+            const isDark = theme === 'dark';
+            
+            let style = isDark ? "bg-gray-800 text-gray-400 border-gray-700" : "bg-slate-100 text-slate-500 border-slate-200";
+            
+            if (lower.includes('chatgpt') || lower.includes('gpt')) 
+                style = isDark ? "bg-[#10a37f]/10 text-[#10a37f] border-[#10a37f]/20" : "bg-[#10a37f]/10 text-[#0d8567] border-[#10a37f]/20";
+            else if (lower.includes('claude')) 
+                style = isDark ? "bg-[#d97757]/10 text-[#d97757] border-[#d97757]/20" : "bg-[#d97757]/10 text-[#b65e43] border-[#d97757]/20";
+            else if (lower.includes('gemini')) 
+                style = isDark ? "bg-[#4285f4]/10 text-[#4285f4] border-[#4285f4]/20" : "bg-[#4285f4]/10 text-[#3367d6] border-[#4285f4]/20";
+            else if (lower.includes('ai') || lower.includes('בינה')) 
+                style = isDark ? "bg-purple-500/10 text-purple-400 border-purple-500/20" : "bg-purple-500/10 text-purple-600 border-purple-500/20";
+            else if (lower.includes('טיפ')) 
+                style = isDark ? "bg-amber-500/10 text-amber-400 border-amber-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/20";
+
+            return (
+                <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold border ${style} uppercase tracking-wider`}>
+                    {text}
+                </span>
+            );
+        };
+
+        const App = () => {
+            const [theme, setTheme] = useState(getInitialTheme);
+            const [notes, setNotes] = useState([]);
+            const [isLoading, setIsLoading] = useState(true);
+            const [error, setError] = useState(null);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [debouncedSearch, setDebouncedSearch] = useState('');
+            const [activeCategory, setActiveCategory] = useState(null);
+            const [activeNote, setActiveNote] = useState(null);
+            const [copySuccess, setCopySuccess] = useState(null);
+            const [manualJson, setManualJson] = useState('');
+            const [showManualInput, setShowManualInput] = useState(false);
+            
+            const [currentPage, setCurrentPage] = useState(1);
+            const [pageSize, setPageSize] = useState(24);
+
+            const isDark = theme === 'dark';
+
+            useEffect(() => {
+                document.body.className = isDark ? 'theme-dark bg-[#121212] text-gray-100' : 'theme-light bg-slate-50 text-slate-900';
+                localStorage.setItem('obn-tips-theme', theme);
+            }, [theme]);
+
+            const handleManualSubmit = () => {
+                try {
+                    const data = JSON.parse(manualJson);
+                    setNotes(Array.isArray(data) ? data : []);
+                    setError(null);
+                    setShowManualInput(false);
+                } catch (e) {
+                    alert('פורמט JSON לא תקין. אנא וודא שהעתקת את כל תוכן הקובץ.');
+                }
+            };
+
+            useEffect(() => {
+                const loadData = async () => {
+                    try {
+                        const response = await fetch('data.json');
+                        if (!response.ok) throw new Error('קובץ data.json לא נמצא בשרת.');
+                        const data = await response.json();
+                        setNotes(Array.isArray(data) ? data : []);
+                    } catch (err) {
+                        setError(window.location.protocol === 'file:' ? 'מגבלת אבטחה: דפדפנים חוסמים קבצים חיצוניים בהרצה מקומית.' : err.message);
+                    } finally { setIsLoading(false); }
+                };
+                loadData();
+            }, []);
+
+            useEffect(() => {
+                const timer = setTimeout(() => { 
+                    setDebouncedSearch(searchTerm); 
+                    setCurrentPage(1); 
+                }, 300);
+                return () => clearTimeout(timer);
+            }, [searchTerm]);
+
+            useEffect(() => { setCurrentPage(1); }, [activeCategory]);
+
+            const filteredNotes = useMemo(() => {
+                return notes.filter(note => {
+                    const combinedText = (note.title + " " + note.content).toLowerCase();
+                    const matchesSearch = combinedText.includes(debouncedSearch.toLowerCase());
+                    let matchesCategory = !activeCategory || (CATEGORY_MAP[activeCategory] || [activeCategory]).some(kw => combinedText.includes(kw.toLowerCase()));
+                    return matchesSearch && matchesCategory;
+                });
+            }, [notes, debouncedSearch, activeCategory]);
+
+            const totalPages = Math.ceil(filteredNotes.length / pageSize);
+            const safeCurrentPage = (currentPage > totalPages && totalPages > 0) ? 1 : currentPage;
+            const pagedNotes = useMemo(() => {
+                const start = (safeCurrentPage - 1) * pageSize;
+                return filteredNotes.slice(start, start + pageSize);
+            }, [filteredNotes, safeCurrentPage, pageSize]);
+
+            const copyToClipboard = (e, text, id) => {
+                if (e) e.stopPropagation();
+                navigator.clipboard.writeText(text).then(() => {
+                    setCopySuccess(id);
+                    setTimeout(() => setCopySuccess(null), 2000);
+                });
+            };
+
+            const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+
+            const PaginationControls = ({ isTop = false }) => (
+                <div className={`flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-[2rem] border shadow-sm transition-colors ${isDark ? 'bg-[#1e1e1e] border-[#2a2a2a]' : 'bg-white border-slate-200'} ${isTop ? 'mb-6' : 'mt-12 mb-8'}`}>
+                    <div className="flex items-center gap-4">
+                        <button 
+                            disabled={safeCurrentPage === 1} 
+                            onClick={() => {setCurrentPage(p => p - 1); window.scrollTo({top: 0, behavior: 'smooth'});}} 
+                            className={`p-3 disabled:opacity-20 rounded-full transition-all border ${isDark ? 'hover:bg-[#2a2a2a] text-white border-white/5' : 'hover:bg-slate-100 text-slate-800 border-slate-100'}`}
+                        >
+                            <Icon name="chevron-right" size={24} />
+                        </button>
+                        <div className="flex items-center gap-2">
+                            <span className={isDark ? 'text-gray-500' : 'text-slate-400'}>עמוד</span>
+                            <span className={`font-black text-2xl ${isDark ? 'text-white' : 'text-slate-900'}`}>{safeCurrentPage}</span>
+                            <span className={isDark ? 'text-gray-500' : 'text-slate-400'}>מתוך {totalPages || 1}</span>
+                        </div>
+                        <button 
+                            disabled={safeCurrentPage === totalPages || totalPages === 0} 
+                            onClick={() => {setCurrentPage(p => p + 1); window.scrollTo({top: 0, behavior: 'smooth'});}} 
+                            className={`p-3 disabled:opacity-20 rounded-full transition-all border ${isDark ? 'hover:bg-[#2a2a2a] text-white border-white/5' : 'hover:bg-slate-100 text-slate-800 border-slate-100'}`}
+                        >
+                            <Icon name="chevron-left" size={24} />
+                        </button>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>להציג:</span>
+                        <div className={`flex p-1 rounded-xl border ${isDark ? 'bg-[#121212] border-white/5' : 'bg-slate-50 border-slate-100'}`}>
+                            {[24, 48, 96].map(size => (
+                                <button 
+                                    key={size} 
+                                    onClick={() => {setPageSize(size); setCurrentPage(1);}} 
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${pageSize === size ? (isDark ? 'bg-[#2a2a2a] text-white shadow-lg' : 'bg-white text-slate-900 shadow-md') : (isDark ? 'text-gray-600 hover:text-gray-400' : 'text-slate-400 hover:text-slate-600')}`}
+                                >
+                                    {size}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+
+            if (isLoading) return <div className={`min-h-screen flex items-center justify-center italic tracking-widest ${isDark ? 'bg-[#121212] text-white' : 'bg-slate-50 text-slate-900'}`}>OBN-TIPS LOADING...</div>;
+
+            return (
+                <div className="flex-1 flex flex-col">
+                    <header className={`backdrop-blur-md border-b sticky top-0 z-20 shadow-2xl transition-colors ${isDark ? 'bg-[#1a1a1a]/80 border-[#2a2a2a]' : 'bg-white/80 border-slate-200'}`}>
+                        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+                            <div className="flex flex-col">
+                                <h1 className={`text-xl md:text-2xl font-black leading-none tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>OBN-Tips - מאגר הטכנוטיפים של אופיר בן נתן</h1>
+                                <p className={`text-[10px] font-bold uppercase tracking-[0.2em] mt-1 italic opacity-60 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Quality Knowledge Hub</p>
+                            </div>
+                            
+                            <div className="flex items-center gap-4">
+                                <button 
+                                    onClick={toggleTheme}
+                                    className={`p-2.5 rounded-xl border transition-all active:scale-90 ${isDark ? 'bg-white/5 border-white/10 text-yellow-400 hover:bg-white/10' : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'}`}
+                                    title={isDark ? "מצב בהיר" : "מצב כהה"}
+                                >
+                                    <Icon name={isDark ? "sun" : "moon"} size={20} />
+                                </button>
+                                <div className={`px-6 py-2 rounded-full border text-xs font-bold hidden md:block italic ${isDark ? 'bg-white/5 border-white/10 text-gray-300' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                                    {notes.length} טכנוטיפים & counting...
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="max-w-7xl mx-auto px-6 py-10 flex-1 w-full">
+                        {error && notes.length === 0 ? (
+                            <div className={`max-w-xl mx-auto p-10 rounded-[3rem] shadow-2xl text-center border mt-12 ${isDark ? 'bg-[#1e1e1e] border-red-900/30' : 'bg-white border-red-100'}`}>
+                                <Icon name="alert-triangle" className="text-red-500 mb-6" size={48} />
+                                <h2 className={`text-2xl font-black mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>שגיאת טעינה</h2>
+                                <p className={isDark ? 'text-gray-400' : 'text-slate-500'}>{error}</p>
+                                <textarea className={`w-full h-32 p-4 border rounded-2xl text-sm font-mono mt-6 mb-4 text-left ${isDark ? 'border-[#333] bg-[#121212] text-gray-300' : 'border-slate-200 bg-slate-50 text-slate-700'}`} dir="ltr" placeholder="Paste data.json here..." onChange={(e) => setManualJson(e.target.value)} />
+                                <button onClick={handleManualSubmit} className={`w-full py-4 rounded-2xl font-bold transition-all ${isDark ? 'bg-white text-black hover:bg-gray-200' : 'bg-slate-900 text-white hover:bg-slate-800'}`}>טען ידנית</button>
+                            </div>
+                        ) : (
+                            <div className="space-y-8 animate-in fade-in duration-700">
+                                {/* Search & Filters Area */}
+                                <div className={`p-8 rounded-[2.5rem] border shadow-2xl space-y-8 transition-colors ${isDark ? 'bg-[#1a1a1a] border-[#2a2a2a]' : 'bg-white border-slate-200'}`}>
+                                    <div className="relative group">
+                                        <div className={`absolute right-6 top-1/2 -translate-y-1/2 transition-colors pointer-events-none ${isDark ? 'text-gray-600 group-focus-within:text-yellow-500' : 'text-slate-300 group-focus-within:text-slate-600'}`}>
+                                            <Icon name="search" size={26} />
+                                        </div>
+                                        <input 
+                                            type="text" 
+                                            placeholder="מה תרצו לחפש? (כתבו מילת מפתח)" 
+                                            className={`w-full pr-16 pl-14 py-6 border rounded-[1.5rem] focus:ring-4 outline-none transition-all text-xl shadow-inner ${isDark ? 'bg-[#121212] border-[#2a2a2a] focus:ring-white/5 focus:border-white/20 text-white placeholder-gray-700' : 'bg-slate-50 border-slate-100 focus:ring-slate-100 focus:border-slate-200 text-slate-900 placeholder-slate-300'}`} 
+                                            value={searchTerm} 
+                                            onChange={(e) => setSearchTerm(e.target.value)} 
+                                        />
+                                        {searchTerm && (
+                                            <button onClick={() => setSearchTerm('')} className={`absolute left-6 top-1/2 -translate-y-1/2 transition-colors ${isDark ? 'text-gray-600 hover:text-white' : 'text-slate-300 hover:text-slate-600'}`}>
+                                                <Icon name="x" size={20} />
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <div className={`flex flex-wrap gap-2 items-center border-t pt-6 ${isDark ? 'border-white/5' : 'border-slate-50'}`}>
+                                        <button onClick={() => setActiveCategory(null)} className={`px-6 py-2.5 rounded-xl text-sm font-bold border transition-all ${!activeCategory ? (isDark ? 'bg-white text-black border-white shadow-xl shadow-white/5' : 'bg-slate-900 text-white border-slate-900 shadow-xl shadow-slate-200') : (isDark ? 'bg-[#121212] text-gray-500 border-[#2a2a2a] hover:text-gray-300' : 'bg-slate-50 text-slate-400 border-slate-100 hover:text-slate-600')}`}>הכל</button>
+                                        {CATEGORIES.map(cat => (
+                                            <button key={cat} onClick={() => setActiveCategory(cat === activeCategory ? null : cat)} className={`px-6 py-2.5 rounded-xl text-sm font-bold border transition-all whitespace-nowrap ${activeCategory === cat ? (isDark ? 'bg-yellow-500 text-black border-yellow-500 shadow-xl shadow-yellow-500/10' : 'bg-yellow-400 text-slate-900 border-yellow-400 shadow-xl shadow-yellow-100') : (isDark ? 'bg-[#121212] text-gray-500 border-[#2a2a2a] hover:text-gray-300' : 'bg-slate-50 text-slate-400 border-slate-100 hover:text-slate-600')}`}>{cat}</button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between px-4">
+                                    <h2 className={`text-lg italic font-medium ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                                        {(debouncedSearch || activeCategory) ? (
+                                            <span>
+                                                נמצאו <span className={`${isDark ? 'text-white' : 'text-slate-900'} font-black not-italic`}>{filteredNotes.length}</span> טכנוטיפים
+                                                {debouncedSearch && (
+                                                    <> עבור חיפוש: <span className="text-yellow-500 font-bold not-italic">"{debouncedSearch}"</span></>
+                                                )}
+                                                {debouncedSearch && activeCategory && <> + </>}
+                                                {activeCategory && (
+                                                    <> בקטגוריית <span className="text-purple-500 font-bold not-italic">{activeCategory}</span></>
+                                                )}
+                                            </span>
+                                        ) : (
+                                            <span>כל המאגר ({notes.length})</span>
+                                        )}
+                                    </h2>
+                                    <div className={`text-[10px] font-black font-mono tracking-tighter uppercase ${isDark ? 'text-gray-700' : 'text-slate-300'}`}>PAGE {safeCurrentPage} of {totalPages || 1}</div>
+                                </div>
+
+                                {totalPages > 1 && <PaginationControls isTop={true} />}
+
+                                {/* Note Grid */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                    {pagedNotes.map(note => (
+                                        <div 
+                                            key={note.id} 
+                                            onClick={() => setActiveNote(note)} 
+                                            className={`tech-card relative rounded-[2.5rem] p-8 flex flex-col cursor-pointer border ${isDark ? 'bg-[#1e1e1e] border-[#2a2a2a] hover:border-[#444] hover:bg-[#252525] shadow-2xl shadow-black/20' : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 shadow-sm'}`}
+                                        >
+                                            <div className={`absolute top-6 left-6 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider shadow-xl z-10 ${isDark ? 'bg-white text-black' : 'bg-slate-900 text-white'}`}>
+                                                {note.date}
+                                            </div>
+
+                                            <div className="mt-4 mb-6">
+                                                <h3 className={`font-bold text-2xl leading-tight flex items-start gap-3 transition-colors ${isDark ? 'text-white/90 group-hover:text-white' : 'text-slate-800'}`}>
+                                                    <span className="shrink-0 text-2xl filter saturate-50">💡</span>
+                                                    {note.title}
+                                                </h3>
+                                            </div>
+
+                                            <div className={`text-lg whitespace-pre-wrap flex-1 mb-8 line-clamp-8 leading-relaxed text-right ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                                                {note.content}
+                                            </div>
+
+                                            <div className={`flex flex-wrap gap-2 pt-6 border-t ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+                                                {note.labels.map(l => <LabelBadge key={l} text={l} theme={theme} />)}
+                                                <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold italic border ${isDark ? 'bg-white/5 text-gray-700 border-white/5' : 'bg-slate-50 text-slate-300 border-slate-100'}`}>#TECHTIP</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {totalPages > 1 && <PaginationControls />}
+
+                                {filteredNotes.length === 0 && (
+                                    <div className={`py-40 text-center rounded-[4rem] border shadow-inner transition-colors ${isDark ? 'bg-[#1a1a1a] border-[#2a2a2a]' : 'bg-slate-50 border-slate-100'}`}>
+                                        <Icon name="search-x" className={isDark ? 'text-gray-800' : 'text-slate-200'} size={80} />
+                                        <h3 className={`text-3xl font-bold uppercase tracking-widest ${isDark ? 'text-white/20' : 'text-slate-300'}`}>No Results Found</h3>
+                                        <p className={`mt-4 text-xl ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>נסו חיפוש אחר או ניקוי קטגוריה.</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </main>
+
+                    <footer className={`py-16 px-6 border-t mt-20 transition-colors ${isDark ? 'bg-[#0a0a0a] text-gray-600 border-white/5' : 'bg-slate-900 text-slate-400 border-slate-800'}`}>
+                        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
+                            <div className="text-sm font-bold tracking-[0.15em] uppercase text-center md:text-right leading-loose">
+                                © אוסף טכנוטיפים - כל הזכויות שמורות <br className="md:hidden" /> 
+                                <a href="mailto:ofirbn@post.com" className={`underline underline-offset-8 transition-all ${isDark ? 'text-gray-400 hover:text-white decoration-gray-800 hover:decoration-white' : 'text-slate-300 hover:text-yellow-400 decoration-slate-700 hover:decoration-yellow-400'}`}>Ofir Ben Natan</a> 2026
+                            </div>
+                            <div className="flex flex-col items-center md:items-end gap-2 opacity-30">
+                                <span className="text-[10px] font-mono tracking-widest uppercase">OBN-TECH-SYSTEM-V4.2-AUTO-THEME</span>
+                                <div className={`h-px w-20 ${isDark ? 'bg-gray-800' : 'bg-slate-700'}`}></div>
+                                <span className="text-[8px] italic uppercase tracking-tighter">Theme Sync Active</span>
+                            </div>
+                        </div>
+                    </footer>
+
+                    {/* Modal with Mobile Fixes */}
+                    {activeNote && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-10 md:p-20 animate-in fade-in duration-400" style={{ backgroundColor: isDark ? 'rgba(0, 0, 0, 0.95)' : 'rgba(15, 23, 42, 0.9)', backdropFilter: 'blur(15px)' }} onClick={() => setActiveNote(null)}>
+                            <div className={`w-full max-w-5xl max-h-full rounded-[2rem] md:rounded-[3.5rem] shadow-2xl flex flex-col overflow-hidden modal-enter border transition-colors ${isDark ? 'bg-[#161616] border-white/10' : 'bg-white border-slate-200'}`} onClick={(e) => e.stopPropagation()}>
+                                <div className={`px-6 py-5 md:px-10 md:py-8 border-b flex items-start justify-between shrink-0 transition-colors ${isDark ? 'bg-[#1c1c1c] border-white/5' : 'bg-slate-50 border-slate-100'}`}>
+                                    <h3 className={`text-xl md:text-3xl font-black leading-tight flex items-start gap-3 md:gap-4 flex-1 pr-2 ${isDark ? 'text-white' : 'text-slate-900'} line-clamp-3 md:line-clamp-none`}>
+                                        <span className="text-2xl md:text-4xl shrink-0">💎</span> {activeNote.title}
+                                    </h3>
+                                    <div className="flex items-center gap-2 md:gap-4 shrink-0">
+                                        <button onClick={(e) => copyToClipboard(e, activeNote.content, 'modal')} className={`hidden sm:block px-6 py-2.5 rounded-2xl font-bold text-sm shadow-2xl transition-all active:scale-95 ${isDark ? 'bg-green-600 text-white hover:bg-green-500' : 'bg-slate-900 text-white hover:bg-slate-800'}`}>
+                                            {copySuccess === 'modal' ? 'הועתק!' : 'העתק'}
+                                        </button>
+                                        <button onClick={() => setActiveNote(null)} className={`p-1.5 md:p-2 transition-colors rounded-full ${isDark ? 'text-gray-400 hover:text-white hover:bg-white/5' : 'text-slate-400 hover:text-slate-900 hover:bg-slate-100'}`} aria-label="Close">
+                                            <Icon name="x" size={32} className="md:w-10 md:h-10" />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="p-6 md:p-14 overflow-y-auto flex-1 custom-scrollbar">
+                                    <div className={`text-lg md:text-2xl leading-[1.6] md:leading-[1.7] whitespace-pre-wrap text-right ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+                                        {activeNote.content}
+                                    </div>
+                                </div>
+                                <div className={`px-6 py-4 md:px-12 md:py-8 border-t flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0 transition-colors ${isDark ? 'bg-[#161616] border-white/5' : 'bg-slate-50 border-slate-100'}`}>
+                                    <div className="flex items-center gap-3">
+                                        <Icon name="calendar" size={14} className={isDark ? 'text-gray-600' : 'text-slate-400'} />
+                                        <span className={`text-xs md:text-sm font-bold uppercase tracking-widest font-mono ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>UPDATED: {activeNote.date}</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        {activeNote.labels.map(l => <LabelBadge key={l} text={l} theme={theme} />)}
+                                    </div>
+                                    <button onClick={(e) => copyToClipboard(e, activeNote.content, 'modal')} className={`sm:hidden w-full py-3 rounded-xl font-bold text-sm transition-all active:scale-95 ${copySuccess === 'modal' ? 'bg-green-600 text-white' : (isDark ? 'bg-white text-black' : 'bg-slate-900 text-white')}`}>
+                                        {copySuccess === 'modal' ? 'הועתק!' : 'העתק תוכן'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
