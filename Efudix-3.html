@@ -264,7 +264,7 @@
         // --- Configuration ---
         const START_DATE = new Date(2026, 1, 16);
         const PHASE_1_DAYS = 21;
-        const PHASE_2_DAYS = 5;
+        const PHASE_2_DAYS = 14;
         const TOTAL_DAYS = PHASE_1_DAYS + PHASE_2_DAYS;
         const TOTAL_CHECKS = TOTAL_DAYS * 2; 
         
@@ -379,7 +379,7 @@
                 if (i === PHASE_1_DAYS + 1) {
                     const divider = document.createElement('div');
                     divider.className = 'phase-divider';
-                    divider.innerHTML = '<span>שלב ב\' - חיזוק (5 ימים נוספים)</span>';
+                    divider.innerHTML = '<span>שלב ב\' - חיזוק (14 יום נוספים)</span>';
                     container.appendChild(divider);
                 }
 
@@ -605,6 +605,16 @@
         }
 
         function updateProgress(showModal) {
+            const checkedCount = Object.values(state).filter(Boolean).length;
+            const percentage = Math.floor((checkedCount / TOTAL_CHECKS) * 100);
+
+            document.getElementById('percent-display').innerText = `${percentage}%`;
+            const progressBar = document.getElementById('progress-bar');
+            progressBar.style.width = `${percentage}%`;
+            const hue = (percentage / 100) * 120; 
+            progressBar.style.backgroundColor = `hsl(${hue}, 80%, 50%)`;
+            document.getElementById('percent-display').style.color = `hsl(${hue}, 70%, 35%)`;
+
             let p1Checked = 0;
             let p2Checked = 0;
 
@@ -616,16 +626,6 @@
                 if (state[`${i}-morning`]) p2Checked++;
                 if (state[`${i}-evening`]) p2Checked++;
             }
-
-            const checkedCount = p1Checked + p2Checked;
-            const percentage = Math.min(100, Math.floor((checkedCount / TOTAL_CHECKS) * 100));
-
-            document.getElementById('percent-display').innerText = `${percentage}%`;
-            const progressBar = document.getElementById('progress-bar');
-            progressBar.style.width = `${percentage}%`;
-            const hue = (percentage / 100) * 120; 
-            progressBar.style.backgroundColor = `hsl(${hue}, 80%, 50%)`;
-            document.getElementById('percent-display').style.color = `hsl(${hue}, 70%, 35%)`;
 
             const p1TotalChecks = PHASE_1_DAYS * 2;
             const p2TotalChecks = PHASE_2_DAYS * 2;
