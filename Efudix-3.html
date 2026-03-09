@@ -138,8 +138,8 @@
 
     <!-- Settings Modal -->
     <div id="settings-modal" class="fixed inset-0 bg-slate-900/60 z-[90] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl modal-content flex flex-col overflow-hidden">
-            <div class="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl modal-content flex flex-col overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50 sticky top-0 z-10">
                 <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
                     ⚙️ הגדרות אפליקציה
                 </h2>
@@ -148,10 +148,23 @@
                 </button>
             </div>
             <div class="p-5 space-y-4 text-right">
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">שם המטופל (יופיע בתיעוד):</label>
-                    <input type="text" id="setting-name" placeholder="למשל: ישראל ישראלי" class="w-full text-sm text-slate-800 bg-white border border-slate-300 rounded-lg py-2 px-3 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+                
+                <!-- General Settings -->
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <h4 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-1">👤 כללי</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">שם המטופל (יופיע בתיעוד):</label>
+                            <input type="text" id="setting-name" placeholder="למשל: ישראל ישראלי" class="w-full text-sm text-slate-800 bg-white border border-slate-300 rounded-lg py-2 px-3 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">מספר ימים לשלב ב' (חיזוק):</label>
+                            <input type="number" id="setting-phase2-days" min="1" max="60" placeholder="5" class="w-full text-sm text-slate-800 bg-white border border-slate-300 rounded-lg py-2 px-3 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Telegram Settings -->
                 <div class="bg-blue-50/50 p-3 rounded-lg border border-blue-100">
                     <h4 class="text-sm font-bold text-blue-800 mb-2 flex items-center gap-1">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.19-.08-.05-.19-.02-.27 0-.12.03-1.98 1.26-5.59 3.7-.53.36-1.01.54-1.44.53-.47-.01-1.38-.27-2.06-.49-.83-.27-1.49-.42-1.43-.89.03-.25.38-.51 1.05-.78 4.11-1.79 6.85-2.97 8.22-3.54 3.92-1.64 4.73-1.93 5.26-1.94.12 0 .38.03.53.15.12.1.17.24.19.34.01.07.03.22.02.3z"/></svg>
@@ -174,7 +187,7 @@
                         </div>
                     </div>
                 </div>
-                <button onclick="saveSettings()" class="w-full bg-slate-800 text-white py-2.5 rounded-xl font-medium active:scale-95 transition-transform shadow-sm">
+                <button onclick="saveSettings()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-medium active:scale-95 transition-transform shadow-md mt-2">
                     שמור הגדרות
                 </button>
             </div>
@@ -261,19 +274,21 @@
     </div>
 
     <script>
-        // --- Configuration ---
+        // --- Configuration & Dynamic State ---
         const START_DATE = new Date(2026, 1, 16);
         const PHASE_1_DAYS = 21;
-        const PHASE_2_DAYS = 14;
-        const TOTAL_DAYS = PHASE_1_DAYS + PHASE_2_DAYS;
-        const TOTAL_CHECKS = TOTAL_DAYS * 2; 
+        
+        // Phase 2 days is now dynamic, read from localStorage or default to 5
+        let PHASE_2_DAYS = parseInt(localStorage.getItem('phase2Days')) || 5;
+        let TOTAL_DAYS = PHASE_1_DAYS + PHASE_2_DAYS;
+        let TOTAL_CHECKS = TOTAL_DAYS * 2; 
         
         // --- State Management ---
         let state = JSON.parse(localStorage.getItem('treatmentState')) || {};
         let lastMilestone = parseInt(localStorage.getItem('lastMilestone')) || 0;
         let lastTipIndex = -1; 
         let currentTempPhoto = null;
-        let defaultSendToTelegram = localStorage.getItem('defaultSendToTelegram') !== 'false'; // Default true if not set
+        let defaultSendToTelegram = localStorage.getItem('defaultSendToTelegram') !== 'false'; 
 
         // Settings
         let patientName = localStorage.getItem('patientName') || '';
@@ -379,7 +394,7 @@
                 if (i === PHASE_1_DAYS + 1) {
                     const divider = document.createElement('div');
                     divider.className = 'phase-divider';
-                    divider.innerHTML = '<span>שלב ב\' - חיזוק (14 יום נוספים)</span>';
+                    divider.innerHTML = `<span>שלב ב\' - חיזוק (${PHASE_2_DAYS} ימים נוספים)</span>`;
                     container.appendChild(divider);
                 }
 
@@ -421,6 +436,7 @@
 
         function openSettings() {
             document.getElementById('setting-name').value = patientName;
+            document.getElementById('setting-phase2-days').value = PHASE_2_DAYS;
             document.getElementById('setting-token').value = telegramToken;
             document.getElementById('setting-chatid').value = telegramChatId;
             document.getElementById('setting-topicid').value = telegramTopicId;
@@ -433,6 +449,8 @@
 
         function saveSettings() {
             const newPatientName = document.getElementById('setting-name').value.trim();
+            const newPhase2DaysInput = parseInt(document.getElementById('setting-phase2-days').value);
+            const newPhase2Days = (newPhase2DaysInput > 0) ? newPhase2DaysInput : 5;
             
             // חילוץ חכם של הטוקן גם אם המשתמש הדביק בטעות קישור מלא
             let rawToken = document.getElementById('setting-token').value.trim();
@@ -472,14 +490,23 @@
             telegramToken = newTelegramToken;
             telegramChatId = newTelegramChatId;
             telegramTopicId = newTelegramTopicId;
+            
+            // Update the dynamic variables
+            PHASE_2_DAYS = newPhase2Days;
+            TOTAL_DAYS = PHASE_1_DAYS + PHASE_2_DAYS;
+            TOTAL_CHECKS = TOTAL_DAYS * 2;
 
             localStorage.setItem('patientName', patientName);
+            localStorage.setItem('phase2Days', PHASE_2_DAYS);
             localStorage.setItem('telegramToken', telegramToken);
             localStorage.setItem('telegramChatId', telegramChatId);
             localStorage.setItem('telegramTopicId', telegramTopicId);
 
             updateHeaderTitle();
             closeSettings();
+            
+            // Re-render UI based on new days setting!
+            init();
         }
 
         // --- Main Functions (Checkboxes, Progress, Dates) ---
@@ -605,16 +632,6 @@
         }
 
         function updateProgress(showModal) {
-            const checkedCount = Object.values(state).filter(Boolean).length;
-            const percentage = Math.floor((checkedCount / TOTAL_CHECKS) * 100);
-
-            document.getElementById('percent-display').innerText = `${percentage}%`;
-            const progressBar = document.getElementById('progress-bar');
-            progressBar.style.width = `${percentage}%`;
-            const hue = (percentage / 100) * 120; 
-            progressBar.style.backgroundColor = `hsl(${hue}, 80%, 50%)`;
-            document.getElementById('percent-display').style.color = `hsl(${hue}, 70%, 35%)`;
-
             let p1Checked = 0;
             let p2Checked = 0;
 
@@ -626,6 +643,16 @@
                 if (state[`${i}-morning`]) p2Checked++;
                 if (state[`${i}-evening`]) p2Checked++;
             }
+
+            const checkedCount = p1Checked + p2Checked;
+            const percentage = Math.min(100, Math.floor((checkedCount / TOTAL_CHECKS) * 100));
+
+            document.getElementById('percent-display').innerText = `${percentage}%`;
+            const progressBar = document.getElementById('progress-bar');
+            progressBar.style.width = `${percentage}%`;
+            const hue = (percentage / 100) * 120; 
+            progressBar.style.backgroundColor = `hsl(${hue}, 80%, 50%)`;
+            document.getElementById('percent-display').style.color = `hsl(${hue}, 70%, 35%)`;
 
             const p1TotalChecks = PHASE_1_DAYS * 2;
             const p2TotalChecks = PHASE_2_DAYS * 2;
