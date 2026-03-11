@@ -387,6 +387,13 @@
                 startRealtimeSync(user);
             } else {
                 // המשתמש לא מחובר או התנתק
+                window.currentUser = null;
+                document.getElementById('listView').style.display = 'none';
+                document.getElementById('loginView').style.display = 'flex';
+                if(unsubscribeSnapshot) unsubscribeSnapshot();
+            }
+        });
+
         // --- Google Login ---
         window.loginWithGoogle = async () => {
             const provider = new GoogleAuthProvider();
