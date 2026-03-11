@@ -326,7 +326,6 @@
         // ==============================================================================
         // ⚠️ חובה: החלף את בלוק ה-firebaseConfig הזה בנתונים האמיתיים שלך מ-Firebase! ⚠️
         // ==============================================================================
-
 		const firebaseConfig = {
 		  apiKey: "AIzaSyDKw0T8imb-Mimiqg7mU1mbThIozU5QZo8",
 		  authDomain: "obn-braindump.firebaseapp.com",
@@ -388,23 +387,23 @@
                 startRealtimeSync(user);
             } else {
                 // המשתמש לא מחובר או התנתק
-                window.currentUser = null;
-                document.getElementById('listView').style.display = 'none';
-                document.getElementById('loginView').style.display = 'flex';
-                if(unsubscribeSnapshot) unsubscribeSnapshot(); // ביטול האזנה כדי למנוע זליגת זיכרון
-            }
-        });
-
-        // --- פונקציות התחברות וניתוק ---
+        // --- Google Login ---
         window.loginWithGoogle = async () => {
             const provider = new GoogleAuthProvider();
             try {
-                // שימוש בחלון קופץ להתחברות. אם פיירבייס הוגדר נכון (חוקים ודומיינים), זה יצליח.
                 await signInWithPopup(auth, provider);
             } catch (error) {
-                console.error("שגיאת התחברות:", error);
-                window.showToast('<i data-lucide="alert-circle" class="w-4 h-4"></i> שגיאה בהתחברות. ודא שאישרת את הדומיין בפיירבייס.');
-                lucide.createIcons();
+                console.error("Login failed", error);
+                // הודעת שגיאה מפורטת יותר
+                let errorMessage = "שגיאה בהתחברות.";
+                if (error.code === 'auth/unauthorized-domain') {
+                    errorMessage = "שגיאה: הדומיין הנוכחי אינו מורשה ב-Firebase. אנא הוסף אותו ב-Authorized domains.";
+                } else if (error.code === 'auth/popup-closed-by-user') {
+                     errorMessage = "התחברות בוטלה על ידי המשתמש.";
+                } else {
+                     errorMessage += " " + error.message;
+                }
+                window.showToast(errorMessage);
             }
         };
 
