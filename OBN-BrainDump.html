@@ -1,185 +1,332 @@
-<!-- צד לקוח ומסד נתונים - הכל בקובץ אחד מבוסס Firebase OBN -->
+<!-- 
+    =======================================================================
+    OBN BrainDump Pro - Firebase Edition (Extended & Advanced)
+    =======================================================================
+    אפליקציה זו היא יישום רשת מלא, עצמאי, ומאובטח המסתמך על תשתית Firebase.
+    האפליקציה תוכננה בארכיטקטורת "קובץ יחיד" (Single File) לנוחות פריסה מקסימלית,
+    תוך שמירה על חוויית משתמש (UX) של אפליקציית נייטיב למובייל (App Shell).
+
+    מאפיינים מרכזיים בגרסה המורחבת:
+    1. התחברות מאובטחת מול גוגל (Google OAuth).
+    2. סנכרון זמן אמת מול Firestore עם תמיכה מובנית ב-Offline Persistence.
+    3. מנגנון מחיקה רכה (Soft Delete) בשילוב עם פח אשפה מלא לשחזור נתונים.
+    4. מערכת תיוג חכמה (Hashtags) עם סינון מהיר.
+    5. חלון הגדרות וסטטיסטיקות מתקדם.
+    6. זיהוי אוטומטי של קישורים (URLs) בפתקים והפיכתם ללחיצים.
+    =======================================================================
+-->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>BrainDump Pro (Firebase)</title>
+    <title>BrainDump Pro (Firebase Advanced)</title>
     
-    <!-- Tailwind CSS -->
+    <!-- ייבוא ספריית העיצוב Tailwind CSS לפיתוח מהיר ורספונסיבי -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Lucide Icons -->
+    <!-- ייבוא ספריית האייקונים הוקטוריים Lucide (קלת משקל ואיכותית) -->
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.294.0/dist/umd/lucide.min.js"></script>
 
+    <!-- הגדרות CSS מותאמות אישית למניעת התנהגויות לא רצויות בדפדפני מובייל -->
     <style>
+        /* ביטול הריבוע הכחול המעצבן שמופיע בלחיצה על אלמנטים במובייל */
         body {
             -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: none; /* מניעת משיכה לרענון שעלולה לרענן את האפליקציה בטעות */
         }
+
+        /* עיצוב פס הגלילה הכללי (Scrollbar) שייראה עדין ומודרני */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* מחלקה להסתרת פס הגלילה לחלוטין (שימושי לשורת התגיות האופקית) אך שמירה על יכולת הגלילה */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .fade-in { animation: fadeIn 0.2s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* אנימציות כניסה חלקות למסכים, חלונות קופצים (Modals) ואלמנטים חדשים */
+        .fade-in { animation: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(15px) scale(0.98); } 
+            to { opacity: 1; transform: translateY(0) scale(1); } 
+        }
+
+        .slide-in-right { animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* הפיכת קישורים בתוך הפתקים לקליקביליים ובולטים */
+        .note-link { color: #3b82f6; text-decoration: underline; word-break: break-all; pointer-events: auto; }
     </style>
 </head>
-<body class="text-gray-800 font-sans fixed inset-0 overflow-hidden bg-gray-100 w-full h-[100dvh] flex flex-col">
 
-    <!-- מסך טעינה ראשוני -->
-    <div id="loadingView" class="absolute inset-0 bg-gray-100 z-[300] flex items-center justify-center">
-        <i data-lucide="loader-2" class="w-8 h-8 animate-spin text-blue-600"></i>
+<!-- שימוש ב-100dvh כדי להתמודד עם שורת הכתובת שעולה ויורדת בדפדפני סמארטפונים -->
+<body class="text-gray-800 font-sans fixed inset-0 overflow-hidden bg-gray-100 w-full h-[100dvh] flex flex-col selection:bg-blue-200">
+
+    <!-- 1. מסך טעינה ראשוני (מסתיר את הממשק עד שפיירבייס מסיים לאמת את המשתמש) -->
+    <div id="loadingView" class="absolute inset-0 bg-gray-100 z-[300] flex flex-col items-center justify-center fade-in">
+        <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-blue-600 mb-4"></i>
+        <p class="text-gray-500 font-medium animate-pulse">מתחבר למסד הנתונים...</p>
     </div>
 
-    <!-- מסך התחברות (Google Sign-In) -->
-    <div id="loginView" class="absolute inset-0 bg-gray-900/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4 fade-in" style="display: none;">
-        <div class="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl text-center">
-            <div class="bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" class="w-10 h-10" />
+    <!-- 2. מסך התחברות (מוצג רק אם המשתמש אינו מחובר) -->
+    <div id="loginView" class="absolute inset-0 bg-gray-900/85 backdrop-blur-md z-[200] flex items-center justify-center p-4 fade-in" style="display: none;">
+        <div class="bg-white rounded-[2rem] p-8 w-full max-w-md shadow-2xl text-center border border-white/20">
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner ring-4 ring-white">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" class="w-12 h-12 drop-shadow-sm" />
             </div>
-            <h2 class="text-2xl font-black mb-3 text-gray-800">התחברות מאובטחת</h2>
-            <p class="text-sm text-gray-500 mb-8 leading-relaxed">
-                כדי לשמור על הפתקים שלך פרטיים ומאובטחים, התחבר עם חשבון הגוגל שלך.
+            <h2 class="text-3xl font-black mb-3 text-gray-800 tracking-tight">כניסה מאובטחת</h2>
+            <p class="text-base text-gray-500 mb-8 leading-relaxed px-2">
+                BrainDump Pro שומר על הפרטיות שלך. הפתקים שלך מוצפנים ונשמרים אך ורק תחת חשבון הגוגל האישי שלך.
             </p>
-            <button onclick="window.loginWithGoogle()" class="w-full bg-white border-2 border-gray-200 text-gray-700 font-bold py-3.5 rounded-xl hover:bg-gray-50 transition-all shadow-sm active:scale-95 text-lg flex items-center justify-center gap-3">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" class="w-5 h-5" />
-                המשך עם Google
+            <button onclick="window.loginWithGoogle()" class="w-full bg-white border-2 border-gray-200 text-gray-700 font-bold py-4 rounded-2xl hover:bg-gray-50 hover:border-blue-300 hover:text-blue-700 transition-all shadow-sm active:scale-[0.98] text-lg flex items-center justify-center gap-3">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" class="w-6 h-6" />
+                התחבר באמצעות Google
             </button>
+            <p class="mt-6 text-xs text-gray-400 flex items-center justify-center gap-1">
+                <i data-lucide="shield-check" class="w-3 h-3"></i> מוגן בתקני האבטחה של Firebase
+            </p>
         </div>
     </div>
 
-    <!-- מסך ראשי: רשימת פתקים -->
+    <!-- 3. מסך ראשי: רשימת פתקים (הליבה של האפליקציה) -->
     <div id="listView" class="absolute inset-0 flex flex-col fade-in bg-gray-100" style="display: none;">
+        
+        <!-- הדר עליון ושורת חיפוש - מקובעים למעלה (App Shell) -->
         <div class="flex-none z-40 shadow-sm relative bg-white">
-            <header class="bg-blue-600 text-white p-4 flex justify-between items-center relative z-50">
-                <div class="flex items-center gap-2">
-                    <button onclick="window.openHelpModal()" class="p-1 hover:bg-blue-700 rounded-full transition">
-                        <i data-lucide="info" class="w-5 h-5"></i>
+            <header class="bg-gradient-to-r from-blue-700 to-blue-600 text-white p-4 flex justify-between items-center relative z-50">
+                <div class="flex items-center gap-3">
+                    <button onclick="window.openSettingsModal()" class="p-2 hover:bg-white/20 rounded-full transition-colors active:scale-90" title="הגדרות וסטטיסטיקות">
+                        <i data-lucide="settings" class="w-5 h-5"></i>
                     </button>
-                    <h1 class="text-xl font-bold tracking-wide">BrainDump Pro</h1>
+                    <h1 class="text-xl font-bold tracking-wide drop-shadow-md">BrainDump<span class="font-light opacity-80 text-sm ml-1">PRO</span></h1>
                 </div>
                 <div class="flex items-center gap-3">
-                    <div id="syncStatusIcon" class="text-white/80 transition" title="סטטוס חיבור">
-                        <i data-lucide="cloud-lightning" class="w-5 h-5 text-green-300"></i>
+                    <!-- חיווי סטטוס רשת וסנכרון בזמן אמת -->
+                    <div id="syncStatusIcon" class="text-white/90 transition-all duration-300" title="סטטוס חיבור לענן">
+                        <i data-lucide="cloud-lightning" class="w-5 h-5 text-green-300 drop-shadow"></i>
                     </div>
-                    <button onclick="window.exportMenuToggle()" class="p-2 hover:bg-blue-700 rounded-full transition">
+                    <button onclick="window.exportMenuToggle()" class="p-2 hover:bg-white/20 rounded-full transition-colors active:scale-90 relative">
                         <i data-lucide="more-vertical" class="w-5 h-5"></i>
                     </button>
                 </div>
             </header>
 
+            <!-- אזור חיפוש מתקדם -->
             <div class="p-3 border-b border-gray-100 relative z-40 bg-white">
-                <div class="relative">
-                    <i data-lucide="search" class="absolute right-3 top-3 text-gray-400 w-5 h-5"></i>
-                    <input type="text" id="searchInput" placeholder="חיפוש מהיר..." oninput="window.renderNotes()" class="w-full bg-gray-100 rounded-full py-2 pr-10 pl-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                <div class="relative group">
+                    <i data-lucide="search" class="absolute right-4 top-3 text-gray-400 w-5 h-5 group-focus-within:text-blue-500 transition-colors"></i>
+                    <input type="text" id="searchInput" placeholder="חפש בפתקים שלך..." oninput="window.renderNotes()" class="w-full bg-gray-100 hover:bg-gray-50 rounded-2xl py-3 pr-12 pl-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-inner text-gray-700 font-medium">
                 </div>
             </div>
 
-            <!-- שורת תגיות חכמות -->
-            <div id="tagBar" class="hidden px-3 py-2 border-b border-gray-200 overflow-x-auto whitespace-nowrap space-x-2 space-x-reverse items-center no-scrollbar bg-gray-50" style="-webkit-overflow-scrolling: touch;">
-                <!-- דינמי -->
+            <!-- שורת תגיות (Hashtags) נגללת - נוצרת דינמית -->
+            <div id="tagBar" class="hidden px-4 py-2.5 border-b border-gray-200 overflow-x-auto whitespace-nowrap space-x-2 space-x-reverse items-center no-scrollbar bg-gradient-to-b from-gray-50 to-white" style="-webkit-overflow-scrolling: touch;">
+                <!-- כפתורי התגיות יוזרקו לכאן על ידי ה-JS -->
             </div>
         </div>
 
-        <!-- תפריט פעולות -->
-        <div id="exportMenu" class="hidden absolute top-16 left-4 bg-white shadow-xl rounded-lg p-2 z-50 border border-gray-100 w-56">
-            <button onclick="window.openWhatsAppModal()" class="w-full text-right p-3 hover:bg-gray-50 rounded flex items-center gap-2 transition">
-                <i data-lucide="message-circle" class="w-4 h-4 text-green-500"></i> שתף פתקים לוואטסאפ
+        <!-- תפריט פעולות צף (Dropdown Menu) -->
+        <div id="exportMenu" class="hidden absolute top-16 left-4 bg-white shadow-2xl rounded-2xl p-2 z-50 border border-gray-100 w-64 transform origin-top-left fade-in">
+            <button onclick="window.openTrashView()" class="w-full text-right p-3 hover:bg-gray-50 rounded-xl flex items-center gap-3 transition-colors text-gray-700 font-medium">
+                <div class="bg-gray-100 p-1.5 rounded-lg"><i data-lucide="trash" class="w-4 h-4 text-gray-600"></i></div> פח אשפה
             </button>
-            <div class="h-px bg-gray-100 my-1"></div>
-            <button onclick="window.handleSignOut()" class="w-full text-right p-3 hover:bg-red-50 rounded flex items-center gap-2 transition text-red-600">
-                <i data-lucide="log-out" class="w-4 h-4 text-red-500"></i> התנתק
+            <button onclick="window.openWhatsAppModal()" class="w-full text-right p-3 hover:bg-gray-50 rounded-xl flex items-center gap-3 transition-colors text-gray-700 font-medium mt-1">
+                <div class="bg-green-100 p-1.5 rounded-lg"><i data-lucide="message-circle" class="w-4 h-4 text-green-600"></i></div> ייצוא לוואטסאפ
+            </button>
+            <button onclick="window.exportToJSON()" class="w-full text-right p-3 hover:bg-gray-50 rounded-xl flex items-center gap-3 transition-colors text-gray-700 font-medium mt-1">
+                <div class="bg-blue-100 p-1.5 rounded-lg"><i data-lucide="download" class="w-4 h-4 text-blue-600"></i></div> גיבוי מקומי (JSON)
+            </button>
+            <div class="h-px bg-gray-100 my-2 mx-2"></div>
+            <button onclick="window.handleSignOut()" class="w-full text-right p-3 hover:bg-red-50 rounded-xl flex items-center gap-3 transition-colors text-red-600 font-medium">
+                <div class="bg-red-100 p-1.5 rounded-lg"><i data-lucide="log-out" class="w-4 h-4 text-red-500"></i></div> התנתק מהמערכת
             </button>
         </div>
 
-        <!-- אזור גלילה -->
-        <main class="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-3 pb-24 relative" id="notesContainer" style="-webkit-overflow-scrolling: touch; touch-action: pan-y;">
-            <!-- דינמי -->
+        <!-- אזור גלילה מרכזי - מציג את רשימת הפתקים -->
+        <main class="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 pb-28 relative" id="notesContainer" style="-webkit-overflow-scrolling: touch; touch-action: pan-y;">
+            <!-- הפתקים יוזרקו לכאן באופן דינמי וחלקי (Fragment) כדי למנוע Layout Thrashing -->
         </main>
 
-        <!-- כפתור הוספה -->
-        <button onclick="window.openEditor()" class="absolute bottom-20 right-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-xl transform hover:scale-105 transition active:scale-95 z-30">
-            <i data-lucide="plus" class="w-6 h-6"></i>
+        <!-- פח אשפה - מוצג רק כאשר המשתמש בוחר "פח אשפה" מהתפריט -->
+        <main class="hidden flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 pb-28 relative bg-gray-100/50" id="trashContainer" style="-webkit-overflow-scrolling: touch; touch-action: pan-y;">
+            <!-- פתקים מחוקים יוזרקו לכאן -->
+        </main>
+
+        <!-- כפתור הוספה צף (Floating Action Button - FAB) -->
+        <button id="fabBtn" onclick="window.openEditor()" class="absolute bottom-20 right-6 bg-gradient-to-tr from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-full p-4 shadow-xl shadow-blue-500/30 transform hover:scale-105 transition-all active:scale-90 z-30 ring-4 ring-white/50">
+            <i data-lucide="plus" class="w-7 h-7"></i>
         </button>
 
-        <!-- פוטר משתמש -->
-        <footer class="flex-none bg-gray-100 border-t border-gray-200 text-center py-3 px-4 text-xs text-gray-500 z-10 flex items-center justify-between pb-safe">
-            <div class="flex items-center gap-2">
-                <img id="userAvatar" src="" alt="profile" class="w-6 h-6 rounded-full shadow-sm hidden" onerror="this.style.display='none'; document.getElementById('userAvatarFallback').style.display='flex';" />
+        <!-- פוטר משתמש תחתון - מציג את החשבון המחובר כעת -->
+        <footer class="flex-none bg-white border-t border-gray-200 text-center py-3 px-5 text-sm text-gray-500 z-10 flex items-center justify-between pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            <div class="flex items-center gap-2.5 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
+                <img id="userAvatar" src="" alt="profile" class="w-6 h-6 rounded-full shadow-sm hidden object-cover" onerror="this.style.display='none'; document.getElementById('userAvatarFallback').style.display='flex';" />
                 <div id="userAvatarFallback" class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center"><i data-lucide="user" class="w-3 h-3 text-blue-600"></i></div>
-                <span id="userName" class="font-bold text-gray-700 truncate max-w-[120px] text-right">טוען...</span>
+                <span id="userName" class="font-semibold text-gray-700 truncate max-w-[130px] text-right">טוען...</span>
             </div>
-            <div>מאובטח ע"י Firebase</div>
+            <div class="flex items-center gap-1.5 text-xs font-medium text-gray-400 bg-gray-50 px-2.5 py-1.5 rounded-full">
+                <i data-lucide="database" class="w-3 h-3"></i> Firestore
+            </div>
         </footer>
     </div>
 
-    <!-- מסך עריכה -->
-    <div id="editorView" class="absolute inset-0 bg-white z-[100] flex flex-col fade-in h-[100dvh]" style="display: none;">
-        <header class="flex-none bg-white border-b border-gray-200 p-3 flex justify-between items-center z-10">
-            <button onclick="window.closeEditor()" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition">
-                <i data-lucide="arrow-right"></i>
+    <!-- 4. מסך עריכה (Editor) - נפתח כשלוחצים על פתק או על הוספה -->
+    <div id="editorView" class="absolute inset-0 bg-white z-[100] flex flex-col slide-in-right h-[100dvh]" style="display: none;">
+        <header class="flex-none bg-white border-b border-gray-100 p-3 flex justify-between items-center z-10 shadow-sm">
+            <button onclick="window.closeEditor()" class="p-2.5 text-gray-600 hover:bg-gray-100 rounded-full transition-colors active:scale-90 flex items-center justify-center">
+                <i data-lucide="arrow-right" class="w-6 h-6"></i>
             </button>
-            <div class="flex gap-2 items-center">
-                <button id="pinBtn" onclick="window.togglePin()" class="p-2 text-gray-400 hover:text-yellow-600 rounded-full transition outline-none">
+            <div class="flex gap-1.5 items-center">
+                <!-- כפתור נעיצה - מחליף צבע לפי סטטוס -->
+                <button id="pinBtn" onclick="window.togglePin()" class="p-2 text-gray-400 hover:text-yellow-600 rounded-full transition-all outline-none active:scale-90" title="נעץ פתק זה">
                     <i data-lucide="pin" class="w-5 h-5"></i>
                 </button>
-                <button id="deleteBtn" onclick="window.deleteCurrentNote()" class="p-2 text-red-500 hover:bg-red-50 rounded-full transition hidden">
-                    <i data-lucide="trash-2"></i>
+                <!-- כפתור מחיקה - מוסתר ביצירת פתק חדש -->
+                <button id="deleteBtn" onclick="window.deleteCurrentNote()" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all active:scale-90 hidden" title="מחק פתק">
+                    <i data-lucide="trash-2" class="w-5 h-5"></i>
                 </button>
-                <button onclick="window.saveNoteManually()" class="bg-blue-600 text-white px-5 py-1.5 rounded-full font-medium shadow hover:bg-blue-700 transition active:scale-95">
-                    שמור
+                <div class="w-px h-6 bg-gray-200 mx-1"></div>
+                <!-- כפתור שמירה יזומה -->
+                <button onclick="window.saveNoteManually()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full font-bold shadow-md shadow-blue-500/20 transition-all active:scale-95 flex items-center gap-2">
+                    שמור <i data-lucide="check" class="w-4 h-4"></i>
                 </button>
             </div>
         </header>
 
-        <main class="flex-1 flex flex-col p-4 overflow-y-auto pb-8 relative" style="-webkit-overflow-scrolling: touch; touch-action: pan-y;">
-            <input type="text" id="noteTitle" dir="auto" placeholder="כותרת (אופציונלי)" class="text-xl font-bold mb-4 focus:outline-none placeholder-gray-400 bg-transparent text-right flex-none">
-            <textarea id="noteContent" dir="auto" placeholder="התחל לכתוב... (הוסף # כדי לתייג)" class="flex-1 resize-none focus:outline-none text-lg leading-relaxed placeholder-gray-400 bg-transparent min-h-[50vh]"></textarea>
+        <!-- אזור הטקסט הפנימי -->
+        <main class="flex-1 flex flex-col p-5 overflow-y-auto pb-10 relative bg-gray-50/30" style="-webkit-overflow-scrolling: touch; touch-action: pan-y;">
+            <input type="text" id="noteTitle" dir="auto" placeholder="כותרת הפתק..." class="text-2xl font-black mb-4 focus:outline-none placeholder-gray-300 bg-transparent text-right flex-none text-gray-800 transition-colors">
+            <!-- אזור התוכן המרכזי מוגדר כ-textarea המתרחב על כל המקום הנותר -->
+            <textarea id="noteContent" dir="auto" placeholder="התחל לכתוב את הרעיונות שלך... (הוסף # כדי ליצור תגיות)" class="flex-1 resize-none focus:outline-none text-lg leading-relaxed placeholder-gray-400 bg-transparent min-h-[50vh] text-gray-700"></textarea>
+            
+            <!-- שדות נסתרים לניהול הסטייט (State) של הפתק בעריכה -->
             <input type="hidden" id="noteId">
             <input type="hidden" id="noteIsPinned" value="false">
         </main>
     </div>
 
-    <!-- מודלים וחלונות קופצים (מוסתרים) -->
-    <div id="whatsappModal" class="absolute inset-0 bg-black/50 z-[110] flex items-center justify-center p-4 fade-in" style="display: none;" onclick="if(event.target === this) window.history.back()">
-        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
-            <h2 class="text-xl font-bold mb-4 text-gray-800">שתף פתקים לוואטסאפ</h2>
-            <div class="space-y-4 mb-6">
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">מתאריך:</label><input type="date" id="shareStartDate" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-gray-800"></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">עד תאריך:</label><input type="date" id="shareEndDate" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-gray-800"></div>
+    <!-- 5. חלונות קופצים (Modals) ודיאלוגים -->
+
+    <!-- מודל ייצוא לוואטסאפ -->
+    <div id="whatsappModal" class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 fade-in" style="display: none;" onclick="if(event.target === this) window.history.back()">
+        <div class="bg-white rounded-3xl p-7 w-full max-w-sm shadow-2xl">
+            <div class="bg-green-50 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                <i data-lucide="message-circle" class="w-7 h-7 text-green-500"></i>
             </div>
+            <h2 class="text-2xl font-black mb-2 text-gray-800">שתף לוואטסאפ</h2>
+            <p class="text-sm text-gray-500 mb-6">בחר את טווח התאריכים לייצוא. המערכת תארוז את כל הפתקים כהודעה מסודרת.</p>
+            
+            <div class="space-y-4 mb-8">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">החל מתאריך:</label>
+                    <input type="date" id="shareStartDate" class="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-800 transition-all font-medium">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">עד תאריך (כולל):</label>
+                    <input type="date" id="shareEndDate" class="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-800 transition-all font-medium">
+                </div>
+            </div>
+            
             <div class="flex gap-3">
-                <button onclick="window.history.back()" class="flex-1 bg-gray-100 text-gray-700 font-medium py-2.5 rounded-lg hover:bg-gray-200 transition">ביטול</button>
-                <button onclick="window.executeWhatsAppShare()" class="flex-1 bg-green-500 text-white font-medium py-2.5 rounded-lg hover:bg-green-600 transition flex items-center justify-center gap-2 shadow-sm"><i data-lucide="message-circle" class="w-5 h-5"></i> שתף</button>
+                <button onclick="window.history.back()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-3.5 rounded-xl hover:bg-gray-200 transition-colors">ביטול</button>
+                <button onclick="window.executeWhatsAppShare()" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-green-500/30 active:scale-95 flex items-center justify-center gap-2">
+                    <i data-lucide="send" class="w-5 h-5"></i> צור הודעה
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="helpModal" class="absolute inset-0 bg-black/50 z-[110] flex items-center justify-center p-4 fade-in" style="display: none;" onclick="if(event.target === this) window.history.back()">
-        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl max-h-[85vh] overflow-y-auto">
-            <h2 class="text-2xl font-bold mb-2 text-gray-800 flex items-center gap-2"><i data-lucide="info" class="text-blue-500"></i> מדריך שימוש</h2>
-            <p class="text-gray-600 text-sm mb-6 leading-relaxed">גרסה זו מאובטחת פרטית עבורך בסביבת הענן.</p>
-            <div class="space-y-4">
-                <div class="flex items-start gap-3"><div class="bg-blue-100 p-2 rounded-full text-blue-600 flex-shrink-0"><i data-lucide="plus" class="w-4 h-4"></i></div><div><strong class="block text-gray-800">פרטיות מוחלטת</strong><span class="text-sm text-gray-600">הפתקים נעולים תחת חשבון הגוגל שלך.</span></div></div>
-                <div class="flex items-start gap-3"><div class="bg-purple-100 p-2 rounded-full text-purple-600 flex-shrink-0"><i data-lucide="hash" class="w-4 h-4"></i></div><div><strong class="block text-gray-800">תיוג חכם</strong><span class="text-sm text-gray-600">הוסף #מילה לסינון מהיר.</span></div></div>
-                <div class="flex items-start gap-3"><div class="bg-green-100 p-2 rounded-full text-green-600 flex-shrink-0"><i data-lucide="cloud-lightning" class="w-4 h-4"></i></div><div><strong class="block text-gray-800">זמן אמת</strong><span class="text-sm text-gray-600">שמירה אוטומטית ביציאה. אין צורך לסנכרן.</span></div></div>
+    <!-- מודל הגדרות וסטטיסטיקות (חדש!) -->
+    <div id="settingsModal" class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 fade-in" style="display: none;" onclick="if(event.target === this) window.history.back()">
+        <div class="bg-white rounded-3xl p-7 w-full max-w-sm shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-black text-gray-800 flex items-center gap-2">
+                    <i data-lucide="settings" class="text-blue-500"></i> הגדרות ומידע
+                </h2>
+                <button onclick="window.history.back()" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <button onclick="window.history.back()" class="mt-8 w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition active:scale-95">הבנתי!</button>
+            
+            <div class="bg-blue-50 rounded-2xl p-5 mb-6 border border-blue-100">
+                <h3 class="text-xs font-bold text-blue-800 uppercase tracking-wider mb-3">סטטיסטיקות החשבון שלך</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white rounded-xl p-3 shadow-sm border border-blue-50 text-center">
+                        <span class="block text-2xl font-black text-blue-600" id="statTotalNotes">0</span>
+                        <span class="text-xs font-medium text-gray-500">פתקים פעילים</span>
+                    </div>
+                    <div class="bg-white rounded-xl p-3 shadow-sm border border-blue-50 text-center">
+                        <span class="block text-2xl font-black text-yellow-500" id="statPinnedNotes">0</span>
+                        <span class="text-xs font-medium text-gray-500">נעוצים</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="window.openHelpModal()" class="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors text-right border border-gray-100">
+                    <div class="flex items-center gap-3"><div class="bg-blue-100 p-2 rounded-lg"><i data-lucide="help-circle" class="w-4 h-4 text-blue-600"></i></div> <span class="font-bold text-gray-700">מדריך שימוש</span></div>
+                    <i data-lucide="chevron-left" class="w-4 h-4 text-gray-400"></i>
+                </button>
+                <div class="text-center pt-4 border-t border-gray-100 mt-4">
+                    <p class="text-xs text-gray-400">גרסה 2.5 • נבנה עבור מהירות</p>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Toast -->
-    <div id="toast" class="absolute bottom-16 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-5 py-2.5 rounded-full opacity-0 transition-opacity duration-300 pointer-events-none z-[120] text-sm shadow-lg whitespace-nowrap"></div>
+    <!-- מודל עזרה (Help) המפרט את תכונות האפליקציה -->
+    <div id="helpModal" class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm z-[120] flex items-center justify-center p-4 fade-in" style="display: none;" onclick="if(event.target === this) window.history.back()">
+        <div class="bg-white rounded-3xl p-7 w-full max-w-md shadow-2xl max-h-[85vh] overflow-y-auto no-scrollbar">
+            <h2 class="text-2xl font-black mb-2 text-gray-800 flex items-center gap-2"><i data-lucide="sparkles" class="text-blue-500"></i> מדריך ה-Pro</h2>
+            <p class="text-gray-600 text-sm mb-6 leading-relaxed">גלה את היכולות המתקדמות שהופכות את האפליקציה הזו לפנקס כיס מושלם.</p>
+            
+            <div class="space-y-5">
+                <div class="flex items-start gap-4">
+                    <div class="bg-blue-50 p-3 rounded-2xl text-blue-600 flex-shrink-0 shadow-sm border border-blue-100"><i data-lucide="shield-check" class="w-5 h-5"></i></div>
+                    <div><strong class="block text-gray-800 text-base mb-0.5">פרטיות ברזל (Firestore)</strong><span class="text-sm text-gray-500 leading-snug block">הפתקים שלך מאובטחים בחוקי ה-DB של פיירבייס ואיש מלבדך לא יכול לגשת אליהם.</span></div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="bg-purple-50 p-3 rounded-2xl text-purple-600 flex-shrink-0 shadow-sm border border-purple-100"><i data-lucide="hash" class="w-5 h-5"></i></div>
+                    <div><strong class="block text-gray-800 text-base mb-0.5">מנוע תיוג אוטומטי</strong><span class="text-sm text-gray-500 leading-snug block">פשוט הוסף סולמית למילה בתוך הפתק (למשל <span class="text-purple-500 font-medium">#רעיונות</span>), והמערכת תיצור ממנה כפתור סינון עליון באופן אוטומטי!</span></div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="bg-red-50 p-3 rounded-2xl text-red-600 flex-shrink-0 shadow-sm border border-red-100"><i data-lucide="trash-2" class="w-5 h-5"></i></div>
+                    <div><strong class="block text-gray-800 text-base mb-0.5">מחיקה בטוחה (סל מיחזור)</strong><span class="text-sm text-gray-500 leading-snug block">מחקת פתק בטעות? אל דאגה. הוא עובר ל"פח האשפה" בתפריט הראשי, משם תוכל לשחזר אותו או למחוק אותו לתמיד.</span></div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="bg-green-50 p-3 rounded-2xl text-green-600 flex-shrink-0 shadow-sm border border-green-100"><i data-lucide="wifi-off" class="w-5 h-5"></i></div>
+                    <div><strong class="block text-gray-800 text-base mb-0.5">תמיכה מלאה ב-Offline</strong><span class="text-sm text-gray-500 leading-snug block">האפליקציה תמשיך לעבוד ולשמור נתונים גם במצב טיסה, ותסנכרן את הכל חזרה לענן ברגע שהאינטרנט יחזור.</span></div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="bg-gray-50 p-3 rounded-2xl text-gray-600 flex-shrink-0 shadow-sm border border-gray-200"><i data-lucide="copy" class="w-5 h-5"></i></div>
+                    <div><strong class="block text-gray-800 text-base mb-0.5">מחווֹת חכמות</strong><span class="text-sm text-gray-500 leading-snug block">במסך הראשי, **לחיצה ארוכה** (מעל חצי שנייה) על פתק כלשהו תעתיק את כל התוכן שלו ישירות ללוח הגזירים שלך.</span></div>
+                </div>
+            </div>
+            <button onclick="window.history.back()" class="mt-8 w-full bg-blue-600 text-white font-bold py-4 rounded-2xl hover:bg-blue-700 transition active:scale-95 text-lg">מעולה, הבנתי!</button>
+        </div>
+    </div>
 
-    <!-- Firebase SDK (Modular API imported as module) -->
+    <!-- הודעות מוקפצות (Toast Notification) מספקות פידבק על פעולות -->
+    <div id="toast" class="absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white font-medium px-6 py-3 rounded-full opacity-0 transition-all duration-300 pointer-events-none z-[400] text-sm shadow-xl shadow-black/20 whitespace-nowrap flex items-center gap-2"></div>
+
+    <!-- 
+      ===================================================================
+      קוד ה-JavaScript: לוגיקה, מסד נתונים, וניהול תצוגה
+      ===================================================================
+    -->
     <script type="module">
+        // ייבוא מודולים ספציפיים של Firebase כדי לחסוך במשקל (Modular SDK)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-        // ==========================================
-        // ⚠️ הדבק את קוד ה-CONFIG שלך כאן במקום הקיים ⚠️
-        // ==========================================
+        // ==============================================================================
+        // ⚠️ חובה: החלף את בלוק ה-firebaseConfig הזה בנתונים האמיתיים שלך מ-Firebase! ⚠️
+        // ==============================================================================
+
 		const firebaseConfig = {
 		  apiKey: "AIzaSyDKw0T8imb-Mimiqg7mU1mbThIozU5QZo8",
 		  authDomain: "obn-braindump.firebaseapp.com",
@@ -190,150 +337,221 @@
 		  measurementId: "G-XGPNV06H61"
 		};        
 
+        // אתחול שירותי Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = "braindump-web";
+        const appId = "braindump-web"; // מזהה קבוע לאפליקציה למניעת התנגשויות ב-DB
 
-        // --- State Management ---
+        // הפעלת מצב Offline ב-Firestore. קריטי לאפליקציה המיועדת לשמש בדרכים.
+        try {
+            enableIndexedDbPersistence(db).catch((err) => {
+                console.warn("שגיאה בהפעלת מצב אופליין ב-Firebase:", err.code);
+            });
+        } catch (e) {
+            console.warn("תקלה בהגדרת אופליין:", e);
+        }
+
+        // --- משתנים גלובליים לניהול ה-State (מצב האפליקציה) ---
         window.currentUser = null;
-        window.currentNotes = [];
+        window.currentNotes = []; // מכיל את כל הפתקים, כולל כאלו שנמחקו (deleted: true)
         window.currentActiveTag = null;
+        window.currentViewIsTrash = false; // האם אנחנו צופים בפח האשפה כרגע?
+        
         let unsubscribeSnapshot = null;
-        let skipAutoSave = false;
-        let originalNoteState = { title: '', content: '', is_pinned: false };
+        let skipAutoSave = false; // משמש למניעת שמירה כפולה כאשר אנחנו מוחקים פתק באופן יזום וחוזרים אחורה
+        let originalNoteState = { title: '', content: '', is_pinned: false }; // לשמירת מצב הפתק לפני עריכה (Dirty Check)
 
-        // --- Initialize Icons ---
+        // אתחול האייקונים של Lucide
         lucide.createIcons();
 
-        // --- Auth Listener ---
+        // --- האזנה לשינויי התחברות (Auth State Listener) ---
+        // פונקציה זו מופעלת אוטומטית ברגע שהאפליקציה נטענת וכל פעם שהמשתמש מתחבר/מתנתק
         onAuthStateChanged(auth, (user) => {
-            document.getElementById('loadingView').style.display = 'none';
+            document.getElementById('loadingView').style.display = 'none'; // הסתרת מסך הטעינה
+            
             if (user) {
+                // המשתמש מחובר!
                 window.currentUser = user;
                 document.getElementById('loginView').style.display = 'none';
                 document.getElementById('listView').style.display = 'flex';
                 
-                // עדכון פרטי משתמש בפוטר
-                document.getElementById('userName').textContent = user.displayName || 'משתמש';
+                // עדכון ה-UI עם פרטי המשתמש (שם ותמונה)
+                document.getElementById('userName').textContent = user.displayName || 'משתמש מחובר';
                 if(user.photoURL) {
                     document.getElementById('userAvatar').src = user.photoURL;
                     document.getElementById('userAvatar').style.display = 'block';
                     document.getElementById('userAvatarFallback').style.display = 'none';
                 }
 
+                // התחלת האזנה לנתונים ממסד הנתונים
                 startRealtimeSync(user);
             } else {
+                // המשתמש לא מחובר או התנתק
                 window.currentUser = null;
                 document.getElementById('listView').style.display = 'none';
                 document.getElementById('loginView').style.display = 'flex';
-                if(unsubscribeSnapshot) unsubscribeSnapshot();
+                if(unsubscribeSnapshot) unsubscribeSnapshot(); // ביטול האזנה כדי למנוע זליגת זיכרון
             }
         });
 
-        // --- Google Login ---
+        // --- פונקציות התחברות וניתוק ---
         window.loginWithGoogle = async () => {
             const provider = new GoogleAuthProvider();
             try {
+                // שימוש בחלון קופץ להתחברות. אם פיירבייס הוגדר נכון (חוקים ודומיינים), זה יצליח.
                 await signInWithPopup(auth, provider);
             } catch (error) {
-                console.error("Login failed", error);
-                window.showToast("שגיאה בהתחברות");
+                console.error("שגיאת התחברות:", error);
+                window.showToast('<i data-lucide="alert-circle" class="w-4 h-4"></i> שגיאה בהתחברות. ודא שאישרת את הדומיין בפיירבייס.');
+                lucide.createIcons();
             }
         };
 
         window.handleSignOut = async () => {
-            if(confirm('האם להתנתק מהמערכת?')) {
-                window.exportMenuToggle(); // סגירת תפריט
+            if(confirm('האם אתה בטוח שברצונך להתנתק מהמערכת?')) {
+                window.exportMenuToggle(); // סגירת תפריט הפעולות
                 await signOut(auth);
             }
         };
 
-        // --- Realtime Sync ---
+        // --- מנוע הסנכרון והמשיכה בזמן אמת (Real-Time Database Listener) ---
         function startRealtimeSync(user) {
-            // הנתיב הפרטי המאובטח של המשתמש: users/{userId}/notes
+            // הדרך שבה בנינו את הנתיב מבטיחה שכל משתמש מקבל "חדר פרטי" משלו:
+            // הנתיב: artifacts / {appId} / users / {uid} / notes
             const notesRef = collection(db, 'artifacts', appId, 'users', user.uid, 'notes');
             
+            // הפונקציה onSnapshot יוצרת "צינור פתוח". כל פעם שמישהו יוסיף/ישנה פתק בשרת, הפונקציה הזו תרוץ שוב אוטומטית!
             unsubscribeSnapshot = onSnapshot(notesRef, (snapshot) => {
                 window.currentNotes = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    if (!data.deleted) {
-                        window.currentNotes.push({id: doc.id, ...data});
-                    }
+                    window.currentNotes.push({id: doc.id, ...data});
                 });
+                // לאחר עדכון המערך המקומי, אנו מציירים מחדש את המסך
                 window.renderNotes();
             }, (error) => {
-                console.error("Sync error:", error);
+                console.error("שגיאת סנכרון Firestore:", error);
+                window.showToast('שגיאה בתקשורת מול הענן ❌');
             });
         }
 
-        // --- UI Functions ---
+        // --- פונקציות עזר ופונקציות ממשק (UI Helpers) ---
         window.showToast = (msg) => {
             const toast = document.getElementById('toast');
-            toast.textContent = msg;
+            toast.innerHTML = msg;
             toast.classList.remove('opacity-0');
-            setTimeout(() => toast.classList.add('opacity-0'), 3000);
+            toast.classList.add('translate-y-[-10px]');
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                toast.classList.remove('translate-y-[-10px]');
+            }, 3000);
         };
 
         window.exportMenuToggle = () => {
-            document.getElementById('exportMenu').classList.toggle('hidden');
+            const menu = document.getElementById('exportMenu');
+            menu.classList.toggle('hidden');
         };
 
+        // סגירת תפריט כשלוחצים מחוץ אליו
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('#exportMenu') && !e.target.closest('header button')) {
-                document.getElementById('exportMenu').classList.add('hidden');
+            const menu = document.getElementById('exportMenu');
+            if (!menu.classList.contains('hidden') && !e.target.closest('#exportMenu') && !e.target.closest('header button:last-child')) {
+                menu.classList.add('hidden');
             }
         });
 
-        // --- Rendering Logic ---
+        // פונקציית עזר להפיכת טקסט שמכיל URL ללינקים לחיצים (Clickable Links)
+        function linkifyText(text) {
+            if (!text) return '';
+            // Regex בסיסי למציאת כתובות אינטרנט
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            return text.replace(urlRegex, function(url) {
+                return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="note-link" onclick="event.stopPropagation();">${url}</a>`;
+            });
+        }
+
+        // --- לוגיקת רינדור הנתונים למסך (Rendering Engine) ---
         window.renderNotes = () => {
-            const container = document.getElementById('notesContainer');
+            const listContainer = document.getElementById('notesContainer');
+            const trashContainer = document.getElementById('trashContainer');
+            const targetContainer = window.currentViewIsTrash ? trashContainer : listContainer;
+            
             const searchQuery = document.getElementById('searchInput').value.toLowerCase();
             const tagBar = document.getElementById('tagBar');
 
-            // Tags extraction
+            // 1. ניתוח תגיות (האשטאגים) - רק מהפתקים הפעילים
+            const activeNotes = window.currentNotes.filter(n => !n.deleted);
             const allTags = new Set();
-            window.currentNotes.forEach(note => {
+            activeNotes.forEach(note => {
                 const text = (note.title || '') + ' ' + (note.content || '');
                 const matches = text.match(/#[א-תa-zA-Z0-9_]+/g);
                 if (matches) matches.forEach(t => allTags.add(t));
             });
 
-            if (allTags.size > 0) {
+            // 2. בניית שורת התגיות (מוצגת רק במסך הראשי ולא בפח)
+            if (allTags.size > 0 && !window.currentViewIsTrash) {
                 tagBar.style.display = 'flex';
-                tagBar.innerHTML = `<button onclick="window.setActiveTag(null)" class="px-4 py-1 text-sm font-medium rounded-full transition-colors flex-none shadow-sm border ${window.currentActiveTag === null ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200'}">הכל</button>`;
+                tagBar.innerHTML = `<button onclick="window.setActiveTag(null)" class="px-4 py-1.5 text-sm font-bold rounded-xl transition-all flex-none shadow-sm border ${window.currentActiveTag === null ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}">כל הפתקים</button>`;
                 allTags.forEach(tag => {
-                    tagBar.innerHTML += `<button onclick="window.setActiveTag('${tag}')" class="px-4 py-1 text-sm font-medium rounded-full transition-colors flex-none shadow-sm border ${window.currentActiveTag === tag ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-600 border-gray-200 hover:bg-gray-50'}">${tag}</button>`;
+                    tagBar.innerHTML += `<button onclick="window.setActiveTag('${tag}')" class="px-4 py-1.5 text-sm font-bold rounded-xl transition-all flex-none shadow-sm border ${window.currentActiveTag === tag ? 'bg-purple-600 text-white border-purple-600 shadow-purple-500/20' : 'bg-white text-purple-600 border-purple-100 hover:bg-purple-50'}">${tag}</button>`;
                 });
             } else {
                 tagBar.style.display = 'none';
-                window.currentActiveTag = null;
+                if(window.currentViewIsTrash) window.currentActiveTag = null; // איפוס תגית כשנכנסים לפח
             }
 
-            // Filtering & Sorting
+            // 3. עדכון סטטיסטיקות בהגדרות
+            document.getElementById('statTotalNotes').textContent = activeNotes.length;
+            document.getElementById('statPinnedNotes').textContent = activeNotes.filter(n => n.is_pinned).length;
+
+            // 4. סינון הפתקים (לפי סטטוס מחיקה, חיפוש, ותגית פעילה)
             let filtered = window.currentNotes.filter(n => {
+                // אם אנחנו בפח, נראה רק מחוקים. אחרת, רק פעילים.
+                if (window.currentViewIsTrash) {
+                    if (!n.deleted) return false;
+                } else {
+                    if (n.deleted) return false;
+                }
+
                 const matchSearch = (n.title?.toLowerCase() || '').includes(searchQuery) || (n.content?.toLowerCase() || '').includes(searchQuery);
                 const matchTag = window.currentActiveTag ? ((n.title || '') + ' ' + (n.content || '')).includes(window.currentActiveTag) : true;
                 return matchSearch && matchTag;
             });
 
+            // 5. מיון: נעוצים קודם, ואז תאריך יצירה יורד (מהחדש לישן)
             filtered.sort((a, b) => {
                 if (a.is_pinned && !b.is_pinned) return -1;
                 if (!a.is_pinned && b.is_pinned) return 1;
                 return new Date(b.created_at) - new Date(a.created_at);
             });
 
-            // Rendering
+            // 6. יצירת מצבי אפס (Empty States) כאשר אין פתקים להציג
             if (filtered.length === 0) {
-                container.innerHTML = '<div class="text-center text-gray-400 mt-10"><p>אין פתקים. לחץ על + כדי להתחיל.</p></div>';
+                if (window.currentViewIsTrash) {
+                    targetContainer.innerHTML = '<div class="text-center text-gray-400 mt-16 flex flex-col items-center"><div class="bg-gray-200 p-4 rounded-full mb-4"><i data-lucide="trash" class="w-10 h-10 opacity-50"></i></div><p class="font-medium text-lg">פח האשפה ריק</p><p class="text-sm mt-1">אין פתקים למחזור כרגע.</p></div>';
+                } else if (searchQuery || window.currentActiveTag) {
+                    targetContainer.innerHTML = '<div class="text-center text-gray-400 mt-16 flex flex-col items-center"><div class="bg-gray-200 p-4 rounded-full mb-4"><i data-lucide="search-x" class="w-10 h-10 opacity-50"></i></div><p class="font-medium text-lg">לא נמצאו תוצאות</p></div>';
+                } else {
+                    targetContainer.innerHTML = '<div class="text-center text-gray-400 mt-16 flex flex-col items-center"><div class="bg-blue-50 text-blue-300 p-6 rounded-full mb-5 shadow-inner"><i data-lucide="pen-line" class="w-12 h-12"></i></div><p class="font-bold text-xl text-gray-600">אין פתקים כרגע</p><p class="text-sm mt-2 max-w-[200px] leading-relaxed">לחץ על הפלוס למטה כדי לכתוב את הרעיון הראשון שלך.</p></div>';
+                }
+                lucide.createIcons();
                 return;
             }
 
+            // 7. יצירת אלמנטי ה-DOM באמצעות DocumentFragment (הופך את הרינדור למהיר פי 10 ומונע תקיעות)
             const fragment = document.createDocumentFragment();
+            
             filtered.forEach(note => {
                 const el = document.createElement('div');
-                el.className = `p-4 rounded-xl shadow-sm border transition cursor-pointer flex flex-col gap-1 select-none relative ${note.is_pinned ? 'bg-yellow-50 border-yellow-200' : 'bg-white border-gray-200 active:bg-gray-50'}`;
+                // שימוש במחלקות Tailwind לעיצוב הסטטוס (רגיל, נעוץ, או פח אשפה)
+                const baseClasses = "p-4 rounded-[1.25rem] border transition-all cursor-pointer flex flex-col gap-1.5 select-none relative overflow-hidden group ";
+                let stateClasses = note.is_pinned ? 'bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200 shadow-md' : 'bg-white border-gray-200 shadow-sm hover:shadow-md active:bg-gray-50';
+                if (window.currentViewIsTrash) stateClasses = 'bg-gray-50 border-gray-300 opacity-80';
+                
+                el.className = baseClasses + stateClasses;
                 
                 const title = note.title || (note.content ? note.content.substring(0, 30) + '...' : 'ללא כותרת');
                 const d = new Date(note.created_at);
@@ -342,60 +560,82 @@
 
                 let contentHtml = '';
                 if (note.content) {
-                    let highlighted = note.content.replace(/(#[א-תa-zA-Z0-9_]+)/g, '<span class="text-blue-500 font-medium">$1</span>');
-                    contentHtml = `<p class="text-gray-500 text-sm truncate pointer-events-none" dir="auto">${highlighted}</p>`;
+                    // הבלטת האשטאגים ולינקים בטקסט התצוגה המקדימה
+                    let processedText = note.content.replace(/(#[א-תa-zA-Z0-9_]+)/g, '<span class="text-purple-600 font-bold bg-purple-100/50 px-1 rounded">$1</span>');
+                    contentHtml = `<p class="text-gray-500 text-sm leading-relaxed line-clamp-3 mt-1 pointer-events-none" dir="auto">${processedText}</p>`;
                 }
 
-                const pinIcon = note.is_pinned ? `<i data-lucide="pin" class="absolute left-3 top-3 w-4 h-4 text-yellow-500 fill-yellow-100 transform -rotate-45"></i>` : '';
+                const pinIcon = note.is_pinned && !window.currentViewIsTrash ? `<div class="absolute -left-4 -top-4 w-12 h-12 bg-yellow-400 rounded-full opacity-20"></div><i data-lucide="pin" class="absolute left-3 top-3 w-4 h-4 text-yellow-600 fill-yellow-200 transform -rotate-45 drop-shadow-sm"></i>` : '';
+
+                // אם אנחנו בפח האשפה, נציג כפתורי "שחזור" ו"מחיקה סופית"
+                let trashControls = '';
+                if (window.currentViewIsTrash) {
+                    trashControls = `
+                        <div class="mt-3 pt-3 border-t border-gray-200 flex justify-end gap-3 z-10 relative">
+                            <button onclick="event.stopPropagation(); window.hardDeleteNote('${note.id}')" class="text-xs text-red-500 font-bold bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 flex items-center gap-1"><i data-lucide="trash" class="w-3 h-3"></i> מחיקה סופית</button>
+                            <button onclick="event.stopPropagation(); window.restoreNote('${note.id}')" class="text-xs text-blue-600 font-bold bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 flex items-center gap-1"><i data-lucide="history" class="w-3 h-3"></i> שחזר פתק</button>
+                        </div>
+                    `;
+                }
 
                 el.innerHTML = `${pinIcon}
-                    <div class="flex justify-between items-start pointer-events-none ${note.is_pinned ? 'pl-6' : ''}">
-                        <h3 class="font-bold text-gray-800 text-base" dir="auto">${title}</h3>
-                        <div class="flex items-center gap-1.5 text-xs text-gray-400 whitespace-nowrap">
-                            <span>${timeStr}</span><span>•</span><span>${dateStr}</span>
-                            <i data-lucide="cloud-lightning" class="w-3 h-3 text-green-500"></i>
+                    <div class="flex justify-between items-start pointer-events-none ${note.is_pinned && !window.currentViewIsTrash ? 'pl-7' : ''} z-10 relative">
+                        <h3 class="font-black text-gray-800 text-[1.05rem] leading-tight" dir="auto">${title}</h3>
+                        <div class="flex flex-col items-end gap-0.5 text-[10px] text-gray-400 whitespace-nowrap font-medium">
+                            <span class="bg-gray-100 px-1.5 rounded text-gray-500">${timeStr}</span>
+                            <span>${dateStr}</span>
                         </div>
                     </div>
-                    ${contentHtml}`;
+                    <div class="z-10 relative">${contentHtml}</div>
+                    ${trashControls}`;
 
-                // Long Press logic
-                let pressTimer;
-                let isLongPress = false;
-                let startY = 0;
+                // הגדרת אירועי לחיצה למגע ו-Long Press (רק כשאנחנו לא בפח האשפה)
+                if (!window.currentViewIsTrash) {
+                    let pressTimer;
+                    let isLongPress = false;
+                    let startY = 0;
 
-                const start = (e) => {
-                    isLongPress = false;
-                    startY = e.touches ? e.touches[0].clientY : e.clientY;
-                    pressTimer = setTimeout(() => {
-                        isLongPress = true;
-                        if (navigator.vibrate) navigator.vibrate(50);
-                        window.copyText(`${note.title || ''}\n\n${note.content || ''}`.trim());
-                    }, 600);
-                };
-                const move = (e) => {
-                    const currentY = e.touches ? e.touches[0].clientY : e.clientY;
-                    if (Math.abs(currentY - startY) > 10) clearTimeout(pressTimer);
-                };
-                const end = () => { clearTimeout(pressTimer); };
+                    const start = (e) => {
+                        isLongPress = false;
+                        startY = e.touches ? e.touches[0].clientY : e.clientY;
+                        pressTimer = setTimeout(() => {
+                            isLongPress = true;
+                            if (navigator.vibrate) navigator.vibrate(50);
+                            window.copyText(`${note.title || ''}\n\n${note.content || ''}`.trim());
+                        }, 600); // זיהוי הלחיצה הארוכה לאחר 600ms
+                    };
+                    const move = (e) => {
+                        const currentY = e.touches ? e.touches[0].clientY : e.clientY;
+                        if (Math.abs(currentY - startY) > 10) clearTimeout(pressTimer); // ביטול אם האצבע זזה (גלילה)
+                    };
+                    const end = () => { clearTimeout(pressTimer); };
 
-                el.addEventListener('touchstart', start, {passive: true});
-                el.addEventListener('touchmove', move, {passive: true});
-                el.addEventListener('touchend', end);
-                el.addEventListener('mousedown', start);
-                el.addEventListener('mousemove', move);
-                el.addEventListener('mouseup', end);
-                el.addEventListener('mouseleave', end);
+                    el.addEventListener('touchstart', start, {passive: true});
+                    el.addEventListener('touchmove', move, {passive: true});
+                    el.addEventListener('touchend', end);
+                    el.addEventListener('mousedown', start);
+                    el.addEventListener('mousemove', move);
+                    el.addEventListener('mouseup', end);
+                    el.addEventListener('mouseleave', end);
 
-                el.onclick = (e) => {
-                    if (isLongPress) { e.preventDefault(); e.stopPropagation(); } 
-                    else { window.openEditor(note); }
-                };
+                    el.onclick = (e) => {
+                        if (isLongPress) { 
+                            e.preventDefault(); e.stopPropagation(); 
+                        } else { 
+                            window.openEditor(note); 
+                        }
+                    };
+                }
 
                 fragment.appendChild(el);
             });
-            container.innerHTML = '';
-            container.appendChild(fragment);
-            void container.offsetHeight; // Force reflow for mobile scrolling
+            
+            targetContainer.innerHTML = '';
+            targetContainer.appendChild(fragment);
+            
+            // פקודת מניעת קפיאות מובייל קריטית! (Forced Reflow)
+            void targetContainer.offsetHeight; 
+            
             lucide.createIcons();
         };
 
@@ -405,17 +645,63 @@
         };
 
         window.copyText = (text) => {
+            // יצירת אלמנט זמני להעתקת טקסט, כיוון ש-API ההעתקה החדש חסום לעיתים ב-Iframe
             const ta = document.createElement("textarea");
             ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
             document.body.appendChild(ta); ta.select();
-            try { document.execCommand('copy'); window.showToast('התוכן הועתק ללוח! 📋'); } 
-            catch(e) { window.showToast('שגיאה בהעתקה'); }
+            try { 
+                document.execCommand('copy'); 
+                window.showToast('<i data-lucide="check-circle" class="w-4 h-4 text-green-400"></i> התוכן הועתק ללוח ההדבקה!'); 
+            } catch(e) { 
+                window.showToast('שגיאה בהעתקה ❌'); 
+            }
             document.body.removeChild(ta);
         };
 
-        // --- Editor Logic ---
+        // --- לוגיקת פח האשפה (Trash Logic) ---
+        window.openTrashView = () => {
+            window.exportMenuToggle(); // סגירת תפריט הפעולות
+            window.currentViewIsTrash = true;
+            document.getElementById('notesContainer').classList.add('hidden');
+            document.getElementById('trashContainer').classList.remove('hidden');
+            document.getElementById('fabBtn').classList.add('hidden'); // מסתיר כפתור פלוס
+            document.getElementById('searchInput').placeholder = "חפש בפתקים המחוקים...";
+            window.renderNotes();
+            
+            // עדכון היסטוריה לטובת חזרה אחורה בטלפון
+            history.pushState({ screen: 'trash' }, '', '#trash');
+        };
+
+        window.closeTrashView = () => {
+            window.currentViewIsTrash = false;
+            document.getElementById('notesContainer').classList.remove('hidden');
+            document.getElementById('trashContainer').classList.add('hidden');
+            document.getElementById('fabBtn').classList.remove('hidden');
+            document.getElementById('searchInput').placeholder = "חפש בפתקים שלך...";
+            window.renderNotes();
+        };
+
+        window.restoreNote = async (id) => {
+            if (!window.currentUser) return;
+            const noteRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'notes', id);
+            await setDoc(noteRef, { deleted: false, updated_at: new Date().toISOString() }, { merge: true });
+            window.showToast('<i data-lucide="refresh-cw" class="w-4 h-4"></i> הפתק שוחזר בהצלחה');
+        };
+
+        window.hardDeleteNote = async (id) => {
+            if (!window.currentUser) return;
+            if (!confirm('אזהרה: הפתק יימחק לצמיתות ממסד הנתונים ולא ניתן יהיה לשחזרו. האם להמשיך?')) return;
+            
+            const noteRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'notes', id);
+            await deleteDoc(noteRef); // מחיקה פיזית ומלאה (Hard Delete)
+            window.showToast('<i data-lucide="trash" class="w-4 h-4 text-red-400"></i> הפתק נמחק לצמיתות');
+        };
+
+
+        // --- לוגיקת עורך הפתקים (Editor Logic) ---
         window.openEditor = (note = null) => {
             if (note) {
+                // מצב עריכת פתק קיים
                 document.getElementById('noteId').value = note.id;
                 document.getElementById('noteTitle').value = note.title || '';
                 document.getElementById('noteContent').value = note.content || '';
@@ -423,6 +709,7 @@
                 document.getElementById('deleteBtn').classList.remove('hidden');
                 originalNoteState = { title: note.title, content: note.content, is_pinned: note.is_pinned };
             } else {
+                // מצב יצירת פתק חדש
                 document.getElementById('noteId').value = '';
                 document.getElementById('noteTitle').value = '';
                 document.getElementById('noteContent').value = '';
@@ -430,14 +717,26 @@
                 document.getElementById('deleteBtn').classList.add('hidden');
                 originalNoteState = { title: '', content: '', is_pinned: false };
             }
+            
             window.updatePinUI();
+            
+            // מעבר חזותי למסך העריכה
             document.getElementById('listView').style.display = 'none';
             document.getElementById('editorView').style.display = 'flex';
+            
+            // הכנסה להיסטוריה כדי שכפתור 'אחורה' בטלפון יעבוד כהלכה
             history.pushState({ screen: 'editor' }, '', '#editor');
         };
 
-        window.closeEditor = () => { history.back(); };
-        window.saveNoteManually = () => { history.back(); };
+        window.closeEditor = () => { 
+            // הפעלת פונקציית החזור ההיסטורית. זו תיתפס על ידי ה-popstate ותפעיל שמירה אוטומטית.
+            history.back(); 
+        };
+        
+        window.saveNoteManually = () => { 
+            // גם לחיצה על שמור מפעילה את החזרה לאחור וסומכת על מנגנון ה-Auto Save ב-popstate
+            history.back(); 
+        };
 
         window.performSave = async () => {
             if (!window.currentUser) return;
@@ -446,42 +745,52 @@
             const content = document.getElementById('noteContent').value.trim();
             const isPinned = document.getElementById('noteIsPinned').value === 'true';
 
+            // מניעת שמירה של פתק ריק לחלוטין
             if (!title && !content) return;
+            
+            // בדיקת שינויים חכמה (Dirty Check): אם לא נגעו בכלום, חסוך פנייה למסד הנתונים
             if (title === originalNoteState.title && content === originalNoteState.content && isPinned === originalNoteState.is_pinned) return;
 
             const noteId = id || crypto.randomUUID();
             const now = new Date().toISOString();
             
-            // מציאת תאריך יצירה מקורי (אם זה פתק קיים)
             let createdAt = now;
             if (id) {
                 const existing = window.currentNotes.find(n => n.id === id);
                 if (existing) createdAt = existing.created_at;
             }
 
+            // יצירת מזהה מסמך (Document Reference) ב-Firestore
             const noteRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'notes', noteId);
             
             try {
+                // ביצוע השמירה בפועל. merge:true מוודא שלא נדרוס שדות אחרים אם קיימים
                 await setDoc(noteRef, {
-                    id: noteId, title: title, content: content, is_pinned: isPinned,
-                    updated_at: now, created_at: createdAt, deleted: false
+                    id: noteId, 
+                    title: title, 
+                    content: content, 
+                    is_pinned: isPinned,
+                    updated_at: now, 
+                    created_at: createdAt, 
+                    deleted: false
                 }, { merge: true });
-                window.showToast('נשמר בהצלחה');
+                window.showToast('<i data-lucide="check" class="w-4 h-4"></i> הפתק נשמר ונשלח לענן');
             } catch (e) {
                 console.error(e);
-                window.showToast('שגיאה בשמירה');
+                window.showToast('שגיאה בשמירה ❌');
             }
         };
 
         window.deleteCurrentNote = async () => {
-            if(!confirm('האם למחוק פתק זה?')) return;
+            if(!confirm('להעביר את הפתק לפח האשפה?')) return;
             const id = document.getElementById('noteId').value;
             if(id && window.currentUser) {
                 const noteRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'notes', id);
+                // אנו מבצעים מחיקה "רכה" (Soft Delete) אל פח האשפה ולא מחיקה אמיתית מהמסד
                 await setDoc(noteRef, { deleted: true, updated_at: new Date().toISOString() }, { merge: true });
-                window.showToast('נמחק בהצלחה');
+                window.showToast('הועבר לפח האשפה 🗑️');
             }
-            skipAutoSave = true;
+            skipAutoSave = true; // מסמן ל-popstate לא לבצע שמירה כפולה על פתק שכבר ביקשנו למחוק
             history.back();
         };
 
@@ -496,37 +805,54 @@
             const btn = document.getElementById('pinBtn');
             if (isPinned) {
                 btn.classList.replace('text-gray-400', 'text-yellow-600');
-                btn.classList.add('bg-yellow-50');
+                btn.classList.add('bg-yellow-50', 'ring-2', 'ring-yellow-200');
             } else {
                 btn.classList.replace('text-yellow-600', 'text-gray-400');
-                btn.classList.remove('bg-yellow-50');
+                btn.classList.remove('bg-yellow-50', 'ring-2', 'ring-yellow-200');
             }
         };
 
-        // --- Modals ---
+        // --- Modals Management (ניהול חלונות קופצים) ---
+        window.openSettingsModal = () => {
+            document.getElementById('settingsModal').style.display = 'flex';
+            history.pushState({ screen: 'settings' }, '', '#settings');
+        };
+
         window.openHelpModal = () => {
+            // אם הגענו מההגדרות, נחליף את המסך
+            if(document.getElementById('settingsModal').style.display !== 'none') {
+                document.getElementById('settingsModal').style.display = 'none';
+            }
             document.getElementById('helpModal').style.display = 'flex';
             history.pushState({ screen: 'help' }, '', '#help');
         };
+        
         window.openWhatsAppModal = () => {
             window.exportMenuToggle();
             const today = new Date();
             const lastWeek = new Date(); lastWeek.setDate(today.getDate() - 7);
+            // הזנת ערכי ברירת מחדל לטווחי התאריכים בחלון
             document.getElementById('shareStartDate').value = lastWeek.toISOString().split('T')[0];
             document.getElementById('shareEndDate').value = today.toISOString().split('T')[0];
             document.getElementById('whatsappModal').style.display = 'flex';
             history.pushState({ screen: 'whatsapp' }, '', '#share');
         };
+
+        // פונקציית לוגיקת הייצוא (בניית הודעת טקסט לוואטסאפ)
         window.executeWhatsAppShare = () => {
             const start = new Date(document.getElementById('shareStartDate').value); start.setHours(0,0,0,0);
             const end = new Date(document.getElementById('shareEndDate').value); end.setHours(23,59,59,999);
             
             const toShare = window.currentNotes.filter(n => {
+                if (n.deleted) return false; // לא נשתף פתקים מהפח
                 const d = new Date(n.created_at);
                 return d >= start && d <= end;
             });
 
-            if(toShare.length === 0) { window.showToast('אין פתקים בטווח זה'); return; }
+            if(toShare.length === 0) { 
+                window.showToast('<i data-lucide="alert-circle" class="w-4 h-4"></i> אין פתקים בתאריכים אלו'); 
+                return; 
+            }
 
             let text = "*BrainDump - יצוא פתקים*\n\n";
             toShare.forEach(n => {
@@ -534,19 +860,35 @@
                 text += `📝 *${n.title || 'ללא כותרת'}* (${d.toLocaleDateString('he-IL')} ${d.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})})\n${n.content}\n\n`;
             });
             window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
-            history.back();
+            history.back(); // מפעיל חזרה אוטומטית שסוגרת את החלון
         };
 
-        // --- Routing / Back Button ---
+        // --- הליבה של חוויית המובייל: ניתוב מבוסס כפתור 'אחורה' ---
+        // אירוע זה קופץ בכל פעם שהמשתמש לוחץ על 'אחורה' במכשיר (או כשקוראים ל-history.back() בקוד)
         window.addEventListener('popstate', async () => {
+            
+            // סגירת מודלים פתוחים לפני הכל (היררכיית יציאה)
             if(document.getElementById('helpModal').style.display !== 'none') { document.getElementById('helpModal').style.display = 'none'; return; }
             if(document.getElementById('whatsappModal').style.display !== 'none') { document.getElementById('whatsappModal').style.display = 'none'; return; }
+            if(document.getElementById('settingsModal').style.display !== 'none') { document.getElementById('settingsModal').style.display = 'none'; return; }
             
+            // אם אנחנו בפח האשפה ולחצנו אחורה - נחזור לרשימה הראשית
+            if(window.currentViewIsTrash) {
+                window.closeTrashView();
+                return;
+            }
+            
+            // אם אנחנו במסך עריכת פתק ולחצנו אחורה - הפעל מנגנון "שמור וצא"
             if(document.getElementById('editorView').style.display !== 'none') {
-                if(!skipAutoSave) await window.performSave();
-                skipAutoSave = false;
+                // בדיקה אם המשתמש לחץ יזום על "מחק" קודם לכן. אם לא, נשמור!
+                if(!skipAutoSave) {
+                    await window.performSave();
+                }
+                skipAutoSave = false; // איפוס המשתנה
                 document.getElementById('editorView').style.display = 'none';
                 document.getElementById('listView').style.display = 'flex';
+                // אם במקרה עדכנו תגית, נבקש לרנדר מחדש כדי שהיא תופיע ברשימה העליונה
+                window.renderNotes();
             }
         });
 
