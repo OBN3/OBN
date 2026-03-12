@@ -28,7 +28,6 @@
         #reader video { border-radius: 1rem; object-fit: cover; }
     </style>
 </head>
-<!-- שינוי פרואקטיבי לפתרון בעיות גלילה בסמארטפון: גלילה טבעית של הדפדפן -->
 <body class="bg-gray-50 text-gray-900 font-sans min-h-[100dvh]">
 
     <!-- Container ראשי -->
@@ -478,6 +477,15 @@
             renderSuggestions();
         };
 
+        // פונקציה לעריכת שם מוצר inline
+        window.renameItem = async (itemId, newName) => {
+            const trimmed = newName.trim();
+            if (!trimmed || !state.user) return;
+            try {
+                await updateDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'items', itemId), { name: trimmed });
+            } catch (err) { console.error("Error renaming", err); }
+        };
+
         // פונקציית הוספה חכמה שגם מזהה כפילויות, מגדילה כמות ומשייכת ברקודים
         window.addItem = async (name, category, quantity = 1, unit = "יח'", barcode = null) => {
             if (!name.trim() || !state.user || !state.activeListId) return;
@@ -525,7 +533,7 @@
                 if(searchInput) {
                     searchInput.value = '';
                     searchInput.placeholder = "הקלד שם מוצר להוספה...";
-                    searchInput.focus();
+                    searchInput.blur(); // הורדת המקלדת אחרי הוספה מהירה
                 }
                 
                 renderSuggestions();
@@ -585,7 +593,6 @@
         async function onScanSuccess(decodedText, decodedResult) {
             closeScanner(); 
             const searchInput = document.getElementById('search-input');
-            if(searchInput) searchInput.value = "מחפש מוצר...";
             
             // 1. בדיקה פרואקטיבית: האם הברקוד הזה שמור אצלנו כבר במערכת (זיכרון אישי)?
             const existingLocalItem = state.items.find(i => i.barcode === decodedText && i.listId === state.activeListId);
@@ -596,39 +603,44 @@
                     quantity: newQty,
                     isBought: false 
                 });
-                if(searchInput) searchInput.value = "";
                 return;
             }
 
-            // 2. חיפוש במאגר הציבורי
+            // 2. חיפוש במאגר הציבורי ללא הודעות קופצות!
             try {
                 const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${decodedText}.json`);
                 const data = await res.json();
                 
                 if (data.status === 1 && data.product) {
-                    const productName = data.product.product_name_he || data.product.product_name || 'מוצר חדש';
+                    let productName = data.product.product_name_he || data.product.product_name || 'מוצר סרוק';
                     
+                    // מילון פרואקטיבי לתרגום מוצרי בסיס אנגלית לעברית במקרה ואין שם בעברית
+                    const engToHeb = {
+                        "milk": "חלב", "water": "מים", "bread": "לחם", "cheese": "גבינה",
+                        "eggs": "ביצים", "butter": "חמאה", "coffee": "קפה", "tea": "תה",
+                        "sugar": "סוכר", "salt": "מלח", "chocolate": "שוקולד", "cookies": "עוגיות",
+                        "chips": "חטיף", "juice": "מיץ", "pasta": "פסטה", "rice": "אורז"
+                    };
+                    const lowerName = productName.toLowerCase();
+                    if (engToHeb[lowerName]) {
+                        productName = engToHeb[lowerName];
+                    }
+
                     let cat = 'אחר';
                     const pTags = (data.product.categories_tags || []).join(' ').toLowerCase();
-                    if (pTags.includes('dairy')) cat = 'מוצרי חלב וביצים';
-                    else if (pTags.includes('snack')) cat = 'דגנים וחטיפים';
-                    else if (pTags.includes('drink')) cat = 'משקאות';
+                    if (pTags.includes('dairy') || lowerName.includes('milk') || lowerName.includes('cheese')) cat = 'מוצרי חלב וביצים';
+                    else if (pTags.includes('snack') || lowerName.includes('chips')) cat = 'דגנים וחטיפים';
+                    else if (pTags.includes('drink') || pTags.includes('water') || pTags.includes('juice')) cat = 'משקאות';
                     
                     addItem(productName, cat, 1, "יח'", decodedText);
                 } else {
-                    // המאגר לא מזהה, אבל אנחנו נזכור לפעם הבאה!
-                    state.pendingBarcode = decodedText;
-                    if(searchInput) {
-                        searchInput.value = "";
-                        searchInput.placeholder = "ברקוד חדש! הקלד שם ושמור...";
-                        searchInput.focus();
-                    }
-                    alert("הברקוד לא זוהה במאגר. הקלד את שם המוצר בשורת החיפוש ולחץ הוסף - המערכת תזכור אותו לפעם הבאה שתסרוק!");
+                    // המאגר לא מזהה כלום - מוסיף לרשימה מיד עם "מוצר סרוק" כדי שהמשתמש יוכל פשוט לשנות את השם בעצמו
+                    addItem('מוצר סרוק', 'אחר', 1, "יח'", decodedText);
                 }
             } catch (err) {
                 console.error(err);
-                alert("שגיאה בתקשורת סורק הברקוד.");
-                if(searchInput) searchInput.value = "";
+                // גם אם יש שגיאת אינטרנט, לא נתקע את המשתמש ופשוט נוסיף את הברקוד
+                addItem('מוצר סרוק', 'אחר', 1, "יח'", decodedText);
             }
         }
 
@@ -880,6 +892,12 @@
                 groups[cat].push(item);
             });
 
+            // פונקציית עזר להמרת גרשיים כדי שלא ישברו את המבנה
+            const escapeVal = (str) => {
+                if (!str) return '';
+                return String(str).replace(/"/g, '&quot;');
+            };
+
             let html = '';
             Object.entries(groups).forEach(([category, items]) => {
                 const colorClass = CATEGORY_COLORS[category] || CATEGORY_COLORS['אחר'];
@@ -893,8 +911,13 @@
                                 <div class="flex items-center justify-between p-3.5 hover:bg-gray-50 transition-colors group">
                                     <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="toggleItem('${item.id}', false)">
                                         <div class="w-6 h-6 rounded-full flex items-center justify-center border-2 border-gray-300 group-hover:border-emerald-400 transition-colors shrink-0"></div>
-                                        <div class="flex flex-col flex-1 min-w-0">
-                                            <span class="text-base text-gray-800 font-bold truncate">${item.name}</span>
+                                        <div class="flex flex-col flex-1 min-w-0 pr-1">
+                                            <!-- שדה טקסט לעריכת שם המוצר ישירות מהרשימה -->
+                                            <input type="text" value="${escapeVal(item.name)}" 
+                                                onblur="renameItem('${item.id}', this.value)" 
+                                                onkeydown="if(event.key==='Enter') this.blur();" 
+                                                onclick="event.stopPropagation();" 
+                                                class="bg-transparent text-base text-gray-800 font-bold truncate outline-none border-b border-transparent focus:border-emerald-400 focus:bg-white w-full rounded transition-all py-1">
                                         </div>
                                     </div>
                                     
