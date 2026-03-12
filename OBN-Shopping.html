@@ -68,12 +68,21 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // הוספנו את GoogleAuthProvider, signInWithPopup ו-signOut
+        import { getAuth, signInWithCustomToken, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // הגדרות Firebase מהסביבה
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'family-cart-app';
+        // הגדרות Firebase של פרויקט obn-shopping
+        const firebaseConfig = {
+            apiKey: "AIzaSyCVDD-5659lKohVacBWyowCbF4FeZA3FQY",
+            authDomain: "obn-shopping.firebaseapp.com",
+            projectId: "obn-shopping",
+            storageBucket: "obn-shopping.firebasestorage.app",
+            messagingSenderId: "1037170144845",
+            appId: "1:1037170144845:web:eaef5edee7175d52c00e04",
+            measurementId: "G-E6Q3V76YRX"
+        };
+        const appId = firebaseConfig.projectId;
         
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -97,236 +106,235 @@
         
         // נתוני ברירת מחדל (חלק מהרשימה לטובת הדגמה, אפשר להרחיב)
         const DEFAULT_PRODUCTS = [
-  { "name": "חלב 3%", "category": "מוצרי חלב וביצים", "unit": "ליטר" },
-  { "name": "גבינה צהובה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-  { "name": "קוטג'", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-  { "name": "גבינה לבנה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-  { "name": "יוגורט", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-  { "name": "חמאה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-  { "name": "ביצים L", "category": "מוצרי חלב וביצים", "unit": "תבנית" },
-  { "name": "שמנת חמוצה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-  { "name": "שמנת מתוקה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-  { "name": "גבינת פטה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-  { "name": "חלב שיבולת שועל", "category": "מוצרי חלב וביצים", "unit": "ליטר" },
-  { "name": "גבינת שמנת", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-  { "name": "לבנה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-  { "name": "חלב סויה", "category": "מוצרי חלב וביצים", "unit": "ליטר" },
-  { "name": "מעדן שוקולד", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-  { "name": "גבינה בולגרית", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-  { "name": "ריקוטה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-  { "name": "חלומי", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-  { "name": "חלב עזים", "category": "מוצרי חלב וביצים", "unit": "ליטר" },
-  { "name": "גבינת מוצרלה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-  { "name": "עגבניות", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "מלפפונים", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "פלפל גמבה", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "בצל יבש", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "תפוחי אדמה", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "גזר", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "חסה", "category": "פירות וירקות", "unit": "יח'" },
-  { "name": "תפוח עץ", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "בננה", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "לימון", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "חציל", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "קישוא", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "ברוקולי", "category": "פירות וירקות", "unit": "יח'" },
-  { "name": "כרובית", "category": "פירות וירקות", "unit": "יח'" },
-  { "name": "שום", "category": "פירות וירקות", "unit": "מארז" },
-  { "name": "פטרוזיליה", "category": "פירות וירקות", "unit": "מארז" },
-  { "name": "כוסברה", "category": "פירות וירקות", "unit": "מארז" },
-  { "name": "אבוקדו", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "אבטיח", "category": "פירות וירקות", "unit": "יח'" },
-  { "name": "ענבים", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "בטטה", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "בצל ירוק", "category": "פירות וירקות", "unit": "מארז" },
-  { "name": "פטריות שמפיניון", "category": "פירות וירקות", "unit": "מארז" },
-  { "name": "כרוב לבן", "category": "פירות וירקות", "unit": "יח'" },
-  { "name": "כרוב אדום", "category": "פירות וירקות", "unit": "יח'" },
-  { "name": "דלעת", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "צנונית", "category": "פירות וירקות", "unit": "מארז" },
-  { "name": "סלק", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "אפרסק", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "שזיף", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "מנגו", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "תות שדה", "category": "פירות וירקות", "unit": "מארז" },
-  { "name": "מלון", "category": "פירות וירקות", "unit": "יח'" },
-  { "name": "תפוז", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "קיווי", "category": "פירות וירקות", "unit": "ק\"ג" },
-  { "name": "חזה עוף", "category": "בשר ודגים", "unit": "ק\"ג" },
-  { "name": "בשר טחון", "category": "בשר ודגים", "unit": "ק\"ג" },
-  { "name": "דג סלמון", "category": "בשר ודגים", "unit": "ק\"ג" },
-  { "name": "פסטרמה", "category": "בשר ודגים", "unit": "אריזה" },
-  { "name": "כרעיים עוף", "category": "בשר ודגים", "unit": "ק\"ג" },
-  { "name": "המבורגר", "category": "בשר ודגים", "unit": "אריזה" },
-  { "name": "נקניקיות", "category": "בשר ודגים", "unit": "אריזה" },
-  { "name": "דג אמנון", "category": "בשר ודגים", "unit": "ק\"ג" },
-  { "name": "סטייק אנטריקוט", "category": "בשר ודגים", "unit": "ק\"ג" },
-  { "name": "קבב", "category": "בשר ודגים", "unit": "אריזה" },
-  { "name": "כנפיים", "category": "בשר ודגים", "unit": "ק\"ג" },
-  { "name": "שניצל מוכן", "category": "בשר ודגים", "unit": "אריזה" },
-  { "name": "דג לברק", "category": "בשר ודגים", "unit": "ק\"ג" },
-  { "name": "בשר בקר לצלי", "category": "בשר ודגים", "unit": "ק\"ג" },
-  { "name": "לחם פרוס", "category": "מאפה ולחם", "unit": "אריזה" },
-  { "name": "פיתות", "category": "מאפה ולחם", "unit": "אריזה" },
-  { "name": "לחמניות", "category": "מאפה ולחם", "unit": "אריזה" },
-  { "name": "חלה", "category": "מאפה ולחם", "unit": "יח'" },
-  { "name": "בגט", "category": "מאפה ולחם", "unit": "יח'" },
-  { "name": "לחם מחמצת", "category": "מאפה ולחם", "unit": "כיכר" },
-  { "name": "טורטיות", "category": "מאפה ולחם", "unit": "אריזה" },
-  { "name": "פיתות כוסמין", "category": "מאפה ולחם", "unit": "אריזה" },
-  { "name": "ביסקוויטים", "category": "מאפה ולחם", "unit": "אריזה" },
-  { "name": "עוגה בחושה", "category": "מאפה ולחם", "unit": "יח'" },
-  { "name": "בורקס קפוא", "category": "מאפה ולחם", "unit": "אריזה" },
-  { "name": "קרואסון", "category": "מאפה ולחם", "unit": "אריזה" },
-  { "name": "אורז לבן", "category": "מזווה ובישול", "unit": "ק\"ג" },
-  { "name": "אורז מלא", "category": "מזווה ובישול", "unit": "ק\"ג" },
-  { "name": "פסטה פוסילי", "category": "מזווה ובישול", "unit": "אריזה" },
-  { "name": "ספגטי", "category": "מזווה ובישול", "unit": "אריזה" },
-  { "name": "שמן קנולה", "category": "מזווה ובישול", "unit": "בקבוק" },
-  { "name": "שמן זית", "category": "מזווה ובישול", "unit": "בקבוק" },
-  { "name": "סוכר לבן", "category": "מזווה ובישול", "unit": "ק\"ג" },
-  { "name": "מלח שולחן", "category": "מזווה ובישול", "unit": "ק\"ג" },
-  { "name": "קפה נמס", "category": "מזווה ובישול", "unit": "יח'" },
-  { "name": "תה קלאסי", "category": "מזווה ובישול", "unit": "אריזה" },
-  { "name": "קמח חיטה", "category": "מזווה ובישול", "unit": "ק\"ג" },
-  { "name": "קמח תופח", "category": "מזווה ובישול", "unit": "ק\"ג" },
-  { "name": "רסק עגבניות", "category": "מזווה ובישול", "unit": "מארז" },
-  { "name": "טונה בשמן", "category": "מזווה ובישול", "unit": "מארז" },
-  { "name": "טונה במים", "category": "מזווה ובישול", "unit": "מארז" },
-  { "name": "תירס בשימורים", "category": "מזווה ובישול", "unit": "יח'" },
-  { "name": "דבש", "category": "מזווה ובישול", "unit": "צנצנת" },
-  { "name": "סילאן", "category": "מזווה ובישול", "unit": "בקבוק" },
-  { "name": "ריבה", "category": "מזווה ובישול", "unit": "צנצנת" },
-  { "name": "ממרח שוקולד", "category": "מזווה ובישול", "unit": "אריזה" },
-  { "name": "חמאת בוטנים", "category": "מזווה ובישול", "unit": "אריזה" },
-  { "name": "קטשופ", "category": "מזווה ובישול", "unit": "בקבוק" },
-  { "name": "מיונז", "category": "מזווה ובישול", "unit": "אריזה" },
-  { "name": "חרדל", "category": "מזווה ובישול", "unit": "בקבוק" },
-  { "name": "פתיתים", "category": "מזווה ובישול", "unit": "אריזה" },
-  { "name": "קוסקוס", "category": "מזווה ובישול", "unit": "אריזה" },
-  { "name": "פירורי לחם", "category": "מזווה ובישול", "unit": "אריזה" },
-  { "name": "שעועית לבנה", "category": "מזווה ובישול", "unit": "ק\"ג" },
-  { "name": "עדשים ירוקות", "category": "מזווה ובישול", "unit": "ק\"ג" },
-  { "name": "עדשים כתומות", "category": "מזווה ובישול", "unit": "ק\"ג" },
-  { "name": "חומץ", "category": "מזווה ובישול", "unit": "בקבוק" },
-  { "name": "רוטב סויה", "category": "מזווה ובישול", "unit": "בקבוק" },
-  { "name": "רוטב טריאקי", "category": "מזווה ובישול", "unit": "בקבוק" },
-  { "name": "רוטב צ'ילי מתוק", "category": "מזווה ובישול", "unit": "בקבוק" },
-  { "name": "שימורי פטריות", "category": "מזווה ובישול", "unit": "יח'" },
-  { "name": "אבקת מרק", "category": "מזווה ובישול", "unit": "אריזה" },
-  { "name": "סודה לשתייה", "category": "מזווה ובישול", "unit": "אריזה" },
-  { "name": "אבקת אפייה", "category": "מזווה ובישול", "unit": "מארז" },
-  { "name": "תמצית וניל", "category": "מזווה ובישול", "unit": "בקבוק" },
-  { "name": "פפריקה מתוקה", "category": "מזווה ובישול", "unit": "יח'" },
-  { "name": "כמון", "category": "מזווה ובישול", "unit": "יח'" },
-  { "name": "כורכום", "category": "מזווה ובישול", "unit": "יח'" },
-  { "name": "פלפל שחור", "category": "מזווה ובישול", "unit": "יח'" },
-  { "name": "קינמון", "category": "מזווה ובישול", "unit": "יח'" },
-  { "name": "אגוזי מלך", "category": "מזווה ובישול", "unit": "ק\"ג" },
-  { "name": "שקדים", "category": "מזווה ובישול", "unit": "ק\"ג" },
-  { "name": "חומוס מוכן", "category": "סלטים וממרחים", "unit": "אריזה" },
-  { "name": "טחינה גולמית", "category": "סלטים וממרחים", "unit": "אריזה" },
-  { "name": "טחינה מוכנה", "category": "סלטים וממרחים", "unit": "אריזה" },
-  { "name": "מטבוחה", "category": "סלטים וממרחים", "unit": "אריזה" },
-  { "name": "סלט טורקי", "category": "סלטים וממרחים", "unit": "אריזה" },
-  { "name": "סלט כרוב", "category": "סלטים וממרחים", "unit": "אריזה" },
-  { "name": "חמוצים (מלפפון)", "category": "סלטים וממרחים", "unit": "קופסא" },
-  { "name": "זיתים ירוקים", "category": "סלטים וממרחים", "unit": "קופסא" },
-  { "name": "זיתים שחורים", "category": "סלטים וממרחים", "unit": "קופסא" },
-  { "name": "פסטו", "category": "סלטים וממרחים", "unit": "צנצנת" },
-  { "name": "ממרח עגבניות מיובשות", "category": "סלטים וממרחים", "unit": "צנצנת" },
-  { "name": "קורנפלקס", "category": "דגנים וחטיפים", "unit": "אריזה" },
-  { "name": "גרנולה", "category": "דגנים וחטיפים", "unit": "אריזה" },
-  { "name": "שיבולת שועל", "category": "דגנים וחטיפים", "unit": "אריזה" },
-  { "name": "במבה", "category": "דגנים וחטיפים", "unit": "אריזה" },
-  { "name": "ביסלי", "category": "דגנים וחטיפים", "unit": "אריזה" },
-  { "name": "תפוצ'יפס", "category": "דגנים וחטיפים", "unit": "אריזה" },
-  { "name": "דוריטוס", "category": "דגנים וחטיפים", "unit": "אריזה" },
-  { "name": "בייגלה", "category": "דגנים וחטיפים", "unit": "אריזה" },
-  { "name": "שוקולד פרה", "category": "דגנים וחטיפים", "unit": "יח'" },
-  { "name": "עוגיות שוקולד צ'יפס", "category": "דגנים וחטיפים", "unit": "אריזה" },
-  { "name": "ופלים שוקולד", "category": "דגנים וחטיפים", "unit": "אריזה" },
-  { "name": "מסטיק", "category": "דגנים וחטיפים", "unit": "יח'" },
-  { "name": "סוכריות", "category": "דגנים וחטיפים", "unit": "אריזה" },
-  { "name": "חטיף אנרגיה", "category": "דגנים וחטיפים", "unit": "מארז" },
-  { "name": "פריכיות אורז", "category": "דגנים וחטיפים", "unit": "אריזה" },
-  { "name": "פיצוחים מעורבים", "category": "דגנים וחטיפים", "unit": "ק\"ג" },
-  { "name": "מים מינרליים", "category": "משקאות", "unit": "מארז" },
-  { "name": "קוקה קולה", "category": "משקאות", "unit": "בקבוק" },
-  { "name": "דיאט קולה / זירו", "category": "משקאות", "unit": "בקבוק" },
-  { "name": "סודה", "category": "משקאות", "unit": "מארז" },
-  { "name": "מיץ תפוזים", "category": "משקאות", "unit": "בקבוק" },
-  { "name": "מיץ ענבים", "category": "משקאות", "unit": "בקבוק" },
-  { "name": "בירה", "category": "משקאות", "unit": "מארז" },
-  { "name": "יין אדום", "category": "משקאות", "unit": "בקבוק" },
-  { "name": "יין לבן", "category": "משקאות", "unit": "בקבוק" },
-  { "name": "משקה אנרגיה", "category": "משקאות", "unit": "פחית" },
-  { "name": "תה קר", "category": "משקאות", "unit": "בקבוק" },
-  { "name": "נייר טואלט", "category": "ניקיון וטואלטיקה", "unit": "מארז" },
-  { "name": "נוזל כלים", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
-  { "name": "אבקת כביסה", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
-  { "name": "ג'ל כביסה", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
-  { "name": "מרכך כביסה", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
-  { "name": "טבליות למדיח", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
-  { "name": "שמפו", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
-  { "name": "מרכך שיער", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
-  { "name": "סבון גוף נוזלי", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
-  { "name": "משחת שיניים", "category": "ניקיון וטואלטיקה", "unit": "יח'" },
-  { "name": "דאודורנט", "category": "ניקיון וטואלטיקה", "unit": "יח'" },
-  { "name": "שקיות אשפה", "category": "ניקיון וטואלטיקה", "unit": "גליל" },
-  { "name": "מגבוני ניקוי", "category": "ניקיון וטואלטיקה", "unit": "מארז" },
-  { "name": "נייר אפייה", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
-  { "name": "רדיד אלומיניום", "category": "ניקיון וטואלטיקה", "unit": "גליל" },
-  { "name": "סבון ידיים", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
-  { "name": "חומר לניקוי רצפות", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
-  { "name": "חומר לניקוי חלונות", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
-  { "name": "מברשת שיניים", "category": "ניקיון וטואלטיקה", "unit": "יח'" },
-  { "name": "קיסמי שיניים", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
-  { "name": "ירקות קפואים (לקט)", "category": "קפואים", "unit": "אריזה" },
-  { "name": "אפונה קפואה", "category": "קפואים", "unit": "אריזה" },
-  { "name": "שעועית ירוקה קפואה", "category": "קפואים", "unit": "אריזה" },
-  { "name": "תירס קפוא", "category": "קפואים", "unit": "אריזה" },
-  { "name": "צ'יפס קפוא", "category": "קפואים", "unit": "אריזה" },
-  { "name": "פיצה קפואה", "category": "קפואים", "unit": "אריזה" },
-  { "name": "מלאווח", "category": "קפואים", "unit": "אריזה" },
-  { "name": "ג'חנון", "category": "קפואים", "unit": "אריזה" },
-  { "name": "גלידה משפחתית", "category": "קפואים", "unit": "קופסא" },
-  { "name": "שלגונים", "category": "קפואים", "unit": "מארז" },
-  { "name": "פירות יער קפואים", "category": "קפואים", "unit": "אריזה" },
-  { "name": "חיתולים", "category": "תינוקות", "unit": "מארז" },
-  { "name": "מגבונים לחים", "category": "תינוקות", "unit": "מארז" },
-  { "name": "תחליף חלב (מטרנה/סימילאק)", "category": "תינוקות", "unit": "אריזה" },
-  { "name": "מזון לכלבים", "category": "חיות מחמד", "unit": "שק" },
-  { "name": "מזון לחתולים", "category": "חיות מחמד", "unit": "שק" },
-  { "name": "חול לחתולים", "category": "חיות מחמד", "unit": "שק" },
-  { "name": "נרות שבת", "category": "שונות", "unit": "מארז" },
-  { "name": "סוללות AA", "category": "שונות", "unit": "מארז" },
-  { "name": "סוללות AAA", "category": "שונות", "unit": "מארז" }
-];
+          { "name": "חלב 3%", "category": "מוצרי חלב וביצים", "unit": "ליטר" },
+          { "name": "גבינה צהובה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+          { "name": "קוטג'", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+          { "name": "גבינה לבנה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+          { "name": "יוגורט", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+          { "name": "חמאה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+          { "name": "ביצים L", "category": "מוצרי חלב וביצים", "unit": "תבנית" },
+          { "name": "שמנת חמוצה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+          { "name": "שמנת מתוקה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+          { "name": "גבינת פטה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+          { "name": "חלב שיבולת שועל", "category": "מוצרי חלב וביצים", "unit": "ליטר" },
+          { "name": "גבינת שמנת", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+          { "name": "לבנה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+          { "name": "חלב סויה", "category": "מוצרי חלב וביצים", "unit": "ליטר" },
+          { "name": "מעדן שוקולד", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+          { "name": "גבינה בולגרית", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+          { "name": "ריקוטה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+          { "name": "חלומי", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+          { "name": "חלב עזים", "category": "מוצרי חלב וביצים", "unit": "ליטר" },
+          { "name": "גבינת מוצרלה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+          { "name": "עגבניות", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "מלפפונים", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "פלפל גמבה", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "בצל יבש", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "תפוחי אדמה", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "גזר", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "חסה", "category": "פירות וירקות", "unit": "יח'" },
+          { "name": "תפוח עץ", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "בננה", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "לימון", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "חציל", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "קישוא", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "ברוקולי", "category": "פירות וירקות", "unit": "יח'" },
+          { "name": "כרובית", "category": "פירות וירקות", "unit": "יח'" },
+          { "name": "שום", "category": "פירות וירקות", "unit": "מארז" },
+          { "name": "פטרוזיליה", "category": "פירות וירקות", "unit": "מארז" },
+          { "name": "כוסברה", "category": "פירות וירקות", "unit": "מארז" },
+          { "name": "אבוקדו", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "אבטיח", "category": "פירות וירקות", "unit": "יח'" },
+          { "name": "ענבים", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "בטטה", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "בצל ירוק", "category": "פירות וירקות", "unit": "מארז" },
+          { "name": "פטריות שמפיניון", "category": "פירות וירקות", "unit": "מארז" },
+          { "name": "כרוב לבן", "category": "פירות וירקות", "unit": "יח'" },
+          { "name": "כרוב אדום", "category": "פירות וירקות", "unit": "יח'" },
+          { "name": "דלעת", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "צנונית", "category": "פירות וירקות", "unit": "מארז" },
+          { "name": "סלק", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "אפרסק", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "שזיף", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "מנגו", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "תות שדה", "category": "פירות וירקות", "unit": "מארז" },
+          { "name": "מלון", "category": "פירות וירקות", "unit": "יח'" },
+          { "name": "תפוז", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "קיווי", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "חזה עוף", "category": "בשר ודגים", "unit": "ק\"ג" },
+          { "name": "בשר טחון", "category": "בשר ודגים", "unit": "ק\"ג" },
+          { "name": "דג סלמון", "category": "בשר ודגים", "unit": "ק\"ג" },
+          { "name": "פסטרמה", "category": "בשר ודגים", "unit": "אריזה" },
+          { "name": "כרעיים עוף", "category": "בשר ודגים", "unit": "ק\"ג" },
+          { "name": "המבורגר", "category": "בשר ודגים", "unit": "אריזה" },
+          { "name": "נקניקיות", "category": "בשר ודגים", "unit": "אריזה" },
+          { "name": "דג אמנון", "category": "בשר ודגים", "unit": "ק\"ג" },
+          { "name": "סטייק אנטריקוט", "category": "בשר ודגים", "unit": "ק\"ג" },
+          { "name": "קבב", "category": "בשר ודגים", "unit": "אריזה" },
+          { "name": "כנפיים", "category": "בשר ודגים", "unit": "ק\"ג" },
+          { "name": "שניצל מוכן", "category": "בשר ודגים", "unit": "אריזה" },
+          { "name": "דג לברק", "category": "בשר ודגים", "unit": "ק\"ג" },
+          { "name": "בשר בקר לצלי", "category": "בשר ודגים", "unit": "ק\"ג" },
+          { "name": "לחם פרוס", "category": "מאפה ולחם", "unit": "אריזה" },
+          { "name": "פיתות", "category": "מאפה ולחם", "unit": "אריזה" },
+          { "name": "לחמניות", "category": "מאפה ולחם", "unit": "אריזה" },
+          { "name": "חלה", "category": "מאפה ולחם", "unit": "יח'" },
+          { "name": "בגט", "category": "מאפה ולחם", "unit": "יח'" },
+          { "name": "לחם מחמצת", "category": "מאפה ולחם", "unit": "כיכר" },
+          { "name": "טורטיות", "category": "מאפה ולחם", "unit": "אריזה" },
+          { "name": "פיתות כוסמין", "category": "מאפה ולחם", "unit": "אריזה" },
+          { "name": "ביסקוויטים", "category": "מאפה ולחם", "unit": "אריזה" },
+          { "name": "עוגה בחושה", "category": "מאפה ולחם", "unit": "יח'" },
+          { "name": "בורקס קפוא", "category": "מאפה ולחם", "unit": "אריזה" },
+          { "name": "קרואסון", "category": "מאפה ולחם", "unit": "אריזה" },
+          { "name": "אורז לבן", "category": "מזווה ובישול", "unit": "ק\"ג" },
+          { "name": "אורז מלא", "category": "מזווה ובישול", "unit": "ק\"ג" },
+          { "name": "פסטה פוסילי", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "ספגטי", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "שמן קנולה", "category": "מזווה ובישול", "unit": "בקבוק" },
+          { "name": "שמן זית", "category": "מזווה ובישול", "unit": "בקבוק" },
+          { "name": "סוכר לבן", "category": "מזווה ובישול", "unit": "ק\"ג" },
+          { "name": "מלח שולחן", "category": "מזווה ובישול", "unit": "ק\"ג" },
+          { "name": "קפה נמס", "category": "מזווה ובישול", "unit": "יח'" },
+          { "name": "תה קלאסי", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "קמח חיטה", "category": "מזווה ובישול", "unit": "ק\"ג" },
+          { "name": "קמח תופח", "category": "מזווה ובישול", "unit": "ק\"ג" },
+          { "name": "רסק עגבניות", "category": "מזווה ובישול", "unit": "מארז" },
+          { "name": "טונה בשמן", "category": "מזווה ובישול", "unit": "מארז" },
+          { "name": "טונה במים", "category": "מזווה ובישול", "unit": "מארז" },
+          { "name": "תירס בשימורים", "category": "מזווה ובישול", "unit": "יח'" },
+          { "name": "דבש", "category": "מזווה ובישול", "unit": "צנצנת" },
+          { "name": "סילאן", "category": "מזווה ובישול", "unit": "בקבוק" },
+          { "name": "ריבה", "category": "מזווה ובישול", "unit": "צנצנת" },
+          { "name": "ממרח שוקולד", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "חמאת בוטנים", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "קטשופ", "category": "מזווה ובישול", "unit": "בקבוק" },
+          { "name": "מיונז", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "חרדל", "category": "מזווה ובישול", "unit": "בקבוק" },
+          { "name": "פתיתים", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "קוסקוס", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "פירורי לחם", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "שעועית לבנה", "category": "מזווה ובישול", "unit": "ק\"ג" },
+          { "name": "עדשים ירוקות", "category": "מזווה ובישול", "unit": "ק\"ג" },
+          { "name": "עדשים כתומות", "category": "מזווה ובישול", "unit": "ק\"ג" },
+          { "name": "חומץ", "category": "מזווה ובישול", "unit": "בקבוק" },
+          { "name": "רוטב סויה", "category": "מזווה ובישול", "unit": "בקבוק" },
+          { "name": "רוטב טריאקי", "category": "מזווה ובישול", "unit": "בקבוק" },
+          { "name": "רוטב צ'ילי מתוק", "category": "מזווה ובישול", "unit": "בקבוק" },
+          { "name": "שימורי פטריות", "category": "מזווה ובישול", "unit": "יח'" },
+          { "name": "אבקת מרק", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "סודה לשתייה", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "אבקת אפייה", "category": "מזווה ובישול", "unit": "מארז" },
+          { "name": "תמצית וניל", "category": "מזווה ובישול", "unit": "בקבוק" },
+          { "name": "פפריקה מתוקה", "category": "מזווה ובישול", "unit": "יח'" },
+          { "name": "כמון", "category": "מזווה ובישול", "unit": "יח'" },
+          { "name": "כורכום", "category": "מזווה ובישול", "unit": "יח'" },
+          { "name": "פלפל שחור", "category": "מזווה ובישול", "unit": "יח'" },
+          { "name": "קינמון", "category": "מזווה ובישול", "unit": "יח'" },
+          { "name": "אגוזי מלך", "category": "מזווה ובישול", "unit": "ק\"ג" },
+          { "name": "שקדים", "category": "מזווה ובישול", "unit": "ק\"ג" },
+          { "name": "חומוס מוכן", "category": "סלטים וממרחים", "unit": "אריזה" },
+          { "name": "טחינה גולמית", "category": "סלטים וממרחים", "unit": "אריזה" },
+          { "name": "טחינה מוכנה", "category": "סלטים וממרחים", "unit": "אריזה" },
+          { "name": "מטבוחה", "category": "סלטים וממרחים", "unit": "אריזה" },
+          { "name": "סלט טורקי", "category": "סלטים וממרחים", "unit": "אריזה" },
+          { "name": "סלט כרוב", "category": "סלטים וממרחים", "unit": "אריזה" },
+          { "name": "חמוצים (מלפפון)", "category": "סלטים וממרחים", "unit": "קופסא" },
+          { "name": "זיתים ירוקים", "category": "סלטים וממרחים", "unit": "קופסא" },
+          { "name": "זיתים שחורים", "category": "סלטים וממרחים", "unit": "קופסא" },
+          { "name": "פסטו", "category": "סלטים וממרחים", "unit": "צנצנת" },
+          { "name": "ממרח עגבניות מיובשות", "category": "סלטים וממרחים", "unit": "צנצנת" },
+          { "name": "קורנפלקס", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "גרנולה", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "שיבולת שועל", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "במבה", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "ביסלי", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "תפוצ'יפס", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "דוריטוס", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "בייגלה", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "שוקולד פרה", "category": "דגנים וחטיפים", "unit": "יח'" },
+          { "name": "עוגיות שוקולד צ'יפס", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "ופלים שוקולד", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "מסטיק", "category": "דגנים וחטיפים", "unit": "יח'" },
+          { "name": "סוכריות", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "חטיף אנרגיה", "category": "דגנים וחטיפים", "unit": "מארז" },
+          { "name": "פריכיות אורז", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "פיצוחים מעורבים", "category": "דגנים וחטיפים", "unit": "ק\"ג" },
+          { "name": "מים מינרליים", "category": "משקאות", "unit": "מארז" },
+          { "name": "קוקה קולה", "category": "משקאות", "unit": "בקבוק" },
+          { "name": "דיאט קולה / זירו", "category": "משקאות", "unit": "בקבוק" },
+          { "name": "סודה", "category": "משקאות", "unit": "מארז" },
+          { "name": "מיץ תפוזים", "category": "משקאות", "unit": "בקבוק" },
+          { "name": "מיץ ענבים", "category": "משקאות", "unit": "בקבוק" },
+          { "name": "בירה", "category": "משקאות", "unit": "מארז" },
+          { "name": "יין אדום", "category": "משקאות", "unit": "בקבוק" },
+          { "name": "יין לבן", "category": "משקאות", "unit": "בקבוק" },
+          { "name": "משקה אנרגיה", "category": "משקאות", "unit": "פחית" },
+          { "name": "תה קר", "category": "משקאות", "unit": "בקבוק" },
+          { "name": "נייר טואלט", "category": "ניקיון וטואלטיקה", "unit": "מארז" },
+          { "name": "נוזל כלים", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+          { "name": "אבקת כביסה", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
+          { "name": "ג'ל כביסה", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+          { "name": "מרכך כביסה", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+          { "name": "טבליות למדיח", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
+          { "name": "שמפו", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+          { "name": "מרכך שיער", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+          { "name": "סבון גוף נוזלי", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+          { "name": "משחת שיניים", "category": "ניקיון וטואלטיקה", "unit": "יח'" },
+          { "name": "דאודורנט", "category": "ניקיון וטואלטיקה", "unit": "יח'" },
+          { "name": "שקיות אשפה", "category": "ניקיון וטואלטיקה", "unit": "גליל" },
+          { "name": "מגבוני ניקוי", "category": "ניקיון וטואלטיקה", "unit": "מארז" },
+          { "name": "נייר אפייה", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
+          { "name": "רדיד אלומיניום", "category": "ניקיון וטואלטיקה", "unit": "גליל" },
+          { "name": "סבון ידיים", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+          { "name": "חומר לניקוי רצפות", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+          { "name": "חומר לניקוי חלונות", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+          { "name": "מברשת שיניים", "category": "ניקיון וטואלטיקה", "unit": "יח'" },
+          { "name": "קיסמי שיניים", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
+          { "name": "ירקות קפואים (לקט)", "category": "קפואים", "unit": "אריזה" },
+          { "name": "אפונה קפואה", "category": "קפואים", "unit": "אריזה" },
+          { "name": "שעועית ירוקה קפואה", "category": "קפואים", "unit": "אריזה" },
+          { "name": "תירס קפוא", "category": "קפואים", "unit": "אריזה" },
+          { "name": "צ'יפס קפוא", "category": "קפואים", "unit": "אריזה" },
+          { "name": "פיצה קפואה", "category": "קפואים", "unit": "אריזה" },
+          { "name": "מלאווח", "category": "קפואים", "unit": "אריזה" },
+          { "name": "ג'חנון", "category": "קפואים", "unit": "אריזה" },
+          { "name": "גלידה משפחתית", "category": "קפואים", "unit": "קופסא" },
+          { "name": "שלגונים", "category": "קפואים", "unit": "מארז" },
+          { "name": "פירות יער קפואים", "category": "קפואים", "unit": "אריזה" },
+          { "name": "חיתולים", "category": "תינוקות", "unit": "מארז" },
+          { "name": "מגבונים לחים", "category": "תינוקות", "unit": "מארז" },
+          { "name": "תחליף חלב (מטרנה/סימילאק)", "category": "תינוקות", "unit": "אריזה" },
+          { "name": "מזון לכלבים", "category": "חיות מחמד", "unit": "שק" },
+          { "name": "מזון לחתולים", "category": "חיות מחמד", "unit": "שק" },
+          { "name": "חול לחתולים", "category": "חיות מחמד", "unit": "שק" },
+          { "name": "נרות שבת", "category": "שונות", "unit": "מארז" },
+          { "name": "סוללות AA", "category": "שונות", "unit": "מארז" },
+          { "name": "סוללות AAA", "category": "שונות", "unit": "מארז" }
+        ];
 
         // --- ניהול State מקומי ---
         const state = {
             user: null,
             lists: [],
             items: [],
-            activeListId: localStorage.getItem('familyCart_lastListId') || null, // פיצ'ר: זוכר רשימה אחרונה
+            activeListId: localStorage.getItem('familyCart_lastListId') || null,
             loading: true,
             searchQuery: '',
-            showCompleted: true, // הרשימה פתוחה כברירת מחדל
-            hasCelebrated: false // מעקב אחרי קונפטי
+            showCompleted: true,
+            hasCelebrated: false
         };
 
         let unsubLists = null;
         let unsubItems = null;
         let html5QrcodeScanner = null;
 
-        // --- אתחול Firebase ---
+        // --- אתחול Firebase והתחברות Google ---
         async function initAuth() {
             try {
+                // בדיקת סביבת עבודה, לא נתחבר אוטומטית אנונימית יותר
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
                 }
             } catch (error) {
                 console.error("Auth error:", error);
@@ -339,6 +347,9 @@
                 fetchData();
             } else {
                 state.loading = false;
+                // ניקוי האזנות אם התנתקנו
+                if(unsubLists) unsubLists();
+                if(unsubItems) unsubItems();
                 renderApp();
             }
         });
@@ -352,7 +363,6 @@
                 state.lists = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 state.lists.sort((a, b) => b.createdAt - a.createdAt);
                 
-                // אם הרשימה השמורה נמחקה, נאפס
                 if (state.activeListId && !state.lists.find(l => l.id === state.activeListId)) {
                     setActiveList(null);
                 }
@@ -365,18 +375,42 @@
             const itemsRef = collection(db, 'artifacts', appId, 'users', state.user.uid, 'items');
             unsubItems = onSnapshot(itemsRef, (snapshot) => {
                 state.items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderApp(); // נרנדר רק אם הנתונים השתנו
-                renderSuggestions(); // עדכון הצעות החיפוש בזמן אמת
+                renderApp(); 
+                renderSuggestions();
             });
         }
 
         initAuth();
 
         // --- פונקציות עזר (Actions) ---
+
+        // התחברות עם גוגל
+        window.loginWithGoogle = async () => {
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Login error", error);
+                alert("שגיאה בהתחברות. אנא ודא שחיבור Google מופעל ב-Firebase: " + error.message);
+            }
+        };
+
+        // התנתקות
+        window.logout = async () => {
+            if (!confirm("האם אתה בטוח שברצונך להתנתק?")) return;
+            try {
+                await signOut(auth);
+                state.lists = [];
+                state.items = [];
+                setActiveList(null);
+            } catch (error) {
+                console.error("Logout error", error);
+            }
+        };
         
         window.setActiveList = (listId) => {
             state.activeListId = listId;
-            state.searchQuery = ''; // איפוס חיפוש במעבר
+            state.searchQuery = ''; 
             if (listId) {
                 localStorage.setItem('familyCart_lastListId', listId);
             } else {
@@ -395,7 +429,7 @@
                 const listsRef = collection(db, 'artifacts', appId, 'users', state.user.uid, 'lists');
                 const docRef = await addDoc(listsRef, { name, createdAt: Date.now() });
                 input.value = '';
-                setActiveList(docRef.id); // מעבר אוטומטי לרשימה החדשה
+                setActiveList(docRef.id); 
             } catch (error) { console.error("Error creating list", error); }
         };
 
@@ -444,7 +478,6 @@
             renderSuggestions();
         };
 
-        // הוספת פריט עם כמות ויחידת מידה
         window.addItem = async (name, category, quantity = 1, unit = "יח'") => {
             if (!name.trim() || !state.user || !state.activeListId) return;
             try {
@@ -458,7 +491,6 @@
                     createdAt: Date.now()
                 });
                 
-                // איפוס טופס הוספה לאחר אישור
                 const searchInput = document.getElementById('search-input');
                 
                 state.searchQuery = '';
@@ -474,17 +506,14 @@
         window.submitCustomItem = (e) => {
             e.preventDefault();
             const input = document.getElementById('search-input');
-            
             const val = input.value.trim();
 
             if(val) {
-                // בדיקה אם המוצר קיים במאגר כדי לקחת קטגוריה ויחידת מידה
                 const match = DEFAULT_PRODUCTS.find(p => p.name === val);
                 addItem(val, match ? match.category : 'אחר', 1, match && match.unit ? match.unit : "יח'");
             }
         };
 
-        // עדכון כמות אונליין מהרשימה
         window.updateItemQty = async (itemId, delta) => {
             const item = state.items.find(i => i.id === itemId);
             if (!item) return;
@@ -525,12 +554,11 @@
         document.getElementById('close-scanner').addEventListener('click', closeScanner);
 
         async function onScanSuccess(decodedText, decodedResult) {
-            closeScanner(); // סגירת המצלמה מיד
+            closeScanner(); 
             const searchInput = document.getElementById('search-input');
             if(searchInput) searchInput.value = "מחפש מוצר...";
             
             try {
-                // שימוש ב-Open Food Facts API
                 const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${decodedText}.json`);
                 const data = await res.json();
                 
@@ -554,13 +582,33 @@
             }
         }
 
-        function onScanError(errorMessage) {
-            // התעלמות משגיאות סריקה רגילות (קורה כל פריים שלא מזהה)
-        }
-
+        function onScanError(errorMessage) {}
 
         // --- פונקציות רינדור (UI) ---
         const appContainer = document.getElementById('app');
+
+        // מסך התחברות ללקוחות שלא מחוברים
+        function renderLoginScreen() {
+            return `
+                <div class="flex-1 flex flex-col items-center justify-center p-6 bg-emerald-500 text-white fade-in text-center">
+                    <div class="bg-white/20 p-5 rounded-3xl mb-8">
+                        <i data-lucide="shopping-cart" class="w-16 h-16"></i>
+                    </div>
+                    <h1 class="text-4xl font-bold mb-3 tracking-tight">FamilyCart</h1>
+                    <p class="text-emerald-100 mb-12 text-lg px-4">התחברו עם גוגל כדי לנהל ולשתף רשימות קניות עם כל המשפחה בקלות.</p>
+                    
+                    <button onclick="loginWithGoogle()" class="bg-white text-emerald-600 px-8 py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-gray-50 hover:-translate-y-1 active:scale-95 transition-all flex items-center gap-4 border border-emerald-100">
+                        <svg class="w-7 h-7" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                        </svg>
+                        התחברות עם Google
+                    </button>
+                </div>
+            `;
+        }
 
         function renderApp() {
             if (state.loading) {
@@ -572,13 +620,18 @@
                 return;
             }
 
+            // הצגת מסך התחברות אם המשתמש לא מחובר
+            if (!state.user) {
+                appContainer.innerHTML = renderLoginScreen();
+                lucide.createIcons();
+                return;
+            }
+
             if (!state.activeListId) {
                 appContainer.innerHTML = renderListsManager();
             } else {
                 const activeList = state.lists.find(l => l.id === state.activeListId);
                 if(activeList) {
-                    // כדי לא לאבד פוקוס בזמן הקלדה בחיפוש, נרנדר את כל המעטפת רק אם היא לא קיימת או שהחלפנו רשימה.
-                    // ב-Vanilla JS גישה נכונה היא לעדכן רק אלמנטים פנימיים אם אפשר, אבל לצורך הפשטות והיציבות נייצר שלד קבוע ונעדכן את תוכנו.
                     appContainer.innerHTML = renderShoppingListWrapper(activeList);
                     renderDynamicListContent();
                     renderSuggestions();
@@ -610,15 +663,26 @@
                 </div>
             `).join('');
 
+            // שימוש בשם משתמש או אימייל, ותמונת פרופיל (עם fallback במידה ואין)
+            const userName = state.user.displayName || state.user.email?.split('@')[0] || 'משפחה';
+            const userPhoto = state.user.photoURL || `https://ui-avatars.com/api/?name=${userName}&background=random`;
+
             return `
-                <header class="bg-emerald-500 text-white p-6 rounded-b-[2rem] shadow-md z-10 shrink-0">
-                    <div class="flex items-center gap-3 mb-2">
-                        <div class="bg-white/20 p-2 rounded-xl">
-                            <i data-lucide="shopping-cart" class="w-8 h-8"></i>
+                <header class="bg-emerald-500 text-white p-6 rounded-b-[2rem] shadow-md z-10 shrink-0 relative">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-white/20 p-2 rounded-xl">
+                                <i data-lucide="shopping-cart" class="w-8 h-8"></i>
+                            </div>
+                            <h1 class="text-3xl font-bold tracking-tight">FamilyCart</h1>
                         </div>
-                        <h1 class="text-3xl font-bold tracking-tight">FamilyCart</h1>
+                        <!-- פרטי משתמש והתנתקות בראש המסך -->
+                        <div class="flex flex-col items-end">
+                            <img src="${userPhoto}" alt="פרופיל" class="w-10 h-10 rounded-full border-2 border-white/50 mb-1 object-cover shadow-sm">
+                            <button onclick="logout()" class="text-xs text-emerald-100 hover:text-white transition-colors cursor-pointer bg-black/10 px-2 py-0.5 rounded-md">התנתק</button>
+                        </div>
                     </div>
-                    <p class="text-emerald-50 opacity-90 text-sm">רשימות הקניות המשותפות של המשפחה</p>
+                    <p class="text-emerald-50 opacity-90 text-sm mt-1">שלום ${userName}, ברוכים הבאים!</p>
                 </header>
                 <main class="flex-1 p-4 overflow-y-auto no-scrollbar bg-gray-50">
                     <form onsubmit="createList(event)" class="flex gap-2 mb-8 mt-2 relative fade-in">
@@ -653,7 +717,6 @@
                         <div id="progress-bar" class="bg-emerald-500 h-4 rounded-full transition-all duration-500 ease-out flex items-center justify-center text-[10px] font-bold text-white shadow-inner" style="width: 0%"></div>
                     </div>
 
-                    <!-- אזור החיפוש וההוספה מורחב -->
                     <div class="relative mt-2">
                         <form onsubmit="submitCustomItem(event)" class="flex gap-2 relative">
                             <div class="relative flex-1">
@@ -667,7 +730,6 @@
                                 הוסף
                             </button>
                         </form>
-                        <!-- הצעות חיפוש -->
                         <div id="suggestions-box" class="absolute top-full mt-2 left-0 right-0 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 empty:hidden max-h-60 overflow-y-auto"></div>
                     </div>
                 </header>
@@ -687,10 +749,7 @@
                 return;
             }
 
-            // סינון הצעות מתוך המאגר
             const suggestions = DEFAULT_PRODUCTS.filter(p => p.name.includes(q)).slice(0, 6);
-            
-            // בדיקה האם המוצר כבר קיים ברשימה הפעילה (רק הלא קנויים)
             const activeListItems = state.items.filter(i => i.listId === state.activeListId && !i.isBought);
             const activeItemNames = activeListItems.map(i => i.name);
 
@@ -699,7 +758,6 @@
                 return;
             }
 
-            // פונקציית עזר למניעת שגיאות Syntax כשיש גרשיים כפולים (ק"ג) או יחידים (קוטג') בתוך הפונקציה
             const escapeInline = (str) => {
                 if (!str) return '';
                 return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
@@ -743,15 +801,13 @@
             const bought = listItems.filter(i => i.isBought);
             const progress = listItems.length === 0 ? 0 : Math.round((bought.length / listItems.length) * 100);
 
-            // עדכון Progress Header
             if(progressText) progressText.innerText = `${unbought.length} נותרו`;
             const pb = document.getElementById('progress-bar');
             if(pb) {
                 pb.style.width = listItems.length === 0 ? '0%' : `${progress}%`;
-                pb.innerText = progress > 5 ? `${progress}%` : ''; // הצגת אחוזים בתוך הפס
+                pb.innerText = progress > 5 ? `${progress}%` : ''; 
             }
 
-            // לוגיקת קונפטי
             if (progress === 100 && listItems.length > 0 && !state.hasCelebrated) {
                 state.hasCelebrated = true;
                 confetti({
@@ -777,7 +833,6 @@
                 return;
             }
 
-            // קיבוץ לקטגוריות
             const groups = {};
             unbought.forEach(item => {
                 const cat = item.category || 'אחר';
@@ -803,7 +858,6 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- בקרת כמות אינליין פרואקטיבית -->
                                     <div class="flex items-center bg-gray-100 rounded-lg p-0.5 ml-2 border border-gray-200 shrink-0">
                                         <button onclick="event.stopPropagation(); updateItemQty('${item.id}', -1)" class="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-200 active:bg-gray-300 active:scale-95 rounded-md transition-all font-bold text-lg leading-none">-</button>
                                         <span class="text-xs font-bold text-gray-800 w-14 text-center select-none">${item.quantity || 1} ${item.unit || "יח'"}</span>
@@ -820,7 +874,6 @@
                 `;
             });
 
-            // פריטים שהושלמו
             if (bought.length > 0) {
                 const chevronIcon = state.showCompleted ? 'chevron-up' : 'chevron-down';
                 html += `
