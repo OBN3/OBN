@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FamilyCart</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- HTML5 QRCode Scanner -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        /* מעברי אנימציה מותאמים אישית */
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* הסתרת פס גלילה אבל השארת פונקציונליות */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        #reader { width: 100%; max-width: 400px; margin: 0 auto; border-radius: 1rem; overflow: hidden; }
+        #reader video { border-radius: 1rem; object-fit: cover; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans h-screen flex flex-col overflow-hidden">
+
+    <!-- Container ראשי -->
+    <div id="app" class="flex-1 overflow-hidden flex flex-col h-full w-full max-w-md mx-auto bg-white shadow-xl relative">
+        <!-- התוכן ירונדר לכאן על ידי JS -->
+    </div>
+
+    <!-- Modal לסורק ברקוד מצלמה -->
+    <div id="scanner-modal" class="hidden fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4">
+        <div class="w-full max-w-sm bg-white rounded-3xl p-4 flex flex-col gap-4">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-lg">סרוק ברקוד</h3>
+                <button id="close-scanner" class="p-2 bg-gray-100 rounded-full text-gray-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div id="reader" class="bg-black w-full aspect-square rounded-2xl"></div>
+            <p class="text-center text-sm text-gray-500">כוון את המצלמה אל ברקוד המוצר</p>
+        </div>
+    </div>
+
+    <!-- Modal מחיקת הושלמו -->
+    <div id="clear-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex flex-col items-center justify-center p-4 backdrop-blur-sm fade-in">
+        <div class="w-full max-w-sm bg-white rounded-3xl p-6 flex flex-col gap-4 text-center shadow-2xl">
+            <div class="mx-auto bg-red-100 text-red-500 p-4 rounded-full mb-2">
+                <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+            </div>
+            <h3 class="font-bold text-xl text-gray-800">לנקות את כל המוצרים שהושלמו?</h3>
+            <p class="text-gray-500 text-sm">פעולה זו תמחק את כל המוצרים שסומנו כקנויים מהרשימה הנוכחית. לא ניתן לשחזר זאת.</p>
+            <div class="flex gap-3 mt-4">
+                <button onclick="closeClearModal()" class="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors">
+                    ביטול
+                </button>
+                <button onclick="confirmClear()" class="flex-1 bg-red-500 text-white py-3 rounded-xl font-medium shadow-md hover:bg-red-600 transition-colors">
+                    נקה הכל
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // הגדרות Firebase מהסביבה
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'family-cart-app';
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- מסד נתונים וקבועים ---
+        const CATEGORY_COLORS = {
+            "מוצרי חלב וביצים": "bg-blue-100 text-blue-800",
+            "פירות וירקות": "bg-green-100 text-green-800",
+            "בשר ודגים": "bg-red-100 text-red-800",
+            "מאפה ולחם": "bg-orange-100 text-orange-800",
+            "מזווה ובישול": "bg-amber-100 text-amber-800",
+            "סלטים וממרחים": "bg-lime-100 text-lime-800",
+            "דגנים וחטיפים": "bg-purple-100 text-purple-800",
+            "משקאות": "bg-cyan-100 text-cyan-800",
+            "ניקיון וטואלטיקה": "bg-teal-100 text-teal-800",
+            "קפואים": "bg-indigo-100 text-indigo-800",
+            "אחר": "bg-gray-100 text-gray-800"
+        };
+        const CATEGORIES = Object.keys(CATEGORY_COLORS);
+        
+        // נתוני ברירת מחדל (חלק מהרשימה לטובת הדגמה, אפשר להרחיב)
+        const DEFAULT_PRODUCTS = [
+  { "name": "חלב 3%", "category": "מוצרי חלב וביצים", "unit": "ליטר" },
+  { "name": "גבינה צהובה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+  { "name": "קוטג'", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+  { "name": "גבינה לבנה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+  { "name": "יוגורט", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+  { "name": "חמאה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+  { "name": "ביצים L", "category": "מוצרי חלב וביצים", "unit": "תבנית" },
+  { "name": "שמנת חמוצה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+  { "name": "שמנת מתוקה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+  { "name": "גבינת פטה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+  { "name": "חלב שיבולת שועל", "category": "מוצרי חלב וביצים", "unit": "ליטר" },
+  { "name": "גבינת שמנת", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+  { "name": "לבנה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+  { "name": "חלב סויה", "category": "מוצרי חלב וביצים", "unit": "ליטר" },
+  { "name": "מעדן שוקולד", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+  { "name": "גבינה בולגרית", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+  { "name": "ריקוטה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+  { "name": "חלומי", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+  { "name": "חלב עזים", "category": "מוצרי חלב וביצים", "unit": "ליטר" },
+  { "name": "גבינת מוצרלה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+  { "name": "עגבניות", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "מלפפונים", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "פלפל גמבה", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "בצל יבש", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "תפוחי אדמה", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "גזר", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "חסה", "category": "פירות וירקות", "unit": "יח'" },
+  { "name": "תפוח עץ", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "בננה", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "לימון", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "חציל", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "קישוא", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "ברוקולי", "category": "פירות וירקות", "unit": "יח'" },
+  { "name": "כרובית", "category": "פירות וירקות", "unit": "יח'" },
+  { "name": "שום", "category": "פירות וירקות", "unit": "מארז" },
+  { "name": "פטרוזיליה", "category": "פירות וירקות", "unit": "מארז" },
+  { "name": "כוסברה", "category": "פירות וירקות", "unit": "מארז" },
+  { "name": "אבוקדו", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "אבטיח", "category": "פירות וירקות", "unit": "יח'" },
+  { "name": "ענבים", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "בטטה", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "בצל ירוק", "category": "פירות וירקות", "unit": "מארז" },
+  { "name": "פטריות שמפיניון", "category": "פירות וירקות", "unit": "מארז" },
+  { "name": "כרוב לבן", "category": "פירות וירקות", "unit": "יח'" },
+  { "name": "כרוב אדום", "category": "פירות וירקות", "unit": "יח'" },
+  { "name": "דלעת", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "צנונית", "category": "פירות וירקות", "unit": "מארז" },
+  { "name": "סלק", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "אפרסק", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "שזיף", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "מנגו", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "תות שדה", "category": "פירות וירקות", "unit": "מארז" },
+  { "name": "מלון", "category": "פירות וירקות", "unit": "יח'" },
+  { "name": "תפוז", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "קיווי", "category": "פירות וירקות", "unit": "ק\"ג" },
+  { "name": "חזה עוף", "category": "בשר ודגים", "unit": "ק\"ג" },
+  { "name": "בשר טחון", "category": "בשר ודגים", "unit": "ק\"ג" },
+  { "name": "דג סלמון", "category": "בשר ודגים", "unit": "ק\"ג" },
+  { "name": "פסטרמה", "category": "בשר ודגים", "unit": "אריזה" },
+  { "name": "כרעיים עוף", "category": "בשר ודגים", "unit": "ק\"ג" },
+  { "name": "המבורגר", "category": "בשר ודגים", "unit": "אריזה" },
+  { "name": "נקניקיות", "category": "בשר ודגים", "unit": "אריזה" },
+  { "name": "דג אמנון", "category": "בשר ודגים", "unit": "ק\"ג" },
+  { "name": "סטייק אנטריקוט", "category": "בשר ודגים", "unit": "ק\"ג" },
+  { "name": "קבב", "category": "בשר ודגים", "unit": "אריזה" },
+  { "name": "כנפיים", "category": "בשר ודגים", "unit": "ק\"ג" },
+  { "name": "שניצל מוכן", "category": "בשר ודגים", "unit": "אריזה" },
+  { "name": "דג לברק", "category": "בשר ודגים", "unit": "ק\"ג" },
+  { "name": "בשר בקר לצלי", "category": "בשר ודגים", "unit": "ק\"ג" },
+  { "name": "לחם פרוס", "category": "מאפה ולחם", "unit": "אריזה" },
+  { "name": "פיתות", "category": "מאפה ולחם", "unit": "אריזה" },
+  { "name": "לחמניות", "category": "מאפה ולחם", "unit": "אריזה" },
+  { "name": "חלה", "category": "מאפה ולחם", "unit": "יח'" },
+  { "name": "בגט", "category": "מאפה ולחם", "unit": "יח'" },
+  { "name": "לחם מחמצת", "category": "מאפה ולחם", "unit": "כיכר" },
+  { "name": "טורטיות", "category": "מאפה ולחם", "unit": "אריזה" },
+  { "name": "פיתות כוסמין", "category": "מאפה ולחם", "unit": "אריזה" },
+  { "name": "ביסקוויטים", "category": "מאפה ולחם", "unit": "אריזה" },
+  { "name": "עוגה בחושה", "category": "מאפה ולחם", "unit": "יח'" },
+  { "name": "בורקס קפוא", "category": "מאפה ולחם", "unit": "אריזה" },
+  { "name": "קרואסון", "category": "מאפה ולחם", "unit": "אריזה" },
+  { "name": "אורז לבן", "category": "מזווה ובישול", "unit": "ק\"ג" },
+  { "name": "אורז מלא", "category": "מזווה ובישול", "unit": "ק\"ג" },
+  { "name": "פסטה פוסילי", "category": "מזווה ובישול", "unit": "אריזה" },
+  { "name": "ספגטי", "category": "מזווה ובישול", "unit": "אריזה" },
+  { "name": "שמן קנולה", "category": "מזווה ובישול", "unit": "בקבוק" },
+  { "name": "שמן זית", "category": "מזווה ובישול", "unit": "בקבוק" },
+  { "name": "סוכר לבן", "category": "מזווה ובישול", "unit": "ק\"ג" },
+  { "name": "מלח שולחן", "category": "מזווה ובישול", "unit": "ק\"ג" },
+  { "name": "קפה נמס", "category": "מזווה ובישול", "unit": "יח'" },
+  { "name": "תה קלאסי", "category": "מזווה ובישול", "unit": "אריזה" },
+  { "name": "קמח חיטה", "category": "מזווה ובישול", "unit": "ק\"ג" },
+  { "name": "קמח תופח", "category": "מזווה ובישול", "unit": "ק\"ג" },
+  { "name": "רסק עגבניות", "category": "מזווה ובישול", "unit": "מארז" },
+  { "name": "טונה בשמן", "category": "מזווה ובישול", "unit": "מארז" },
+  { "name": "טונה במים", "category": "מזווה ובישול", "unit": "מארז" },
+  { "name": "תירס בשימורים", "category": "מזווה ובישול", "unit": "יח'" },
+  { "name": "דבש", "category": "מזווה ובישול", "unit": "צנצנת" },
+  { "name": "סילאן", "category": "מזווה ובישול", "unit": "בקבוק" },
+  { "name": "ריבה", "category": "מזווה ובישול", "unit": "צנצנת" },
+  { "name": "ממרח שוקולד", "category": "מזווה ובישול", "unit": "אריזה" },
+  { "name": "חמאת בוטנים", "category": "מזווה ובישול", "unit": "אריזה" },
+  { "name": "קטשופ", "category": "מזווה ובישול", "unit": "בקבוק" },
+  { "name": "מיונז", "category": "מזווה ובישול", "unit": "אריזה" },
+  { "name": "חרדל", "category": "מזווה ובישול", "unit": "בקבוק" },
+  { "name": "פתיתים", "category": "מזווה ובישול", "unit": "אריזה" },
+  { "name": "קוסקוס", "category": "מזווה ובישול", "unit": "אריזה" },
+  { "name": "פירורי לחם", "category": "מזווה ובישול", "unit": "אריזה" },
+  { "name": "שעועית לבנה", "category": "מזווה ובישול", "unit": "ק\"ג" },
+  { "name": "עדשים ירוקות", "category": "מזווה ובישול", "unit": "ק\"ג" },
+  { "name": "עדשים כתומות", "category": "מזווה ובישול", "unit": "ק\"ג" },
+  { "name": "חומץ", "category": "מזווה ובישול", "unit": "בקבוק" },
+  { "name": "רוטב סויה", "category": "מזווה ובישול", "unit": "בקבוק" },
+  { "name": "רוטב טריאקי", "category": "מזווה ובישול", "unit": "בקבוק" },
+  { "name": "רוטב צ'ילי מתוק", "category": "מזווה ובישול", "unit": "בקבוק" },
+  { "name": "שימורי פטריות", "category": "מזווה ובישול", "unit": "יח'" },
+  { "name": "אבקת מרק", "category": "מזווה ובישול", "unit": "אריזה" },
+  { "name": "סודה לשתייה", "category": "מזווה ובישול", "unit": "אריזה" },
+  { "name": "אבקת אפייה", "category": "מזווה ובישול", "unit": "מארז" },
+  { "name": "תמצית וניל", "category": "מזווה ובישול", "unit": "בקבוק" },
+  { "name": "פפריקה מתוקה", "category": "מזווה ובישול", "unit": "יח'" },
+  { "name": "כמון", "category": "מזווה ובישול", "unit": "יח'" },
+  { "name": "כורכום", "category": "מזווה ובישול", "unit": "יח'" },
+  { "name": "פלפל שחור", "category": "מזווה ובישול", "unit": "יח'" },
+  { "name": "קינמון", "category": "מזווה ובישול", "unit": "יח'" },
+  { "name": "אגוזי מלך", "category": "מזווה ובישול", "unit": "ק\"ג" },
+  { "name": "שקדים", "category": "מזווה ובישול", "unit": "ק\"ג" },
+  { "name": "חומוס מוכן", "category": "סלטים וממרחים", "unit": "אריזה" },
+  { "name": "טחינה גולמית", "category": "סלטים וממרחים", "unit": "אריזה" },
+  { "name": "טחינה מוכנה", "category": "סלטים וממרחים", "unit": "אריזה" },
+  { "name": "מטבוחה", "category": "סלטים וממרחים", "unit": "אריזה" },
+  { "name": "סלט טורקי", "category": "סלטים וממרחים", "unit": "אריזה" },
+  { "name": "סלט כרוב", "category": "סלטים וממרחים", "unit": "אריזה" },
+  { "name": "חמוצים (מלפפון)", "category": "סלטים וממרחים", "unit": "קופסא" },
+  { "name": "זיתים ירוקים", "category": "סלטים וממרחים", "unit": "קופסא" },
+  { "name": "זיתים שחורים", "category": "סלטים וממרחים", "unit": "קופסא" },
+  { "name": "פסטו", "category": "סלטים וממרחים", "unit": "צנצנת" },
+  { "name": "ממרח עגבניות מיובשות", "category": "סלטים וממרחים", "unit": "צנצנת" },
+  { "name": "קורנפלקס", "category": "דגנים וחטיפים", "unit": "אריזה" },
+  { "name": "גרנולה", "category": "דגנים וחטיפים", "unit": "אריזה" },
+  { "name": "שיבולת שועל", "category": "דגנים וחטיפים", "unit": "אריזה" },
+  { "name": "במבה", "category": "דגנים וחטיפים", "unit": "אריזה" },
+  { "name": "ביסלי", "category": "דגנים וחטיפים", "unit": "אריזה" },
+  { "name": "תפוצ'יפס", "category": "דגנים וחטיפים", "unit": "אריזה" },
+  { "name": "דוריטוס", "category": "דגנים וחטיפים", "unit": "אריזה" },
+  { "name": "בייגלה", "category": "דגנים וחטיפים", "unit": "אריזה" },
+  { "name": "שוקולד פרה", "category": "דגנים וחטיפים", "unit": "יח'" },
+  { "name": "עוגיות שוקולד צ'יפס", "category": "דגנים וחטיפים", "unit": "אריזה" },
+  { "name": "ופלים שוקולד", "category": "דגנים וחטיפים", "unit": "אריזה" },
+  { "name": "מסטיק", "category": "דגנים וחטיפים", "unit": "יח'" },
+  { "name": "סוכריות", "category": "דגנים וחטיפים", "unit": "אריזה" },
+  { "name": "חטיף אנרגיה", "category": "דגנים וחטיפים", "unit": "מארז" },
+  { "name": "פריכיות אורז", "category": "דגנים וחטיפים", "unit": "אריזה" },
+  { "name": "פיצוחים מעורבים", "category": "דגנים וחטיפים", "unit": "ק\"ג" },
+  { "name": "מים מינרליים", "category": "משקאות", "unit": "מארז" },
+  { "name": "קוקה קולה", "category": "משקאות", "unit": "בקבוק" },
+  { "name": "דיאט קולה / זירו", "category": "משקאות", "unit": "בקבוק" },
+  { "name": "סודה", "category": "משקאות", "unit": "מארז" },
+  { "name": "מיץ תפוזים", "category": "משקאות", "unit": "בקבוק" },
+  { "name": "מיץ ענבים", "category": "משקאות", "unit": "בקבוק" },
+  { "name": "בירה", "category": "משקאות", "unit": "מארז" },
+  { "name": "יין אדום", "category": "משקאות", "unit": "בקבוק" },
+  { "name": "יין לבן", "category": "משקאות", "unit": "בקבוק" },
+  { "name": "משקה אנרגיה", "category": "משקאות", "unit": "פחית" },
+  { "name": "תה קר", "category": "משקאות", "unit": "בקבוק" },
+  { "name": "נייר טואלט", "category": "ניקיון וטואלטיקה", "unit": "מארז" },
+  { "name": "נוזל כלים", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+  { "name": "אבקת כביסה", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
+  { "name": "ג'ל כביסה", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+  { "name": "מרכך כביסה", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+  { "name": "טבליות למדיח", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
+  { "name": "שמפו", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+  { "name": "מרכך שיער", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+  { "name": "סבון גוף נוזלי", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+  { "name": "משחת שיניים", "category": "ניקיון וטואלטיקה", "unit": "יח'" },
+  { "name": "דאודורנט", "category": "ניקיון וטואלטיקה", "unit": "יח'" },
+  { "name": "שקיות אשפה", "category": "ניקיון וטואלטיקה", "unit": "גליל" },
+  { "name": "מגבוני ניקוי", "category": "ניקיון וטואלטיקה", "unit": "מארז" },
+  { "name": "נייר אפייה", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
+  { "name": "רדיד אלומיניום", "category": "ניקיון וטואלטיקה", "unit": "גליל" },
+  { "name": "סבון ידיים", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+  { "name": "חומר לניקוי רצפות", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+  { "name": "חומר לניקוי חלונות", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+  { "name": "מברשת שיניים", "category": "ניקיון וטואלטיקה", "unit": "יח'" },
+  { "name": "קיסמי שיניים", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
+  { "name": "ירקות קפואים (לקט)", "category": "קפואים", "unit": "אריזה" },
+  { "name": "אפונה קפואה", "category": "קפואים", "unit": "אריזה" },
+  { "name": "שעועית ירוקה קפואה", "category": "קפואים", "unit": "אריזה" },
+  { "name": "תירס קפוא", "category": "קפואים", "unit": "אריזה" },
+  { "name": "צ'יפס קפוא", "category": "קפואים", "unit": "אריזה" },
+  { "name": "פיצה קפואה", "category": "קפואים", "unit": "אריזה" },
+  { "name": "מלאווח", "category": "קפואים", "unit": "אריזה" },
+  { "name": "ג'חנון", "category": "קפואים", "unit": "אריזה" },
+  { "name": "גלידה משפחתית", "category": "קפואים", "unit": "קופסא" },
+  { "name": "שלגונים", "category": "קפואים", "unit": "מארז" },
+  { "name": "פירות יער קפואים", "category": "קפואים", "unit": "אריזה" },
+  { "name": "חיתולים", "category": "תינוקות", "unit": "מארז" },
+  { "name": "מגבונים לחים", "category": "תינוקות", "unit": "מארז" },
+  { "name": "תחליף חלב (מטרנה/סימילאק)", "category": "תינוקות", "unit": "אריזה" },
+  { "name": "מזון לכלבים", "category": "חיות מחמד", "unit": "שק" },
+  { "name": "מזון לחתולים", "category": "חיות מחמד", "unit": "שק" },
+  { "name": "חול לחתולים", "category": "חיות מחמד", "unit": "שק" },
+  { "name": "נרות שבת", "category": "שונות", "unit": "מארז" },
+  { "name": "סוללות AA", "category": "שונות", "unit": "מארז" },
+  { "name": "סוללות AAA", "category": "שונות", "unit": "מארז" }
+];
+
+        // --- ניהול State מקומי ---
+        const state = {
+            user: null,
+            lists: [],
+            items: [],
+            activeListId: localStorage.getItem('familyCart_lastListId') || null, // פיצ'ר: זוכר רשימה אחרונה
+            loading: true,
+            searchQuery: '',
+            showCompleted: true, // הרשימה פתוחה כברירת מחדל
+            hasCelebrated: false // מעקב אחרי קונפטי
+        };
+
+        let unsubLists = null;
+        let unsubItems = null;
+        let html5QrcodeScanner = null;
+
+        // --- אתחול Firebase ---
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Auth error:", error);
+            }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            state.user = user;
+            if (user) {
+                fetchData();
+            } else {
+                state.loading = false;
+                renderApp();
+            }
+        });
+
+        function fetchData() {
+            if (!state.user) return;
+            
+            // שליפת רשימות
+            const listsRef = collection(db, 'artifacts', appId, 'users', state.user.uid, 'lists');
+            unsubLists = onSnapshot(listsRef, (snapshot) => {
+                state.lists = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                state.lists.sort((a, b) => b.createdAt - a.createdAt);
+                
+                // אם הרשימה השמורה נמחקה, נאפס
+                if (state.activeListId && !state.lists.find(l => l.id === state.activeListId)) {
+                    setActiveList(null);
+                }
+                
+                state.loading = false;
+                renderApp();
+            });
+
+            // שליפת מוצרים
+            const itemsRef = collection(db, 'artifacts', appId, 'users', state.user.uid, 'items');
+            unsubItems = onSnapshot(itemsRef, (snapshot) => {
+                state.items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderApp(); // נרנדר רק אם הנתונים השתנו
+                renderSuggestions(); // עדכון הצעות החיפוש בזמן אמת
+            });
+        }
+
+        initAuth();
+
+        // --- פונקציות עזר (Actions) ---
+        
+        window.setActiveList = (listId) => {
+            state.activeListId = listId;
+            state.searchQuery = ''; // איפוס חיפוש במעבר
+            if (listId) {
+                localStorage.setItem('familyCart_lastListId', listId);
+            } else {
+                localStorage.removeItem('familyCart_lastListId');
+            }
+            renderApp();
+        };
+
+        window.createList = async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('new-list-name');
+            const name = input.value.trim();
+            if (!name || !state.user) return;
+            
+            try {
+                const listsRef = collection(db, 'artifacts', appId, 'users', state.user.uid, 'lists');
+                const docRef = await addDoc(listsRef, { name, createdAt: Date.now() });
+                input.value = '';
+                setActiveList(docRef.id); // מעבר אוטומטי לרשימה החדשה
+            } catch (error) { console.error("Error creating list", error); }
+        };
+
+        window.deleteList = async (listId) => {
+            if (!confirm("האם למחוק רשימה זו?")) return;
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'lists', listId));
+                if (state.activeListId === listId) setActiveList(null);
+            } catch (err) { console.error("Error deleting list", err); }
+        };
+
+        window.toggleItem = async (itemId, currentStatus) => {
+            try {
+                await updateDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'items', itemId), { 
+                    isBought: !currentStatus 
+                });
+            } catch (err) { console.error("Error toggling item", err); }
+        };
+
+        window.deleteItem = async (itemId) => {
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'items', itemId));
+            } catch (err) { console.error("Error deleting item", err); }
+        };
+
+        window.showClearModal = () => {
+            document.getElementById('clear-modal').classList.remove('hidden');
+            lucide.createIcons();
+        };
+
+        window.closeClearModal = () => {
+            document.getElementById('clear-modal').classList.add('hidden');
+        };
+
+        window.confirmClear = async () => {
+            const boughtItems = state.items.filter(i => i.listId === state.activeListId && i.isBought);
+            try {
+                const promises = boughtItems.map(item => deleteDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'items', item.id)));
+                await Promise.all(promises);
+                closeClearModal();
+            } catch (err) { console.error("Error clearing", err); }
+        };
+
+        window.handleSearchInput = (e) => {
+            state.searchQuery = e.target.value;
+            renderSuggestions();
+        };
+
+        // הוספת פריט עם כמות ויחידת מידה
+        window.addItem = async (name, category, quantity = 1, unit = "יח'") => {
+            if (!name.trim() || !state.user || !state.activeListId) return;
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'users', state.user.uid, 'items'), {
+                    listId: state.activeListId,
+                    name: name.trim(),
+                    category: category || 'אחר',
+                    quantity: parseFloat(quantity) || 1,
+                    unit: unit,
+                    isBought: false,
+                    createdAt: Date.now()
+                });
+                
+                // איפוס טופס הוספה לאחר אישור
+                const searchInput = document.getElementById('search-input');
+                
+                state.searchQuery = '';
+                if(searchInput) {
+                    searchInput.value = '';
+                    searchInput.focus();
+                }
+                
+                renderSuggestions();
+            } catch (err) { console.error("Error adding item", err); }
+        };
+
+        window.submitCustomItem = (e) => {
+            e.preventDefault();
+            const input = document.getElementById('search-input');
+            
+            const val = input.value.trim();
+
+            if(val) {
+                // בדיקה אם המוצר קיים במאגר כדי לקחת קטגוריה ויחידת מידה
+                const match = DEFAULT_PRODUCTS.find(p => p.name === val);
+                addItem(val, match ? match.category : 'אחר', 1, match && match.unit ? match.unit : "יח'");
+            }
+        };
+
+        // עדכון כמות אונליין מהרשימה
+        window.updateItemQty = async (itemId, delta) => {
+            const item = state.items.find(i => i.id === itemId);
+            if (!item) return;
+            const newQty = Math.max(0.5, (parseFloat(item.quantity) || 1) + delta);
+            try {
+                await updateDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'items', itemId), { quantity: newQty });
+            } catch (err) { console.error("Error updating qty", err); }
+        };
+
+        window.toggleCompleted = () => {
+            state.showCompleted = !state.showCompleted;
+            renderApp();
+        };
+
+        // --- סורק ברקוד ---
+        window.openScanner = () => {
+            const modal = document.getElementById('scanner-modal');
+            modal.classList.remove('hidden');
+            
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            
+            html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess, onScanError)
+            .catch(err => {
+                alert("שגיאה בגישה למצלמה. ודא שאישרת הרשאות.");
+                closeScanner();
+            });
+        };
+
+        window.closeScanner = () => {
+            const modal = document.getElementById('scanner-modal');
+            modal.classList.add('hidden');
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); }).catch(console.error);
+            }
+        };
+
+        document.getElementById('close-scanner').addEventListener('click', closeScanner);
+
+        async function onScanSuccess(decodedText, decodedResult) {
+            closeScanner(); // סגירת המצלמה מיד
+            const searchInput = document.getElementById('search-input');
+            if(searchInput) searchInput.value = "מחפש מוצר...";
+            
+            try {
+                // שימוש ב-Open Food Facts API
+                const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${decodedText}.json`);
+                const data = await res.json();
+                
+                if (data.status === 1 && data.product) {
+                    const productName = data.product.product_name_he || data.product.product_name || 'מוצר חדש';
+                    
+                    let cat = 'אחר';
+                    const pTags = (data.product.categories_tags || []).join(' ').toLowerCase();
+                    if (pTags.includes('dairy')) cat = 'מוצרי חלב וביצים';
+                    else if (pTags.includes('snack')) cat = 'דגנים וחטיפים';
+                    else if (pTags.includes('drink')) cat = 'משקאות';
+                    
+                    addItem(productName, cat);
+                } else {
+                    alert("המוצר לא נמצא במאגר הציבורי.");
+                    if(searchInput) searchInput.value = "";
+                }
+            } catch (err) {
+                console.error(err);
+                alert("שגיאה בתקשורת סורק הברקוד.");
+            }
+        }
+
+        function onScanError(errorMessage) {
+            // התעלמות משגיאות סריקה רגילות (קורה כל פריים שלא מזהה)
+        }
+
+
+        // --- פונקציות רינדור (UI) ---
+        const appContainer = document.getElementById('app');
+
+        function renderApp() {
+            if (state.loading) {
+                appContainer.innerHTML = `
+                    <div class="flex-1 flex items-center justify-center text-emerald-500">
+                        <i data-lucide="loader-2" class="w-10 h-10 animate-spin"></i>
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            if (!state.activeListId) {
+                appContainer.innerHTML = renderListsManager();
+            } else {
+                const activeList = state.lists.find(l => l.id === state.activeListId);
+                if(activeList) {
+                    // כדי לא לאבד פוקוס בזמן הקלדה בחיפוש, נרנדר את כל המעטפת רק אם היא לא קיימת או שהחלפנו רשימה.
+                    // ב-Vanilla JS גישה נכונה היא לעדכן רק אלמנטים פנימיים אם אפשר, אבל לצורך הפשטות והיציבות נייצר שלד קבוע ונעדכן את תוכנו.
+                    appContainer.innerHTML = renderShoppingListWrapper(activeList);
+                    renderDynamicListContent();
+                    renderSuggestions();
+                } else {
+                    setActiveList(null);
+                }
+            }
+            lucide.createIcons();
+        }
+
+        // 1. מסך ניהול רשימות
+        function renderListsManager() {
+            const listsHtml = state.lists.length === 0 ? `
+                <div class="text-center text-gray-400 py-16 flex flex-col items-center fade-in">
+                    <i data-lucide="package-open" class="w-16 h-16 mb-4 opacity-50"></i>
+                    <p>אין רשימות עדיין.<br/>צור רשימה חדשה כדי להתחיל!</p>
+                </div>
+            ` : state.lists.map(list => `
+                <div onclick="setActiveList('${list.id}')" class="group flex items-center justify-between bg-white border border-gray-100 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer mb-3 fade-in">
+                    <div class="flex items-center gap-4">
+                        <div class="bg-emerald-100 text-emerald-600 p-2.5 rounded-xl">
+                            <i data-lucide="list" class="w-5 h-5"></i>
+                        </div>
+                        <span class="font-bold text-lg text-gray-800">${list.name}</span>
+                    </div>
+                    <button onclick="event.stopPropagation(); deleteList('${list.id}')" class="text-gray-300 hover:text-red-500 p-2 transition-colors">
+                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            `).join('');
+
+            return `
+                <header class="bg-emerald-500 text-white p-6 rounded-b-[2rem] shadow-md z-10 shrink-0">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="bg-white/20 p-2 rounded-xl">
+                            <i data-lucide="shopping-cart" class="w-8 h-8"></i>
+                        </div>
+                        <h1 class="text-3xl font-bold tracking-tight">FamilyCart</h1>
+                    </div>
+                    <p class="text-emerald-50 opacity-90 text-sm">רשימות הקניות המשותפות של המשפחה</p>
+                </header>
+                <main class="flex-1 p-4 overflow-y-auto no-scrollbar bg-gray-50">
+                    <form onsubmit="createList(event)" class="flex gap-2 mb-8 mt-2 relative fade-in">
+                        <input type="text" id="new-list-name" placeholder="רשימה חדשה (לדוג': סופר, טיול...)" class="flex-1 border-gray-200 border bg-white rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm text-base">
+                        <button type="submit" class="bg-emerald-500 text-white rounded-2xl p-3 shadow-md hover:bg-emerald-600 transition-all flex items-center justify-center aspect-square">
+                            <i data-lucide="plus" class="w-6 h-6"></i>
+                        </button>
+                    </form>
+                    <div class="space-y-1">
+                        <h2 class="font-semibold text-gray-500 mb-4 px-2">הרשימות שלי</h2>
+                        ${listsHtml}
+                    </div>
+                </main>
+            `;
+        }
+
+        // 2. מסך רשימת קניות - שלד עוטף
+        function renderShoppingListWrapper(list) {
+            return `
+                <header class="bg-white px-4 py-3 shadow-sm flex flex-col gap-3 border-b border-gray-100 shrink-0 z-20 relative">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <button onclick="setActiveList(null)" class="p-2 -mr-2 bg-gray-50 rounded-full hover:bg-gray-100 transition-colors">
+                                <i data-lucide="arrow-right" class="w-5 h-5 text-gray-600"></i>
+                            </button>
+                            <h2 class="text-xl font-bold text-gray-800 truncate max-w-[200px]">${list.name}</h2>
+                        </div>
+                        <div id="progress-text" class="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full"></div>
+                    </div>
+                    
+                    <div class="w-full bg-gray-100 rounded-full h-4 overflow-hidden relative mt-1">
+                        <div id="progress-bar" class="bg-emerald-500 h-4 rounded-full transition-all duration-500 ease-out flex items-center justify-center text-[10px] font-bold text-white shadow-inner" style="width: 0%"></div>
+                    </div>
+
+                    <!-- אזור החיפוש וההוספה מורחב -->
+                    <div class="relative mt-2">
+                        <form onsubmit="submitCustomItem(event)" class="flex gap-2 relative">
+                            <div class="relative flex-1">
+                                <input type="text" id="search-input" autocomplete="off" oninput="handleSearchInput(event)" placeholder="הקלד שם מוצר להוספה..." 
+                                    class="w-full border-gray-200 border bg-gray-50 rounded-2xl py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white text-base transition-colors font-medium">
+                                <button type="button" onclick="openScanner()" class="absolute left-2 top-2 p-1.5 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors shadow-sm" title="סרוק ברקוד">
+                                    <i data-lucide="camera" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                            <button type="submit" class="bg-emerald-500 text-white rounded-2xl px-5 font-bold shadow-md hover:bg-emerald-600 transition-colors shrink-0">
+                                הוסף
+                            </button>
+                        </form>
+                        <!-- הצעות חיפוש -->
+                        <div id="suggestions-box" class="absolute top-full mt-2 left-0 right-0 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 empty:hidden max-h-60 overflow-y-auto"></div>
+                    </div>
+                </header>
+
+                <main id="list-content" class="flex-1 p-4 space-y-6 overflow-y-auto no-scrollbar bg-gray-50 pb-20 relative"></main>
+            `;
+        }
+
+        // 3. עדכון דינמי של הצעות חיפוש
+        function renderSuggestions() {
+            const box = document.getElementById('suggestions-box');
+            if (!box) return;
+
+            const q = state.searchQuery.trim();
+            if (!q) {
+                box.innerHTML = '';
+                return;
+            }
+
+            // סינון הצעות מתוך המאגר
+            const suggestions = DEFAULT_PRODUCTS.filter(p => p.name.includes(q)).slice(0, 6);
+            
+            // בדיקה האם המוצר כבר קיים ברשימה הפעילה (רק הלא קנויים)
+            const activeListItems = state.items.filter(i => i.listId === state.activeListId && !i.isBought);
+            const activeItemNames = activeListItems.map(i => i.name);
+
+            if (suggestions.length === 0) {
+                box.innerHTML = `<div class="p-4 text-sm text-gray-500 text-center bg-gray-50">לא נמצא במאגר. למטה תוכל לבחור כמות ויחידת מידה וללחוץ "הוסף".</div>`;
+                return;
+            }
+
+            // פונקציית עזר למניעת שגיאות Syntax כשיש גרשיים כפולים (ק"ג) או יחידים (קוטג') בתוך הפונקציה
+            const escapeInline = (str) => {
+                if (!str) return '';
+                return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            };
+
+            box.innerHTML = suggestions.map(p => {
+                const isDuplicate = activeItemNames.includes(p.name);
+                const defaultUnitHtml = p.unit ? `<span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-md border border-gray-200">${p.unit}</span>` : '';
+                
+                if (isDuplicate) {
+                    return `
+                        <div class="p-3 flex justify-between items-center border-b border-gray-50 last:border-0 bg-gray-100 opacity-60 cursor-not-allowed">
+                            <span class="font-medium text-gray-500 line-through">${p.name}</span>
+                            <span class="text-xs font-bold text-gray-500 bg-gray-200 px-2 py-1 rounded-md">כבר ברשימה</span>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div onclick="addItem('${escapeInline(p.name)}', '${escapeInline(p.category)}', 1, '${escapeInline(p.unit || "יח'")}')" class="p-3 hover:bg-emerald-50 cursor-pointer flex justify-between items-center border-b border-gray-50 last:border-0 transition-colors">
+                            <span class="font-bold text-gray-800">${p.name}</span>
+                            <div class="flex items-center gap-2">
+                                ${defaultUnitHtml}
+                                <i data-lucide="plus" class="w-4 h-4 text-emerald-500 opacity-50"></i>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+            lucide.createIcons();
+        }
+
+        // 4. עדכון רשימת המוצרים נטו
+        function renderDynamicListContent() {
+            const contentDiv = document.getElementById('list-content');
+            const progressText = document.getElementById('progress-text');
+            const progressBar = document.getElementById('progressBar');
+            if (!contentDiv) return;
+
+            const listItems = state.items.filter(i => i.listId === state.activeListId);
+            const unbought = listItems.filter(i => !i.isBought);
+            const bought = listItems.filter(i => i.isBought);
+            const progress = listItems.length === 0 ? 0 : Math.round((bought.length / listItems.length) * 100);
+
+            // עדכון Progress Header
+            if(progressText) progressText.innerText = `${unbought.length} נותרו`;
+            const pb = document.getElementById('progress-bar');
+            if(pb) {
+                pb.style.width = listItems.length === 0 ? '0%' : `${progress}%`;
+                pb.innerText = progress > 5 ? `${progress}%` : ''; // הצגת אחוזים בתוך הפס
+            }
+
+            // לוגיקת קונפטי
+            if (progress === 100 && listItems.length > 0 && !state.hasCelebrated) {
+                state.hasCelebrated = true;
+                confetti({
+                    particleCount: 150,
+                    spread: 80,
+                    origin: { y: 0.6 },
+                    zIndex: 100,
+                    colors: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444']
+                });
+            } else if (progress < 100) {
+                state.hasCelebrated = false;
+            }
+
+            if (unbought.length === 0 && bought.length === 0) {
+                contentDiv.innerHTML = `
+                    <div class="text-center text-gray-400 py-20 flex flex-col items-center">
+                        <i data-lucide="shopping-cart" class="w-16 h-16 mb-4 opacity-30"></i>
+                        <p class="text-lg font-medium">הרשימה ריקה</p>
+                        <p class="text-sm mt-1">חפש למעלה והוסף מוצרים</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            // קיבוץ לקטגוריות
+            const groups = {};
+            unbought.forEach(item => {
+                const cat = item.category || 'אחר';
+                if (!groups[cat]) groups[cat] = [];
+                groups[cat].push(item);
+            });
+
+            let html = '';
+            Object.entries(groups).forEach(([category, items]) => {
+                const colorClass = CATEGORY_COLORS[category] || CATEGORY_COLORS['אחר'];
+                html += `
+                    <div class="space-y-2">
+                        <h3 class="text-xs font-bold px-3 py-1 inline-block rounded-lg ${colorClass}">
+                            ${category}
+                        </h3>
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
+                            ${items.map(item => `
+                                <div class="flex items-center justify-between p-3.5 hover:bg-gray-50 transition-colors group">
+                                    <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="toggleItem('${item.id}', false)">
+                                        <div class="w-6 h-6 rounded-full flex items-center justify-center border-2 border-gray-300 group-hover:border-emerald-400 transition-colors shrink-0"></div>
+                                        <div class="flex flex-col flex-1 min-w-0">
+                                            <span class="text-base text-gray-800 font-bold truncate">${item.name}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- בקרת כמות אינליין פרואקטיבית -->
+                                    <div class="flex items-center bg-gray-100 rounded-lg p-0.5 ml-2 border border-gray-200 shrink-0">
+                                        <button onclick="event.stopPropagation(); updateItemQty('${item.id}', -1)" class="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-200 active:bg-gray-300 active:scale-95 rounded-md transition-all font-bold text-lg leading-none">-</button>
+                                        <span class="text-xs font-bold text-gray-800 w-14 text-center select-none">${item.quantity || 1} ${item.unit || "יח'"}</span>
+                                        <button onclick="event.stopPropagation(); updateItemQty('${item.id}', 1)" class="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-200 active:bg-gray-300 active:scale-95 rounded-md transition-all font-bold text-lg leading-none">+</button>
+                                    </div>
+
+                                    <button onclick="deleteItem('${item.id}')" class="p-2 text-gray-300 hover:text-red-500 rounded-xl transition-all shrink-0">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            // פריטים שהושלמו
+            if (bought.length > 0) {
+                const chevronIcon = state.showCompleted ? 'chevron-up' : 'chevron-down';
+                html += `
+                    <div class="mt-8 border-t border-gray-200 pt-6 pb-6">
+                        <div class="flex items-center justify-between px-2 mb-3">
+                            <button onclick="toggleCompleted()" class="flex items-center gap-2 text-gray-500 hover:text-gray-700 font-semibold text-sm transition-colors">
+                                הושלמו (${bought.length})
+                                <i data-lucide="${chevronIcon}" class="w-4 h-4"></i>
+                            </button>
+                            ${state.showCompleted ? `
+                                <button onclick="showClearModal()" class="text-xs font-bold text-red-600 bg-red-50 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-red-100 transition-colors">
+                                    <i data-lucide="trash-2" class="w-3 h-3"></i> נקה הכל
+                                </button>
+                            ` : ''}
+                        </div>
+                        
+                        ${state.showCompleted ? `
+                            <div class="bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden divide-y divide-gray-100 opacity-80">
+                                ${bought.map(item => `
+                                    <div class="flex items-center justify-between p-3.5 bg-gray-100">
+                                        <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="toggleItem('${item.id}', true)">
+                                            <div class="w-6 h-6 rounded-full flex items-center justify-center border-2 bg-emerald-500 border-emerald-500 shadow-sm shrink-0">
+                                                <i data-lucide="check" class="w-4 h-4 text-white"></i>
+                                            </div>
+                                            <div class="flex items-center gap-2 text-gray-500 line-through decoration-emerald-500/50">
+                                                <span class="text-base">${item.name}</span>
+                                                <span class="text-xs bg-gray-200 px-2 py-0.5 rounded-md">${item.quantity || 1} ${item.unit || "יח'"}</span>
+                                            </div>
+                                        </div>
+                                        <button onclick="deleteItem('${item.id}')" class="p-2 text-gray-400 hover:text-red-500 transition-all shrink-0">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            contentDiv.innerHTML = html;
+            lucide.createIcons();
+        }
+
+    </script>
+</body>
+</html>
