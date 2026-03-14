@@ -6,6 +6,8 @@
   messagingSenderId: "826937050149",
   appId: "1:826937050149:web:0b28b528ce1fcc7571ebcc"
 -->
+
+
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -169,19 +171,21 @@
             <input type="text" id="noteTitle" dir="auto" placeholder="כותרת הפתק..." class="text-2xl font-black mb-4 focus:outline-none placeholder-gray-300 bg-transparent text-right flex-none text-gray-800 transition-colors">
             
             <!-- אזור תוכן ומדיה -->
-            <div class="flex-1 flex flex-col min-h-0">
+            <div class="flex flex-col gap-4 flex-1">
                 <textarea id="noteContent" dir="auto" placeholder="התחל לכתוב... (הוסף # כדי ליצור תגיות)" class="w-full flex-1 resize-none focus:outline-none text-lg leading-relaxed placeholder-gray-400 bg-transparent min-h-[30vh] text-gray-700"></textarea>
                 
-                <!-- תצוגה מקדימה של תמונה -->
-                <div id="imagePreviewContainer" class="hidden relative mt-4 mb-2 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
-                    <img id="imagePreview" src="" class="w-full h-auto max-h-[40vh] object-cover" />
-                    <button onclick="window.removeImage()" class="absolute top-2 left-2 bg-red-500/80 hover:bg-red-600 text-white p-2 rounded-full backdrop-blur-sm transition-all">
+                <!-- תצוגה מקדימה של תמונה (מתקנת את בעיית החיתוך והמעיכה) -->
+                <div id="imagePreviewContainer" class="hidden relative rounded-xl overflow-hidden border border-gray-200 shadow-sm bg-gray-900/5 flex-shrink-0">
+                    <!-- הוספנו object-contain כדי שלא תיחתך, ו-cursor-zoom-in כדי להראות שאפשר ללחוץ -->
+                    <img id="imagePreview" src="" class="w-full h-auto max-h-[45vh] object-contain cursor-zoom-in" onclick="window.openFullscreenImage(this.src)" title="לחץ להגדלה" />
+                    <!-- הוספנו stopPropagation כדי שלחיצה על ה-X לא תגדיל את התמונה -->
+                    <button onclick="window.removeImage(); event.stopPropagation();" class="absolute top-2 left-2 bg-red-500/80 hover:bg-red-600 text-white p-2 rounded-full backdrop-blur-sm transition-all z-10">
                         <i data-lucide="x" class="w-4 h-4"></i>
                     </button>
                 </div>
 
-                <!-- נגן הקלטה -->
-                <div id="audioPreviewContainer" class="hidden mt-4 mb-2 bg-white p-3 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-3">
+                <!-- נגן הקלטה (מוגן ממעיכה) -->
+                <div id="audioPreviewContainer" class="hidden bg-white p-3 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-3 flex-shrink-0">
                     <div class="bg-blue-100 p-2 rounded-full text-blue-600"><i data-lucide="headphones" class="w-5 h-5"></i></div>
                     <audio id="audioPlayback" controls class="flex-1 h-10 outline-none"></audio>
                     <button onclick="window.removeAudio()" class="text-red-500 hover:bg-red-50 p-2 rounded-full transition-all">
@@ -219,6 +223,14 @@
                 <span id="recordText" class="text-[10px] font-bold relative z-10">הקלט</span>
             </button>
         </div>
+    </div>
+
+    <!-- מודל תמונה במסך מלא (Lightbox) -->
+    <div id="fullscreenImageModal" class="fixed inset-0 z-[600] hidden fade-in flex items-center justify-center bg-black/95 backdrop-blur-md" onclick="window.closeFullscreenImage()">
+        <button class="absolute top-4 right-4 p-3 text-white/70 hover:text-white bg-black/30 hover:bg-black/60 rounded-full transition-all z-10" onclick="window.closeFullscreenImage()">
+            <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+        <img id="fullscreenImageSrc" src="" class="max-w-full max-h-[90vh] object-contain pointer-events-none p-4" />
     </div>
 
     <!-- תפריט קונטקסט (לחיצה ארוכה) -->
@@ -482,7 +494,6 @@
             }
         };
 
-        // הוספנו פונקציית כפתור חזור לפח האשפה (כדי לצאת ממנו)
         window.handleMainBack = () => {
             history.back();
         };
@@ -739,6 +750,18 @@
             history.back();
         };
 
+        // --- הוספנו צפייה בתמונה במסך מלא ---
+        window.openFullscreenImage = (src) => {
+            if(!src) return;
+            document.getElementById('fullscreenImageSrc').src = src;
+            document.getElementById('fullscreenImageModal').classList.remove('hidden');
+            history.pushState({ screen: 'fullscreenImage' }, '', '#image');
+        };
+
+        window.closeFullscreenImage = () => {
+            document.getElementById('fullscreenImageModal').classList.add('hidden');
+        };
+
         // --- Media Handling (Image Compression & Audio) ---
         
         // דחיסת תמונה חכמה בעזרת Canvas
@@ -752,7 +775,7 @@
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     let width = img.width; let height = img.height;
-                    const MAX_WIDTH = 1280; // חוסך משמעותית בנפח בענן
+                    const MAX_WIDTH = 1280; 
                     
                     if (width > MAX_WIDTH) {
                         height = Math.round((height * MAX_WIDTH) / width);
@@ -766,7 +789,7 @@
                         pendingImageBlob = blob;
                         document.getElementById('imagePreview').src = URL.createObjectURL(blob);
                         document.getElementById('imagePreviewContainer').classList.remove('hidden');
-                    }, 'image/webp', 0.8); // שימוש ב-WebP לדחיסה מעולה
+                    }, 'image/webp', 0.8); 
                 };
                 img.src = event.target.result;
             };
@@ -777,7 +800,7 @@
             pendingImageBlob = null;
             document.getElementById('imagePreview').src = '';
             document.getElementById('imagePreviewContainer').classList.add('hidden');
-            document.getElementById('existingImageUrl').value = ''; // מסמן שצריך למחוק מה-DB
+            document.getElementById('existingImageUrl').value = ''; 
         };
 
         window.toggleRecording = async () => {
@@ -990,6 +1013,8 @@
         window.addEventListener('popstate', async () => {
             if(isSaving) { history.pushState({ screen: 'editor' }, '', '#editor'); return; } // חסימה
             
+            // תמיכה בסגירת חלונות צפים עם כפתור החזור
+            if(!document.getElementById('fullscreenImageModal').classList.contains('hidden')) { window.closeFullscreenImage(); return; }
             if(!document.getElementById('contextMenuOverlay').classList.contains('hidden')) { window.closeContextMenu(); return; }
             if(!document.getElementById('helpModal').classList.contains('hidden')) { document.getElementById('helpModal').classList.add('hidden'); return; }
             if(!document.getElementById('whatsappModal').classList.contains('hidden')) { document.getElementById('whatsappModal').classList.add('hidden'); return; }
