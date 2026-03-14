@@ -1,74 +1,40 @@
-<!-- 
-    =======================================================================
-    OBN BrainDump Pro - Firebase Edition (Extended & Advanced)
-    =======================================================================
-    אפליקציה זו היא יישום רשת מלא, עצמאי, ומאובטח המסתמך על תשתית Firebase.
-    האפליקציה תוכננה בארכיטקטורת "קובץ יחיד" (Single File) לנוחות פריסה מקסימלית,
-    תוך שמירה על חוויית משתמש (UX) של אפליקציית נייטיב למובייל (App Shell).
-
-    מאפיינים מרכזיים:
-    1. התחברות מאובטחת מול גוגל (Google OAuth).
-    2. סנכרון זמן אמת מול Firestore עם תמיכה מובנית ב-Offline Persistence.
-    3. פח אשפה עם כפתור חזרה נגיש ומונה סטטיסטי.
-    4. מערכת תיוג חכמה (Hashtags) עם סינון מהיר.
-    5. חלון הגדרות וסטטיסטיקות חי.
-    =======================================================================
--->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>BrainDump Pro (Firebase Advanced)</title>
+    <title>BrainDump Pro</title>
     
-    <!-- ייבוא ספריית העיצוב Tailwind CSS לפיתוח מהיר ורספונסיבי -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- ייבוא ספריית האייקונים הוקטוריים Lucide (קלת משקל ואיכותית) -->
+    <!-- Lucide Icons -->
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.294.0/dist/umd/lucide.min.js"></script>
 
     <style>
-        /* ביטול הריבוע הכחול המעצבן שמופיע בלחיצה על אלמנטים במובייל */
         body {
             -webkit-tap-highlight-color: transparent;
-            overscroll-behavior-y: none;
         }
-
-        /* עיצוב פס הגלילה הכללי (Scrollbar) שייראה עדין ומודרני */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* אנימציות כניסה חלקות */
-        .fade-in { animation: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-        @keyframes fadeIn { 
-            from { opacity: 0; transform: translateY(15px) scale(0.98); } 
-            to { opacity: 1; transform: translateY(0) scale(1); } 
-        }
-
-        .slide-in-right { animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-        @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(50px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        .note-link { color: #3b82f6; text-decoration: underline; word-break: break-all; pointer-events: auto; }
+        .fade-in { animation: fadeIn 0.2s ease-in-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .slide-in-bottom { animation: slideInBottom 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        @keyframes slideInBottom { from { transform: translateY(100%); } to { transform: translateY(0); } }
     </style>
 </head>
+<body class="text-gray-800 font-sans fixed inset-0 overflow-hidden bg-gray-100 w-full h-[100dvh] flex flex-col">
 
-<body class="text-gray-800 font-sans fixed inset-0 overflow-hidden bg-gray-100 w-full h-[100dvh] flex flex-col selection:bg-blue-200">
-
-    <!-- 1. מסך טעינה ראשוני -->
-    <div id="loadingView" class="absolute inset-0 bg-gray-100 z-[300] flex flex-col items-center justify-center fade-in">
-        <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-blue-600 mb-4"></i>
-        <p class="text-gray-500 font-medium animate-pulse">מתחבר למסד הנתונים...</p>
+    <!-- מסך טעינה ראשוני -->
+    <div id="loadingView" class="absolute inset-0 bg-gray-100 z-[300] flex items-center justify-center fade-in">
+        <i data-lucide="loader-2" class="w-8 h-8 animate-spin text-blue-600"></i>
     </div>
 
-    <!-- 2. מסך התחברות -->
+    <!-- מסך התחברות (Google Sign-In) -->
     <div id="loginView" class="absolute inset-0 bg-gray-900/85 backdrop-blur-md z-[200] flex items-center justify-center p-4 fade-in" style="display: none;">
         <div class="bg-white rounded-[2rem] p-8 w-full max-w-md shadow-2xl text-center border border-white/20">
             <div class="bg-gradient-to-br from-blue-50 to-blue-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner ring-4 ring-white">
@@ -76,112 +42,98 @@
             </div>
             <h2 class="text-3xl font-black mb-3 text-gray-800 tracking-tight">כניסה מאובטחת</h2>
             <p class="text-base text-gray-500 mb-8 leading-relaxed px-2">
-                BrainDump Pro שומר על הפרטיות שלך. הפתקים שלך מוצפנים ונשמרים אך ורק תחת חשבון הגוגל האישי שלך.
+                הפתקים שלך פרטיים, מוצפנים ונשמרים אך ורק תחת חשבון הגוגל האישי שלך.
             </p>
             <button onclick="window.loginWithGoogle()" class="w-full bg-white border-2 border-gray-200 text-gray-700 font-bold py-4 rounded-2xl hover:bg-gray-50 hover:border-blue-300 hover:text-blue-700 transition-all shadow-sm active:scale-[0.98] text-lg flex items-center justify-center gap-3">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" class="w-6 h-6" />
                 התחבר באמצעות Google
             </button>
-            <p class="mt-6 text-xs text-gray-400 flex items-center justify-center gap-1">
-                <i data-lucide="shield-check" class="w-3 h-3"></i> מוגן בתקני האבטחה של Firebase
-            </p>
         </div>
     </div>
 
-    <!-- 3. מסך ראשי: רשימת פתקים -->
+    <!-- מסך ראשי: רשימת פתקים -->
     <div id="listView" class="absolute inset-0 flex flex-col fade-in bg-gray-100" style="display: none;">
         
+        <!-- Header -->
         <div class="flex-none z-40 shadow-sm relative bg-white">
-            <header class="bg-gradient-to-r from-blue-700 to-blue-600 text-white p-4 flex justify-between items-center relative z-50">
-                <div class="flex items-center gap-3">
-                    <button onclick="window.openSettingsModal()" class="p-2 hover:bg-white/20 rounded-full transition-colors active:scale-90" title="הגדרות וסטטיסטיקות">
-                        <i data-lucide="settings" class="w-5 h-5"></i>
+            <header class="bg-blue-600 text-white p-4 flex justify-between items-center relative z-50">
+                <div class="flex items-center gap-2">
+                    <button onclick="window.openHelpModal()" class="p-2 hover:bg-blue-700 rounded-full transition" title="מדריך למשתמש">
+                        <i data-lucide="help-circle" class="w-5 h-5"></i>
                     </button>
-                    <h1 class="text-xl font-bold tracking-wide drop-shadow-md">BrainDump<span class="font-light opacity-80 text-sm ml-1">PRO</span></h1>
+                    <h1 class="text-xl font-bold tracking-wide">BrainDump Pro</h1>
                 </div>
-                <div class="flex items-center gap-3">
-                    <div id="syncStatusIcon" class="text-white/90 transition-all duration-300" title="סטטוס חיבור לענן">
-                        <i data-lucide="cloud-lightning" class="w-5 h-5 text-green-300 drop-shadow"></i>
-                    </div>
-                    <button onclick="window.exportMenuToggle()" class="p-2 hover:bg-white/20 rounded-full transition-colors active:scale-90 relative">
+                <div class="flex items-center gap-2">
+                    <button onclick="window.exportMenuToggle()" class="p-2 hover:bg-blue-700 rounded-full transition relative">
                         <i data-lucide="more-vertical" class="w-5 h-5"></i>
+                        
+                        <!-- תפריט פעולות נפתח -->
+                        <div id="exportMenu" class="hidden absolute top-12 left-0 bg-white shadow-2xl rounded-xl p-2 z-50 border border-gray-100 w-56 text-gray-800 text-right fade-in cursor-default" onclick="event.stopPropagation()">
+                            <button onclick="window.openWhatsAppModal()" class="w-full text-right p-3 hover:bg-gray-50 rounded flex items-center gap-2 transition">
+                                <i data-lucide="message-circle" class="w-4 h-4 text-green-500"></i> שתף לוואטסאפ
+                            </button>
+                            <div class="h-px bg-gray-100 my-1"></div>
+                            <button onclick="window.handleSignOut()" class="w-full text-right p-3 hover:bg-red-50 rounded flex items-center gap-2 transition text-red-600">
+                                <i data-lucide="log-out" class="w-4 h-4 text-red-500"></i> התנתק
+                            </button>
+                        </div>
                     </button>
                 </div>
             </header>
 
+            <!-- שורת חיפוש -->
             <div class="p-3 border-b border-gray-100 relative z-40 bg-white">
                 <div class="relative group">
                     <i data-lucide="search" class="absolute right-4 top-3 text-gray-400 w-5 h-5 group-focus-within:text-blue-500 transition-colors"></i>
-                    <input type="text" id="searchInput" placeholder="חפש בפתקים שלך..." oninput="window.renderNotes()" class="w-full bg-gray-100 hover:bg-gray-50 rounded-2xl py-3 pr-12 pl-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-inner text-gray-700 font-medium">
+                    <input type="text" id="searchInput" placeholder="חפש בפתקים שלך..." oninput="window.renderNotes()" class="w-full bg-gray-100 hover:bg-gray-50 rounded-2xl py-3 pr-12 pl-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-gray-700 font-medium">
                 </div>
             </div>
 
-            <div id="tagBar" class="hidden px-4 py-2.5 border-b border-gray-200 overflow-x-auto whitespace-nowrap space-x-2 space-x-reverse items-center no-scrollbar bg-gradient-to-b from-gray-50 to-white" style="-webkit-overflow-scrolling: touch;">
+            <!-- תגיות -->
+            <div id="tagBar" class="hidden px-3 py-2.5 border-b border-gray-200 overflow-x-auto whitespace-nowrap space-x-2 space-x-reverse items-center no-scrollbar bg-gray-50" style="-webkit-overflow-scrolling: touch;">
+                <!-- מוזרק דינמית מ-JS -->
             </div>
         </div>
 
-        <div id="exportMenu" class="hidden absolute top-16 left-4 bg-white shadow-2xl rounded-2xl p-2 z-50 border border-gray-100 w-64 transform origin-top-left fade-in">
-            <button onclick="window.openTrashView()" class="w-full text-right p-3 hover:bg-gray-50 rounded-xl flex items-center gap-3 transition-colors text-gray-700 font-medium">
-                <div class="bg-gray-100 p-1.5 rounded-lg"><i data-lucide="trash" class="w-4 h-4 text-gray-600"></i></div> פח אשפה
-            </button>
-            <button onclick="window.openWhatsAppModal()" class="w-full text-right p-3 hover:bg-gray-50 rounded-xl flex items-center gap-3 transition-colors text-gray-700 font-medium mt-1">
-                <div class="bg-green-100 p-1.5 rounded-lg"><i data-lucide="message-circle" class="w-4 h-4 text-green-600"></i></div> ייצוא לוואטסאפ
-            </button>
-            <button onclick="window.exportToJSON()" class="w-full text-right p-3 hover:bg-gray-50 rounded-xl flex items-center gap-3 transition-colors text-gray-700 font-medium mt-1">
-                <div class="bg-blue-100 p-1.5 rounded-lg"><i data-lucide="download" class="w-4 h-4 text-blue-600"></i></div> גיבוי מקומי (JSON)
-            </button>
-            <div class="h-px bg-gray-100 my-2 mx-2"></div>
-            <button onclick="window.handleSignOut()" class="w-full text-right p-3 hover:bg-red-50 rounded-xl flex items-center gap-3 transition-colors text-red-600 font-medium">
-                <div class="bg-red-100 p-1.5 rounded-lg"><i data-lucide="log-out" class="w-4 h-4 text-red-500"></i></div> התנתק מהמערכת
-            </button>
-        </div>
-
-        <main class="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 pb-28 relative" id="notesContainer" style="-webkit-overflow-scrolling: touch; touch-action: pan-y;">
+        <!-- רשימת פתקים (גריד 2 עמודות - Masonry) -->
+        <main class="flex-1 overflow-y-auto overflow-x-hidden p-4 pb-28 relative" style="-webkit-overflow-scrolling: touch; touch-action: pan-y;">
+            <div id="notesContainer" class="columns-1 sm:columns-2 gap-3 space-y-0">
+                <!-- מוזרק דינמית מ-JS -->
+            </div>
         </main>
 
-        <!-- אזור פח אשפה עם כפתור חזרה קבוע בראשו -->
-        <div id="trashContainerWrapper" class="hidden flex-1 flex flex-col overflow-hidden bg-gray-100/50 relative">
-            <div class="p-4 pb-0 flex-none z-10">
-                <button onclick="window.closeTrashView()" class="w-full flex items-center justify-center gap-2 text-blue-700 font-bold bg-blue-100/80 px-4 py-3.5 rounded-2xl hover:bg-blue-200 transition-colors shadow-sm active:scale-95 border border-blue-200/50">
-                    <i data-lucide="arrow-right" class="w-5 h-5"></i> חזרה לפתקים שלי
-                </button>
-            </div>
-            <main class="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 pb-28" id="trashContainer" style="-webkit-overflow-scrolling: touch; touch-action: pan-y;">
-            </main>
-        </div>
-
-        <button id="fabBtn" onclick="window.openEditor()" class="absolute bottom-20 right-6 bg-gradient-to-tr from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-full p-4 shadow-xl shadow-blue-500/30 transform hover:scale-105 transition-all active:scale-90 z-30 ring-4 ring-white/50">
+        <!-- כפתור הוספה (FAB) -->
+        <button onclick="window.openEditor()" class="absolute bottom-20 right-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-xl shadow-blue-500/30 transform hover:scale-105 transition-all active:scale-90 z-30">
             <i data-lucide="plus" class="w-7 h-7"></i>
         </button>
 
-        <footer class="flex-none bg-white border-t border-gray-200 text-center py-3 px-5 text-sm text-gray-500 z-10 flex items-center justify-between pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <!-- פוטר (משתמש + צרו קשר) -->
+        <footer class="flex-none bg-white border-t border-gray-200 py-3 px-4 text-xs z-10 flex items-center justify-between pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
             <div class="flex items-center gap-2.5 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
-                <img id="userAvatar" src="" alt="profile" class="w-6 h-6 rounded-full shadow-sm hidden object-cover" onerror="this.style.display='none'; document.getElementById('userAvatarFallback').style.display='flex';" />
+                <img id="userAvatar" src="" alt="profile" class="w-6 h-6 rounded-full shadow-sm object-cover hidden" onerror="this.style.display='none'; document.getElementById('userAvatarFallback').style.display='flex';" />
                 <div id="userAvatarFallback" class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center"><i data-lucide="user" class="w-3 h-3 text-blue-600"></i></div>
-                <span id="userName" class="font-semibold text-gray-700 truncate max-w-[130px] text-right">טוען...</span>
+                <span id="userName" class="font-bold text-gray-700 truncate max-w-[100px]">טוען...</span>
             </div>
-            <div class="flex items-center gap-1.5 text-xs font-medium text-gray-400 bg-gray-50 px-2.5 py-1.5 rounded-full">
-                <i data-lucide="database" class="w-3 h-3"></i> Firestore
+            <div class="text-gray-500 font-medium text-left">
+                נבנה באהבה על ידי OBN.<br/>
+                <a href="mailto:ofirbn@post.com" class="text-blue-500 underline font-bold">צרו קשר</a>
             </div>
         </footer>
     </div>
 
-    <!-- 4. מסך עריכה -->
-    <div id="editorView" class="absolute inset-0 bg-white z-[100] flex flex-col slide-in-right h-[100dvh]" style="display: none;">
+    <!-- מסך עריכה -->
+    <div id="editorView" class="absolute inset-0 bg-white z-[100] flex flex-col fade-in h-[100dvh]" style="display: none;">
         <header class="flex-none bg-white border-b border-gray-100 p-3 flex justify-between items-center z-10 shadow-sm">
-            <button onclick="window.closeEditor()" class="p-2.5 text-gray-600 hover:bg-gray-100 rounded-full transition-colors active:scale-90 flex items-center justify-center">
+            <button onclick="window.closeEditor()" class="p-2.5 text-gray-600 hover:bg-gray-100 rounded-full transition-colors active:scale-90">
                 <i data-lucide="arrow-right" class="w-6 h-6"></i>
             </button>
             <div class="flex gap-1.5 items-center">
-                <button id="pinBtn" onclick="window.togglePin()" class="p-2 text-gray-400 hover:text-yellow-600 rounded-full transition-all outline-none active:scale-90" title="נעץ פתק זה">
+                <button id="pinBtn" onclick="window.togglePin()" class="p-2 rounded-full transition-all outline-none active:scale-90 text-gray-400 hover:text-yellow-600">
                     <i data-lucide="pin" class="w-5 h-5"></i>
-                </button>
-                <button id="deleteBtn" onclick="window.deleteCurrentNote()" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all active:scale-90 hidden" title="מחק פתק">
-                    <i data-lucide="trash-2" class="w-5 h-5"></i>
                 </button>
                 <div class="w-px h-6 bg-gray-200 mx-1"></div>
                 <button onclick="window.saveNoteManually()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full font-bold shadow-md shadow-blue-500/20 transition-all active:scale-95 flex items-center gap-2">
-                    שמור <i data-lucide="check" class="w-4 h-4"></i>
+                    שמור <i data-lucide="check-circle" class="w-4 h-4"></i>
                 </button>
             </div>
         </header>
@@ -194,14 +146,44 @@
         </main>
     </div>
 
-    <!-- 5. חלונות קופצים (Modals) -->
-    <div id="whatsappModal" class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 fade-in" style="display: none;" onclick="if(event.target === this) window.history.back()">
+    <!-- תפריט קונטקסט נפתח (מוסתר כברירת מחדל, מופעל בלחיצה ארוכה) -->
+    <div id="contextMenuOverlay" class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm z-[150] fade-in hidden" onclick="window.closeContextMenu()"></div>
+    <div id="contextMenuModal" class="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 z-[200] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transform translate-y-full transition-transform duration-300">
+        <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
+        
+        <h3 id="contextMenuTitle" class="font-bold text-gray-500 text-center mb-6 text-sm truncate px-4">
+            פעולות על פתק
+        </h3>
+
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <button onclick="window.handleContextAction('copy')" class="bg-blue-50 text-blue-700 hover:bg-blue-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors active:scale-95">
+                <i data-lucide="copy" class="w-6 h-6"></i>
+                <span class="font-bold text-sm">העתקה</span>
+            </button>
+            <button id="contextPinBtn" onclick="window.handleContextAction('pin')" class="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors active:scale-95">
+                <i data-lucide="pin" class="w-6 h-6"></i>
+                <span class="font-bold text-sm">נעיצה</span>
+            </button>
+            <button onclick="window.handleContextAction('whatsapp')" class="bg-green-50 text-green-700 hover:bg-green-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors active:scale-95">
+                <i data-lucide="message-circle" class="w-6 h-6"></i>
+                <span class="font-bold text-sm">שליחה בווטסאפ</span>
+            </button>
+            <button onclick="window.handleContextAction('delete')" class="bg-red-50 text-red-600 hover:bg-red-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors active:scale-95">
+                <i data-lucide="trash-2" class="w-6 h-6"></i>
+                <span class="font-bold text-sm">מחיקה</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- מודל שיתוף וואטסאפ -->
+    <div id="whatsappModal" class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 fade-in hidden" onclick="if(event.target === this) window.history.back()">
         <div class="bg-white rounded-3xl p-7 w-full max-w-sm shadow-2xl">
             <div class="bg-green-50 w-14 h-14 rounded-full flex items-center justify-center mb-4">
                 <i data-lucide="message-circle" class="w-7 h-7 text-green-500"></i>
             </div>
             <h2 class="text-2xl font-black mb-2 text-gray-800">שתף לוואטסאפ</h2>
             <p class="text-sm text-gray-500 mb-6">בחר את טווח התאריכים לייצוא. המערכת תארוז את כל הפתקים כהודעה מסודרת.</p>
+            
             <div class="space-y-4 mb-8">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">החל מתאריך:</label>
@@ -212,6 +194,7 @@
                     <input type="date" id="shareEndDate" class="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-800 transition-all font-medium">
                 </div>
             </div>
+            
             <div class="flex gap-3">
                 <button onclick="window.history.back()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-3.5 rounded-xl hover:bg-gray-200 transition-colors">ביטול</button>
                 <button onclick="window.executeWhatsAppShare()" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-green-500/30 active:scale-95 flex items-center justify-center gap-2">
@@ -221,73 +204,68 @@
         </div>
     </div>
 
-    <!-- מודל הגדרות וסטטיסטיקות -->
-    <div id="settingsModal" class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 fade-in" style="display: none;" onclick="if(event.target === this) window.history.back()">
-        <div class="bg-white rounded-3xl p-7 w-full max-w-sm shadow-2xl">
-            <div class="flex justify-between items-center mb-6">
+    <!-- מודל מדריך משתמש וסטטיסטיקות (אחוד) -->
+    <div id="helpModal" class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 fade-in hidden" onclick="if(event.target === this) window.history.back()">
+        <div class="bg-white rounded-3xl p-7 w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto no-scrollbar">
+            
+            <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-black text-gray-800 flex items-center gap-2">
-                    <i data-lucide="settings" class="text-blue-500"></i> הגדרות ומידע
+                    <i data-lucide="help-circle" class="text-blue-500"></i> מדריך למשתמש
                 </h2>
-                <button onclick="window.history.back()" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button onclick="window.history.back()" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
             </div>
             
-            <div class="bg-blue-50 rounded-2xl p-5 mb-6 border border-blue-100">
+            <p class="text-gray-600 text-sm mb-6 leading-relaxed">ברוך הבא ל-BrainDump Pro! גלה את היכולות המתקדמות שהופכות את האפליקציה הזו לפנקס כיס מושלם.</p>
+            
+            <div class="space-y-5 mb-8">
+                <div class="flex items-start gap-4">
+                    <div class="bg-purple-50 p-3 rounded-2xl text-purple-600 flex-shrink-0 shadow-sm border border-purple-100"><i data-lucide="hash" class="w-5 h-5"></i></div>
+                    <div><strong class="block text-gray-800 text-base mb-0.5">תיוג אוטומטי</strong><span class="text-sm text-gray-500 leading-snug block">הוסף סולמית למילה בתוך הפתק (למשל <span class="text-purple-500 font-medium">#רעיונות</span>), והיא תהפוך לכפתור סינון עליון.</span></div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="bg-gray-50 p-3 rounded-2xl text-gray-600 flex-shrink-0 shadow-sm border border-gray-200"><i data-lucide="smartphone" class="w-5 h-5"></i></div>
+                    <div><strong class="block text-gray-800 text-base mb-0.5">פעולות מהירות</strong><span class="text-sm text-gray-500 leading-snug block">במסך הראשי, <strong>לחיצה ארוכה</strong> (מעל חצי שנייה) על פתק תפתח תפריט מחיקה, העתקה, שיתוף ונעיצה.</span></div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="bg-blue-50 p-3 rounded-2xl text-blue-600 flex-shrink-0 shadow-sm border border-blue-100"><i data-lucide="cloud-lightning" class="w-5 h-5"></i></div>
+                    <div><strong class="block text-gray-800 text-base mb-0.5">זמן אמת ואופליין</strong><span class="text-sm text-gray-500 leading-snug block">הכל נשמר אוטומטית ביציאה מפתק ומסונכרן ברקע בזמן אמת לענן המאובטח של גוגל. תמיכה מלאה באופליין.</span></div>
+                </div>
+            </div>
+
+            <!-- סטטיסטיקות -->
+            <div class="bg-blue-50 rounded-2xl p-5 border border-blue-100">
                 <h3 class="text-xs font-bold text-blue-800 uppercase tracking-wider mb-3">סטטיסטיקות החשבון שלך</h3>
-                <div class="grid grid-cols-2 gap-3 mb-3">
+                <div class="grid grid-cols-2 gap-3">
                     <div class="bg-white rounded-xl p-3 shadow-sm border border-blue-50 text-center">
-                        <span class="block text-2xl font-black text-blue-600" id="statTotalNotes">0</span>
+                        <span id="statTotalNotes" class="block text-2xl font-black text-blue-600">0</span>
                         <span class="text-xs font-medium text-gray-500">פתקים פעילים</span>
                     </div>
                     <div class="bg-white rounded-xl p-3 shadow-sm border border-blue-50 text-center">
-                        <span class="block text-2xl font-black text-yellow-500" id="statPinnedNotes">0</span>
-                        <span class="text-xs font-medium text-gray-500">נעוצים</span>
+                        <span id="statPinnedNotes" class="block text-2xl font-black text-yellow-500">0</span>
+                        <span class="text-xs font-medium text-gray-500">נעוצים בראש</span>
                     </div>
                 </div>
-                <div class="bg-white rounded-xl p-3 shadow-sm border border-red-50 text-center flex flex-col justify-center items-center">
-                    <span class="block text-2xl font-black text-red-500" id="statTrashNotes">0</span>
-                    <span class="text-xs font-medium text-gray-500">פתקים בפח האשפה</span>
-                </div>
             </div>
 
-            <div class="space-y-3">
-                <button onclick="window.openHelpModal()" class="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors text-right border border-gray-100">
-                    <div class="flex items-center gap-3"><div class="bg-blue-100 p-2 rounded-lg"><i data-lucide="help-circle" class="w-4 h-4 text-blue-600"></i></div> <span class="font-bold text-gray-700">מדריך שימוש</span></div>
-                    <i data-lucide="chevron-left" class="w-4 h-4 text-gray-400"></i>
-                </button>
-                <div class="text-center pt-4 border-t border-gray-100 mt-4">
-                    <p class="text-xs text-gray-400">גרסה 2.6 • נבנה עבור מהירות</p>
-                </div>
-            </div>
         </div>
     </div>
 
-    <!-- מודל עזרה -->
-    <div id="helpModal" class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm z-[120] flex items-center justify-center p-4 fade-in" style="display: none;" onclick="if(event.target === this) window.history.back()">
-        <div class="bg-white rounded-3xl p-7 w-full max-w-md shadow-2xl max-h-[85vh] overflow-y-auto no-scrollbar">
-            <h2 class="text-2xl font-black mb-2 text-gray-800 flex items-center gap-2"><i data-lucide="sparkles" class="text-blue-500"></i> מדריך ה-Pro</h2>
-            <p class="text-gray-600 text-sm mb-6 leading-relaxed">גלה את היכולות המתקדמות שהופכות את האפליקציה הזו לפנקס כיס מושלם.</p>
-            <div class="space-y-5">
-                <div class="flex items-start gap-4"><div class="bg-blue-50 p-3 rounded-2xl text-blue-600 flex-shrink-0 shadow-sm border border-blue-100"><i data-lucide="shield-check" class="w-5 h-5"></i></div><div><strong class="block text-gray-800 text-base mb-0.5">פרטיות ברזל (Firestore)</strong><span class="text-sm text-gray-500 leading-snug block">הפתקים שלך מאובטחים בחוקי ה-DB של פיירבייס ואיש מלבדך לא יכול לגשת אליהם.</span></div></div>
-                <div class="flex items-start gap-4"><div class="bg-purple-50 p-3 rounded-2xl text-purple-600 flex-shrink-0 shadow-sm border border-purple-100"><i data-lucide="hash" class="w-5 h-5"></i></div><div><strong class="block text-gray-800 text-base mb-0.5">מנוע תיוג אוטומטי</strong><span class="text-sm text-gray-500 leading-snug block">פשוט הוסף סולמית למילה בתוך הפתק (למשל <span class="text-purple-500 font-medium">#רעיונות</span>), והמערכת תיצור ממנה כפתור סינון עליון באופן אוטומטי!</span></div></div>
-                <div class="flex items-start gap-4"><div class="bg-red-50 p-3 rounded-2xl text-red-600 flex-shrink-0 shadow-sm border border-red-100"><i data-lucide="trash-2" class="w-5 h-5"></i></div><div><strong class="block text-gray-800 text-base mb-0.5">מחיקה בטוחה (סל מיחזור)</strong><span class="text-sm text-gray-500 leading-snug block">מחקת פתק בטעות? אל דאגה. הוא עובר ל"פח האשפה" בתפריט הראשי, משם תוכל לשחזר אותו או למחוק אותו לתמיד.</span></div></div>
-                <div class="flex items-start gap-4"><div class="bg-green-50 p-3 rounded-2xl text-green-600 flex-shrink-0 shadow-sm border border-green-100"><i data-lucide="wifi-off" class="w-5 h-5"></i></div><div><strong class="block text-gray-800 text-base mb-0.5">תמיכה מלאה ב-Offline</strong><span class="text-sm text-gray-500 leading-snug block">האפליקציה תמשיך לעבוד ולשמור נתונים גם במצב טיסה, ותסנכרן את הכל חזרה לענן ברגע שהאינטרנט יחזור.</span></div></div>
-                <div class="flex items-start gap-4"><div class="bg-gray-50 p-3 rounded-2xl text-gray-600 flex-shrink-0 shadow-sm border border-gray-200"><i data-lucide="copy" class="w-5 h-5"></i></div><div><strong class="block text-gray-800 text-base mb-0.5">מחווֹת חכמות</strong><span class="text-sm text-gray-500 leading-snug block">במסך הראשי, **לחיצה ארוכה** (מעל חצי שנייה) על פתק כלשהו תעתיק את כל התוכן שלו ישירות ללוח הגזירים שלך.</span></div></div>
-            </div>
-            <button onclick="window.history.back()" class="mt-8 w-full bg-blue-600 text-white font-bold py-4 rounded-2xl hover:bg-blue-700 transition active:scale-95 text-lg">מעולה, הבנתי!</button>
-        </div>
-    </div>
-
+    <!-- הודעות מוקפצות -->
     <div id="toast" class="absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white font-medium px-6 py-3 rounded-full opacity-0 transition-all duration-300 pointer-events-none z-[400] text-sm shadow-xl shadow-black/20 whitespace-nowrap flex items-center gap-2"></div>
 
+    <!-- Firebase + JavaScript טהור -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+        import { getAuth, signInWithPopup, signInWithCustomToken, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
         // ==============================================================================
         // ⚠️ חובה: החלף את בלוק ה-firebaseConfig הזה בנתונים האמיתיים שלך מ-Firebase! ⚠️
         // ==============================================================================
-		const firebaseConfig = {
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            // אם אתה מריץ ב-Vercel/GitHub - הכנס את פרטי ה-Config שלך כאן:
 		  apiKey: "AIzaSyDKw0T8imb-Mimiqg7mU1mbThIozU5QZo8",
 		  authDomain: "obn-braindump.firebaseapp.com",
 		  projectId: "obn-braindump",
@@ -295,40 +273,47 @@
 		  messagingSenderId: "902275826872",
 		  appId: "1:902275826872:web:da522f9c3628086341604d",
 		  measurementId: "G-XGPNV06H61"
-		};   
+        };
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = "braindump-web";
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'braindump-web';
 
         try {
             enableIndexedDbPersistence(db).catch((err) => {
                 console.warn("שגיאה בהפעלת אופליין:", err.code);
             });
-        } catch (e) {
-            console.warn("תקלה בהגדרת אופליין:", e);
-        }
+        } catch (e) {}
 
+        // Global State
         window.currentUser = null;
-        window.currentNotes = []; 
+        window.currentNotes = [];
         window.currentActiveTag = null;
-        window.currentViewIsTrash = false; 
+        window.activeContextNote = null; // הפתק שנבחר בלחיצה ארוכה
         
         let unsubscribeSnapshot = null;
-        let skipAutoSave = false; 
-        let originalNoteState = { title: '', content: '', is_pinned: false }; 
+        let skipAutoSave = false;
+        let originalNoteState = { title: '', content: '', is_pinned: false };
 
         lucide.createIcons();
 
+        // אתחול אימות
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                try { await signInWithCustomToken(auth, __initial_auth_token); } catch(e){}
+            }
+        };
+        initAuth();
+
         onAuthStateChanged(auth, (user) => {
-            document.getElementById('loadingView').style.display = 'none'; 
-            
-            if (user) {
+            document.getElementById('loadingView').style.display = 'none';
+            if (user && !user.isAnonymous) {
                 window.currentUser = user;
                 document.getElementById('loginView').style.display = 'none';
                 document.getElementById('listView').style.display = 'flex';
                 
-                document.getElementById('userName').textContent = user.displayName || 'משתמש מחובר';
+                document.getElementById('userName').textContent = user.displayName || 'משתמש';
                 if(user.photoURL) {
                     document.getElementById('userAvatar').src = user.photoURL;
                     document.getElementById('userAvatar').style.display = 'block';
@@ -344,26 +329,16 @@
         });
 
         window.loginWithGoogle = async () => {
-            const provider = new GoogleAuthProvider();
             try {
-                await signInWithPopup(auth, provider);
+                await signInWithPopup(auth, new GoogleAuthProvider());
             } catch (error) {
-                console.error("Login failed", error);
-                let errorMessage = "שגיאה בהתחברות.";
-                if (error.code === 'auth/unauthorized-domain') {
-                    errorMessage = "שגיאה: הדומיין אינו מורשה ב-Firebase.";
-                } else if (error.code === 'auth/popup-closed-by-user') {
-                     errorMessage = "התחברות בוטלה.";
-                } else {
-                     errorMessage += " " + error.message;
-                }
-                window.showToast(errorMessage);
+                window.showToast("שגיאה בהתחברות לגוגל");
             }
         };
 
         window.handleSignOut = async () => {
-            if(confirm('האם אתה בטוח שברצונך להתנתק מהמערכת?')) {
-                window.exportMenuToggle(); 
+            if(confirm('האם אתה בטוח שברצונך להתנתק?')) {
+                window.exportMenuToggle();
                 await signOut(auth);
             }
         };
@@ -374,79 +349,57 @@
                 window.currentNotes = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    window.currentNotes.push({id: doc.id, ...data});
+                    if(!data.deleted) window.currentNotes.push({id: doc.id, ...data});
                 });
                 window.renderNotes();
             }, (error) => {
-                console.error("שגיאת סנכרון Firestore:", error);
-                window.showToast('שגיאה בתקשורת מול הענן ❌');
+                console.error("Sync error:", error);
             });
         }
 
         window.showToast = (msg) => {
             const toast = document.getElementById('toast');
             toast.innerHTML = msg;
-            toast.classList.remove('opacity-0');
-            toast.classList.add('translate-y-[-10px]');
+            toast.classList.remove('opacity-0', 'translate-y-4');
             lucide.createIcons();
             setTimeout(() => {
-                toast.classList.add('opacity-0');
-                toast.classList.remove('translate-y-[-10px]');
+                toast.classList.add('opacity-0', 'translate-y-4');
             }, 3000);
         };
 
         window.exportMenuToggle = () => {
-            const menu = document.getElementById('exportMenu');
-            menu.classList.toggle('hidden');
+            document.getElementById('exportMenu').classList.toggle('hidden');
         };
 
-        document.addEventListener('click', (e) => {
-            const menu = document.getElementById('exportMenu');
-            if (!menu.classList.contains('hidden') && !e.target.closest('#exportMenu') && !e.target.closest('header button:last-child')) {
-                menu.classList.add('hidden');
-            }
-        });
-
+        // Render Notes (Grid 2 Columns)
         window.renderNotes = () => {
-            const listContainer = document.getElementById('notesContainer');
-            const trashContainer = document.getElementById('trashContainer');
-            const targetContainer = window.currentViewIsTrash ? trashContainer : listContainer;
-            
+            const container = document.getElementById('notesContainer');
             const searchQuery = document.getElementById('searchInput').value.toLowerCase();
             const tagBar = document.getElementById('tagBar');
 
-            const activeNotes = window.currentNotes.filter(n => !n.deleted);
-            const trashNotes = window.currentNotes.filter(n => n.deleted);
-            
-            // עדכון הסטטיסטיקות במסך ההגדרות
-            document.getElementById('statTotalNotes').textContent = activeNotes.length;
-            document.getElementById('statPinnedNotes').textContent = activeNotes.filter(n => n.is_pinned).length;
-            document.getElementById('statTrashNotes').textContent = trashNotes.length;
+            // עדכון סטטיסטיקות למודל העזרה
+            document.getElementById('statTotalNotes').textContent = window.currentNotes.length;
+            document.getElementById('statPinnedNotes').textContent = window.currentNotes.filter(n => n.is_pinned).length;
 
             const allTags = new Set();
-            activeNotes.forEach(note => {
+            window.currentNotes.forEach(note => {
                 const text = (note.title || '') + ' ' + (note.content || '');
                 const matches = text.match(/#[א-תa-zA-Z0-9_]+/g);
                 if (matches) matches.forEach(t => allTags.add(t));
             });
 
-            if (allTags.size > 0 && !window.currentViewIsTrash) {
+            if (allTags.size > 0) {
                 tagBar.style.display = 'flex';
-                tagBar.innerHTML = `<button onclick="window.setActiveTag(null)" class="px-4 py-1.5 text-sm font-bold rounded-xl transition-all flex-none shadow-sm border ${window.currentActiveTag === null ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}">כל הפתקים</button>`;
+                tagBar.innerHTML = `<button onclick="window.setActiveTag(null)" class="px-4 py-1.5 text-sm font-bold rounded-xl transition-all flex-none border ${window.currentActiveTag === null ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-100'}">הכל</button>`;
                 allTags.forEach(tag => {
-                    tagBar.innerHTML += `<button onclick="window.setActiveTag('${tag}')" class="px-4 py-1.5 text-sm font-bold rounded-xl transition-all flex-none shadow-sm border ${window.currentActiveTag === tag ? 'bg-purple-600 text-white border-purple-600 shadow-purple-500/20' : 'bg-white text-purple-600 border-purple-100 hover:bg-purple-50'}">${tag}</button>`;
+                    tagBar.innerHTML += `<button onclick="window.setActiveTag('${tag}')" class="px-4 py-1.5 text-sm font-bold rounded-xl transition-all flex-none border ${window.currentActiveTag === tag ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-white text-purple-600 border-purple-100 hover:bg-purple-50'}">${tag}</button>`;
                 });
             } else {
                 tagBar.style.display = 'none';
-                if(window.currentViewIsTrash) window.currentActiveTag = null;
+                window.currentActiveTag = null;
             }
 
             let filtered = window.currentNotes.filter(n => {
-                if (window.currentViewIsTrash) {
-                    if (!n.deleted) return false;
-                } else {
-                    if (n.deleted) return false;
-                }
                 const matchSearch = (n.title?.toLowerCase() || '').includes(searchQuery) || (n.content?.toLowerCase() || '').includes(searchQuery);
                 const matchTag = window.currentActiveTag ? ((n.title || '') + ' ' + (n.content || '')).includes(window.currentActiveTag) : true;
                 return matchSearch && matchTag;
@@ -459,104 +412,71 @@
             });
 
             if (filtered.length === 0) {
-                if (window.currentViewIsTrash) {
-                    targetContainer.innerHTML = '<div class="text-center text-gray-400 mt-16 flex flex-col items-center"><div class="bg-gray-200 p-4 rounded-full mb-4"><i data-lucide="trash" class="w-10 h-10 opacity-50"></i></div><p class="font-medium text-lg">פח האשפה ריק</p><p class="text-sm mt-1">אין פתקים למחזור כרגע.</p></div>';
-                } else if (searchQuery || window.currentActiveTag) {
-                    targetContainer.innerHTML = '<div class="text-center text-gray-400 mt-16 flex flex-col items-center"><div class="bg-gray-200 p-4 rounded-full mb-4"><i data-lucide="search-x" class="w-10 h-10 opacity-50"></i></div><p class="font-medium text-lg">לא נמצאו תוצאות</p></div>';
-                } else {
-                    targetContainer.innerHTML = '<div class="text-center text-gray-400 mt-16 flex flex-col items-center"><div class="bg-blue-50 text-blue-300 p-6 rounded-full mb-5 shadow-inner"><i data-lucide="pen-line" class="w-12 h-12"></i></div><p class="font-bold text-xl text-gray-600">אין פתקים כרגע</p><p class="text-sm mt-2 max-w-[200px] leading-relaxed">לחץ על הפלוס למטה כדי לכתוב את הרעיון הראשון שלך.</p></div>';
-                }
+                container.innerHTML = '<div class="text-center text-gray-400 mt-16 flex flex-col items-center col-span-2"><div class="bg-blue-50 text-blue-300 p-6 rounded-full mb-5 shadow-inner"><i data-lucide="plus" class="w-12 h-12"></i></div><p class="font-bold text-xl text-gray-600">אין פתקים כרגע</p><p class="text-sm mt-2 max-w-[200px] leading-relaxed">לחץ על הפלוס למטה כדי לכתוב את הרעיון הראשון שלך.</p></div>';
                 lucide.createIcons();
                 return;
             }
 
             const fragment = document.createDocumentFragment();
-            
             filtered.forEach(note => {
                 const el = document.createElement('div');
-                const baseClasses = "p-4 rounded-[1.25rem] border transition-all cursor-pointer flex flex-col gap-1.5 select-none relative overflow-hidden group ";
-                let stateClasses = note.is_pinned ? 'bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200 shadow-md' : 'bg-white border-gray-200 shadow-sm hover:shadow-md active:bg-gray-50';
-                if (window.currentViewIsTrash) stateClasses = 'bg-gray-50 border-gray-300 opacity-80';
+                const isPinned = note.is_pinned;
                 
-                el.className = baseClasses + stateClasses;
+                // שימוש במחלקות Break-inside-avoid עבור ה-Masonry Layout
+                el.className = `p-4 rounded-2xl border transition-all cursor-pointer flex flex-col gap-1.5 select-none relative break-inside-avoid mb-3 ${isPinned ? 'bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200 shadow-md' : 'bg-white border-gray-200 shadow-sm hover:shadow-md active:bg-gray-50'}`;
                 
                 const title = note.title || (note.content ? note.content.substring(0, 30) + '...' : 'ללא כותרת');
-                const d = new Date(note.created_at);
-                const dateStr = d.toLocaleDateString('he-IL', {day: '2-digit', month: '2-digit', year: '2-digit'});
-                const timeStr = d.toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
-
                 let contentHtml = '';
                 if (note.content) {
-                    let processedText = note.content.replace(/(#[א-תa-zA-Z0-9_]+)/g, '<span class="text-purple-600 font-bold bg-purple-100/50 px-1 rounded">$1</span>');
-                    contentHtml = `<p class="text-gray-500 text-sm leading-relaxed line-clamp-3 mt-1 pointer-events-none" dir="auto">${processedText}</p>`;
+                    let processedText = note.content.replace(/(#[א-תa-zA-Z0-9_]+)/g, '<span class="text-blue-600 font-bold bg-blue-50 px-1 rounded">$1</span>');
+                    contentHtml = `<p class="text-gray-500 text-sm leading-relaxed line-clamp-6 mt-1 pointer-events-none" dir="auto">${processedText}</p>`;
                 }
 
-                const pinIcon = note.is_pinned && !window.currentViewIsTrash ? `<div class="absolute -left-4 -top-4 w-12 h-12 bg-yellow-400 rounded-full opacity-20"></div><i data-lucide="pin" class="absolute left-3 top-3 w-4 h-4 text-yellow-600 fill-yellow-200 transform -rotate-45 drop-shadow-sm"></i>` : '';
-
-                let trashControls = '';
-                if (window.currentViewIsTrash) {
-                    trashControls = `
-                        <div class="mt-3 pt-3 border-t border-gray-200 flex justify-end gap-3 z-10 relative">
-                            <button onclick="event.stopPropagation(); window.hardDeleteNote('${note.id}')" class="text-xs text-red-500 font-bold bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 flex items-center gap-1"><i data-lucide="trash" class="w-3 h-3"></i> מחיקה סופית</button>
-                            <button onclick="event.stopPropagation(); window.restoreNote('${note.id}')" class="text-xs text-blue-600 font-bold bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 flex items-center gap-1"><i data-lucide="history" class="w-3 h-3"></i> שחזר פתק</button>
-                        </div>
-                    `;
-                }
+                const pinIcon = isPinned ? `<i data-lucide="pin" class="absolute left-3 top-3 w-4 h-4 text-yellow-500 fill-yellow-200 transform -rotate-45"></i>` : '';
 
                 el.innerHTML = `${pinIcon}
-                    <div class="flex justify-between items-start pointer-events-none ${note.is_pinned && !window.currentViewIsTrash ? 'pl-7' : ''} z-10 relative">
-                        <h3 class="font-black text-gray-800 text-[1.05rem] leading-tight" dir="auto">${title}</h3>
-                        <div class="flex flex-col items-end gap-0.5 text-[10px] text-gray-400 whitespace-nowrap font-medium">
-                            <span class="bg-gray-100 px-1.5 rounded text-gray-500">${timeStr}</span>
-                            <span>${dateStr}</span>
-                        </div>
-                    </div>
-                    <div class="z-10 relative">${contentHtml}</div>
-                    ${trashControls}`;
+                    <h3 class="font-black text-gray-800 text-[1.05rem] leading-tight ${isPinned ? 'pl-6' : ''}" dir="auto">${title}</h3>
+                    ${contentHtml}`;
 
-                if (!window.currentViewIsTrash) {
-                    let pressTimer;
-                    let isLongPress = false;
-                    let startY = 0;
+                // לחיצה ארוכה -> פתיחת מודל פעולות
+                let pressTimer;
+                let isLongPress = false;
+                let startY = 0;
 
-                    const start = (e) => {
-                        isLongPress = false;
-                        startY = e.touches ? e.touches[0].clientY : e.clientY;
-                        pressTimer = setTimeout(() => {
-                            isLongPress = true;
-                            if (navigator.vibrate) navigator.vibrate(50);
-                            window.copyText(`${note.title || ''}\n\n${note.content || ''}`.trim());
-                        }, 600);
-                    };
-                    const move = (e) => {
-                        const currentY = e.touches ? e.touches[0].clientY : e.clientY;
-                        if (Math.abs(currentY - startY) > 10) clearTimeout(pressTimer); 
-                    };
-                    const end = () => { clearTimeout(pressTimer); };
+                const start = (e) => {
+                    isLongPress = false;
+                    startY = e.touches ? e.touches[0].clientY : e.clientY;
+                    pressTimer = setTimeout(() => {
+                        isLongPress = true;
+                        if (navigator.vibrate) navigator.vibrate(50);
+                        window.openContextMenu(note);
+                    }, 500); 
+                };
+                const move = (e) => {
+                    const currentY = e.touches ? e.touches[0].clientY : e.clientY;
+                    if (Math.abs(currentY - startY) > 10) clearTimeout(pressTimer);
+                };
+                const end = () => { clearTimeout(pressTimer); };
 
-                    el.addEventListener('touchstart', start, {passive: true});
-                    el.addEventListener('touchmove', move, {passive: true});
-                    el.addEventListener('touchend', end);
-                    el.addEventListener('mousedown', start);
-                    el.addEventListener('mousemove', move);
-                    el.addEventListener('mouseup', end);
-                    el.addEventListener('mouseleave', end);
+                el.addEventListener('touchstart', start, {passive: true});
+                el.addEventListener('touchmove', move, {passive: true});
+                el.addEventListener('touchend', end);
+                el.addEventListener('mousedown', start);
+                el.addEventListener('mousemove', move);
+                el.addEventListener('mouseup', end);
+                el.addEventListener('mouseleave', end);
 
-                    el.onclick = (e) => {
-                        if (isLongPress) { 
-                            e.preventDefault(); e.stopPropagation(); 
-                        } else { 
-                            window.openEditor(note); 
-                        }
-                    };
-                }
+                el.onclick = (e) => {
+                    if (isLongPress) { e.preventDefault(); e.stopPropagation(); } 
+                    else { window.openEditor(note); }
+                };
 
                 fragment.appendChild(el);
             });
             
-            targetContainer.innerHTML = '';
-            targetContainer.appendChild(fragment);
-            void targetContainer.offsetHeight; 
+            container.innerHTML = '';
+            container.appendChild(fragment);
+            void container.offsetHeight; 
             lucide.createIcons();
         };
 
@@ -565,54 +485,63 @@
             window.renderNotes();
         };
 
-        window.copyText = (text) => {
-            const ta = document.createElement("textarea");
-            ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
-            document.body.appendChild(ta); ta.select();
-            try { 
-                document.execCommand('copy'); 
-                window.showToast('<i data-lucide="check-circle" class="w-4 h-4 text-green-400"></i> התוכן הועתק ללוח ההדבקה!'); 
-            } catch(e) { 
-                window.showToast('שגיאה בהעתקה ❌'); 
+        // --- Context Menu (Bottom Sheet) ---
+        window.openContextMenu = (note) => {
+            window.activeContextNote = note;
+            document.getElementById('contextMenuTitle').textContent = `פעולות על: ${note.title || 'פתק ללא כותרת'}`;
+            
+            const pinBtn = document.getElementById('contextPinBtn');
+            if (note.is_pinned) {
+                pinBtn.className = "bg-orange-50 text-orange-600 hover:bg-orange-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors active:scale-95";
+                pinBtn.querySelector('span').textContent = 'בטל נעיצה';
+            } else {
+                pinBtn.className = "bg-yellow-50 text-yellow-600 hover:bg-yellow-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors active:scale-95";
+                pinBtn.querySelector('span').textContent = 'נעיצה בראש';
             }
-            document.body.removeChild(ta);
+
+            document.getElementById('contextMenuOverlay').classList.remove('hidden');
+            const menu = document.getElementById('contextMenuModal');
+            menu.classList.remove('translate-y-full');
+            
+            history.pushState({ screen: 'context' }, '', '#actions');
         };
 
-        // --- Trash Logic ---
-        window.openTrashView = () => {
-            window.exportMenuToggle();
-            window.currentViewIsTrash = true;
-            document.getElementById('notesContainer').classList.add('hidden');
-            document.getElementById('trashContainerWrapper').classList.remove('hidden');
-            document.getElementById('fabBtn').classList.add('hidden');
-            document.getElementById('tagBar').style.display = 'none';
-            document.getElementById('searchInput').placeholder = "חפש בפתקים המחוקים...";
-            window.renderNotes();
-            history.pushState({ screen: 'trash' }, '', '#trash');
+        window.closeContextMenu = () => {
+            document.getElementById('contextMenuOverlay').classList.add('hidden');
+            document.getElementById('contextMenuModal').classList.add('translate-y-full');
+            window.activeContextNote = null;
         };
 
-        window.closeTrashView = () => {
-            window.currentViewIsTrash = false;
-            document.getElementById('notesContainer').classList.remove('hidden');
-            document.getElementById('trashContainerWrapper').classList.add('hidden');
-            document.getElementById('fabBtn').classList.remove('hidden');
-            document.getElementById('searchInput').placeholder = "חפש בפתקים שלך...";
-            window.renderNotes();
-        };
+        window.handleContextAction = async (action) => {
+            const note = window.activeContextNote;
+            if(!note) return;
+            
+            history.back(); // סוגר את התפריט
 
-        window.restoreNote = async (id) => {
-            if (!window.currentUser) return;
-            const noteRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'notes', id);
-            await setDoc(noteRef, { deleted: false, updated_at: new Date().toISOString() }, { merge: true });
-            window.showToast('<i data-lucide="refresh-cw" class="w-4 h-4"></i> הפתק שוחזר בהצלחה');
-        };
-
-        window.hardDeleteNote = async (id) => {
-            if (!window.currentUser) return;
-            if (!confirm('אזהרה: הפתק יימחק לצמיתות ממסד הנתונים ולא ניתן יהיה לשחזרו. האם להמשיך?')) return;
-            const noteRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'notes', id);
-            await deleteDoc(noteRef); 
-            window.showToast('<i data-lucide="trash" class="w-4 h-4 text-red-400"></i> הפתק נמחק לצמיתות');
+            setTimeout(async () => {
+                if (action === 'copy') {
+                    const ta = document.createElement("textarea");
+                    ta.value = `${note.title || ''}\n\n${note.content || ''}`.trim(); 
+                    ta.style.position = "fixed"; ta.style.opacity = "0";
+                    document.body.appendChild(ta); ta.select();
+                    try { document.execCommand('copy'); window.showToast('הועתק ללוח!'); } catch(e) {}
+                    document.body.removeChild(ta);
+                } 
+                else if (action === 'delete') {
+                    if(!confirm('למחוק את הפתק?')) return;
+                    const noteRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'notes', note.id);
+                    await setDoc(noteRef, { deleted: true, updated_at: new Date().toISOString() }, { merge: true });
+                    window.showToast('הפתק נמחק');
+                }
+                else if (action === 'pin') {
+                    const noteRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'notes', note.id);
+                    await setDoc(noteRef, { is_pinned: !note.is_pinned, updated_at: new Date().toISOString() }, { merge: true });
+                }
+                else if (action === 'whatsapp') {
+                    let text = `📝 *${note.title || 'ללא כותרת'}*\n${note.content || ''}`;
+                    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+                }
+            }, 150);
         };
 
         // --- Editor Logic ---
@@ -622,16 +551,19 @@
                 document.getElementById('noteTitle').value = note.title || '';
                 document.getElementById('noteContent').value = note.content || '';
                 document.getElementById('noteIsPinned').value = note.is_pinned ? 'true' : 'false';
-                document.getElementById('deleteBtn').classList.remove('hidden');
-                originalNoteState = { title: note.title, content: note.content, is_pinned: note.is_pinned };
             } else {
                 document.getElementById('noteId').value = '';
                 document.getElementById('noteTitle').value = '';
                 document.getElementById('noteContent').value = '';
                 document.getElementById('noteIsPinned').value = 'false';
-                document.getElementById('deleteBtn').classList.add('hidden');
-                originalNoteState = { title: '', content: '', is_pinned: false };
             }
+            
+            originalNoteState = { 
+                title: document.getElementById('noteTitle').value.trim(), 
+                content: document.getElementById('noteContent').value.trim(), 
+                is_pinned: document.getElementById('noteIsPinned').value === 'true' 
+            };
+            
             window.updatePinUI();
             document.getElementById('listView').style.display = 'none';
             document.getElementById('editorView').style.display = 'flex';
@@ -666,23 +598,9 @@
                     id: noteId, title: title, content: content, is_pinned: isPinned,
                     updated_at: now, created_at: createdAt, deleted: false
                 }, { merge: true });
-                window.showToast('<i data-lucide="check" class="w-4 h-4"></i> הפתק נשמר ונשלח לענן');
             } catch (e) {
-                console.error(e);
                 window.showToast('שגיאה בשמירה ❌');
             }
-        };
-
-        window.deleteCurrentNote = async () => {
-            if(!confirm('להעביר את הפתק לפח האשפה?')) return;
-            const id = document.getElementById('noteId').value;
-            if(id && window.currentUser) {
-                const noteRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'notes', id);
-                await setDoc(noteRef, { deleted: true, updated_at: new Date().toISOString() }, { merge: true });
-                window.showToast('הועבר לפח האשפה 🗑️');
-            }
-            skipAutoSave = true; 
-            history.back();
         };
 
         window.togglePin = () => {
@@ -696,24 +614,18 @@
             const btn = document.getElementById('pinBtn');
             if (isPinned) {
                 btn.classList.replace('text-gray-400', 'text-yellow-600');
-                btn.classList.add('bg-yellow-50', 'ring-2', 'ring-yellow-200');
+                btn.classList.add('bg-yellow-50');
             } else {
                 btn.classList.replace('text-yellow-600', 'text-gray-400');
-                btn.classList.remove('bg-yellow-50', 'ring-2', 'ring-yellow-200');
+                btn.classList.remove('bg-yellow-50');
             }
         };
 
         // --- Modals ---
-        window.openSettingsModal = () => {
-            document.getElementById('settingsModal').style.display = 'flex';
-            history.pushState({ screen: 'settings' }, '', '#settings');
-        };
-
         window.openHelpModal = () => {
-            if(document.getElementById('settingsModal').style.display !== 'none') {
-                document.getElementById('settingsModal').style.display = 'none';
-            }
             document.getElementById('helpModal').style.display = 'flex';
+            document.getElementById('statTotalNotes').textContent = window.currentNotes.length;
+            document.getElementById('statPinnedNotes').textContent = window.currentNotes.filter(n=>n.is_pinned).length;
             history.pushState({ screen: 'help' }, '', '#help');
         };
         
@@ -723,7 +635,7 @@
             const lastWeek = new Date(); lastWeek.setDate(today.getDate() - 7);
             document.getElementById('shareStartDate').value = lastWeek.toISOString().split('T')[0];
             document.getElementById('shareEndDate').value = today.toISOString().split('T')[0];
-            document.getElementById('whatsappModal').style.display = 'flex';
+            document.getElementById('whatsappModal').classList.remove('hidden');
             history.pushState({ screen: 'whatsapp' }, '', '#share');
         };
 
@@ -732,15 +644,11 @@
             const end = new Date(document.getElementById('shareEndDate').value); end.setHours(23,59,59,999);
             
             const toShare = window.currentNotes.filter(n => {
-                if (n.deleted) return false; 
                 const d = new Date(n.created_at);
                 return d >= start && d <= end;
             });
 
-            if(toShare.length === 0) { 
-                window.showToast('<i data-lucide="alert-circle" class="w-4 h-4"></i> אין פתקים בתאריכים אלו'); 
-                return; 
-            }
+            if(toShare.length === 0) { window.showToast('אין פתקים בטווח זה'); return; }
 
             let text = "*BrainDump - יצוא פתקים*\n\n";
             toShare.forEach(n => {
@@ -748,19 +656,15 @@
                 text += `📝 *${n.title || 'ללא כותרת'}* (${d.toLocaleDateString('he-IL')} ${d.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})})\n${n.content}\n\n`;
             });
             window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
-            history.back(); 
+            history.back();
         };
 
         // --- Routing (Popstate) ---
         window.addEventListener('popstate', async () => {
+            if(!document.getElementById('contextMenuOverlay').classList.contains('hidden')) { window.closeContextMenu(); return; }
             if(document.getElementById('helpModal').style.display !== 'none') { document.getElementById('helpModal').style.display = 'none'; return; }
-            if(document.getElementById('whatsappModal').style.display !== 'none') { document.getElementById('whatsappModal').style.display = 'none'; return; }
-            if(document.getElementById('settingsModal').style.display !== 'none') { document.getElementById('settingsModal').style.display = 'none'; return; }
-            
-            if(window.currentViewIsTrash) {
-                window.closeTrashView();
-                return;
-            }
+            if(!document.getElementById('whatsappModal').classList.contains('hidden')) { document.getElementById('whatsappModal').classList.add('hidden'); return; }
+            if(!document.getElementById('exportMenu').classList.contains('hidden')) { window.exportMenuToggle(); return; }
             
             if(document.getElementById('editorView').style.display !== 'none') {
                 if(!skipAutoSave) await window.performSave();
