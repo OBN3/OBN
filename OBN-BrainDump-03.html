@@ -6,11 +6,6 @@
   messagingSenderId: "826937050149",
   appId: "1:826937050149:web:0b28b528ce1fcc7571ebcc"
 -->
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -78,10 +73,15 @@
         <div class="sticky top-0 z-[100] shadow-md bg-white w-full">
             <header class="bg-blue-600 text-white p-4 flex justify-between items-center relative">
                 <div class="flex items-center gap-2">
-                    <button onclick="window.openHelpModal()" class="p-2 hover:bg-blue-700 rounded-full transition" title="מדריך למשתמש">
+                    <!-- חץ אחורה (מוצג רק בפח האשפה) -->
+                    <button id="mainBackBtn" onclick="window.handleMainBack()" class="p-2 hover:bg-blue-700 rounded-full transition hidden" title="חזור למסך הראשי">
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </button>
+                    <!-- עזרה -->
+                    <button id="helpBtn" onclick="window.openHelpModal()" class="p-2 hover:bg-blue-700 rounded-full transition" title="מדריך למשתמש">
                         <i data-lucide="help-circle" class="w-5 h-5"></i>
                     </button>
-                    <h1 id="appMainTitle" class="text-xl font-bold tracking-wide">BrainDump Pro</h1>
+                    <h1 id="appMainTitle" class="text-xl font-bold tracking-wide">BrainDump Pro By OBN</h1>
                 </div>
                 <div class="flex items-center gap-2 relative">
                     <button onclick="window.exportMenuToggle()" class="p-2 hover:bg-blue-700 rounded-full transition">
@@ -90,8 +90,11 @@
                     
                     <!-- תפריט פעולות -->
                     <div id="exportMenu" class="hidden absolute top-12 left-0 bg-white shadow-2xl rounded-xl p-2 z-[200] border border-gray-100 w-64 text-gray-800 text-right fade-in cursor-default" onclick="event.stopPropagation()">
+                        <button onclick="window.openWhatsAppModal()" class="w-full text-right p-3 hover:bg-gray-50 rounded flex items-center gap-3 transition">
+                            <i data-lucide="message-circle" class="w-4 h-4 text-green-500"></i> ייצוא לוואטסאפ
+                        </button>
                         <button onclick="window.exportToJSON()" class="w-full text-right p-3 hover:bg-gray-50 rounded flex items-center gap-3 transition">
-                            <i data-lucide="download" class="w-4 h-4 text-blue-500"></i> גיבוי מקומי (טקסט בלבד)
+                            <i data-lucide="download" class="w-4 h-4 text-blue-500"></i> גיבוי מקומי ל-JSON
                         </button>
                         <button onclick="window.toggleTrashView()" class="w-full text-right p-3 hover:bg-gray-50 rounded flex items-center gap-3 transition">
                             <i data-lucide="trash-2" class="w-4 h-4 text-gray-500"></i> <span id="trashMenuText">פח אשפה</span>
@@ -135,7 +138,10 @@
                 <div id="userAvatarFallback" class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center"><i data-lucide="user" class="w-3 h-3 text-blue-600"></i></div>
                 <span id="userName" class="font-bold text-gray-700 truncate max-w-[100px]">טוען...</span>
             </div>
-            <div class="text-gray-500 font-medium text-left">נבנה באהבה על ידי OBN.</div>
+            <div class="text-gray-500 font-medium text-left">
+                נבנה באהבה על ידי OBN.<br>
+                <a href="mailto:ofirbn@post.com" class="text-blue-500 underline font-bold hover:text-blue-600 transition-colors">צרו קשר</a>
+            </div>
         </footer>
     </div>
 
@@ -215,33 +221,72 @@
         </div>
     </div>
 
-    <!-- תפריט קונטקסט -->
+    <!-- תפריט קונטקסט (לחיצה ארוכה) -->
     <div id="contextMenuOverlay" class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-[300] fade-in hidden" onclick="window.closeContextMenu()"></div>
     <div id="contextMenuModal" class="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 z-[350] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transform translate-y-full transition-transform duration-300" style="padding-bottom: max(1.5rem, env(safe-area-inset-bottom));">
         <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
         <h3 id="contextMenuTitle" class="font-bold text-gray-500 text-center mb-6 text-sm truncate px-4">פעולות על פתק</h3>
         <div class="grid grid-cols-2 gap-4 mb-2">
-            <button onclick="window.handleContextAction('copy')" class="bg-blue-50 text-blue-700 hover:bg-blue-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors">
+            <button onclick="window.handleContextAction('copy')" class="bg-blue-50 text-blue-700 hover:bg-blue-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors active:scale-95">
                 <i data-lucide="copy" class="w-6 h-6"></i>
                 <span class="font-bold text-sm">העתקה</span>
             </button>
-            <button id="contextPinBtn" onclick="window.handleContextAction('pin')" class="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors">
+            <button id="contextPinBtn" onclick="window.handleContextAction('pin')" class="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors active:scale-95">
                 <i data-lucide="pin" class="w-6 h-6"></i>
                 <span class="font-bold text-sm">נעיצה</span>
             </button>
-            <button onclick="window.handleContextAction('delete')" class="bg-red-50 text-red-600 hover:bg-red-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors col-span-2">
+            <button onclick="window.handleContextAction('whatsapp')" class="bg-green-50 text-green-700 hover:bg-green-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors active:scale-95">
+                <i data-lucide="message-circle" class="w-6 h-6"></i>
+                <span class="font-bold text-sm">שליחה</span>
+            </button>
+            <button onclick="window.handleContextAction('delete')" class="bg-red-50 text-red-600 hover:bg-red-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors active:scale-95">
                 <i data-lucide="trash-2" class="w-6 h-6"></i>
                 <span class="font-bold text-sm">מחיקה</span>
             </button>
         </div>
     </div>
 
-    <!-- מודל עזרה -->
+    <!-- מודל שיתוף וואטסאפ מרובה (לפי תאריכים) -->
+    <div id="whatsappModal" class="fixed inset-0 z-[400] hidden fade-in">
+        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" onclick="window.history.back()"></div>
+        <div class="fixed inset-0 overflow-y-auto z-10 pointer-events-none" style="-webkit-overflow-scrolling: touch;">
+            <div class="flex min-h-full items-center justify-center p-4">
+                <div class="bg-white rounded-3xl p-7 w-full max-w-sm shadow-2xl pointer-events-auto">
+                    <div class="bg-green-50 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                        <i data-lucide="message-circle" class="w-7 h-7 text-green-500"></i>
+                    </div>
+                    <h2 class="text-2xl font-black mb-2 text-gray-800">שתף לוואטסאפ</h2>
+                    <p class="text-sm text-gray-500 mb-6">בחר את טווח התאריכים לייצוא. המערכת תארוז את כל הפתקים כהודעה מסודרת.</p>
+                    
+                    <div class="space-y-4 mb-8">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">החל מתאריך:</label>
+                            <input type="date" id="shareStartDate" class="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-800 transition-all font-medium">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">עד תאריך (כולל):</label>
+                            <input type="date" id="shareEndDate" class="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-800 transition-all font-medium">
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <button onclick="window.history.back()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-3.5 rounded-xl hover:bg-gray-200 transition-colors">ביטול</button>
+                        <button onclick="window.executeWhatsAppShare()" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-green-500/30 active:scale-95 flex items-center justify-center gap-2">
+                            <i data-lucide="send" class="w-5 h-5"></i> צור הודעה
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- מודל מדריך ה-Pro -->
     <div id="helpModal" class="fixed inset-0 z-[400] hidden fade-in">
         <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" onclick="window.history.back()"></div>
         <div class="fixed inset-0 overflow-y-auto z-10 pointer-events-none" style="-webkit-overflow-scrolling: touch;">
             <div class="flex min-h-full items-center justify-center p-4">
                 <div class="bg-white rounded-3xl p-7 w-full max-w-md shadow-2xl relative pointer-events-auto">
+                    
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-2xl font-black text-gray-800 flex items-center gap-2">
                             <i data-lucide="zap" class="text-blue-500"></i> מדריך ה-Pro
@@ -251,22 +296,49 @@
                         </button>
                     </div>
                     
-                    <p class="text-gray-600 text-sm mb-6 leading-relaxed font-medium">כעת תומך גם במולטימדיה!</p>
+                    <p class="text-gray-600 text-sm mb-6 leading-relaxed font-medium">גלה את היכולות המתקדמות שהופכות את האפליקציה הזו לפנקס כיס מושלם.</p>
                     
-                    <div class="space-y-4 mb-8">
-                         <div class="flex items-start gap-4">
-                            <div class="bg-green-50 p-3 rounded-2xl text-green-600 flex-shrink-0 shadow-sm border border-green-200"><i data-lucide="image" class="w-5 h-5"></i></div>
-                            <div><strong class="block text-gray-800 text-base mb-1">תמונות (חוסך מקום)</strong><span class="text-sm text-gray-500 leading-relaxed block">התמונות שתעלה נדחסות אוטומטית לפורמט קל משקל כדי לחסוך לך את חבילת האחסון ב-Firebase.</span></div>
+                    <div class="space-y-6 mb-8">
+                        <div class="flex items-start gap-4">
+                            <div class="bg-slate-50 p-3 rounded-2xl text-slate-600 flex-shrink-0 shadow-sm border border-slate-200"><i data-lucide="shield" class="w-5 h-5"></i></div>
+                            <div><strong class="block text-gray-800 text-base mb-1">פרטיות</strong><span class="text-sm text-gray-500 leading-relaxed block">הפתקים שלך מאובטחים בחוקי ה-DB של פיירבייס ואיש מלבדך לא יכול לגשת אליהם.</span></div>
                         </div>
                         <div class="flex items-start gap-4">
-                            <div class="bg-red-50 p-3 rounded-2xl text-red-600 flex-shrink-0 shadow-sm border border-red-200"><i data-lucide="mic" class="w-5 h-5"></i></div>
-                            <div><strong class="block text-gray-800 text-base mb-1">הקלטות קול</strong><span class="text-sm text-gray-500 leading-relaxed block">מושלם להקלטת רעיונות בנהיגה או הליכה. נשמר ישירות בענן שלך.</span></div>
+                            <div class="bg-purple-50 p-3 rounded-2xl text-purple-600 flex-shrink-0 shadow-sm border border-purple-100"><i data-lucide="hash" class="w-5 h-5"></i></div>
+                            <div><strong class="block text-gray-800 text-base mb-1">מנוע תיוג אוטומטי</strong><span class="text-sm text-gray-500 leading-relaxed block">פשוט הוסף סולמית למילה בתוך הפתק (למשל <span class="text-purple-500 font-bold bg-purple-100 px-1 rounded">#רעיונות</span>), והמערכת תיצור ממנה כפתור סינון עליון באופן אוטומטי! כך תוכל לאתר פתקים דומים.</span></div>
                         </div>
-                         <div class="flex items-start gap-4">
-                            <div class="bg-blue-50 p-3 rounded-2xl text-blue-600 flex-shrink-0 shadow-sm border border-blue-200"><i data-lucide="database" class="w-5 h-5"></i></div>
-                            <div><strong class="block text-gray-800 text-base mb-1">מחיקה חכמה</strong><span class="text-sm text-gray-500 leading-relaxed block">כשתמחק פתק "לצמיתות" מפח האשפה, המערכת תנקה גם את התמונות וההקלטות שלו כדי לפנות מקום.</span></div>
+                        <div class="flex items-start gap-4">
+                            <div class="bg-red-50 p-3 rounded-2xl text-red-600 flex-shrink-0 shadow-sm border border-red-100"><i data-lucide="trash-2" class="w-5 h-5"></i></div>
+                            <div><strong class="block text-gray-800 text-base mb-1">מחיקה בטוחה (סל מיחזור)</strong><span class="text-sm text-gray-500 leading-relaxed block">מחקת פתק בטעות? אל דאגה. הוא עובר ל"פח האשפה" בתפריט הראשי, משם תוכל לשחזר אותו או למחוק אותו לתמיד.</span></div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="bg-blue-50 p-3 rounded-2xl text-blue-600 flex-shrink-0 shadow-sm border border-blue-100"><i data-lucide="cloud-off" class="w-5 h-5"></i></div>
+                            <div><strong class="block text-gray-800 text-base mb-1">תמיכה מלאה ב-Offline</strong><span class="text-sm text-gray-500 leading-relaxed block">האפליקציה תמשיך לעבוד ולשמור נתונים גם במצב טיסה, ותסנכרן את הכל חזרה לענן ברגע שהאינטרנט יחזור.</span></div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="bg-gray-50 p-3 rounded-2xl text-gray-600 flex-shrink-0 shadow-sm border border-gray-200"><i data-lucide="smartphone" class="w-5 h-5"></i></div>
+                            <div>
+                                <strong class="block text-gray-800 text-base mb-1">מחווֹת חכמות</strong>
+                                <span class="text-sm text-gray-500 leading-relaxed block">במסך הראשי, <strong>לחיצה ארוכה</strong> (מעל חצי שנייה) על פתק כלשהו תפתח תפריט פעולות: העתקה, נעיצה, מחיקה, שליחה.<br><br>ניתן להוסיף לפתק: טקסט, תמונה או הקלטת קול.</span>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- סטטיסטיקות -->
+                    <div class="bg-blue-50 rounded-2xl p-5 border border-blue-100">
+                        <h3 class="text-xs font-bold text-blue-800 uppercase tracking-wider mb-3">סטטיסטיקות החשבון שלך</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-white rounded-xl p-3 shadow-sm border border-blue-50 text-center">
+                                <span id="statTotalNotes" class="block text-2xl font-black text-blue-600">0</span>
+                                <span class="text-xs font-medium text-gray-500">פתקים פעילים</span>
+                            </div>
+                            <div class="bg-white rounded-xl p-3 shadow-sm border border-blue-50 text-center">
+                                <span id="statPinnedNotes" class="block text-2xl font-black text-yellow-500">0</span>
+                                <span class="text-xs font-medium text-gray-500">נעוצים בראש</span>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -284,12 +356,12 @@
 
         // מפתחות Firebase שלך
         const firebaseConfig = {
-			  apiKey: "AIzaSyAFaXAtelONc262VlGPFmwTjoUu4tje4YY",
-			authDomain: "obn-braindump-2.firebaseapp.com",
-			projectId: "obn-braindump-2",
-			storageBucket: "obn-braindump-2.firebasestorage.app",
-			messagingSenderId: "826937050149",
-			appId: "1:826937050149:web:0b28b528ce1fcc7571ebcc"
+  apiKey: "AIzaSyAFaXAtelONc262VlGPFmwTjoUu4tje4YY",
+  authDomain: "obn-braindump-2.firebaseapp.com",
+  projectId: "obn-braindump-2",
+  storageBucket: "obn-braindump-2.firebasestorage.app",
+  messagingSenderId: "826937050149",
+  appId: "1:826937050149:web:0b28b528ce1fcc7571ebcc"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -307,7 +379,7 @@
         window.activeContextNote = null;
         window.showingTrash = false; 
         
-        // Media State (New)
+        // Media State
         let pendingImageBlob = null;
         let pendingAudioBlob = null;
         let mediaRecorder = null;
@@ -316,7 +388,7 @@
         
         let unsubscribeSnapshot = null;
         let skipAutoSave = false;
-        let isSaving = false; // Flag למניעת יציאה בזמן שמירה
+        let isSaving = false; 
 
         lucide.createIcons();
 
@@ -397,15 +469,22 @@
             window.showToast('גיבוי הורד בהצלחה');
         };
 
+        // --- פח אשפה וחזרה ---
         window.toggleTrashView = () => {
             window.exportMenuToggle();
-            if (window.showingTrash) { history.back(); } 
-            else {
+            if (window.showingTrash) { 
+                history.back(); 
+            } else {
                 window.showingTrash = true;
                 document.getElementById('trashMenuText').textContent = 'חזור לפתקים הפעילים';
                 history.pushState({ screen: 'trash' }, '', '#trash'); 
                 window.renderNotes();
             }
+        };
+
+        // הוספנו פונקציית כפתור חזור לפח האשפה (כדי לצאת ממנו)
+        window.handleMainBack = () => {
+            history.back();
         };
 
         window.restoreNote = async (id) => {
@@ -414,7 +493,6 @@
             window.showToast('הפתק שוחזר');
         };
 
-        // הוספנו מחיקת קבצים פיזית בעת מחיקה לצמיתות
         window.hardDeleteNote = async (id) => {
             const note = window.currentNotes.find(n => n.id === id);
             if(note) {
@@ -440,11 +518,15 @@
 
             if (window.showingTrash) {
                 document.getElementById('appMainTitle').textContent = 'פח אשפה';
+                document.getElementById('mainBackBtn').classList.remove('hidden');
+                document.getElementById('helpBtn').classList.add('hidden');
                 document.getElementById('searchContainer').style.display = 'none';
                 document.getElementById('fabButton').style.display = 'none';
                 document.getElementById('quickAddBar').style.display = 'none';
             } else {
-                document.getElementById('appMainTitle').textContent = 'BrainDump Pro';
+                document.getElementById('appMainTitle').textContent = 'BrainDump Pro By OBN';
+                document.getElementById('mainBackBtn').classList.add('hidden');
+                document.getElementById('helpBtn').classList.remove('hidden');
                 document.getElementById('searchContainer').style.display = 'block';
                 document.getElementById('fabButton').style.display = 'flex';
                 document.getElementById('quickAddBar').style.display = 'flex';
@@ -521,7 +603,7 @@
                     contentHtml = `<p class="text-gray-500 text-sm leading-relaxed line-clamp-6 mt-1 pointer-events-none" dir="auto">${processedText}</p>`;
                 }
 
-                // Lazy Loading Media Indicators (חוסך תעבורה)
+                // Lazy Loading Media Indicators
                 let mediaIndicators = '';
                 if(note.imageUrl || note.audioUrl) {
                     mediaIndicators = `<div class="flex gap-2 mt-2 pt-2 border-t border-gray-100/50 text-gray-400">`;
@@ -577,10 +659,10 @@
             document.getElementById('contextMenuTitle').textContent = `פעולות: ${note.title || 'ללא כותרת'}`;
             const pinBtn = document.getElementById('contextPinBtn');
             if (note.is_pinned) {
-                pinBtn.className = "bg-orange-50 text-orange-600 hover:bg-orange-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors";
+                pinBtn.className = "bg-orange-50 text-orange-600 hover:bg-orange-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors active:scale-95";
                 pinBtn.querySelector('span').textContent = 'בטל נעיצה';
             } else {
-                pinBtn.className = "bg-yellow-50 text-yellow-600 hover:bg-yellow-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors";
+                pinBtn.className = "bg-yellow-50 text-yellow-600 hover:bg-yellow-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors active:scale-95";
                 pinBtn.querySelector('span').textContent = 'נעיצה בראש';
             }
             document.getElementById('contextMenuOverlay').classList.remove('hidden');
@@ -613,7 +695,48 @@
                     const noteRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'notes', note.id);
                     await setDoc(noteRef, { is_pinned: !note.is_pinned, updated_at: new Date().toISOString() }, { merge: true });
                 }
+                else if (action === 'whatsapp') {
+                    let text = `📝 *${note.title || 'ללא כותרת'}*\n${note.content || ''}`;
+                    if(note.imageUrl) text += `\n🖼️ [מצורפת תמונה במערכת]`;
+                    if(note.audioUrl) text += `\n🎤 [מצורפת הקלטה במערכת]`;
+                    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+                }
             }, 150);
+        };
+
+        // --- ייצוא לוואטסאפ מרובה (לפי תאריכים) ---
+        window.openWhatsAppModal = () => {
+            window.exportMenuToggle();
+            const today = new Date();
+            const lastWeek = new Date(); lastWeek.setDate(today.getDate() - 7);
+            document.getElementById('shareStartDate').value = lastWeek.toISOString().split('T')[0];
+            document.getElementById('shareEndDate').value = today.toISOString().split('T')[0];
+            document.getElementById('whatsappModal').classList.remove('hidden');
+            history.pushState({ screen: 'whatsapp' }, '', '#share');
+        };
+
+        window.executeWhatsAppShare = () => {
+            const start = new Date(document.getElementById('shareStartDate').value); start.setHours(0,0,0,0);
+            const end = new Date(document.getElementById('shareEndDate').value); end.setHours(23,59,59,999);
+            
+            const toShare = window.currentNotes.filter(n => {
+                if (n.deleted) return false;
+                const d = new Date(n.created_at);
+                return d >= start && d <= end;
+            });
+
+            if(toShare.length === 0) { window.showToast('אין פתקים בטווח זה'); return; }
+
+            let text = "*BrainDump - יצוא פתקים*\n\n";
+            toShare.forEach(n => {
+                const d = new Date(n.created_at);
+                text += `📝 *${n.title || 'ללא כותרת'}* (${d.toLocaleDateString('he-IL')} ${d.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})})\n${n.content}\n`;
+                if(n.imageUrl) text += `🖼️ תמונה מצורפת במערכת\n`;
+                if(n.audioUrl) text += `🎤 הקלטה מצורפת במערכת\n`;
+                text += `\n`;
+            });
+            window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+            history.back();
         };
 
         // --- Media Handling (Image Compression & Audio) ---
@@ -857,6 +980,9 @@
 
         window.openHelpModal = () => {
             document.getElementById('helpModal').classList.remove('hidden');
+            const activeOnly = window.currentNotes.filter(n=>!n.deleted);
+            document.getElementById('statTotalNotes').textContent = activeOnly.length;
+            document.getElementById('statPinnedNotes').textContent = activeOnly.filter(n=>n.is_pinned).length;
             history.pushState({ screen: 'help' }, '', '#help');
         };
         
@@ -866,6 +992,7 @@
             
             if(!document.getElementById('contextMenuOverlay').classList.contains('hidden')) { window.closeContextMenu(); return; }
             if(!document.getElementById('helpModal').classList.contains('hidden')) { document.getElementById('helpModal').classList.add('hidden'); return; }
+            if(!document.getElementById('whatsappModal').classList.contains('hidden')) { document.getElementById('whatsappModal').classList.add('hidden'); return; }
             if(!document.getElementById('exportMenu').classList.contains('hidden')) { window.exportMenuToggle(); return; }
             
             if(document.getElementById('editorView').style.display !== 'none') {
