@@ -1,0 +1,890 @@
+<!--
+        const firebaseConfig = {
+            apiKey: "AIzaSyDKw0T8imb-Mimiqg7mU1mbThIozU5QZo8",
+            authDomain: "obn-braindump.firebaseapp.com",
+            projectId: "obn-braindump",
+            storageBucket: "obn-braindump.firebasestorage.app",
+            messagingSenderId: "902275826872",
+            appId: "1:902275826872:web:da522f9c3628086341604d",
+            measurementId: "G-XGPNV06H61"
+-->
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>BrainDump Pro</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.294.0/dist/umd/lucide.min.js"></script>
+
+    <style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .fade-in { animation: fadeIn 0.3s ease-in-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .pulse-record { animation: pulseRecord 1.5s infinite; }
+        @keyframes pulseRecord { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+    </style>
+</head>
+<body class="text-gray-800 font-sans bg-gray-100 min-h-screen relative">
+
+    <!-- מסך טעינה -->
+    <div id="loadingView" class="fixed inset-0 bg-gray-100 z-[600] flex items-center justify-center fade-in">
+        <div class="flex flex-col items-center gap-4">
+            <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-blue-600"></i>
+            <span id="loadingText" class="text-gray-500 font-medium hidden">מסנכרן מדיה...</span>
+        </div>
+    </div>
+
+    <!-- מסך התחברות -->
+    <div id="loginView" class="fixed inset-0 z-[500] hidden fade-in">
+        <div class="fixed inset-0 bg-gray-900/85 backdrop-blur-md"></div>
+        <div class="fixed inset-0 overflow-y-auto z-10" style="-webkit-overflow-scrolling: touch;">
+            <div class="flex min-h-full items-center justify-center p-4">
+                <div class="bg-white rounded-[2rem] p-8 w-full max-w-md shadow-2xl text-center border border-white/20 relative pointer-events-auto">
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner ring-4 ring-white">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" class="w-12 h-12 drop-shadow-sm" />
+                    </div>
+                    <h2 class="text-3xl font-black mb-3 text-gray-800 tracking-tight">כניסה מאובטחת</h2>
+                    <p class="text-base text-gray-500 mb-8 leading-relaxed px-2">
+                        הפתקים שלך פרטיים, מוצפנים ונשמרים אך ורק תחת חשבון הגוגל האישי שלך.
+                    </p>
+                    <button onclick="window.loginWithGoogle()" class="w-full bg-white border-2 border-gray-200 text-gray-700 font-bold py-4 rounded-2xl hover:bg-gray-50 hover:border-blue-300 hover:text-blue-700 transition-all shadow-sm active:scale-[0.98] text-lg flex items-center justify-center gap-3">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" class="w-6 h-6" />
+                        התחבר באמצעות Google
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- מסך ראשי: רשימת פתקים -->
+    <div id="listView" class="flex flex-col min-h-screen fade-in bg-gray-100 pb-20 w-full" style="display: none;">
+        <!-- Header -->
+        <div class="sticky top-0 z-[100] shadow-md bg-white w-full">
+            <header class="bg-blue-600 text-white p-4 flex justify-between items-center relative">
+                <div class="flex items-center gap-2">
+                    <button onclick="window.openHelpModal()" class="p-2 hover:bg-blue-700 rounded-full transition" title="מדריך למשתמש">
+                        <i data-lucide="help-circle" class="w-5 h-5"></i>
+                    </button>
+                    <h1 id="appMainTitle" class="text-xl font-bold tracking-wide">BrainDump Pro</h1>
+                </div>
+                <div class="flex items-center gap-2 relative">
+                    <button onclick="window.exportMenuToggle()" class="p-2 hover:bg-blue-700 rounded-full transition">
+                        <i data-lucide="more-vertical" class="w-5 h-5"></i>
+                    </button>
+                    
+                    <!-- תפריט פעולות -->
+                    <div id="exportMenu" class="hidden absolute top-12 left-0 bg-white shadow-2xl rounded-xl p-2 z-[200] border border-gray-100 w-64 text-gray-800 text-right fade-in cursor-default" onclick="event.stopPropagation()">
+                        <button onclick="window.exportToJSON()" class="w-full text-right p-3 hover:bg-gray-50 rounded flex items-center gap-3 transition">
+                            <i data-lucide="download" class="w-4 h-4 text-blue-500"></i> גיבוי מקומי (טקסט בלבד)
+                        </button>
+                        <button onclick="window.toggleTrashView()" class="w-full text-right p-3 hover:bg-gray-50 rounded flex items-center gap-3 transition">
+                            <i data-lucide="trash-2" class="w-4 h-4 text-gray-500"></i> <span id="trashMenuText">פח אשפה</span>
+                        </button>
+                        <div class="h-px bg-gray-100 my-1"></div>
+                        <button onclick="window.handleSignOut()" class="w-full text-right p-3 hover:bg-red-50 rounded flex items-center gap-3 transition text-red-600">
+                            <i data-lucide="log-out" class="w-4 h-4 text-red-500"></i> התנתק
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- חיפוש -->
+            <div class="p-3 border-b border-gray-100 relative bg-white" id="searchContainer">
+                <div class="relative group">
+                    <i data-lucide="search" class="absolute right-4 top-3 text-gray-400 w-5 h-5 group-focus-within:text-blue-500 transition-colors"></i>
+                    <input type="text" id="searchInput" placeholder="חפש בפתקים שלך..." oninput="window.renderNotes()" class="w-full bg-gray-100 hover:bg-gray-50 rounded-2xl py-3 pr-12 pl-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-gray-700 font-medium">
+                </div>
+            </div>
+
+            <!-- תגיות -->
+            <div id="tagBar" class="hidden px-3 py-2.5 border-b border-gray-200 overflow-x-auto whitespace-nowrap space-x-2 space-x-reverse items-center no-scrollbar bg-gray-50" style="-webkit-overflow-scrolling: touch;"></div>
+        </div>
+
+        <main class="flex-1 p-4 pb-28 w-full mx-auto max-w-5xl flex flex-col relative z-10">
+            <div id="quickAddBar" onclick="window.openEditor()" class="mb-5 bg-white border border-gray-200 shadow-sm hover:shadow-md rounded-2xl p-4 flex items-center gap-3 cursor-pointer transition-all active:scale-[0.98] w-full">
+                <i data-lucide="plus-circle" class="w-6 h-6 text-blue-500"></i>
+                <span class="font-medium text-gray-500 text-base sm:text-lg flex-1">הוסף פתק חדש...</span>
+            </div>
+
+            <div id="notesContainer" class="columns-2 gap-3 w-full"></div>
+        </main>
+
+        <button id="fabButton" onclick="window.openEditor()" class="fixed bottom-24 right-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-xl shadow-blue-500/30 transform hover:scale-105 transition-all active:scale-90 z-[110] flex items-center justify-center">
+            <i data-lucide="plus" class="w-7 h-7"></i>
+        </button>
+
+        <footer class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-3 px-4 text-xs z-[100] flex items-center justify-between shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
+            <div class="flex items-center gap-2.5 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
+                <img id="userAvatar" src="" alt="profile" class="w-6 h-6 rounded-full shadow-sm object-cover hidden" onerror="this.style.display='none'; document.getElementById('userAvatarFallback').style.display='flex';" />
+                <div id="userAvatarFallback" class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center"><i data-lucide="user" class="w-3 h-3 text-blue-600"></i></div>
+                <span id="userName" class="font-bold text-gray-700 truncate max-w-[100px]">טוען...</span>
+            </div>
+            <div class="text-gray-500 font-medium text-left">נבנה באהבה על ידי OBN.</div>
+        </footer>
+    </div>
+
+    <!-- מסך עריכה -->
+    <div id="editorView" class="fixed inset-0 bg-white z-[200] flex flex-col h-[100dvh]" style="display: none;">
+        <header class="flex-none bg-white border-b border-gray-100 p-3 flex justify-between items-center z-10 shadow-sm">
+            <button onclick="window.handleEditorBack()" class="p-2.5 text-gray-600 hover:bg-gray-100 rounded-full transition-colors active:scale-90">
+                <i data-lucide="arrow-right" class="w-6 h-6"></i>
+            </button>
+            <div class="flex gap-1.5 items-center">
+                <button id="deleteBtn" onclick="window.deleteCurrentNote()" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-all active:scale-90 hidden" title="העבר לפח האשפה">
+                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                </button>
+                <button id="pinBtn" onclick="window.togglePin()" class="p-2 rounded-full transition-all outline-none active:scale-90 text-gray-400 hover:text-yellow-600">
+                    <i data-lucide="pin" class="w-5 h-5"></i>
+                </button>
+                <div class="w-px h-6 bg-gray-200 mx-1"></div>
+                <button onclick="window.saveNoteManually()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full font-bold shadow-md shadow-blue-500/20 transition-all active:scale-95 flex items-center gap-2">
+                    שמור <i data-lucide="check-circle" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-1 flex flex-col p-5 overflow-y-auto pb-6 relative bg-gray-50/30" style="-webkit-overflow-scrolling: touch; touch-action: pan-y;">
+            <input type="text" id="noteTitle" dir="auto" placeholder="כותרת הפתק..." class="text-2xl font-black mb-4 focus:outline-none placeholder-gray-300 bg-transparent text-right flex-none text-gray-800 transition-colors">
+            
+            <!-- אזור תוכן ומדיה -->
+            <div class="flex-1 flex flex-col min-h-0">
+                <textarea id="noteContent" dir="auto" placeholder="התחל לכתוב... (הוסף # כדי ליצור תגיות)" class="w-full flex-1 resize-none focus:outline-none text-lg leading-relaxed placeholder-gray-400 bg-transparent min-h-[30vh] text-gray-700"></textarea>
+                
+                <!-- תצוגה מקדימה של תמונה -->
+                <div id="imagePreviewContainer" class="hidden relative mt-4 mb-2 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                    <img id="imagePreview" src="" class="w-full h-auto max-h-[40vh] object-cover" />
+                    <button onclick="window.removeImage()" class="absolute top-2 left-2 bg-red-500/80 hover:bg-red-600 text-white p-2 rounded-full backdrop-blur-sm transition-all">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- נגן הקלטה -->
+                <div id="audioPreviewContainer" class="hidden mt-4 mb-2 bg-white p-3 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-3">
+                    <div class="bg-blue-100 p-2 rounded-full text-blue-600"><i data-lucide="headphones" class="w-5 h-5"></i></div>
+                    <audio id="audioPlayback" controls class="flex-1 h-10 outline-none"></audio>
+                    <button onclick="window.removeAudio()" class="text-red-500 hover:bg-red-50 p-2 rounded-full transition-all">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <input type="hidden" id="noteId">
+            <input type="hidden" id="noteIsPinned" value="false">
+            <input type="hidden" id="existingImageUrl" value="">
+            <input type="hidden" id="existingAudioUrl" value="">
+        </main>
+
+        <!-- סרגל כלים למדיה -->
+        <div class="bg-white border-t border-gray-200 p-3 flex justify-around items-center shadow-[0_-4px_10px_rgba(0,0,0,0.03)] pb-safe" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
+            <!-- כפתור תמונה -->
+            <button onclick="document.getElementById('imageInput').click()" class="flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition-colors p-2">
+                <i data-lucide="image" class="w-6 h-6"></i>
+                <span class="text-[10px] font-bold">תמונה</span>
+            </button>
+            <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="window.handleImageSelect(event)">
+
+            <!-- כפתור מצלמה ישירה -->
+            <button onclick="document.getElementById('cameraInput').click()" class="flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition-colors p-2">
+                <i data-lucide="camera" class="w-6 h-6"></i>
+                <span class="text-[10px] font-bold">צלם</span>
+            </button>
+            <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="window.handleImageSelect(event)">
+
+            <!-- כפתור הקלטה -->
+            <button id="recordBtn" onclick="window.toggleRecording()" class="flex flex-col items-center gap-1 text-gray-500 hover:text-red-600 transition-colors p-2 relative">
+                <div id="recordIconBg" class="absolute inset-0 bg-red-500 rounded-full opacity-0"></div>
+                <i data-lucide="mic" id="recordIcon" class="w-6 h-6 relative z-10"></i>
+                <span id="recordText" class="text-[10px] font-bold relative z-10">הקלט</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- תפריט קונטקסט -->
+    <div id="contextMenuOverlay" class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-[300] fade-in hidden" onclick="window.closeContextMenu()"></div>
+    <div id="contextMenuModal" class="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 z-[350] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transform translate-y-full transition-transform duration-300" style="padding-bottom: max(1.5rem, env(safe-area-inset-bottom));">
+        <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
+        <h3 id="contextMenuTitle" class="font-bold text-gray-500 text-center mb-6 text-sm truncate px-4">פעולות על פתק</h3>
+        <div class="grid grid-cols-2 gap-4 mb-2">
+            <button onclick="window.handleContextAction('copy')" class="bg-blue-50 text-blue-700 hover:bg-blue-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors">
+                <i data-lucide="copy" class="w-6 h-6"></i>
+                <span class="font-bold text-sm">העתקה</span>
+            </button>
+            <button id="contextPinBtn" onclick="window.handleContextAction('pin')" class="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors">
+                <i data-lucide="pin" class="w-6 h-6"></i>
+                <span class="font-bold text-sm">נעיצה</span>
+            </button>
+            <button onclick="window.handleContextAction('delete')" class="bg-red-50 text-red-600 hover:bg-red-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors col-span-2">
+                <i data-lucide="trash-2" class="w-6 h-6"></i>
+                <span class="font-bold text-sm">מחיקה</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- מודל עזרה -->
+    <div id="helpModal" class="fixed inset-0 z-[400] hidden fade-in">
+        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" onclick="window.history.back()"></div>
+        <div class="fixed inset-0 overflow-y-auto z-10 pointer-events-none" style="-webkit-overflow-scrolling: touch;">
+            <div class="flex min-h-full items-center justify-center p-4">
+                <div class="bg-white rounded-3xl p-7 w-full max-w-md shadow-2xl relative pointer-events-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-black text-gray-800 flex items-center gap-2">
+                            <i data-lucide="zap" class="text-blue-500"></i> מדריך ה-Pro
+                        </h2>
+                        <button onclick="window.history.back()" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    
+                    <p class="text-gray-600 text-sm mb-6 leading-relaxed font-medium">כעת תומך גם במולטימדיה!</p>
+                    
+                    <div class="space-y-4 mb-8">
+                         <div class="flex items-start gap-4">
+                            <div class="bg-green-50 p-3 rounded-2xl text-green-600 flex-shrink-0 shadow-sm border border-green-200"><i data-lucide="image" class="w-5 h-5"></i></div>
+                            <div><strong class="block text-gray-800 text-base mb-1">תמונות (חוסך מקום)</strong><span class="text-sm text-gray-500 leading-relaxed block">התמונות שתעלה נדחסות אוטומטית לפורמט קל משקל כדי לחסוך לך את חבילת האחסון ב-Firebase.</span></div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="bg-red-50 p-3 rounded-2xl text-red-600 flex-shrink-0 shadow-sm border border-red-200"><i data-lucide="mic" class="w-5 h-5"></i></div>
+                            <div><strong class="block text-gray-800 text-base mb-1">הקלטות קול</strong><span class="text-sm text-gray-500 leading-relaxed block">מושלם להקלטת רעיונות בנהיגה או הליכה. נשמר ישירות בענן שלך.</span></div>
+                        </div>
+                         <div class="flex items-start gap-4">
+                            <div class="bg-blue-50 p-3 rounded-2xl text-blue-600 flex-shrink-0 shadow-sm border border-blue-200"><i data-lucide="database" class="w-5 h-5"></i></div>
+                            <div><strong class="block text-gray-800 text-base mb-1">מחיקה חכמה</strong><span class="text-sm text-gray-500 leading-relaxed block">כשתמחק פתק "לצמיתות" מפח האשפה, המערכת תנקה גם את התמונות וההקלטות שלו כדי לפנות מקום.</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- טוסט התראות -->
+    <div id="toast" class="fixed bottom-32 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white font-medium px-6 py-3 rounded-full opacity-0 transition-all duration-300 pointer-events-none z-[700] text-sm shadow-xl shadow-black/20 whitespace-nowrap flex items-center gap-2"></div>
+
+    <script type="module">
+        // --- Firebase Imports ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+        import { getAuth, signInWithPopup, signInWithCustomToken, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
+
+        // מפתחות Firebase שלך
+        const firebaseConfig = {
+            apiKey: "AIzaSyDKw0T8imb-Mimiqg7mU1mbThIozU5QZo8",
+            authDomain: "obn-braindump.firebaseapp.com",
+            projectId: "obn-braindump",
+            storageBucket: "obn-braindump.firebasestorage.app", // קריטי ל-Storage
+            messagingSenderId: "902275826872",
+            appId: "1:902275826872:web:da522f9c3628086341604d",
+            measurementId: "G-XGPNV06H61"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        const appId = "braindump-web";
+
+        try { enableIndexedDbPersistence(db).catch(() => {}); } catch (e) {}
+
+        // Global State
+        window.currentUser = null;
+        window.currentNotes = []; 
+        window.currentActiveTag = null;
+        window.activeContextNote = null;
+        window.showingTrash = false; 
+        
+        // Media State (New)
+        let pendingImageBlob = null;
+        let pendingAudioBlob = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+        
+        let unsubscribeSnapshot = null;
+        let skipAutoSave = false;
+        let isSaving = false; // Flag למניעת יציאה בזמן שמירה
+
+        lucide.createIcons();
+
+        function generateSafeId() {
+            if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+            return 'note-' + Date.now() + '-' + Math.floor(Math.random() * 1000000);
+        }
+
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                try { await signInWithCustomToken(auth, __initial_auth_token); } catch(e){}
+            }
+        };
+        initAuth();
+
+        onAuthStateChanged(auth, (user) => {
+            document.getElementById('loadingView').style.display = 'none';
+            if (user && !user.isAnonymous) {
+                window.currentUser = user;
+                document.getElementById('loginView').style.display = 'none';
+                document.getElementById('listView').style.display = 'flex';
+                
+                document.getElementById('userName').textContent = user.displayName || 'משתמש';
+                if(user.photoURL) {
+                    document.getElementById('userAvatar').src = user.photoURL;
+                    document.getElementById('userAvatar').style.display = 'block';
+                    document.getElementById('userAvatarFallback').style.display = 'none';
+                }
+                startRealtimeSync(user);
+            } else {
+                window.currentUser = null;
+                document.getElementById('listView').style.display = 'none';
+                document.getElementById('loginView').style.display = 'flex';
+                if(unsubscribeSnapshot) unsubscribeSnapshot();
+            }
+        });
+
+        window.loginWithGoogle = async () => {
+            try { await signInWithPopup(auth, new GoogleAuthProvider()); } 
+            catch (error) { window.showToast("שגיאה בהתחברות לגוגל"); }
+        };
+
+        window.handleSignOut = async () => {
+            if(confirm('האם אתה בטוח שברצונך להתנתק?')) {
+                window.exportMenuToggle();
+                await signOut(auth);
+            }
+        };
+
+        function startRealtimeSync(user) {
+            const notesRef = collection(db, 'artifacts', appId, 'users', user.uid, 'notes');
+            unsubscribeSnapshot = onSnapshot(notesRef, (snapshot) => {
+                window.currentNotes = [];
+                snapshot.forEach(doc => {
+                    window.currentNotes.push({id: doc.id, ...doc.data()});
+                });
+                window.renderNotes();
+            });
+        }
+
+        window.showToast = (msg) => {
+            const toast = document.getElementById('toast');
+            toast.innerHTML = msg;
+            toast.classList.remove('opacity-0', 'translate-y-4');
+            lucide.createIcons();
+            setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-4'); }, 3000);
+        };
+
+        window.exportMenuToggle = () => { document.getElementById('exportMenu').classList.toggle('hidden'); };
+
+        window.exportToJSON = () => {
+            window.exportMenuToggle();
+            const activeNotes = window.currentNotes.filter(n => !n.deleted);
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(activeNotes, null, 2));
+            const a = document.createElement('a');
+            a.href = dataStr; a.download = "braindump_backup.json";
+            document.body.appendChild(a); a.click(); a.remove();
+            window.showToast('גיבוי הורד בהצלחה');
+        };
+
+        window.toggleTrashView = () => {
+            window.exportMenuToggle();
+            if (window.showingTrash) { history.back(); } 
+            else {
+                window.showingTrash = true;
+                document.getElementById('trashMenuText').textContent = 'חזור לפתקים הפעילים';
+                history.pushState({ screen: 'trash' }, '', '#trash'); 
+                window.renderNotes();
+            }
+        };
+
+        window.restoreNote = async (id) => {
+            const noteRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'notes', id);
+            await setDoc(noteRef, { deleted: false, updated_at: new Date().toISOString() }, { merge: true });
+            window.showToast('הפתק שוחזר');
+        };
+
+        // הוספנו מחיקת קבצים פיזית בעת מחיקה לצמיתות
+        window.hardDeleteNote = async (id) => {
+            const note = window.currentNotes.find(n => n.id === id);
+            if(note) {
+                // מחיקת תמונה מהאחסון
+                if(note.imageUrl) {
+                    try { const imgRef = ref(storage, note.imageUrl); await deleteObject(imgRef); } catch(e) { console.warn("Failed to delete image", e); }
+                }
+                // מחיקת אודיו מהאחסון
+                if(note.audioUrl) {
+                    try { const audRef = ref(storage, note.audioUrl); await deleteObject(audRef); } catch(e) { console.warn("Failed to delete audio", e); }
+                }
+            }
+            const noteRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'notes', id);
+            await deleteDoc(noteRef);
+            window.showToast('נמחק לצמיתות מהענן');
+        };
+
+        // --- רינדור תצוגה מרכזית ---
+        window.renderNotes = () => {
+            const container = document.getElementById('notesContainer');
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            const tagBar = document.getElementById('tagBar');
+
+            if (window.showingTrash) {
+                document.getElementById('appMainTitle').textContent = 'פח אשפה';
+                document.getElementById('searchContainer').style.display = 'none';
+                document.getElementById('fabButton').style.display = 'none';
+                document.getElementById('quickAddBar').style.display = 'none';
+            } else {
+                document.getElementById('appMainTitle').textContent = 'BrainDump Pro';
+                document.getElementById('searchContainer').style.display = 'block';
+                document.getElementById('fabButton').style.display = 'flex';
+                document.getElementById('quickAddBar').style.display = 'flex';
+            }
+
+            const activeOnly = window.currentNotes.filter(n => !n.deleted);
+            const allTags = new Set();
+            activeOnly.forEach(note => {
+                const text = (note.title || '') + ' ' + (note.content || '');
+                const matches = text.match(/#[א-תa-zA-Z0-9_]+/g);
+                if (matches) matches.forEach(t => allTags.add(t));
+            });
+
+            if (allTags.size > 0 && !window.showingTrash) {
+                tagBar.style.display = 'flex';
+                tagBar.innerHTML = `<button onclick="window.setActiveTag(null)" class="px-4 py-1.5 text-sm font-bold rounded-xl transition-all flex-none border ${window.currentActiveTag === null ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-100'}">הכל</button>`;
+                allTags.forEach(tag => {
+                    tagBar.innerHTML += `<button onclick="window.setActiveTag('${tag}')" class="px-4 py-1.5 text-sm font-bold rounded-xl transition-all flex-none border ${window.currentActiveTag === tag ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-white text-purple-600 border-purple-100 hover:bg-purple-50'}">${tag}</button>`;
+                });
+            } else {
+                tagBar.style.display = 'none';
+            }
+
+            let filtered = window.currentNotes.filter(n => {
+                const isDeleted = n.deleted === true;
+                if (window.showingTrash && !isDeleted) return false;
+                if (!window.showingTrash && isDeleted) return false;
+                const matchSearch = (n.title?.toLowerCase() || '').includes(searchQuery) || (n.content?.toLowerCase() || '').includes(searchQuery);
+                const matchTag = window.currentActiveTag ? ((n.title || '') + ' ' + (n.content || '')).includes(window.currentActiveTag) : true;
+                return matchSearch && matchTag;
+            });
+
+            filtered.sort((a, b) => {
+                if (a.is_pinned && !b.is_pinned) return -1;
+                if (!a.is_pinned && b.is_pinned) return 1;
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
+
+            if (filtered.length === 0) {
+                container.className = 'flex flex-col items-center justify-center mt-10 w-full';
+                if (window.showingTrash) {
+                    container.innerHTML = '<div class="text-center text-gray-400 flex flex-col items-center"><div class="bg-gray-100 text-gray-300 p-6 rounded-full mb-5 shadow-inner"><i data-lucide="trash-2" class="w-12 h-12"></i></div><p class="font-bold text-xl text-gray-500">פח האשפה ריק</p></div>';
+                } else {
+                    container.innerHTML = `
+                        <div class="text-center flex flex-col items-center p-8 bg-white rounded-3xl shadow-sm border border-gray-100 w-full max-w-md mx-auto">
+                            <div class="bg-blue-50 text-blue-500 p-5 rounded-full mb-6 shadow-inner cursor-pointer hover:bg-blue-100 transition-colors" onclick="window.openEditor()">
+                                <i data-lucide="pen-tool" class="w-10 h-10"></i>
+                            </div>
+                            <p class="font-black text-2xl text-gray-800 mb-2">אין פתקים כרגע</p>
+                            <button onclick="window.openEditor()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl font-bold mt-4 shadow-lg active:scale-95 flex gap-3">
+                                <i data-lucide="plus" class="w-5 h-5"></i> צור פתק חדש
+                            </button>
+                        </div>`;
+                }
+                lucide.createIcons();
+                return;
+            }
+            
+            container.className = 'columns-2 gap-3 w-full';
+            const fragment = document.createDocumentFragment();
+
+            filtered.forEach(note => {
+                const el = document.createElement('div');
+                const isPinned = note.is_pinned;
+                let cardStyle = isPinned ? 'bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200' : 'bg-white border-gray-200 hover:shadow-md';
+                if (window.showingTrash) cardStyle = 'bg-red-50 border-red-200 opacity-80';
+
+                el.className = `p-4 rounded-2xl border transition-all cursor-pointer flex flex-col gap-1.5 select-none relative break-inside-avoid mb-3 shadow-sm ${cardStyle}`;
+                
+                const title = note.title || (note.content ? note.content.substring(0, 30) + '...' : 'ללא כותרת');
+                let contentHtml = '';
+                if (note.content) {
+                    let processedText = note.content.replace(/(#[א-תa-zA-Z0-9_]+)/g, '<span class="text-blue-600 font-bold bg-blue-50 px-1 rounded">$1</span>');
+                    contentHtml = `<p class="text-gray-500 text-sm leading-relaxed line-clamp-6 mt-1 pointer-events-none" dir="auto">${processedText}</p>`;
+                }
+
+                // Lazy Loading Media Indicators (חוסך תעבורה)
+                let mediaIndicators = '';
+                if(note.imageUrl || note.audioUrl) {
+                    mediaIndicators = `<div class="flex gap-2 mt-2 pt-2 border-t border-gray-100/50 text-gray-400">`;
+                    if(note.imageUrl) mediaIndicators += `<i data-lucide="image" class="w-4 h-4"></i>`;
+                    if(note.audioUrl) mediaIndicators += `<i data-lucide="mic" class="w-4 h-4"></i>`;
+                    mediaIndicators += `</div>`;
+                }
+
+                const pinIcon = isPinned && !window.showingTrash ? `<i data-lucide="pin" class="absolute left-3 top-3 w-4 h-4 text-yellow-500 fill-yellow-200 transform -rotate-45"></i>` : '';
+
+                el.innerHTML = `${pinIcon}
+                    <h3 class="font-black text-gray-800 text-[1.05rem] leading-tight ${isPinned && !window.showingTrash ? 'pl-6' : ''}" dir="auto">${title}</h3>
+                    ${contentHtml}
+                    ${mediaIndicators}`;
+
+                let pressTimer; let isLongPress = false; let startY = 0;
+                const start = (e) => {
+                    if (window.showingTrash) return;
+                    isLongPress = false; startY = e.touches ? e.touches[0].clientY : e.clientY;
+                    pressTimer = setTimeout(() => {
+                        isLongPress = true; if (navigator.vibrate) navigator.vibrate(50);
+                        window.openContextMenu(note);
+                    }, 500); 
+                };
+                const move = (e) => { const currentY = e.touches ? e.touches[0].clientY : e.clientY; if (Math.abs(currentY - startY) > 10) clearTimeout(pressTimer); };
+                const end = () => { clearTimeout(pressTimer); };
+
+                el.addEventListener('touchstart', start, {passive: true}); el.addEventListener('touchmove', move, {passive: true});
+                el.addEventListener('touchend', end); el.addEventListener('mousedown', start);
+                el.addEventListener('mousemove', move); el.addEventListener('mouseup', end); el.addEventListener('mouseleave', end);
+
+                el.onclick = (e) => {
+                    if (isLongPress) { e.preventDefault(); e.stopPropagation(); } 
+                    else {
+                        if (window.showingTrash) {
+                            if(confirm('לשחזר את הפתק? (ביטול ימחק לצמיתות)')) window.restoreNote(note.id);
+                            else if(confirm('למחוק לצמיתות (כולל מדיה)?')) window.hardDeleteNote(note.id);
+                        } else { window.openEditor(note); }
+                    }
+                };
+                fragment.appendChild(el);
+            });
+            
+            container.innerHTML = ''; container.appendChild(fragment);
+            lucide.createIcons();
+        };
+
+        window.setActiveTag = (tag) => { window.currentActiveTag = tag; window.renderNotes(); };
+
+        // --- Context Menu ---
+        window.openContextMenu = (note) => {
+            window.activeContextNote = note;
+            document.getElementById('contextMenuTitle').textContent = `פעולות: ${note.title || 'ללא כותרת'}`;
+            const pinBtn = document.getElementById('contextPinBtn');
+            if (note.is_pinned) {
+                pinBtn.className = "bg-orange-50 text-orange-600 hover:bg-orange-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors";
+                pinBtn.querySelector('span').textContent = 'בטל נעיצה';
+            } else {
+                pinBtn.className = "bg-yellow-50 text-yellow-600 hover:bg-yellow-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors";
+                pinBtn.querySelector('span').textContent = 'נעיצה בראש';
+            }
+            document.getElementById('contextMenuOverlay').classList.remove('hidden');
+            document.getElementById('contextMenuModal').classList.remove('translate-y-full');
+            history.pushState({ screen: 'context' }, '', '#actions');
+        };
+
+        window.closeContextMenu = () => {
+            document.getElementById('contextMenuOverlay').classList.add('hidden');
+            document.getElementById('contextMenuModal').classList.add('translate-y-full');
+            window.activeContextNote = null;
+        };
+
+        window.handleContextAction = async (action) => {
+            const note = window.activeContextNote;
+            if(!note) return;
+            history.back(); 
+            setTimeout(async () => {
+                if (action === 'copy') {
+                    const ta = document.createElement("textarea"); ta.value = `${note.title || ''}\n\n${note.content || ''}`.trim(); 
+                    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+                    window.showToast('הועתק!');
+                } 
+                else if (action === 'delete') {
+                    const noteRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'notes', note.id);
+                    await setDoc(noteRef, { deleted: true, updated_at: new Date().toISOString() }, { merge: true });
+                    window.showToast('הועבר לפח');
+                }
+                else if (action === 'pin') {
+                    const noteRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'notes', note.id);
+                    await setDoc(noteRef, { is_pinned: !note.is_pinned, updated_at: new Date().toISOString() }, { merge: true });
+                }
+            }, 150);
+        };
+
+        // --- Media Handling (Image Compression & Audio) ---
+        
+        // דחיסת תמונה חכמה בעזרת Canvas
+        window.handleImageSelect = (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width; let height = img.height;
+                    const MAX_WIDTH = 1280; // חוסך משמעותית בנפח בענן
+                    
+                    if (width > MAX_WIDTH) {
+                        height = Math.round((height * MAX_WIDTH) / width);
+                        width = MAX_WIDTH;
+                    }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    canvas.toBlob((blob) => {
+                        pendingImageBlob = blob;
+                        document.getElementById('imagePreview').src = URL.createObjectURL(blob);
+                        document.getElementById('imagePreviewContainer').classList.remove('hidden');
+                    }, 'image/webp', 0.8); // שימוש ב-WebP לדחיסה מעולה
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.removeImage = () => {
+            pendingImageBlob = null;
+            document.getElementById('imagePreview').src = '';
+            document.getElementById('imagePreviewContainer').classList.add('hidden');
+            document.getElementById('existingImageUrl').value = ''; // מסמן שצריך למחוק מה-DB
+        };
+
+        window.toggleRecording = async () => {
+            if(isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                document.getElementById('recordIcon').classList.replace('text-white', 'text-gray-500');
+                document.getElementById('recordIconBg').classList.remove('pulse-record', 'opacity-100');
+                document.getElementById('recordText').textContent = "הקלט";
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = e => { if(e.data.size > 0) audioChunks.push(e.data); };
+                mediaRecorder.onstop = () => {
+                    pendingAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const audioUrl = URL.createObjectURL(pendingAudioBlob);
+                    document.getElementById('audioPlayback').src = audioUrl;
+                    document.getElementById('audioPreviewContainer').classList.remove('hidden');
+                    stream.getTracks().forEach(track => track.stop()); // סגירת המיקרופון
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                document.getElementById('recordIcon').classList.replace('text-gray-500', 'text-white');
+                document.getElementById('recordIconBg').classList.add('pulse-record', 'opacity-100');
+                document.getElementById('recordText').textContent = "מקליט...";
+            } catch (err) {
+                alert("לא ניתן לגשת למיקרופון. ודא שאישרת הרשאות ושאתה גולש ב-HTTPS.");
+            }
+        };
+
+        window.removeAudio = () => {
+            pendingAudioBlob = null;
+            document.getElementById('audioPlayback').src = '';
+            document.getElementById('audioPreviewContainer').classList.add('hidden');
+            document.getElementById('existingAudioUrl').value = '';
+        };
+
+        // --- Editor Logic ---
+        window.openEditor = (note = null) => {
+            const deleteBtn = document.getElementById('deleteBtn');
+            pendingImageBlob = null;
+            pendingAudioBlob = null;
+            
+            // איפוס UI מדיה
+            document.getElementById('imagePreviewContainer').classList.add('hidden');
+            document.getElementById('audioPreviewContainer').classList.add('hidden');
+            document.getElementById('imageInput').value = '';
+            document.getElementById('cameraInput').value = '';
+
+            if (note) {
+                document.getElementById('noteId').value = note.id;
+                document.getElementById('noteTitle').value = note.title || '';
+                document.getElementById('noteContent').value = note.content || '';
+                document.getElementById('noteIsPinned').value = note.is_pinned ? 'true' : 'false';
+                document.getElementById('existingImageUrl').value = note.imageUrl || '';
+                document.getElementById('existingAudioUrl').value = note.audioUrl || '';
+                deleteBtn.classList.remove('hidden'); 
+
+                // טעינת מדיה קיימת לתצוגה
+                if(note.imageUrl) {
+                    document.getElementById('imagePreview').src = note.imageUrl;
+                    document.getElementById('imagePreviewContainer').classList.remove('hidden');
+                }
+                if(note.audioUrl) {
+                    document.getElementById('audioPlayback').src = note.audioUrl;
+                    document.getElementById('audioPreviewContainer').classList.remove('hidden');
+                }
+            } else {
+                document.getElementById('noteId').value = '';
+                document.getElementById('noteTitle').value = '';
+                document.getElementById('noteContent').value = '';
+                document.getElementById('noteIsPinned').value = 'false';
+                document.getElementById('existingImageUrl').value = '';
+                document.getElementById('existingAudioUrl').value = '';
+                deleteBtn.classList.add('hidden'); 
+            }
+            
+            window.updatePinUI();
+            document.getElementById('listView').style.display = 'none';
+            document.getElementById('editorView').style.display = 'flex';
+            history.pushState({ screen: 'editor' }, '', '#editor');
+        };
+
+        window.handleEditorBack = () => {
+            if(isSaving) return; // חסימת חזרה בזמן שמירה/העלאה
+            history.back();
+        };
+        
+        window.saveNoteManually = () => {
+             if(isSaving) return;
+             history.back(); 
+        };
+
+        window.performSave = async () => {
+            if (!window.currentUser || isSaving) return;
+            
+            const id = document.getElementById('noteId').value;
+            const title = document.getElementById('noteTitle').value.trim();
+            const content = document.getElementById('noteContent').value.trim();
+            const isPinned = document.getElementById('noteIsPinned').value === 'true';
+            let finalImgUrl = document.getElementById('existingImageUrl').value;
+            let finalAudioUrl = document.getElementById('existingAudioUrl').value;
+
+            // אם הכל ריק ואין מדיה לשתף, אל תשמור
+            if (!title && !content && !pendingImageBlob && !pendingAudioBlob && !finalImgUrl && !finalAudioUrl) return;
+
+            isSaving = true;
+            
+            // הצגת מסך טעינה אם יש העלאת קבצים כבדה
+            if(pendingImageBlob || pendingAudioBlob) {
+                const loader = document.getElementById('loadingView');
+                document.getElementById('loadingText').classList.remove('hidden');
+                loader.style.display = 'flex';
+                loader.classList.remove('hidden');
+            }
+
+            try {
+                const noteId = id || generateSafeId();
+                const now = new Date().toISOString();
+                const userId = window.currentUser.uid;
+
+                // 1. העלאת תמונה
+                if (pendingImageBlob) {
+                    const imgRef = ref(storage, `users/${userId}/images/${noteId}_${Date.now()}.webp`);
+                    await uploadBytes(imgRef, pendingImageBlob);
+                    finalImgUrl = await getDownloadURL(imgRef);
+                }
+
+                // 2. העלאת אודיו
+                if (pendingAudioBlob) {
+                    const audioRef = ref(storage, `users/${userId}/audio/${noteId}_${Date.now()}.webm`);
+                    await uploadBytes(audioRef, pendingAudioBlob);
+                    finalAudioUrl = await getDownloadURL(audioRef);
+                }
+
+                // 3. שמירה ב-Firestore
+                let createdAt = now;
+                if (id) {
+                    const existing = window.currentNotes.find(n => n.id === id);
+                    if (existing) createdAt = existing.created_at;
+                }
+
+                const noteData = {
+                    id: noteId, title: title, content: content, is_pinned: isPinned,
+                    updated_at: now, created_at: createdAt, deleted: false
+                };
+                
+                // הוספת שדות המדיה רק אם קיימים (מונע דריסה עם NULL)
+                if(finalImgUrl) noteData.imageUrl = finalImgUrl; else noteData.imageUrl = null;
+                if(finalAudioUrl) noteData.audioUrl = finalAudioUrl; else noteData.audioUrl = null;
+
+                const noteRef = doc(db, 'artifacts', appId, 'users', userId, 'notes', noteId);
+                await setDoc(noteRef, noteData, { merge: true });
+
+            } catch (e) {
+                console.error(e);
+                window.showToast('שגיאה בשמירה/העלאה ❌');
+            } finally {
+                document.getElementById('loadingView').style.display = 'none';
+                document.getElementById('loadingText').classList.add('hidden');
+                isSaving = false;
+            }
+        };
+        
+        window.deleteCurrentNote = async () => {
+            if(!confirm('להעביר את הפתק לפח האשפה?')) return;
+            const id = document.getElementById('noteId').value;
+            if(id && window.currentUser) {
+                const noteRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'notes', id);
+                await setDoc(noteRef, { deleted: true, updated_at: new Date().toISOString() }, { merge: true });
+                window.showToast('הועבר לפח האשפה');
+            }
+            skipAutoSave = true;
+            history.back(); 
+        };
+
+        window.togglePin = () => {
+            const input = document.getElementById('noteIsPinned');
+            input.value = input.value === 'true' ? 'false' : 'true';
+            window.updatePinUI();
+        };
+
+        window.updatePinUI = () => {
+            const isPinned = document.getElementById('noteIsPinned').value === 'true';
+            const btn = document.getElementById('pinBtn');
+            if (isPinned) {
+                btn.classList.replace('text-gray-400', 'text-yellow-600');
+                btn.classList.add('bg-yellow-50');
+            } else {
+                btn.classList.replace('text-yellow-600', 'text-gray-400');
+                btn.classList.remove('bg-yellow-50');
+            }
+        };
+
+        window.openHelpModal = () => {
+            document.getElementById('helpModal').classList.remove('hidden');
+            history.pushState({ screen: 'help' }, '', '#help');
+        };
+        
+        // --- Routing ---
+        window.addEventListener('popstate', async () => {
+            if(isSaving) { history.pushState({ screen: 'editor' }, '', '#editor'); return; } // חסימה
+            
+            if(!document.getElementById('contextMenuOverlay').classList.contains('hidden')) { window.closeContextMenu(); return; }
+            if(!document.getElementById('helpModal').classList.contains('hidden')) { document.getElementById('helpModal').classList.add('hidden'); return; }
+            if(!document.getElementById('exportMenu').classList.contains('hidden')) { window.exportMenuToggle(); return; }
+            
+            if(document.getElementById('editorView').style.display !== 'none') {
+                if(isRecording) window.toggleRecording(); // עצור הקלטה אם יצא
+                if(!skipAutoSave) await window.performSave();
+                skipAutoSave = false; 
+                document.getElementById('editorView').style.display = 'none';
+                document.getElementById('listView').style.display = 'flex';
+                window.renderNotes();
+                return;
+            }
+
+            if (window.showingTrash) {
+                window.showingTrash = false;
+                document.getElementById('trashMenuText').textContent = 'פח אשפה';
+                window.renderNotes();
+                return;
+            }
+        });
+
+    </script>
+</body>
+</html>
