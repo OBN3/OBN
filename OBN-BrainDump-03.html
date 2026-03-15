@@ -98,6 +98,10 @@
                         <button onclick="window.exportToJSON()" class="w-full text-right p-3 hover:bg-gray-50 rounded flex items-center gap-3 transition">
                             <i data-lucide="download" class="w-4 h-4 text-blue-500"></i> גיבוי מקומי ל-JSON
                         </button>
+                        <button onclick="document.getElementById('importInput').click()" class="w-full text-right p-3 hover:bg-gray-50 rounded flex items-center gap-3 transition">
+                            <i data-lucide="upload" class="w-4 h-4 text-purple-500"></i> שחזור גיבוי מ-JSON
+                        </button>
+                        <input type="file" id="importInput" accept=".json" class="hidden" onchange="window.handleImportJSON(event)">
                         <button onclick="window.toggleTrashView()" class="w-full text-right p-3 hover:bg-gray-50 rounded flex items-center gap-3 transition">
                             <i data-lucide="trash-2" class="w-4 h-4 text-gray-500"></i> <span id="trashMenuText">פח אשפה</span>
                         </button>
@@ -203,14 +207,14 @@
         <!-- סרגל כלים למדיה -->
         <div class="bg-white border-t border-gray-200 p-3 flex justify-around items-center shadow-[0_-4px_10px_rgba(0,0,0,0.03)] pb-safe" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
             <!-- כפתור תמונה -->
-            <button onclick="document.getElementById('imageInput').click()" class="flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition-colors p-2">
+            <button onclick="window.triggerImageSelect('gallery')" class="flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition-colors p-2">
                 <i data-lucide="image" class="w-6 h-6"></i>
                 <span class="text-[10px] font-bold">תמונה</span>
             </button>
             <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="window.handleImageSelect(event)">
 
             <!-- כפתור מצלמה ישירה -->
-            <button onclick="document.getElementById('cameraInput').click()" class="flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition-colors p-2">
+            <button onclick="window.triggerImageSelect('camera')" class="flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition-colors p-2">
                 <i data-lucide="camera" class="w-6 h-6"></i>
                 <span class="text-[10px] font-bold">צלם</span>
             </button>
@@ -479,6 +483,51 @@
             a.href = dataStr; a.download = "braindump_backup.json";
             document.body.appendChild(a); a.click(); a.remove();
             window.showToast('גיבוי הורד בהצלחה');
+        };
+
+        // --- ייבוא מ-JSON ---
+        window.handleImportJSON = (e) => {
+            window.exportMenuToggle();
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if(!confirm('שים לב: ייבוא גיבוי יוסיף או יעדכן פתקים. מדיה (תמונות/הקלטות) לא נשמרת בקובץ הגיבוי ולכן לא תשוחזר אם נמחקה בעבר. האם להמשיך?')) {
+                e.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const importedNotes = JSON.parse(event.target.result);
+                    if (!Array.isArray(importedNotes)) throw new Error("Invalid format");
+                    
+                    document.getElementById('loadingText').textContent = 'משחזר פתקים...';
+                    document.getElementById('loadingView').style.display = 'flex';
+                    document.getElementById('loadingView').classList.remove('hidden');
+
+                    const batchPromises = importedNotes.map(note => {
+                        const noteId = note.id || generateSafeId();
+                        const noteRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'notes', noteId);
+                        // Merge keeps existing media URLs intact if they exist in DB
+                        return setDoc(noteRef, {
+                            ...note,
+                            updated_at: new Date().toISOString(),
+                            deleted: false
+                        }, { merge: true });
+                    });
+
+                    await Promise.all(batchPromises);
+                    window.showToast('הגיבוי שוחזר בהצלחה!');
+                } catch (err) {
+                    console.error(err);
+                    window.showToast('שגיאה בשחזור. ודא שזהו קובץ תקין.');
+                } finally {
+                    document.getElementById('loadingView').style.display = 'none';
+                    e.target.value = '';
+                }
+            };
+            reader.readAsText(file);
         };
 
         // --- פח אשפה וחזרה ---
@@ -764,6 +813,17 @@
 
         // --- Media Handling (Image Compression & Audio) ---
         
+        window.triggerImageSelect = (type) => {
+            const hasImage = pendingImageBlob !== null || document.getElementById('existingImageUrl').value !== '';
+            if (hasImage) {
+                if (!confirm('כבר קיימת תמונה בפתק זה. האם תרצה להחליף אותה בתמונה חדשה?')) {
+                    return;
+                }
+            }
+            if (type === 'gallery') document.getElementById('imageInput').click();
+            if (type === 'camera') document.getElementById('cameraInput').click();
+        };
+
         // דחיסת תמונה חכמה בעזרת Canvas
         window.handleImageSelect = (e) => {
             const file = e.target.files[0];
