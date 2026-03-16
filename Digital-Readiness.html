@@ -144,7 +144,7 @@
             <div id="score-circle" class="text-5xl font-black mb-2 text-center">0/10</div>
             <h3 id="result-title" class="text-xl font-bold mb-2 italic text-center"></h3>
             
-            <div id="prev-score-feedback" class="text-center text-sm font-semibold mb-6 text-blue-800 bg-blue-50 py-2 rounded-lg hidden"></div>
+            <div id="prev-score-feedback" class="text-center text-sm font-semibold mb-6 text-blue-800 bg-blue-50 py-3 rounded-lg hidden"></div>
             
             <div id="recommendations-container" class="space-y-4 mb-8 text-right">
                 <h4 class="font-bold text-gray-800 border-b pb-2 mb-3">צריכים חיזוק בנקודות הבאות:</h4>
@@ -305,13 +305,12 @@
                 failedIndices.forEach(idx => {
                     const q = questions[idx];
                     const item = document.createElement('div');
-                    item.className = "p-3 bg-white border-r-4 border-blue-400 rounded-lg text-sm shadow-sm flex items-start gap-3";
+                    item.className = "p-3 bg-white border-r-4 border-blue-400 rounded-lg text-sm shadow-sm flex items-start gap-3 text-right";
                     item.innerHTML = `<span>${q.icon}</span> <span>${q.fix}</span>`;
                     recsList.appendChild(item);
                 });
             }
 
-            // Reset lights
             ['red', 'orange', 'green'].forEach(c => document.getElementById(`light-${c}`).classList.remove('active'));
 
             if (finalScore <= 4) {
@@ -347,7 +346,7 @@
                 message += `אני מוגן/ת לחלוטין! כל הכבוד לי! 🛡️`;
             }
             
-            message += `\nבדקו את עצמכם גם!`;
+            message += `\nבדקו את עצמכם גם בקישור: https://did.li/wFmUY`;
             const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
             window.open(url, '_blank');
         }
