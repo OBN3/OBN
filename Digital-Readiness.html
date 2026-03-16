@@ -26,8 +26,65 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .traffic-light-glow { filter: drop-shadow(0 0 12px currentColor); }
+        
+        /* Traffic Light Styling */
+        .traffic-light-box {
+            background: #1a1a1a;
+            border-radius: 2rem;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5), 0 5px 15px rgba(0,0,0,0.3);
+            width: 240px;
+            margin: 1.5rem auto;
+        }
+        .light {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            transition: all 0.4s ease;
+            opacity: 0.2;
+            filter: grayscale(1);
+        }
+        
+        /* Active States with Glow */
+        .light-red.active {
+            background: #ef4444;
+            opacity: 1;
+            filter: grayscale(0);
+            box-shadow: 0 0 20px #ef4444;
+        }
+        .light-orange.active {
+            background: #f59e0b;
+            opacity: 1;
+            filter: grayscale(0);
+            box-shadow: 0 0 20px #f59e0b;
+        }
+        .light-green.active {
+            background: #10b981;
+            opacity: 1;
+            filter: grayscale(0);
+            box-shadow: 0 0 20px #10b981;
+        }
+
         footer { margin-top: auto; }
+        
+        .btn-selected-yes {
+            background-color: #10b981 !important;
+            color: white !important;
+            box-shadow: 0 0 0 4px #d1fae5;
+        }
+        .btn-selected-no {
+            background-color: #ef4444 !important;
+            color: white !important;
+            box-shadow: 0 0 0 4px #fee2e2;
+        }
     </style>
 </head>
 <body class="p-4">
@@ -48,22 +105,26 @@
         </div>
 
         <!-- Quiz Screen -->
-        <div id="quiz-screen" class="glass-card p-8 hidden fade-in">
+        <div id="quiz-screen" class="glass-card p-8 hidden fade-in relative">
             <div class="flex justify-between items-center mb-6">
-                <span id="question-counter" class="text-sm font-semibold text-blue-600 tracking-tight">שאלה 1 מתוך 10</span>
-                <div class="w-1/2 bg-gray-200 rounded-full h-2">
+                <button id="back-btn" onclick="prevQuestion()" class="text-blue-600 font-bold flex items-center hover:opacity-70 disabled:opacity-30 disabled:cursor-not-allowed">
+                    <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+                    חזרה
+                </button>
+                <div class="w-1/3 bg-gray-200 rounded-full h-2 mx-2">
                     <div id="progress-bar" class="bg-blue-600 h-2 rounded-full progress-bar" style="width: 10%"></div>
                 </div>
+                <span id="question-counter" class="text-xs font-semibold text-blue-600 tracking-tight text-left">שאלה 1/10</span>
             </div>
             
             <div id="question-icon" class="text-5xl mb-4 text-center"></div>
             <h2 id="question-text" class="text-xl font-bold text-gray-800 mb-10 min-h-[90px] text-center leading-relaxed"></h2>
             
             <div class="grid grid-cols-2 gap-4">
-                <button onclick="handleAnswer(true)" class="flex flex-col items-center justify-center bg-white border-2 border-green-500 hover:bg-green-50 text-green-700 font-bold py-6 px-4 rounded-2xl transition-all shadow-sm active:scale-95">
+                <button id="btn-yes" onclick="handleAnswer(true)" class="flex flex-col items-center justify-center bg-white border-2 border-green-500 hover:bg-green-50 text-green-700 font-bold py-6 px-4 rounded-2xl transition-all shadow-sm active:scale-95">
                     <span class="text-3xl mb-1">כן</span>
                 </button>
-                <button onclick="handleAnswer(false)" class="flex flex-col items-center justify-center bg-white border-2 border-red-500 hover:bg-red-50 text-red-700 font-bold py-6 px-4 rounded-2xl transition-all shadow-sm active:scale-95">
+                <button id="btn-no" onclick="handleAnswer(false)" class="flex flex-col items-center justify-center bg-white border-2 border-red-500 hover:bg-red-50 text-red-700 font-bold py-6 px-4 rounded-2xl transition-all shadow-sm active:scale-95">
                     <span class="text-3xl mb-1">לא</span>
                 </button>
             </div>
@@ -71,16 +132,19 @@
 
         <!-- Result Screen -->
         <div id="result-screen" class="glass-card p-8 hidden fade-in">
-            <h2 class="text-2xl font-bold text-gray-800 mb-2 text-center">התוצאה שלך</h2>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2 text-center text-balance">התוצאה שלך</h2>
             
-            <div class="flex justify-center space-x-4 space-x-reverse my-6">
-                <div id="light-red" class="w-14 h-14 rounded-full bg-gray-200 border-4 border-white flex items-center justify-center transition-all duration-500">🚨</div>
-                <div id="light-orange" class="w-14 h-14 rounded-full bg-gray-200 border-4 border-white flex items-center justify-center transition-all duration-500">⚠️</div>
-                <div id="light-green" class="w-14 h-14 rounded-full bg-gray-200 border-4 border-white flex items-center justify-center transition-all duration-500">✅</div>
+            <!-- Horizontal Traffic Light -->
+            <div class="traffic-light-box">
+                <div id="light-red" class="light light-red">🚨</div>
+                <div id="light-orange" class="light light-orange">⚠️</div>
+                <div id="light-green" class="light light-green">🛡️</div>
             </div>
 
             <div id="score-circle" class="text-5xl font-black mb-2 text-center">0/10</div>
-            <h3 id="result-title" class="text-xl font-bold mb-4 italic text-center"></h3>
+            <h3 id="result-title" class="text-xl font-bold mb-2 italic text-center"></h3>
+            
+            <div id="prev-score-feedback" class="text-center text-sm font-semibold mb-6 text-blue-800 bg-blue-50 py-2 rounded-lg hidden"></div>
             
             <div id="recommendations-container" class="space-y-4 mb-8 text-right">
                 <h4 class="font-bold text-gray-800 border-b pb-2 mb-3">צריכים חיזוק בנקודות הבאות:</h4>
@@ -104,37 +168,37 @@
     <script>
         const questions = [
             { 
-                text: "אם מישהו שאני מכיר מתקשר ומבקש כסף או פרטים אישיים, האם האינסטינקט שלי הוא לנתק ולהתקשר אליו בעצמי למספר ששמור לי?", 
+                text: "אם מישהו שאני מכיר מתקשר ומבקש כסף או פרטים אישיים, האם האינסטינקט שלי הוא לנתק ולהתקשר אליו בעצמי למספר ששמור לי באנשי הקשר?", 
                 icon: "📞",
                 fix: "תמיד לנתק ולהתקשר חזרה למספר השמור. קולות ב-AI יכולים להישמע בדיוק כמו יקיריכם."
             },
             { 
-                text: "האם אני מקפיד שלא להזין פרטים רגישים (כמו מספר ת\"ז, פרטי בנק או מידע רפואי) לתוך אפליקציות של בינה מלאכותית?", 
+                text: "האם אני מקפיד שלא להזין פרטים רגישים (כמו מספר ת\"ז, פרטי בנק או מידע רפואי) לתוך אפליקציות של צ'אט או בינה מלאכותית?", 
                 icon: "🔒",
                 fix: "לעולם אל תזינו מידע אישי או רגיש לצ'אטים של AI (כמו ChatGPT) - המידע הזה עשוי להישמר במאגרים שלהם."
             },
             { 
-                text: "האם קבעתי עם הילדים או הנכדים 'מילת קוד' סודית כדי שאוכל לוודא שזה באמת הם במקרה של שיחה דחופה?", 
+                text: "האם קבעתי עם הילדים או הנכדים 'מילת קוד' סודית כדי שאוכל לוודא שזה באמת הם במקרה של שיחה מוזרה או דחופה?", 
                 icon: "🔑",
                 fix: "הגדירו עוד היום 'מילת קסם' שרק המשפחה מכירה. זה הכלי הכי חזק נגד זיוף קול (Deepfake)."
             },
             { 
-                text: "לפני שאני מעביר הלאה הודעה מרגשת או מפחידה, האם אני בודק אם היא פורסמה גם באמצעי תקשורת רשמיים?", 
+                text: "לפני שאני מעביר הלאה הודעה מרגשת או מפחידה שקיבלתי, האם אני בודק אם היא פורסמה גם באמצעי תקשורת רשמיים?", 
                 icon: "📰",
                 fix: "אל תפיצו שמועות. בדקו באתרים רשמיים (ynet, N12 וכדומה) לפני שמעבירים הלאה הודעה מפחידה."
             },
             { 
-                text: "האם הגדרתי באפליקציית הוואטסאפ שלי 'אימות דו-שלבי' (קוד בן 6 ספרות) כדי למנוע השתלטות האקרים?", 
+                text: "האם הגדרתי באפליקציית הוואטסאפ שלי 'אימות דו-שלבי' (קוד בן 6 ספרות) כדי למנוע מהאקרים להשתלט לי על החשבון?", 
                 icon: "🛡️",
                 fix: "כנסו להגדרות וואטסאפ > חשבון > אימות דו-שלבי והגדירו קוד. זה ינעל את החשבון שלכם בפני פריצות."
             },
             { 
-                text: "האם אני נמנע מלחיצה על קישורים שמגיעים ב-SMS ממספרים שאינני מכיר, גם אם הם מבטיחים 'פרס'?", 
+                text: "האם אני נמנע מלחיצה על קישורים שמגיעים ב-SMS או בוואטסאפ ממספרים שאינני מכיר, גם אם הם מבטיחים 'פרס' או 'חבילה שמחכה'?", 
                 icon: "🔗",
                 fix: "קישורים בהודעות ממקור לא מוכר הם הדרך הנפוצה ביותר לגניבת פרטים. פשוט אל תלחצו."
             },
             { 
-                text: "האם אני יודע שבינה מלאכותית יכולה ליצור תמונות שנראות אמיתיות, ולכן אני לא מאמין לכל תמונה 'מרעישה'?", 
+                text: "האם אני יודע שבינה מלאכותית יכולה ליצור תמונות שנראות אמיתיות לחלוטין, ולכן אני לא מאמין לכל תמונה 'מרעישה' שאני רואה ברשת?", 
                 icon: "🖼️",
                 fix: "היו סקפטיים. חפשו עיוותים בתמונה (אצבעות מוזרות, רקע מרוח) לפני שאתם מאמינים למה שאתם רואים."
             },
@@ -149,15 +213,14 @@
                 fix: "עדכוני תוכנה מכילים תיקוני אבטחה קריטיים. אל תדחו אותם - הם המגן הטכנולוגי שלכם."
             },
             { 
-                text: "האם יש לי אדם קרוב שאני סומך עליו שאני מרגיש בנוח להתקשר אליו ולהתייעץ לפני פעולה דיגיטלית?", 
+                text: "האם יש לי אדם קרוב שאני סומך עליו (בן משפחה או חבר) שאני מרגיש בנוח להתקשר אליו ולהתייעץ לפני שאני מבצע פעולה דיגיטלית שאני לא בטוח לגביה?", 
                 icon: "👥",
                 fix: "בחרו 'חבר טלפוני' טכנולוגי שאתם סומכים עליו. התייעצות של דקה יכולה לחסוך עוגמת נפש גדולה."
             }
         ];
 
         let currentQuestion = 0;
-        let score = 0;
-        let failedIndices = [];
+        let answers = new Array(questions.length).fill(null);
 
         function startQuiz() {
             document.getElementById('start-screen').classList.add('hidden');
@@ -167,39 +230,74 @@
 
         function updateQuestion() {
             const total = questions.length;
+            const yesBtn = document.getElementById('btn-yes');
+            const noBtn = document.getElementById('btn-no');
+
+            yesBtn.classList.remove('btn-selected-yes');
+            noBtn.classList.remove('btn-selected-no');
+
             if (currentQuestion < total) {
                 const q = questions[currentQuestion];
                 document.getElementById('question-text').innerText = q.text;
                 document.getElementById('question-icon').innerText = q.icon;
-                document.getElementById('question-counter').innerText = `שאלה ${currentQuestion + 1} מתוך ${total}`;
+                document.getElementById('question-counter').innerText = `שאלה ${currentQuestion + 1}/${total}`;
                 document.getElementById('progress-bar').style.width = `${((currentQuestion + 1) / total) * 100}%`;
+                document.getElementById('back-btn').disabled = currentQuestion === 0;
+
+                if (answers[currentQuestion] === true) {
+                    yesBtn.classList.add('btn-selected-yes');
+                } else if (answers[currentQuestion] === false) {
+                    noBtn.classList.add('btn-selected-no');
+                }
             } else {
                 showResults();
             }
         }
 
         function handleAnswer(isYes) {
-            if (isYes) {
-                score++;
-            } else {
-                failedIndices.push(currentQuestion);
-            }
+            answers[currentQuestion] = isYes;
             currentQuestion++;
             updateQuestion();
+        }
+
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                updateQuestion();
+            }
         }
 
         function showResults() {
             document.getElementById('quiz-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.remove('hidden');
             
+            const finalScore = answers.filter(a => a === true).length;
+            const failedIndices = answers.map((a, i) => a === false ? i : null).filter(i => i !== null);
+            
             const scoreCircle = document.getElementById('score-circle');
             const resultTitle = document.getElementById('result-title');
             const recsList = document.getElementById('recs-list');
+            const feedbackBox = document.getElementById('prev-score-feedback');
             
-            scoreCircle.innerText = `${score}/10`;
+            scoreCircle.innerText = `${finalScore}/10`;
             recsList.innerHTML = "";
 
-            // Recommendations logic
+            const prevScore = localStorage.getItem('obn_ai_last_score');
+            if (prevScore !== null) {
+                const prev = parseInt(prevScore);
+                feedbackBox.classList.remove('hidden');
+                if (finalScore > prev) {
+                    feedbackBox.innerText = `הציון הקודם שלך היה ${prev}. כל הכבוד על השיפור! 📈`;
+                    feedbackBox.className = "text-center text-sm font-semibold mb-6 text-green-800 bg-green-50 py-3 rounded-lg border border-green-200";
+                } else if (finalScore < prev) {
+                    feedbackBox.innerText = `הציון הקודם שלך היה ${prev}. לא נורא, קראו את ההמלצות ונסו שוב!`;
+                    feedbackBox.className = "text-center text-sm font-semibold mb-6 text-red-800 bg-red-50 py-3 rounded-lg border border-red-200";
+                } else {
+                    feedbackBox.innerText = `שמרת על רמה יציבה! הציון הקודם היה גם ${prev}.`;
+                }
+            }
+            localStorage.setItem('obn_ai_last_score', finalScore);
+
             if (failedIndices.length === 0) {
                 document.getElementById('recommendations-container').classList.add('hidden');
             } else {
@@ -207,58 +305,56 @@
                 failedIndices.forEach(idx => {
                     const q = questions[idx];
                     const item = document.createElement('div');
-                    item.className = "p-3 bg-red-50 border-r-4 border-red-400 rounded-sm text-sm";
-                    item.innerHTML = `<strong>${q.icon} המלצה:</strong> ${q.fix}`;
+                    item.className = "p-3 bg-white border-r-4 border-blue-400 rounded-lg text-sm shadow-sm flex items-start gap-3";
+                    item.innerHTML = `<span>${q.icon}</span> <span>${q.fix}</span>`;
                     recsList.appendChild(item);
                 });
             }
 
-            // Traffic Light
-            ['red', 'orange', 'green'].forEach(c => document.getElementById(`light-${c}`).className = "w-14 h-14 rounded-full bg-gray-200 border-4 border-white flex items-center justify-center transition-all duration-500");
+            // Reset lights
+            ['red', 'orange', 'green'].forEach(c => document.getElementById(`light-${c}`).classList.remove('active'));
 
-            if (score <= 4) {
-                const l = document.getElementById('light-red');
-                l.className += " bg-red-500 text-white traffic-light-glow";
+            if (finalScore <= 4) {
+                document.getElementById('light-red').classList.add('active');
                 scoreCircle.className = "text-5xl font-black mb-2 text-center text-red-600";
                 resultTitle.innerText = '"חשופים לאיומים"';
-            } else if (score <= 7) {
-                const l = document.getElementById('light-orange');
-                l.className += " bg-orange-500 text-white traffic-light-glow";
+            } else if (finalScore <= 7) {
+                document.getElementById('light-orange').classList.add('active');
                 scoreCircle.className = "text-5xl font-black mb-2 text-center text-orange-500";
                 resultTitle.innerText = '"במסלול הבטוח, אך נדרש שיפור"';
             } else {
-                const l = document.getElementById('light-green');
-                l.className += " bg-green-500 text-white traffic-light-glow";
+                document.getElementById('light-green').classList.add('active');
                 scoreCircle.className = "text-5xl font-black mb-2 text-center text-green-600";
                 resultTitle.innerText = '"חסינות גבוהה מאוד"';
             }
         }
 
         function shareWhatsApp() {
-            let status = score <= 4 ? "🚨 אדומה (חשופה)" : (score <= 7 ? "⚠️ כתומה (בינונית)" : "✅ ירוקה (חסינה)");
+            const finalScore = answers.filter(a => a === true).length;
+            const failedIndices = answers.map((a, i) => a === false ? i : null).filter(i => i !== null);
+            let status = finalScore <= 4 ? "🚨 אדומה (חשופה)" : (finalScore <= 7 ? "⚠️ כתומה (בינונית)" : "✅ ירוקה (חסינה)");
+            
             let message = `*מדד החסינות הדיגיטלית שלי לעידן ה-AI*\n\n`;
-            message += `התוצאה שלי: *${score}/10*\n`;
+            message += `התוצאה שלי: *${finalScore}/10*\n`;
             message += `רמת מוגנות: *${status}*\n\n`;
             
             if (failedIndices.length > 0) {
-                message += `*המלצות לפעולה לשיפור המוגנות שלי:*\n`;
+                message += `*הנה מה שלמדתי כדי להגן על עצמי:*\n`;
                 failedIndices.forEach((idx, i) => {
-                    message += `${i+1}. ${questions[idx].fix}\n`;
+                    message += `• ${questions[idx].fix}\n`;
                 });
             } else {
-                message += `אני מוגן לחלוטין! כל הכבוד לי! 🛡️`;
+                message += `אני מוגן/ת לחלוטין! כל הכבוד לי! 🛡️`;
             }
             
             message += `\nבדקו את עצמכם גם!`;
-            
             const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
             window.open(url, '_blank');
         }
 
         function resetQuiz() {
             currentQuestion = 0;
-            score = 0;
-            failedIndices = [];
+            answers = new Array(questions.length).fill(null);
             document.getElementById('result-screen').classList.add('hidden');
             document.getElementById('start-screen').classList.remove('hidden');
         }
