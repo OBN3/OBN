@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מדד החסינות הדיגיטלית - עידן ה-AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Assistant', sans-serif;
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .progress-bar { transition: width 0.4s ease-in-out; }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .traffic-light-glow { filter: drop-shadow(0 0 12px currentColor); }
+        footer { margin-top: auto; }
+    </style>
+</head>
+<body class="p-4">
+
+    <div id="app" class="max-w-xl w-full mx-auto my-auto">
+        <!-- Start Screen -->
+        <div id="start-screen" class="glass-card p-8 text-center fade-in">
+            <div class="mb-6 inline-block p-4 bg-blue-100 rounded-full text-blue-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-4">מדד החסינות הדיגיטלית</h1>
+            <p class="text-lg text-gray-600 mb-8">האם אתם מוכנים לעידן ה-AI? בדקו את רמת המוגנות שלכם ב-10 שאלות קצרות וקבלו המלצות אישיות לשיפור.</p>
+            <button onclick="startQuiz()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl transition duration-300 shadow-lg text-xl">
+                בדיקת חסינות
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="glass-card p-8 hidden fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <span id="question-counter" class="text-sm font-semibold text-blue-600 tracking-tight">שאלה 1 מתוך 10</span>
+                <div class="w-1/2 bg-gray-200 rounded-full h-2">
+                    <div id="progress-bar" class="bg-blue-600 h-2 rounded-full progress-bar" style="width: 10%"></div>
+                </div>
+            </div>
+            
+            <div id="question-icon" class="text-5xl mb-4 text-center"></div>
+            <h2 id="question-text" class="text-xl font-bold text-gray-800 mb-10 min-h-[90px] text-center leading-relaxed"></h2>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="handleAnswer(true)" class="flex flex-col items-center justify-center bg-white border-2 border-green-500 hover:bg-green-50 text-green-700 font-bold py-6 px-4 rounded-2xl transition-all shadow-sm active:scale-95">
+                    <span class="text-3xl mb-1">כן</span>
+                </button>
+                <button onclick="handleAnswer(false)" class="flex flex-col items-center justify-center bg-white border-2 border-red-500 hover:bg-red-50 text-red-700 font-bold py-6 px-4 rounded-2xl transition-all shadow-sm active:scale-95">
+                    <span class="text-3xl mb-1">לא</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="glass-card p-8 hidden fade-in">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2 text-center">התוצאה שלך</h2>
+            
+            <div class="flex justify-center space-x-4 space-x-reverse my-6">
+                <div id="light-red" class="w-14 h-14 rounded-full bg-gray-200 border-4 border-white flex items-center justify-center transition-all duration-500">🚨</div>
+                <div id="light-orange" class="w-14 h-14 rounded-full bg-gray-200 border-4 border-white flex items-center justify-center transition-all duration-500">⚠️</div>
+                <div id="light-green" class="w-14 h-14 rounded-full bg-gray-200 border-4 border-white flex items-center justify-center transition-all duration-500">✅</div>
+            </div>
+
+            <div id="score-circle" class="text-5xl font-black mb-2 text-center">0/10</div>
+            <h3 id="result-title" class="text-xl font-bold mb-4 italic text-center"></h3>
+            
+            <div id="recommendations-container" class="space-y-4 mb-8 text-right">
+                <h4 class="font-bold text-gray-800 border-b pb-2 mb-3">צריכים חיזוק בנקודות הבאות:</h4>
+                <div id="recs-list" class="space-y-3"></div>
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="shareWhatsApp()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center shadow-md transition-colors">
+                    <svg class="w-6 h-6 ml-2" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    שלח תוצאות והמלצות בווטסאפ
+                </button>
+                <button onclick="resetQuiz()" class="w-full text-gray-500 font-semibold py-2 hover:underline">מילוי מחדש</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="w-full text-center p-6 text-sm text-gray-500 border-t bg-white mt-8">
+        פותח על ידי OBN. <a href="mailto:ofirbn@post.com" class="text-blue-600 font-bold hover:underline">צרו קשר</a>
+    </footer>
+
+    <script>
+        const questions = [
+            { 
+                text: "אם מישהו שאני מכיר מתקשר ומבקש כסף או פרטים אישיים, האם האינסטינקט שלי הוא לנתק ולהתקשר אליו בעצמי למספר ששמור לי?", 
+                icon: "📞",
+                fix: "תמיד לנתק ולהתקשר חזרה למספר השמור. קולות ב-AI יכולים להישמע בדיוק כמו יקיריכם."
+            },
+            { 
+                text: "האם אני מקפיד שלא להזין פרטים רגישים (כמו מספר ת\"ז, פרטי בנק או מידע רפואי) לתוך אפליקציות של בינה מלאכותית?", 
+                icon: "🔒",
+                fix: "לעולם אל תזינו מידע אישי או רגיש לצ'אטים של AI (כמו ChatGPT) - המידע הזה עשוי להישמר במאגרים שלהם."
+            },
+            { 
+                text: "האם קבעתי עם הילדים או הנכדים 'מילת קוד' סודית כדי שאוכל לוודא שזה באמת הם במקרה של שיחה דחופה?", 
+                icon: "🔑",
+                fix: "הגדירו עוד היום 'מילת קסם' שרק המשפחה מכירה. זה הכלי הכי חזק נגד זיוף קול (Deepfake)."
+            },
+            { 
+                text: "לפני שאני מעביר הלאה הודעה מרגשת או מפחידה, האם אני בודק אם היא פורסמה גם באמצעי תקשורת רשמיים?", 
+                icon: "📰",
+                fix: "אל תפיצו שמועות. בדקו באתרים רשמיים (ynet, N12 וכדומה) לפני שמעבירים הלאה הודעה מפחידה."
+            },
+            { 
+                text: "האם הגדרתי באפליקציית הוואטסאפ שלי 'אימות דו-שלבי' (קוד בן 6 ספרות) כדי למנוע השתלטות האקרים?", 
+                icon: "🛡️",
+                fix: "כנסו להגדרות וואטסאפ > חשבון > אימות דו-שלבי והגדירו קוד. זה ינעל את החשבון שלכם בפני פריצות."
+            },
+            { 
+                text: "האם אני נמנע מלחיצה על קישורים שמגיעים ב-SMS ממספרים שאינני מכיר, גם אם הם מבטיחים 'פרס'?", 
+                icon: "🔗",
+                fix: "קישורים בהודעות ממקור לא מוכר הם הדרך הנפוצה ביותר לגניבת פרטים. פשוט אל תלחצו."
+            },
+            { 
+                text: "האם אני יודע שבינה מלאכותית יכולה ליצור תמונות שנראות אמיתיות, ולכן אני לא מאמין לכל תמונה 'מרעישה'?", 
+                icon: "🖼️",
+                fix: "היו סקפטיים. חפשו עיוותים בתמונה (אצבעות מוזרות, רקע מרוח) לפני שאתם מאמינים למה שאתם רואים."
+            },
+            { 
+                text: "האם אני יודע לזהות שדרישה לפעולה 'עכשיו ומיד' (לחץ זמן) היא בדרך כלל סימן ראשון לניסיון הונאה?", 
+                icon: "⏳",
+                fix: "נוכלים משתמשים בלחץ זמן כדי שלא תחשבו. קיבלתם דרישה דחופה? קחו נשימה עמוקה ותחשדו."
+            },
+            { 
+                text: "האם אני מקפיד לעדכן את הטלפון והאפליקציות שלי כשהמכשיר מבקש זאת?", 
+                icon: "🔄",
+                fix: "עדכוני תוכנה מכילים תיקוני אבטחה קריטיים. אל תדחו אותם - הם המגן הטכנולוגי שלכם."
+            },
+            { 
+                text: "האם יש לי אדם קרוב שאני סומך עליו שאני מרגיש בנוח להתקשר אליו ולהתייעץ לפני פעולה דיגיטלית?", 
+                icon: "👥",
+                fix: "בחרו 'חבר טלפוני' טכנולוגי שאתם סומכים עליו. התייעצות של דקה יכולה לחסוך עוגמת נפש גדולה."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let failedIndices = [];
+
+        function startQuiz() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            updateQuestion();
+        }
+
+        function updateQuestion() {
+            const total = questions.length;
+            if (currentQuestion < total) {
+                const q = questions[currentQuestion];
+                document.getElementById('question-text').innerText = q.text;
+                document.getElementById('question-icon').innerText = q.icon;
+                document.getElementById('question-counter').innerText = `שאלה ${currentQuestion + 1} מתוך ${total}`;
+                document.getElementById('progress-bar').style.width = `${((currentQuestion + 1) / total) * 100}%`;
+            } else {
+                showResults();
+            }
+        }
+
+        function handleAnswer(isYes) {
+            if (isYes) {
+                score++;
+            } else {
+                failedIndices.push(currentQuestion);
+            }
+            currentQuestion++;
+            updateQuestion();
+        }
+
+        function showResults() {
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            
+            const scoreCircle = document.getElementById('score-circle');
+            const resultTitle = document.getElementById('result-title');
+            const recsList = document.getElementById('recs-list');
+            
+            scoreCircle.innerText = `${score}/10`;
+            recsList.innerHTML = "";
+
+            // Recommendations logic
+            if (failedIndices.length === 0) {
+                document.getElementById('recommendations-container').classList.add('hidden');
+            } else {
+                document.getElementById('recommendations-container').classList.remove('hidden');
+                failedIndices.forEach(idx => {
+                    const q = questions[idx];
+                    const item = document.createElement('div');
+                    item.className = "p-3 bg-red-50 border-r-4 border-red-400 rounded-sm text-sm";
+                    item.innerHTML = `<strong>${q.icon} המלצה:</strong> ${q.fix}`;
+                    recsList.appendChild(item);
+                });
+            }
+
+            // Traffic Light
+            ['red', 'orange', 'green'].forEach(c => document.getElementById(`light-${c}`).className = "w-14 h-14 rounded-full bg-gray-200 border-4 border-white flex items-center justify-center transition-all duration-500");
+
+            if (score <= 4) {
+                const l = document.getElementById('light-red');
+                l.className += " bg-red-500 text-white traffic-light-glow";
+                scoreCircle.className = "text-5xl font-black mb-2 text-center text-red-600";
+                resultTitle.innerText = '"חשופים לאיומים"';
+            } else if (score <= 7) {
+                const l = document.getElementById('light-orange');
+                l.className += " bg-orange-500 text-white traffic-light-glow";
+                scoreCircle.className = "text-5xl font-black mb-2 text-center text-orange-500";
+                resultTitle.innerText = '"במסלול הבטוח, אך נדרש שיפור"';
+            } else {
+                const l = document.getElementById('light-green');
+                l.className += " bg-green-500 text-white traffic-light-glow";
+                scoreCircle.className = "text-5xl font-black mb-2 text-center text-green-600";
+                resultTitle.innerText = '"חסינות גבוהה מאוד"';
+            }
+        }
+
+        function shareWhatsApp() {
+            let status = score <= 4 ? "🚨 אדומה (חשופה)" : (score <= 7 ? "⚠️ כתומה (בינונית)" : "✅ ירוקה (חסינה)");
+            let message = `*מדד החסינות הדיגיטלית שלי לעידן ה-AI*\n\n`;
+            message += `התוצאה שלי: *${score}/10*\n`;
+            message += `רמת מוגנות: *${status}*\n\n`;
+            
+            if (failedIndices.length > 0) {
+                message += `*המלצות לפעולה לשיפור המוגנות שלי:*\n`;
+                failedIndices.forEach((idx, i) => {
+                    message += `${i+1}. ${questions[idx].fix}\n`;
+                });
+            } else {
+                message += `אני מוגן לחלוטין! כל הכבוד לי! 🛡️`;
+            }
+            
+            message += `\nבדקו את עצמכם גם!`;
+            
+            const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        }
+
+        function resetQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            failedIndices = [];
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('start-screen').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
