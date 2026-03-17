@@ -28,7 +28,6 @@
             height: 300px;
             width: 100%;
         }
-        /* Custom scrollbar for table */
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
         }
@@ -103,17 +102,22 @@
                 </div>
             </div>
             <div class="stat-card border-b-4 border-indigo-500">
-                <p class="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-1">חוסן דיגיטלי</p>
-                <div class="flex items-end gap-2">
-                    <h2 id="high-resilience" class="text-4xl font-black text-slate-800">-</h2>
-                    <span class="text-indigo-400 text-sm mb-1 font-bold">משיבים ירוקים</span>
+                <p class="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-1">חוסן דיגיטלי / מובייל</p>
+                <div class="flex items-end justify-between gap-2">
+                    <div>
+                        <h2 id="high-resilience" class="text-4xl font-black text-slate-800">-</h2>
+                        <span class="text-indigo-400 text-xs font-bold uppercase">ירוקים</span>
+                    </div>
+                    <div class="text-left">
+                        <h2 id="mobile-usage" class="text-xl font-black text-slate-600">-%</h2>
+                        <span class="text-slate-400 text-[10px] font-bold uppercase">מובייל</span>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Main Analytics Charts Section -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-            <!-- Pie Chart: Traffic Light Distribution -->
             <div class="stat-card lg:col-span-1">
                 <h3 class="font-bold text-slate-700 mb-6 flex items-center justify-between">
                     התפלגות רמות חסינות
@@ -138,10 +142,9 @@
                 </div>
             </div>
 
-            <!-- Bar Chart: Question Fail Rate -->
             <div class="stat-card lg:col-span-2">
-                <h3 class="font-bold text-slate-700 mb-2">מיפוי נקודות תורפה</h3>
-                <p class="text-xs text-slate-400 mb-6">אחוז המשיבים שענו "לא" על כל שאלה (היכן נדרשת הסברה?)</p>
+                <h3 class="font-bold text-slate-700 mb-2 text-balance text-right">מיפוי נקודות תורפה</h3>
+                <p class="text-xs text-slate-400 mb-6 text-right text-balance">מיון השאלות על פי רמת חומרה (אחוז המשיבים שענו "לא")</p>
                 <div class="chart-container">
                     <canvas id="questionsBarChart"></canvas>
                 </div>
@@ -149,11 +152,9 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-            <!-- Table: Detailed Log -->
-            <div class="stat-card flex flex-col">
-                <h3 class="font-bold text-slate-700 mb-4 flex items-center justify-between">
+            <div class="stat-card flex flex-col min-h-[400px]">
+                <h3 class="font-bold text-slate-700 mb-4 flex items-center justify-between text-balance">
                     יומן משיבים אחרונים
-                    <span class="text-xs font-normal text-blue-600 cursor-pointer hover:underline">ראה הכל</span>
                 </h3>
                 <div class="overflow-x-auto custom-scrollbar flex-grow">
                     <table class="w-full text-right">
@@ -166,15 +167,13 @@
                             </tr>
                         </thead>
                         <tbody id="raw-data-table" class="divide-y divide-slate-50">
-                            <!-- Data populated here -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Actionable Insights Card -->
             <div class="stat-card bg-slate-900 text-white">
-                <h3 class="font-bold text-blue-400 mb-6 flex items-center gap-2">
+                <h3 class="font-bold text-blue-400 mb-6 flex items-center gap-2 text-balance">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                     תובנות אסטרטגיות לשטח
                 </h3>
@@ -189,8 +188,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="mt-8 pt-6 border-t border-slate-800 text-xs text-slate-500">
-                    * התובנות מופקות באופן אוטומטי על בסיס ניתוח חריגות בסטטיסטיקה.
+                <div class="mt-8 pt-6 border-t border-slate-800 text-[10px] text-slate-500">
+                    * התובנות מופקות אוטונומית על בסיס חריגות סטטיסטיות.
                 </div>
             </div>
         </div>
@@ -205,22 +204,18 @@
         מערכת לניהול דאטה | מוגנות זקנים 2026 | <a href="mailto:ofirbn@post.com" class="text-blue-500 hover:text-blue-700 transition">תמיכה טכנית</a>
     </footer>
 
-    <!-- Firebase SDK & Dashboard Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // ==========================================
-        // Firebase Configuration (Replace with your actual keys)
-        // ==========================================
         const manualConfig = {
-  apiKey: "AIzaSyDkIybiuarf2hs4CxUnjRZsm91WF0M9ipI",
-  authDomain: "digital-readiness-1613e.firebaseapp.com",
-  projectId: "digital-readiness-1613e",
-  storageBucket: "digital-readiness-1613e.firebasestorage.app",
-  messagingSenderId: "1058438460509",
-  appId: "1:1058438460509:web:a6c7d1b530d46526a089b4"
+            apiKey: "AIzaSyDkIybiuarf2hs4CxUnjRZsm91WF0M9ipI",
+            authDomain: "digital-readiness-1613e.firebaseapp.com",
+            projectId: "digital-readiness-1613e",
+            storageBucket: "digital-readiness-1613e.firebasestorage.app",
+            messagingSenderId: "1058438460509",
+            appId: "1:1058438460509:web:a6c7d1b530d46526a089b4"
         };
 
         const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config) 
@@ -236,21 +231,25 @@
         let charts = { donut: null, bar: null };
 
         const questionTitles = [
-            "ניתוק והתקשרות חזרה", "הזנת פרטים ושמירה על פרטיות מול AI", "קביעת מילת קוד משפחתית", "בדיקת מקורות רשמיים לפני הפצת הודעה",
-            "הגדרתי אימות דו-שלבי בווטסאפ", "נמנע מללחוץ על קישורים ממספר לא מוכר", "סקפטיות לגבי תמונות", "זיהוי הודעות שמשתמשות בלחץ זמן",
-            "מקפיד על עדכוני תוכנה", "יש לי קרוב שאני יכול להתייעץ איתו"
+            "ניתוק והתקשרות חזרה", 
+            "הזנת פרטים ושמירה על פרטיות מול AI", 
+            "קביעת מילת קוד משפחתית", 
+            "בדיקת מקורות רשמיים לפני הפצת הודעה",
+            "הגדרתי אימות דו-שלבי בווטסאפ", 
+            "נמנע מללחוץ על קישורים ממספר לא מוכר", 
+            "סקפטיות לגבי תמונות", 
+            "זיהוי הודעות שמשתמשות בלחץ זמן",
+            "מקפיד על עדכוני תוכנה", 
+            "יש לי קרוב שאני יכול להתייעץ איתו"
         ];
 
         async function init() {
             if (!firebaseConfig.apiKey) {
-                console.warn("Firebase Config is missing!");
                 showError("נא להזין הגדרות Firebase בקוד.");
                 return;
             }
-            
             showLoading(true);
             try {
-                // Ensure auth is settled
                 await signInAnonymously(auth);
                 onAuthStateChanged(auth, (user) => {
                     if (user) fetchData();
@@ -291,28 +290,33 @@
 
         function processAndDisplay() {
             const total = allData.length;
+            if (total === 0) return;
+
             const avg = allData.reduce((acc, curr) => acc + (curr.score || 0), 0) / total;
             const redCount = allData.filter(d => d.score <= 4).length;
             const orangeCount = allData.filter(d => d.score >= 5 && d.score <= 7).length;
             const greenCount = allData.filter(d => d.score >= 8).length;
             const mobileCount = allData.filter(d => d.userAgent && d.userAgent.toLowerCase().includes('mobile')).length;
 
-            // Update KPIs
-            document.getElementById('total-responses').innerText = total;
-            document.getElementById('avg-score').innerText = avg.toFixed(1);
-            document.getElementById('at-risk-count').innerText = redCount;
-            document.getElementById('at-risk-percent').innerText = `${Math.round((redCount / total) * 100)}%`;
-            document.getElementById('high-resilience').innerText = greenCount;
-            document.getElementById('mobile-usage').innerText = Math.round((mobileCount / total) * 100) + "%";
+            updateText('total-responses', total);
+            updateText('avg-score', avg.toFixed(1));
+            updateText('at-risk-count', redCount);
+            updateText('at-risk-percent', `${Math.round((redCount / total) * 100)}%`);
+            updateText('high-resilience', greenCount);
+            updateText('mobile-usage', `${Math.round((mobileCount / total) * 100)}%`);
 
-            // Update Labels
-            document.getElementById('label-green').innerText = `${Math.round((greenCount / total) * 100)}%`;
-            document.getElementById('label-orange').innerText = `${Math.round((orangeCount / total) * 100)}%`;
-            document.getElementById('label-red').innerText = `${Math.round((redCount / total) * 100)}%`;
+            updateText('label-green', `${Math.round((greenCount / total) * 100)}%`);
+            updateText('label-orange', `${Math.round((orangeCount / total) * 100)}%`);
+            updateText('label-red', `${Math.round((redCount / total) * 100)}%`);
 
             renderCharts(redCount, orangeCount, greenCount);
             renderTable();
             generateInsights(redCount, orangeCount, greenCount, total);
+        }
+
+        function updateText(id, text) {
+            const el = document.getElementById(id);
+            if (el) el.innerText = text;
         }
 
         function renderCharts(red, orange, green) {
@@ -338,25 +342,38 @@
                 }
             });
 
-            // Bar Chart for Fail Rates
-            const failCounts = new Array(10).fill(0);
+            // Bar Chart for Fail Rates - Sorted by severity
+            const failCounts = new Array(questionTitles.length).fill(0);
             allData.forEach(entry => {
                 if (entry.answers) {
-                    entry.answers.forEach((ans, idx) => { if (ans === false) failCounts[idx]++; });
+                    entry.answers.forEach((ans, idx) => { 
+                        if (ans === false && idx < failCounts.length) failCounts[idx]++; 
+                    });
                 }
             });
-            const failPercentages = failCounts.map(c => Math.round((c / allData.length) * 100));
+
+            // Create sortable list of question objects
+            const questionStats = questionTitles.map((title, idx) => {
+                const percentage = Math.round((failCounts[idx] / allData.length) * 100);
+                return { title, percentage };
+            });
+
+            // Sort by severity (percentage of "No" descending)
+            questionStats.sort((a, b) => b.percentage - a.percentage);
+
+            const sortedLabels = questionStats.map(q => q.title);
+            const sortedData = questionStats.map(q => q.percentage);
 
             const barCtx = document.getElementById('questionsBarChart').getContext('2d');
             if (charts.bar) charts.bar.destroy();
             charts.bar = new Chart(barCtx, {
                 type: 'bar',
                 data: {
-                    labels: questionTitles,
+                    labels: sortedLabels,
                     datasets: [{
                         label: 'אחוז נכשלים (%)',
-                        data: failPercentages,
-                        backgroundColor: failPercentages.map(p => p > 50 ? '#f43f5e' : '#6366f1'),
+                        data: sortedData,
+                        backgroundColor: sortedData.map(p => p > 50 ? '#f43f5e' : '#6366f1'),
                         borderRadius: 8
                     }]
                 },
@@ -365,16 +382,20 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        x: { max: 100, grid: { display: false } },
-                        y: { grid: { display: false } }
+                        x: { max: 100, grid: { display: false }, ticks: { callback: (val) => val + '%' } },
+                        y: { grid: { display: false }, ticks: { font: { size: 10 } } }
                     },
-                    plugins: { legend: { display: false } }
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (ctx) => ` ${ctx.parsed.x}% נכשלים` } }
+                    }
                 }
             });
         }
 
         function renderTable() {
             const tbody = document.getElementById('raw-data-table');
+            if (!tbody) return;
             tbody.innerHTML = allData.slice(0, 15).map(d => {
                 const date = d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '---';
                 const statusColor = d.score <= 4 ? 'text-rose-600 bg-rose-50' : (d.score <= 7 ? 'text-amber-600 bg-amber-50' : 'text-emerald-600 bg-emerald-50');
@@ -396,30 +417,28 @@
 
         function generateInsights(red, orange, green, total) {
             const insightsContainer = document.getElementById('ai-insights');
+            if (!insightsContainer) return;
             
-            // Calculate specific fail trends
-            const failCounts = new Array(10).fill(0);
-            allData.forEach(entry => { if (entry.answers) entry.answers.forEach((ans, idx) => { if (ans === false) failCounts[idx]++; }); });
+            const failCounts = new Array(questionTitles.length).fill(0);
+            allData.forEach(entry => { if (entry.answers) entry.answers.forEach((ans, idx) => { if (ans === false && idx < failCounts.length) failCounts[idx]++; }); });
             
             const worstQuestionIdx = failCounts.indexOf(Math.max(...failCounts));
-            const worstQuestionTitle = questionTitles[worstQuestionIdx];
+            const worstQuestionTitle = questionTitles[worstQuestionIdx] || "כללי";
             const worstPercent = Math.round((failCounts[worstQuestionIdx] / total) * 100);
 
             let html = `
                 <div class="space-y-4">
                     <div class="p-4 bg-slate-800 rounded-xl border-r-4 border-rose-500">
                         <h4 class="text-rose-400 font-bold text-sm mb-1">נורת אזהרה: ${worstQuestionTitle}</h4>
-                        <p class="text-slate-300 text-xs">${worstPercent}% מהזקנים נכשלים בזיהוי איום זה. מומלץ למקד את ה"טכנוטיפ" הבא בנושא זה.</p>
+                        <p class="text-slate-300 text-[11px] leading-relaxed">${worstPercent}% מהזקנים נכשלים כאן. זהו נושא ההדרכה הדחוף ביותר.</p>
                     </div>
-                    
                     <div class="p-4 bg-slate-800 rounded-xl border-r-4 border-blue-400">
-                        <h4 class="text-blue-400 font-bold text-sm mb-1">מגמת מוגנות</h4>
-                        <p class="text-slate-300 text-xs">כ-${Math.round((red/total)*100)}% מהמשיבים נמצאים בטווח האדום. נדרשת התערבות הסברתית בקהילות אלו.</p>
+                        <h4 class="text-blue-400 font-bold text-sm mb-1">פילוח משתמשים</h4>
+                        <p class="text-slate-300 text-[11px] leading-relaxed">כ-${Math.round((red/total)*100)}% בטווח האדום. נדרשת התערבות ממוקדת בקהילה זו.</p>
                     </div>
-
                     <div class="p-4 bg-slate-800 rounded-xl border-r-4 border-emerald-400">
                         <h4 class="text-emerald-400 font-bold text-sm mb-1">הזדמנות לשגרירות</h4>
-                        <p class="text-slate-300 text-xs">ישנם ${green} משתמשים "חסינים". ניתן להכשירם כ'נאמני AI' להדרכת חבריהם.</p>
+                        <p class="text-slate-300 text-[11px] leading-relaxed">קיימים ${green} משיבים "ירוקים". ניתן להכשירם כנאמני מוגנות בקהילתם.</p>
                     </div>
                 </div>
             `;
@@ -432,7 +451,7 @@
             allData.forEach(d => {
                 const date = d.timestamp ? new Date(d.timestamp.seconds * 1000).toISOString() : '';
                 const status = d.score <= 4 ? 'Risk' : (d.score <= 7 ? 'Medium' : 'Resilient');
-                csv += `"${date}",${d.score},"${status}","${d.userAgent.replace(/"/g, '""')}"\n`;
+                csv += `"${date}",${d.score},"${status}","${d.userAgent ? d.userAgent.replace(/"/g, '""') : ''}"\n`;
             });
 
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -443,7 +462,8 @@
         };
 
         function showLoading(show) {
-            document.getElementById('loading-spinner').classList.toggle('hidden', !show);
+            const spinner = document.getElementById('loading-spinner');
+            if (spinner) spinner.classList.toggle('hidden', !show);
         }
 
         function showError(msg) {
