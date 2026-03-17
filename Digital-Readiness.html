@@ -27,7 +27,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Traffic Light Styling */
         .traffic-light-box {
             background: #1a1a1a;
             border-radius: 2rem;
@@ -53,38 +52,14 @@
             filter: grayscale(1);
         }
         
-        /* Active States with Glow */
-        .light-red.active {
-            background: #ef4444;
-            opacity: 1;
-            filter: grayscale(0);
-            box-shadow: 0 0 20px #ef4444;
-        }
-        .light-orange.active {
-            background: #f59e0b;
-            opacity: 1;
-            filter: grayscale(0);
-            box-shadow: 0 0 20px #f59e0b;
-        }
-        .light-green.active {
-            background: #10b981;
-            opacity: 1;
-            filter: grayscale(0);
-            box-shadow: 0 0 20px #10b981;
-        }
+        .light-red.active { background: #ef4444; opacity: 1; filter: grayscale(0); box-shadow: 0 0 20px #ef4444; }
+        .light-orange.active { background: #f59e0b; opacity: 1; filter: grayscale(0); box-shadow: 0 0 20px #f59e0b; }
+        .light-green.active { background: #10b981; opacity: 1; filter: grayscale(0); box-shadow: 0 0 20px #10b981; }
 
         footer { margin-top: auto; }
         
-        .btn-selected-yes {
-            background-color: #10b981 !important;
-            color: white !important;
-            box-shadow: 0 0 0 4px #d1fae5;
-        }
-        .btn-selected-no {
-            background-color: #ef4444 !important;
-            color: white !important;
-            box-shadow: 0 0 0 4px #fee2e2;
-        }
+        .btn-selected-yes { background-color: #10b981 !important; color: white !important; box-shadow: 0 0 0 4px #d1fae5; }
+        .btn-selected-no { background-color: #ef4444 !important; color: white !important; box-shadow: 0 0 0 4px #fee2e2; }
     </style>
 </head>
 <body class="p-4">
@@ -97,7 +72,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
             </div>
-            <h1 class="text-3xl font-bold text-gray-800 mb-4">מדד החסינות הדיגיטלית</h1>
+            <h1 class="text-3xl font-bold text-gray-800 mb-4 text-balance">מדד החסינות הדיגיטלית</h1>
             <p class="text-lg text-gray-600 mb-8">האם אתם מוכנים לעידן ה-AI? בדקו את רמת המוגנות שלכם ב-10 שאלות קצרות וקבלו המלצות אישיות לשיפור.</p>
             <button onclick="startQuiz()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl transition duration-300 shadow-lg text-xl">
                 בדיקת חסינות
@@ -108,7 +83,7 @@
         <div id="quiz-screen" class="glass-card p-8 hidden fade-in relative">
             <div class="flex justify-between items-center mb-6">
                 <button id="back-btn" onclick="prevQuestion()" class="text-blue-600 font-bold flex items-center hover:opacity-70 disabled:opacity-30 disabled:cursor-not-allowed">
-                    <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+                    <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" dir="ltr"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
                     חזרה
                 </button>
                 <div class="w-1/3 bg-gray-200 rounded-full h-2 mx-2">
@@ -134,7 +109,6 @@
         <div id="result-screen" class="glass-card p-8 hidden fade-in">
             <h2 class="text-2xl font-bold text-gray-800 mb-2 text-center text-balance">התוצאה שלך</h2>
             
-            <!-- Horizontal Traffic Light -->
             <div class="traffic-light-box">
                 <div id="light-red" class="light light-red">🚨</div>
                 <div id="light-orange" class="light light-orange">⚠️</div>
@@ -165,27 +139,87 @@
         פותח על ידי OBN. <a href="mailto:ofirbn@post.com" class="text-blue-600 font-bold hover:underline">צרו קשר</a>
     </footer>
 
-    <script>
+    <!-- Firebase SDK Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ==========================================
+        // Firebase Configuration
+        // ==========================================
+        // שלב 1: העתק לכאן את הנתונים מה-Firebase Console (Project Settings -> Your Apps)
+        const manualConfig = {
+  apiKey: "AIzaSyDkIybiuarf2hs4CxUnjRZsm91WF0M9ipI",
+  authDomain: "digital-readiness-1613e.firebaseapp.com",
+  projectId: "digital-readiness-1613e",
+  storageBucket: "digital-readiness-1613e.firebasestorage.app",
+  messagingSenderId: "1058438460509",
+  appId: "1:1058438460509:web:a6c7d1b530d46526a089b4"
+        };
+
+        // לוגיקה לבחירת הקונפיגורציה המתאימה (סביבת Preview או ידנית)
+        const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config) 
+            ? JSON.parse(__firebase_config) 
+            : manualConfig;
+
+        // וידוא שהגדרות הוכנסו לפני אתחול
+        if (!firebaseConfig.apiKey) {
+            console.warn("Firebase Config missing. Please fill manualConfig in the code.");
+        }
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let currentUser = null;
+
+        // Initialize Anonymous Auth
+        // הערה: יש לוודא ש-Anonymous Sign-in מופעל ב-Firebase Console
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    // שימוש בטוקן אם קיים בסביבה
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Auth error:", error);
+                // הודעה ידידותית למשתמש במקרה של שגיאת קונפיגורציה
+                if (error.code === 'auth/configuration-not-found') {
+                    console.error("נא להפעיל Anonymous Auth ב-Firebase Console תחת לשונית Authentication");
+                }
+            }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+        });
+
+        initAuth();
+
         const questions = [
             { 
                 text: "אם מישהו שאני מכיר מתקשר ומבקש כסף או פרטים אישיים, האם האינסטינקט שלי הוא לנתק ולהתקשר אליו בעצמי למספר ששמור לי באנשי הקשר?", 
                 icon: "📞",
-                fix: "תמיד לנתק ולהתקשר חזרה למספר השמור. קולות ב-AI יכולים להישמע בדיוק כמו יקיריכם. כן! לא צריך יותר מכמה שניות של דגימת קול כדי לזייף ולהשתמש בו נגדכם. מקרי הונאה רבים מתרחשים בדיוק כך."
+                fix: "תמיד לנתק ולהתקשר חזרה למספר השמור. קולות ב-AI יכולים להישמע בדיוק כמו יקיריכם."
             },
             { 
                 text: "האם אני מקפיד שלא להזין פרטים רגישים (כמו מספר ת\"ז, פרטי בנק או מידע רפואי) לתוך אפליקציות של צ'אט או בינה מלאכותית?", 
                 icon: "🔒",
-                fix: "לעולם אל תזינו מידע אישי או רגיש לצ'אטים של AI (כמו ChatGPT) - המידע הזה עלול להישמר במאגרים שלהם ולזלוג החוצה."
+                fix: "לעולם אל תזינו מידע אישי או רגיש לצ'אטים של AI (כמו ChatGPT) - המידע הזה עשוי להישמר במאגרים שלהם."
             },
             { 
                 text: "האם קבעתי עם הילדים או הנכדים 'מילת קוד' סודית כדי שאוכל לוודא שזה באמת הם במקרה של שיחה מוזרה או דחופה?", 
                 icon: "🔑",
-                fix: "הגדירו עוד היום 'מילת קסם' שרק המשפחה מכירה. זה הכלי הכי חזק נגד זיוף קול (Deepfake). כך, כאשר אתם מקבלים שיחה שנשמעת חשודה, תוכלו לשאול - מה מילת הקסם, או - מה הססמה, ולהיות בטוחים שאתם מדברים עם מי שאתם חושבים שאתם מדברים."
+                fix: "הגדירו עוד היום 'מילת קסם' שרק המשפחה מכירה. זה הכלי הכי חזק נגד זיוף קול (Deepfake)."
             },
             { 
                 text: "לפני שאני מעביר הלאה הודעה מרגשת או מפחידה שקיבלתי, האם אני בודק אם היא פורסמה גם באמצעי תקשורת רשמיים?", 
                 icon: "📰",
-                fix: "אל תפיצו שמועות. בדקו באתרים רשמיים (ynet, N12 וכדומה) לפני שמעבירים הלאה הודעה מלחיצה או מפחידה."
+                fix: "אל תפיצו שמועות. בדקו באתרים רשמיים (ynet, N12 וכדומה) לפני שמעבירים הלאה הודעה מפחידה."
             },
             { 
                 text: "האם הגדרתי באפליקציית הוואטסאפ שלי 'אימות דו-שלבי' (קוד בן 6 ספרות) כדי למנוע מהאקרים להשתלט לי על החשבון?", 
@@ -193,19 +227,19 @@
                 fix: "כנסו להגדרות וואטסאפ > חשבון > אימות דו-שלבי והגדירו קוד. זה ינעל את החשבון שלכם בפני פריצות."
             },
             { 
-                text: "האם אני נמנע מלחיצה על קישורים שמגיעים ב-SMS או בוואטסאפ ממספרים שאינני מכיר, גם אם הם מבטיחים 'פרס' או 'חבילה שמחכה לך'?", 
+                text: "האם אני נמנע מלחיצה על קישורים שמגיעים ב-SMS או בוואטסאפ ממספרים שאינני מכיר, גם אם הם מבטיחים 'פרס' או 'חבילה שמחכה'?", 
                 icon: "🔗",
                 fix: "קישורים בהודעות ממקור לא מוכר הם הדרך הנפוצה ביותר לגניבת פרטים. פשוט אל תלחצו."
             },
             { 
-                text: "האם אני יודע שבינה מלאכותית יכולה ליצור תמונות שנראות אמיתיות לחלוטין, ולכן אני לא מאמין לכל תמונה של ידיעה 'מרעישה' שאני רואה ברשת?", 
+                text: "האם אני יודע שבינה מלאכותית יכולה ליצור תמונות שנראות אמיתיות לחלוטין, ולכן אני לא מאמין לכל תמונה 'מרעישה' שאני רואה ברשת?", 
                 icon: "🖼️",
-                fix: "היו סקפטיים. חפשו עיוותים בתמונה (אצבעות מוזרות, רקע מרוח) לפני שאתם מאמינים למה שאתם רואים. עם זאת - חשוב לדעת שהבינה המלאכותית משתפרת מאד, וזה הופך ונהיה קשה יותר לזהות יצירה של בינה מלאכותית"
+                fix: "היו סקפטיים. חפשו עיוותים בתמונה (אצבעות מוזרות, רקע מרוח) לפני שאתם מאמינים למה שאתם רואים."
             },
             { 
-                text: "האם אני יודע לזהות שדרישה לפעולה דחופה, 'עכשיו ומיד' (לחץ זמן) היא בדרך כלל סימן ראשון לניסיון הונאה?", 
+                text: "האם אני יודע לזהות שדרישה לפעולה 'עכשיו ומיד' (לחץ זמן) היא בדרך כלל סימן ראשון לניסיון הונאה?", 
                 icon: "⏳",
-                fix: "נוכלים משתמשים בלחץ זמן כדי שלא תחשבו. קיבלתם דרישה דחופה? קודם כל - תירגעו :) קחו נשימה עמוקה ותחשדו."
+                fix: "נוכלים משתמשים בלחץ זמן כדי שלא תחשבו. קיבלתם דרישה דחופה? קחו נשימה עמוקה ותחשדו."
             },
             { 
                 text: "האם אני מקפיד לעדכן את הטלפון והאפליקציות שלי כשהמכשיר מבקש זאת?", 
@@ -222,11 +256,11 @@
         let currentQuestion = 0;
         let answers = new Array(questions.length).fill(null);
 
-        function startQuiz() {
+        window.startQuiz = function() {
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('quiz-screen').classList.remove('hidden');
             updateQuestion();
-        }
+        };
 
         function updateQuestion() {
             const total = questions.length;
@@ -244,26 +278,38 @@
                 document.getElementById('progress-bar').style.width = `${((currentQuestion + 1) / total) * 100}%`;
                 document.getElementById('back-btn').disabled = currentQuestion === 0;
 
-                if (answers[currentQuestion] === true) {
-                    yesBtn.classList.add('btn-selected-yes');
-                } else if (answers[currentQuestion] === false) {
-                    noBtn.classList.add('btn-selected-no');
-                }
+                if (answers[currentQuestion] === true) yesBtn.classList.add('btn-selected-yes');
+                else if (answers[currentQuestion] === false) noBtn.classList.add('btn-selected-no');
             } else {
                 showResults();
             }
         }
 
-        function handleAnswer(isYes) {
+        window.handleAnswer = function(isYes) {
             answers[currentQuestion] = isYes;
             currentQuestion++;
             updateQuestion();
-        }
+        };
 
-        function prevQuestion() {
+        window.prevQuestion = function() {
             if (currentQuestion > 0) {
                 currentQuestion--;
                 updateQuestion();
+            }
+        };
+
+        async function saveToDB(score, answersArray) {
+            // הגנה: רק אם המשתמש מחובר ויש הגדרות בסיסיות
+            if (!currentUser || !firebaseConfig.apiKey) return;
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'statistics'), {
+                    score: score,
+                    answers: answersArray,
+                    timestamp: serverTimestamp(),
+                    userAgent: navigator.userAgent
+                });
+            } catch (e) {
+                console.error("Error logging stats to Firestore:", e);
             }
         }
 
@@ -282,6 +328,9 @@
             scoreCircle.innerText = `${finalScore}/10`;
             recsList.innerHTML = "";
 
+            // שמירה אוטומטית ל-DB
+            saveToDB(finalScore, answers);
+
             const prevScore = localStorage.getItem('obn_ai_last_score');
             if (prevScore !== null) {
                 const prev = parseInt(prevScore);
@@ -293,7 +342,7 @@
                     feedbackBox.innerText = `הציון הקודם שלך היה ${prev}. לא נורא, קראו את ההמלצות ונסו שוב!`;
                     feedbackBox.className = "text-center text-sm font-semibold mb-6 text-red-800 bg-red-50 py-3 rounded-lg border border-red-200";
                 } else {
-                    feedbackBox.innerText = `שמרת על רמה יציבה! הציון הקודם היה גם ${prev}.`;
+                    feedbackBox.innerText = `שמרתם על רמה יציבה! הציון הקודם היה גם ${prev}.`;
                 }
             }
             localStorage.setItem('obn_ai_last_score', finalScore);
@@ -328,7 +377,7 @@
             }
         }
 
-        function shareWhatsApp() {
+        window.shareWhatsApp = function() {
             const finalScore = answers.filter(a => a === true).length;
             const failedIndices = answers.map((a, i) => a === false ? i : null).filter(i => i !== null);
             let status = finalScore <= 4 ? "🚨 אדומה (חשופה)" : (finalScore <= 7 ? "⚠️ כתומה (בינונית)" : "✅ ירוקה (חסינה)");
@@ -346,17 +395,17 @@
                 message += `אני מוגן/ת לחלוטין! כל הכבוד לי! 🛡️`;
             }
             
-            message += `\nבדקו את עצמכם גם בקישור: https://did.li/wFmUY`;
+            message += `\nבדקו את עצמכם גם בקישור!`;
             const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
             window.open(url, '_blank');
-        }
+        };
 
-        function resetQuiz() {
+        window.resetQuiz = function() {
             currentQuestion = 0;
             answers = new Array(questions.length).fill(null);
             document.getElementById('result-screen').classList.add('hidden');
             document.getElementById('start-screen').classList.remove('hidden');
-        }
+        };
     </script>
 </body>
 </html>
