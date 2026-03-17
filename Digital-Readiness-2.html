@@ -145,7 +145,25 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = JSON.parse(__firebase_config);
+        // ==========================================
+        // Firebase Configuration
+        // ==========================================
+        // אם אתה מריץ את הקובץ בסביבה החיצונית שלך, החלף את האובייקט למטה 
+        // בפרטים שקיבלת מה-Firebase Console שלך.
+        const manualConfig = {
+            apiKey: "",
+            authDomain: "",
+            projectId: "",
+            storageBucket: "",
+            messagingSenderId: "",
+            appId: ""
+        };
+
+        // לוגיקה לבחירת הקונפיגורציה המתאימה (סביבת Preview או ידנית)
+        const firebaseConfig = (typeof __firebase_config !== 'undefined') 
+            ? JSON.parse(__firebase_config) 
+            : manualConfig;
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -267,7 +285,7 @@
         };
 
         async function saveToDB(score, answersArray) {
-            if (!currentUser) return;
+            if (!currentUser || !firebaseConfig.apiKey) return;
             try {
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'statistics'), {
                     score: score,
