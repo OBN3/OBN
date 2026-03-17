@@ -83,7 +83,7 @@
         <div id="quiz-screen" class="glass-card p-8 hidden fade-in relative">
             <div class="flex justify-between items-center mb-6">
                 <button id="back-btn" onclick="prevQuestion()" class="text-blue-600 font-bold flex items-center hover:opacity-70 disabled:opacity-30 disabled:cursor-not-allowed">
-                    <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+                    <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" dir="ltr"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
                     חזרה
                 </button>
                 <div class="w-1/3 bg-gray-200 rounded-full h-2 mx-2">
@@ -148,8 +148,7 @@
         // ==========================================
         // Firebase Configuration
         // ==========================================
-        // אם אתה מריץ את הקובץ בסביבה החיצונית שלך, החלף את האובייקט למטה 
-        // בפרטים שקיבלת מה-Firebase Console שלך.
+        // שלב 1: העתק לכאן את הנתונים מה-Firebase Console (Project Settings -> Your Apps)
         const manualConfig = {
   apiKey: "AIzaSyDkIybiuarf2hs4CxUnjRZsm91WF0M9ipI",
   authDomain: "digital-readiness-1613e.firebaseapp.com",
@@ -160,9 +159,14 @@
         };
 
         // לוגיקה לבחירת הקונפיגורציה המתאימה (סביבת Preview או ידנית)
-        const firebaseConfig = (typeof __firebase_config !== 'undefined') 
+        const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config) 
             ? JSON.parse(__firebase_config) 
             : manualConfig;
+
+        // וידוא שהגדרות הוכנסו לפני אתחול
+        if (!firebaseConfig.apiKey) {
+            console.warn("Firebase Config missing. Please fill manualConfig in the code.");
+        }
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -172,11 +176,21 @@
         let currentUser = null;
 
         // Initialize Anonymous Auth
+        // הערה: יש לוודא ש-Anonymous Sign-in מופעל ב-Firebase Console
         async function initAuth() {
             try {
-                await signInAnonymously(auth);
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    // שימוש בטוקן אם קיים בסביבה
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
             } catch (error) {
                 console.error("Auth error:", error);
+                // הודעה ידידותית למשתמש במקרה של שגיאת קונפיגורציה
+                if (error.code === 'auth/configuration-not-found') {
+                    console.error("נא להפעיל Anonymous Auth ב-Firebase Console תחת לשונית Authentication");
+                }
             }
         }
 
@@ -285,6 +299,7 @@
         };
 
         async function saveToDB(score, answersArray) {
+            // הגנה: רק אם המשתמש מחובר ויש הגדרות בסיסיות
             if (!currentUser || !firebaseConfig.apiKey) return;
             try {
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'statistics'), {
@@ -294,7 +309,7 @@
                     userAgent: navigator.userAgent
                 });
             } catch (e) {
-                console.error("Error logging stats:", e);
+                console.error("Error logging stats to Firestore:", e);
             }
         }
 
@@ -313,7 +328,7 @@
             scoreCircle.innerText = `${finalScore}/10`;
             recsList.innerHTML = "";
 
-            // Save result to DB automatically
+            // שמירה אוטומטית ל-DB
             saveToDB(finalScore, answers);
 
             const prevScore = localStorage.getItem('obn_ai_last_score');
