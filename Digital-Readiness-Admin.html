@@ -1,1 +1,456 @@
-a
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>דשבורד ניהול מתקדם - מדד החסינות הדיגיטלית</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Assistant', sans-serif; 
+            background-color: #f1f5f9; 
+            color: #1e293b;
+        }
+        .stat-card { 
+            background: white; 
+            border-radius: 1.25rem; 
+            padding: 1.5rem; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        /* Custom scrollbar for table */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .loading-overlay {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div id="loading-spinner" class="fixed inset-0 z-50 flex items-center justify-center loading-overlay hidden">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
+    </div>
+
+    <div class="max-w-7xl mx-auto">
+        <!-- Header Section -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+            <div class="mb-4 md:mb-0">
+                <div class="flex items-center gap-3 mb-1">
+                    <span class="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    </span>
+                    <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">מרכז הנתונים: מוגנות AI</h1>
+                </div>
+                <p class="text-slate-500 font-medium mr-11">ניתוח אסטרטגי ותובנות - תוכנית מוגנות זקנים 2026</p>
+            </div>
+            
+            <div class="flex flex-wrap gap-3">
+                <div id="last-update" class="hidden md:flex items-center text-xs text-slate-400 ml-4 italic">
+                    עדכון אחרון: לפני רגע
+                </div>
+                <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold flex items-center shadow-lg shadow-blue-200 transition-all active:scale-95">
+                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    רענון נתונים
+                </button>
+                <button onclick="exportToCSV()" class="bg-slate-800 hover:bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold flex items-center shadow-lg shadow-slate-200 transition-all active:scale-95">
+                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    ייצוא דוח מלא
+                </button>
+            </div>
+        </header>
+
+        <!-- KPI Cards Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <div class="stat-card bg-gradient-to-br from-white to-blue-50">
+                <p class="text-xs font-bold text-blue-500 uppercase tracking-wider mb-1">סה"כ משתתפים</p>
+                <div class="flex items-end gap-2">
+                    <h2 id="total-responses" class="text-4xl font-black text-slate-800">-</h2>
+                    <span class="text-slate-400 text-sm mb-1 font-medium">משיבים</span>
+                </div>
+            </div>
+            <div class="stat-card border-b-4 border-emerald-500">
+                <p class="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-1">ציון ממוצע ארצי</p>
+                <div class="flex items-end gap-2">
+                    <h2 id="avg-score" class="text-4xl font-black text-slate-800">-</h2>
+                    <span class="text-slate-400 text-sm mb-1 font-medium">מתוך 10</span>
+                </div>
+            </div>
+            <div class="stat-card border-b-4 border-rose-500">
+                <p class="text-xs font-bold text-rose-500 uppercase tracking-wider mb-1">אוכלוסייה בסיכון</p>
+                <div class="flex items-end gap-2">
+                    <h2 id="at-risk-count" class="text-4xl font-black text-slate-800">-</h2>
+                    <span id="at-risk-percent" class="text-rose-400 text-sm mb-1 font-bold">-%</span>
+                </div>
+            </div>
+            <div class="stat-card border-b-4 border-indigo-500">
+                <p class="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-1">חוסן דיגיטלי</p>
+                <div class="flex items-end gap-2">
+                    <h2 id="high-resilience" class="text-4xl font-black text-slate-800">-</h2>
+                    <span class="text-indigo-400 text-sm mb-1 font-bold">משיבים ירוקים</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Analytics Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+            <!-- Pie Chart: Traffic Light Distribution -->
+            <div class="stat-card lg:col-span-1">
+                <h3 class="font-bold text-slate-700 mb-6 flex items-center justify-between">
+                    התפלגות רמות חסינות
+                    <span class="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-400">מודל רמזור</span>
+                </h3>
+                <div class="chart-container">
+                    <canvas id="trafficLightChart"></canvas>
+                </div>
+                <div class="mt-6 space-y-2">
+                    <div class="flex justify-between text-xs">
+                        <span class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-emerald-500"></div> חסין (8-10)</span>
+                        <span id="label-green" class="font-bold">-%</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-amber-500"></div> בינוני (5-7)</span>
+                        <span id="label-orange" class="font-bold">-%</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-rose-500"></div> בסיכון (0-4)</span>
+                        <span id="label-red" class="font-bold">-%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bar Chart: Question Fail Rate -->
+            <div class="stat-card lg:col-span-2">
+                <h3 class="font-bold text-slate-700 mb-2">מיפוי נקודות תורפה</h3>
+                <p class="text-xs text-slate-400 mb-6">אחוז המשיבים שענו "לא" על כל שאלה (היכן נדרשת הסברה?)</p>
+                <div class="chart-container">
+                    <canvas id="questionsBarChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+            <!-- Table: Detailed Log -->
+            <div class="stat-card flex flex-col">
+                <h3 class="font-bold text-slate-700 mb-4 flex items-center justify-between">
+                    יומן משיבים אחרונים
+                    <span class="text-xs font-normal text-blue-600 cursor-pointer hover:underline">ראה הכל</span>
+                </h3>
+                <div class="overflow-x-auto custom-scrollbar flex-grow">
+                    <table class="w-full text-right">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-400 text-[11px] uppercase tracking-widest border-b border-slate-100">
+                                <th class="p-4 font-bold">זמן</th>
+                                <th class="p-4 font-bold">ציון</th>
+                                <th class="p-4 font-bold">סטטוס</th>
+                                <th class="p-4 font-bold">מכשיר</th>
+                            </tr>
+                        </thead>
+                        <tbody id="raw-data-table" class="divide-y divide-slate-50">
+                            <!-- Data populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Actionable Insights Card -->
+            <div class="stat-card bg-slate-900 text-white">
+                <h3 class="font-bold text-blue-400 mb-6 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    תובנות אסטרטגיות לשטח
+                </h3>
+                <div id="ai-insights" class="space-y-6">
+                    <div class="animate-pulse flex space-x-4 space-x-reverse">
+                        <div class="flex-1 space-y-4 py-1">
+                            <div class="h-4 bg-slate-700 rounded w-3/4"></div>
+                            <div class="space-y-2">
+                                <div class="h-4 bg-slate-700 rounded"></div>
+                                <div class="h-4 bg-slate-700 rounded w-5/6"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8 pt-6 border-t border-slate-800 text-xs text-slate-500">
+                    * התובנות מופקות באופן אוטומטי על בסיס ניתוח חריגות בסטטיסטיקה.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="max-w-7xl mx-auto text-center py-10 text-slate-400 text-sm">
+        <div class="flex justify-center items-center gap-4 mb-2">
+            <span class="h-px w-8 bg-slate-200"></span>
+            <span class="font-bold">OBN ANALYTICS ENGINE</span>
+            <span class="h-px w-8 bg-slate-200"></span>
+        </div>
+        מערכת לניהול דאטה | מוגנות זקנים 2026 | <a href="mailto:ofirbn@post.com" class="text-blue-500 hover:text-blue-700 transition">תמיכה טכנית</a>
+    </footer>
+
+    <!-- Firebase SDK & Dashboard Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ==========================================
+        // Firebase Configuration (Replace with your actual keys)
+        // ==========================================
+        const manualConfig = {
+  apiKey: "AIzaSyDkIybiuarf2hs4CxUnjRZsm91WF0M9ipI",
+  authDomain: "digital-readiness-1613e.firebaseapp.com",
+  projectId: "digital-readiness-1613e",
+  storageBucket: "digital-readiness-1613e.firebasestorage.app",
+  messagingSenderId: "1058438460509",
+  appId: "1:1058438460509:web:a6c7d1b530d46526a089b4"
+        };
+
+        const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config) 
+            ? JSON.parse(__firebase_config) 
+            : manualConfig;
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let allData = [];
+        let charts = { donut: null, bar: null };
+
+        const questionTitles = [
+            "ניתוק והתקשרות חזרה", "הזנת פרטים ושמירה על פרטיות מול AI", "קביעת מילת קוד משפחתית", "בדיקת מקורות רשמיים לפני הפצת הודעה",
+            "הגדרתי אימות דו-שלבי בווטסאפ", "נמנע מללחוץ על קישורים ממספר לא מוכר", "סקפטיות לגבי תמונות", "זיהוי הודעות שמשתמשות בלחץ זמן",
+            "מקפיד על עדכוני תוכנה", "יש לי קרוב שאני יכול להתייעץ איתו"
+        ];
+
+        async function init() {
+            if (!firebaseConfig.apiKey) {
+                console.warn("Firebase Config is missing!");
+                showError("נא להזין הגדרות Firebase בקוד.");
+                return;
+            }
+            
+            showLoading(true);
+            try {
+                // Ensure auth is settled
+                await signInAnonymously(auth);
+                onAuthStateChanged(auth, (user) => {
+                    if (user) fetchData();
+                });
+            } catch (err) {
+                console.error("Initialization failed:", err);
+                showError("שגיאת התחברות למסד הנתונים.");
+            }
+        }
+
+        window.fetchData = async () => {
+            showLoading(true);
+            try {
+                const q = query(
+                    collection(db, 'artifacts', appId, 'public', 'data', 'statistics'),
+                    orderBy('timestamp', 'desc')
+                );
+                
+                const querySnapshot = await getDocs(q);
+                allData = [];
+                querySnapshot.forEach((doc) => {
+                    allData.push({ id: doc.id, ...doc.data() });
+                });
+
+                if (allData.length === 0) {
+                    showError("טרם התקבלו נתונים בשאלון.");
+                } else {
+                    processAndDisplay();
+                    document.getElementById('last-update').innerText = `עדכון אחרון: ${new Date().toLocaleTimeString('he-IL')}`;
+                }
+            } catch (err) {
+                console.error("Fetch failed:", err);
+                showError("נכשל במשיכת נתונים.");
+            } finally {
+                showLoading(false);
+            }
+        };
+
+        function processAndDisplay() {
+            const total = allData.length;
+            const avg = allData.reduce((acc, curr) => acc + (curr.score || 0), 0) / total;
+            const redCount = allData.filter(d => d.score <= 4).length;
+            const orangeCount = allData.filter(d => d.score >= 5 && d.score <= 7).length;
+            const greenCount = allData.filter(d => d.score >= 8).length;
+            const mobileCount = allData.filter(d => d.userAgent && d.userAgent.toLowerCase().includes('mobile')).length;
+
+            // Update KPIs
+            document.getElementById('total-responses').innerText = total;
+            document.getElementById('avg-score').innerText = avg.toFixed(1);
+            document.getElementById('at-risk-count').innerText = redCount;
+            document.getElementById('at-risk-percent').innerText = `${Math.round((redCount / total) * 100)}%`;
+            document.getElementById('high-resilience').innerText = greenCount;
+            document.getElementById('mobile-usage').innerText = Math.round((mobileCount / total) * 100) + "%";
+
+            // Update Labels
+            document.getElementById('label-green').innerText = `${Math.round((greenCount / total) * 100)}%`;
+            document.getElementById('label-orange').innerText = `${Math.round((orangeCount / total) * 100)}%`;
+            document.getElementById('label-red').innerText = `${Math.round((redCount / total) * 100)}%`;
+
+            renderCharts(redCount, orangeCount, greenCount);
+            renderTable();
+            generateInsights(redCount, orangeCount, greenCount, total);
+        }
+
+        function renderCharts(red, orange, green) {
+            // Doughnut Chart
+            const donutCtx = document.getElementById('trafficLightChart').getContext('2d');
+            if (charts.donut) charts.donut.destroy();
+            charts.donut = new Chart(donutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['בסיכון', 'בינוני', 'חסין'],
+                    datasets: [{
+                        data: [red, orange, green],
+                        backgroundColor: ['#f43f5e', '#f59e0b', '#10b981'],
+                        hoverOffset: 10,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '75%',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Bar Chart for Fail Rates
+            const failCounts = new Array(10).fill(0);
+            allData.forEach(entry => {
+                if (entry.answers) {
+                    entry.answers.forEach((ans, idx) => { if (ans === false) failCounts[idx]++; });
+                }
+            });
+            const failPercentages = failCounts.map(c => Math.round((c / allData.length) * 100));
+
+            const barCtx = document.getElementById('questionsBarChart').getContext('2d');
+            if (charts.bar) charts.bar.destroy();
+            charts.bar = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: questionTitles,
+                    datasets: [{
+                        label: 'אחוז נכשלים (%)',
+                        data: failPercentages,
+                        backgroundColor: failPercentages.map(p => p > 50 ? '#f43f5e' : '#6366f1'),
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { max: 100, grid: { display: false } },
+                        y: { grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('raw-data-table');
+            tbody.innerHTML = allData.slice(0, 15).map(d => {
+                const date = d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '---';
+                const statusColor = d.score <= 4 ? 'text-rose-600 bg-rose-50' : (d.score <= 7 ? 'text-amber-600 bg-amber-50' : 'text-emerald-600 bg-emerald-50');
+                const statusText = d.score <= 4 ? 'בסיכון' : (d.score <= 7 ? 'בינוני' : 'חסין');
+                const device = d.userAgent ? (d.userAgent.includes('Mobile') ? '📱 נייד' : '💻 מחשב') : '---';
+
+                return `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="p-4 text-xs text-slate-500">${date}</td>
+                        <td class="p-4 font-bold text-slate-700">${d.score}/10</td>
+                        <td class="p-4">
+                            <span class="px-2 py-1 rounded-md text-[10px] font-bold ${statusColor}">${statusText}</span>
+                        </td>
+                        <td class="p-4 text-xs text-slate-400">${device}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function generateInsights(red, orange, green, total) {
+            const insightsContainer = document.getElementById('ai-insights');
+            
+            // Calculate specific fail trends
+            const failCounts = new Array(10).fill(0);
+            allData.forEach(entry => { if (entry.answers) entry.answers.forEach((ans, idx) => { if (ans === false) failCounts[idx]++; }); });
+            
+            const worstQuestionIdx = failCounts.indexOf(Math.max(...failCounts));
+            const worstQuestionTitle = questionTitles[worstQuestionIdx];
+            const worstPercent = Math.round((failCounts[worstQuestionIdx] / total) * 100);
+
+            let html = `
+                <div class="space-y-4">
+                    <div class="p-4 bg-slate-800 rounded-xl border-r-4 border-rose-500">
+                        <h4 class="text-rose-400 font-bold text-sm mb-1">נורת אזהרה: ${worstQuestionTitle}</h4>
+                        <p class="text-slate-300 text-xs">${worstPercent}% מהזקנים נכשלים בזיהוי איום זה. מומלץ למקד את ה"טכנוטיפ" הבא בנושא זה.</p>
+                    </div>
+                    
+                    <div class="p-4 bg-slate-800 rounded-xl border-r-4 border-blue-400">
+                        <h4 class="text-blue-400 font-bold text-sm mb-1">מגמת מוגנות</h4>
+                        <p class="text-slate-300 text-xs">כ-${Math.round((red/total)*100)}% מהמשיבים נמצאים בטווח האדום. נדרשת התערבות הסברתית בקהילות אלו.</p>
+                    </div>
+
+                    <div class="p-4 bg-slate-800 rounded-xl border-r-4 border-emerald-400">
+                        <h4 class="text-emerald-400 font-bold text-sm mb-1">הזדמנות לשגרירות</h4>
+                        <p class="text-slate-300 text-xs">ישנם ${green} משתמשים "חסינים". ניתן להכשירם כ'נאמני AI' להדרכת חבריהם.</p>
+                    </div>
+                </div>
+            `;
+            insightsContainer.innerHTML = html;
+        }
+
+        window.exportToCSV = () => {
+            if (allData.length === 0) return;
+            let csv = "\uFEFFTimestamp,Score,Status,UserAgent\n";
+            allData.forEach(d => {
+                const date = d.timestamp ? new Date(d.timestamp.seconds * 1000).toISOString() : '';
+                const status = d.score <= 4 ? 'Risk' : (d.score <= 7 ? 'Medium' : 'Resilient');
+                csv += `"${date}",${d.score},"${status}","${d.userAgent.replace(/"/g, '""')}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Report_AI_Immunity_${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+        };
+
+        function showLoading(show) {
+            document.getElementById('loading-spinner').classList.toggle('hidden', !show);
+        }
+
+        function showError(msg) {
+            alert(msg);
+        }
+
+        init();
+    </script>
+</body>
+</html>
