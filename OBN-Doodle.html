@@ -22,12 +22,11 @@
         .animate-in { animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Day colors for the table */
-        .day-col-0 { background-color: #eff6ff; } /* Blue */
-        .day-col-1 { background-color: #f0fdf4; } /* Green */
-        .day-col-2 { background-color: #fffbeb; } /* Amber */
-        .day-col-3 { background-color: #fdf2f8; } /* Pink */
-        .day-col-4 { background-color: #f5f3ff; } /* Violet */
+        .day-col-0 { background-color: #eff6ff; }
+        .day-col-1 { background-color: #f0fdf4; }
+        .day-col-2 { background-color: #fffbeb; }
+        .day-col-3 { background-color: #fdf2f8; }
+        .day-col-4 { background-color: #f5f3ff; }
     </style>
 </head>
 <body class="min-h-screen pb-12">
@@ -64,15 +63,13 @@
                 </button>
             </div>
 
-            <!-- Admin Dashboard (List of events) -->
+            <!-- Admin Dashboard -->
             <div id="view-dashboard" class="hidden animate-in space-y-6">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-3xl font-bold">האירועים שלי</h2>
                     <button onclick="showCreateView()" class="btn-primary px-6 py-3 rounded-xl font-bold">+ אירוע חדש</button>
                 </div>
-                <div id="events-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <!-- Event cards will be injected here -->
-                </div>
+                <div id="events-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
             </div>
 
             <!-- Create Event View -->
@@ -125,9 +122,15 @@
                             <h2 id="vote-title" class="text-4xl font-extrabold text-gray-800"></h2>
                             <p id="vote-desc" class="text-gray-500 mt-2 text-lg"></p>
                         </div>
-                        <div id="admin-share-box" class="hidden">
-                            <button onclick="copyCurrentUrl()" class="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-lg hover:bg-green-100 font-bold text-sm border border-green-200">
-                                <span>🔗</span> העתק קישור להזמנה
+                        <div class="flex flex-col items-end gap-2">
+                            <div id="admin-share-box" class="hidden">
+                                <button onclick="copyCurrentUrl()" class="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-lg hover:bg-green-100 transition-all font-bold text-sm border border-green-200">
+                                    <span>🔗</span> העתק קישור להזמנה
+                                </button>
+                            </div>
+                            <!-- כפתור חזרה לבית עבור משתמש מחובר -->
+                            <button id="back-home-btn" onclick="window.location.href=window.location.pathname" class="hidden text-blue-600 text-sm font-bold hover:underline">
+                                🏠 חזרה ללוח הבקרה שלי
                             </button>
                         </div>
                     </div>
@@ -164,7 +167,6 @@
         </div>
     </div>
 
-    <!-- Templates -->
     <template id="day-block-template">
         <div class="day-block animate-in relative shadow-sm">
             <button onclick="this.parentElement.remove()" class="absolute -top-3 -left-3 w-8 h-8 bg-white border border-red-100 text-red-500 rounded-full shadow-sm hover:bg-red-50 flex items-center justify-center transition-colors z-10">✕</button>
@@ -201,31 +203,26 @@
         const appId = firebaseConfig.projectId;
         const provider = new GoogleAuthProvider();
         
+        // --- הגדרת מנהל על ---
+        // הכנס כאן את המייל שלך כדי לקבל הרשאות מלאות לכל האירועים
+        const SUPER_ADMIN_EMAIL = "your-email@example.com"; 
+
         let user, currentEventId;
 
-        // --- EMAIL NOTIFICATION SETTINGS (EMAILJS PLACEHOLDER) ---
-        // עליך להכניס כאן את המפתחות שלך מ-EmailJS כדי שזה יעבוד באמת
-        const EMAIL_SERVICE_ID = ""; // למשל: 'service_xxxx'
-        const EMAIL_TEMPLATE_ID = ""; // למשל: 'template_xxxx'
-        const EMAIL_PUBLIC_KEY = ""; // למשל: 'user_xxxx'
+        // EmailJS Placeholder
+        const EMAIL_SERVICE_ID = ""; 
+        const EMAIL_TEMPLATE_ID = ""; 
+        const EMAIL_PUBLIC_KEY = ""; 
 
         async function sendNotification(targetEmail, subject, body) {
-            console.log(`Sending Email to ${targetEmail}: ${subject}`);
-            // אם יש לך EmailJS, הקוד הבא יופעל:
             if (EMAIL_SERVICE_ID && EMAIL_PUBLIC_KEY) {
                 try {
                     await fetch('https://api.emailjs.com/api/v1.0/email/send', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            service_id: EMAIL_SERVICE_ID,
-                            template_id: EMAIL_TEMPLATE_ID,
-                            user_id: EMAIL_PUBLIC_KEY,
-                            template_params: {
-                                to_email: targetEmail,
-                                subject: subject,
-                                message: body
-                            }
+                            service_id: EMAIL_SERVICE_ID, template_id: EMAIL_TEMPLATE_ID, user_id: EMAIL_PUBLIC_KEY,
+                            template_params: { to_email: targetEmail, subject: subject, message: body }
                         })
                     });
                 } catch (e) { console.error("Email failed:", e); }
@@ -247,12 +244,18 @@
 
             const statusEl = document.getElementById('user-status');
             const logoutBtn = document.getElementById('logout-btn');
+            const backHomeBtn = document.getElementById('back-home-btn');
             
             if (user) {
                 const isGoogle = user.providerData.some(p => p.providerId === 'google.com');
                 statusEl.textContent = isGoogle ? `שלום, ${user.displayName || user.email}` : `מצב אורח`;
-                if(isGoogle) logoutBtn.classList.remove('hidden');
-                else logoutBtn.classList.add('hidden');
+                if(isGoogle) {
+                    logoutBtn.classList.remove('hidden');
+                    backHomeBtn.classList.remove('hidden');
+                } else {
+                    logoutBtn.classList.add('hidden');
+                    backHomeBtn.classList.add('hidden');
+                }
             }
 
             if (currentEventId) {
@@ -264,16 +267,14 @@
             }
         }
 
-        // --- AUTH ---
         window.loginWithGoogle = async () => {
             try { await signInWithPopup(auth, provider); } catch (e) { alertBox("התחברות נכשלה."); }
         };
         window.logout = async () => { 
             await signOut(auth); 
-            window.location.href = window.location.pathname; // חזרה לדף הראשי
+            window.location.href = window.location.pathname;
         };
 
-        // --- VIEWS ---
         function hideAll() { 
             ['view-admin-login', 'view-create', 'view-vote', 'view-dashboard'].forEach(id => document.getElementById(id).classList.add('hidden')); 
         }
@@ -286,28 +287,35 @@
             const container = document.getElementById('events-list');
             container.innerHTML = '<p class="text-gray-400">טוען אירועים...</p>';
             
-            // Rule 2: Fetch all events and filter in memory
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'events'), (snapshot) => {
                 container.innerHTML = '';
-                const myEvents = snapshot.docs.filter(d => d.data().createdBy === user.uid);
+                const isSuperAdmin = user.email === SUPER_ADMIN_EMAIL;
                 
-                if(myEvents.length === 0) {
-                    container.innerHTML = '<p class="col-span-full text-center py-10 text-gray-400">אין אירועים פעילים. הקם את האירוע הראשון שלך!</p>';
+                // מנהל על רואה הכל, משתמש רגיל רואה רק את שלו
+                const visibleEvents = isSuperAdmin 
+                    ? snapshot.docs 
+                    : snapshot.docs.filter(d => d.data().createdBy === user.uid);
+                
+                if(visibleEvents.length === 0) {
+                    container.innerHTML = '<p class="col-span-full text-center py-10 text-gray-400">אין אירועים להצגה.</p>';
                     return;
                 }
 
-                myEvents.forEach(docSnap => {
+                visibleEvents.forEach(docSnap => {
                     const data = docSnap.data();
                     const card = document.createElement('div');
                     card.className = 'card p-6 flex flex-col justify-between animate-in';
                     card.innerHTML = `
                         <div>
-                            <h3 class="text-xl font-bold text-gray-800 mb-2">${data.title}</h3>
+                            <div class="flex justify-between items-start">
+                                <h3 class="text-xl font-bold text-gray-800 mb-2">${data.title}</h3>
+                                ${isSuperAdmin && data.createdBy !== user.uid ? '<span class="text-[10px] bg-gray-100 px-2 rounded">מנהל על</span>' : ''}
+                            </div>
                             <p class="text-gray-500 text-sm mb-4 line-clamp-2">${data.desc || 'אין תיאור'}</p>
                         </div>
                         <div class="flex gap-2 mt-4">
                             <a href="?id=${docSnap.id}" class="flex-1 text-center bg-blue-100 text-blue-700 py-2 rounded-lg font-bold text-sm hover:bg-blue-200 transition">צפה / הצבע</a>
-                            <button onclick="confirmDelete('${docSnap.id}')" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition">🗑️</button>
+                            <button onclick="confirmDelete('${docSnap.id}')" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition" title="מחק אירוע">🗑️</button>
                         </div>
                     `;
                     container.appendChild(card);
@@ -318,19 +326,23 @@
         window.confirmDelete = async (id) => {
             if(!confirm("האם אתה בטוח שברצונך למחוק את האירוע? פעולה זו היא סופית.")) return;
             try {
+                // מחיקה דורשת הרשאה ב-Firestore (Admin או Creator)
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', id));
                 alertBox("האירוע נמחק בהצלחה.");
-            } catch(e) { alertBox("שגיאה במחיקה."); }
+            } catch(e) { 
+                console.error("Delete error:", e);
+                alertBox("שגיאה במחיקה. וודאו שיש לכם הרשאה מתאימה."); 
+            }
         }
 
         window.showCreateView = () => {
             hideAll();
             document.getElementById('view-create').classList.remove('hidden');
             if(user.email) document.getElementById('admin-email').value = user.email;
-            if (document.getElementById('date-blocks-container').children.length === 0) addDateBlock();
+            const container = document.getElementById('date-blocks-container');
+            if(container.children.length === 0) addDateBlock();
         };
 
-        // --- CREATION ---
         const HOURS = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
         window.addDateBlock = () => {
             const template = document.getElementById('day-block-template');
@@ -368,21 +380,15 @@
             try {
                 const ref = doc(collection(db, 'artifacts', appId, 'public', 'data', 'events'));
                 await setDoc(ref, { 
-                    title, desc, adminEmail: email, 
-                    options: opts.sort(), 
-                    createdBy: user.uid, 
-                    createdAt: Date.now() 
+                    title, desc, adminEmail: email, options: opts.sort(), 
+                    createdBy: user.uid, createdAt: Date.now() 
                 });
-                
-                // התראה למייל של האדמין על הקמת אירוע
-                sendNotification(email, "אירוע חדש הוקם במערכת!", `היי, האירוע "${title}" הוקם בהצלחה. קישור: ${window.location.origin}${window.location.pathname}?id=${ref.id}`);
-
+                sendNotification(email, "אירוע חדש הוקם!", `האירוע "${title}" מוכן. קישור: ${window.location.origin}${window.location.pathname}?id=${ref.id}`);
                 window.history.pushState({}, '', '?id=' + ref.id);
                 updateUI();
             } catch(e) { alertBox("שגיאה בשמירה."); }
         }
 
-        // --- VOTING ---
         async function showVoteView(id) {
             hideAll();
             document.getElementById('view-vote').classList.remove('hidden');
@@ -458,14 +464,11 @@
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'votes'), {
                     eventId: currentEventId, email, selections: sels, uid: user.uid, timestamp: Date.now()
                 });
-
-                // התראה למייל של האדמין על הצבעה חדשה
                 const eventDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', currentEventId));
                 if(eventDoc.exists()) {
-                    const eventData = eventDoc.data();
-                    sendNotification(eventData.adminEmail, `הצבעה חדשה באירוע: ${eventData.title}`, `המשתמש ${email} הצביע לאירוע שלך. בדוק את התוצאות כאן: ${window.location.href}`);
+                    const eData = eventDoc.data();
+                    sendNotification(eData.adminEmail, `הצבעה חדשה באירוע: ${eData.title}`, `המשתמש ${email} הצביע לאירוע שלך.`);
                 }
-
                 document.getElementById('voter-email').value = '';
                 checks.forEach(c => c.checked = false);
                 alertBox("הצבעתך נשמרה!");
