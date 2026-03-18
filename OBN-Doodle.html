@@ -201,11 +201,8 @@
         const provider = new GoogleAuthProvider();
         
         // --- אבטחת מנהל על (SECURITY HASH) ---
-        // העתק לכאן את מחרוזת ה-Hash שתקבל מהקונסול ברגע שתתחבר
-        // דוגמה ל-Hash של "test@gmail.com" היא: "973dfe463c..."
         const SUPER_ADMIN_HASH = "d725fa5fdfa11cbb29f0e74bb5fafd056428791484c6ab396db9f65ed748e73d"; 
 
-        // פונקציית Hash מאובטחת
         async function sha256(message) {
             const msgBuffer = new TextEncoder().encode(message.toLowerCase());
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -222,7 +219,6 @@
                     const userHash = await sha256(user.email);
                     isSuperAdmin = (userHash === SUPER_ADMIN_HASH);
                     
-                    // כלי עזר עבורך: מדפיס לקונסול את ה-Hash של המשתמש המחובר
                     console.log("%c--- כלי הגדרת אבטחה ---", "color: blue; font-weight: bold;");
                     console.log("המייל המחובר:", user.email);
                     console.log("מחרוזת ה-Hash שלך (העתק אותה לקוד):", userHash);
@@ -287,7 +283,6 @@
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'events'), (snapshot) => {
                 container.innerHTML = '';
                 
-                // Super Admin רואה הכל, אחרים רואים רק את שלהם
                 const visibleEvents = isSuperAdmin 
                     ? snapshot.docs 
                     : snapshot.docs.filter(d => d.data().createdBy === user.uid);
@@ -324,7 +319,10 @@
             try {
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', id));
                 alertBox("האירוע נמחק בהצלחה.");
-            } catch(e) { alertBox("שגיאה במחיקה. וודאו שיש לכם הרשאה."); }
+            } catch(e) { 
+                console.error("Delete error:", e);
+                alertBox("שגיאה במחיקה. ייתכן שאין לכם הרשאה."); 
+            }
         }
 
         window.showCreateView = () => {
