@@ -602,7 +602,7 @@
             });
 
             const labels = Object.keys(groups);
-            const data = labels.map(l => groups[l].count > 0 ? (groups[l].sum / groups[l].count).toFixed(1) : 0);
+            const data = labels.map(l => groups[l].count > 0 ? (groups[l].sum / groups[l].count).toFixed(1) : null);
 
             const topLabelsPlugin = {
                 id: 'topLabels',
@@ -612,7 +612,7 @@
                         const meta = chart.getDatasetMeta(i);
                         meta.data.forEach((point, index) => {
                             const value = dataset.data[index];
-                            if (value > 0) {
+                            if (value !== null) {
                                 ctx.fillStyle = '#0f172a';
                                 ctx.font = 'bold 14px Assistant';
                                 ctx.textAlign = 'center';
@@ -630,7 +630,7 @@
                     labels,
                     datasets: [{
                         label: 'ציון חסינות ממוצע', data, borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.2)',
-                        fill: true, tension: 0.3, pointRadius: 6, pointBackgroundColor: '#fff', pointBorderWidth: 3
+                        fill: true, tension: 0.3, pointRadius: 6, pointBackgroundColor: '#fff', pointBorderWidth: 3, spanGaps: true
                     }]
                 },
                 options: {
