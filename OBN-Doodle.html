@@ -201,6 +201,7 @@
         const provider = new GoogleAuthProvider();
         
         // --- אבטחת מנהל על (SECURITY HASH) ---
+        // העתק לכאן את מחרוזת ה-Hash שתקבל מהקונסול ברגע שתתחבר
         const SUPER_ADMIN_HASH = "d725fa5fdfa11cbb29f0e74bb5fafd056428791484c6ab396db9f65ed748e73d"; 
 
         async function sha256(message) {
@@ -296,15 +297,18 @@
                     const data = docSnap.data();
                     const card = document.createElement('div');
                     card.className = 'card p-6 flex flex-col justify-between animate-in';
+                    const creationDate = data.createdAt ? new Date(data.createdAt).toLocaleDateString('he-IL') : 'תאריך לא ידוע';
                     card.innerHTML = `
                         <div>
-                            <div class="flex justify-between items-start">
-                                <h3 class="text-xl font-bold text-gray-800 mb-2">${data.title}</h3>
-                                ${isSuperAdmin && data.createdBy !== user.uid ? '<span class="text-[10px] bg-blue-50 text-blue-600 px-2 rounded font-bold">מנוהל ע"י אחר</span>' : ''}
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-xl font-bold text-gray-800">${data.title}</h3>
+                                ${isSuperAdmin && data.createdBy !== user.uid ? 
+                                    `<span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold border border-blue-100">${data.adminEmail || 'אנונימי'}</span>` : ''}
                             </div>
                             <p class="text-gray-500 text-sm mb-4 line-clamp-2">${data.desc || 'אין תיאור'}</p>
+                            <p class="text-[10px] text-gray-400 mb-4">נוצר ב: ${creationDate}</p>
                         </div>
-                        <div class="flex gap-2 mt-4">
+                        <div class="flex gap-2 mt-auto">
                             <a href="?id=${docSnap.id}" class="flex-1 text-center bg-blue-100 text-blue-700 py-2 rounded-lg font-bold text-sm hover:bg-blue-200 transition">צפה / הצבע</a>
                             <button onclick="confirmDelete('${docSnap.id}')" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition" title="מחק אירוע">🗑️</button>
                         </div>
