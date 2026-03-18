@@ -66,7 +66,7 @@
             <!-- Admin Dashboard -->
             <div id="view-dashboard" class="hidden animate-in space-y-6">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-3xl font-bold">האירועים שלי</h2>
+                    <h2 class="text-3xl font-bold">לוח בקרה</h2>
                     <button onclick="showCreateView()" class="btn-primary px-6 py-3 rounded-xl font-bold">+ אירוע חדש</button>
                 </div>
                 <div id="events-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
@@ -84,7 +84,6 @@
                     </div>
                     
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                        <!-- Details -->
                         <div class="lg:col-span-4 space-y-6">
                             <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100">
                                 <label class="block text-sm font-bold text-gray-700 mb-2">שם האירוע</label>
@@ -94,7 +93,7 @@
                                 <input type="email" id="admin-email" class="w-full p-4 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="your@email.com">
                                 
                                 <label class="block text-sm font-bold text-gray-700 mb-2 mt-6">תיאור קצר</label>
-                                <textarea id="event-desc" class="w-full p-4 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="מה בלו\"ז?"></textarea>
+                                <textarea id="event-desc" class="w-full p-4 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="כתבו תיאור או סדר יום"></textarea>
                             </div>
                             
                             <button onclick="saveEvent()" class="w-full btn-primary py-4 rounded-xl font-bold text-xl shadow-lg mt-4 flex items-center justify-center gap-2">
@@ -102,7 +101,6 @@
                             </button>
                         </div>
 
-                        <!-- Time Picker -->
                         <div class="lg:col-span-8">
                             <label class="block text-sm font-bold text-gray-700 mb-4">בחירת מועדים (לחץ על השעות הרצויות)</label>
                             <div id="date-blocks-container" class="space-y-6"></div>
@@ -128,7 +126,6 @@
                                     <span>🔗</span> העתק קישור להזמנה
                                 </button>
                             </div>
-                            <!-- כפתור חזרה לבית עבור משתמש מחובר -->
                             <button id="back-home-btn" onclick="window.location.href=window.location.pathname" class="hidden text-blue-600 text-sm font-bold hover:underline">
                                 🏠 חזרה ללוח הבקרה שלי
                             </button>
@@ -203,35 +200,34 @@
         const appId = firebaseConfig.projectId;
         const provider = new GoogleAuthProvider();
         
-        // --- הגדרת מנהל על ---
-        // הכנס כאן את המייל שלך כדי לקבל הרשאות מלאות לכל האירועים
-        const SUPER_ADMIN_EMAIL = "your-email@example.com"; 
+        // --- אבטחת מנהל על (SECURITY HASH) ---
+        // העתק לכאן את מחרוזת ה-Hash שתקבל מהקונסול ברגע שתתחבר
+        // דוגמה ל-Hash של "test@gmail.com" היא: "973dfe463c..."
+        const SUPER_ADMIN_HASH = ""; 
 
-        let user, currentEventId;
-
-        // EmailJS Placeholder
-        const EMAIL_SERVICE_ID = ""; 
-        const EMAIL_TEMPLATE_ID = ""; 
-        const EMAIL_PUBLIC_KEY = ""; 
-
-        async function sendNotification(targetEmail, subject, body) {
-            if (EMAIL_SERVICE_ID && EMAIL_PUBLIC_KEY) {
-                try {
-                    await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            service_id: EMAIL_SERVICE_ID, template_id: EMAIL_TEMPLATE_ID, user_id: EMAIL_PUBLIC_KEY,
-                            template_params: { to_email: targetEmail, subject: subject, message: body }
-                        })
-                    });
-                } catch (e) { console.error("Email failed:", e); }
-            }
+        // פונקציית Hash מאובטחת
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message.toLowerCase());
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
+        let user, currentEventId, isSuperAdmin = false;
+
         window.onload = () => {
-            onAuthStateChanged(auth, (u) => {
+            onAuthStateChanged(auth, async (u) => {
                 user = u;
+                if (user && user.email) {
+                    const userHash = await sha256(user.email);
+                    isSuperAdmin = (userHash === SUPER_ADMIN_HASH);
+                    
+                    // כלי עזר עבורך: מדפיס לקונסול את ה-Hash של המשתמש המחובר
+                    console.log("%c--- כלי הגדרת אבטחה ---", "color: blue; font-weight: bold;");
+                    console.log("המייל המחובר:", user.email);
+                    console.log("מחרוזת ה-Hash שלך (העתק אותה לקוד):", userHash);
+                    console.log("-----------------------");
+                }
                 updateUI();
             });
         };
@@ -248,7 +244,8 @@
             
             if (user) {
                 const isGoogle = user.providerData.some(p => p.providerId === 'google.com');
-                statusEl.textContent = isGoogle ? `שלום, ${user.displayName || user.email}` : `מצב אורח`;
+                statusEl.innerHTML = isGoogle ? `שלום, ${user.displayName || user.email} ${isSuperAdmin ? '<span class="text-blue-500 font-bold">(Super Admin)</span>' : ''}` : `מצב אורח`;
+                
                 if(isGoogle) {
                     logoutBtn.classList.remove('hidden');
                     backHomeBtn.classList.remove('hidden');
@@ -289,9 +286,8 @@
             
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'events'), (snapshot) => {
                 container.innerHTML = '';
-                const isSuperAdmin = user.email === SUPER_ADMIN_EMAIL;
                 
-                // מנהל על רואה הכל, משתמש רגיל רואה רק את שלו
+                // Super Admin רואה הכל, אחרים רואים רק את שלהם
                 const visibleEvents = isSuperAdmin 
                     ? snapshot.docs 
                     : snapshot.docs.filter(d => d.data().createdBy === user.uid);
@@ -309,7 +305,7 @@
                         <div>
                             <div class="flex justify-between items-start">
                                 <h3 class="text-xl font-bold text-gray-800 mb-2">${data.title}</h3>
-                                ${isSuperAdmin && data.createdBy !== user.uid ? '<span class="text-[10px] bg-gray-100 px-2 rounded">מנהל על</span>' : ''}
+                                ${isSuperAdmin && data.createdBy !== user.uid ? '<span class="text-[10px] bg-blue-50 text-blue-600 px-2 rounded font-bold">מנוהל ע"י אחר</span>' : ''}
                             </div>
                             <p class="text-gray-500 text-sm mb-4 line-clamp-2">${data.desc || 'אין תיאור'}</p>
                         </div>
@@ -326,13 +322,9 @@
         window.confirmDelete = async (id) => {
             if(!confirm("האם אתה בטוח שברצונך למחוק את האירוע? פעולה זו היא סופית.")) return;
             try {
-                // מחיקה דורשת הרשאה ב-Firestore (Admin או Creator)
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', id));
                 alertBox("האירוע נמחק בהצלחה.");
-            } catch(e) { 
-                console.error("Delete error:", e);
-                alertBox("שגיאה במחיקה. וודאו שיש לכם הרשאה מתאימה."); 
-            }
+            } catch(e) { alertBox("שגיאה במחיקה. וודאו שיש לכם הרשאה."); }
         }
 
         window.showCreateView = () => {
@@ -383,8 +375,6 @@
                     title, desc, adminEmail: email, options: opts.sort(), 
                     createdBy: user.uid, createdAt: Date.now() 
                 });
-                sendNotification(email, "אירוע חדש הוקם!", `האירוע "${title}" מוכן. קישור: ${window.location.origin}${window.location.pathname}?id=${ref.id}`);
-                window.history.pushState({}, '', '?id=' + ref.id);
                 updateUI();
             } catch(e) { alertBox("שגיאה בשמירה."); }
         }
@@ -464,11 +454,6 @@
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'votes'), {
                     eventId: currentEventId, email, selections: sels, uid: user.uid, timestamp: Date.now()
                 });
-                const eventDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', currentEventId));
-                if(eventDoc.exists()) {
-                    const eData = eventDoc.data();
-                    sendNotification(eData.adminEmail, `הצבעה חדשה באירוע: ${eData.title}`, `המשתמש ${email} הצביע לאירוע שלך.`);
-                }
                 document.getElementById('voter-email').value = '';
                 checks.forEach(c => c.checked = false);
                 alertBox("הצבעתך נשמרה!");
