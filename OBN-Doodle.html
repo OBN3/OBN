@@ -136,7 +136,7 @@
                         <table class="w-full border-collapse">
                             <thead>
                                 <tr id="table-date-header">
-                                    <th class="p-4 border-b text-right font-bold w-48 sticky right-0 bg-white z-10">האימייל שלכם</th>
+                                    <th class="p-4 border-b text-right font-bold w-72 sticky right-0 bg-white z-10">האימייל שלכם</th>
                                 </tr>
                                 <tr id="table-time-header" class="bg-white">
                                     <th class="p-4 border-b sticky right-0 bg-white z-10"></th>
@@ -373,6 +373,9 @@
                     title, desc, adminEmail: email, options: opts.sort(), 
                     createdBy: user.uid, createdAt: Date.now() 
                 });
+                
+                // עדכון ה-URL למזהה החדש והפעלת UI
+                window.history.pushState({}, '', '?id=' + ref.id);
                 updateUI();
             } catch(e) { alertBox("שגיאה בשמירה."); }
         }
