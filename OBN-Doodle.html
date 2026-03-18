@@ -11,6 +11,8 @@
         .card { background: white; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         .btn-primary { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; transition: all 0.2s; }
         .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+        .btn-danger { background-color: #ef4444; color: white; }
+        .btn-danger:hover { background-color: #dc2626; }
         .btn-google { background-color: white; color: #374151; border: 1px solid #e2e8f0; transition: all 0.2s; }
         .day-block { border: 2px solid #e2e8f0; border-radius: 12px; padding: 1.25rem; background: #ffffff; }
         .time-chip { transition: all 0.15s; border: 1px solid #e2e8f0; cursor: pointer; }
@@ -19,22 +21,33 @@
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .animate-in { animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Day colors for the table */
+        .day-col-0 { background-color: #eff6ff; } /* Blue */
+        .day-col-1 { background-color: #f0fdf4; } /* Green */
+        .day-col-2 { background-color: #fffbeb; } /* Amber */
+        .day-col-3 { background-color: #fdf2f8; } /* Pink */
+        .day-col-4 { background-color: #f5f3ff; } /* Violet */
     </style>
 </head>
 <body class="min-h-screen pb-12">
 
-    <div id="app" class="max-w-5xl mx-auto px-4">
+    <div id="app" class="max-w-6xl mx-auto px-4">
         <!-- Header -->
-        <header class="py-8 text-center">
+        <header class="py-8 text-center relative">
             <h1 class="text-5xl font-extrabold text-blue-700 tracking-tight mb-2">תאם לי</h1>
-            <p class="text-gray-500 font-light text-lg">פשוט. מהיר. מסונכרן.</p>
-            <div id="user-status" class="mt-4 inline-block px-3 py-1 bg-white rounded-full border border-gray-100 text-xs text-gray-400"></div>
+            <p class="text-gray-500 font-light text-lg">ניהול אירועים והצבעות בקליק</p>
+            
+            <div id="auth-controls" class="mt-4 flex flex-col items-center gap-2">
+                <div id="user-status" class="px-3 py-1 bg-white rounded-full border border-gray-100 text-xs text-gray-400"></div>
+                <button id="logout-btn" onclick="logout()" class="hidden text-red-500 text-xs hover:underline font-bold">התנתק מהמערכת</button>
+            </div>
         </header>
 
         <!-- Loading -->
         <div id="loading" class="flex flex-col items-center justify-center py-24">
             <div class="loader w-14 h-14 border-4 border-gray-200 rounded-full mb-4"></div>
-            <p class="text-gray-400 animate-pulse">מתחבר לענן שלכם...</p>
+            <p class="text-gray-400 animate-pulse">טוען נתונים...</p>
         </div>
 
         <!-- Main Content -->
@@ -42,13 +55,24 @@
             
             <!-- Admin Login View -->
             <div id="view-admin-login" class="hidden animate-in text-center py-16 card p-10 max-w-md mx-auto">
-                <div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">📅</div>
-                <h2 class="text-2xl font-bold mb-3">יצירת אירוע חדש</h2>
-                <p class="text-gray-500 mb-8">התחבר עם גוגל כדי להגדיר מועדים ולנהל את ההצבעות של כולם.</p>
+                <div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">🔑</div>
+                <h2 class="text-2xl font-bold mb-3">כניסת מנהל</h2>
+                <p class="text-gray-500 mb-8">התחבר עם גוגל כדי להקים אירועים חדשים ולנהל את הקיימים.</p>
                 <button onclick="loginWithGoogle()" class="btn-google w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl shadow-sm font-bold text-lg">
                     <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.67l-3.57-2.77c-1.01.67-2.28 1.09-3.71 1.09-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.67-.35-1.39-.35-2.09s.13-1.42.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
                     התחברות עם Google
                 </button>
+            </div>
+
+            <!-- Admin Dashboard (List of events) -->
+            <div id="view-dashboard" class="hidden animate-in space-y-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold">האירועים שלי</h2>
+                    <button onclick="showCreateView()" class="btn-primary px-6 py-3 rounded-xl font-bold">+ אירוע חדש</button>
+                </div>
+                <div id="events-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Event cards will be injected here -->
+                </div>
             </div>
 
             <!-- Create Event View -->
@@ -56,21 +80,24 @@
                 <div class="card p-8">
                     <div class="flex justify-between items-start mb-8">
                         <div>
-                            <h2 class="text-3xl font-bold text-gray-800">הגדרת האירוע</h2>
+                            <h2 class="text-3xl font-bold text-gray-800">הגדרת אירוע חדש</h2>
                             <p class="text-gray-400 mt-1">מלא את הפרטים ובחר שעות מהלוח</p>
                         </div>
-                        <button onclick="logout()" class="text-gray-400 hover:text-red-500 transition-colors">התנתק</button>
+                        <button onclick="updateUI()" class="text-blue-500 hover:underline">חזרה לרשימה</button>
                     </div>
                     
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                        <!-- Event Details -->
+                        <!-- Details -->
                         <div class="lg:col-span-4 space-y-6">
                             <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100">
                                 <label class="block text-sm font-bold text-gray-700 mb-2">שם האירוע</label>
-                                <input type="text" id="event-title" class="w-full p-4 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="למשל: ישיבת צוות">
+                                <input type="text" id="event-title" class="w-full p-4 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="למשל: ישיבת הנהלה">
+                                
+                                <label class="block text-sm font-bold text-gray-700 mb-2 mt-6">האימייל שלך (לקבלת עדכונים)</label>
+                                <input type="email" id="admin-email" class="w-full p-4 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="your@email.com">
                                 
                                 <label class="block text-sm font-bold text-gray-700 mb-2 mt-6">תיאור קצר</label>
-                                <textarea id="event-desc" class="w-full p-4 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" rows="3" placeholder="על מה נדבר?"></textarea>
+                                <textarea id="event-desc" class="w-full p-4 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="מה בלו\"ז?"></textarea>
                             </div>
                             
                             <button onclick="saveEvent()" class="w-full btn-primary py-4 rounded-xl font-bold text-xl shadow-lg mt-4 flex items-center justify-center gap-2">
@@ -78,13 +105,11 @@
                             </button>
                         </div>
 
-                        <!-- Time Selection Grid -->
+                        <!-- Time Picker -->
                         <div class="lg:col-span-8">
-                            <label class="block text-sm font-bold text-gray-700 mb-4">בחירת מועדים (לחץ על השעות הרצויות בכל יום)</label>
-                            <div id="date-blocks-container" class="space-y-6">
-                                <!-- Day blocks go here -->
-                            </div>
-                            <button onclick="addDateBlock()" class="w-full mt-6 border-2 border-dashed border-blue-200 text-blue-600 hover:bg-blue-50 py-4 rounded-xl font-bold transition-all text-lg">
+                            <label class="block text-sm font-bold text-gray-700 mb-4">בחירת מועדים (לחץ על השעות הרצויות)</label>
+                            <div id="date-blocks-container" class="space-y-6"></div>
+                            <button onclick="addDateBlock()" class="w-full mt-6 border-2 border-dashed border-blue-200 text-blue-600 hover:bg-blue-50 py-4 rounded-xl font-bold text-lg">
                                 + הוסף יום נוסף ללוח
                             </button>
                         </div>
@@ -101,7 +126,7 @@
                             <p id="vote-desc" class="text-gray-500 mt-2 text-lg"></p>
                         </div>
                         <div id="admin-share-box" class="hidden">
-                            <button onclick="copyCurrentUrl()" class="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-lg hover:bg-green-100 transition-all font-bold text-sm border border-green-200">
+                            <button onclick="copyCurrentUrl()" class="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-lg hover:bg-green-100 font-bold text-sm border border-green-200">
                                 <span>🔗</span> העתק קישור להזמנה
                             </button>
                         </div>
@@ -110,8 +135,8 @@
                     <div class="overflow-x-auto rounded-xl border border-gray-100 shadow-inner">
                         <table class="w-full border-collapse">
                             <thead>
-                                <tr id="table-date-header" class="bg-gray-50">
-                                    <th class="p-4 border-b text-right font-bold w-48 sticky right-0 bg-gray-50 z-10">משתתף</th>
+                                <tr id="table-date-header">
+                                    <th class="p-4 border-b text-right font-bold w-48 sticky right-0 bg-white z-10">האימייל שלכם</th>
                                 </tr>
                                 <tr id="table-time-header" class="bg-white">
                                     <th class="p-4 border-b sticky right-0 bg-white z-10"></th>
@@ -121,7 +146,7 @@
                             <tfoot>
                                 <tr class="bg-blue-50/50">
                                     <td class="p-4 border-t sticky right-0 bg-blue-50 z-10">
-                                        <input type="text" id="voter-name" class="w-full p-3 bg-white border border-blue-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-400 font-bold" placeholder="השם שלך...">
+                                        <input type="email" id="voter-email" class="w-full p-3 bg-white border border-blue-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-400 font-bold" placeholder="your@email.com">
                                     </td>
                                 </tr>
                             </tfoot>
@@ -129,7 +154,7 @@
                     </div>
                     
                     <div class="mt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                        <p class="text-gray-400 text-sm">סמנו את השעות שנוחות לכם ולחצו על שליחה.</p>
+                        <p class="text-gray-400 text-sm italic">* האימייל נדרש כדי שנוכל לעדכן את המנהל על בחירתכם.</p>
                         <button onclick="submitVote()" class="btn-primary w-full md:w-auto px-12 py-3 rounded-xl font-bold text-lg">
                             שלח את הבחירה שלי
                         </button>
@@ -139,9 +164,9 @@
         </div>
     </div>
 
-    <!-- Template for a single day block -->
+    <!-- Templates -->
     <template id="day-block-template">
-        <div class="day-block animate-in relative group shadow-sm">
+        <div class="day-block animate-in relative shadow-sm">
             <button onclick="this.parentElement.remove()" class="absolute -top-3 -left-3 w-8 h-8 bg-white border border-red-100 text-red-500 rounded-full shadow-sm hover:bg-red-50 flex items-center justify-center transition-colors z-10">✕</button>
             <div class="flex flex-col md:flex-row md:items-center gap-4 mb-4">
                 <input type="date" class="block-date p-2 bg-blue-50 border-0 rounded-lg font-bold text-blue-800 focus:ring-2 focus:ring-blue-300 outline-none w-full md:w-auto">
@@ -151,17 +176,16 @@
                     <button onclick="toggleAllTimes(this, false)" class="hover:text-blue-600">נקה הכל</button>
                 </div>
             </div>
-            <div class="time-grid grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
-                <!-- Hours will be generated by JS -->
-            </div>
+            <div class="time-grid grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2"></div>
         </div>
     </template>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyBwGHroy14gSPiZSUEIN1Zo4uTKJcDMluA",
             authDomain: "obn-doodle.firebaseapp.com",
@@ -179,6 +203,35 @@
         
         let user, currentEventId;
 
+        // --- EMAIL NOTIFICATION SETTINGS (EMAILJS PLACEHOLDER) ---
+        // עליך להכניס כאן את המפתחות שלך מ-EmailJS כדי שזה יעבוד באמת
+        const EMAIL_SERVICE_ID = ""; // למשל: 'service_xxxx'
+        const EMAIL_TEMPLATE_ID = ""; // למשל: 'template_xxxx'
+        const EMAIL_PUBLIC_KEY = ""; // למשל: 'user_xxxx'
+
+        async function sendNotification(targetEmail, subject, body) {
+            console.log(`Sending Email to ${targetEmail}: ${subject}`);
+            // אם יש לך EmailJS, הקוד הבא יופעל:
+            if (EMAIL_SERVICE_ID && EMAIL_PUBLIC_KEY) {
+                try {
+                    await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            service_id: EMAIL_SERVICE_ID,
+                            template_id: EMAIL_TEMPLATE_ID,
+                            user_id: EMAIL_PUBLIC_KEY,
+                            template_params: {
+                                to_email: targetEmail,
+                                subject: subject,
+                                message: body
+                            }
+                        })
+                    });
+                } catch (e) { console.error("Email failed:", e); }
+            }
+        }
+
         window.onload = () => {
             onAuthStateChanged(auth, (u) => {
                 user = u;
@@ -193,9 +246,13 @@
             currentEventId = urlParams.get('id');
 
             const statusEl = document.getElementById('user-status');
+            const logoutBtn = document.getElementById('logout-btn');
+            
             if (user) {
                 const isGoogle = user.providerData.some(p => p.providerId === 'google.com');
-                statusEl.textContent = isGoogle ? `שלום, ${user.displayName}` : `מצב אורח`;
+                statusEl.textContent = isGoogle ? `שלום, ${user.displayName || user.email}` : `מצב אורח`;
+                if(isGoogle) logoutBtn.classList.remove('hidden');
+                else logoutBtn.classList.add('hidden');
             }
 
             if (currentEventId) {
@@ -203,195 +260,229 @@
                 showVoteView(currentEventId);
             } else {
                 const isGoogle = user && user.providerData.some(p => p.providerId === 'google.com');
-                if (isGoogle) showCreateView(); else showAdminLogin();
+                if (isGoogle) showDashboard(); else showAdminLogin();
             }
         }
 
         // --- AUTH ---
         window.loginWithGoogle = async () => {
-            try { await signInWithPopup(auth, provider); } catch (e) { alertBox("התחברות נכשלה. בדוק את הגדרות ה-Google Auth."); }
+            try { await signInWithPopup(auth, provider); } catch (e) { alertBox("התחברות נכשלה."); }
         };
-        window.logout = async () => { await signOut(auth); window.location.reload(); };
+        window.logout = async () => { 
+            await signOut(auth); 
+            window.location.href = window.location.pathname; // חזרה לדף הראשי
+        };
 
-        // --- CREATION LOGIC ---
-        function showAdminLogin() { hideAllViews(); document.getElementById('view-admin-login').classList.remove('hidden'); }
-        function showCreateView() {
-            hideAllViews();
-            document.getElementById('view-create').classList.remove('hidden');
-            if (document.getElementById('date-blocks-container').children.length === 0) addDateBlock();
+        // --- VIEWS ---
+        function hideAll() { 
+            ['view-admin-login', 'view-create', 'view-vote', 'view-dashboard'].forEach(id => document.getElementById(id).classList.add('hidden')); 
         }
 
-        const WORKING_HOURS = [
-            '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-            '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
-            '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00'
-        ];
+        function showAdminLogin() { hideAll(); document.getElementById('view-admin-login').classList.remove('hidden'); }
+        
+        async function showDashboard() {
+            hideAll();
+            document.getElementById('view-dashboard').classList.remove('hidden');
+            const container = document.getElementById('events-list');
+            container.innerHTML = '<p class="text-gray-400">טוען אירועים...</p>';
+            
+            // Rule 2: Fetch all events and filter in memory
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'events'), (snapshot) => {
+                container.innerHTML = '';
+                const myEvents = snapshot.docs.filter(d => d.data().createdBy === user.uid);
+                
+                if(myEvents.length === 0) {
+                    container.innerHTML = '<p class="col-span-full text-center py-10 text-gray-400">אין אירועים פעילים. הקם את האירוע הראשון שלך!</p>';
+                    return;
+                }
 
+                myEvents.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const card = document.createElement('div');
+                    card.className = 'card p-6 flex flex-col justify-between animate-in';
+                    card.innerHTML = `
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800 mb-2">${data.title}</h3>
+                            <p class="text-gray-500 text-sm mb-4 line-clamp-2">${data.desc || 'אין תיאור'}</p>
+                        </div>
+                        <div class="flex gap-2 mt-4">
+                            <a href="?id=${docSnap.id}" class="flex-1 text-center bg-blue-100 text-blue-700 py-2 rounded-lg font-bold text-sm hover:bg-blue-200 transition">צפה / הצבע</a>
+                            <button onclick="confirmDelete('${docSnap.id}')" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition">🗑️</button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            });
+        }
+
+        window.confirmDelete = async (id) => {
+            if(!confirm("האם אתה בטוח שברצונך למחוק את האירוע? פעולה זו היא סופית.")) return;
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', id));
+                alertBox("האירוע נמחק בהצלחה.");
+            } catch(e) { alertBox("שגיאה במחיקה."); }
+        }
+
+        window.showCreateView = () => {
+            hideAll();
+            document.getElementById('view-create').classList.remove('hidden');
+            if(user.email) document.getElementById('admin-email').value = user.email;
+            if (document.getElementById('date-blocks-container').children.length === 0) addDateBlock();
+        };
+
+        // --- CREATION ---
+        const HOURS = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
         window.addDateBlock = () => {
             const template = document.getElementById('day-block-template');
             const clone = template.content.cloneNode(true);
             const container = document.getElementById('date-blocks-container');
             const block = clone.querySelector('.day-block');
-            
-            // Set date to today
-            const dateInput = block.querySelector('.block-date');
-            dateInput.valueAsDate = new Date();
-
-            // Build time grid
+            block.querySelector('.block-date').valueAsDate = new Date();
             const grid = block.querySelector('.time-grid');
-            WORKING_HOURS.forEach(time => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'time-chip text-xs py-2 px-1 rounded-lg font-medium';
-                btn.textContent = time;
-                btn.onclick = () => btn.classList.toggle('active');
-                grid.appendChild(btn);
+            HOURS.forEach(h => {
+                const b = document.createElement('button');
+                b.className = 'time-chip text-xs py-2 rounded-lg font-medium';
+                b.textContent = h; b.onclick = () => b.classList.toggle('active');
+                grid.appendChild(b);
             });
-
             container.appendChild(block);
-        };
+        }
 
-        window.toggleAllTimes = (btn, state) => {
-            const block = btn.closest('.day-block');
-            block.querySelectorAll('.time-chip').forEach(chip => {
-                if(state) chip.classList.add('active');
-                else chip.classList.remove('active');
-            });
-        };
+        window.toggleAllTimes = (btn, s) => {
+            btn.closest('.day-block').querySelectorAll('.time-chip').forEach(c => s ? c.classList.add('active') : c.classList.remove('active'));
+        }
 
         window.saveEvent = async () => {
             const title = document.getElementById('event-title').value.trim();
+            const email = document.getElementById('admin-email').value.trim();
             const desc = document.getElementById('event-desc').value.trim();
             const blocks = document.querySelectorAll('.day-block');
-            
-            let options = [];
-            blocks.forEach(block => {
-                const date = block.querySelector('.block-date').value;
-                const selectedChips = block.querySelectorAll('.time-chip.active');
-                selectedChips.forEach(chip => {
-                    if (date) options.push(`${date}T${chip.textContent}`);
-                });
+            let opts = [];
+            blocks.forEach(b => {
+                const d = b.querySelector('.block-date').value;
+                b.querySelectorAll('.time-chip.active').forEach(c => { if(d) opts.push(`${d}T${c.textContent}`); });
             });
 
-            if (!title || options.length === 0) { alertBox("נא להזין שם אירוע ולפחות מועד אחד"); return; }
-
+            if(!title || !email || opts.length === 0) { alertBox("מלא שם, מייל ולפחות מועד אחד"); return; }
+            
             try {
-                const eventRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'events'));
-                await setDoc(eventRef, {
-                    title, desc, 
-                    options: options.sort(),
-                    createdBy: user.uid,
-                    createdAt: Date.now()
+                const ref = doc(collection(db, 'artifacts', appId, 'public', 'data', 'events'));
+                await setDoc(ref, { 
+                    title, desc, adminEmail: email, 
+                    options: opts.sort(), 
+                    createdBy: user.uid, 
+                    createdAt: Date.now() 
                 });
-                const newUrl = window.location.origin + window.location.pathname + '?id=' + eventRef.id;
-                window.history.pushState({}, '', newUrl);
-                currentEventId = eventRef.id;
+                
+                // התראה למייל של האדמין על הקמת אירוע
+                sendNotification(email, "אירוע חדש הוקם במערכת!", `היי, האירוע "${title}" הוקם בהצלחה. קישור: ${window.location.origin}${window.location.pathname}?id=${ref.id}`);
+
+                window.history.pushState({}, '', '?id=' + ref.id);
                 updateUI();
-            } catch (e) { alertBox("שגיאה בשמירה. בדקו את חוקי ה-Firestore."); }
+            } catch(e) { alertBox("שגיאה בשמירה."); }
         }
 
-        // --- VOTING LOGIC ---
+        // --- VOTING ---
         async function showVoteView(id) {
-            hideAllViews();
+            hideAll();
             document.getElementById('view-vote').classList.remove('hidden');
-
-            const eventDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', id));
-            if (!eventDoc.exists()) { alertBox("אירוע לא נמצא"); window.location.href = window.location.pathname; return; }
-
-            const data = eventDoc.data();
+            const docSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', id));
+            if(!docSnap.exists()) { alertBox("אירוע לא נמצא."); window.location.href = window.location.pathname; return; }
+            
+            const data = docSnap.data();
             document.getElementById('vote-title').textContent = data.title;
             document.getElementById('vote-desc').textContent = data.desc;
+            if(user && data.createdBy === user.uid) document.getElementById('admin-share-box').classList.remove('hidden');
 
-            if (user && data.createdBy === user.uid) document.getElementById('admin-share-box').classList.remove('hidden');
+            const dateH = document.getElementById('table-date-header');
+            const timeH = document.getElementById('table-time-header');
+            const footR = document.querySelector('tfoot tr');
 
-            const dateHeader = document.getElementById('table-date-header');
-            const timeHeader = document.getElementById('table-time-header');
-            const footerRow = document.querySelector('tfoot tr');
-            
-            while(dateHeader.children.length > 1) dateHeader.removeChild(dateHeader.lastChild);
-            while(timeHeader.children.length > 1) timeHeader.removeChild(timeHeader.lastChild);
-            while(footerRow.children.length > 1) footerRow.removeChild(footerRow.lastChild);
+            while(dateH.children.length > 1) dateH.removeChild(dateH.lastChild);
+            while(timeH.children.length > 1) timeH.removeChild(timeH.lastChild);
+            while(footR.children.length > 1) footR.removeChild(footR.lastChild);
 
             const grouped = {};
             data.options.forEach(opt => {
-                const dateStr = opt.split('T')[0];
-                if (!grouped[dateStr]) grouped[dateStr] = [];
-                grouped[dateStr].push(opt);
+                const d = opt.split('T')[0];
+                if(!grouped[d]) grouped[d] = [];
+                grouped[d].push(opt);
             });
 
             let globalIdx = 0;
-            Object.keys(grouped).sort().forEach(dateKey => {
-                const dayOptions = grouped[dateKey];
-                const thDate = document.createElement('th');
-                thDate.className = 'p-3 border-b text-center border-x bg-blue-50/30 font-bold text-blue-900';
-                thDate.colSpan = dayOptions.length;
-                thDate.textContent = new Date(dateKey).toLocaleDateString('he-IL', {weekday: 'short', day: 'numeric', month: 'numeric'});
-                dateHeader.appendChild(thDate);
+            const sortedDates = Object.keys(grouped).sort();
+            sortedDates.forEach((dateKey, colorIdx) => {
+                const opts = grouped[dateKey];
+                const thD = document.createElement('th');
+                thD.className = `p-3 border-b text-center border-x font-bold day-col-${colorIdx % 5}`;
+                thD.colSpan = opts.length;
+                thD.textContent = new Date(dateKey).toLocaleDateString('he-IL', {weekday:'short', day:'numeric', month:'numeric'});
+                dateH.appendChild(thD);
 
-                dayOptions.forEach(opt => {
-                    const thTime = document.createElement('th');
-                    thTime.className = 'p-2 border-b text-center text-xs text-gray-400 font-medium whitespace-nowrap';
-                    thTime.textContent = opt.split('T')[1];
-                    timeHeader.appendChild(thTime);
+                opts.forEach(o => {
+                    const thT = document.createElement('th');
+                    thT.className = `p-2 border-b text-center text-xs text-gray-400 day-col-${colorIdx % 5} whitespace-nowrap`;
+                    thT.textContent = o.split('T')[1];
+                    timeH.appendChild(thT);
 
                     const td = document.createElement('td');
-                    td.className = 'p-3 border-b text-center border-x';
-                    td.innerHTML = `<input type="checkbox" class="vote-check w-6 h-6 cursor-pointer accent-blue-600" data-idx="${globalIdx}">`;
-                    footerRow.appendChild(td);
-                    globalIdx++;
+                    td.className = `p-3 border-b text-center border-x day-col-${colorIdx % 5}`;
+                    td.innerHTML = `<input type="checkbox" class="vote-check w-6 h-6 cursor-pointer accent-blue-600" data-idx="${globalIdx++}">`;
+                    footR.appendChild(td);
                 });
             });
 
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'votes'), (snapshot) => {
-                const votesBody = document.getElementById('votes-body');
-                votesBody.innerHTML = '';
-                snapshot.docs.forEach(doc => {
-                    const v = doc.data();
-                    if (v.eventId !== id) return;
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'votes'), (snap) => {
+                const body = document.getElementById('votes-body');
+                body.innerHTML = '';
+                snap.docs.filter(d => d.data().eventId === id).forEach(d => {
+                    const v = d.data();
                     const tr = document.createElement('tr');
-                    tr.className = 'hover:bg-gray-50/50 transition-colors';
-                    tr.innerHTML = `<td class="p-4 border-b font-bold text-gray-700 sticky right-0 bg-white z-10">${v.name}</td>`;
-                    data.options.forEach((_, idx) => {
-                        const isChecked = v.selections.includes(idx);
-                        tr.innerHTML += `<td class="p-3 border-b text-center border-x text-2xl">${isChecked ? '<span class="text-green-500">✓</span>' : '<span class="text-gray-100 italic text-sm">✗</span>'}</td>`;
+                    tr.innerHTML = `<td class="p-4 border-b font-medium text-xs text-gray-500 sticky right-0 bg-white z-10">${v.email}</td>`;
+                    data.options.forEach((_, i) => {
+                        const ok = v.selections.includes(i);
+                        tr.innerHTML += `<td class="p-3 border-b text-center border-x text-2xl">${ok ? '✅' : '❌'}</td>`;
                     });
-                    votesBody.appendChild(tr);
+                    body.appendChild(tr);
                 });
             });
         }
 
         window.submitVote = async () => {
-            const name = document.getElementById('voter-name').value.trim();
+            const email = document.getElementById('voter-email').value.trim();
             const checks = document.querySelectorAll('.vote-check');
-            const selections = Array.from(checks).filter(c => c.checked).map(c => parseInt(c.dataset.idx));
-            if (!name) { alertBox("אנא הכנס את שמך"); return; }
+            const sels = Array.from(checks).filter(c => c.checked).map(c => parseInt(c.dataset.idx));
+            if(!email) { alertBox("הזן אימייל להצבעה."); return; }
+            
             try {
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'votes'), {
-                    eventId: currentEventId, name, selections, uid: user.uid, timestamp: Date.now()
+                    eventId: currentEventId, email, selections: sels, uid: user.uid, timestamp: Date.now()
                 });
-                document.getElementById('voter-name').value = '';
+
+                // התראה למייל של האדמין על הצבעה חדשה
+                const eventDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', currentEventId));
+                if(eventDoc.exists()) {
+                    const eventData = eventDoc.data();
+                    sendNotification(eventData.adminEmail, `הצבעה חדשה באירוע: ${eventData.title}`, `המשתמש ${email} הצביע לאירוע שלך. בדוק את התוצאות כאן: ${window.location.href}`);
+                }
+
+                document.getElementById('voter-email').value = '';
                 checks.forEach(c => c.checked = false);
-                alertBox("הבחירה שלך נשמרה!");
-            } catch (e) { alertBox("שגיאה בשליחה."); }
-        };
+                alertBox("הצבעתך נשמרה!");
+            } catch(e) { alertBox("שגיאה בשליחה."); }
+        }
 
         window.copyCurrentUrl = () => {
             const el = document.createElement('textarea');
-            el.value = window.location.href;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
-            alertBox("הקישור הועתק!");
-        };
+            el.value = window.location.href; document.body.appendChild(el); el.select();
+            document.execCommand('copy'); document.body.removeChild(el); alertBox("הקישור הועתק!");
+        }
 
-        function hideAllViews() { ['view-admin-login', 'view-create', 'view-vote'].forEach(id => document.getElementById(id).classList.add('hidden')); }
-        function alertBox(msg) {
-            const box = document.createElement('div');
-            box.className = 'fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-8 py-3 rounded-2xl shadow-2xl z-50 animate-in font-bold text-sm text-center max-w-[90%]';
-            box.textContent = msg;
-            document.body.appendChild(box);
-            setTimeout(() => { box.classList.add('opacity-0'); setTimeout(() => box.remove(), 500); }, 3000);
+        function alertBox(m) {
+            const b = document.createElement('div');
+            b.className = 'fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-8 py-3 rounded-2xl shadow-2xl z-50 animate-in font-bold text-sm';
+            b.textContent = m; document.body.appendChild(b);
+            setTimeout(() => { b.classList.add('opacity-0'); setTimeout(() => b.remove(), 500); }, 3000);
         }
     </script>
 </body>
