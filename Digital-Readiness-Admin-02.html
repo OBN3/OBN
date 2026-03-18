@@ -136,7 +136,7 @@
         <!-- KPI Cards Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10 text-slate-900">
 
-            <!-- Card 1: סה"כ משתתפים + ציון ממוצע ארצי (שורה אחת) -->
+            <!-- Card 1: סה"כ משתתפים + ציון ממוצע ארצי -->
             <div class="stat-card bg-gradient-to-br from-white to-blue-50">
                 <p class="text-sm font-bold text-blue-800 uppercase tracking-wider mb-3">סה"כ משתתפים</p>
                 <div class="flex items-center justify-between gap-2">
@@ -157,8 +157,9 @@
             <div class="stat-card border-b-4 border-rose-600">
                 <p class="text-sm font-bold text-rose-700 uppercase tracking-wider mb-1">משיבים בסיכון גבוה</p>
                 <div class="flex items-end gap-2">
-                    <h2 id="at-risk-count" class="text-4xl font-black">-</h2>
-                    <span id="at-risk-percent" class="text-rose-700 text-base mb-1 font-black">-%</span>
+                    <h2 id="at-risk-percent" class="text-4xl font-black text-rose-700">-%</h2>
+                    <span id="at-risk-count" class="text-slate-700 text-base mb-1 font-bold">-</span>
+                    <span class="text-slate-500 text-sm mb-1 font-bold">משיבים</span>
                 </div>
                 <p class="text-sm text-slate-900 mt-2 italic font-bold">משיבים עם ציון 0-4 (רמה אדומה)</p>
             </div>
@@ -167,8 +168,9 @@
             <div class="stat-card border-b-4 border-amber-500">
                 <p class="text-sm font-bold text-amber-600 uppercase tracking-wider mb-1">משיבים בסיכון בינוני</p>
                 <div class="flex items-end gap-2">
-                    <h2 id="medium-resilience-count" class="text-4xl font-black">-</h2>
-                    <span id="medium-resilience-percent" class="text-amber-600 text-base mb-1 font-black">-%</span>
+                    <h2 id="medium-resilience-percent" class="text-4xl font-black text-amber-600">-%</h2>
+                    <span id="medium-resilience-count" class="text-slate-700 text-base mb-1 font-bold">-</span>
+                    <span class="text-slate-500 text-sm mb-1 font-bold">משיבים</span>
                 </div>
                 <p class="text-sm text-slate-900 mt-2 italic font-bold">משיבים עם ציון 5-7 (רמה כתומה)</p>
             </div>
@@ -177,8 +179,9 @@
             <div class="stat-card border-b-4 border-emerald-600">
                 <p class="text-sm font-bold text-emerald-700 uppercase tracking-wider mb-1">משיבים בסיכון נמוך</p>
                 <div class="flex items-end gap-2">
-                    <h2 id="high-resilience" class="text-4xl font-black">-</h2>
-                    <span id="low-risk-percent" class="text-emerald-700 text-base mb-1 font-black">-%</span>
+                    <h2 id="low-risk-percent" class="text-4xl font-black text-emerald-700">-%</h2>
+                    <span id="high-resilience" class="text-slate-700 text-base mb-1 font-bold">-</span>
+                    <span class="text-slate-500 text-sm mb-1 font-bold">משיבים</span>
                 </div>
                 <p class="text-sm text-slate-900 mt-2 italic font-bold">משיבים עם ציון 8-10 (רמה ירוקה)</p>
             </div>
@@ -377,14 +380,15 @@
             updateText('total-responses', total);
             updateText('avg-score', avg.toFixed(1));
 
-            updateText('at-risk-count', redCount);
-            updateText('at-risk-percent', `${Math.round((redCount / total) * 100)}%`);
+            // אחוז בפונט גדול, מספר בפונט קטן
+            updateText('at-risk-percent',  `${Math.round((redCount    / total) * 100)}%`);
+            updateText('at-risk-count',    redCount);
 
-            updateText('medium-resilience-count', orangeCount);
             updateText('medium-resilience-percent', `${Math.round((orangeCount / total) * 100)}%`);
+            updateText('medium-resilience-count',   orangeCount);
 
-            updateText('high-resilience', greenCount);
-            updateText('low-risk-percent', `${Math.round((greenCount / total) * 100)}%`);
+            updateText('low-risk-percent', `${Math.round((greenCount  / total) * 100)}%`);
+            updateText('high-resilience',  greenCount);
 
             updateText('label-green',  `${Math.round((greenCount  / total) * 100)}%`);
             updateText('label-orange', `${Math.round((orangeCount / total) * 100)}%`);
