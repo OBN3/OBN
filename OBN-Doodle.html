@@ -90,7 +90,7 @@
                                 <input type="text" id="event-title" class="w-full p-4 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="למשל: ישיבת הנהלה">
                                 
                                 <label class="block text-sm font-bold text-gray-700 mb-2 mt-6">האימייל שלך (לקבלת עדכונים)</label>
-                                <input type="email" id="admin-email" class="w-full p-4 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="your@email.com">
+                                <input type="email" id="admin-email" dir="ltr" class="w-full p-4 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-left" placeholder="your@email.com">
                                 
                                 <label class="block text-sm font-bold text-gray-700 mb-2 mt-6">תיאור קצר</label>
                                 <textarea id="event-desc" class="w-full p-4 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="כתבו תיאור או סדר יום"></textarea>
@@ -146,7 +146,7 @@
                             <tfoot>
                                 <tr class="bg-blue-50/50">
                                     <td class="p-4 border-t sticky right-0 bg-blue-50 z-10">
-                                        <input type="email" id="voter-email" class="w-full p-3 bg-white border border-blue-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-400 font-bold" placeholder="your@email.com">
+                                        <input type="email" id="voter-email" dir="ltr" class="w-full p-3 bg-white border border-blue-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-400 font-bold text-left" placeholder="your@email.com">
                                     </td>
                                 </tr>
                             </tfoot>
@@ -201,14 +201,46 @@
         const provider = new GoogleAuthProvider();
         
         // --- אבטחת מנהל על (SECURITY HASH) ---
-        // העתק לכאן את מחרוזת ה-Hash שתקבל מהקונסול ברגע שתתחבר
-        const SUPER_ADMIN_HASH = "d725fa5fdfa11cbb29f0e74bb5fafd056428791484c6ab396db9f65ed748e73d"; 
+        const SUPER_ADMIN_HASH = ""; 
+
+        // --- הגדרות אימייל (EMAILJS) ---
+        // המפתחות שהזנת עודכנו כאן:
+        const EMAIL_SERVICE_ID = "service_7f2q1o6"; 
+        const EMAIL_TEMPLATE_ID = "template_nkp34qa"; 
+        const EMAIL_PUBLIC_KEY = "Z5HhFw_n3NPMJCeH4"; 
 
         async function sha256(message) {
             const msgBuffer = new TextEncoder().encode(message.toLowerCase());
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function validateEmail(email) {
+            return String(email)
+                .toLowerCase()
+                .match(/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
+        }
+
+        async function sendNotification(targetEmail, subject, body) {
+            if (EMAIL_SERVICE_ID && EMAIL_PUBLIC_KEY) {
+                try {
+                    await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            service_id: EMAIL_SERVICE_ID, 
+                            template_id: EMAIL_TEMPLATE_ID, 
+                            user_id: EMAIL_PUBLIC_KEY,
+                            template_params: { 
+                                to_email: targetEmail, 
+                                subject: subject, 
+                                message: body 
+                            }
+                        })
+                    });
+                } catch (e) { console.error("Email notification failed:", e); }
+            }
         }
 
         let user, currentEventId, isSuperAdmin = false;
@@ -219,11 +251,6 @@
                 if (user && user.email) {
                     const userHash = await sha256(user.email);
                     isSuperAdmin = (userHash === SUPER_ADMIN_HASH);
-                    
-                    console.log("%c--- כלי הגדרת אבטחה ---", "color: blue; font-weight: bold;");
-                    console.log("המייל המחובר:", user.email);
-                    console.log("מחרוזת ה-Hash שלך (העתק אותה לקוד):", userHash);
-                    console.log("-----------------------");
                 }
                 updateUI();
             });
@@ -283,7 +310,6 @@
             
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'events'), (snapshot) => {
                 container.innerHTML = '';
-                
                 const visibleEvents = isSuperAdmin 
                     ? snapshot.docs 
                     : snapshot.docs.filter(d => d.data().createdBy === user.uid);
@@ -323,10 +349,7 @@
             try {
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', id));
                 alertBox("האירוע נמחק בהצלחה.");
-            } catch(e) { 
-                console.error("Delete error:", e);
-                alertBox("שגיאה במחיקה. ייתכן שאין לכם הרשאה."); 
-            }
+            } catch(e) { alertBox("שגיאה במחיקה. ייתכן שאין לכם הרשאה."); }
         }
 
         window.showCreateView = () => {
@@ -370,6 +393,7 @@
             });
 
             if(!title || !email || opts.length === 0) { alertBox("מלא שם, מייל ולפחות מועד אחד"); return; }
+            if(!validateEmail(email)) { alertBox("אנא הזן כתובת מייל תקינה"); return; }
             
             try {
                 const ref = doc(collection(db, 'artifacts', appId, 'public', 'data', 'events'));
@@ -378,7 +402,8 @@
                     createdBy: user.uid, createdAt: Date.now() 
                 });
                 
-                // עדכון ה-URL למזהה החדש והפעלת UI
+                await sendNotification(email, `אירוע חדש הוקם: ${title}`, `היי, האירוע שלך מוכן. הקישור לשיתוף: ${window.location.origin}${window.location.pathname}?id=${ref.id}`);
+                
                 window.history.pushState({}, '', '?id=' + ref.id);
                 updateUI();
             } catch(e) { alertBox("שגיאה בשמירה."); }
@@ -439,7 +464,7 @@
                 snap.docs.filter(d => d.data().eventId === id).forEach(d => {
                     const v = d.data();
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `<td class="p-4 border-b font-medium text-xs text-gray-500 sticky right-0 bg-white z-10">${v.email}</td>`;
+                    tr.innerHTML = `<td class="p-4 border-b font-medium text-xs text-gray-500 sticky right-0 bg-white z-10 text-left" dir="ltr">${v.email}</td>`;
                     data.options.forEach((_, i) => {
                         const ok = v.selections.includes(i);
                         tr.innerHTML += `<td class="p-3 border-b text-center border-x text-2xl">${ok ? '✅' : '❌'}</td>`;
@@ -454,11 +479,19 @@
             const checks = document.querySelectorAll('.vote-check');
             const sels = Array.from(checks).filter(c => c.checked).map(c => parseInt(c.dataset.idx));
             if(!email) { alertBox("הזן אימייל להצבעה."); return; }
+            if(!validateEmail(email)) { alertBox("אנא הזן כתובת מייל תקינה"); return; }
             
             try {
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'votes'), {
                     eventId: currentEventId, email, selections: sels, uid: user.uid, timestamp: Date.now()
                 });
+                
+                const docSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', currentEventId));
+                if (docSnap.exists()) {
+                    const eData = docSnap.data();
+                    await sendNotification(eData.adminEmail, `הצבעה חדשה לאירוע: ${eData.title}`, `המשתמש ${email} הצביע לאירוע שלך. בדוק את התוצאות המעודכנות כאן: ${window.location.href}`);
+                }
+
                 document.getElementById('voter-email').value = '';
                 checks.forEach(c => c.checked = false);
                 alertBox("הצבעתך נשמרה!");
