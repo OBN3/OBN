@@ -27,6 +27,9 @@
         .day-col-2 { background-color: #fffbeb; }
         .day-col-3 { background-color: #fdf2f8; }
         .day-col-4 { background-color: #f5f3ff; }
+
+        /* Super Admin Badge */
+        .admin-badge { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: bold; }
     </style>
 </head>
 <body class="min-h-screen pb-12">
@@ -38,7 +41,7 @@
             <p class="text-gray-500 font-light text-lg">ניהול אירועים והצבעות בקליק</p>
             
             <div id="auth-controls" class="mt-4 flex flex-col items-center gap-2">
-                <div id="user-status" class="px-3 py-1 bg-white rounded-full border border-gray-100 text-xs text-gray-400"></div>
+                <div id="user-status" class="flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-gray-100 text-xs text-gray-400"></div>
                 <button id="logout-btn" onclick="logout()" class="hidden text-red-500 text-xs hover:underline font-bold">התנתק מהמערכת</button>
             </div>
         </header>
@@ -66,7 +69,10 @@
             <!-- Admin Dashboard -->
             <div id="view-dashboard" class="hidden animate-in space-y-6">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-3xl font-bold">לוח בקרה</h2>
+                    <div class="flex items-center gap-3">
+                        <h2 class="text-3xl font-bold">לוח בקרה</h2>
+                        <div id="dashboard-admin-status"></div>
+                    </div>
                     <button onclick="showCreateView()" class="btn-primary px-6 py-3 rounded-xl font-bold">+ אירוע חדש</button>
                 </div>
                 <div id="events-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
@@ -201,10 +207,10 @@
         const provider = new GoogleAuthProvider();
         
         // --- אבטחת מנהל על (SECURITY HASH) ---
-        const SUPER_ADMIN_HASH = ""; 
+        // הדבק כאן את ה-Hash שקיבלת מהקונסול
+        const SUPER_ADMIN_HASH = "d725fa5fdfa11cbb29f0e74bb5fafd056428791484c6ab396db9f65ed748e73d"; 
 
         // --- מייל לקבלת התראות מנהל (SUPER ADMIN NOTIFY) ---
-        // הכנס כאן את המייל שלך כדי לקבל עדכונים מפורטים על כל אירוע שמוקם במערכת
         const SUPER_ADMIN_NOTIFY_EMAIL = "ofirbn@gmail.com"; 
 
         // --- הגדרות אימייל (EMAILJS) ---
@@ -213,7 +219,7 @@
         const EMAIL_PUBLIC_KEY = "Z5HhFw_n3NPMJCeH4"; 
 
         async function sha256(message) {
-            const msgBuffer = new TextEncoder().encode(message.toLowerCase());
+            const msgBuffer = new TextEncoder().encode(message.toLowerCase().trim());
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
@@ -235,11 +241,7 @@
                             service_id: EMAIL_SERVICE_ID, 
                             template_id: EMAIL_TEMPLATE_ID, 
                             user_id: EMAIL_PUBLIC_KEY,
-                            template_params: { 
-                                to_email: targetEmail, 
-                                subject: subject, 
-                                message: body 
-                            }
+                            template_params: { to_email: targetEmail, subject: subject, message: body }
                         })
                     });
                 } catch (e) { console.error("Email notification failed:", e); }
@@ -254,6 +256,15 @@
                 if (user && user.email) {
                     const userHash = await sha256(user.email);
                     isSuperAdmin = (userHash === SUPER_ADMIN_HASH);
+                    
+                    // כלי עזר עבורך - מוודא שה-Hash תקין
+                    console.log("%c--- אבחון SUPER ADMIN ---", "color: blue; font-weight: bold;");
+                    console.log("המייל המחובר:", user.email);
+                    console.log("ה-Hash הנוכחי (ודא שהוא מופיע בקוד):", userHash);
+                    console.log("סטטוס מנהל על:", isSuperAdmin ? "✅ מזהה אותך כמנהל-על" : "❌ לא מזוהה כמנהל-על");
+                    console.log("-----------------------");
+                } else {
+                    isSuperAdmin = false;
                 }
                 updateUI();
             });
@@ -271,14 +282,14 @@
             
             if (user) {
                 const isGoogle = user.providerData.some(p => p.providerId === 'google.com');
-                statusEl.innerHTML = isGoogle ? `שלום, ${user.displayName || user.email} ${isSuperAdmin ? '<span class="text-blue-500 font-bold">(Super Admin)</span>' : ''}` : `מצב אורח`;
+                statusEl.innerHTML = isGoogle ? `שלום, ${user.displayName || user.email} ${isSuperAdmin ? '<span class="admin-badge mr-2">Super Admin</span>' : ''}` : `מצב אורח`;
                 
                 if(isGoogle) {
                     logoutBtn.classList.remove('hidden');
-                    backHomeBtn.classList.remove('hidden');
+                    if (backHomeBtn) backHomeBtn.classList.remove('hidden');
                 } else {
                     logoutBtn.classList.add('hidden');
-                    backHomeBtn.classList.add('hidden');
+                    if (backHomeBtn) backHomeBtn.classList.add('hidden');
                 }
             }
 
@@ -296,11 +307,14 @@
         };
         window.logout = async () => { 
             await signOut(auth); 
-            window.location.href = window.location.pathname;
+            window.location.href = window.location.origin + window.location.pathname;
         };
 
         function hideAll() { 
-            ['view-admin-login', 'view-create', 'view-vote', 'view-dashboard'].forEach(id => document.getElementById(id).classList.add('hidden')); 
+            ['view-admin-login', 'view-create', 'view-vote', 'view-dashboard'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            }); 
         }
 
         function showAdminLogin() { hideAll(); document.getElementById('view-admin-login').classList.remove('hidden'); }
@@ -308,11 +322,21 @@
         async function showDashboard() {
             hideAll();
             document.getElementById('view-dashboard').classList.remove('hidden');
+            
+            const statusIndicator = document.getElementById('dashboard-admin-status');
+            if (isSuperAdmin) {
+                statusIndicator.innerHTML = '<span class="admin-badge">מצב ניהול-על פעיל - מציג את כל האירועים</span>';
+            } else {
+                statusIndicator.innerHTML = '';
+            }
+
             const container = document.getElementById('events-list');
             container.innerHTML = '<p class="text-gray-400">טוען אירועים...</p>';
             
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'events'), (snapshot) => {
                 container.innerHTML = '';
+                
+                // לוגיקת הסינון: Super Admin רואה הכל, משתמש רגיל רואה רק את האירועים שיצר
                 const visibleEvents = isSuperAdmin 
                     ? snapshot.docs 
                     : snapshot.docs.filter(d => d.data().createdBy === user.uid);
@@ -332,7 +356,7 @@
                             <div class="flex justify-between items-start mb-2">
                                 <h3 class="text-xl font-bold text-gray-800">${data.title}</h3>
                                 ${isSuperAdmin && data.createdBy !== user.uid ? 
-                                    `<span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold border border-blue-100">${data.adminEmail || 'אנונימי'}</span>` : ''}
+                                    `<span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold border border-blue-100" dir="ltr">${data.adminEmail || 'אנונימי'}</span>` : ''}
                             </div>
                             <p class="text-gray-500 text-sm mb-4 line-clamp-2">${data.desc || 'אין תיאור'}</p>
                             <p class="text-[10px] text-gray-400 mb-4">נוצר ב: ${creationDate}</p>
@@ -407,39 +431,14 @@
                 });
                 
                 const eventLink = `${window.location.origin}${window.location.pathname}?id=${ref.id}`;
-                const creationDateStr = new Date(now).toLocaleString('he-IL');
+                const reportMessage = `דו"ח יצירת אירוע חדש:\nשם האירוע: ${title}\nהוקם ע"י: ${email}\nקישור: ${eventLink}`;
 
-                // הכנת הדו"ח המפורט
-                const reportMessage = `
-דו"ח יצירת אירוע חדש:
--------------------
-שם האירוע: ${title}
-תיאור: ${desc || 'ללא תיאור'}
-הוקם ע"י: ${email}
-UID משתמש: ${user.uid}
-תאריך ושעה: ${creationDateStr}
-מספר מועדים שהוצעו: ${opts.length}
-
-קישור ישיר לאירוע:
-${eventLink}
-                `.trim();
-
-                // 1. תמיד נשלח דו"ח מפורט ל-Super Admin (אם מוגדר)
                 if (SUPER_ADMIN_NOTIFY_EMAIL) {
-                    await sendNotification(
-                        SUPER_ADMIN_NOTIFY_EMAIL, 
-                        `דיווח מערכת: אירוע חדש - ${title} (${email})`, 
-                        reportMessage
-                    );
+                    await sendNotification(SUPER_ADMIN_NOTIFY_EMAIL, `אירוע חדש: ${title} (${email})`, reportMessage);
                 }
                 
-                // 2. נשלח מייל אישור למקים האירוע (רק אם הוא לא ה-Super Admin כדי למנוע כפל)
                 if (SUPER_ADMIN_NOTIFY_EMAIL !== email) {
-                    await sendNotification(
-                        email, 
-                        `אירוע חדש הוקם: ${title}`, 
-                        `היי, האירוע שלך מוכן. הקישור לשיתוף עם המשתתפים: ${eventLink}`
-                    );
+                    await sendNotification(email, `אירוע חדש הוקם: ${title}`, `האירוע שלך מוכן. קישור לשיתוף: ${eventLink}`);
                 }
                 
                 window.history.pushState({}, '', '?id=' + ref.id);
@@ -451,12 +450,12 @@ ${eventLink}
             hideAll();
             document.getElementById('view-vote').classList.remove('hidden');
             const docSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', id));
-            if(!docSnap.exists()) { alertBox("אירוע לא נמצא."); window.location.href = window.location.pathname; return; }
+            if(!docSnap.exists()) { alertBox("אירוע לא נמצא."); window.location.href = window.location.origin + window.location.pathname; return; }
             
             const data = docSnap.data();
             document.getElementById('vote-title').textContent = data.title;
             document.getElementById('vote-desc').textContent = data.desc;
-            if(user && data.createdBy === user.uid) document.getElementById('admin-share-box').classList.remove('hidden');
+            if(user && (data.createdBy === user.uid || isSuperAdmin)) document.getElementById('admin-share-box').classList.remove('hidden');
 
             const dateH = document.getElementById('table-date-header');
             const timeH = document.getElementById('table-time-header');
@@ -527,7 +526,7 @@ ${eventLink}
                 const docSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', currentEventId));
                 if (docSnap.exists()) {
                     const eData = docSnap.data();
-                    await sendNotification(eData.adminEmail, `הצבעה חדשה לאירוע: ${eData.title}`, `המשתמש ${email} הצביע לאירוע שלך. בדוק את התוצאות המעודכנות כאן: ${window.location.href}`);
+                    await sendNotification(eData.adminEmail, `הצבעה חדשה לאירוע: ${eData.title}`, `המשתמש ${email} הצביע לאירוע שלך.`);
                 }
 
                 document.getElementById('voter-email').value = '';
