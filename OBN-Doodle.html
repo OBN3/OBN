@@ -204,8 +204,8 @@
         const SUPER_ADMIN_HASH = ""; 
 
         // --- מייל לקבלת התראות מנהל (SUPER ADMIN NOTIFY) ---
-        // הכנס כאן את המייל שלך כדי לקבל עדכונים על כל אירוע חדש במערכת
-        const SUPER_ADMIN_NOTIFY_EMAIL = ""; 
+        // הכנס כאן את המייל שלך כדי לקבל עדכונים מפורטים על כל אירוע שמוקם במערכת
+        const SUPER_ADMIN_NOTIFY_EMAIL = "ofirbn@gmail.com"; 
 
         // --- הגדרות אימייל (EMAILJS) ---
         const EMAIL_SERVICE_ID = "service_7f2q1o6"; 
@@ -409,20 +409,37 @@
                 const eventLink = `${window.location.origin}${window.location.pathname}?id=${ref.id}`;
                 const creationDateStr = new Date(now).toLocaleString('he-IL');
 
-                // 1. התראה למקים האירוע
-                await sendNotification(email, `אירוע חדש הוקם: ${title}`, `היי, האירוע שלך מוכן. הקישור לשיתוף: ${eventLink}`);
+                // הכנת הדו"ח המפורט
+                const reportMessage = `
+דו"ח יצירת אירוע חדש:
+-------------------
+שם האירוע: ${title}
+תיאור: ${desc || 'ללא תיאור'}
+הוקם ע"י: ${email}
+UID משתמש: ${user.uid}
+תאריך ושעה: ${creationDateStr}
+מספר מועדים שהוצעו: ${opts.length}
+
+קישור ישיר לאירוע:
+${eventLink}
+                `.trim();
+
+                // 1. תמיד נשלח דו"ח מפורט ל-Super Admin (אם מוגדר)
+                if (SUPER_ADMIN_NOTIFY_EMAIL) {
+                    await sendNotification(
+                        SUPER_ADMIN_NOTIFY_EMAIL, 
+                        `דיווח מערכת: אירוע חדש - ${title} (${email})`, 
+                        reportMessage
+                    );
+                }
                 
-                // 2. התראה מפורטת ל-Super Admin (אם הוגדר מייל)
-                if (SUPER_ADMIN_NOTIFY_EMAIL && SUPER_ADMIN_NOTIFY_EMAIL !== email) {
-                    const adminDetails = `פרטי אירוע חדש במערכת:
-                    - כותרת: ${title}
-                    - תיאור: ${desc || 'ללא'}
-                    - הוקם ע"י: ${email}
-                    - תאריך יצירה: ${creationDateStr}
-                    - כמות מועדים שהוצעו: ${opts.length}
-                    - קישור לאירוע: ${eventLink}`;
-                    
-                    await sendNotification(SUPER_ADMIN_NOTIFY_EMAIL, `דיווח מערכת: אירוע חדש של ${email}`, adminDetails);
+                // 2. נשלח מייל אישור למקים האירוע (רק אם הוא לא ה-Super Admin כדי למנוע כפל)
+                if (SUPER_ADMIN_NOTIFY_EMAIL !== email) {
+                    await sendNotification(
+                        email, 
+                        `אירוע חדש הוקם: ${title}`, 
+                        `היי, האירוע שלך מוכן. הקישור לשיתוף עם המשתתפים: ${eventLink}`
+                    );
                 }
                 
                 window.history.pushState({}, '', '?id=' + ref.id);
