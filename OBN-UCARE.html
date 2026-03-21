@@ -98,6 +98,8 @@
                         <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-6 h-6">
                         התחברות עם Google להתחלת עבודה
                     </button>
+                    <!-- הוספנו כאן אזור מיוחד להצגת שגיאות התחברות מדויקות במקום שימוש ב-alert -->
+                    <div id="login-error-msg" class="hidden mt-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm max-w-md mx-auto" dir="ltr"></div>
                     <p class="text-xs text-gray-400 mt-4">כל הנתונים נשמרים בענן מאובטח תחת החשבון שלך</p>
                 </div>
             </div>
@@ -256,6 +258,7 @@
         const btnCopy = document.getElementById('btn-copy');
         const elHistoryList = document.getElementById('history-list');
         const elErrorMsg = document.getElementById('error-message');
+        const elLoginErrorMsg = document.getElementById('login-error-msg'); // New error element
 
         // Setup UI Elements
         const setupModal = document.getElementById('db-setup-modal');
@@ -294,6 +297,7 @@
                 // Show App, Hide Landing
                 elLandingPage.classList.add('hidden');
                 elMainApp.classList.remove('hidden');
+                elLoginErrorMsg.classList.add('hidden'); // הוסתרת הודעת שגיאה אם הייתה
                 
                 // Set UI info
                 const displayName = user.displayName || user.email?.split('@')[0] || "משתמש";
@@ -319,13 +323,16 @@
         // כפתור התחברות עם גוגל
         btnLogin.addEventListener('click', async () => {
             try {
+                elLoginErrorMsg.classList.add('hidden'); // איפוס הודעת שגיאה קודמת
                 elInitialLoader.classList.remove('hidden');
                 elInitialLoader.querySelector('p').textContent = 'מתחבר לחשבון גוגל...';
                 await signInWithPopup(auth, googleProvider);
                 // לאחר ההתחברות המוצלחת עם גוגל, onAuthStateChanged תופעל והמשתמש יועבר פנימה
             } catch (error) {
                 console.error("Login failed:", error);
-                alert("שגיאה בהתחברות. ודא שהוספת את הדומיין בהגדרות Firebase.");
+                // הצגת הודעת השגיאה האמיתית על המסך במקום alert
+                elLoginErrorMsg.textContent = `שגיאת מערכת: ${error.message} (קוד: ${error.code})`;
+                elLoginErrorMsg.classList.remove('hidden');
                 elInitialLoader.classList.add('hidden');
             }
         });
