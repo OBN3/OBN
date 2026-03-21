@@ -141,16 +141,8 @@
             <div class="w-full md:w-1/2 p-4 md:p-8 md:overflow-y-auto bg-gray-50 md:border-l border-gray-200 border-b md:border-b-0">
                 <div class="max-w-xl mx-auto space-y-6">
                     
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+                    <div class="mb-4">
                         <h2 class="text-2xl font-bold text-gray-800">בניית הפרומפט</h2>
-                        
-                        <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm">
-                            <label for="model-select" class="text-xs font-bold text-gray-600 whitespace-nowrap">בחרו מודל עבודה:</label>
-                            <select id="model-select" class="bg-transparent text-primary text-sm font-semibold focus:outline-none cursor-pointer">
-                                <option value="llama-3.3-70b-versatile" selected>Llama 3.3 70B (מומלץ)</option>
-                                <option value="llama-3.1-8b-instant">Llama 3.1 8B (מהיר)</option>
-                            </select>
-                        </div>
                     </div>
 
                     <!-- Input Fields -->
@@ -503,7 +495,8 @@
 
             showError('');
 
-            const modelId = document.getElementById('model-select').value;
+            // קיבענו את המודל לזהות של Llama 3.3 70B
+            const modelId = 'llama-3.3-70b-versatile';
 
             const systemPrompt = `
 אתה מומחה בינלאומי להנדסת פרומפטים (Prompt Engineering). 
