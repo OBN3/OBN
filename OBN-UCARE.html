@@ -510,27 +510,16 @@
             adminAuthError.classList.add('hidden');
             inputAdminPwd.value = '';
             
-            // בדיקה האם הוגדרה כבר ססמה ב-DB
             try {
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'admin_config');
                 const docSnap = await getDoc(docRef);
                 
                 if (!docSnap.exists() || !docSnap.data().password) {
-                    // תיקון אבטחה: רק מנהל העל (לפי אימייל) יכול לייצר את הססמה הראשונית
-                    if (currentUser && currentUser.email === ADMIN_EMAIL) {
-                        adminAuthTitle.textContent = "יצירת ססמת מנהל ראשונית";
-                        adminAuthDesc.textContent = "זוהי כניסת מנהל ראשונה. קבע ססמה שתשמש אותך מעתה ואילך.";
-                        btnSubmitAdminPwd.textContent = "קבע ססמה ושמור";
-                        btnSubmitAdminPwd.dataset.mode = 'create';
-                        adminAuthModal.classList.remove('hidden');
-                    } else {
-                        alert("מערכת הניהול טרם הוגדרה. רק מנהל העל של המערכת מורשה להגדיר אותה בפעם הראשונה.");
-                    }
+                    alert("ססמת מנהל טרם הוגדרה במסד הנתונים. אנא הגדר אותה דרך Firebase Console כפי שהוסבר.");
                 } else {
                     adminAuthTitle.textContent = "אזור ניהול מאובטח";
                     adminAuthDesc.textContent = "הזן ססמת מנהל כדי לגשת לדשבורד ולבטל הגבלות שימוש.";
                     btnSubmitAdminPwd.textContent = "התחבר";
-                    btnSubmitAdminPwd.dataset.mode = 'login';
                     adminAuthModal.classList.remove('hidden');
                 }
             } catch (error) {
@@ -550,23 +539,14 @@
 
             try {
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'admin_config');
+                const docSnap = await getDoc(docRef);
                 
-                if (btnSubmitAdminPwd.dataset.mode === 'create') {
-                    // יצירת ססמה ראשונית (רק אם לא קיימת)
-                    await setDoc(docRef, { password: pwd }, { merge: true });
+                if (docSnap.exists() && docSnap.data().password === pwd) {
                     unlockAdmin();
                     adminAuthModal.classList.add('hidden');
-                    alert("ססמת מנהל הוגדרה ונשמרה בהצלחה!");
                 } else {
-                    // אימות ססמה קיימת
-                    const docSnap = await getDoc(docRef);
-                    if (docSnap.exists() && docSnap.data().password === pwd) {
-                        unlockAdmin();
-                        adminAuthModal.classList.add('hidden');
-                    } else {
-                        adminAuthError.textContent = "ססמה שגויה. נסה שנית.";
-                        adminAuthError.classList.remove('hidden');
-                    }
+                    adminAuthError.textContent = "ססמה שגויה. נסה שנית.";
+                    adminAuthError.classList.remove('hidden');
                 }
             } catch (error) {
                 console.error(error);
@@ -629,8 +609,8 @@
                         const data = doc.data();
                         prompts.push({ id: doc.id, ...data });
                         
-                        // אל תספור אותי (המנהל) בספירת המשתמשים
-                        if (data.userEmail && data.userEmail !== currentUser.email) {
+                        // אל תספור אותי (המנהל) בספירת המשתמשים (ללא תלות באימייל קשיח)
+                        if (data.userEmail) {
                             uniqueUsers.add(data.userEmail);
                         }
                     });
