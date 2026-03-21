@@ -77,19 +77,19 @@
             
             <div class="p-8 md:p-12">
                 <p class="text-lg mb-6 leading-relaxed text-gray-700">
-                    ברוכים הבאים למערכת יצירת הפרומפטים המקצועית! מלאו את השדות במידת האפשר וקבלו פרומפט מצטיין, מעמיק ומפורט אותו תוכלו להעתיק ולהדביק בכל מערכת בינה מלאכותית (ChatGPT, Claude ועוד).
+                    ברוכים הבאים למערכת יצירת הפרומפטים המקצועית! תארו מה תרצו לעשות, וקבלו פרומפט מצטיין, מעמיק ומפורט אותו תוכלו להעתיק ולהדביק בכל מערכת בינה מלאכותית.
                 </p>
 
                 <div class="bg-indigo-50 rounded-2xl p-6 mb-8 border border-indigo-100">
                     <h3 class="font-bold text-indigo-900 mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-lightbulb text-yellow-500"></i> איך זה עובד? המודל מבוסס על 5 שלבים:
+                        <i class="fa-solid fa-lightbulb text-yellow-500"></i> איך זה עובד? המערכת מבססת את התוצאה על 5 שלבים:
                     </h3>
                     <ul class="space-y-3 text-sm md:text-base text-gray-700">
-                        <li><strong><span class="text-primary font-bold">U</span> - You (תפקיד):</strong> הגדרת המומחיות (למשל: "אתה מומחה שיווק").</li>
-                        <li><strong><span class="text-primary font-bold">C</span> - Context (הקשר):</strong> רקע למשימה (למשל: "אנו פותחים סדנה חדשה").</li>
-                        <li><strong><span class="text-primary font-bold">A</span> - Action (פעולה):</strong> מה צריך לעשות (למשל: "כתוב פוסט מרגש").</li>
-                        <li><strong><span class="text-primary font-bold">R</span> - Result (תוצאה):</strong> המטרה הרגשית/עסקית (למשל: "לייצר תחושת מסוגלות").</li>
-                        <li><strong><span class="text-primary font-bold">E</span> - Example (דוגמה/אילוצים):</strong> כללים וסגנון (למשל: "עד 50 מילים").</li>
+                        <li><strong><span class="text-primary font-bold">U</span> - You (תפקיד):</strong> הגדרת המומחיות.</li>
+                        <li><strong><span class="text-primary font-bold">C</span> - Context (הקשר):</strong> רקע למשימה.</li>
+                        <li><strong><span class="text-primary font-bold">A</span> - Action (פעולה):</strong> מה צריך לעשות.</li>
+                        <li><strong><span class="text-primary font-bold">R</span> - Result (תוצאה):</strong> המטרה הרגשית/עסקית.</li>
+                        <li><strong><span class="text-primary font-bold">E</span> - Example (דוגמה/אילוצים):</strong> כללים וסגנון.</li>
                     </ul>
                 </div>
 
@@ -98,7 +98,7 @@
                         <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-6 h-6">
                         התחברות עם Google להתחלת עבודה
                     </button>
-                    <p class="text-xs text-gray-400 mt-4">כל הנתונים נשמרים בענן מאובטח</p>
+                    <p class="text-xs text-gray-400 mt-4">כל הנתונים נשמרים בענן מאובטח תחת החשבון שלך</p>
                 </div>
             </div>
         </div>
@@ -119,35 +119,11 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <button id="btn-settings" class="text-gray-400 hover:text-primary transition-colors p-2 rounded-full hover:bg-gray-100" title="הגדרות API">
-                    <i class="fa-solid fa-gear"></i>
-                </button>
                 <button id="btn-logout" class="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors font-medium">
                     <i class="fa-solid fa-arrow-right-from-bracket ml-1"></i> התנתק
                 </button>
             </div>
         </header>
-
-        <!-- API Key Modal (Proactive Solution for Security) -->
-        <div id="api-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-gray-800">הגדרות מתקדמות</h2>
-                    <button id="close-api-modal" class="text-gray-400 hover:text-gray-700"><i class="fa-solid fa-xmark text-xl"></i></button>
-                </div>
-                <div class="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm p-3 rounded-lg">
-                    <i class="fa-solid fa-shield-halved mr-1"></i> 
-                    <strong>הערת אבטחה:</strong> באפליקציות צד-לקוח, מסוכן לשמור מפתחות API בקוד. לצורך הדגמה זו, הזן את מפתח ה-Groq שלך כאן. הוא יישמר <strong>רק בדפדפן שלך</strong> (Local Storage) ולא ישלח לשרת שלנו.
-                </div>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Groq API Key</label>
-                    <input type="password" id="groq-api-key" placeholder="gsk_..." class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-left" dir="ltr">
-                </div>
-                <button id="save-api-key" class="w-full bg-primary hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-xl transition-colors">
-                    שמור הגדרות
-                </button>
-            </div>
-        </div>
 
         <!-- Main Content Area -->
         <div class="flex-grow flex flex-col md:flex-row overflow-hidden">
@@ -159,9 +135,10 @@
                     <div class="flex items-center justify-between mb-2">
                         <h2 class="text-2xl font-bold text-gray-800">בניית הפרומפט</h2>
                         <select id="model-select" class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-primary focus:border-primary block p-2 outline-none">
-                            <option value="llama3-8b-8192">Llama 3 8B (מהיר)</option>
-                            <option value="llama3-70b-8192" selected>Llama 3 70B (מומלץ)</option>
+                            <option value="llama-3.3-70b-versatile" selected>Llama 3.3 70B (מומלץ)</option>
+                            <option value="llama-3.1-8b-instant">Llama 3.1 8B (מהיר)</option>
                             <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+                            <option value="gemma2-9b-it">Gemma 2 9B</option>
                         </select>
                     </div>
 
@@ -206,7 +183,7 @@
                     </div>
                 </div>
 
-                <!-- History Area (Proactive Addition) -->
+                <!-- History Area -->
                 <div class="h-1/3 border-t border-gray-200 bg-gray-50 p-4 overflow-y-auto">
                     <h3 class="text-sm font-bold text-gray-500 mb-3 flex items-center gap-2 uppercase tracking-wider">
                         <i class="fa-solid fa-clock-rotate-left"></i> היסטוריית פרומפטים (נשמר ב-DB)
@@ -221,14 +198,29 @@
         </div>
     </div>
 
+    <!-- Admin Setup Modal (Hidden by default) -->
+    <div id="db-setup-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">הגדרת מערכת ראשונית (מנהל)</h2>
+            <p class="text-sm text-gray-600 mb-4">זיהינו שעדיין לא מוגדר מפתח API במסד הנתונים. הזן אותו כאן פעם אחת, והוא יישמר ב-Firebase באופן נסתר.</p>
+            <input type="password" id="admin-api-key" placeholder="gsk_..." class="w-full border border-gray-300 rounded-xl px-4 py-2 mb-4 focus:ring-2 focus:ring-primary outline-none text-left" dir="ltr">
+            <button id="btn-save-db-key" class="w-full bg-primary hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-xl transition-colors">שמור ב-DB</button>
+            <p id="setup-error" class="text-red-500 text-xs mt-2 hidden"></p>
+        </div>
+    </div>
+
     <!-- Firebase & Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Environment variables
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+        // ==========================================
+        // CONFIGURATION
+        // ==========================================
+
+        // Firebase Configuration (מה שנתת לי)
+        const firebaseConfig = {
             apiKey: "AIzaSyBbAC9wVaJJFsZq2unW6iglUUdwgh0GzB4",
             authDomain: "ucare-52022.firebaseapp.com",
             projectId: "ucare-52022",
@@ -237,7 +229,7 @@
             appId: "1:124101244839:web:53435a4d443ab7b9bea882",
             measurementId: "G-640LBPKDQY"
         };
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ucare-app';
+        const appId = 'ucare-app';
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
@@ -265,37 +257,23 @@
         const elHistoryList = document.getElementById('history-list');
         const elErrorMsg = document.getElementById('error-message');
 
-        // Settings Modal UI
-        const btnSettings = document.getElementById('btn-settings');
-        const apiModal = document.getElementById('api-modal');
-        const closeApiModal = document.getElementById('close-api-modal');
-        const inputApiKey = document.getElementById('groq-api-key');
-        const btnSaveApiKey = document.getElementById('save-api-key');
-
-        // Load saved API key from localStorage
-        inputApiKey.value = localStorage.getItem('groq_api_key') || '';
-
-        // Modal Listeners
-        btnSettings.addEventListener('click', () => apiModal.classList.remove('hidden'));
-        closeApiModal.addEventListener('click', () => apiModal.classList.add('hidden'));
-        btnSaveApiKey.addEventListener('click', () => {
-            localStorage.setItem('groq_api_key', inputApiKey.value.trim());
-            apiModal.classList.add('hidden');
-            showError(''); // Clear any previous errors
-        });
+        // Setup UI Elements
+        const setupModal = document.getElementById('db-setup-modal');
+        const adminApiKeyInput = document.getElementById('admin-api-key');
+        const btnSaveDbKey = document.getElementById('btn-save-db-key');
+        const setupError = document.getElementById('setup-error');
 
         // ==========================================
-        // AUTHENTICATION LOGIC
+        // AUTHENTICATION LOGIC (Google Login Required)
         // ==========================================
         
-        // Follow mandatory sandbox rules: Initialize Auth FIRST
+        // אתחול מערכת ההזדהות
         const initAuth = async () => {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
-                    // In a real deployed app, you'd just wait for onAuthStateChanged or trigger Google Login.
-                    // For sandbox compliance, we ensure an anonymous session if no token exists.
+                    // יוצר חיבור אנונימי ברקע לבדיקות המערכת
                     await signInAnonymously(auth); 
                 }
             } catch (error) {
@@ -305,10 +283,12 @@
             }
         };
 
-        // Listen to auth state
+        // מאזין לשינויים במצב ההתחברות
         onAuthStateChanged(auth, (user) => {
             elInitialLoader.classList.add('hidden');
-            if (user) {
+            
+            // תנאי קריטי: מאפשר כניסה רק אם יש משתמש, ורק אם הוא לא אנונימי (כלומר, התחבר עם גוגל)
+            if (user && !user.isAnonymous) {
                 currentUser = user;
                 
                 // Show App, Hide Landing
@@ -316,14 +296,14 @@
                 elMainApp.classList.remove('hidden');
                 
                 // Set UI info
-                const displayName = user.displayName || user.email?.split('@')[0] || "משתמש אנונימי";
+                const displayName = user.displayName || user.email?.split('@')[0] || "משתמש";
                 elUserGreeting.textContent = `שלום, ${displayName}`;
 
-                // Load History (Rule 3: Only after auth, Rule 1: Strict paths)
+                // טעינת ההיסטוריה מה-DB של החשבון הספציפי
                 loadUserHistory(user.uid);
             } else {
+                // המשתמש אנונימי או לא מחובר כלל -> מחייב אותו להישאר בדף הנחיתה וללחוץ על Login
                 currentUser = null;
-                // Show Landing, Hide App
                 elLandingPage.classList.remove('hidden');
                 elMainApp.classList.add('hidden');
                 if (unsubscribeHistory) {
@@ -336,21 +316,21 @@
         // Initialize!
         initAuth();
 
-        // Manual Google Login Button (Overlays anonymous auth if user wants to link account)
+        // כפתור התחברות עם גוגל
         btnLogin.addEventListener('click', async () => {
             try {
                 elInitialLoader.classList.remove('hidden');
-                elInitialLoader.querySelector('p').textContent = 'מתחבר לחשבון...';
+                elInitialLoader.querySelector('p').textContent = 'מתחבר לחשבון גוגל...';
                 await signInWithPopup(auth, googleProvider);
-                // onAuthStateChanged will handle the rest
+                // לאחר ההתחברות המוצלחת עם גוגל, onAuthStateChanged תופעל והמשתמש יועבר פנימה
             } catch (error) {
                 console.error("Login failed:", error);
-                alert("שגיאה בהתחברות. נסה שנית.");
+                alert("שגיאה בהתחברות. ודא שהוספת את הדומיין בהגדרות Firebase.");
                 elInitialLoader.classList.add('hidden');
             }
         });
 
-        // Logout
+        // התנתקות
         btnLogout.addEventListener('click', async () => {
             try {
                 await signOut(auth);
@@ -365,14 +345,10 @@
         // ==========================================
 
         function loadUserHistory(userId) {
-            // MANDATORY RULE 1: Strict Paths
             const historyRef = collection(db, 'artifacts', appId, 'users', userId, 'ucare_prompts');
-            
-            // Note: Not using orderBy to avoid complex query indexing issues in sandbox
             
             unsubscribeHistory = onSnapshot(historyRef, 
                 (snapshot) => {
-                    // Manual sorting in JS (MANDATORY RULE 2: No complex queries)
                     const prompts = [];
                     snapshot.forEach(doc => {
                         prompts.push({ id: doc.id, ...doc.data() });
@@ -428,7 +404,6 @@
         async function savePromptToDB(inputs, generatedPrompt, modelName) {
             if (!currentUser) return;
 
-            // Collect metadata transparently
             const metadata = {
                 userAgent: navigator.userAgent,
                 language: navigator.language,
@@ -447,7 +422,6 @@
             };
 
             try {
-                // MANDATORY RULE 1: Strict paths
                 const historyRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'ucare_prompts');
                 await addDoc(historyRef, data);
             } catch (error) {
@@ -459,6 +433,41 @@
         // ==========================================
         // PROMPT GENERATION LOGIC (GROQ API)
         // ==========================================
+
+        // פונקציה לשליפת המפתח מ-Firebase
+        async function getApiKeyFromDB() {
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'api_config');
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists() && docSnap.data().groqKey) {
+                    return docSnap.data().groqKey;
+                }
+                return null;
+            } catch (error) {
+                console.error("Error fetching API key from DB:", error);
+                return null;
+            }
+        }
+
+        // טיפול בשמירת המפתח ל-DB בפעם הראשונה
+        btnSaveDbKey.addEventListener('click', async () => {
+            const key = adminApiKeyInput.value.trim();
+            if (!key) {
+                setupError.textContent = "אנא הזן מפתח";
+                setupError.classList.remove('hidden');
+                return;
+            }
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'api_config');
+                await setDoc(docRef, { groqKey: key });
+                setupModal.classList.add('hidden');
+                alert("המפתח נשמר בהצלחה ב-DB! לחץ שוב על 'חולל פרומפט חכם'.");
+            } catch (error) {
+                setupError.textContent = "שגיאה. האם עדכנת את חוקי האבטחה (Rules) ב-Firebase?";
+                setupError.classList.remove('hidden');
+                console.error(error);
+            }
+        });
 
         function showError(msg) {
             if(msg) {
@@ -481,7 +490,6 @@
         btnCopy.addEventListener('click', () => {
             const text = elFinalOutput.textContent;
             if(text) {
-                // Try clipboard API first, fallback to execCommand
                 if (navigator.clipboard && window.isSecureContext) {
                     navigator.clipboard.writeText(text).then(() => showCopied()).catch(()=> fallbackCopy(text));
                 } else {
@@ -513,25 +521,15 @@
         }
 
         btnGenerate.addEventListener('click', async () => {
-            // Get inputs
             const inputs = {
                 task: document.getElementById('input-free-text').value.trim()
             };
 
-            // Basic validation
             if (!inputs.task) {
                 showError('אנא תאר מה אתה רוצה לעשות כדי שנוכל ליצור פרומפט.');
                 return;
             }
 
-            const apiKey = localStorage.getItem('groq_api_key');
-            if (!apiKey) {
-                showError('חסר מפתח API. אנא לחץ על גלגל השיניים (הגדרות) למעלה והזן מפתח Groq.');
-                apiModal.classList.remove('hidden');
-                return;
-            }
-
-            showError('');
             elOutputPlaceholder.classList.add('hidden');
             elFinalOutput.classList.add('hidden');
             btnCopy.classList.add('hidden');
@@ -539,9 +537,23 @@
             btnGenerate.disabled = true;
             btnGenerate.classList.add('opacity-75', 'cursor-not-allowed');
 
+            // --- שאיבת המפתח מה-DB ---
+            const apiKey = await getApiKeyFromDB();
+            
+            // אם אין מפתח ב-DB, עוצרים ומציגים חלון למנהל להכניס פעם אחת
+            if (!apiKey) {
+                elLoadingIndicator.classList.add('hidden');
+                elOutputPlaceholder.classList.remove('hidden');
+                btnGenerate.disabled = false;
+                btnGenerate.classList.remove('opacity-75', 'cursor-not-allowed');
+                setupModal.classList.remove('hidden');
+                return;
+            }
+
+            showError('');
+
             const modelId = document.getElementById('model-select').value;
 
-            // Construct System Prompt to instruct the LLM how to build the user's prompt
             const systemPrompt = `
 אתה מומחה בינלאומי להנדסת פרומפטים (Prompt Engineering). 
 המטרה שלך היא לקחת בקשה חופשית של משתמש, ולתרגם אותה ל**פרומפט סופי אחד, מקצועי, מפורט ואפקטיבי בשפה העברית** המבוסס על מודל U-CARE.
@@ -566,7 +578,6 @@ E (Example/Constraints) - דוגמאות, סגנון, אילוצים.
             `;
 
             try {
-                // Call Groq API
                 const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                     method: 'POST',
                     headers: {
@@ -592,10 +603,7 @@ E (Example/Constraints) - דוגמאות, סגנון, אילוצים.
                 const data = await response.json();
                 const finalGeneratedPrompt = data.choices[0].message.content.trim();
 
-                // Show Result
                 displayResult(finalGeneratedPrompt);
-
-                // Save to Firebase Database
                 await savePromptToDB(inputs, finalGeneratedPrompt, modelId);
 
             } catch (error) {
