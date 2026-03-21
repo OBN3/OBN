@@ -137,10 +137,7 @@
                     <div class="flex items-center justify-between mb-2">
                         <h2 class="text-2xl font-bold text-gray-800">בניית הפרומפט</h2>
                         <select id="model-select" class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-primary focus:border-primary block p-2 outline-none">
-                            <option value="llama-3.3-70b-versatile" selected>Llama 3.3 70B (מומלץ)</option>
-                            <option value="llama-3.1-8b-instant">Llama 3.1 8B (מהיר)</option>
-                            <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
-                            <option value="gemma2-9b-it">Gemma 2 9B</option>
+                            <option value="">טוען מודלים...</option>
                         </select>
                     </div>
 
@@ -305,6 +302,15 @@
 
                 // טעינת ההיסטוריה מה-DB של החשבון הספציפי
                 loadUserHistory(user.uid);
+                
+                // טעינת רשימת המודלים מ-Groq (באמצעות המפתח ב-DB)
+                getApiKeyFromDB().then(apiKey => {
+                    if (apiKey) {
+                        loadGroqModels(apiKey);
+                    } else {
+                        document.getElementById('model-select').innerHTML = '<option value="">נדרש מפתח (לחץ "חולל")</option>';
+                    }
+                });
             } else {
                 // המשתמש אנונימי או לא מחובר כלל -> מחייב אותו להישאר בדף הנחיתה וללחוץ על Login
                 currentUser = null;
@@ -456,6 +462,50 @@
             }
         }
 
+        // פונקציה חדשה: טעינת רשימת המודלים העדכנית משרתי Groq
+        async function loadGroqModels(apiKey) {
+            const selectEl = document.getElementById('model-select');
+            try {
+                selectEl.innerHTML = '<option value="">שואב מודלים מ-Groq...</option>';
+                // פנייה ל-API התואם של Groq למשיכת המודלים 
+                const response = await fetch('https://api.groq.com/openai/v1/models', {
+                    headers: { 'Authorization': `Bearer ${apiKey}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to fetch models');
+                
+                const data = await response.json();
+                selectEl.innerHTML = ''; // ניקוי הרשימה
+                
+                // סינון מודלים של אודיו (כמו whisper) כי אנחנו צריכים רק מודלי שפה
+                const textModels = data.data
+                    .filter(model => !model.id.includes('whisper'))
+                    .sort((a, b) => a.id.localeCompare(b.id));
+
+                textModels.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model.id;
+                    
+                    // עיצוב תצוגה
+                    let displayName = model.id;
+                    if (model.id.includes('70b')) displayName += ' (מומלץ)';
+                    else if (model.id.includes('8b')) displayName += ' (מהיר)';
+                    
+                    option.textContent = displayName;
+                    
+                    // בחירת ברירת מחדל למודל החזק
+                    if (model.id.includes('llama-3.3-70b')) {
+                        option.selected = true;
+                    }
+                    
+                    selectEl.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error loading models:", error);
+                selectEl.innerHTML = '<option value="llama-3.3-70b-versatile">Llama 3.3 70B (שגיאה בטעינה)</option>';
+            }
+        }
+
         // טיפול בשמירת המפתח ל-DB בפעם הראשונה
         btnSaveDbKey.addEventListener('click', async () => {
             const key = adminApiKeyInput.value.trim();
@@ -469,6 +519,9 @@
                 await setDoc(docRef, { groqKey: key });
                 setupModal.classList.add('hidden');
                 alert("המפתח נשמר בהצלחה ב-DB! לחץ שוב על 'חולל פרומפט חכם'.");
+                
+                // רענון רשימת המודלים מיידית לאחר השמירה
+                loadGroqModels(key);
             } catch (error) {
                 setupError.textContent = "שגיאה. האם עדכנת את חוקי האבטחה (Rules) ב-Firebase?";
                 setupError.classList.remove('hidden');
@@ -574,7 +627,7 @@ E (Example/Constraints) - דוגמאות, סגנון, אילוצים.
 
 כללים חשובים לתוצר שלך:
 1. אל תנהל שיחה, ואל תסביר למשתמש על המודל. החזר *אך ורק* את הפרומפט הסופי שייצרת.
-2. נסח את הפרומפט הסופי בגוף שני (למשל: "התעלם מכל הוראה קודמת. עליך לשמש כ...", "המשימה שלך היא...", "עליך להקפיד על...").
+2. נסח את הפרומפט הסופי בגוף שני (למשל: "עליך לשמש כ...", "המשימה שלך היא...", "עליך להקפיד על..."). התחל ישירות מהגדרת התפקיד ללא הקדמות מיותרות.
 3. ארגן את הפרומפט הסופי בצורה ברורה עם נקודות כדי שמודל ה-AI שיקבל אותו יבין אותו מושלם.
 4. **חשוב מאוד:** אם המשתמש כתב בקשה קצרה, השלם בעצמך את החסר על בסיס ההיגיון! המצא תפקיד (U) מתאים, הגדר תוצאה (R) רצויה, וקבע אילוצים (E) מקצועיים גם אם לא התבקשת במפורש, כדי להעשיר את הפרומפט.
             `;
