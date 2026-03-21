@@ -272,7 +272,7 @@
     </div>
 
     <!-- ============================================== -->
-    <!-- MODALS                                         -->
+    <!-- MODALS (כל החלונות הקופצים מסודרים כאן)       -->
     <!-- ============================================== -->
 
     <!-- Modal: Copy Success -->
@@ -347,7 +347,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, setDoc, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
         // CONFIGURATION
@@ -441,7 +441,6 @@
         }
 
         btnCloseLimitModal.addEventListener('click', () => limitReachedModal.classList.add('hidden'));
-        btnCloseCopyModal.addEventListener('click', () => copySuccessModal.classList.add('hidden'));
         btnCloseViewPrompt.addEventListener('click', () => adminViewPromptModal.classList.add('hidden'));
 
         // ==========================================
@@ -524,7 +523,7 @@
                 }
             } catch (error) {
                 console.error(error);
-                alert("שגיאה בגישה להגדרות. האם התחברת למערכת?");
+                alert("שגיאה בגישה להגדרות. ודא שחוקי האבטחה (Rules) עודכנו בהתאם.");
             }
         });
 
@@ -563,7 +562,6 @@
             sessionStorage.setItem('ucare_admin', 'true');
             updateAdminUI();
             
-            // מעבר אוטומטי לדשבורד
             viewGenerator.classList.add('hidden');
             viewAdmin.classList.remove('hidden');
             viewAdmin.classList.add('flex');
@@ -595,7 +593,6 @@
             const adminTableBody = document.getElementById('admin-table-body');
             adminTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400"><div class="loader mx-auto mb-2"></div>טוען נתונים חיים מ-Firebase...</td></tr>';
             
-            // MANDATORY RULE 1: Fetching from public "all_prompts" path for Admin
             const adminLogRef = collection(db, 'artifacts', appId, 'public', 'data', 'all_prompts');
             
             if (adminUnsubscribe) adminUnsubscribe();
@@ -609,20 +606,17 @@
                         const data = doc.data();
                         prompts.push({ id: doc.id, ...data });
                         
-                        // אל תספור אותי (המנהל) בספירת המשתמשים (ללא תלות באימייל קשיח)
                         if (data.userEmail) {
                             uniqueUsers.add(data.userEmail);
                         }
                     });
                     
-                    // Sort descending in JS (Rule 2)
                     prompts.sort((a, b) => {
                         const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
                         const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
                         return timeB - timeA;
                     });
 
-                    // Update Stats
                     document.getElementById('stat-users').textContent = uniqueUsers.size;
                     document.getElementById('stat-prompts').textContent = prompts.length;
 
@@ -650,7 +644,6 @@
                 
                 const dateStr = item.createdAt ? new Date(item.createdAt.toMillis()).toLocaleString('he-IL', {dateStyle: 'short', timeStyle: 'short'}) : 'לא ידוע';
                 
-                // עיבוד מכשיר
                 let deviceStr = 'לא ידוע';
                 if (item.metadata?.userAgent) {
                     const ua = item.metadata.userAgent.toLowerCase();
@@ -731,6 +724,7 @@
             const usageRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'usage');
             
             try {
+                // מעדכן ספירה אישית למשתמש (אפשרי בזכות חוק מספר 2)
                 await setDoc(usageRef, currentUsageData);
                 updateUsageUI();
             } catch (error) {
@@ -742,7 +736,6 @@
         // FIRESTORE "DOUBLE-WRITE" LOGIC
         // ==========================================
 
-        // שומר גם בתיקייה האישית (פרטיות המשתמש) וגם בתיקייה הכללית (לשימוש דשבורד מנהלים)
         async function savePromptToDB(inputs, generatedPrompt, modelName) {
             if (!currentUser) return;
 
@@ -763,11 +756,11 @@
             };
 
             try {
-                // עותק 1: תיקייה אישית (Users/uid)
+                // עותק 1: תיקייה אישית (אפשרי בזכות חוק 2)
                 const privateRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'ucare_prompts');
                 await addDoc(privateRef, data);
 
-                // עותק 2: תיקייה כללית פומבית לדשבורד (מותרת קריאה/כתיבה לכל המחוברים)
+                // עותק 2: פומבי לדשבורד (אפשרי בזכות חוק 1)
                 const publicAdminRef = collection(db, 'artifacts', appId, 'public', 'data', 'all_prompts');
                 await addDoc(publicAdminRef, data);
 
@@ -812,6 +805,51 @@
         }
 
         // ==========================================
+        // COPY MODAL LOGIC (משופר וחסין תקלות)
+        // ==========================================
+        
+        btnCloseCopyModal.addEventListener('click', () => {
+            copySuccessModal.classList.add('hidden');
+        });
+
+        function showCopiedModal() {
+            copySuccessModal.classList.remove('hidden');
+        }
+
+        btnCopy.addEventListener('click', () => {
+            const text = elFinalOutput.textContent;
+            if(!text) return;
+
+            // יצירת אלמנט נסתר להעתקה - עובד מעולה גם בתוך iframes וגם במובייל
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            // מניעת קפיצת המסך או פתיחת מקלדת במובייל
+            textArea.setAttribute('readonly', '');
+            textArea.style.position = "fixed";
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.opacity = "0";
+            
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if(successful) {
+                    showCopiedModal();
+                } else {
+                    alert('המכשיר חסם העתקה אוטומטית. אנא בחר את הטקסט במסך והעתק ידנית.');
+                }
+            } catch (err) {
+                console.error('Fallback copy failed:', err);
+                alert('המכשיר חסם העתקה אוטומטית. אנא בחר את הטקסט במסך והעתק ידנית.');
+            }
+            
+            document.body.removeChild(textArea);
+        });
+
+        // ==========================================
         // GENERATION TRIGGER
         // ==========================================
 
@@ -846,9 +884,6 @@
                 elOutputPlaceholder.classList.remove('hidden');
                 btnGenerate.disabled = false;
                 btnGenerate.classList.remove('opacity-75', 'cursor-not-allowed');
-                
-                // במקרה שאין מפתח Groq כלל במערכת, צריך להגדיר אותו דרך ה-DB. 
-                // הודעה גנרית (מנהל שיכנס לדשבורד יוכל אולי להגדיר בעתיד)
                 alert("המערכת טרם הוגדרה במלואה (חסר מפתח שרת במסד הנתונים). פנה למנהל האתר.");
                 return;
             }
