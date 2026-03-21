@@ -232,7 +232,7 @@
     <!-- Firebase & Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
@@ -285,49 +285,43 @@
         const btnCloseCopyModal = document.getElementById('btn-close-copy-modal');
 
         // ==========================================
-        // AUTHENTICATION LOGIC (Google Login Required)
+        // AUTHENTICATION LOGIC (Google Persistent Login)
         // ==========================================
         
-        const initAuth = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth); 
-                }
-            } catch (error) {
-                console.error("Auth init error:", error);
-                elInitialLoader.classList.add('hidden');
-                elLandingPage.classList.remove('hidden');
-            }
-        };
+        // מגדיר שמירה של ההתחברות לדפדפן (Local Storage)
+        setPersistence(auth, browserLocalPersistence)
+            .then(() => {
+                // המערכת תאזין באופן טבעי האם המשתמש כבר מחובר מהפעם הקודמת
+                onAuthStateChanged(auth, (user) => {
+                    elInitialLoader.classList.add('hidden');
+                    
+                    if (user) {
+                        // המשתמש מחובר! נציג את המסך הראשי
+                        currentUser = user;
+                        elLandingPage.classList.add('hidden');
+                        elMainApp.classList.remove('hidden');
+                        elLoginErrorMsg.classList.add('hidden');
+                        
+                        const displayName = user.displayName || user.email?.split('@')[0] || "משתמש";
+                        elUserGreeting.textContent = `שלום, ${displayName}`;
+                        
+                        // Prefetch API to make sure it exists, show admin modal if not
+                        getApiKeyFromDB().then(key => {
+                            if (!key) { /* We wait for them to click Generate to show modal */ }
+                        });
 
-        onAuthStateChanged(auth, (user) => {
-            elInitialLoader.classList.add('hidden');
-            
-            // Allow only real Google users
-            if (user && !user.isAnonymous) {
-                currentUser = user;
-                elLandingPage.classList.add('hidden');
-                elMainApp.classList.remove('hidden');
-                elLoginErrorMsg.classList.add('hidden');
-                
-                const displayName = user.displayName || user.email?.split('@')[0] || "משתמש";
-                elUserGreeting.textContent = `שלום, ${displayName}`;
-                
-                // Prefetch API to make sure it exists, show admin modal if not
-                getApiKeyFromDB().then(key => {
-                    if (!key) { /* We wait for them to click Generate to show modal */ }
+                    } else {
+                        // אין משתמש, נציג את מסך ההתחברות
+                        currentUser = null;
+                        elLandingPage.classList.remove('hidden');
+                        elMainApp.classList.add('hidden');
+                    }
                 });
-
-            } else {
-                currentUser = null;
-                elLandingPage.classList.remove('hidden');
-                elMainApp.classList.add('hidden');
-            }
-        });
-
-        initAuth();
+            })
+            .catch((error) => {
+                console.error("Auth persistence error:", error);
+                elInitialLoader.classList.add('hidden');
+            });
 
         btnLogin.addEventListener('click', async () => {
             try {
@@ -355,8 +349,6 @@
         // FIRESTORE & DATA LOGIC (Hidden History)
         // ==========================================
 
-        // השארנו רק את פונקציית השמירה ל-DB לצורך סטטיסטיקות ומעקב של מנהל המערכת (OBN)
-        // המשתמש לא רואה את ההיסטוריה באפליקציה.
         async function savePromptToDB(inputs, generatedPrompt, modelName) {
             if (!currentUser) return;
 
