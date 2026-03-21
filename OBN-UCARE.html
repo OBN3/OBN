@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מודל U-CARE לכתיבת פרומפטים אפקטיביים</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts (Rubik for Hebrew) -->
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Rubik', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#4F46E5', // Indigo 600
+                        secondary: '#10B981', // Emerald 500
+                        dark: '#1F2937',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #F3F4F6; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #c7c7cc; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a1a1aa; }
+        
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #4F46E5;
+            width: 24px;
+            height: 24px;
+            -webkit-animation: spin 1s linear infinite; /* Safari */
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Loading Overlay for initial Auth check -->
+    <div id="initial-loader" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
+        <div class="loader w-12 h-12 mb-4"></div>
+        <p class="text-lg font-medium text-gray-600">טוען מערכת...</p>
+    </div>
+
+    <!-- LANDING PAGE (Unauthenticated) -->
+    <div id="landing-page" class="hidden flex-grow flex flex-col items-center justify-center p-4">
+        <div class="max-w-3xl w-full glass-panel rounded-3xl shadow-xl overflow-hidden">
+            <div class="bg-primary p-8 text-center text-white">
+                <i class="fa-solid fa-wand-magic-sparkles text-5xl mb-4"></i>
+                <h1 class="text-3xl md:text-4xl font-bold mb-2">מודל U-CARE</h1>
+                <p class="text-indigo-100 text-lg">מחולל הפרומפטים החכם שלך</p>
+            </div>
+            
+            <div class="p-8 md:p-12">
+                <p class="text-lg mb-6 leading-relaxed text-gray-700">
+                    ברוכים הבאים למערכת יצירת הפרומפטים המקצועית! מלאו את השדות במידת האפשר וקבלו פרומפט מצטיין, מעמיק ומפורט אותו תוכלו להעתיק ולהדביק בכל מערכת בינה מלאכותית (ChatGPT, Claude ועוד).
+                </p>
+
+                <div class="bg-indigo-50 rounded-2xl p-6 mb-8 border border-indigo-100">
+                    <h3 class="font-bold text-indigo-900 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-lightbulb text-yellow-500"></i> איך זה עובד? המודל מבוסס על 5 שלבים:
+                    </h3>
+                    <ul class="space-y-3 text-sm md:text-base text-gray-700">
+                        <li><strong><span class="text-primary font-bold">U</span> - You (תפקיד):</strong> הגדרת המומחיות (למשל: "אתה מומחה שיווק").</li>
+                        <li><strong><span class="text-primary font-bold">C</span> - Context (הקשר):</strong> רקע למשימה (למשל: "אנו פותחים סדנה חדשה").</li>
+                        <li><strong><span class="text-primary font-bold">A</span> - Action (פעולה):</strong> מה צריך לעשות (למשל: "כתוב פוסט מרגש").</li>
+                        <li><strong><span class="text-primary font-bold">R</span> - Result (תוצאה):</strong> המטרה הרגשית/עסקית (למשל: "לייצר תחושת מסוגלות").</li>
+                        <li><strong><span class="text-primary font-bold">E</span> - Example (דוגמה/אילוצים):</strong> כללים וסגנון (למשל: "עד 50 מילים").</li>
+                    </ul>
+                </div>
+
+                <div class="text-center">
+                    <button id="btn-login" class="bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50 font-bold py-3 px-8 rounded-full shadow-sm transition-all flex items-center justify-center gap-3 mx-auto w-full md:w-auto text-lg hover:shadow-md">
+                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-6 h-6">
+                        התחברות עם Google להתחלת עבודה
+                    </button>
+                    <p class="text-xs text-gray-400 mt-4">כל הנתונים נשמרים בענן מאובטח</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP (Authenticated) -->
+    <div id="main-app" class="hidden flex-grow flex flex-col h-screen overflow-hidden">
+        
+        <!-- Header -->
+        <header class="bg-white shadow-sm z-10 py-3 px-6 flex justify-between items-center shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="bg-primary text-white w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xl shadow-md">
+                    U
+                </div>
+                <div>
+                    <h1 class="font-bold text-gray-800 leading-tight">U-CARE Generator</h1>
+                    <span class="text-xs text-gray-500" id="user-greeting">שלום, אורח</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <button id="btn-settings" class="text-gray-400 hover:text-primary transition-colors p-2 rounded-full hover:bg-gray-100" title="הגדרות API">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+                <button id="btn-logout" class="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors font-medium">
+                    <i class="fa-solid fa-arrow-right-from-bracket ml-1"></i> התנתק
+                </button>
+            </div>
+        </header>
+
+        <!-- API Key Modal (Proactive Solution for Security) -->
+        <div id="api-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">הגדרות מתקדמות</h2>
+                    <button id="close-api-modal" class="text-gray-400 hover:text-gray-700"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <div class="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm p-3 rounded-lg">
+                    <i class="fa-solid fa-shield-halved mr-1"></i> 
+                    <strong>הערת אבטחה:</strong> באפליקציות צד-לקוח, מסוכן לשמור מפתחות API בקוד. לצורך הדגמה זו, הזן את מפתח ה-Groq שלך כאן. הוא יישמר <strong>רק בדפדפן שלך</strong> (Local Storage) ולא ישלח לשרת שלנו.
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Groq API Key</label>
+                    <input type="password" id="groq-api-key" placeholder="gsk_..." class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-left" dir="ltr">
+                </div>
+                <button id="save-api-key" class="w-full bg-primary hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-xl transition-colors">
+                    שמור הגדרות
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="flex-grow flex flex-col md:flex-row overflow-hidden">
+            
+            <!-- Left Side: Form -->
+            <div class="w-full md:w-1/2 p-4 md:p-6 overflow-y-auto bg-gray-50 border-l border-gray-200">
+                <div class="max-w-xl mx-auto space-y-5">
+                    
+                    <div class="flex items-center justify-between mb-2">
+                        <h2 class="text-2xl font-bold text-gray-800">בניית הפרומפט</h2>
+                        <select id="model-select" class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-primary focus:border-primary block p-2 outline-none">
+                            <option value="llama3-8b-8192">Llama 3 8B (מהיר)</option>
+                            <option value="llama3-70b-8192" selected>Llama 3 70B (מומלץ)</option>
+                            <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+                        </select>
+                    </div>
+
+                    <!-- Input Fields -->
+                    <div class="space-y-4">
+                        <div class="relative group">
+                            <label class="block text-sm font-bold text-gray-700 mb-2">תאר במילים שלך מה אתה רוצה לעשות:</label>
+                            <textarea id="input-free-text" rows="6" class="w-full border border-gray-200 rounded-2xl px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none shadow-sm" placeholder="לדוגמה: אני רוצה לכתוב פוסט לפייסבוק שמזמין בני נוער לסדנת צילום בסמארטפון. חשוב שזה יהיה מרגש, יפיג חששות טכנולוגיים, ושיהיה קצר (עד 50 מילים) עם אמוג'ים..."></textarea>
+                            <p class="text-xs text-gray-500 mt-2">המערכת שלנו תנתח את הבקשה שלך ותבנה עבורך פרומפט מקצועי לפי מודל U-CARE (תפקיד, הקשר, פעולה, תוצאה ודוגמה).</p>
+                        </div>
+                    </div>
+
+                    <button id="btn-generate" class="w-full bg-gradient-to-r from-primary to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transform transition-all hover:-translate-y-1 flex items-center justify-center gap-2 text-lg">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> חולל פרומפט חכם
+                    </button>
+                    <p id="error-message" class="text-red-500 text-sm text-center hidden mt-2 font-medium"></p>
+                </div>
+            </div>
+
+            <!-- Right Side: Output & History -->
+            <div class="w-full md:w-1/2 flex flex-col h-full bg-white relative">
+                
+                <!-- Output Area -->
+                <div class="flex-grow p-4 md:p-6 overflow-y-auto flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800">התוצאה שלך</h2>
+                        <button id="btn-copy" class="text-gray-500 hover:text-primary transition-colors flex items-center gap-1 text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg hidden">
+                            <i class="fa-regular fa-copy"></i> העתק
+                        </button>
+                    </div>
+                    
+                    <div id="output-container" class="flex-grow bg-gray-50 border border-gray-200 rounded-2xl p-5 relative">
+                        <div id="output-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 opacity-50">
+                            <i class="fa-solid fa-robot text-5xl mb-3"></i>
+                            <p>הפרומפט המושלם שלך יופיע כאן...</p>
+                        </div>
+                        <div id="loading-indicator" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-gray-50/80 rounded-2xl z-10">
+                            <div class="loader mb-3"></div>
+                            <p class="text-primary font-medium animate-pulse">הבינה המלאכותית מנסחת...</p>
+                        </div>
+                        <div id="final-output" class="hidden text-gray-800 whitespace-pre-wrap leading-relaxed font-medium text-lg" dir="auto"></div>
+                    </div>
+                </div>
+
+                <!-- History Area (Proactive Addition) -->
+                <div class="h-1/3 border-t border-gray-200 bg-gray-50 p-4 overflow-y-auto">
+                    <h3 class="text-sm font-bold text-gray-500 mb-3 flex items-center gap-2 uppercase tracking-wider">
+                        <i class="fa-solid fa-clock-rotate-left"></i> היסטוריית פרומפטים (נשמר ב-DB)
+                    </h3>
+                    <div id="history-list" class="space-y-2">
+                        <!-- History items will be injected here -->
+                        <div class="text-xs text-gray-400 text-center py-4">אין היסטוריה עדיין</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Firebase & Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Environment variables
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyBbAC9wVaJJFsZq2unW6iglUUdwgh0GzB4",
+            authDomain: "ucare-52022.firebaseapp.com",
+            projectId: "ucare-52022",
+            storageBucket: "ucare-52022.firebasestorage.app",
+            messagingSenderId: "124101244839",
+            appId: "1:124101244839:web:53435a4d443ab7b9bea882",
+            measurementId: "G-640LBPKDQY"
+        };
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ucare-app';
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const googleProvider = new GoogleAuthProvider();
+
+        // State
+        let currentUser = null;
+        let unsubscribeHistory = null;
+
+        // UI Elements
+        const elInitialLoader = document.getElementById('initial-loader');
+        const elLandingPage = document.getElementById('landing-page');
+        const elMainApp = document.getElementById('main-app');
+        const btnLogin = document.getElementById('btn-login');
+        const btnLogout = document.getElementById('btn-logout');
+        const elUserGreeting = document.getElementById('user-greeting');
+        const btnGenerate = document.getElementById('btn-generate');
+        const elOutputContainer = document.getElementById('output-container');
+        const elOutputPlaceholder = document.getElementById('output-placeholder');
+        const elLoadingIndicator = document.getElementById('loading-indicator');
+        const elFinalOutput = document.getElementById('final-output');
+        const btnCopy = document.getElementById('btn-copy');
+        const elHistoryList = document.getElementById('history-list');
+        const elErrorMsg = document.getElementById('error-message');
+
+        // Settings Modal UI
+        const btnSettings = document.getElementById('btn-settings');
+        const apiModal = document.getElementById('api-modal');
+        const closeApiModal = document.getElementById('close-api-modal');
+        const inputApiKey = document.getElementById('groq-api-key');
+        const btnSaveApiKey = document.getElementById('save-api-key');
+
+        // Load saved API key from localStorage
+        inputApiKey.value = localStorage.getItem('groq_api_key') || '';
+
+        // Modal Listeners
+        btnSettings.addEventListener('click', () => apiModal.classList.remove('hidden'));
+        closeApiModal.addEventListener('click', () => apiModal.classList.add('hidden'));
+        btnSaveApiKey.addEventListener('click', () => {
+            localStorage.setItem('groq_api_key', inputApiKey.value.trim());
+            apiModal.classList.add('hidden');
+            showError(''); // Clear any previous errors
+        });
+
+        // ==========================================
+        // AUTHENTICATION LOGIC
+        // ==========================================
+        
+        // Follow mandatory sandbox rules: Initialize Auth FIRST
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    // In a real deployed app, you'd just wait for onAuthStateChanged or trigger Google Login.
+                    // For sandbox compliance, we ensure an anonymous session if no token exists.
+                    await signInAnonymously(auth); 
+                }
+            } catch (error) {
+                console.error("Auth init error:", error);
+                elInitialLoader.classList.add('hidden');
+                elLandingPage.classList.remove('hidden');
+            }
+        };
+
+        // Listen to auth state
+        onAuthStateChanged(auth, (user) => {
+            elInitialLoader.classList.add('hidden');
+            if (user) {
+                currentUser = user;
+                
+                // Show App, Hide Landing
+                elLandingPage.classList.add('hidden');
+                elMainApp.classList.remove('hidden');
+                
+                // Set UI info
+                const displayName = user.displayName || user.email?.split('@')[0] || "משתמש אנונימי";
+                elUserGreeting.textContent = `שלום, ${displayName}`;
+
+                // Load History (Rule 3: Only after auth, Rule 1: Strict paths)
+                loadUserHistory(user.uid);
+            } else {
+                currentUser = null;
+                // Show Landing, Hide App
+                elLandingPage.classList.remove('hidden');
+                elMainApp.classList.add('hidden');
+                if (unsubscribeHistory) {
+                    unsubscribeHistory();
+                    unsubscribeHistory = null;
+                }
+            }
+        });
+
+        // Initialize!
+        initAuth();
+
+        // Manual Google Login Button (Overlays anonymous auth if user wants to link account)
+        btnLogin.addEventListener('click', async () => {
+            try {
+                elInitialLoader.classList.remove('hidden');
+                elInitialLoader.querySelector('p').textContent = 'מתחבר לחשבון...';
+                await signInWithPopup(auth, googleProvider);
+                // onAuthStateChanged will handle the rest
+            } catch (error) {
+                console.error("Login failed:", error);
+                alert("שגיאה בהתחברות. נסה שנית.");
+                elInitialLoader.classList.add('hidden');
+            }
+        });
+
+        // Logout
+        btnLogout.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("Logout error", error);
+            }
+        });
+
+
+        // ==========================================
+        // FIRESTORE & DATA LOGIC
+        // ==========================================
+
+        function loadUserHistory(userId) {
+            // MANDATORY RULE 1: Strict Paths
+            const historyRef = collection(db, 'artifacts', appId, 'users', userId, 'ucare_prompts');
+            
+            // Note: Not using orderBy to avoid complex query indexing issues in sandbox
+            
+            unsubscribeHistory = onSnapshot(historyRef, 
+                (snapshot) => {
+                    // Manual sorting in JS (MANDATORY RULE 2: No complex queries)
+                    const prompts = [];
+                    snapshot.forEach(doc => {
+                        prompts.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    // Sort by date descending
+                    prompts.sort((a, b) => {
+                        const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
+                        const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
+                        return timeB - timeA;
+                    });
+
+                    renderHistory(prompts);
+                },
+                (error) => {
+                    console.error("Error fetching history:", error);
+                    elHistoryList.innerHTML = `<div class="text-red-400 text-xs text-center py-2">שגיאה בטעינת היסטוריה. ${error.message}</div>`;
+                }
+            );
+        }
+
+        function renderHistory(prompts) {
+            elHistoryList.innerHTML = '';
+            if (prompts.length === 0) {
+                elHistoryList.innerHTML = '<div class="text-xs text-gray-400 text-center py-4">אין היסטוריה עדיין</div>';
+                return;
+            }
+
+            prompts.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'bg-white p-3 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col gap-1 group';
+                
+                const dateStr = item.createdAt ? new Date(item.createdAt.toMillis()).toLocaleDateString('he-IL', {hour: '2-digit', minute:'2-digit'}) : 'עכשיו';
+                const contextPreview = item.inputs.task || "ללא תוכן";
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-primary truncate pr-2">${contextPreview}</span>
+                        <span class="text-[10px] text-gray-400 whitespace-nowrap">${dateStr}</span>
+                    </div>
+                    <div class="text-xs text-gray-500 line-clamp-2">${item.generatedPrompt}</div>
+                `;
+                
+                // Click to view past prompt
+                div.addEventListener('click', () => {
+                    displayResult(item.generatedPrompt);
+                });
+
+                elHistoryList.appendChild(div);
+            });
+        }
+
+        async function savePromptToDB(inputs, generatedPrompt, modelName) {
+            if (!currentUser) return;
+
+            // Collect metadata transparently
+            const metadata = {
+                userAgent: navigator.userAgent,
+                language: navigator.language,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                platform: navigator.platform
+            };
+
+            const data = {
+                userEmail: currentUser.email || 'anonymous',
+                userName: currentUser.displayName || 'anonymous',
+                inputs: inputs,
+                generatedPrompt: generatedPrompt,
+                modelUsed: modelName,
+                metadata: metadata,
+                createdAt: serverTimestamp()
+            };
+
+            try {
+                // MANDATORY RULE 1: Strict paths
+                const historyRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'ucare_prompts');
+                await addDoc(historyRef, data);
+            } catch (error) {
+                console.error("Error saving to DB:", error);
+            }
+        }
+
+
+        // ==========================================
+        // PROMPT GENERATION LOGIC (GROQ API)
+        // ==========================================
+
+        function showError(msg) {
+            if(msg) {
+                elErrorMsg.textContent = msg;
+                elErrorMsg.classList.remove('hidden');
+            } else {
+                elErrorMsg.classList.add('hidden');
+            }
+        }
+
+        function displayResult(text) {
+            elOutputPlaceholder.classList.add('hidden');
+            elLoadingIndicator.classList.add('hidden');
+            elFinalOutput.classList.remove('hidden');
+            btnCopy.classList.remove('hidden');
+            
+            elFinalOutput.textContent = text;
+        }
+
+        btnCopy.addEventListener('click', () => {
+            const text = elFinalOutput.textContent;
+            if(text) {
+                // Try clipboard API first, fallback to execCommand
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(text).then(() => showCopied()).catch(()=> fallbackCopy(text));
+                } else {
+                    fallbackCopy(text);
+                }
+            }
+        });
+
+        function fallbackCopy(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showCopied();
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function showCopied() {
+            const originalHTML = btnCopy.innerHTML;
+            btnCopy.innerHTML = '<i class="fa-solid fa-check text-green-500"></i> הועתק!';
+            setTimeout(() => { btnCopy.innerHTML = originalHTML; }, 2000);
+        }
+
+        btnGenerate.addEventListener('click', async () => {
+            // Get inputs
+            const inputs = {
+                task: document.getElementById('input-free-text').value.trim()
+            };
+
+            // Basic validation
+            if (!inputs.task) {
+                showError('אנא תאר מה אתה רוצה לעשות כדי שנוכל ליצור פרומפט.');
+                return;
+            }
+
+            const apiKey = localStorage.getItem('groq_api_key');
+            if (!apiKey) {
+                showError('חסר מפתח API. אנא לחץ על גלגל השיניים (הגדרות) למעלה והזן מפתח Groq.');
+                apiModal.classList.remove('hidden');
+                return;
+            }
+
+            showError('');
+            elOutputPlaceholder.classList.add('hidden');
+            elFinalOutput.classList.add('hidden');
+            btnCopy.classList.add('hidden');
+            elLoadingIndicator.classList.remove('hidden');
+            btnGenerate.disabled = true;
+            btnGenerate.classList.add('opacity-75', 'cursor-not-allowed');
+
+            const modelId = document.getElementById('model-select').value;
+
+            // Construct System Prompt to instruct the LLM how to build the user's prompt
+            const systemPrompt = `
+אתה מומחה בינלאומי להנדסת פרומפטים (Prompt Engineering). 
+המטרה שלך היא לקחת בקשה חופשית של משתמש, ולתרגם אותה ל**פרומפט סופי אחד, מקצועי, מפורט ואפקטיבי בשפה העברית** המבוסס על מודל U-CARE.
+
+מודל U-CARE כולל:
+U (Role) - מי המומחה שצריך לכתוב את זה.
+C (Context) - מה ההקשר או הרקע.
+A (Action) - מה הפעולה הנדרשת.
+R (Result) - מה התוצאה או המטרה הרגשית/עסקית.
+E (Example/Constraints) - דוגמאות, סגנון, אילוצים.
+
+כללים חשובים לתוצר שלך:
+1. אל תנהל שיחה, ואל תסביר למשתמש על המודל. החזר *אך ורק* את הפרומפט הסופי שייצרת.
+2. נסח את הפרומפט הסופי בגוף שני (למשל: "התעלם מכל הוראה קודמת. עליך לשמש כ...", "המשימה שלך היא...", "עליך להקפיד על...").
+3. ארגן את הפרומפט הסופי בצורה ברורה עם נקודות כדי שמודל ה-AI שיקבל אותו יבין אותו מושלם.
+4. **חשוב מאוד:** אם המשתמש כתב בקשה קצרה, השלם בעצמך את החסר על בסיס ההיגיון! המצא תפקיד (U) מתאים, הגדר תוצאה (R) רצויה, וקבע אילוצים (E) מקצועיים גם אם לא התבקשת במפורש, כדי להעשיר את הפרומפט.
+            `;
+
+            const userPrompt = `
+הנה הבקשה שלי. הפוך אותה לפרומפט מקצועי לפי מודל U-CARE:
+"${inputs.task}"
+            `;
+
+            try {
+                // Call Groq API
+                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: modelId,
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: userPrompt }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 1500
+                    })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error?.message || 'שגיאה בתקשורת מול Groq');
+                }
+
+                const data = await response.json();
+                const finalGeneratedPrompt = data.choices[0].message.content.trim();
+
+                // Show Result
+                displayResult(finalGeneratedPrompt);
+
+                // Save to Firebase Database
+                await savePromptToDB(inputs, finalGeneratedPrompt, modelId);
+
+            } catch (error) {
+                console.error("API Error:", error);
+                showError(`אירעה שגיאה: ${error.message}`);
+                elLoadingIndicator.classList.add('hidden');
+                elOutputPlaceholder.classList.remove('hidden');
+            } finally {
+                btnGenerate.disabled = false;
+                btnGenerate.classList.remove('opacity-75', 'cursor-not-allowed');
+            }
+        });
+
+    </script>
+</body>
+</html>
