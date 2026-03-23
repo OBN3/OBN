@@ -59,7 +59,7 @@
                             <label class="block text-sm font-medium text-slate-700 mb-1">Gemini Key & Model</label>
                             <input type="password" id="geminiKey" class="w-full p-2 border rounded-lg mb-2 outline-none focus:ring-2 focus:ring-blue-500" placeholder="הזן מפתח Gemini...">
                             <select id="geminiModel" class="w-full p-2 border rounded-lg text-sm bg-slate-50">
-                                <option value="gemini-2.5-flash-preview-09-2025">Gemini 2.5 Flash Preview</option>
+                                <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash</option>
                                 <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
                                 <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
                             </select>
@@ -67,12 +67,16 @@
                         <div class="pt-2 border-t border-slate-100">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Groq Key & Model</label>
                             <input type="password" id="groqKey" class="w-full p-2 border rounded-lg mb-2 outline-none focus:ring-2 focus:ring-emerald-500" placeholder="הזן מפתח Groq...">
-                            <select id="groqModel" class="w-full p-2 border rounded-lg text-sm bg-slate-50">
+                            <select id="groqModel" class="w-full p-2 border rounded-lg text-sm bg-slate-50 mb-2" onchange="toggleCustomModel(this.value)">
                                 <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Versatile)</option>
-                                <option value="llama-3.1-70b-versatile">Llama 3.1 70B</option>
-                                <option value="llama3-70b-8192">Llama 3 70B (Classic)</option>
-                                <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+                                <option value="llama-3.1-8b-instant">Llama 3.1 8B (Instant)</option>
+                                <option value="openai/gpt-oss-120b">GPT OSS 120B (OpenAI)</option>
+                                <option value="openai/gpt-oss-20b">GPT OSS 20B (OpenAI)</option>
+                                <option value="groq/compound">Groq Compound</option>
+                                <option value="groq/compound-mini">Groq Compound Mini</option>
+                                <option value="custom">-- מודל בהתאמה אישית --</option>
                             </select>
+                            <input type="text" id="customGroqModel" class="hidden w-full p-2 border rounded-lg text-sm mb-2 outline-none focus:ring-2 focus:ring-emerald-500" placeholder="הזן שם מודל ידנית...">
                         </div>
                     </div>
                 </div>
@@ -186,10 +190,25 @@
             });
             
             // Persistence
-            ['geminiKey', 'groqKey', 'geminiModel', 'groqModel'].forEach(id => {
+            ['geminiKey', 'groqKey', 'geminiModel', 'groqModel', 'customGroqModel'].forEach(id => {
                 const val = localStorage.getItem(id);
-                if (val) document.getElementById(id).value = val;
+                if (val) {
+                    const el = document.getElementById(id);
+                    if (el) el.value = val;
+                }
             });
+
+            // Trigger initial visibility of custom model input
+            toggleCustomModel(document.getElementById('groqModel').value);
+        }
+
+        function toggleCustomModel(val) {
+            const customInput = document.getElementById('customGroqModel');
+            if (val === 'custom') {
+                customInput.classList.remove('hidden');
+            } else {
+                customInput.classList.add('hidden');
+            }
         }
 
         function toggleAllSources(checked) {
@@ -273,7 +292,7 @@
             if (errors.length > 0 && allArticles.length === 0) {
                 listContainer.innerHTML = `
                     <div class="text-center py-10 bg-red-50 rounded-xl border border-red-200 px-6">
-                        <p class="text-red-600 font-bold mb-2">גישה חסומה או בעיית רשת</p>
+                        <p class="text-red-600 font-bold mb-2 text-lg">שגיאה קריטית בשאיבת הנתונים</p>
                         <p class="text-sm text-red-500 mb-4 font-medium">האתרים זיהו ניסיון גישה לא מורשה. הפעל את הקובץ דרך שרת מקומי (Live Server).</p>
                         <div class="text-right text-[11px] bg-white p-3 rounded border border-red-100 font-mono">
                             ${errors.join('<br>')}
@@ -312,14 +331,18 @@
             const geminiKey = document.getElementById('geminiKey').value.trim();
             const groqKey = document.getElementById('groqKey').value.trim();
             const geminiModel = document.getElementById('geminiModel').value;
-            const groqModel = document.getElementById('groqModel').value;
+            const groqModelRaw = document.getElementById('groqModel').value;
+            const customGroqModel = document.getElementById('customGroqModel').value.trim();
             const systemPrompt = document.getElementById('systemPrompt').value;
             
+            const groqModel = groqModelRaw === 'custom' ? customGroqModel : groqModelRaw;
+
             // Save state
             localStorage.setItem('gemini_key', geminiKey);
             localStorage.setItem('groq_key', groqKey);
             localStorage.setItem('geminiModel', geminiModel);
-            localStorage.setItem('groqModel', groqModel);
+            localStorage.setItem('groqModel', groqModelRaw);
+            localStorage.setItem('customGroqModel', customGroqModel);
 
             const selectedIndices = Array.from(document.querySelectorAll('.art-selector:checked')).map(i => parseInt(i.id.split('-')[1]));
             if (selectedIndices.length === 0) {
@@ -339,6 +362,7 @@
                     responseText = await callGemini(geminiKey, geminiModel, fullPrompt);
                 } else {
                     if (!groqKey) throw new Error("מפתח Groq חסר.");
+                    if (!groqModel) throw new Error("שם המודל של Groq לא הוגדר.");
                     responseText = await callGroq(groqKey, groqModel, fullPrompt);
                 }
                 showResult(responseText);
