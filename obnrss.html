@@ -42,7 +42,7 @@
             <p class="text-slate-600">עיבוד והנגשת חדשות טכנולוגיה באמצעות בינה מלאכותית</p>
             <!-- Local context warning -->
             <div id="localWarning" class="hidden mt-4 inline-block bg-amber-50 border border-amber-200 text-amber-800 text-xs px-4 py-2 rounded-full">
-                ⚠️ שים לב: הרצה מקומית עלולה להגביל שאיבת נתונים מחלק מהאתרים.
+                ⚠️ שים לב: הרצה מקומית (`file://`) חוסמת חלק מהגישות. מומלץ להשתמש בשרת מקומי (Live Server).
             </div>
         </header>
 
@@ -157,7 +157,6 @@
         let allArticles = [];
 
         function init() {
-            // Check if running from file://
             if (window.location.protocol === 'file:') {
                 document.getElementById('localWarning').classList.remove('hidden');
             }
@@ -182,48 +181,45 @@
         }
 
         /**
-         * Enhanced Proxy fetcher with wider proxy selection and better response handling
+         * Fetch and normalize RSS items from various formats/proxies
          */
-        async function fetchWithProxy(url) {
-            const proxyConfigs = [
-                // 1. AllOrigins (usually most stable but needs manual unpacking)
-                { url: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, type: 'json' },
-                // 2. Codetabs (Direct proxy, often works for XDA)
-                { url: u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`, type: 'text' },
-                // 3. Corsproxy.io (Simple and fast)
-                { url: u => `https://corsproxy.io/?${encodeURIComponent(u)}`, type: 'text' },
-                // 4. Proxy.wayback (Alternative)
-                { url: u => `https://cors-anywhere.mirror.it.com/${u}`, type: 'text' }
+        async function fetchFeedItems(source) {
+            const proxies = [
+                // 1. RSS2JSON - Specialized service, high success rate for tech sites
+                { 
+                    url: u => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(u)}`, 
+                    parser: data => data.items.map(item => ({
+                        title: item.title,
+                        desc: item.description.replace(/<[^>]*>/g, '').trim().slice(0, 250),
+                        link: item.link
+                    }))
+                },
+                // 2. AllOrigins - General proxy
+                { 
+                    url: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, 
+                    parser: data => {
+                        const xml = new DOMParser().parseFromString(data.contents, "text/xml");
+                        return Array.from(xml.querySelectorAll('item, entry')).map(item => ({
+                            title: item.querySelector('title')?.textContent || 'ללא כותרת',
+                            desc: (item.querySelector('description, summary, content')?.textContent || '').replace(/<[^>]*>/g, '').trim().slice(0, 250),
+                            link: item.querySelector('link')?.textContent || item.querySelector('link')?.getAttribute('href') || '#'
+                        }));
+                    }
+                }
             ];
 
-            let lastError = null;
-            for (const config of proxyConfigs) {
+            for (const proxy of proxies) {
                 try {
-                    console.log(`מנסה לשאוב נתונים דרך שרת גיבוי...`);
-                    const response = await fetch(config.url(url), {
-                        headers: { 
-                            'Accept': 'application/xml, text/xml, */*',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    });
-
-                    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-
-                    if (config.type === 'json') {
-                        const data = await response.json();
-                        if (data.contents) return data.contents;
-                        throw new Error("JSON invalid structure");
-                    } else {
-                        const text = await response.text();
-                        if (text.trim().startsWith('<') || text.trim().startsWith('<?xml')) return text;
-                        throw new Error("Response is not XML");
-                    }
+                    const response = await fetch(proxy.url(source.url));
+                    if (!response.ok) continue;
+                    const data = await response.json();
+                    const items = proxy.parser(data);
+                    if (items && items.length > 0) return items.slice(0, 5);
                 } catch (e) {
-                    lastError = e;
-                    console.warn(`ניסיון פרוקסי נכשל: ${e.message}`);
+                    console.warn(`Proxy failed for ${source.name}:`, e.message);
                 }
             }
-            throw new Error(`כל ניסיונות השאיבה נכשלו. ייתכן שהאתר חוסם בוטים או שהרצה מקומית מונעת את החיבור. שגיאה: ${lastError.message}`);
+            throw new Error("לא ניתן היה למשוך נתונים משום שרת פרוקסי.");
         }
 
         async function fetchFeeds() {
@@ -235,12 +231,11 @@
 
             const fetchBtn = document.getElementById('fetchBtn');
             const loader = document.getElementById('fetchLoader');
-            
             fetchBtn.disabled = true;
             loader.classList.remove('hidden');
             
             const listContainer = document.getElementById('articlesList');
-            listContainer.innerHTML = '<div class="flex flex-col items-center py-12"><div class="loader !w-8 !h-8 mb-4"></div><p class="text-slate-600 animate-pulse font-semibold">מעבד את נתוני הפידים...</p></div>';
+            listContainer.innerHTML = '<div class="flex flex-col items-center py-12"><div class="loader !w-8 !h-8 mb-4"></div><p class="text-slate-600 animate-pulse font-semibold">אוסף כתבות מכל המקורות...</p></div>';
             
             allArticles = [];
             let errors = [];
@@ -248,25 +243,11 @@
             for (const id of selectedIds) {
                 const source = sources.find(s => s.id === id);
                 try {
-                    const content = await fetchWithProxy(source.url);
-                    
-                    const parser = new DOMParser();
-                    const xml = parser.parseFromString(content, "text/xml");
-                    
-                    if (xml.querySelector('parsererror')) throw new Error("קובץ ה-XML לא תקין");
-
-                    const items = Array.from(xml.querySelectorAll('item, entry')).slice(0, 5);
-
+                    const items = await fetchFeedItems(source);
                     items.forEach(item => {
-                        const title = item.querySelector('title')?.textContent || 'ללא כותרת';
-                        let desc = item.querySelector('description, summary, content')?.textContent || '';
-                        desc = desc.replace(/<[^>]*>/g, '').trim().slice(0, 250);
-                        const link = item.querySelector('link')?.textContent || item.querySelector('link')?.getAttribute('href') || '#';
-                        
-                        allArticles.push({ source: source.name, title, desc, link });
+                        allArticles.push({ ...item, source: source.name });
                     });
                 } catch (e) {
-                    console.error(`שגיאה במשיכת ${source.name}:`, e);
                     errors.push(`${source.name}: ${e.message}`);
                 }
             }
@@ -276,13 +257,9 @@
             if (errors.length > 0 && allArticles.length === 0) {
                 listContainer.innerHTML = `
                     <div class="text-center py-10 bg-red-50 rounded-xl border border-red-200 px-6">
-                        <p class="text-red-600 font-bold mb-2 text-lg">שגיאה קריטית בשאיבת הנתונים</p>
-                        <p class="text-sm text-red-500 mb-4 leading-relaxed">
-                            המערכת לא הצליחה לגשת למקורות המידע. זה קורה בדרך כלל בגלל הרצה מקומית של הקובץ (file://).<br>
-                            <strong>פתרון מומלץ:</strong> להעלות את הקובץ לשרת (כמו GitHub Pages) או להשתמש ב-VS Code Live Server.
-                        </p>
-                        <div class="text-right inline-block text-[11px] bg-white p-4 rounded border border-red-100 max-w-full overflow-auto font-mono">
-                            <strong>לוג שגיאות:</strong><br>
+                        <p class="text-red-600 font-bold mb-2">שגיאה בשאיבת הנתונים</p>
+                        <p class="text-sm text-red-500 mb-4">האתרים חוסמים גישה ישירה. נסה להפעיל את הקובץ דרך שרת מקומי (Live Server).</p>
+                        <div class="text-right text-[11px] bg-white p-3 rounded border border-red-100 font-mono">
                             ${errors.join('<br>')}
                         </div>
                     </div>
@@ -308,7 +285,7 @@
                                 <span class="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">${art.source}</span>
                             </div>
                             <label for="art-${idx}" class="font-bold text-slate-800 mb-2 block leading-snug cursor-pointer group-hover:text-blue-700 transition-colors">${art.title}</label>
-                            <p class="text-sm text-slate-500 line-clamp-2 leading-relaxed">${art.desc}...</p>
+                            <p class="text-sm text-slate-500 line-clamp-2 leading-relaxed">${art.desc}</p>
                         </div>
                     </div>
                 </div>
@@ -325,28 +302,27 @@
 
             const selectedIndices = Array.from(document.querySelectorAll('.art-selector:checked')).map(i => parseInt(i.id.split('-')[1]));
             if (selectedIndices.length === 0) {
-                alert('אנא בחר לפחות כתבה אחת מהרשימה.');
+                alert('אנא בחר לפחות כתבה אחת.');
                 return;
             }
 
             const dataToProcess = selectedIndices.map(i => `מקור: ${allArticles[i].source}\nכותרת: ${allArticles[i].title}\nתקציר: ${allArticles[i].desc}`).join('\n\n---\n\n');
-            const fullPrompt = `${systemPrompt}\n\nלהלן הידיעות שנבחרו לעיבוד:\n${dataToProcess}`;
+            const fullPrompt = `${systemPrompt}\n\nלהלן הידיעות:\n${dataToProcess}`;
 
             document.getElementById(`${engine}Loader`).classList.remove('hidden');
             
             try {
                 let responseText = "";
                 if (engine === 'gemini') {
-                    if (!geminiKey) throw new Error("מפתח ה-API של Gemini חסר.");
+                    if (!geminiKey) throw new Error("מפתח Gemini חסר.");
                     responseText = await callGemini(geminiKey, fullPrompt);
                 } else {
-                    if (!groqKey) throw new Error("מפתח ה-API של Groq חסר.");
+                    if (!groqKey) throw new Error("מפתח Groq חסר.");
                     responseText = await callGroq(groqKey, fullPrompt);
                 }
-
                 showResult(responseText);
             } catch (error) {
-                alert("שגיאה בעיבוד ה-AI: " + error.message);
+                alert("שגיאה ב-AI: " + error.message);
             } finally {
                 document.getElementById(`${engine}Loader`).classList.add('hidden');
             }
@@ -354,38 +330,26 @@
 
         async function callGemini(apiKey, prompt) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }]
-            };
-
             const response = await fetchWithRetry(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
             const data = await response.json();
             if (data.error) throw new Error(data.error.message);
-            return data.candidates?.[0]?.content?.parts?.[0]?.text || "לא התקבלה תשובה מ-Gemini";
+            return data.candidates?.[0]?.content?.parts?.[0]?.text || "אין תגובה.";
         }
 
         async function callGroq(apiKey, prompt) {
             const url = "https://api.groq.com/openai/v1/chat/completions";
-            const payload = {
-                model: "llama-3.3-70b-versatile",
-                messages: [{ role: "user", content: prompt }]
-            };
-
             const response = await fetchWithRetry(url, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
-                body: JSON.stringify(payload)
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: prompt }] })
             });
             const data = await response.json();
             if (data.error) throw new Error(data.error.message);
-            return data.choices?.[0]?.message?.content || "לא התקבלה תשובה מ-Groq";
+            return data.choices?.[0]?.message?.content || "אין תגובה.";
         }
 
         async function fetchWithRetry(url, options, retries = 5) {
@@ -397,13 +361,12 @@
                 } catch (e) {}
                 await new Promise(res => setTimeout(res, Math.pow(2, i) * 1000));
             }
-            throw new Error("נכשלו ניסיונות ההתחברות לשרתי ה-AI. בדוק מפתח API או חיבור רשת.");
+            throw new Error("נכשלו ניסיונות ההתחברות לשרתי ה-AI.");
         }
 
         function showResult(text) {
             const container = document.getElementById('resultContainer');
-            const display = document.getElementById('aiResponse');
-            display.innerText = text;
+            document.getElementById('aiResponse').innerText = text;
             container.classList.remove('hidden');
             container.scrollIntoView({ behavior: 'smooth' });
         }
@@ -416,26 +379,12 @@
             temp.select();
             document.execCommand('copy');
             document.body.removeChild(temp);
-            alert('הטקסט הועתק לקליפבורד בהצלחה!');
+            alert('הועתק!');
         }
 
         function exportToWord() {
             const text = document.getElementById('aiResponse').innerText;
-            const content = `
-                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-                <head><meta charset='utf-8'><title>Techno Tip</title>
-                <style>
-                    body { font-family: 'Arial', sans-serif; direction: rtl; }
-                    .content { white-space: pre-wrap; line-height: 1.6; font-size: 14pt; }
-                </style>
-                </head>
-                <body>
-                    <h1 style="text-align: center; color: #1e40af;">הטכנוטיפ שלי</h1>
-                    <hr>
-                    <div class="content">${text}</div>
-                </body>
-                </html>
-            `;
+            const content = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body style="direction: rtl; font-family: Arial;">${text.replace(/\n/g, '<br>')}</body></html>`;
             const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
