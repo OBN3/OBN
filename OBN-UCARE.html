@@ -805,7 +805,7 @@
                 }
 
                 const taskPreview = item.inputs?.task ? (item.inputs.task.length > 40 ? item.inputs.task.substring(0, 40) + '...' : item.inputs.task) : '-';
-                const nameStr = item.userName || item.userEmail || 'משתמש מזוהה';
+                const nameStr = item.userEmail || 'לא ידוע';
 
                 tr.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-gray-500 font-mono text-xs" dir="ltr">${dateStr}</td>
