@@ -393,6 +393,11 @@
         const MAX_DAILY_USAGE = 5;
         let currentUsageData = { date: '', count: 0 };
         
+        // משתנים גלובליים לניהול המשתמש ושמו
+        let currentUser = null;
+        let currentUserEmail = null;
+        let currentUserName = null;
+
         // משיכת סטטוס הניהול מהזיכרון המקומי
         let isAdmin = localStorage.getItem('ucare_admin_verified') === 'true';
 
@@ -402,8 +407,6 @@
         const db = getFirestore(app);
         const googleProvider = new GoogleAuthProvider();
 
-        // State
-        let currentUser = null;
         let adminUnsubscribe = null;
         let isLoginInProgress = false; // מונע התנגשויות תהליכי התחברות
 
@@ -472,6 +475,14 @@
             }
         }
 
+        // פונקציית עזר ליצירת שם קריא מתוך כתובת אימייל
+        function formatNameFromEmail(email) {
+            if (!email) return "משתמש";
+            let prefix = email.split('@')[0];
+            prefix = prefix.replace(/[\._-]/g, ' '); 
+            return prefix.replace(/\b\w/g, l => l.toUpperCase());
+        }
+
         btnCloseEmailModal.addEventListener('click', () => emailAuthModal.classList.add('hidden'));
         btnCloseLimitModal.addEventListener('click', () => limitReachedModal.classList.add('hidden'));
         btnCloseViewPrompt.addEventListener('click', () => adminViewPromptModal.classList.add('hidden'));
@@ -483,20 +494,22 @@
         // פונקציית אימות מרכזית (מול חוקי ה-DB הנסתרים)
         async function verifyAndEnter(user, emailToVerify, displayName, isGoogleLogin = false) {
             try {
-                // המערכת מנסה לכתוב את האימייל ל-DB. ה-HTML "טיפש" ולא יודע איזה דומיין מותר.
-                // חוקי ה-Firebase מגדירים איזה סיומת לאשר, ואם התיקייה תדחה את הבקשה נקבל שגיאה.
+                // המערכת מנסה לכתוב את האימייל ל-DB
                 const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile');
                 await setDoc(profileRef, { email: emailToVerify });
 
-                // ה-DB אישר!
+                // ה-DB אישר! מעדכנים נתוני זיכרון
                 currentUser = user;
+                currentUserEmail = emailToVerify;
+                currentUserName = displayName || formatNameFromEmail(emailToVerify);
+                
                 elLandingPage.classList.add('hidden');
                 elMainApp.classList.remove('hidden');
                 elLoginErrorMsg.classList.add('hidden');
                 
-                elUserGreeting.textContent = `שלום, ${displayName || emailToVerify.split('@')[0]}`;
+                elUserGreeting.textContent = `שלום, ${currentUserName}`;
                 
-                if (emailToVerify === ADMIN_EMAIL || localStorage.getItem('ucare_admin_verified') === 'true') {
+                if (currentUserEmail === ADMIN_EMAIL || localStorage.getItem('ucare_admin_verified') === 'true') {
                     unlockAdmin(false); 
                 } else {
                     updateAdminUI();
@@ -507,6 +520,9 @@
                 console.error("Access denied by DB rules:", error);
                 await signOut(auth);
                 currentUser = null;
+                currentUserEmail = null;
+                currentUserName = null;
+                
                 elLandingPage.classList.remove('hidden');
                 elMainApp.classList.add('hidden');
                 
@@ -525,7 +541,7 @@
         setPersistence(auth, browserLocalPersistence)
             .then(() => {
                 onAuthStateChanged(auth, async (user) => {
-                    if (isLoginInProgress) return; // לא להתערב אם כפתור התחברות בדיוק רץ
+                    if (isLoginInProgress) return;
 
                     if (user) {
                         try {
@@ -534,18 +550,21 @@
                             const snap = await getDoc(profileRef);
                             
                             if (snap.exists()) {
-                                const email = snap.data().email;
                                 currentUser = user;
+                                currentUserEmail = snap.data().email;
+                                currentUserName = user.displayName || formatNameFromEmail(currentUserEmail);
+                                
                                 elLandingPage.classList.add('hidden');
                                 elMainApp.classList.remove('hidden');
-                                elUserGreeting.textContent = `שלום, ${user.displayName || email.split('@')[0]}`;
+                                elUserGreeting.textContent = `שלום, ${currentUserName}`;
                                 
-                                if (email === ADMIN_EMAIL || localStorage.getItem('ucare_admin_verified') === 'true') {
+                                if (currentUserEmail === ADMIN_EMAIL || localStorage.getItem('ucare_admin_verified') === 'true') {
                                     unlockAdmin(false);
                                 } else {
                                     updateAdminUI();
                                     fetchDailyUsage();
                                 }
+                                elInitialLoader.classList.add('hidden'); // תוקן באג המסך הנתקע בטעינה רגילה
                             } else {
                                 await signOut(auth);
                                 elInitialLoader.classList.add('hidden');
@@ -556,6 +575,8 @@
                         }
                     } else {
                         currentUser = null;
+                        currentUserEmail = null;
+                        currentUserName = null;
                         elLandingPage.classList.remove('hidden');
                         elMainApp.classList.add('hidden');
                         isAdmin = false;
@@ -609,7 +630,8 @@
                 elInitialLoader.querySelector('p').textContent = 'מוודא הרשאות מערכת...';
                 
                 const result = await signInAnonymously(auth);
-                await verifyAndEnter(result.user, email, "משתמש", false);
+                // אנו מעבירים את הפונקציה המנקה את השם במקום המילה הגנרית
+                await verifyAndEnter(result.user, email, formatNameFromEmail(email), false);
             } catch (error) {
                 console.error("Anonymous Login failed:", error);
                 elLoginErrorMsg.textContent = `שגיאת אימות: ${error.message}`;
@@ -620,10 +642,9 @@
             }
         });
 
-        // כפתור התנתקות מתוקן
+        // כפתור התנתקות
         btnLogout.addEventListener('click', async () => {
             try {
-                // הוסר isLoginInProgress = true כדי לאפשר ל-onAuthStateChanged לטפל בהתנתקות ולרענן מסך
                 await signOut(auth);
             } catch (error) {
                 console.error("Logout error", error);
@@ -784,7 +805,7 @@
                 }
 
                 const taskPreview = item.inputs?.task ? (item.inputs.task.length > 40 ? item.inputs.task.substring(0, 40) + '...' : item.inputs.task) : '-';
-                const nameStr = item.userName || item.userEmail || 'אנונימי';
+                const nameStr = item.userName || item.userEmail || 'משתמש מזוהה';
 
                 tr.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-gray-500 font-mono text-xs" dir="ltr">${dateStr}</td>
@@ -876,8 +897,8 @@
             };
 
             const data = {
-                userEmail: currentUser.email || 'anonymous',
-                userName: currentUser.displayName || 'anonymous',
+                userEmail: currentUserEmail || 'anonymous',
+                userName: currentUserName || 'anonymous',
                 inputs: inputs,
                 generatedPrompt: generatedPrompt,
                 modelUsed: modelName,
@@ -898,7 +919,7 @@
         }
 
         // ==========================================
-        // API KEY LOGIC (טיפול שגיאות משופר)
+        // API KEY LOGIC
         // ==========================================
 
         async function getGroqApiKey() {
