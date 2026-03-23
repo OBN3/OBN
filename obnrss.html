@@ -26,7 +26,6 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* Custom scrollbar for better look */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -35,54 +34,62 @@
 </head>
 <body class="p-4 md:p-8">
 
-    <div class="max-w-5xl mx-auto">
+    <div class="max-w-6xl mx-auto">
         <!-- Header -->
         <header class="mb-8 text-center">
             <h1 class="text-4xl font-bold text-slate-800 mb-2 tracking-tight">מחולל הטכנוטיפים החכם</h1>
             <p class="text-slate-600">עיבוד והנגשת חדשות טכנולוגיה באמצעות בינה מלאכותית</p>
-            <!-- Local context warning -->
-            <div id="localWarning" class="hidden mt-4 inline-block bg-amber-50 border border-amber-200 text-amber-800 text-xs px-4 py-2 rounded-full">
-                ⚠️ שים לב: הרצה מקומית (`file://`) חוסמת חלק מהגישות. מומלץ להשתמש בשרת מקומי (Live Server).
+            <div id="localWarning" class="hidden mt-4 inline-block bg-amber-50 border border-amber-200 text-amber-800 text-xs px-4 py-2 rounded-full italic">
+                ⚠️ שים לב: הרצה מקומית (`file://`) עלולה להגביל את שאיבת הנתונים. מומלץ להשתמש ב-Live Server.
             </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            <!-- Side Panel: Settings & Sources -->
+            <!-- Side Panel -->
             <div class="lg:col-span-1 space-y-6">
                 
-                <!-- API Keys -->
+                <!-- API Keys & Models -->
                 <div class="glass-card p-6 rounded-2xl shadow-sm border-r-4 border-blue-500">
                     <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                        <span>🔑</span> הגדרות API
+                        <span>🔑</span> הגדרות מנוע
                     </h2>
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Gemini API Key</label>
-                            <input type="password" id="geminiKey" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="הזן מפתח Gemini...">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Gemini Key & Model</label>
+                            <input type="password" id="geminiKey" class="w-full p-2 border rounded-lg mb-2 outline-none focus:ring-2 focus:ring-blue-500" placeholder="הזן מפתח Gemini...">
+                            <select id="geminiModel" class="w-full p-2 border rounded-lg text-sm bg-slate-50">
+                                <option value="gemini-2.5-flash-preview-09-2025">Gemini 2.5 Flash Preview</option>
+                                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                            </select>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Groq API Key</label>
-                            <input type="password" id="groqKey" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="הזן מפתח Groq...">
+                        <div class="pt-2 border-t border-slate-100">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Groq Key & Model</label>
+                            <input type="password" id="groqKey" class="w-full p-2 border rounded-lg mb-2 outline-none focus:ring-2 focus:ring-emerald-500" placeholder="הזן מפתח Groq...">
+                            <select id="groqModel" class="w-full p-2 border rounded-lg text-sm bg-slate-50">
+                                <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Versatile)</option>
+                                <option value="llama-3.1-70b-versatile">Llama 3.1 70B</option>
+                                <option value="llama3-70b-8192">Llama 3 70B (Classic)</option>
+                                <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+                            </select>
                         </div>
                     </div>
                 </div>
 
-                <!-- Sources -->
+                <!-- Sources Selection -->
                 <div class="glass-card p-6 rounded-2xl shadow-sm">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-xl font-semibold flex items-center gap-2">
                             <span>📡</span> מקורות מידע
                         </h2>
                         <div class="text-xs space-x-2 space-x-reverse">
-                            <button onclick="toggleAllSources(true)" class="text-blue-600 hover:text-blue-800 transition-colors font-semibold">הכל</button>
+                            <button onclick="toggleAllSources(true)" class="text-blue-600 hover:text-blue-800 font-semibold">הכל</button>
                             <span class="text-slate-300">|</span>
-                            <button onclick="toggleAllSources(false)" class="text-red-600 hover:text-red-800 transition-colors font-semibold">ללא</button>
+                            <button onclick="toggleAllSources(false)" class="text-red-600 hover:text-red-800 font-semibold">ללא</button>
                         </div>
                     </div>
-                    <div id="sourcesList" class="space-y-2 max-h-72 overflow-y-auto pr-2">
-                        <!-- Sources injected via JS -->
-                    </div>
+                    <div id="sourcesList" class="space-y-2 max-h-72 overflow-y-auto pr-2"></div>
                     <button onclick="fetchFeeds()" id="fetchBtn" class="w-full mt-6 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex justify-center items-center gap-2 group">
                         <span>טען כתבות אחרונות</span>
                         <div id="fetchLoader" class="loader hidden !border-slate-400 !border-t-white"></div>
@@ -91,28 +98,34 @@
                 </div>
             </div>
 
-            <!-- Main Panel: Articles & Output -->
+            <!-- Main Panel -->
             <div class="lg:col-span-2 space-y-6">
                 
                 <!-- Articles Feed -->
                 <div class="glass-card p-6 rounded-2xl shadow-sm min-h-[300px]">
-                    <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                        <span>📰</span> כתבות שנמצאו
-                    </h2>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold flex items-center gap-2">
+                            <span>📰</span> כתבות שנמצאו
+                        </h2>
+                        <div id="articleControls" class="hidden text-xs space-x-2 space-x-reverse">
+                            <button onclick="toggleAllArticles(true)" class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-100">בחר הכל</button>
+                            <button onclick="toggleAllArticles(false)" class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full hover:bg-slate-200">נקה הכל</button>
+                        </div>
+                    </div>
                     <div id="articlesList" class="space-y-4 max-h-[450px] overflow-y-auto pr-2 text-slate-500 italic">
                         טרם נטענו כתבות. בחר מקורות ולחץ על "טען כתבות".
                     </div>
                 </div>
 
-                <!-- AI Control -->
+                <!-- AI Control Area -->
                 <div class="glass-card p-6 rounded-2xl shadow-sm border-t-4 border-indigo-500">
                     <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
                         <span>🧠</span> עיבוד בבינה מלאכותית
                     </h2>
                     
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">הפרומפט לעיבוד:</label>
-                        <textarea id="systemPrompt" rows="4" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm leading-relaxed" placeholder="כתוב כאן את ההנחיות ל-AI...">סכם את הידיעות והצג אותם כטכנוטיפ קצר. התמקד בשורה התחתונה - מה המשתמש יכול לעשות עם זה עכשיו? כתוב בנימה מקצועית אך נגישה בעברית.</textarea>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">הפרומפט האישי שלך:</label>
+                        <textarea id="systemPrompt" rows="4" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm leading-relaxed">סכם את הידיעות והצג אותם כטכנוטיפ קצר. התמקד בשורה התחתונה - מה המשתמש יכול לעשות עם זה עכשיו? כתוב בנימה מקצועית אך נגישה בעברית.</textarea>
                     </div>
 
                     <div class="flex flex-wrap gap-3">
@@ -127,13 +140,13 @@
                     </div>
                 </div>
 
-                <!-- Result Area -->
+                <!-- Result Container -->
                 <div id="resultContainer" class="hidden glass-card p-8 rounded-2xl shadow-2xl border-2 border-blue-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
-                        <h2 class="text-2xl font-bold text-slate-800">הטכנוטיפ המוכן</h2>
-                        <div class="flex gap-3">
-                            <button onclick="copyToClipboard()" class="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors border border-transparent hover:border-blue-100" title="העתק">📋 העתק</button>
-                            <button onclick="exportToWord()" class="p-2 hover:bg-emerald-50 text-emerald-600 rounded-lg transition-colors border border-transparent hover:border-emerald-100" title="ייצוא לוורד">📄 וורד</button>
+                        <h2 class="text-2xl font-bold text-slate-800 tracking-tight">הטכנוטיפ המעובד</h2>
+                        <div class="flex gap-2">
+                            <button onclick="copyToClipboard()" class="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-semibold">📋 העתק</button>
+                            <button onclick="exportToWord()" class="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors font-semibold">📄 וורד</button>
                         </div>
                     </div>
                     <div id="aiResponse" class="prose max-w-none text-slate-800 leading-relaxed whitespace-pre-wrap text-lg"></div>
@@ -172,36 +185,38 @@
                 list.appendChild(div);
             });
             
-            document.getElementById('geminiKey').value = localStorage.getItem('gemini_key') || '';
-            document.getElementById('groqKey').value = localStorage.getItem('groq_key') || '';
+            // Persistence
+            ['geminiKey', 'groqKey', 'geminiModel', 'groqModel'].forEach(id => {
+                const val = localStorage.getItem(id);
+                if (val) document.getElementById(id).value = val;
+            });
         }
 
         function toggleAllSources(checked) {
             document.querySelectorAll('#sourcesList input').forEach(i => i.checked = checked);
         }
 
-        /**
-         * Fetch and normalize RSS items from various formats/proxies
-         */
+        function toggleAllArticles(checked) {
+            document.querySelectorAll('.art-selector').forEach(i => i.checked = checked);
+        }
+
         async function fetchFeedItems(source) {
             const proxies = [
-                // 1. RSS2JSON - Specialized service, high success rate for tech sites
                 { 
                     url: u => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(u)}`, 
                     parser: data => data.items.map(item => ({
                         title: item.title,
-                        desc: item.description.replace(/<[^>]*>/g, '').trim().slice(0, 250),
+                        desc: item.description.replace(/<[^>]*>/g, '').trim().slice(0, 300),
                         link: item.link
                     }))
                 },
-                // 2. AllOrigins - General proxy
                 { 
                     url: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, 
                     parser: data => {
                         const xml = new DOMParser().parseFromString(data.contents, "text/xml");
                         return Array.from(xml.querySelectorAll('item, entry')).map(item => ({
                             title: item.querySelector('title')?.textContent || 'ללא כותרת',
-                            desc: (item.querySelector('description, summary, content')?.textContent || '').replace(/<[^>]*>/g, '').trim().slice(0, 250),
+                            desc: (item.querySelector('description, summary, content')?.textContent || '').replace(/<[^>]*>/g, '').trim().slice(0, 300),
                             link: item.querySelector('link')?.textContent || item.querySelector('link')?.getAttribute('href') || '#'
                         }));
                     }
@@ -214,18 +229,18 @@
                     if (!response.ok) continue;
                     const data = await response.json();
                     const items = proxy.parser(data);
-                    if (items && items.length > 0) return items.slice(0, 5);
+                    if (items && items.length > 0) return items.slice(0, 6);
                 } catch (e) {
                     console.warn(`Proxy failed for ${source.name}:`, e.message);
                 }
             }
-            throw new Error("לא ניתן היה למשוך נתונים משום שרת פרוקסי.");
+            throw new Error("נכשלו ניסיונות השאיבה מהמקור.");
         }
 
         async function fetchFeeds() {
             const selectedIds = Array.from(document.querySelectorAll('#sourcesList input:checked')).map(i => i.value);
             if (selectedIds.length === 0) {
-                alert('אנא בחר לפחות מקור אחד.');
+                alert('בחר לפחות מקור אחד.');
                 return;
             }
 
@@ -235,7 +250,7 @@
             loader.classList.remove('hidden');
             
             const listContainer = document.getElementById('articlesList');
-            listContainer.innerHTML = '<div class="flex flex-col items-center py-12"><div class="loader !w-8 !h-8 mb-4"></div><p class="text-slate-600 animate-pulse font-semibold">אוסף כתבות מכל המקורות...</p></div>';
+            listContainer.innerHTML = '<div class="flex flex-col items-center py-12"><div class="loader !w-8 !h-8 mb-4"></div><p class="text-slate-600 animate-pulse font-semibold">אוסף ומעבד נתונים מהמקורות...</p></div>';
             
             allArticles = [];
             let errors = [];
@@ -253,12 +268,13 @@
             }
 
             displayArticles();
+            document.getElementById('articleControls').classList.toggle('hidden', allArticles.length === 0);
             
             if (errors.length > 0 && allArticles.length === 0) {
                 listContainer.innerHTML = `
                     <div class="text-center py-10 bg-red-50 rounded-xl border border-red-200 px-6">
-                        <p class="text-red-600 font-bold mb-2">שגיאה בשאיבת הנתונים</p>
-                        <p class="text-sm text-red-500 mb-4">האתרים חוסמים גישה ישירה. נסה להפעיל את הקובץ דרך שרת מקומי (Live Server).</p>
+                        <p class="text-red-600 font-bold mb-2">גישה חסומה או בעיית רשת</p>
+                        <p class="text-sm text-red-500 mb-4 font-medium">האתרים זיהו ניסיון גישה לא מורשה. הפעל את הקובץ דרך שרת מקומי (Live Server).</p>
                         <div class="text-right text-[11px] bg-white p-3 rounded border border-red-100 font-mono">
                             ${errors.join('<br>')}
                         </div>
@@ -295,19 +311,24 @@
         async function summarize(engine) {
             const geminiKey = document.getElementById('geminiKey').value.trim();
             const groqKey = document.getElementById('groqKey').value.trim();
+            const geminiModel = document.getElementById('geminiModel').value;
+            const groqModel = document.getElementById('groqModel').value;
             const systemPrompt = document.getElementById('systemPrompt').value;
             
+            // Save state
             localStorage.setItem('gemini_key', geminiKey);
             localStorage.setItem('groq_key', groqKey);
+            localStorage.setItem('geminiModel', geminiModel);
+            localStorage.setItem('groqModel', groqModel);
 
             const selectedIndices = Array.from(document.querySelectorAll('.art-selector:checked')).map(i => parseInt(i.id.split('-')[1]));
             if (selectedIndices.length === 0) {
-                alert('אנא בחר לפחות כתבה אחת.');
+                alert('בחר לפחות כתבה אחת לעיבוד.');
                 return;
             }
 
             const dataToProcess = selectedIndices.map(i => `מקור: ${allArticles[i].source}\nכותרת: ${allArticles[i].title}\nתקציר: ${allArticles[i].desc}`).join('\n\n---\n\n');
-            const fullPrompt = `${systemPrompt}\n\nלהלן הידיעות:\n${dataToProcess}`;
+            const fullPrompt = `${systemPrompt}\n\nידיעות שנבחרו:\n${dataToProcess}`;
 
             document.getElementById(`${engine}Loader`).classList.remove('hidden');
             
@@ -315,21 +336,21 @@
                 let responseText = "";
                 if (engine === 'gemini') {
                     if (!geminiKey) throw new Error("מפתח Gemini חסר.");
-                    responseText = await callGemini(geminiKey, fullPrompt);
+                    responseText = await callGemini(geminiKey, geminiModel, fullPrompt);
                 } else {
                     if (!groqKey) throw new Error("מפתח Groq חסר.");
-                    responseText = await callGroq(groqKey, fullPrompt);
+                    responseText = await callGroq(groqKey, groqModel, fullPrompt);
                 }
                 showResult(responseText);
             } catch (error) {
-                alert("שגיאה ב-AI: " + error.message);
+                alert("שגיאת AI: " + error.message);
             } finally {
                 document.getElementById(`${engine}Loader`).classList.add('hidden');
             }
         }
 
-        async function callGemini(apiKey, prompt) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        async function callGemini(apiKey, model, prompt) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
             const response = await fetchWithRetry(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -337,19 +358,26 @@
             });
             const data = await response.json();
             if (data.error) throw new Error(data.error.message);
-            return data.candidates?.[0]?.content?.parts?.[0]?.text || "אין תגובה.";
+            return data.candidates?.[0]?.content?.parts?.[0]?.text || "לא התקבלה תשובה.";
         }
 
-        async function callGroq(apiKey, prompt) {
+        async function callGroq(apiKey, model, prompt) {
             const url = "https://api.groq.com/openai/v1/chat/completions";
             const response = await fetchWithRetry(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-                body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: prompt }] })
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': `Bearer ${apiKey}` 
+                },
+                body: JSON.stringify({ 
+                    model: model, 
+                    messages: [{ role: "user", content: prompt }],
+                    temperature: 0.7
+                })
             });
             const data = await response.json();
             if (data.error) throw new Error(data.error.message);
-            return data.choices?.[0]?.message?.content || "אין תגובה.";
+            return data.choices?.[0]?.message?.content || "לא התקבלה תשובה.";
         }
 
         async function fetchWithRetry(url, options, retries = 5) {
@@ -357,11 +385,16 @@
                 try {
                     const response = await fetch(url, options);
                     if (response.ok) return response;
-                    if (response.status !== 429 && response.status < 500) break; 
-                } catch (e) {}
+                    if (response.status !== 429 && response.status < 500) {
+                        const errData = await response.json().catch(() => ({}));
+                        throw new Error(errData.error?.message || `שגיאת שרת (${response.status})`);
+                    }
+                } catch (e) {
+                    if (i === retries - 1) throw e;
+                }
                 await new Promise(res => setTimeout(res, Math.pow(2, i) * 1000));
             }
-            throw new Error("נכשלו ניסיונות ההתחברות לשרתי ה-AI.");
+            throw new Error("לא ניתן להתחבר לשרת ה-AI.");
         }
 
         function showResult(text) {
@@ -379,17 +412,17 @@
             temp.select();
             document.execCommand('copy');
             document.body.removeChild(temp);
-            alert('הועתק!');
+            alert('הטקסט הועתק בהצלחה!');
         }
 
         function exportToWord() {
             const text = document.getElementById('aiResponse').innerText;
-            const content = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body style="direction: rtl; font-family: Arial;">${text.replace(/\n/g, '<br>')}</body></html>`;
+            const content = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body style="direction: rtl; font-family: Arial; line-height: 1.5;">${text.replace(/\n/g, '<br>')}</body></html>`;
             const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `techno-tip-${new Date().toLocaleDateString('he-IL')}.doc`;
+            link.download = `טכנוטיפ-${new Date().toLocaleDateString('he-IL')}.doc`;
             link.click();
         }
 
