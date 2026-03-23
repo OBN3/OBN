@@ -365,13 +365,12 @@
         };
         const appId = 'ucare-app';
         
-        // --- הגדרות אדמין ומגבלות ---
-        const ADMIN_EMAIL = 'הכנס_כאן_את_מייל_הגוגל_שלך@gmail.com'; // <--- ערוך את השורה הזו עם המייל שאיתו אתה נכנס ל-Google!
+        // מגבלות משתמשים
         const MAX_DAILY_USAGE = 5;
         let currentUsageData = { date: '', count: 0 };
         
-        // Admin State
-        let isAdmin = sessionStorage.getItem('ucare_admin') === 'true';
+        // משיכת סטטוס הניהול מהזיכרון המקומי
+        let isAdmin = localStorage.getItem('ucare_admin_verified') === 'true';
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
@@ -464,12 +463,12 @@
                         const displayName = user.displayName || user.email?.split('@')[0] || "משתמש";
                         elUserGreeting.textContent = `שלום, ${displayName}`;
                         
-                        // בדיקה אוטומטית: אם המייל תואם למייל המנהל, תן הרשאות אוטומטית!
-                        if (user.email === ADMIN_EMAIL || sessionStorage.getItem('ucare_admin') === 'true') {
+                        // בדיקה אם המשתמש כבר אימת סיסמת מנהל בעבר באותו מכשיר
+                        if (localStorage.getItem('ucare_admin_verified') === 'true') {
                             unlockAdmin(false); // פותח הרשאות אבל לא קופץ לדשבורד בכוח
                         } else {
                             updateAdminUI();
-                            fetchDailyUsage(); // סופר רק אם הוא לא אדמין
+                            fetchDailyUsage(); // סופר רק אם הוא לא אדמין מורשה
                         }
 
                     } else {
@@ -477,7 +476,8 @@
                         elLandingPage.classList.remove('hidden');
                         elMainApp.classList.add('hidden');
                         isAdmin = false;
-                        sessionStorage.removeItem('ucare_admin');
+                        // אפשר לבחור להסיר את הרשאות המנהל בעת התנתקות מלאה לבטיחות מקסימלית
+                        localStorage.removeItem('ucare_admin_verified');
                         if (adminUnsubscribe) adminUnsubscribe();
                     }
                 });
@@ -549,7 +549,7 @@
                 const docSnap = await getDoc(docRef);
                 
                 if (docSnap.exists() && docSnap.data().password === pwd) {
-                    unlockAdmin(true); // אם הקליד ססמה ידנית, שלח אותו לדשבורד
+                    unlockAdmin(true); // אם הקליד ססמה ידנית נכונה, קפוץ לדשבורד
                     adminAuthModal.classList.add('hidden');
                 } else {
                     adminAuthError.textContent = "ססמה שגויה. נסה שנית.";
@@ -567,7 +567,8 @@
 
         function unlockAdmin(forceDashboard = false) {
             isAdmin = true;
-            sessionStorage.setItem('ucare_admin', 'true');
+            // שמירת חותמת מנהל מקומית על המכשיר שתישאר גם אחרי רענון!
+            localStorage.setItem('ucare_admin_verified', 'true');
             updateAdminUI();
             
             if (forceDashboard) {
@@ -734,7 +735,6 @@
             const usageRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'usage');
             
             try {
-                // מעדכן ספירה אישית למשתמש (אפשרי בזכות חוק מספר 2)
                 await setDoc(usageRef, currentUsageData);
                 updateUsageUI();
             } catch (error) {
