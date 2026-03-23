@@ -157,11 +157,6 @@
                             <div class="relative group">
                                 <label class="block text-sm font-bold text-gray-700 mb-2">תאר במילים שלך מה אתה רוצה לעשות:</label>
                                 <textarea id="input-free-text" rows="8" class="w-full border border-gray-200 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none shadow-sm text-base leading-relaxed" placeholder="לדוגמה: אני רוצה לכתוב פוסט לפייסבוק שמזמין בני נוער לסדנת צילום בסמארטפון. חשוב שזה יהיה מרגש, יפיג חששות טכנולוגיים, ושיהיה קצר (עד 50 מילים) עם אמוג'ים..."></textarea>
-                                <div class="flex justify-end mt-2">
-                                    <button id="btn-enhance-idea" class="text-sm bg-gradient-to-r from-purple-100 to-pink-100 hover:from-purple-200 hover:to-pink-200 text-purple-700 font-bold py-1.5 px-4 rounded-lg shadow-sm transition-all flex items-center gap-2">
-                                        ✨ שפר לי את הרעיון עם AI
-                                    </button>
-                                </div>
                                 <p class="text-xs text-gray-500 mt-2 font-medium">המערכת תנתח את הבקשה שלך ותבנה עבורך פרומפט מקצועי המבוסס על מתודולוגיות מתקדמות להפקת תוצאות מדויקות.</p>
                             </div>
                         </div>
@@ -196,24 +191,6 @@
                                 <p class="text-primary font-bold text-lg animate-pulse">הבינה המלאכותית מנסחת...</p>
                             </div>
                             <div id="final-output" class="hidden text-gray-800 whitespace-pre-wrap leading-relaxed font-medium text-lg" dir="auto"></div>
-                            
-                            <!-- Gemini Simulation Container -->
-                            <div id="simulation-wrapper" class="hidden mt-6 pt-6 border-t border-gray-200">
-                                <div class="flex justify-between items-center mb-4">
-                                    <h3 class="text-lg font-bold text-gray-800">איך זה ייראה בפועל?</h3>
-                                    <button id="btn-simulate" class="text-sm bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-2 px-4 rounded-xl shadow-md transition-all flex items-center gap-2">
-                                        ✨ הדגם תוצאה מ-AI
-                                    </button>
-                                </div>
-                                <div id="simulation-output" class="hidden bg-white border-2 border-purple-100 p-5 rounded-2xl shadow-sm text-gray-700 whitespace-pre-wrap text-base font-normal min-h-[100px] relative">
-                                    <div id="sim-loading-indicator" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-white/90 rounded-2xl z-10 backdrop-blur-sm">
-                                        <div class="loader mb-3 w-8 h-8" style="border-top-color: #A855F7; border-width: 4px;"></div>
-                                        <p class="text-purple-600 font-bold text-sm animate-pulse">מייצר תצוגה מקדימה...</p>
-                                    </div>
-                                    <div id="sim-final-text" dir="auto"></div>
-                                </div>
-                            </div>
-
                         </div>
                     </div>
                 </div>
@@ -418,17 +395,6 @@
         const btnCopy = document.getElementById('btn-copy');
         const elErrorMsg = document.getElementById('error-message');
         const elLoginErrorMsg = document.getElementById('login-error-msg');
-
-        // Gemini UI Elements
-        const btnEnhanceIdea = document.getElementById('btn-enhance-idea');
-        const simulationWrapper = document.getElementById('simulation-wrapper');
-        const btnSimulate = document.getElementById('btn-simulate');
-        const simulationOutput = document.getElementById('simulation-output');
-        const simLoadingIndicator = document.getElementById('sim-loading-indicator');
-        const simFinalText = document.getElementById('sim-final-text');
-        
-        // Gemini API Key (Injected by Environment)
-        const geminiApiKey = "";
 
         // Views
         const viewGenerator = document.getElementById('view-generator');
@@ -836,99 +802,7 @@
             elFinalOutput.classList.remove('hidden');
             btnCopy.classList.remove('hidden');
             elFinalOutput.textContent = text;
-
-            // Reset and show Gemini Simulation section
-            simulationWrapper.classList.remove('hidden');
-            simulationOutput.classList.add('hidden');
-            simFinalText.textContent = '';
         }
-
-        // ==========================================
-        // GEMINI API INTEGRATIONS
-        // ==========================================
-
-        async function fetchGeminiWithBackoff(prompt, systemInstruction) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiApiKey}`;
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-                systemInstruction: { parts: [{ text: systemInstruction }] }
-            };
-
-            let retries = 5;
-            let delay = 1000;
-
-            while (retries > 0) {
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) throw new Error(`Gemini API Error: ${response.status}`);
-                    
-                    const data = await response.json();
-                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "לא התקבלה תוצאה מ-Gemini.";
-                } catch (error) {
-                    retries--;
-                    if (retries === 0) throw error;
-                    await new Promise(res => setTimeout(res, delay));
-                    delay *= 2;
-                }
-            }
-        }
-
-        // Feature 1: Enhance Idea using Gemini
-        btnEnhanceIdea.addEventListener('click', async () => {
-            const inputField = document.getElementById('input-free-text');
-            const currentText = inputField.value.trim();
-            
-            if (!currentText) {
-                showError("אנא כתבו רעיון קצר כלשהו לפני שניישם עליו קסם.");
-                return;
-            }
-
-            const originalBtnText = btnEnhanceIdea.innerHTML;
-            btnEnhanceIdea.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> משפר...';
-            btnEnhanceIdea.disabled = true;
-
-            const sysInstruction = "אתה עוזר סיעור מוחות. המשתמש יספק לך רעיון קצר וגולמי למשימה. המטרה שלך היא לקחת את הרעיון הזה, לנסח אותו מחדש באופן עשיר ומפורט יותר, ולהוסיף לו הקשר רלוונטי, קהל יעד משוער, ותוצאה רצויה. החזר אך ורק את הפסקה המורחבת בשפה העברית, ללא הקדמות או סיכומים.";
-
-            try {
-                const enhancedText = await fetchGeminiWithBackoff(currentText, sysInstruction);
-                inputField.value = enhancedText;
-                showError(''); // Clear errors
-            } catch (error) {
-                console.error("Gemini Enhancement Error:", error);
-                showError("אירעה שגיאה בשיפור הרעיון מול Gemini. נסו שוב.");
-            } finally {
-                btnEnhanceIdea.innerHTML = originalBtnText;
-                btnEnhanceIdea.disabled = false;
-            }
-        });
-
-        // Feature 2: Simulate Final Prompt Result using Gemini
-        btnSimulate.addEventListener('click', async () => {
-            const promptText = elFinalOutput.textContent.trim();
-            if (!promptText) return;
-
-            simulationOutput.classList.remove('hidden');
-            simLoadingIndicator.classList.remove('hidden');
-            btnSimulate.disabled = true;
-
-            const sysInstruction = "אתה מודל בינה מלאכותית מתקדם. המשתמש יספק לך 'פרומפט מופנה לבינה מלאכותית'. עליך לקרוא את הפרומפט בעיון, להיכנס לתפקיד שהוגדר בו, ולייצר את התוצאה הטובה ביותר האפשרית בדיוק לפי הכללים והאילוצים שהמשתמש הגדיר בפרומפט. החזר רק את התוצאה הסופית, ללא תיאורים מסביב.";
-
-            try {
-                const simulationResult = await fetchGeminiWithBackoff(promptText, sysInstruction);
-                simFinalText.textContent = simulationResult;
-            } catch (error) {
-                console.error("Gemini Simulation Error:", error);
-                simFinalText.textContent = "אירעה שגיאה ביצירת התצוגה המקדימה. אנא נסו שוב מאוחר יותר.";
-            } finally {
-                simLoadingIndicator.classList.add('hidden');
-                btnSimulate.disabled = false;
-            }
-        });
 
         // ==========================================
         // COPY MODAL LOGIC (משופר וחסין תקלות)
