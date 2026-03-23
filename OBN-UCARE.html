@@ -94,10 +94,16 @@
                 </div>
 
                 <div class="text-center">
-                    <button id="btn-login" class="bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50 font-bold py-3 px-8 rounded-full shadow-sm transition-all flex items-center justify-center gap-3 mx-auto w-full md:w-auto text-lg hover:shadow-md">
-                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-6 h-6">
-                        התחברות עם Google להתחלת עבודה
-                    </button>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <button id="btn-login-google" class="bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50 font-bold py-3 px-6 rounded-full shadow-sm transition-all flex items-center justify-center gap-3 w-full sm:w-auto text-base hover:shadow-md">
+                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-6 h-6">
+                            התחברות עם Google
+                        </button>
+                        <button id="btn-login-microsoft" class="bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50 font-bold py-3 px-6 rounded-full shadow-sm transition-all flex items-center justify-center gap-3 w-full sm:w-auto text-base hover:shadow-md">
+                            <img src="https://www.svgrepo.com/show/475661/microsoft-color.svg" alt="Microsoft" class="w-6 h-6">
+                            התחברות עם Microsoft
+                        </button>
+                    </div>
                     <!-- אזור להצגת שגיאות התחברות מדויקות -->
                     <div id="login-error-msg" class="hidden mt-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm max-w-md mx-auto" dir="ltr"></div>
                 </div>
@@ -158,6 +164,11 @@
                                 <label class="block text-sm font-bold text-gray-700 mb-2">תאר במילים שלך מה אתה רוצה לעשות:</label>
                                 <!-- הוספנו כאן את המחלקה placeholder-gray-800 font-medium לטקסט דוגמה שחור וברור -->
                                 <textarea id="input-free-text" rows="8" class="w-full border border-gray-200 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none shadow-sm text-base leading-relaxed placeholder-gray-800 font-medium" placeholder="לדוגמה: אני רוצה לכתוב פוסט לפייסבוק שמזמין בני נוער לסדנת צילום בסמארטפון. חשוב שזה יהיה מרגש, יפיג חששות טכנולוגיים, ושיהיה קצר (עד 50 מילים) עם אמוג'ים..."></textarea>
+                                <div class="flex justify-end mt-2">
+                                    <button id="btn-enhance-idea" class="text-sm bg-gradient-to-r from-purple-100 to-pink-100 hover:from-purple-200 hover:to-pink-200 text-purple-700 font-bold py-1.5 px-4 rounded-lg shadow-sm transition-all flex items-center gap-2">
+                                        ✨ שפר לי את הרעיון עם AI
+                                    </button>
+                                </div>
                                 <p class="text-xs text-gray-500 mt-2 font-medium">המערכת תנתח את הבקשה שלך ותבנה עבורך פרומפט מקצועי המבוסס על מתודולוגיות מתקדמות להפקת תוצאות מדויקות.</p>
                             </div>
                         </div>
@@ -192,6 +203,23 @@
                                 <p class="text-primary font-bold text-lg animate-pulse">הבינה המלאכותית מנסחת...</p>
                             </div>
                             <div id="final-output" class="hidden text-gray-800 whitespace-pre-wrap leading-relaxed font-medium text-lg" dir="auto"></div>
+                            
+                            <!-- Gemini Simulation Container -->
+                            <div id="simulation-wrapper" class="hidden mt-6 pt-6 border-t border-gray-200">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-lg font-bold text-gray-800">איך זה ייראה בפועל?</h3>
+                                    <button id="btn-simulate" class="text-sm bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-2 px-4 rounded-xl shadow-md transition-all flex items-center gap-2">
+                                        ✨ הדגם תוצאה מ-AI
+                                    </button>
+                                </div>
+                                <div id="simulation-output" class="hidden bg-white border-2 border-purple-100 p-5 rounded-2xl shadow-sm text-gray-700 whitespace-pre-wrap text-base font-normal min-h-[100px] relative">
+                                    <div id="sim-loading-indicator" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-white/90 rounded-2xl z-10 backdrop-blur-sm">
+                                        <div class="loader mb-3 w-8 h-8" style="border-top-color: #A855F7; border-width: 4px;"></div>
+                                        <p class="text-purple-600 font-bold text-sm animate-pulse">מייצר תצוגה מקדימה...</p>
+                                    </div>
+                                    <div id="sim-final-text" dir="auto"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -347,7 +375,7 @@
     <!-- Firebase & Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithPopup, OAuthProvider, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
@@ -365,7 +393,9 @@
         };
         const appId = 'ucare-app';
         
-        // מגבלות משתמשים
+        // --- הגדרות אדמין, דומיין מורשה ומגבלות ---
+        const ADMIN_EMAIL = 'הכנס_כאן_את_מייל_הגוגל_שלך@gmail.com'; // אימייל מנהל העל (יכול להיות כל דומיין)
+        const ALLOWED_DOMAIN = '@jdc.org'; // <--- רק משתמשים שהמייל שלהם מסתיים כך יוכלו להתחבר למערכת
         const MAX_DAILY_USAGE = 5;
         let currentUsageData = { date: '', count: 0 };
         
@@ -376,7 +406,13 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const googleProvider = new GoogleAuthProvider();
+        
+        // הגדרת ספק ההתחברות של מיקרוסופט
+        const microsoftProvider = new OAuthProvider('microsoft.com');
+        // הוספת פרמטר שמכריח את המשתמש לבחור חשבון במידה ויש לו כמה חשבונות מיקרוסופט מחוברים
+        microsoftProvider.setCustomParameters({
+            prompt: 'select_account'
+        });
 
         // State
         let currentUser = null;
@@ -386,7 +422,8 @@
         const elInitialLoader = document.getElementById('initial-loader');
         const elLandingPage = document.getElementById('landing-page');
         const elMainApp = document.getElementById('main-app');
-        const btnLogin = document.getElementById('btn-login');
+        const btnLoginGoogle = document.getElementById('btn-login-google');
+        const btnLoginMicrosoft = document.getElementById('btn-login-microsoft');
         const btnLogout = document.getElementById('btn-logout');
         const elUserGreeting = document.getElementById('user-greeting');
         const btnGenerate = document.getElementById('btn-generate');
@@ -397,6 +434,17 @@
         const btnCopy = document.getElementById('btn-copy');
         const elErrorMsg = document.getElementById('error-message');
         const elLoginErrorMsg = document.getElementById('login-error-msg');
+
+        // Gemini UI Elements
+        const btnEnhanceIdea = document.getElementById('btn-enhance-idea');
+        const simulationWrapper = document.getElementById('simulation-wrapper');
+        const btnSimulate = document.getElementById('btn-simulate');
+        const simulationOutput = document.getElementById('simulation-output');
+        const simLoadingIndicator = document.getElementById('sim-loading-indicator');
+        const simFinalText = document.getElementById('sim-final-text');
+        
+        // Gemini API Key (Injected by Environment)
+        const geminiApiKey = "";
 
         // Views
         const viewGenerator = document.getElementById('view-generator');
@@ -451,10 +499,25 @@
         
         setPersistence(auth, browserLocalPersistence)
             .then(() => {
-                onAuthStateChanged(auth, (user) => {
+                onAuthStateChanged(auth, async (user) => {
                     elInitialLoader.classList.add('hidden');
                     
                     if (user) {
+                        
+                        // --- בדיקת הרשאות גישה (דומיין מורשה או מנהל ראשי) ---
+                        const isAuthorized = user.email === ADMIN_EMAIL || user.email.endsWith(ALLOWED_DOMAIN);
+                        
+                        if (!isAuthorized) {
+                            await signOut(auth); // מנתק אותו מיד אם לא מורשה
+                            currentUser = null;
+                            elLandingPage.classList.remove('hidden');
+                            elMainApp.classList.add('hidden');
+                            elLoginErrorMsg.textContent = `הגישה חסומה: המערכת מורשית לעובדי ${ALLOWED_DOMAIN} בלבד.`;
+                            elLoginErrorMsg.classList.remove('hidden');
+                            return; // עוצר את התהליך ולא מאפשר גישה לאפליקציה
+                        }
+
+                        // המשתמש מורשה ויכול להיכנס
                         currentUser = user;
                         elLandingPage.classList.add('hidden');
                         elMainApp.classList.remove('hidden');
@@ -463,9 +526,9 @@
                         const displayName = user.displayName || user.email?.split('@')[0] || "משתמש";
                         elUserGreeting.textContent = `שלום, ${displayName}`;
                         
-                        // בדיקה אם המשתמש כבר אימת סיסמת מנהל בעבר באותו מכשיר
-                        if (localStorage.getItem('ucare_admin_verified') === 'true') {
-                            unlockAdmin(false); // פותח הרשאות אבל לא קופץ לדשבורד בכוח
+                        // בדיקה אוטומטית: אם המייל תואם למייל המנהל, או שאומת בעבר
+                        if (user.email === ADMIN_EMAIL || localStorage.getItem('ucare_admin_verified') === 'true') {
+                            unlockAdmin(false); 
                         } else {
                             updateAdminUI();
                             fetchDailyUsage(); // סופר רק אם הוא לא אדמין מורשה
@@ -476,7 +539,6 @@
                         elLandingPage.classList.remove('hidden');
                         elMainApp.classList.add('hidden');
                         isAdmin = false;
-                        // אפשר לבחור להסיר את הרשאות המנהל בעת התנתקות מלאה לבטיחות מקסימלית
                         localStorage.removeItem('ucare_admin_verified');
                         if (adminUnsubscribe) adminUnsubscribe();
                     }
@@ -487,14 +549,28 @@
                 elInitialLoader.classList.add('hidden');
             });
 
-        btnLogin.addEventListener('click', async () => {
+        btnLoginGoogle.addEventListener('click', async () => {
             try {
                 elLoginErrorMsg.classList.add('hidden'); 
                 elInitialLoader.classList.remove('hidden');
-                elInitialLoader.querySelector('p').textContent = 'מתחבר לחשבון גוגל...';
+                elInitialLoader.querySelector('p').textContent = 'מתחבר לחשבון Google...';
                 await signInWithPopup(auth, googleProvider);
             } catch (error) {
-                console.error("Login failed:", error);
+                console.error("Google Login failed:", error);
+                elLoginErrorMsg.textContent = `שגיאת מערכת: ${error.message} (קוד: ${error.code})`;
+                elLoginErrorMsg.classList.remove('hidden');
+                elInitialLoader.classList.add('hidden');
+            }
+        });
+
+        btnLoginMicrosoft.addEventListener('click', async () => {
+            try {
+                elLoginErrorMsg.classList.add('hidden'); 
+                elInitialLoader.classList.remove('hidden');
+                elInitialLoader.querySelector('p').textContent = 'מתחבר לחשבון Microsoft...';
+                await signInWithPopup(auth, microsoftProvider);
+            } catch (error) {
+                console.error("Microsoft Login failed:", error);
                 elLoginErrorMsg.textContent = `שגיאת מערכת: ${error.message} (קוד: ${error.code})`;
                 elLoginErrorMsg.classList.remove('hidden');
                 elInitialLoader.classList.add('hidden');
@@ -549,7 +625,7 @@
                 const docSnap = await getDoc(docRef);
                 
                 if (docSnap.exists() && docSnap.data().password === pwd) {
-                    unlockAdmin(true); // אם הקליד ססמה ידנית נכונה, קפוץ לדשבורד
+                    unlockAdmin(true); 
                     adminAuthModal.classList.add('hidden');
                 } else {
                     adminAuthError.textContent = "ססמה שגויה. נסה שנית.";
@@ -567,7 +643,6 @@
 
         function unlockAdmin(forceDashboard = false) {
             isAdmin = true;
-            // שמירת חותמת מנהל מקומית על המכשיר שתישאר גם אחרי רענון!
             localStorage.setItem('ucare_admin_verified', 'true');
             updateAdminUI();
             
@@ -766,11 +841,9 @@
             };
 
             try {
-                // עותק 1: תיקייה אישית (אפשרי בזכות חוק 2)
                 const privateRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'ucare_prompts');
                 await addDoc(privateRef, data);
 
-                // עותק 2: פומבי לדשבורד (אפשרי בזכות חוק 1)
                 const publicAdminRef = collection(db, 'artifacts', appId, 'public', 'data', 'all_prompts');
                 await addDoc(publicAdminRef, data);
 
@@ -812,10 +885,102 @@
             elFinalOutput.classList.remove('hidden');
             btnCopy.classList.remove('hidden');
             elFinalOutput.textContent = text;
+
+            // Reset and show Gemini Simulation section
+            simulationWrapper.classList.remove('hidden');
+            simulationOutput.classList.add('hidden');
+            simFinalText.textContent = '';
         }
 
         // ==========================================
-        // COPY MODAL LOGIC (משופר וחסין תקלות)
+        // GEMINI API INTEGRATIONS
+        // ==========================================
+
+        async function fetchGeminiWithBackoff(prompt, systemInstruction) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiApiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemInstruction }] }
+            };
+
+            let retries = 5;
+            let delay = 1000;
+
+            while (retries > 0) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) throw new Error(`Gemini API Error: ${response.status}`);
+                    
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "לא התקבלה תוצאה מ-Gemini.";
+                } catch (error) {
+                    retries--;
+                    if (retries === 0) throw error;
+                    await new Promise(res => setTimeout(res, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        // Feature 1: Enhance Idea using Gemini
+        btnEnhanceIdea.addEventListener('click', async () => {
+            const inputField = document.getElementById('input-free-text');
+            const currentText = inputField.value.trim();
+            
+            if (!currentText) {
+                showError("אנא כתבו רעיון קצר כלשהו לפני שניישם עליו קסם.");
+                return;
+            }
+
+            const originalBtnText = btnEnhanceIdea.innerHTML;
+            btnEnhanceIdea.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> משפר...';
+            btnEnhanceIdea.disabled = true;
+
+            const sysInstruction = "אתה עוזר סיעור מוחות. המשתמש יספק לך רעיון קצר וגולמי למשימה. המטרה שלך היא לקחת את הרעיון הזה, לנסח אותו מחדש באופן עשיר ומפורט יותר, ולהוסיף לו הקשר רלוונטי, קהל יעד משוער, ותוצאה רצויה. החזר אך ורק את הפסקה המורחבת בשפה העברית, ללא הקדמות או סיכומים.";
+
+            try {
+                const enhancedText = await fetchGeminiWithBackoff(currentText, sysInstruction);
+                inputField.value = enhancedText;
+                showError(''); // Clear errors
+            } catch (error) {
+                console.error("Gemini Enhancement Error:", error);
+                showError("אירעה שגיאה בשיפור הרעיון מול Gemini. נסו שוב.");
+            } finally {
+                btnEnhanceIdea.innerHTML = originalBtnText;
+                btnEnhanceIdea.disabled = false;
+            }
+        });
+
+        // Feature 2: Simulate Final Prompt Result using Gemini
+        btnSimulate.addEventListener('click', async () => {
+            const promptText = elFinalOutput.textContent.trim();
+            if (!promptText) return;
+
+            simulationOutput.classList.remove('hidden');
+            simLoadingIndicator.classList.remove('hidden');
+            btnSimulate.disabled = true;
+
+            const sysInstruction = "אתה מודל בינה מלאכותית מתקדם. המשתמש יספק לך 'פרומפט מופנה לבינה מלאכותית'. עליך לקרוא את הפרומפט בעיון, להיכנס לתפקיד שהוגדר בו, ולייצר את התוצאה הטובה ביותר האפשרית בדיוק לפי הכללים והאילוצים שהמשתמש הגדיר בפרומפט. החזר רק את התוצאה הסופית, ללא תיאורים מסביב.";
+
+            try {
+                const simulationResult = await fetchGeminiWithBackoff(promptText, sysInstruction);
+                simFinalText.textContent = simulationResult;
+            } catch (error) {
+                console.error("Gemini Simulation Error:", error);
+                simFinalText.textContent = "אירעה שגיאה ביצירת התצוגה המקדימה. אנא נסו שוב מאוחר יותר.";
+            } finally {
+                simLoadingIndicator.classList.add('hidden');
+                btnSimulate.disabled = false;
+            }
+        });
+
+        // ==========================================
+        // COPY MODAL LOGIC 
         // ==========================================
         
         btnCloseCopyModal.addEventListener('click', () => {
@@ -830,10 +995,8 @@
             const text = elFinalOutput.textContent;
             if(!text) return;
 
-            // יצירת אלמנט נסתר להעתקה - עובד מעולה גם בתוך iframes וגם במובייל
             const textArea = document.createElement("textarea");
             textArea.value = text;
-            // מניעת קפיצת המסך או פתיחת מקלדת במובייל
             textArea.setAttribute('readonly', '');
             textArea.style.position = "fixed";
             textArea.style.top = "0";
@@ -884,6 +1047,7 @@
             elFinalOutput.classList.add('hidden');
             btnCopy.classList.add('hidden');
             elLoadingIndicator.classList.remove('hidden');
+            simulationWrapper.classList.add('hidden');
             btnGenerate.disabled = true;
             btnGenerate.classList.add('opacity-75', 'cursor-not-allowed');
 
