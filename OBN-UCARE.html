@@ -99,13 +99,13 @@
                             <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-6 h-6">
                             התחברות עם Google
                         </button>
-                        <button id="btn-login-microsoft" class="bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50 font-bold py-3 px-6 rounded-full shadow-sm transition-all flex items-center justify-center gap-3 w-full sm:w-auto text-base hover:shadow-md">
-                            <img src="https://www.svgrepo.com/show/475661/microsoft-color.svg" alt="Microsoft" class="w-6 h-6">
-                            התחברות עם Microsoft
+                        <button id="btn-open-email-modal" class="bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50 font-bold py-3 px-6 rounded-full shadow-sm transition-all flex items-center justify-center gap-3 w-full sm:w-auto text-base hover:shadow-md">
+                            <i class="fa-solid fa-envelope text-indigo-600 text-xl"></i>
+                            כניסה עם אימייל ארגוני
                         </button>
                     </div>
                     <!-- אזור להצגת שגיאות התחברות מדויקות -->
-                    <div id="login-error-msg" class="hidden mt-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm max-w-md mx-auto" dir="ltr"></div>
+                    <div id="login-error-msg" class="hidden mt-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm max-w-md mx-auto" dir="rtl"></div>
                 </div>
             </div>
         </div>
@@ -304,6 +304,24 @@
     <!-- MODALS (כל החלונות הקופצים מסודרים כאן)       -->
     <!-- ============================================== -->
 
+    <!-- Modal: Email Login Form -->
+    <div id="email-auth-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl relative">
+            <button id="btn-close-email-modal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-envelope text-2xl text-primary"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2 text-center">כניסה למורשים בלבד</h3>
+            <p class="text-gray-500 mb-6 text-sm text-center leading-relaxed">אנא הזן את כתובת האימייל הארגונית שלך כדי להזדהות ולגשת למערכת.</p>
+            
+            <input type="email" id="input-org-email" placeholder="name@domain.com" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 mb-4 focus:ring-2 focus:ring-primary outline-none text-left font-mono" dir="ltr">
+            
+            <button id="btn-submit-org-email" class="w-full bg-primary hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-md">
+                המשך למערכת
+            </button>
+        </div>
+    </div>
+
     <!-- Modal: Copy Success -->
     <div id="copy-success-modal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
         <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center transform transition-all scale-100">
@@ -375,7 +393,7 @@
     <!-- Firebase & Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithPopup, OAuthProvider, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signInAnonymously, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
@@ -393,9 +411,8 @@
         };
         const appId = 'ucare-app';
         
-        // --- הגדרות אדמין, דומיין מורשה ומגבלות ---
-        const ADMIN_EMAIL = 'הכנס_כאן_את_מייל_הגוגל_שלך@gmail.com'; // אימייל מנהל העל (יכול להיות כל דומיין)
-        const ALLOWED_DOMAIN = '@jdc.org'; // <--- רק משתמשים שהמייל שלהם מסתיים כך יוכלו להתחבר למערכת
+        // הגדרת מייל המנהל בקוד (ניתן לצפייה, אך לא מסכן דבר כי נדרשת ססמה או התחברות גוגל מאובטחת)
+        const ADMIN_EMAIL = 'הכנס_כאן_את_מייל_הגוגל_שלך@gmail.com'; 
         const MAX_DAILY_USAGE = 5;
         let currentUsageData = { date: '', count: 0 };
         
@@ -406,24 +423,19 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
-        // הגדרת ספק ההתחברות של מיקרוסופט
-        const microsoftProvider = new OAuthProvider('microsoft.com');
-        // הוספת פרמטר שמכריח את המשתמש לבחור חשבון במידה ויש לו כמה חשבונות מיקרוסופט מחוברים
-        microsoftProvider.setCustomParameters({
-            prompt: 'select_account'
-        });
+        const googleProvider = new GoogleAuthProvider();
 
         // State
         let currentUser = null;
         let adminUnsubscribe = null;
+        let isLoginInProgress = false; // מונע התנגשויות תהליכי התחברות
 
         // UI Elements
         const elInitialLoader = document.getElementById('initial-loader');
         const elLandingPage = document.getElementById('landing-page');
         const elMainApp = document.getElementById('main-app');
         const btnLoginGoogle = document.getElementById('btn-login-google');
-        const btnLoginMicrosoft = document.getElementById('btn-login-microsoft');
+        const btnOpenEmailModal = document.getElementById('btn-open-email-modal');
         const btnLogout = document.getElementById('btn-logout');
         const elUserGreeting = document.getElementById('user-greeting');
         const btnGenerate = document.getElementById('btn-generate');
@@ -453,12 +465,16 @@
         const btnBackToGen = document.getElementById('btn-back-to-gen');
 
         // Modals
+        const emailAuthModal = document.getElementById('email-auth-modal');
+        const btnCloseEmailModal = document.getElementById('btn-close-email-modal');
+        const inputOrgEmail = document.getElementById('input-org-email');
+        const btnSubmitOrgEmail = document.getElementById('btn-submit-org-email');
+
         const copySuccessModal = document.getElementById('copy-success-modal');
         const btnCloseCopyModal = document.getElementById('btn-close-copy-modal');
         const limitReachedModal = document.getElementById('limit-reached-modal');
         const btnCloseLimitModal = document.getElementById('btn-close-limit-modal');
 
-        // Admin Modals Elements
         const btnOpenAdminAuth = document.getElementById('btn-open-admin-auth');
         const adminAuthModal = document.getElementById('admin-auth-modal');
         const btnCloseAdminAuth = document.getElementById('btn-close-admin-auth');
@@ -490,50 +506,82 @@
             }
         }
 
+        btnCloseEmailModal.addEventListener('click', () => emailAuthModal.classList.add('hidden'));
         btnCloseLimitModal.addEventListener('click', () => limitReachedModal.classList.add('hidden'));
         btnCloseViewPrompt.addEventListener('click', () => adminViewPromptModal.classList.add('hidden'));
 
         // ==========================================
-        // AUTHENTICATION LOGIC
+        // AUTHENTICATION LOGIC (Google + Anonymous DB Verification)
         // ==========================================
         
+        // פונקציית אימות מרכזית (מול חוקי ה-DB הנסתרים)
+        async function verifyAndEnter(user, emailToVerify, displayName) {
+            try {
+                // המערכת מנסה לכתוב את האימייל ל-DB. ה-HTML "טיפש" ולא יודע איזה דומיין מותר.
+                // חוקי ה-Firebase מגדירים איזה סיומת לאשר, ואם התיקייה תדחה את הבקשה נקבל שגיאה.
+                const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile');
+                await setDoc(profileRef, { email: emailToVerify });
+
+                // ה-DB אישר!
+                currentUser = user;
+                elLandingPage.classList.add('hidden');
+                elMainApp.classList.remove('hidden');
+                elLoginErrorMsg.classList.add('hidden');
+                
+                elUserGreeting.textContent = `שלום, ${displayName || emailToVerify.split('@')[0]}`;
+                
+                if (emailToVerify === ADMIN_EMAIL || localStorage.getItem('ucare_admin_verified') === 'true') {
+                    unlockAdmin(false); 
+                } else {
+                    updateAdminUI();
+                    fetchDailyUsage(); 
+                }
+            } catch (error) {
+                // ה-DB דחה את הגישה בגלל חוקי האבטחה (Permission Denied)
+                console.error("Access denied by DB rules:", error);
+                await signOut(auth);
+                currentUser = null;
+                elLandingPage.classList.remove('hidden');
+                elMainApp.classList.add('hidden');
+                elLoginErrorMsg.textContent = "הגישה נדחתה: אימייל זה אינו מורשה במערכת.";
+                elLoginErrorMsg.classList.remove('hidden');
+            } finally {
+                elInitialLoader.classList.add('hidden');
+            }
+        }
+
         setPersistence(auth, browserLocalPersistence)
             .then(() => {
                 onAuthStateChanged(auth, async (user) => {
-                    elInitialLoader.classList.add('hidden');
-                    
+                    if (isLoginInProgress) return; // לא להתערב אם כפתור התחברות בדיוק רץ
+
                     if (user) {
-                        
-                        // --- בדיקת הרשאות גישה (דומיין מורשה או מנהל ראשי) ---
-                        const isAuthorized = user.email === ADMIN_EMAIL || user.email.endsWith(ALLOWED_DOMAIN);
-                        
-                        if (!isAuthorized) {
-                            await signOut(auth); // מנתק אותו מיד אם לא מורשה
-                            currentUser = null;
-                            elLandingPage.classList.remove('hidden');
-                            elMainApp.classList.add('hidden');
-                            elLoginErrorMsg.textContent = `הגישה חסומה: המערכת מורשית לעובדי ${ALLOWED_DOMAIN} בלבד.`;
-                            elLoginErrorMsg.classList.remove('hidden');
-                            return; // עוצר את התהליך ולא מאפשר גישה לאפליקציה
+                        try {
+                            // ברענון עמוד רגיל - נבדוק מול ה-DB האם הפרופיל שלו תקין
+                            const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile');
+                            const snap = await getDoc(profileRef);
+                            
+                            if (snap.exists()) {
+                                const email = snap.data().email;
+                                currentUser = user;
+                                elLandingPage.classList.add('hidden');
+                                elMainApp.classList.remove('hidden');
+                                elUserGreeting.textContent = `שלום, ${user.displayName || email.split('@')[0]}`;
+                                
+                                if (email === ADMIN_EMAIL || localStorage.getItem('ucare_admin_verified') === 'true') {
+                                    unlockAdmin(false);
+                                } else {
+                                    updateAdminUI();
+                                    fetchDailyUsage();
+                                }
+                            } else {
+                                await signOut(auth);
+                                elInitialLoader.classList.add('hidden');
+                            }
+                        } catch(e) {
+                            await signOut(auth);
+                            elInitialLoader.classList.add('hidden');
                         }
-
-                        // המשתמש מורשה ויכול להיכנס
-                        currentUser = user;
-                        elLandingPage.classList.add('hidden');
-                        elMainApp.classList.remove('hidden');
-                        elLoginErrorMsg.classList.add('hidden');
-                        
-                        const displayName = user.displayName || user.email?.split('@')[0] || "משתמש";
-                        elUserGreeting.textContent = `שלום, ${displayName}`;
-                        
-                        // בדיקה אוטומטית: אם המייל תואם למייל המנהל, או שאומת בעבר
-                        if (user.email === ADMIN_EMAIL || localStorage.getItem('ucare_admin_verified') === 'true') {
-                            unlockAdmin(false); 
-                        } else {
-                            updateAdminUI();
-                            fetchDailyUsage(); // סופר רק אם הוא לא אדמין מורשה
-                        }
-
                     } else {
                         currentUser = null;
                         elLandingPage.classList.remove('hidden');
@@ -541,6 +589,7 @@
                         isAdmin = false;
                         localStorage.removeItem('ucare_admin_verified');
                         if (adminUnsubscribe) adminUnsubscribe();
+                        elInitialLoader.classList.add('hidden');
                     }
                 });
             })
@@ -549,39 +598,64 @@
                 elInitialLoader.classList.add('hidden');
             });
 
+        // התחברות גוגל (מאומתת)
         btnLoginGoogle.addEventListener('click', async () => {
             try {
+                isLoginInProgress = true;
                 elLoginErrorMsg.classList.add('hidden'); 
                 elInitialLoader.classList.remove('hidden');
                 elInitialLoader.querySelector('p').textContent = 'מתחבר לחשבון Google...';
-                await signInWithPopup(auth, googleProvider);
+                const result = await signInWithPopup(auth, googleProvider);
+                await verifyAndEnter(result.user, result.user.email, result.user.displayName);
             } catch (error) {
                 console.error("Google Login failed:", error);
                 elLoginErrorMsg.textContent = `שגיאת מערכת: ${error.message} (קוד: ${error.code})`;
                 elLoginErrorMsg.classList.remove('hidden');
                 elInitialLoader.classList.add('hidden');
+            } finally {
+                isLoginInProgress = false;
             }
         });
 
-        btnLoginMicrosoft.addEventListener('click', async () => {
+        // פתיחת חלון אימייל ארגוני
+        btnOpenEmailModal.addEventListener('click', () => {
+            inputOrgEmail.value = '';
+            emailAuthModal.classList.remove('hidden');
+        });
+
+        // אימות ושליחת אימייל ארגוני למסד הנתונים
+        btnSubmitOrgEmail.addEventListener('click', async () => {
+            const email = inputOrgEmail.value.trim().toLowerCase();
+            if (!email) return;
+            
+            emailAuthModal.classList.add('hidden');
+            
             try {
+                isLoginInProgress = true;
                 elLoginErrorMsg.classList.add('hidden'); 
                 elInitialLoader.classList.remove('hidden');
-                elInitialLoader.querySelector('p').textContent = 'מתחבר לחשבון Microsoft...';
-                await signInWithPopup(auth, microsoftProvider);
+                elInitialLoader.querySelector('p').textContent = 'מוודא הרשאות מערכת...';
+                
+                const result = await signInAnonymously(auth);
+                await verifyAndEnter(result.user, email, "משתמש");
             } catch (error) {
-                console.error("Microsoft Login failed:", error);
-                elLoginErrorMsg.textContent = `שגיאת מערכת: ${error.message} (קוד: ${error.code})`;
+                console.error("Anonymous Login failed:", error);
+                elLoginErrorMsg.textContent = `שגיאת אימות: ${error.message}`;
                 elLoginErrorMsg.classList.remove('hidden');
                 elInitialLoader.classList.add('hidden');
+            } finally {
+                isLoginInProgress = false;
             }
         });
 
         btnLogout.addEventListener('click', async () => {
             try {
+                isLoginInProgress = true;
                 await signOut(auth);
             } catch (error) {
                 console.error("Logout error", error);
+            } finally {
+                isLoginInProgress = false;
             }
         });
 
