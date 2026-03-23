@@ -156,7 +156,8 @@
                         <div class="space-y-4">
                             <div class="relative group">
                                 <label class="block text-sm font-bold text-gray-700 mb-2">תאר במילים שלך מה אתה רוצה לעשות:</label>
-                                <textarea id="input-free-text" rows="8" class="w-full border border-gray-200 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none shadow-sm text-base leading-relaxed" placeholder="לדוגמה: אני רוצה לכתוב פוסט לפייסבוק שמזמין בני נוער לסדנת צילום בסמארטפון. חשוב שזה יהיה מרגש, יפיג חששות טכנולוגיים, ושיהיה קצר (עד 50 מילים) עם אמוג'ים..."></textarea>
+                                <!-- הוספנו כאן את המחלקה placeholder-gray-800 font-medium לטקסט דוגמה שחור וברור -->
+                                <textarea id="input-free-text" rows="8" class="w-full border border-gray-200 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none shadow-sm text-base leading-relaxed placeholder-gray-800 font-medium" placeholder="לדוגמה: אני רוצה לכתוב פוסט לפייסבוק שמזמין בני נוער לסדנת צילום בסמארטפון. חשוב שזה יהיה מרגש, יפיג חששות טכנולוגיים, ושיהיה קצר (עד 50 מילים) עם אמוג'ים..."></textarea>
                                 <p class="text-xs text-gray-500 mt-2 font-medium">המערכת תנתח את הבקשה שלך ותבנה עבורך פרומפט מקצועי המבוסס על מתודולוגיות מתקדמות להפקת תוצאות מדויקות.</p>
                             </div>
                         </div>
@@ -364,6 +365,8 @@
         };
         const appId = 'ucare-app';
         
+        // --- הגדרות אדמין ומגבלות ---
+        const ADMIN_EMAIL = 'הכנס_כאן_את_מייל_הגוגל_שלך@gmail.com'; // <--- ערוך את השורה הזו עם המייל שאיתו אתה נכנס ל-Google!
         const MAX_DAILY_USAGE = 5;
         let currentUsageData = { date: '', count: 0 };
         
@@ -461,8 +464,13 @@
                         const displayName = user.displayName || user.email?.split('@')[0] || "משתמש";
                         elUserGreeting.textContent = `שלום, ${displayName}`;
                         
-                        updateAdminUI();
-                        if (!isAdmin) fetchDailyUsage();
+                        // בדיקה אוטומטית: אם המייל תואם למייל המנהל, תן הרשאות אוטומטית!
+                        if (user.email === ADMIN_EMAIL || sessionStorage.getItem('ucare_admin') === 'true') {
+                            unlockAdmin(false); // פותח הרשאות אבל לא קופץ לדשבורד בכוח
+                        } else {
+                            updateAdminUI();
+                            fetchDailyUsage(); // סופר רק אם הוא לא אדמין
+                        }
 
                     } else {
                         currentUser = null;
@@ -541,7 +549,7 @@
                 const docSnap = await getDoc(docRef);
                 
                 if (docSnap.exists() && docSnap.data().password === pwd) {
-                    unlockAdmin();
+                    unlockAdmin(true); // אם הקליד ססמה ידנית, שלח אותו לדשבורד
                     adminAuthModal.classList.add('hidden');
                 } else {
                     adminAuthError.textContent = "ססמה שגויה. נסה שנית.";
@@ -557,15 +565,17 @@
             }
         });
 
-        function unlockAdmin() {
+        function unlockAdmin(forceDashboard = false) {
             isAdmin = true;
             sessionStorage.setItem('ucare_admin', 'true');
             updateAdminUI();
             
-            viewGenerator.classList.add('hidden');
-            viewAdmin.classList.remove('hidden');
-            viewAdmin.classList.add('flex');
-            fetchAdminData();
+            if (forceDashboard) {
+                viewGenerator.classList.add('hidden');
+                viewAdmin.classList.remove('hidden');
+                viewAdmin.classList.add('flex');
+                fetchAdminData();
+            }
         }
 
         // ==========================================
