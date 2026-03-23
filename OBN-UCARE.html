@@ -481,7 +481,7 @@
         // ==========================================
         
         // פונקציית אימות מרכזית (מול חוקי ה-DB הנסתרים)
-        async function verifyAndEnter(user, emailToVerify, displayName) {
+        async function verifyAndEnter(user, emailToVerify, displayName, isGoogleLogin = false) {
             try {
                 // המערכת מנסה לכתוב את האימייל ל-DB. ה-HTML "טיפש" ולא יודע איזה דומיין מותר.
                 // חוקי ה-Firebase מגדירים איזה סיומת לאשר, ואם התיקייה תדחה את הבקשה נקבל שגיאה.
@@ -509,7 +509,13 @@
                 currentUser = null;
                 elLandingPage.classList.remove('hidden');
                 elMainApp.classList.add('hidden');
-                elLoginErrorMsg.textContent = "הגישה נדחתה: אימייל זה אינו מורשה במערכת.";
+                
+                if (isGoogleLogin) {
+                    elLoginErrorMsg.textContent = "שגיאת הרשאות במסד הנתונים: אנא עדכן את ה-Rules ב-Firebase.";
+                } else {
+                    elLoginErrorMsg.textContent = "הגישה נדחתה: אימייל זה אינו מורשה במערכת.";
+                }
+                
                 elLoginErrorMsg.classList.remove('hidden');
             } finally {
                 elInitialLoader.classList.add('hidden');
@@ -572,7 +578,7 @@
                 elInitialLoader.classList.remove('hidden');
                 elInitialLoader.querySelector('p').textContent = 'מתחבר לחשבון Google...';
                 const result = await signInWithPopup(auth, googleProvider);
-                await verifyAndEnter(result.user, result.user.email, result.user.displayName);
+                await verifyAndEnter(result.user, result.user.email, result.user.displayName, true);
             } catch (error) {
                 console.error("Google Login failed:", error);
                 elLoginErrorMsg.textContent = `שגיאת מערכת: ${error.message} (קוד: ${error.code})`;
@@ -603,7 +609,7 @@
                 elInitialLoader.querySelector('p').textContent = 'מוודא הרשאות מערכת...';
                 
                 const result = await signInAnonymously(auth);
-                await verifyAndEnter(result.user, email, "משתמש");
+                await verifyAndEnter(result.user, email, "משתמש", false);
             } catch (error) {
                 console.error("Anonymous Login failed:", error);
                 elLoginErrorMsg.textContent = `שגיאת אימות: ${error.message}`;
