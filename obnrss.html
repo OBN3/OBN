@@ -51,14 +51,17 @@
                 
                 <!-- API Keys & Models -->
                 <div class="glass-card p-6 rounded-2xl shadow-sm border-r-4 border-blue-500">
-                    <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                        <span>🔑</span> הגדרות מנוע
-                    </h2>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold flex items-center gap-2">
+                            <span>🔑</span> הגדרות מנוע
+                        </h2>
+                        <button onclick="clearAllKeys()" class="text-[10px] text-red-500 hover:underline">נקה מפתחות</button>
+                    </div>
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Gemini Key & Model</label>
-                            <input type="password" id="geminiKey" class="w-full p-2 border rounded-lg mb-2 outline-none focus:ring-2 focus:ring-blue-500" placeholder="הזן מפתח Gemini...">
-                            <select id="geminiModel" class="w-full p-2 border rounded-lg text-sm bg-slate-50">
+                            <input type="password" id="geminiKey" oninput="saveKeyState(this)" class="w-full p-2 border rounded-lg mb-2 outline-none focus:ring-2 focus:ring-blue-500" placeholder="הזן מפתח Gemini...">
+                            <select id="geminiModel" onchange="saveKeyState(this)" class="w-full p-2 border rounded-lg text-sm bg-slate-50">
                                 <option value="gemini-2.5-flash-preview-09-2025">Gemini 2.5 Flash</option>
                                 <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite</option>
                                 <option value="gemma-3-1b-it">Gemma 3 1B</option>
@@ -69,8 +72,8 @@
                         </div>
                         <div class="pt-2 border-t border-slate-100">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Groq Key & Model</label>
-                            <input type="password" id="groqKey" class="w-full p-2 border rounded-lg mb-2 outline-none focus:ring-2 focus:ring-emerald-500" placeholder="הזן מפתח Groq...">
-                            <select id="groqModel" class="w-full p-2 border rounded-lg text-sm bg-slate-50 mb-2" onchange="toggleCustomModel(this.value)">
+                            <input type="password" id="groqKey" oninput="saveKeyState(this)" class="w-full p-2 border rounded-lg mb-2 outline-none focus:ring-2 focus:ring-emerald-500" placeholder="הזן מפתח Groq...">
+                            <select id="groqModel" onchange="handleModelChange(this)" class="w-full p-2 border rounded-lg text-sm bg-slate-50 mb-2">
                                 <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Versatile)</option>
                                 <option value="llama-3.1-8b-instant">Llama 3.1 8B (Instant)</option>
                                 <option value="openai/gpt-oss-120b">GPT OSS 120B (OpenAI)</option>
@@ -79,9 +82,10 @@
                                 <option value="groq/compound-mini">Groq Compound Mini</option>
                                 <option value="custom">-- מודל בהתאמה אישית --</option>
                             </select>
-                            <input type="text" id="customGroqModel" class="hidden w-full p-2 border rounded-lg text-sm mb-2 outline-none focus:ring-2 focus:ring-emerald-500" placeholder="הזן שם מודל ידנית...">
+                            <input type="text" id="customGroqModel" oninput="saveKeyState(this)" class="hidden w-full p-2 border rounded-lg text-sm mb-2 outline-none focus:ring-2 focus:ring-emerald-500" placeholder="הזן שם מודל ידנית...">
                         </div>
                     </div>
+                    <p id="saveFeedback" class="text-[10px] text-emerald-600 mt-2 opacity-0 transition-opacity">נשמר בהצלחה ✓</p>
                 </div>
 
                 <!-- Sources Selection -->
@@ -175,6 +179,7 @@
         ];
 
         let allArticles = [];
+        let saveTimeout;
 
         function init() {
             if (window.location.protocol === 'file:') {
@@ -192,7 +197,7 @@
                 list.appendChild(div);
             });
             
-            // Persistence
+            // Fixed persistence: mapping logic to element IDs
             ['geminiKey', 'groqKey', 'geminiModel', 'groqModel', 'customGroqModel'].forEach(id => {
                 const val = localStorage.getItem(id);
                 if (val) {
@@ -201,8 +206,25 @@
                 }
             });
 
-            // Trigger initial visibility of custom model input
             toggleCustomModel(document.getElementById('groqModel').value);
+        }
+
+        // Proactive: Auto-save keys as the user types
+        function saveKeyState(el) {
+            localStorage.setItem(el.id, el.value);
+            
+            // Visual feedback
+            const feedback = document.getElementById('saveFeedback');
+            feedback.style.opacity = '1';
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                feedback.style.opacity = '0';
+            }, 1500);
+        }
+
+        function handleModelChange(el) {
+            saveKeyState(el);
+            toggleCustomModel(el.value);
         }
 
         function toggleCustomModel(val) {
@@ -212,6 +234,16 @@
             } else {
                 customInput.classList.add('hidden');
             }
+        }
+
+        function clearAllKeys() {
+            ['geminiKey', 'groqKey', 'geminiModel', 'groqModel', 'customGroqModel'].forEach(id => {
+                localStorage.removeItem(id);
+                const el = document.getElementById(id);
+                if (el) el.value = (el.tagName === 'SELECT' ? el.options[0].value : '');
+            });
+            toggleCustomModel(document.getElementById('groqModel').value);
+            alert('כל המפתחות וההגדרות נמחקו מהזיכרון המקומי.');
         }
 
         function toggleAllSources(checked) {
@@ -340,13 +372,6 @@
             
             const groqModel = groqModelRaw === 'custom' ? customGroqModel : groqModelRaw;
 
-            // Save state
-            localStorage.setItem('gemini_key', geminiKey);
-            localStorage.setItem('groq_key', groqKey);
-            localStorage.setItem('geminiModel', geminiModel);
-            localStorage.setItem('groqModel', groqModelRaw);
-            localStorage.setItem('customGroqModel', customGroqModel);
-
             const selectedIndices = Array.from(document.querySelectorAll('.art-selector:checked')).map(i => parseInt(i.id.split('-')[1]));
             if (selectedIndices.length === 0) {
                 alert('בחר לפחות כתבה אחת לעיבוד.');
@@ -384,7 +409,7 @@
                 body: JSON.stringify({ 
                     contents: [{ parts: [{ text: prompt }] }],
                     generationConfig: {
-                        maxOutputTokens: 8192 // Requesting maximum response length
+                        maxOutputTokens: 8192
                     }
                 })
             });
@@ -405,7 +430,7 @@
                     model: model, 
                     messages: [{ role: "user", content: prompt }],
                     temperature: 0.7,
-                    max_tokens: 4096 // Groq's typical max context for output
+                    max_tokens: 4096
                 })
             });
             const data = await response.json();
