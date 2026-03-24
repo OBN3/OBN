@@ -150,9 +150,8 @@
         </footer>
     </div>
 
-    <!-- מסך עריכה (המוכר והרגיל) -->
+    <!-- מסך עריכה -->
     <div id="editorView" class="fixed inset-0 bg-white z-[200] flex flex-col h-[100dvh]" style="display: none;">
-        <!-- ... (שורת ה-Header זהה לחלוטין) ... -->
         <header class="flex-none bg-white border-b border-gray-100 p-3 flex justify-between items-center z-10 shadow-sm">
             <button onclick="window.handleEditorBack()" class="p-2.5 text-gray-600 hover:bg-gray-100 rounded-full transition-colors active:scale-90">
                 <i data-lucide="arrow-right" class="w-6 h-6"></i>
@@ -197,7 +196,6 @@
             <input type="hidden" id="existingAudioUrl" value="">
         </main>
 
-        <!-- סרגל כלים למדיה -->
         <div class="bg-white border-t border-gray-200 p-3 flex justify-around items-center shadow-[0_-4px_10px_rgba(0,0,0,0.03)] pb-safe" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
             <button onclick="window.triggerImageSelect('gallery')" class="flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition-colors p-2">
                 <i data-lucide="image" class="w-6 h-6"></i>
@@ -217,9 +215,7 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- ממשק מנהל (Admin Dashboard)                -->
-    <!-- ========================================== -->
+    <!-- ממשק מנהל -->
     <div id="adminView" class="fixed inset-0 bg-gray-50 z-[800] flex flex-col h-[100dvh]" style="display: none;">
         <header class="bg-slate-800 text-white p-4 flex justify-between items-center shadow-lg relative z-10">
             <button onclick="window.closeAdminPanel()" class="p-2 hover:bg-slate-700 rounded-full transition flex items-center gap-2">
@@ -231,7 +227,6 @@
         </header>
 
         <main class="flex-1 p-4 overflow-y-auto w-full max-w-6xl mx-auto space-y-6">
-            <!-- קלפי סטטיסטיקה -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
                     <div class="text-3xl font-black text-blue-600 mb-1" id="adminStatUsers">0</div>
@@ -251,7 +246,6 @@
                 </div>
             </div>
 
-            <!-- רשימת משתמשים -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="bg-slate-50 border-b border-gray-100 p-4">
                     <h2 class="font-bold text-gray-700">פירוט משתמשים</h2>
@@ -267,7 +261,6 @@
                             </tr>
                         </thead>
                         <tbody id="adminUsersTableBody" class="divide-y divide-gray-100">
-                            <!-- דינמי -->
                         </tbody>
                     </table>
                 </div>
@@ -275,7 +268,7 @@
         </main>
     </div>
 
-    <!-- מודל צפייה בפתקי משתמש (למנהל) -->
+    <!-- מודל צפייה בפתקי משתמש למנהל -->
     <div id="adminNotesModal" class="fixed inset-0 z-[900] hidden fade-in">
         <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" onclick="document.getElementById('adminNotesModal').classList.add('hidden')"></div>
         <div class="fixed inset-0 overflow-y-auto z-10 pointer-events-none flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -287,15 +280,12 @@
                     </button>
                 </div>
                 <div class="flex-1 overflow-y-auto pr-2 space-y-4" id="adminNotesModalContent">
-                    <!-- דינמי -->
                 </div>
             </div>
         </div>
     </div>
-    <!-- סוף ממשק מנהל -->
 
-
-    <!-- מודל תמונה במסך מלא (Lightbox) -->
+    <!-- מודלים נוספים -->
     <div id="fullscreenImageModal" class="fixed inset-0 z-[600] hidden fade-in flex items-center justify-center bg-black/95 backdrop-blur-md" onclick="window.closeFullscreenImage()">
         <button class="absolute top-4 right-4 p-3 text-white/70 hover:text-white bg-black/30 hover:bg-black/60 rounded-full transition-all z-10" onclick="window.closeFullscreenImage()">
             <i data-lucide="x" class="w-6 h-6"></i>
@@ -303,7 +293,6 @@
         <img id="fullscreenImageSrc" src="" class="max-w-full max-h-[90vh] object-contain pointer-events-none p-4" />
     </div>
 
-    <!-- תפריטים מודלים רגילים ... -->
     <div id="contextMenuOverlay" class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-[300] fade-in hidden" onclick="window.closeContextMenu()"></div>
     <div id="contextMenuModal" class="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 z-[350] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transform translate-y-full transition-transform duration-300" style="padding-bottom: max(1.5rem, env(safe-area-inset-bottom));">
         <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
@@ -316,7 +305,6 @@
         </div>
     </div>
 
-    <!-- מודל שיתוף וואטסאפ מרובה -->
     <div id="whatsappModal" class="fixed inset-0 z-[400] hidden fade-in">
         <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" onclick="window.history.back()"></div>
         <div class="fixed inset-0 overflow-y-auto z-10 pointer-events-none" style="-webkit-overflow-scrolling: touch;">
@@ -338,7 +326,6 @@
         </div>
     </div>
 
-    <!-- מודל מדריך -->
     <div id="helpModal" class="fixed inset-0 z-[400] hidden fade-in">
         <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" onclick="window.history.back()"></div>
         <div class="fixed inset-0 overflow-y-auto z-10 pointer-events-none" style="-webkit-overflow-scrolling: touch;">
@@ -372,8 +359,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-        // הוספנו את collectionGroup, getDocs, getDoc בשביל ממשק המנהל
-        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, enableIndexedDbPersistence, collectionGroup, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+        // הוספנו את enableMultiTabIndexedDbPersistence למניעת שגיאת ריבוי חלונות
+        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, enableMultiTabIndexedDbPersistence, collectionGroup, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
         const firebaseConfig = {
@@ -391,7 +378,7 @@
         const storage = getStorage(app);
         const appId = "braindump-web";
 
-        try { enableIndexedDbPersistence(db).catch(() => {}); } catch (e) {}
+        try { enableMultiTabIndexedDbPersistence(db).catch(() => {}); } catch (e) {}
 
         window.currentUser = null;
         window.currentNotes = []; 
@@ -409,7 +396,6 @@
         let skipAutoSave = false;
         let isSaving = false; 
 
-        // --- משתני ניהול ---
         let adminClickCount = 0;
         let adminClickTimeout = null;
 
@@ -434,7 +420,6 @@
                     document.getElementById('userAvatarFallback').style.display = 'none';
                 }
 
-                // * פרואקטיביות *: נשמור את פרופיל המשתמש ב-DB כדי שהמנהל יוכל לראות למי שייך כל פתק
                 try {
                     const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'info');
                     await setDoc(profileRef, {
@@ -477,31 +462,25 @@
             });
         }
 
-        window.showToast = (msg) => {
+        window.showToast = (msg, duration = 3000) => {
             const toast = document.getElementById('toast');
             toast.innerHTML = msg;
             toast.classList.remove('opacity-0', 'translate-y-4');
             lucide.createIcons();
-            setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-4'); }, 3000);
+            setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-4'); }, duration);
         };
 
         window.exportMenuToggle = () => { document.getElementById('exportMenu').classList.toggle('hidden'); };
 
-        // ==========================================
-        //         מערכת מנהל (Admin Logic)
-        // ==========================================
-        
         window.triggerAdminLogin = () => {
             adminClickCount++;
             clearTimeout(adminClickTimeout);
-            adminClickTimeout = setTimeout(() => { adminClickCount = 0; }, 3000); // איפוס אחרי 3 שניות
+            adminClickTimeout = setTimeout(() => { adminClickCount = 0; }, 3000);
 
             if(adminClickCount >= 5) {
                 adminClickCount = 0;
                 const pwd = prompt("מצב מנהל: הכנס סיסמה");
-                if(pwd) {
-                    window.verifyAndLoadAdmin(pwd);
-                }
+                if(pwd) { window.verifyAndLoadAdmin(pwd); }
             }
         };
 
@@ -510,7 +489,6 @@
             document.getElementById('loadingView').style.display = 'flex';
 
             try {
-                // 1. בדיקת הסיסמה מול מסד הנתונים
                 const configRef = doc(db, 'artifacts', appId, 'admin', 'config');
                 const configSnap = await getDoc(configRef);
                 
@@ -524,10 +502,8 @@
                 document.getElementById('listView').style.display = 'none';
                 document.getElementById('adminView').style.display = 'flex';
                 
-                // 2. טעינת כל המידע ממסד הנתונים
                 document.getElementById('loadingText').textContent = 'אוסף נתוני משתמשים...';
                 
-                // משיכת הפרופילים (ששמרנו קודם) כדי לדעת שמות משתמשים
                 const profilesQuery = collectionGroup(db, 'profile');
                 const profilesSnap = await getDocs(profilesQuery);
                 const userProfiles = {};
@@ -537,7 +513,6 @@
                     userProfiles[userId] = doc.data();
                 });
 
-                // משיכת כל הפתקים של כולם
                 const notesQuery = collectionGroup(db, 'notes');
                 const notesSnap = await getDocs(notesQuery);
 
@@ -553,40 +528,28 @@
                         usersData[userId] = { 
                             userId: userId,
                             profile: userProfiles[userId] || { name: 'לא ידוע', email: userId },
-                            notes: [], 
-                            activeNotesCount: 0,
-                            lastActive: 0 
+                            notes: [], activeNotesCount: 0, lastActive: 0 
                         };
                     }
                     
                     usersData[userId].notes.push(note);
-                    if(!note.deleted) {
-                        usersData[userId].activeNotesCount++;
-                        totalNotes++;
-                    }
+                    if(!note.deleted) { usersData[userId].activeNotesCount++; totalNotes++; }
                     if(note.imageUrl) totalImages++;
                     if(note.audioUrl) totalAudio++;
 
                     const noteTime = new Date(note.updated_at || note.created_at).getTime();
-                    if(noteTime > usersData[userId].lastActive) {
-                        usersData[userId].lastActive = noteTime;
-                    }
+                    if(noteTime > usersData[userId].lastActive) { usersData[userId].lastActive = noteTime; }
                 });
 
-                // עידכון הדשבורד
                 document.getElementById('adminStatUsers').textContent = Object.keys(usersData).length;
                 document.getElementById('adminStatNotes').textContent = totalNotes;
                 document.getElementById('adminStatImages').textContent = totalImages;
                 document.getElementById('adminStatAudio').textContent = totalAudio;
 
-                // יצירת טבלת המשתמשים
                 const tbody = document.getElementById('adminUsersTableBody');
                 tbody.innerHTML = '';
                 
-                // המרת האובייקט למערך ומיון לפי פעילות אחרונה
                 const usersArray = Object.values(usersData).sort((a,b) => b.lastActive - a.lastActive);
-                
-                // שמירה גלובלית כדי להציג את הפתקים בלחיצה
                 window.adminGlobalUsersData = usersData;
 
                 usersArray.forEach(user => {
@@ -613,12 +576,15 @@
                     `;
                     tbody.appendChild(tr);
                 });
-
                 lucide.createIcons();
 
             } catch (err) {
-                console.error(err);
-                window.showToast("שגיאת הרשאות! ודא שחוקי ה-Firestore מעודכנים");
+                console.error("Admin Load Error:", err);
+                if (err.code === 'permission-denied') {
+                    window.showToast("שגיאת הרשאות! פיירבייס חוסם גישה (תקן את ה-Rules לפי המדריך)", 5000);
+                } else {
+                    window.showToast("שגיאה בטעינת ממשק מנהל.");
+                }
             } finally {
                 document.getElementById('loadingView').style.display = 'none';
             }
@@ -649,8 +615,6 @@
 
                     const div = document.createElement('div');
                     div.className = "bg-gray-50 border border-gray-200 rounded-xl p-4";
-                    
-                    // חלק מקוצר (Summary)
                     const title = note.title ? `<strong class="text-gray-800">${note.title}</strong>` : '';
                     const contentSnippet = note.content ? note.content.substring(0, 60) + (note.content.length>60?'...':'') : 'ללא תוכן';
                     
@@ -658,7 +622,6 @@
                         <div class="flex justify-between items-start mb-2">
                             <div>${title} <span class="text-xs text-gray-400 mr-2">${new Date(note.created_at).toLocaleDateString('he-IL')}</span></div>
                             <button class="text-blue-500 text-sm font-bold hover:underline" onclick="this.nextElementSibling.classList.toggle('hidden')">הרחב/הסתר</button>
-                            <!-- תוכן מורחב מוסתר -->
                             <div class="hidden absolute left-0 right-0 mt-8 mx-4 p-4 bg-white shadow-xl border border-blue-100 rounded-xl z-20">
                                 ${note.title ? `<h4 class="font-black text-lg mb-2">${note.title}</h4>` : ''}
                                 <p class="text-gray-600 whitespace-pre-wrap mb-4">${note.content || ''}</p>
@@ -677,10 +640,6 @@
             document.getElementById('adminNotesModal').classList.remove('hidden');
             lucide.createIcons();
         };
-
-        // ==========================================
-        //  סוף מערכת מנהל / המשך פונקציות רגילות
-        // ==========================================
 
         window.exportToJSON = () => {
             window.exportMenuToggle();
