@@ -359,8 +359,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-        // הוספנו את enableMultiTabIndexedDbPersistence למניעת שגיאת ריבוי חלונות
-        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, enableMultiTabIndexedDbPersistence, collectionGroup, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, onSnapshot, doc, setDoc, deleteDoc, collectionGroup, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
         const firebaseConfig = {
@@ -374,11 +373,13 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app);
+        
+        const db = initializeFirestore(app, {
+            localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+        });
+        
         const storage = getStorage(app);
         const appId = "braindump-web";
-
-        try { enableMultiTabIndexedDbPersistence(db).catch(() => {}); } catch (e) {}
 
         window.currentUser = null;
         window.currentNotes = []; 
@@ -519,11 +520,24 @@
                 const usersData = {};
                 let totalNotes = 0, totalImages = 0, totalAudio = 0;
 
+                // פרואקטיביות: אתחול מראש של כל המשתמשים מתוך הפרופילים כדי שאף משתמש לא יתפספס, גם אם אין לו פתקים
+                Object.keys(userProfiles).forEach(userId => {
+                    usersData[userId] = {
+                        userId: userId,
+                        profile: userProfiles[userId],
+                        notes: [],
+                        activeNotesCount: 0,
+                        // אם אין פתקים, נציג את תאריך ושעת ההתחברות האחרונה (פעילות האפליקציה)
+                        lastActive: userProfiles[userId].lastLogin ? new Date(userProfiles[userId].lastLogin).getTime() : 0
+                    };
+                });
+
                 notesSnap.forEach(doc => {
                     const note = doc.data();
                     const pathParts = doc.ref.path.split('/');
                     const userId = pathParts[pathParts.indexOf('users') + 1];
 
+                    // Fallback למקרה נדיר שיש פתק אבל משום מה לא נשמר פרופיל בעבר
                     if(!usersData[userId]) {
                         usersData[userId] = { 
                             userId: userId,
@@ -553,7 +567,11 @@
                 window.adminGlobalUsersData = usersData;
 
                 usersArray.forEach(user => {
-                    const lastDate = user.lastActive > 0 ? new Date(user.lastActive).toLocaleDateString('he-IL') : 'אין פתקים';
+                    // הצגה מדויקת של פעילות אחרונה, או התחברות אחרונה למשתמש ללא פתקים
+                    const lastDate = user.lastActive > 0 ? 
+                        `${new Date(user.lastActive).toLocaleDateString('he-IL')} ${new Date(user.lastActive).toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})}` 
+                        : 'לא ידוע';
+                        
                     const tr = document.createElement('tr');
                     tr.className = "border-b border-gray-50 hover:bg-slate-50 transition-colors";
                     tr.innerHTML = `
@@ -566,10 +584,10 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="p-4 font-bold text-blue-600">${user.activeNotesCount}</td>
+                        <td class="p-4 font-bold ${user.activeNotesCount > 0 ? 'text-blue-600' : 'text-gray-400'}">${user.activeNotesCount}</td>
                         <td class="p-4 text-gray-500 text-sm">${lastDate}</td>
                         <td class="p-4">
-                            <button onclick="window.viewAdminUserNotes('${user.userId}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-4 py-2 rounded-xl text-sm font-bold transition-colors">
+                            <button onclick="window.viewAdminUserNotes('${user.userId}')" class="${user.activeNotesCount > 0 ? 'bg-indigo-50 hover:bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-400 cursor-not-allowed'} px-4 py-2 rounded-xl text-sm font-bold transition-colors" ${user.activeNotesCount === 0 ? 'disabled title="אין פתקים לצפייה"' : ''}>
                                 צפה בפתקים
                             </button>
                         </td>
