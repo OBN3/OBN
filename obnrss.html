@@ -34,6 +34,11 @@
         .ai-result-content p {
             margin-bottom: 1.25rem;
         }
+        .article-link {
+            color: #2563eb;
+            text-decoration: underline;
+            font-weight: 600;
+        }
         
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -59,7 +64,7 @@
             <div class="lg:col-span-4 space-y-6">
                 
                 <!-- API Keys & Models -->
-                <div class="glass-card p-6 rounded-3xl border-r-4 border-blue-500">
+                <div class="glass-card p-6 rounded-3xl border-r-4 border-blue-500 shadow-lg">
                     <div class="flex justify-between items-center mb-5">
                         <h2 class="text-xl font-bold flex items-center gap-2">
                             <span>🔑</span> הגדרות מנוע
@@ -95,7 +100,7 @@
                 </div>
 
                 <!-- Sources Management -->
-                <div class="glass-card p-6 rounded-3xl">
+                <div class="glass-card p-6 rounded-3xl shadow-lg">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-xl font-bold flex items-center gap-2">
                             <span>📡</span> מקורות RSS
@@ -107,12 +112,10 @@
                         </div>
                     </div>
                     
-                    <!-- Feed List -->
                     <div id="sourcesList" class="space-y-1 max-h-56 overflow-y-auto pr-1 mb-6 border-b pb-4"></div>
                     
-                    <!-- Add Custom Source -->
                     <div class="mt-4">
-                        <label class="block text-xs font-bold text-slate-500 mb-2">הוסף מקורות RSS משלך (כתובת אחת בשורה):</label>
+                        <label class="block text-xs font-bold text-slate-500 mb-2">הוסף מקורות RSS (כתובת אחת בשורה):</label>
                         <textarea id="customRssInput" rows="3" class="w-full p-3 text-xs border rounded-xl outline-none focus:ring-2 focus:ring-blue-400 bg-slate-50" placeholder="https://example.com/rss..."></textarea>
                         <button onclick="addCustomSources()" class="w-full mt-2 bg-blue-100 text-blue-700 text-xs font-bold py-2 rounded-lg hover:bg-blue-200 transition-colors">הוסף לרשימה</button>
                     </div>
@@ -128,20 +131,24 @@
             <div class="lg:col-span-8 space-y-6">
                 
                 <!-- Articles Feed -->
-                <div class="glass-card p-8 rounded-3xl min-h-[400px]">
-                    <div class="flex justify-between items-center mb-6">
+                <div class="glass-card p-8 rounded-3xl min-h-[400px] shadow-xl">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                         <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
                             <span>📰</span> כתבות אחרונות
                         </h2>
-                        <div id="articleControls" class="hidden space-x-2 space-x-reverse">
-                            <button onclick="toggleAllArticles(true)" class="text-xs font-bold bg-blue-50 text-blue-600 px-4 py-2 rounded-full hover:bg-blue-100 transition-colors">בחר הכל</button>
+                        <div id="articleControls" class="hidden flex flex-wrap gap-2">
+                            <button onclick="translateArticlesList()" id="translateBtn" class="text-xs font-bold bg-amber-50 text-amber-700 px-4 py-2 rounded-full hover:bg-amber-100 transition-colors border border-amber-200 flex items-center gap-2">
+                                <span>🌐</span> תרגם רשימה לעברית
+                                <div id="translateLoader" class="loader hidden !w-3 !h-3 !border-amber-300 !border-t-amber-700"></div>
+                            </button>
+                            <button onclick="toggleAllArticles(true)" class="text-xs font-bold bg-blue-50 text-blue-600 px-4 py-2 rounded-full hover:bg-blue-100 transition-colors border border-blue-100">בחר הכל</button>
                             <button onclick="toggleAllArticles(false)" class="text-xs font-bold bg-slate-100 text-slate-600 px-4 py-2 rounded-full hover:bg-slate-200 transition-colors">נקה</button>
                         </div>
                     </div>
                     <div id="articlesList" class="space-y-6 max-h-[600px] overflow-y-auto pr-2 text-slate-400 text-center py-10">
                         <div class="opacity-50">
                             <p class="text-4xl mb-4">🕵️‍♂️</p>
-                            <p class="text-lg">המערכת ממתינה שתבחר מקורות ותלחץ על "טען כתבות".</p>
+                            <p class="text-lg">בחר מקורות משמאל ולחץ על "טען כתבות".</p>
                         </div>
                     </div>
                 </div>
@@ -149,12 +156,12 @@
                 <!-- AI Control Area -->
                 <div class="glass-card p-8 rounded-3xl border-t-8 border-indigo-600 shadow-2xl">
                     <h2 class="text-2xl font-bold mb-6 text-slate-800 flex items-center gap-2">
-                        <span>🧠</span> מחולל הטיפים
+                        <span>🧠</span> מחולל הטכנוטיפים
                     </h2>
                     
                     <div class="mb-6">
-                        <label class="block text-sm font-bold text-slate-700 mb-2">הפרומפט לעיבוד (ערוך לפי הצורך):</label>
-                        <textarea id="systemPrompt" rows="3" class="w-full p-4 border rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none text-md bg-slate-50/50 shadow-inner">סכם את הידיעות והצג אותם כטכנוטיפ קצר. התמקד בשורה התחתונה - מה המשתמש יכול לעשות עם זה עכשיו? כתוב בנימה מקצועית אך נגישה בעברית.</textarea>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">הפרומפט (כולל הוראת קישורים):</label>
+                        <textarea id="systemPrompt" rows="4" class="w-full p-4 border rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none text-md bg-slate-50/50 shadow-inner">כתוב סיכום מעמיק וארוך של הידיעות הבאות. הצג אותם כטכנוטיפים פרקטיים. תחת כל טיפ, חובה להוסיף את הקישור המקורי בצורה גלויה. התמקד בשורה התחתונה - מה המשתמש יכול לעשות עם זה עכשיו? כתוב בנימה מקצועית ונגישה בעברית, ללא סימני Markdown כמו כוכביות או סולמיות.</textarea>
                     </div>
 
                     <div class="flex flex-wrap gap-4">
@@ -172,7 +179,7 @@
                 <!-- AI Result Area -->
                 <div id="resultContainer" class="hidden glass-card p-10 rounded-[2.5rem] shadow-2xl border-2 border-indigo-100 bg-white animate-in fade-in slide-in-from-bottom-8 duration-700">
                     <div class="flex justify-between items-center mb-8 pb-6 border-b-2 border-slate-50">
-                        <h2 class="text-3xl font-black text-slate-900 tracking-tight">הטכנוטיפ שלך מוכן</h2>
+                        <h2 class="text-3xl font-black text-slate-900 tracking-tight">הטכנוטיפ המורחב</h2>
                         <div class="flex gap-3">
                             <button onclick="copyToClipboard()" class="flex items-center gap-2 px-5 py-2.5 bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-100 transition-colors font-bold text-sm">📋 העתק</button>
                             <button onclick="exportToWord()" class="flex items-center gap-2 px-5 py-2.5 bg-emerald-50 text-emerald-700 rounded-xl hover:bg-emerald-100 transition-colors font-bold text-sm">📄 ייצוא לוורד</button>
@@ -203,28 +210,22 @@
             if (window.location.protocol === 'file:') {
                 document.getElementById('localWarning').classList.remove('hidden');
             }
-            
             renderSources();
-
-            // Load saved settings
-            ['geminiKey', 'groqKey', 'geminiModel', 'groqModel', 'customGroqModel'].forEach(id => {
+            ['geminiKey', 'groqKey', 'geminiModel', 'groqModel', 'customGroqModel', 'systemPrompt'].forEach(id => {
                 const val = localStorage.getItem(id);
                 if (val) {
                     const el = document.getElementById(id);
                     if (el) el.value = val;
                 }
             });
-
             toggleCustomModel(document.getElementById('groqModel').value);
         }
 
         function renderSources() {
             const list = document.getElementById('sourcesList');
             list.innerHTML = '';
-            
             const customSources = JSON.parse(localStorage.getItem('customSources') || '[]');
             const currentSources = [...defaultSources, ...customSources];
-
             currentSources.forEach(src => {
                 const div = document.createElement('div');
                 div.className = 'flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer group';
@@ -241,14 +242,12 @@
             const input = document.getElementById('customRssInput');
             const lines = input.value.split('\n').map(l => l.trim()).filter(l => l && l.startsWith('http'));
             if (lines.length === 0) return;
-
             let customSources = JSON.parse(localStorage.getItem('customSources') || '[]');
             lines.forEach(url => {
                 const id = 'custom-' + Date.now() + Math.random().toString(36).substr(2, 5);
                 const name = new URL(url).hostname.replace('www.', '');
                 customSources.push({ id, name, url });
             });
-
             localStorage.setItem('customSources', JSON.stringify(customSources));
             input.value = '';
             renderSources();
@@ -287,7 +286,7 @@
                 if (el) el.value = (el.tagName === 'SELECT' ? el.options[0].value : '');
             });
             toggleCustomModel(document.getElementById('groqModel').value);
-            alert('כל ההגדרות נמחקו.');
+            alert('ההגדרות נמחקו.');
         }
 
         function toggleAllSources(checked) {
@@ -322,7 +321,6 @@
                     }
                 }
             ];
-
             for (const proxy of proxies) {
                 try {
                     const response = await fetch(proxy.url(source.url));
@@ -330,9 +328,7 @@
                     const data = await response.json();
                     const items = proxy.parser(data);
                     if (items && items.length > 0) return items.slice(0, 5);
-                } catch (e) {
-                    console.warn(`Proxy failed for ${source.name}:`, e.message);
-                }
+                } catch (e) { console.warn(e); }
             }
             throw new Error("שגיאת שאיבה.");
         }
@@ -341,55 +337,67 @@
             const customSources = JSON.parse(localStorage.getItem('customSources') || '[]');
             const currentSources = [...defaultSources, ...customSources];
             const selectedIds = Array.from(document.querySelectorAll('#sourcesList input:checked')).map(i => i.value);
-            
-            if (selectedIds.length === 0) {
-                alert('בחר לפחות מקור אחד.');
-                return;
-            }
-
+            if (selectedIds.length === 0) { alert('בחר לפחות מקור אחד.'); return; }
             const fetchBtn = document.getElementById('fetchBtn');
             const loader = document.getElementById('fetchLoader');
             fetchBtn.disabled = true;
             loader.classList.remove('hidden');
-            
             const listContainer = document.getElementById('articlesList');
             listContainer.innerHTML = '<div class="flex flex-col items-center py-12"><div class="loader !w-10 !h-10 mb-4 border-slate-200 border-t-blue-600"></div><p class="text-slate-600 font-bold animate-pulse text-lg">סורק מקורות מידע...</p></div>';
-            
             allArticles = [];
             let errors = [];
-            
             for (const id of selectedIds) {
                 const source = currentSources.find(s => s.id === id);
                 try {
                     const items = await fetchFeedItems(source);
                     items.forEach(item => allArticles.push({ ...item, source: source.name }));
-                } catch (e) {
-                    errors.push(`${source.name}: ${e.message}`);
-                }
+                } catch (e) { errors.push(`${source.name}: ${e.message}`); }
             }
-
             displayArticles();
             document.getElementById('articleControls').classList.toggle('hidden', allArticles.length === 0);
-            
-            if (errors.length > 0 && allArticles.length === 0) {
-                listContainer.innerHTML = `<div class="p-8 bg-red-50 text-red-600 rounded-2xl border border-red-100">
-                    <p class="font-bold text-xl mb-2">לא נמצאו כתבות</p>
-                    <p class="text-sm">${errors.join('<br>')}</p>
-                </div>`;
-            }
-
             fetchBtn.disabled = false;
+            loader.classList.add('hidden');
+        }
+
+        async function translateArticlesList() {
+            const geminiKey = document.getElementById('geminiKey').value.trim();
+            if (!geminiKey) { alert('יש להזין מפתח Gemini כדי לתרגם את הרשימה.'); return; }
+            const btn = document.getElementById('translateBtn');
+            const loader = document.getElementById('translateLoader');
+            btn.disabled = true;
+            loader.classList.remove('hidden');
+            const textToTranslate = allArticles.map((a, i) => `ID:${i} Title:${a.title} Desc:${a.desc}`).join('\n');
+            const prompt = `Translate the following article titles and short descriptions into Hebrew. Keep the ID prefix. Response must be in JSON format: [{"id": number, "title": "Hebrew Title", "desc": "Hebrew Description"}]\n\n${textToTranslate}`;
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
+                const data = await response.json();
+                const translated = JSON.parse(data.candidates[0].content.parts[0].text);
+                translated.forEach(item => {
+                    if (allArticles[item.id]) {
+                        allArticles[item.id].title = item.title;
+                        allArticles[item.id].desc = item.desc;
+                    }
+                });
+                displayArticles();
+            } catch (e) { alert('תרגום נכשל: ' + e.message); }
+            btn.disabled = false;
             loader.classList.add('hidden');
         }
 
         function displayArticles() {
             const listContainer = document.getElementById('articlesList');
             if (allArticles.length === 0) return;
-
             listContainer.innerHTML = allArticles.map((art, idx) => {
-                const cleanContent = art.content.replace(/<[^>]*>/g, '').trim().split('\n')[0].slice(0, 300);
-                const cleanDesc = art.desc.replace(/<[^>]*>/g, '').trim().slice(0, 150);
-                
+                const cleanContent = (art.content || "").replace(/<[^>]*>/g, '').trim().split('\n')[0].slice(0, 300);
+                const cleanDesc = (art.desc || "").replace(/<[^>]*>/g, '').trim().slice(0, 150);
                 return `
                 <div class="bg-white p-6 rounded-2xl border border-slate-100 hover:border-blue-200 hover:shadow-lg transition-all text-right shadow-sm group">
                     <div class="flex items-start gap-4">
@@ -413,8 +421,16 @@
             }).join('');
         }
 
-        function cleanMarkdown(text) {
-            // Remove markdown syntax like ##, **, *, etc.
+        function formatLinksInText(text) {
+            // Converts raw URLs to clickable anchor tags
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            return text.replace(urlRegex, (url) => {
+                return `<a href="${url}" target="_blank" class="article-link">${url}</a>`;
+            });
+        }
+
+        function cleanOutput(text) {
+            // Removes # and * and trims
             return text.replace(/[#*`~]/g, '').trim();
         }
 
@@ -426,18 +442,12 @@
             const customGroqModel = document.getElementById('customGroqModel').value.trim();
             const systemPrompt = document.getElementById('systemPrompt').value;
             const groqModel = groqModelRaw === 'custom' ? customGroqModel : groqModelRaw;
-
             const selectedIndices = Array.from(document.querySelectorAll('.art-selector:checked')).map(i => parseInt(i.id.split('-')[1]));
-            if (selectedIndices.length === 0) {
-                alert('בחר לפחות כתבה אחת.');
-                return;
-            }
-
-            const dataToProcess = selectedIndices.map(i => `מקור: ${allArticles[i].source}\nכותרת: ${allArticles[i].title}\nתוכן: ${allArticles[i].content.replace(/<[^>]*>/g, '').slice(0, 1000)}`).join('\n\n---\n\n');
-            const fullPrompt = `${systemPrompt}\n\nלהלן הידיעות שנבחרו:\n${dataToProcess}`;
-
+            if (selectedIndices.length === 0) { alert('בחר לפחות כתבה אחת.'); return; }
+            localStorage.setItem('systemPrompt', systemPrompt);
+            const dataToProcess = selectedIndices.map(i => `מקור: ${allArticles[i].source}\nכותרת: ${allArticles[i].title}\nקישור: ${allArticles[i].link}\nתוכן: ${allArticles[i].content.replace(/<[^>]*>/g, '').slice(0, 1500)}`).join('\n\n---\n\n');
+            const fullPrompt = `${systemPrompt}\n\nלהלן הידיעות:\n${dataToProcess}`;
             document.getElementById(`${engine}Loader`).classList.remove('hidden');
-            
             try {
                 let responseText = "";
                 if (engine === 'gemini') {
@@ -447,15 +457,9 @@
                     if (!groqKey) throw new Error("מפתח Groq חסר.");
                     responseText = await callGroq(groqKey, groqModel, fullPrompt);
                 }
-                
-                // Process output: clean markdown symbols
-                const cleanedText = cleanMarkdown(responseText);
-                showResult(cleanedText);
-            } catch (error) {
-                alert("שגיאת AI: " + error.message);
-            } finally {
-                document.getElementById(`${engine}Loader`).classList.add('hidden');
-            }
+                showResult(responseText);
+            } catch (error) { alert("שגיאת AI: " + error.message); }
+            finally { document.getElementById(`${engine}Loader`).classList.add('hidden'); }
         }
 
         async function callGemini(apiKey, model, prompt) {
@@ -465,12 +469,12 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { maxOutputTokens: 8192 }
+                    generationConfig: { maxOutputTokens: 8192, temperature: 0.7 }
                 })
             });
             const data = await response.json();
             if (data.error) throw new Error(data.error.message);
-            return data.candidates?.[0]?.content?.parts?.[0]?.text || "לא התקבלה תשובה.";
+            return data.candidates?.[0]?.content?.parts?.[0]?.text || "אין תשובה.";
         }
 
         async function callGroq(apiKey, model, prompt) {
@@ -482,7 +486,7 @@
             });
             const data = await response.json();
             if (data.error) throw new Error(data.error.message);
-            return data.choices?.[0]?.message?.content || "לא התקבלה תשובה.";
+            return data.choices?.[0]?.message?.content || "אין תשובה.";
         }
 
         async function fetchWithRetry(url, options, retries = 5) {
@@ -494,22 +498,19 @@
                         const err = await response.json().catch(() => ({}));
                         throw new Error(err.error?.message || `שגיאה (${response.status})`);
                     }
-                } catch (e) {
-                    if (i === retries - 1) throw e;
-                }
+                } catch (e) { if (i === retries - 1) throw e; }
                 await new Promise(res => setTimeout(res, Math.pow(2, i) * 1000));
             }
-            throw new Error("לא ניתן להתחבר לשרת ה-AI.");
+            throw new Error("לא ניתן להתחבר ל-AI.");
         }
 
         function showResult(text) {
             const container = document.getElementById('resultContainer');
             const display = document.getElementById('aiResponse');
-            
-            // Format text to wrap paragraphs in <p> tags for cleaner design
-            const paragraphs = text.split('\n\n').filter(p => p.trim());
+            const cleanedText = cleanOutput(text);
+            const formattedWithLinks = formatLinksInText(cleanedText);
+            const paragraphs = formattedWithLinks.split('\n\n').filter(p => p.trim());
             display.innerHTML = paragraphs.map(p => `<p>${p.trim()}</p>`).join('');
-            
             container.classList.remove('hidden');
             container.scrollIntoView({ behavior: 'smooth' });
         }
@@ -522,7 +523,7 @@
             temp.select();
             document.execCommand('copy');
             document.body.removeChild(temp);
-            alert('הטקסט הועתק בהצלחה!');
+            alert('הועתק!');
         }
 
         function exportToWord() {
