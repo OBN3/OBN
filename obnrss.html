@@ -9,12 +9,13 @@
     <style>
         body {
             font-family: 'Assistant', sans-serif;
-            background-color: #f8fafc;
+            background-color: #f0f4f8;
         }
         .glass-card {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(226, 232, 240, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
         .loader {
             border: 3px solid #f3f3f3;
@@ -26,6 +27,14 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
+        .ai-result-content {
+            line-height: 1.8;
+            color: #1e293b;
+        }
+        .ai-result-content p {
+            margin-bottom: 1.25rem;
+        }
+        
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -34,34 +43,34 @@
 </head>
 <body class="p-4 md:p-8">
 
-    <div class="max-w-6xl mx-auto">
+    <div class="max-w-7xl mx-auto">
         <!-- Header -->
-        <header class="mb-8 text-center">
-            <h1 class="text-4xl font-bold text-slate-800 mb-2 tracking-tight">מחולל הטכנוטיפים החכם</h1>
-            <p class="text-slate-600">עיבוד והנגשת חדשות טכנולוגיה באמצעות בינה מלאכותית</p>
-            <div id="localWarning" class="hidden mt-4 inline-block bg-amber-50 border border-amber-200 text-amber-800 text-xs px-4 py-2 rounded-full italic">
+        <header class="mb-10 text-center">
+            <h1 class="text-5xl font-extrabold text-slate-900 mb-3 tracking-tight">מחולל הטכנוטיפים החכם</h1>
+            <p class="text-xl text-slate-600 font-light">הופכים חדשות לערך פרקטי בלחיצת כפתור</p>
+            <div id="localWarning" class="hidden mt-4 inline-block bg-amber-50 border border-amber-200 text-amber-800 text-xs px-6 py-2 rounded-full italic shadow-sm">
                 ⚠️ שים לב: הרצה מקומית (`file://`) עלולה להגביל את שאיבת הנתונים. מומלץ להשתמש ב-Live Server.
             </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            <!-- Side Panel -->
-            <div class="lg:col-span-1 space-y-6">
+            <!-- Side Panel (4 cols) -->
+            <div class="lg:col-span-4 space-y-6">
                 
                 <!-- API Keys & Models -->
-                <div class="glass-card p-6 rounded-2xl shadow-sm border-r-4 border-blue-500">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-semibold flex items-center gap-2">
+                <div class="glass-card p-6 rounded-3xl border-r-4 border-blue-500">
+                    <div class="flex justify-between items-center mb-5">
+                        <h2 class="text-xl font-bold flex items-center gap-2">
                             <span>🔑</span> הגדרות מנוע
                         </h2>
-                        <button onclick="clearAllKeys()" class="text-[10px] text-red-500 hover:underline">נקה מפתחות</button>
+                        <button onclick="clearAllKeys()" class="text-xs text-red-500 hover:bg-red-50 px-2 py-1 rounded transition-colors">נקה הכל</button>
                     </div>
                     <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Gemini Key & Model</label>
-                            <input type="password" id="geminiKey" oninput="saveKeyState(this)" class="w-full p-2 border rounded-lg mb-2 outline-none focus:ring-2 focus:ring-blue-500" placeholder="הזן מפתח Gemini...">
-                            <select id="geminiModel" onchange="saveKeyState(this)" class="w-full p-2 border rounded-lg text-sm bg-slate-50">
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Gemini AI</label>
+                            <input type="password" id="geminiKey" oninput="saveKeyState(this)" class="w-full p-2 border rounded-lg mb-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="הזן מפתח API...">
+                            <select id="geminiModel" onchange="saveKeyState(this)" class="w-full p-2 border rounded-lg text-sm bg-white">
                                 <option value="gemini-2.5-flash-preview-09-2025">Gemini 2.5 Flash</option>
                                 <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite</option>
                                 <option value="gemma-3-1b-it">Gemma 3 1B</option>
@@ -70,97 +79,106 @@
                                 <option value="gemma-3-27b-it">Gemma 3 27B</option>
                             </select>
                         </div>
-                        <div class="pt-2 border-t border-slate-100">
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Groq Key & Model</label>
-                            <input type="password" id="groqKey" oninput="saveKeyState(this)" class="w-full p-2 border rounded-lg mb-2 outline-none focus:ring-2 focus:ring-emerald-500" placeholder="הזן מפתח Groq...">
-                            <select id="groqModel" onchange="handleModelChange(this)" class="w-full p-2 border rounded-lg text-sm bg-slate-50 mb-2">
-                                <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Versatile)</option>
-                                <option value="llama-3.1-8b-instant">Llama 3.1 8B (Instant)</option>
-                                <option value="openai/gpt-oss-120b">GPT OSS 120B (OpenAI)</option>
-                                <option value="openai/gpt-oss-20b">GPT OSS 20B (OpenAI)</option>
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Groq AI</label>
+                            <input type="password" id="groqKey" oninput="saveKeyState(this)" class="w-full p-2 border rounded-lg mb-2 outline-none focus:ring-2 focus:ring-emerald-500 text-sm" placeholder="הזן מפתח API...">
+                            <select id="groqModel" onchange="handleModelChange(this)" class="w-full p-2 border rounded-lg text-sm bg-white mb-2">
+                                <option value="llama-3.3-70b-versatile">Llama 3.3 70B</option>
+                                <option value="llama-3.1-8b-instant">Llama 3.1 8B</option>
                                 <option value="groq/compound">Groq Compound</option>
-                                <option value="groq/compound-mini">Groq Compound Mini</option>
-                                <option value="custom">-- מודל בהתאמה אישית --</option>
+                                <option value="custom">-- מודל מותאם אישית --</option>
                             </select>
-                            <input type="text" id="customGroqModel" oninput="saveKeyState(this)" class="hidden w-full p-2 border rounded-lg text-sm mb-2 outline-none focus:ring-2 focus:ring-emerald-500" placeholder="הזן שם מודל ידנית...">
+                            <input type="text" id="customGroqModel" oninput="saveKeyState(this)" class="hidden w-full p-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500" placeholder="שם המודל...">
                         </div>
                     </div>
-                    <p id="saveFeedback" class="text-[10px] text-emerald-600 mt-2 opacity-0 transition-opacity">נשמר בהצלחה ✓</p>
+                    <p id="saveFeedback" class="text-[10px] text-emerald-600 mt-2 opacity-0 transition-opacity font-bold">ההגדרות נשמרו ✓</p>
                 </div>
 
-                <!-- Sources Selection -->
-                <div class="glass-card p-6 rounded-2xl shadow-sm">
+                <!-- Sources Management -->
+                <div class="glass-card p-6 rounded-3xl">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-semibold flex items-center gap-2">
-                            <span>📡</span> מקורות מידע
+                        <h2 class="text-xl font-bold flex items-center gap-2">
+                            <span>📡</span> מקורות RSS
                         </h2>
                         <div class="text-xs space-x-2 space-x-reverse">
-                            <button onclick="toggleAllSources(true)" class="text-blue-600 hover:text-blue-800 font-semibold">הכל</button>
+                            <button onclick="toggleAllSources(true)" class="text-blue-600 font-bold hover:underline">הכל</button>
                             <span class="text-slate-300">|</span>
-                            <button onclick="toggleAllSources(false)" class="text-red-600 hover:text-red-800 font-semibold">ללא</button>
+                            <button onclick="toggleAllSources(false)" class="text-red-600 font-bold hover:underline">ללא</button>
                         </div>
                     </div>
-                    <div id="sourcesList" class="space-y-2 max-h-72 overflow-y-auto pr-2"></div>
-                    <button onclick="fetchFeeds()" id="fetchBtn" class="w-full mt-6 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex justify-center items-center gap-2 group">
-                        <span>טען כתבות אחרונות</span>
-                        <div id="fetchLoader" class="loader hidden !border-slate-400 !border-t-white"></div>
-                        <span class="group-hover:translate-x-[-4px] transition-transform">←</span>
+                    
+                    <!-- Feed List -->
+                    <div id="sourcesList" class="space-y-1 max-h-56 overflow-y-auto pr-1 mb-6 border-b pb-4"></div>
+                    
+                    <!-- Add Custom Source -->
+                    <div class="mt-4">
+                        <label class="block text-xs font-bold text-slate-500 mb-2">הוסף מקורות RSS משלך (כתובת אחת בשורה):</label>
+                        <textarea id="customRssInput" rows="3" class="w-full p-3 text-xs border rounded-xl outline-none focus:ring-2 focus:ring-blue-400 bg-slate-50" placeholder="https://example.com/rss..."></textarea>
+                        <button onclick="addCustomSources()" class="w-full mt-2 bg-blue-100 text-blue-700 text-xs font-bold py-2 rounded-lg hover:bg-blue-200 transition-colors">הוסף לרשימה</button>
+                    </div>
+
+                    <button onclick="fetchFeeds()" id="fetchBtn" class="w-full mt-6 bg-slate-900 hover:bg-black text-white font-bold py-4 rounded-2xl transition-all shadow-xl flex justify-center items-center gap-2 group">
+                        <span>טען כתבות</span>
+                        <div id="fetchLoader" class="loader hidden !border-slate-500 !border-t-white"></div>
                     </button>
                 </div>
             </div>
 
-            <!-- Main Panel -->
-            <div class="lg:col-span-2 space-y-6">
+            <!-- Main Panel (8 cols) -->
+            <div class="lg:col-span-8 space-y-6">
                 
                 <!-- Articles Feed -->
-                <div class="glass-card p-6 rounded-2xl shadow-sm min-h-[300px]">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-semibold flex items-center gap-2">
-                            <span>📰</span> כתבות שנמצאו
+                <div class="glass-card p-8 rounded-3xl min-h-[400px]">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                            <span>📰</span> כתבות אחרונות
                         </h2>
-                        <div id="articleControls" class="hidden text-xs space-x-2 space-x-reverse">
-                            <button onclick="toggleAllArticles(true)" class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-100">בחר הכל</button>
-                            <button onclick="toggleAllArticles(false)" class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full hover:bg-slate-200">נקה הכל</button>
+                        <div id="articleControls" class="hidden space-x-2 space-x-reverse">
+                            <button onclick="toggleAllArticles(true)" class="text-xs font-bold bg-blue-50 text-blue-600 px-4 py-2 rounded-full hover:bg-blue-100 transition-colors">בחר הכל</button>
+                            <button onclick="toggleAllArticles(false)" class="text-xs font-bold bg-slate-100 text-slate-600 px-4 py-2 rounded-full hover:bg-slate-200 transition-colors">נקה</button>
                         </div>
                     </div>
-                    <div id="articlesList" class="space-y-4 max-h-[450px] overflow-y-auto pr-2 text-slate-500 italic">
-                        טרם נטענו כתבות. בחר מקורות ולחץ על "טען כתבות".
+                    <div id="articlesList" class="space-y-6 max-h-[600px] overflow-y-auto pr-2 text-slate-400 text-center py-10">
+                        <div class="opacity-50">
+                            <p class="text-4xl mb-4">🕵️‍♂️</p>
+                            <p class="text-lg">המערכת ממתינה שתבחר מקורות ותלחץ על "טען כתבות".</p>
+                        </div>
                     </div>
                 </div>
 
                 <!-- AI Control Area -->
-                <div class="glass-card p-6 rounded-2xl shadow-sm border-t-4 border-indigo-500">
-                    <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                        <span>🧠</span> עיבוד בבינה מלאכותית
+                <div class="glass-card p-8 rounded-3xl border-t-8 border-indigo-600 shadow-2xl">
+                    <h2 class="text-2xl font-bold mb-6 text-slate-800 flex items-center gap-2">
+                        <span>🧠</span> מחולל הטיפים
                     </h2>
                     
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">הפרומפט האישי שלך:</label>
-                        <textarea id="systemPrompt" rows="4" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm leading-relaxed">סכם את הידיעות והצג אותם כטכנוטיפ קצר. התמקד בשורה התחתונה - מה המשתמש יכול לעשות עם זה עכשיו? כתוב בנימה מקצועית אך נגישה בעברית.</textarea>
+                    <div class="mb-6">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">הפרומפט לעיבוד (ערוך לפי הצורך):</label>
+                        <textarea id="systemPrompt" rows="3" class="w-full p-4 border rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none text-md bg-slate-50/50 shadow-inner">סכם את הידיעות והצג אותם כטכנוטיפ קצר. התמקד בשורה התחתונה - מה המשתמש יכול לעשות עם זה עכשיו? כתוב בנימה מקצועית אך נגישה בעברית.</textarea>
                     </div>
 
-                    <div class="flex flex-wrap gap-3">
-                        <button onclick="summarize('gemini')" class="flex-1 min-w-[140px] bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3 rounded-xl hover:shadow-xl transition-all flex justify-center items-center gap-2">
-                            <span>שלח ל-Gemini</span>
+                    <div class="flex flex-wrap gap-4">
+                        <button onclick="summarize('gemini')" class="flex-1 min-w-[180px] bg-gradient-to-br from-blue-600 to-blue-800 text-white font-extrabold py-4 rounded-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-lg flex justify-center items-center gap-3">
+                            <span>עבד עם Gemini</span>
                             <div id="geminiLoader" class="loader hidden !border-white !border-t-transparent"></div>
                         </button>
-                        <button onclick="summarize('groq')" class="flex-1 min-w-[140px] bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold py-3 rounded-xl hover:shadow-xl transition-all flex justify-center items-center gap-2">
-                            <span>שלח ל-Groq</span>
+                        <button onclick="summarize('groq')" class="flex-1 min-w-[180px] bg-gradient-to-br from-emerald-600 to-emerald-800 text-white font-extrabold py-4 rounded-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-lg flex justify-center items-center gap-3">
+                            <span>עבד עם Groq</span>
                             <div id="groqLoader" class="loader hidden !border-white !border-t-transparent"></div>
                         </button>
                     </div>
                 </div>
 
-                <!-- Result Container -->
-                <div id="resultContainer" class="hidden glass-card p-8 rounded-2xl shadow-2xl border-2 border-blue-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
-                        <h2 class="text-2xl font-bold text-slate-800 tracking-tight">הטכנוטיפ המעובד</h2>
-                        <div class="flex gap-2">
-                            <button onclick="copyToClipboard()" class="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-semibold">📋 העתק</button>
-                            <button onclick="exportToWord()" class="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors font-semibold">📄 וורד</button>
+                <!-- AI Result Area -->
+                <div id="resultContainer" class="hidden glass-card p-10 rounded-[2.5rem] shadow-2xl border-2 border-indigo-100 bg-white animate-in fade-in slide-in-from-bottom-8 duration-700">
+                    <div class="flex justify-between items-center mb-8 pb-6 border-b-2 border-slate-50">
+                        <h2 class="text-3xl font-black text-slate-900 tracking-tight">הטכנוטיפ שלך מוכן</h2>
+                        <div class="flex gap-3">
+                            <button onclick="copyToClipboard()" class="flex items-center gap-2 px-5 py-2.5 bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-100 transition-colors font-bold text-sm">📋 העתק</button>
+                            <button onclick="exportToWord()" class="flex items-center gap-2 px-5 py-2.5 bg-emerald-50 text-emerald-700 rounded-xl hover:bg-emerald-100 transition-colors font-bold text-sm">📄 ייצוא לוורד</button>
                         </div>
                     </div>
-                    <div id="aiResponse" class="prose max-w-none text-slate-800 leading-relaxed whitespace-pre-wrap text-lg"></div>
+                    <div id="aiResponse" class="ai-result-content text-xl whitespace-pre-wrap"></div>
                 </div>
 
             </div>
@@ -168,7 +186,7 @@
     </div>
 
     <script>
-        const sources = [
+        const defaultSources = [
             { id: 'xda', name: 'XDA Developers', url: 'https://www.xda-developers.com/feed/' },
             { id: 'htg', name: 'How-To Geek', url: 'https://www.howtogeek.com/feed/' },
             { id: 'toms', name: 'Tom\'s Guide', url: 'https://www.tomsguide.com/feeds/all' },
@@ -185,19 +203,10 @@
             if (window.location.protocol === 'file:') {
                 document.getElementById('localWarning').classList.remove('hidden');
             }
-
-            const list = document.getElementById('sourcesList');
-            sources.forEach(src => {
-                const div = document.createElement('div');
-                div.className = 'flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer group';
-                div.innerHTML = `
-                    <input type="checkbox" id="check-${src.id}" value="${src.id}" class="w-4 h-4 text-blue-600 rounded cursor-pointer transition-transform group-hover:scale-110">
-                    <label for="check-${src.id}" class="flex-1 text-sm font-medium text-slate-700 cursor-pointer">${src.name}</label>
-                `;
-                list.appendChild(div);
-            });
             
-            // Fixed persistence: mapping logic to element IDs
+            renderSources();
+
+            // Load saved settings
             ['geminiKey', 'groqKey', 'geminiModel', 'groqModel', 'customGroqModel'].forEach(id => {
                 const val = localStorage.getItem(id);
                 if (val) {
@@ -209,17 +218,55 @@
             toggleCustomModel(document.getElementById('groqModel').value);
         }
 
-        // Proactive: Auto-save keys as the user types
+        function renderSources() {
+            const list = document.getElementById('sourcesList');
+            list.innerHTML = '';
+            
+            const customSources = JSON.parse(localStorage.getItem('customSources') || '[]');
+            const currentSources = [...defaultSources, ...customSources];
+
+            currentSources.forEach(src => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer group';
+                div.innerHTML = `
+                    <input type="checkbox" id="check-${src.id}" value="${src.id}" class="w-4 h-4 text-blue-600 rounded cursor-pointer transition-transform group-hover:scale-110">
+                    <label for="check-${src.id}" class="flex-1 text-sm font-medium text-slate-700 cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap">${src.name}</label>
+                    ${src.id.startsWith('custom-') ? `<button onclick="removeSource('${src.id}')" class="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 text-xs">🗑️</button>` : ''}
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function addCustomSources() {
+            const input = document.getElementById('customRssInput');
+            const lines = input.value.split('\n').map(l => l.trim()).filter(l => l && l.startsWith('http'));
+            if (lines.length === 0) return;
+
+            let customSources = JSON.parse(localStorage.getItem('customSources') || '[]');
+            lines.forEach(url => {
+                const id = 'custom-' + Date.now() + Math.random().toString(36).substr(2, 5);
+                const name = new URL(url).hostname.replace('www.', '');
+                customSources.push({ id, name, url });
+            });
+
+            localStorage.setItem('customSources', JSON.stringify(customSources));
+            input.value = '';
+            renderSources();
+        }
+
+        function removeSource(id) {
+            let customSources = JSON.parse(localStorage.getItem('customSources') || '[]');
+            customSources = customSources.filter(s => s.id !== id);
+            localStorage.setItem('customSources', JSON.stringify(customSources));
+            renderSources();
+        }
+
         function saveKeyState(el) {
             localStorage.setItem(el.id, el.value);
-            
-            // Visual feedback
             const feedback = document.getElementById('saveFeedback');
             feedback.style.opacity = '1';
             clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => {
-                feedback.style.opacity = '0';
-            }, 1500);
+            saveTimeout = setTimeout(() => feedback.style.opacity = '0', 1500);
         }
 
         function handleModelChange(el) {
@@ -229,11 +276,8 @@
 
         function toggleCustomModel(val) {
             const customInput = document.getElementById('customGroqModel');
-            if (val === 'custom') {
-                customInput.classList.remove('hidden');
-            } else {
-                customInput.classList.add('hidden');
-            }
+            if (val === 'custom') customInput.classList.remove('hidden');
+            else customInput.classList.add('hidden');
         }
 
         function clearAllKeys() {
@@ -243,11 +287,11 @@
                 if (el) el.value = (el.tagName === 'SELECT' ? el.options[0].value : '');
             });
             toggleCustomModel(document.getElementById('groqModel').value);
-            alert('כל המפתחות וההגדרות נמחקו מהזיכרון המקומי.');
+            alert('כל ההגדרות נמחקו.');
         }
 
         function toggleAllSources(checked) {
-            document.querySelectorAll('#sourcesList input').forEach(i => i.checked = checked);
+            document.querySelectorAll('#sourcesList input[type="checkbox"]').forEach(i => i.checked = checked);
         }
 
         function toggleAllArticles(checked) {
@@ -260,7 +304,8 @@
                     url: u => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(u)}`, 
                     parser: data => data.items.map(item => ({
                         title: item.title,
-                        desc: item.description.replace(/<[^>]*>/g, '').trim().slice(0, 300),
+                        desc: item.description,
+                        content: item.content || item.description,
                         link: item.link
                     }))
                 },
@@ -270,7 +315,8 @@
                         const xml = new DOMParser().parseFromString(data.contents, "text/xml");
                         return Array.from(xml.querySelectorAll('item, entry')).map(item => ({
                             title: item.querySelector('title')?.textContent || 'ללא כותרת',
-                            desc: (item.querySelector('description, summary, content')?.textContent || '').replace(/<[^>]*>/g, '').trim().slice(0, 300),
+                            desc: item.querySelector('description, summary')?.textContent || '',
+                            content: item.querySelector('content\\:encoded, encoded, content')?.textContent || item.querySelector('description')?.textContent || '',
                             link: item.querySelector('link')?.textContent || item.querySelector('link')?.getAttribute('href') || '#'
                         }));
                     }
@@ -283,16 +329,19 @@
                     if (!response.ok) continue;
                     const data = await response.json();
                     const items = proxy.parser(data);
-                    if (items && items.length > 0) return items.slice(0, 6);
+                    if (items && items.length > 0) return items.slice(0, 5);
                 } catch (e) {
                     console.warn(`Proxy failed for ${source.name}:`, e.message);
                 }
             }
-            throw new Error("נכשלו ניסיונות השאיבה מהמקור.");
+            throw new Error("שגיאת שאיבה.");
         }
 
         async function fetchFeeds() {
+            const customSources = JSON.parse(localStorage.getItem('customSources') || '[]');
+            const currentSources = [...defaultSources, ...customSources];
             const selectedIds = Array.from(document.querySelectorAll('#sourcesList input:checked')).map(i => i.value);
+            
             if (selectedIds.length === 0) {
                 alert('בחר לפחות מקור אחד.');
                 return;
@@ -304,18 +353,16 @@
             loader.classList.remove('hidden');
             
             const listContainer = document.getElementById('articlesList');
-            listContainer.innerHTML = '<div class="flex flex-col items-center py-12"><div class="loader !w-8 !h-8 mb-4"></div><p class="text-slate-600 animate-pulse font-semibold">אוסף ומעבד נתונים מהמקורות...</p></div>';
+            listContainer.innerHTML = '<div class="flex flex-col items-center py-12"><div class="loader !w-10 !h-10 mb-4 border-slate-200 border-t-blue-600"></div><p class="text-slate-600 font-bold animate-pulse text-lg">סורק מקורות מידע...</p></div>';
             
             allArticles = [];
             let errors = [];
             
             for (const id of selectedIds) {
-                const source = sources.find(s => s.id === id);
+                const source = currentSources.find(s => s.id === id);
                 try {
                     const items = await fetchFeedItems(source);
-                    items.forEach(item => {
-                        allArticles.push({ ...item, source: source.name });
-                    });
+                    items.forEach(item => allArticles.push({ ...item, source: source.name }));
                 } catch (e) {
                     errors.push(`${source.name}: ${e.message}`);
                 }
@@ -325,15 +372,10 @@
             document.getElementById('articleControls').classList.toggle('hidden', allArticles.length === 0);
             
             if (errors.length > 0 && allArticles.length === 0) {
-                listContainer.innerHTML = `
-                    <div class="text-center py-10 bg-red-50 rounded-xl border border-red-200 px-6">
-                        <p class="text-red-600 font-bold mb-2 text-lg">שגיאה קריטית בשאיבת הנתונים</p>
-                        <p class="text-sm text-red-500 mb-4 font-medium">האתרים זיהו ניסיון גישה לא מורשה. הפעל את הקובץ דרך שרת מקומי (Live Server).</p>
-                        <div class="text-right text-[11px] bg-white p-3 rounded border border-red-100 font-mono">
-                            ${errors.join('<br>')}
-                        </div>
-                    </div>
-                `;
+                listContainer.innerHTML = `<div class="p-8 bg-red-50 text-red-600 rounded-2xl border border-red-100">
+                    <p class="font-bold text-xl mb-2">לא נמצאו כתבות</p>
+                    <p class="text-sm">${errors.join('<br>')}</p>
+                </div>`;
             }
 
             fetchBtn.disabled = false;
@@ -344,22 +386,36 @@
             const listContainer = document.getElementById('articlesList');
             if (allArticles.length === 0) return;
 
-            listContainer.innerHTML = allArticles.map((art, idx) => `
-                <div class="p-4 border border-slate-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all bg-white group">
+            listContainer.innerHTML = allArticles.map((art, idx) => {
+                const cleanContent = art.content.replace(/<[^>]*>/g, '').trim().split('\n')[0].slice(0, 300);
+                const cleanDesc = art.desc.replace(/<[^>]*>/g, '').trim().slice(0, 150);
+                
+                return `
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 hover:border-blue-200 hover:shadow-lg transition-all text-right shadow-sm group">
                     <div class="flex items-start gap-4">
-                        <div class="pt-1">
-                            <input type="checkbox" checked id="art-${idx}" class="w-5 h-5 art-selector cursor-pointer text-blue-600 rounded">
-                        </div>
+                        <input type="checkbox" checked id="art-${idx}" class="w-6 h-6 art-selector cursor-pointer text-blue-600 rounded-md mt-1">
                         <div class="flex-1">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">${art.source}</span>
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded-full font-black uppercase">${art.source}</span>
                             </div>
-                            <label for="art-${idx}" class="font-bold text-slate-800 mb-2 block leading-snug cursor-pointer group-hover:text-blue-700 transition-colors">${art.title}</label>
-                            <p class="text-sm text-slate-500 line-clamp-2 leading-relaxed">${art.desc}</p>
+                            <h3 class="text-xl font-bold text-slate-800 mb-3 leading-tight group-hover:text-blue-600 transition-colors">${art.title}</h3>
+                            <div class="text-slate-500 text-sm leading-relaxed mb-4">
+                                <p class="font-semibold mb-2 text-slate-700">${cleanDesc}...</p>
+                                <p class="opacity-80">${cleanContent}...</p>
+                            </div>
+                            <a href="${art.link}" target="_blank" class="text-blue-500 hover:text-blue-700 font-bold text-sm inline-flex items-center gap-1 transition-all">
+                                <span>קרא את הכתבה המלאה</span>
+                                <span class="text-xs">🔗</span>
+                            </a>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
+        }
+
+        function cleanMarkdown(text) {
+            // Remove markdown syntax like ##, **, *, etc.
+            return text.replace(/[#*`~]/g, '').trim();
         }
 
         async function summarize(engine) {
@@ -369,17 +425,16 @@
             const groqModelRaw = document.getElementById('groqModel').value;
             const customGroqModel = document.getElementById('customGroqModel').value.trim();
             const systemPrompt = document.getElementById('systemPrompt').value;
-            
             const groqModel = groqModelRaw === 'custom' ? customGroqModel : groqModelRaw;
 
             const selectedIndices = Array.from(document.querySelectorAll('.art-selector:checked')).map(i => parseInt(i.id.split('-')[1]));
             if (selectedIndices.length === 0) {
-                alert('בחר לפחות כתבה אחת לעיבוד.');
+                alert('בחר לפחות כתבה אחת.');
                 return;
             }
 
-            const dataToProcess = selectedIndices.map(i => `מקור: ${allArticles[i].source}\nכותרת: ${allArticles[i].title}\nתקציר: ${allArticles[i].desc}`).join('\n\n---\n\n');
-            const fullPrompt = `${systemPrompt}\n\nידיעות שנבחרו:\n${dataToProcess}`;
+            const dataToProcess = selectedIndices.map(i => `מקור: ${allArticles[i].source}\nכותרת: ${allArticles[i].title}\nתוכן: ${allArticles[i].content.replace(/<[^>]*>/g, '').slice(0, 1000)}`).join('\n\n---\n\n');
+            const fullPrompt = `${systemPrompt}\n\nלהלן הידיעות שנבחרו:\n${dataToProcess}`;
 
             document.getElementById(`${engine}Loader`).classList.remove('hidden');
             
@@ -390,10 +445,12 @@
                     responseText = await callGemini(geminiKey, geminiModel, fullPrompt);
                 } else {
                     if (!groqKey) throw new Error("מפתח Groq חסר.");
-                    if (!groqModel) throw new Error("שם המודל של Groq לא הוגדר.");
                     responseText = await callGroq(groqKey, groqModel, fullPrompt);
                 }
-                showResult(responseText);
+                
+                // Process output: clean markdown symbols
+                const cleanedText = cleanMarkdown(responseText);
+                showResult(cleanedText);
             } catch (error) {
                 alert("שגיאת AI: " + error.message);
             } finally {
@@ -408,9 +465,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: {
-                        maxOutputTokens: 8192
-                    }
+                    generationConfig: { maxOutputTokens: 8192 }
                 })
             });
             const data = await response.json();
@@ -422,16 +477,8 @@
             const url = "https://api.groq.com/openai/v1/chat/completions";
             const response = await fetchWithRetry(url, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'Authorization': `Bearer ${apiKey}` 
-                },
-                body: JSON.stringify({ 
-                    model: model, 
-                    messages: [{ role: "user", content: prompt }],
-                    temperature: 0.7,
-                    max_tokens: 4096
-                })
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                body: JSON.stringify({ model, messages: [{ role: "user", content: prompt }], temperature: 0.7, max_tokens: 4096 })
             });
             const data = await response.json();
             if (data.error) throw new Error(data.error.message);
@@ -444,8 +491,8 @@
                     const response = await fetch(url, options);
                     if (response.ok) return response;
                     if (response.status !== 429 && response.status < 500) {
-                        const errData = await response.json().catch(() => ({}));
-                        throw new Error(errData.error?.message || `שגיאת שרת (${response.status})`);
+                        const err = await response.json().catch(() => ({}));
+                        throw new Error(err.error?.message || `שגיאה (${response.status})`);
                     }
                 } catch (e) {
                     if (i === retries - 1) throw e;
@@ -457,7 +504,12 @@
 
         function showResult(text) {
             const container = document.getElementById('resultContainer');
-            document.getElementById('aiResponse').innerText = text;
+            const display = document.getElementById('aiResponse');
+            
+            // Format text to wrap paragraphs in <p> tags for cleaner design
+            const paragraphs = text.split('\n\n').filter(p => p.trim());
+            display.innerHTML = paragraphs.map(p => `<p>${p.trim()}</p>`).join('');
+            
             container.classList.remove('hidden');
             container.scrollIntoView({ behavior: 'smooth' });
         }
@@ -474,8 +526,8 @@
         }
 
         function exportToWord() {
-            const text = document.getElementById('aiResponse').innerText;
-            const content = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body style="direction: rtl; font-family: Arial; line-height: 1.5;">${text.replace(/\n/g, '<br>')}</body></html>`;
+            const text = document.getElementById('aiResponse').innerHTML;
+            const content = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body style="direction: rtl; font-family: Arial; line-height: 1.6; padding: 20px;">${text}</body></html>`;
             const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
