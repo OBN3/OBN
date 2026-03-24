@@ -40,6 +40,14 @@
             font-weight: 600;
         }
         
+        /* Masking for API keys without triggering password managers */
+        .api-input-masked {
+            -webkit-text-security: disc;
+        }
+        .api-input-unmasked {
+            -webkit-text-security: none;
+        }
+        
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -74,7 +82,15 @@
                     <div class="space-y-4">
                         <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Gemini AI</label>
-                            <input type="password" id="geminiKey" oninput="saveKeyState(this)" class="w-full p-2 border rounded-lg mb-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="הזן מפתח API...">
+                            <div class="relative mb-2">
+                                <input type="text" id="geminiKey" oninput="saveKeyState(this)" 
+                                       autocomplete="off" spellcheck="false"
+                                       class="api-input-masked w-full p-2 pl-10 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white" 
+                                       placeholder="הזן מפתח API...">
+                                <button onclick="toggleVisibility('geminiKey')" class="absolute left-2 top-1.5 text-slate-400 hover:text-blue-500 transition-colors">
+                                    <span id="geminiKey-icon">👁️</span>
+                                </button>
+                            </div>
                             <select id="geminiModel" onchange="saveKeyState(this)" class="w-full p-2 border rounded-lg text-sm bg-white">
                                 <option value="gemini-2.5-flash-preview-09-2025">Gemini 2.5 Flash</option>
                                 <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite</option>
@@ -86,7 +102,15 @@
                         </div>
                         <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Groq AI</label>
-                            <input type="password" id="groqKey" oninput="saveKeyState(this)" class="w-full p-2 border rounded-lg mb-2 outline-none focus:ring-2 focus:ring-emerald-500 text-sm" placeholder="הזן מפתח API...">
+                            <div class="relative mb-2">
+                                <input type="text" id="groqKey" oninput="saveKeyState(this)" 
+                                       autocomplete="off" spellcheck="false"
+                                       class="api-input-masked w-full p-2 pl-10 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 text-sm bg-white" 
+                                       placeholder="הזן מפתח API...">
+                                <button onclick="toggleVisibility('groqKey')" class="absolute left-2 top-1.5 text-slate-400 hover:text-emerald-500 transition-colors">
+                                    <span id="groqKey-icon">👁️</span>
+                                </button>
+                            </div>
                             <select id="groqModel" onchange="handleModelChange(this)" class="w-full p-2 border rounded-lg text-sm bg-white mb-2">
                                 <option value="llama-3.3-70b-versatile">Llama 3.3 70B</option>
                                 <option value="llama-3.1-8b-instant">Llama 3.1 8B</option>
@@ -219,6 +243,21 @@
                 }
             });
             toggleCustomModel(document.getElementById('groqModel').value);
+        }
+
+        // New visibility toggle to bypass password manager detection
+        function toggleVisibility(id) {
+            const el = document.getElementById(id);
+            const icon = document.getElementById(id + '-icon');
+            if (el.classList.contains('api-input-masked')) {
+                el.classList.remove('api-input-masked');
+                el.classList.add('api-input-unmasked');
+                icon.innerText = '🙈';
+            } else {
+                el.classList.add('api-input-masked');
+                el.classList.remove('api-input-unmasked');
+                icon.innerText = '👁️';
+            }
         }
 
         function renderSources() {
@@ -457,8 +496,6 @@
             if (selectedIndices.length === 0) { alert('בחר לפחות כתבה אחת.'); return; }
             localStorage.setItem('systemPrompt', systemPrompt);
 
-            // Limit per article content to prevent 413 error (Content Too Large)
-            // If many articles are selected, we reduce the amount of text per article
             const maxTotalChars = engine === 'groq' ? 5000 : 15000;
             const charsPerArticle = Math.floor(maxTotalChars / selectedIndices.length);
 
@@ -524,28 +561,17 @@
                 try {
                     const response = await fetch(url, options);
                     if (response.ok) return response;
-                    
-                    // Handle 413 specifically
-                    if (response.status === 413) {
-                        throw new Error("הטקסט שנשלח גדול מדי (413). נסה לבחור פחות כתבות.");
-                    }
-
-                    // For 429 (Too Many Requests) or Server Errors, retry with backoff
+                    if (response.status === 413) throw new Error("הטקסט שנשלח גדול מדי (413). נסה לבחור פחות כתבות.");
                     if (response.status === 429 || (response.status >= 500 && response.status < 600)) {
-                        if (i === retries - 1) break; // Final attempt failed
-                        // Wait with exponential backoff
+                        if (i === retries - 1) break;
                         await new Promise(res => setTimeout(res, Math.pow(2, i) * 1000));
                         continue;
                     }
-
-                    // For other errors, don't retry
                     const err = await response.json().catch(() => ({}));
                     throw new Error(err.error?.message || `שגיאה (${response.status})`);
-                } catch (e) {
-                    if (i === retries - 1) throw e;
-                }
+                } catch (e) { if (i === retries - 1) throw e; }
             }
-            throw new Error("נכשלו ניסיונות ההתחברות לשרת ה-AI לאחר 3 ניסיונות. ייתכן שיש עומס על המערכת.");
+            throw new Error("נכשלו ניסיונות ההתחברות לשרת ה-AI לאחר 3 ניסיונות.");
         }
 
         function showResult(text) {
