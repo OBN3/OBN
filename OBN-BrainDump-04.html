@@ -1,3 +1,12 @@
+<!--
+  apiKey: "AIzaSyAFaXAtelONc262VlGPFmwTjoUu4tje4YY",
+  authDomain: "obn-braindump-2.firebaseapp.com",
+  projectId: "obn-braindump-2",
+  storageBucket: "obn-braindump-2.firebasestorage.app",
+  messagingSenderId: "826937050149",
+  appId: "1:826937050149:web:0b28b528ce1fcc7571ebcc"
+-->
+
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -135,14 +144,15 @@
                 <span id="userName" class="font-bold text-gray-700 truncate max-w-[100px]">טוען...</span>
             </div>
             <div class="text-gray-500 font-medium text-left">
-                נבנה באהבה על ידי OBN.<br>
+                נבנה באהבה על ידי <span onclick="window.triggerAdminLogin()" class="font-bold cursor-pointer hover:text-gray-800 transition-colors">OBN</span>.<br>
                 <a href="mailto:ofirbn@post.com" class="text-blue-500 underline font-bold hover:text-blue-600 transition-colors">צרו קשר</a>
             </div>
         </footer>
     </div>
 
-    <!-- מסך עריכה -->
+    <!-- מסך עריכה (המוכר והרגיל) -->
     <div id="editorView" class="fixed inset-0 bg-white z-[200] flex flex-col h-[100dvh]" style="display: none;">
+        <!-- ... (שורת ה-Header זהה לחלוטין) ... -->
         <header class="flex-none bg-white border-b border-gray-100 p-3 flex justify-between items-center z-10 shadow-sm">
             <button onclick="window.handleEditorBack()" class="p-2.5 text-gray-600 hover:bg-gray-100 rounded-full transition-colors active:scale-90">
                 <i data-lucide="arrow-right" class="w-6 h-6"></i>
@@ -163,22 +173,16 @@
 
         <main class="flex-1 flex flex-col p-5 overflow-y-auto pb-6 relative bg-gray-50/30" style="-webkit-overflow-scrolling: touch; touch-action: pan-y;">
             <input type="text" id="noteTitle" dir="auto" placeholder="כותרת הפתק..." class="text-2xl font-black mb-4 focus:outline-none placeholder-gray-300 bg-transparent text-right flex-none text-gray-800 transition-colors">
-            
-            <!-- אזור תוכן ומדיה -->
             <div class="flex flex-col gap-4 flex-1">
                 <textarea id="noteContent" dir="auto" placeholder="התחל לכתוב... (הוסף # כדי ליצור תגיות)" class="w-full flex-1 resize-none focus:outline-none text-lg leading-relaxed placeholder-gray-400 bg-transparent min-h-[30vh] text-gray-700"></textarea>
                 
-                <!-- תצוגה מקדימה של תמונה (מתקנת את בעיית החיתוך והמעיכה) -->
                 <div id="imagePreviewContainer" class="hidden relative rounded-xl overflow-hidden border border-gray-200 shadow-sm bg-gray-900/5 flex-shrink-0">
-                    <!-- הוספנו object-contain כדי שלא תיחתך, ו-cursor-zoom-in כדי להראות שאפשר ללחוץ -->
                     <img id="imagePreview" src="" class="w-full h-auto max-h-[45vh] object-contain cursor-zoom-in" onclick="window.openFullscreenImage(this.src)" title="לחץ להגדלה" />
-                    <!-- הוספנו stopPropagation כדי שלחיצה על ה-X לא תגדיל את התמונה -->
                     <button onclick="window.removeImage(); event.stopPropagation();" class="absolute top-2 left-2 bg-red-500/80 hover:bg-red-600 text-white p-2 rounded-full backdrop-blur-sm transition-all z-10">
                         <i data-lucide="x" class="w-4 h-4"></i>
                     </button>
                 </div>
 
-                <!-- נגן הקלטה (מוגן ממעיכה) -->
                 <div id="audioPreviewContainer" class="hidden bg-white p-3 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-3 flex-shrink-0">
                     <div class="bg-blue-100 p-2 rounded-full text-blue-600"><i data-lucide="headphones" class="w-5 h-5"></i></div>
                     <audio id="audioPlayback" controls class="flex-1 h-10 outline-none"></audio>
@@ -187,7 +191,6 @@
                     </button>
                 </div>
             </div>
-
             <input type="hidden" id="noteId">
             <input type="hidden" id="noteIsPinned" value="false">
             <input type="hidden" id="existingImageUrl" value="">
@@ -196,21 +199,16 @@
 
         <!-- סרגל כלים למדיה -->
         <div class="bg-white border-t border-gray-200 p-3 flex justify-around items-center shadow-[0_-4px_10px_rgba(0,0,0,0.03)] pb-safe" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
-            <!-- כפתור תמונה -->
             <button onclick="window.triggerImageSelect('gallery')" class="flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition-colors p-2">
                 <i data-lucide="image" class="w-6 h-6"></i>
                 <span class="text-[10px] font-bold">תמונה</span>
             </button>
             <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="window.handleImageSelect(event)">
-
-            <!-- כפתור מצלמה ישירה -->
             <button onclick="window.triggerImageSelect('camera')" class="flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition-colors p-2">
                 <i data-lucide="camera" class="w-6 h-6"></i>
                 <span class="text-[10px] font-bold">צלם</span>
             </button>
             <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="window.handleImageSelect(event)">
-
-            <!-- כפתור הקלטה -->
             <button id="recordBtn" onclick="window.toggleRecording()" class="flex flex-col items-center gap-1 text-gray-500 hover:text-red-600 transition-colors p-2 relative">
                 <div id="recordIconBg" class="absolute inset-0 bg-red-500 rounded-full opacity-0"></div>
                 <i data-lucide="mic" id="recordIcon" class="w-6 h-6 relative z-10"></i>
@@ -218,6 +216,84 @@
             </button>
         </div>
     </div>
+
+    <!-- ========================================== -->
+    <!-- ממשק מנהל (Admin Dashboard)                -->
+    <!-- ========================================== -->
+    <div id="adminView" class="fixed inset-0 bg-gray-50 z-[800] flex flex-col h-[100dvh]" style="display: none;">
+        <header class="bg-slate-800 text-white p-4 flex justify-between items-center shadow-lg relative z-10">
+            <button onclick="window.closeAdminPanel()" class="p-2 hover:bg-slate-700 rounded-full transition flex items-center gap-2">
+                <i data-lucide="arrow-right" class="w-5 h-5"></i> יציאה
+            </button>
+            <h1 class="text-xl font-black tracking-wider flex items-center gap-2">
+                <i data-lucide="shield-alert" class="w-5 h-5 text-yellow-400"></i> עמדת מנהל
+            </h1>
+        </header>
+
+        <main class="flex-1 p-4 overflow-y-auto w-full max-w-6xl mx-auto space-y-6">
+            <!-- קלפי סטטיסטיקה -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+                    <div class="text-3xl font-black text-blue-600 mb-1" id="adminStatUsers">0</div>
+                    <div class="text-sm text-gray-500 font-medium">משתמשים רשומים</div>
+                </div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+                    <div class="text-3xl font-black text-indigo-600 mb-1" id="adminStatNotes">0</div>
+                    <div class="text-sm text-gray-500 font-medium">סך הכל פתקים</div>
+                </div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+                    <div class="text-3xl font-black text-pink-600 mb-1" id="adminStatImages">0</div>
+                    <div class="text-sm text-gray-500 font-medium">תמונות במערכת</div>
+                </div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+                    <div class="text-3xl font-black text-orange-600 mb-1" id="adminStatAudio">0</div>
+                    <div class="text-sm text-gray-500 font-medium">הקלטות קוליות</div>
+                </div>
+            </div>
+
+            <!-- רשימת משתמשים -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-slate-50 border-b border-gray-100 p-4">
+                    <h2 class="font-bold text-gray-700">פירוט משתמשים</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-500 text-sm border-b border-gray-100">
+                                <th class="p-4 font-medium">משתמש</th>
+                                <th class="p-4 font-medium">פתקים פעילים</th>
+                                <th class="p-4 font-medium">פעילות אחרונה</th>
+                                <th class="p-4 font-medium">פעולות</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminUsersTableBody" class="divide-y divide-gray-100">
+                            <!-- דינמי -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- מודל צפייה בפתקי משתמש (למנהל) -->
+    <div id="adminNotesModal" class="fixed inset-0 z-[900] hidden fade-in">
+        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" onclick="document.getElementById('adminNotesModal').classList.add('hidden')"></div>
+        <div class="fixed inset-0 overflow-y-auto z-10 pointer-events-none flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div class="bg-white rounded-t-3xl sm:rounded-3xl p-6 w-full max-w-2xl shadow-2xl pointer-events-auto h-[85vh] sm:h-[80vh] flex flex-col">
+                <div class="flex justify-between items-center mb-4 border-b pb-3">
+                    <h2 class="text-xl font-bold text-gray-800" id="adminNotesModalTitle">פתקים של המשתמש</h2>
+                    <button onclick="document.getElementById('adminNotesModal').classList.add('hidden')" class="p-2 hover:bg-gray-100 rounded-full transition text-gray-500">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div class="flex-1 overflow-y-auto pr-2 space-y-4" id="adminNotesModalContent">
+                    <!-- דינמי -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- סוף ממשק מנהל -->
+
 
     <!-- מודל תמונה במסך מלא (Lightbox) -->
     <div id="fullscreenImageModal" class="fixed inset-0 z-[600] hidden fade-in flex items-center justify-center bg-black/95 backdrop-blur-md" onclick="window.closeFullscreenImage()">
@@ -227,148 +303,86 @@
         <img id="fullscreenImageSrc" src="" class="max-w-full max-h-[90vh] object-contain pointer-events-none p-4" />
     </div>
 
-    <!-- תפריט קונטקסט (לחיצה ארוכה) -->
+    <!-- תפריטים מודלים רגילים ... -->
     <div id="contextMenuOverlay" class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-[300] fade-in hidden" onclick="window.closeContextMenu()"></div>
     <div id="contextMenuModal" class="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 z-[350] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transform translate-y-full transition-transform duration-300" style="padding-bottom: max(1.5rem, env(safe-area-inset-bottom));">
         <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
         <h3 id="contextMenuTitle" class="font-bold text-gray-500 text-center mb-6 text-sm truncate px-4">פעולות על פתק</h3>
         <div class="grid grid-cols-2 gap-4 mb-2">
-            <button onclick="window.handleContextAction('copy')" class="bg-blue-50 text-blue-700 hover:bg-blue-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors active:scale-95">
-                <i data-lucide="copy" class="w-6 h-6"></i>
-                <span class="font-bold text-sm">העתקה</span>
-            </button>
-            <button id="contextPinBtn" onclick="window.handleContextAction('pin')" class="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors active:scale-95">
-                <i data-lucide="pin" class="w-6 h-6"></i>
-                <span class="font-bold text-sm">נעיצה</span>
-            </button>
-            <button onclick="window.handleContextAction('whatsapp')" class="bg-green-50 text-green-700 hover:bg-green-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors active:scale-95">
-                <i data-lucide="message-circle" class="w-6 h-6"></i>
-                <span class="font-bold text-sm">שליחה</span>
-            </button>
-            <button onclick="window.handleContextAction('delete')" class="bg-red-50 text-red-600 hover:bg-red-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors active:scale-95">
-                <i data-lucide="trash-2" class="w-6 h-6"></i>
-                <span class="font-bold text-sm">מחיקה</span>
-            </button>
+            <button onclick="window.handleContextAction('copy')" class="bg-blue-50 text-blue-700 hover:bg-blue-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors active:scale-95"><i data-lucide="copy" class="w-6 h-6"></i><span class="font-bold text-sm">העתקה</span></button>
+            <button id="contextPinBtn" onclick="window.handleContextAction('pin')" class="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors active:scale-95"><i data-lucide="pin" class="w-6 h-6"></i><span class="font-bold text-sm">נעיצה</span></button>
+            <button onclick="window.handleContextAction('whatsapp')" class="bg-green-50 text-green-700 hover:bg-green-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors active:scale-95"><i data-lucide="message-circle" class="w-6 h-6"></i><span class="font-bold text-sm">שליחה</span></button>
+            <button onclick="window.handleContextAction('delete')" class="bg-red-50 text-red-600 hover:bg-red-100 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors active:scale-95"><i data-lucide="trash-2" class="w-6 h-6"></i><span class="font-bold text-sm">מחיקה</span></button>
         </div>
     </div>
 
-    <!-- מודל שיתוף וואטסאפ מרובה (לפי תאריכים) -->
+    <!-- מודל שיתוף וואטסאפ מרובה -->
     <div id="whatsappModal" class="fixed inset-0 z-[400] hidden fade-in">
         <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" onclick="window.history.back()"></div>
         <div class="fixed inset-0 overflow-y-auto z-10 pointer-events-none" style="-webkit-overflow-scrolling: touch;">
             <div class="flex min-h-full items-center justify-center p-4">
                 <div class="bg-white rounded-3xl p-7 w-full max-w-sm shadow-2xl pointer-events-auto">
-                    <div class="bg-green-50 w-14 h-14 rounded-full flex items-center justify-center mb-4">
-                        <i data-lucide="message-circle" class="w-7 h-7 text-green-500"></i>
-                    </div>
+                    <div class="bg-green-50 w-14 h-14 rounded-full flex items-center justify-center mb-4"><i data-lucide="message-circle" class="w-7 h-7 text-green-500"></i></div>
                     <h2 class="text-2xl font-black mb-2 text-gray-800">שתף לוואטסאפ</h2>
                     <p class="text-sm text-gray-500 mb-6">בחר את טווח התאריכים לייצוא. המערכת תארוז את כל הפתקים כהודעה מסודרת.</p>
-                    
                     <div class="space-y-4 mb-8">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">החל מתאריך:</label>
-                            <input type="date" id="shareStartDate" class="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-800 transition-all font-medium">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">עד תאריך (כולל):</label>
-                            <input type="date" id="shareEndDate" class="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-800 transition-all font-medium">
-                        </div>
+                        <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">החל מתאריך:</label><input type="date" id="shareStartDate" class="w-full border-2 border-gray-200 rounded-xl p-3 outline-none text-gray-800 font-medium"></div>
+                        <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">עד תאריך (כולל):</label><input type="date" id="shareEndDate" class="w-full border-2 border-gray-200 rounded-xl p-3 outline-none text-gray-800 font-medium"></div>
                     </div>
-                    
                     <div class="flex gap-3">
                         <button onclick="window.history.back()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-3.5 rounded-xl hover:bg-gray-200 transition-colors">ביטול</button>
-                        <button onclick="window.executeWhatsAppShare()" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-green-500/30 active:scale-95 flex items-center justify-center gap-2">
-                            <i data-lucide="send" class="w-5 h-5"></i> צור הודעה
-                        </button>
+                        <button onclick="window.executeWhatsAppShare()" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-green-500/30 active:scale-95 flex items-center justify-center gap-2"><i data-lucide="send" class="w-5 h-5"></i> צור הודעה</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- מודל מדריך ה-Pro -->
+    <!-- מודל מדריך -->
     <div id="helpModal" class="fixed inset-0 z-[400] hidden fade-in">
         <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" onclick="window.history.back()"></div>
         <div class="fixed inset-0 overflow-y-auto z-10 pointer-events-none" style="-webkit-overflow-scrolling: touch;">
             <div class="flex min-h-full items-center justify-center p-4">
                 <div class="bg-white rounded-3xl p-7 w-full max-w-md shadow-2xl relative pointer-events-auto">
-                    
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-2xl font-black text-gray-800 flex items-center gap-2">
-                            <i data-lucide="zap" class="text-blue-500"></i> מדריך ה-Pro
-                        </h2>
-                        <button onclick="window.history.back()" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
-                            <i data-lucide="x" class="w-5 h-5"></i>
-                        </button>
+                        <h2 class="text-2xl font-black text-gray-800 flex items-center gap-2"><i data-lucide="zap" class="text-blue-500"></i> מדריך ה-Pro</h2>
+                        <button onclick="window.history.back()" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500"><i data-lucide="x" class="w-5 h-5"></i></button>
                     </div>
-                    
                     <p class="text-gray-600 text-sm mb-6 leading-relaxed font-medium">גלה את היכולות המתקדמות שהופכות את האפליקציה הזו לפנקס כיס מושלם.</p>
-                    
                     <div class="space-y-6 mb-8">
                         <div class="flex items-start gap-4">
-                            <div class="bg-slate-50 p-3 rounded-2xl text-slate-600 flex-shrink-0 shadow-sm border border-slate-200"><i data-lucide="shield" class="w-5 h-5"></i></div>
-                            <div><strong class="block text-gray-800 text-base mb-1">פרטיות</strong><span class="text-sm text-gray-500 leading-relaxed block">הפתקים שלך מאובטחים בחוקי ה-DB של פיירבייס ואיש מלבדך לא יכול לגשת אליהם.</span></div>
-                        </div>
-                        <div class="flex items-start gap-4">
-                            <div class="bg-purple-50 p-3 rounded-2xl text-purple-600 flex-shrink-0 shadow-sm border border-purple-100"><i data-lucide="hash" class="w-5 h-5"></i></div>
-                            <div><strong class="block text-gray-800 text-base mb-1">מנוע תיוג אוטומטי</strong><span class="text-sm text-gray-500 leading-relaxed block">פשוט הוסף סולמית למילה בתוך הפתק (למשל <span class="text-purple-500 font-bold bg-purple-100 px-1 rounded">#רעיונות</span>), והמערכת תיצור ממנה כפתור סינון עליון באופן אוטומטי! כך תוכל לאתר פתקים דומים.</span></div>
-                        </div>
-                        <div class="flex items-start gap-4">
-                            <div class="bg-red-50 p-3 rounded-2xl text-red-600 flex-shrink-0 shadow-sm border border-red-100"><i data-lucide="trash-2" class="w-5 h-5"></i></div>
-                            <div><strong class="block text-gray-800 text-base mb-1">מחיקה בטוחה (סל מיחזור)</strong><span class="text-sm text-gray-500 leading-relaxed block">מחקת פתק בטעות? אל דאגה. הוא עובר ל"פח האשפה" בתפריט הראשי, משם תוכל לשחזר אותו או למחוק אותו לתמיד.</span></div>
-                        </div>
-                        <div class="flex items-start gap-4">
-                            <div class="bg-blue-50 p-3 rounded-2xl text-blue-600 flex-shrink-0 shadow-sm border border-blue-100"><i data-lucide="cloud-off" class="w-5 h-5"></i></div>
-                            <div><strong class="block text-gray-800 text-base mb-1">תמיכה מלאה ב-Offline</strong><span class="text-sm text-gray-500 leading-relaxed block">האפליקציה תמשיך לעבוד ולשמור נתונים גם במצב טיסה, ותסנכרן את הכל חזרה לענן ברגע שהאינטרנט יחזור.</span></div>
-                        </div>
-                        <div class="flex items-start gap-4">
-                            <div class="bg-gray-50 p-3 rounded-2xl text-gray-600 flex-shrink-0 shadow-sm border border-gray-200"><i data-lucide="smartphone" class="w-5 h-5"></i></div>
-                            <div>
-                                <strong class="block text-gray-800 text-base mb-1">מחווֹת חכמות</strong>
-                                <span class="text-sm text-gray-500 leading-relaxed block">במסך הראשי, <strong>לחיצה ארוכה</strong> (מעל חצי שנייה) על פתק כלשהו תפתח תפריט פעולות: העתקה, נעיצה, מחיקה, שליחה.<br><br>ניתן להוסיף לפתק: טקסט, תמונה או הקלטת קול.</span>
-                            </div>
+                            <div class="bg-slate-50 p-3 rounded-2xl text-slate-600 flex-shrink-0"><i data-lucide="shield" class="w-5 h-5"></i></div>
+                            <div><strong class="block text-gray-800 text-base mb-1">פרטיות</strong><span class="text-sm text-gray-500 leading-relaxed block">הפתקים שלך מאובטחים בחוקי ה-DB.</span></div>
                         </div>
                     </div>
-
-                    <!-- סטטיסטיקות -->
                     <div class="bg-blue-50 rounded-2xl p-5 border border-blue-100">
                         <h3 class="text-xs font-bold text-blue-800 uppercase tracking-wider mb-3">סטטיסטיקות החשבון שלך</h3>
                         <div class="grid grid-cols-2 gap-3">
-                            <div class="bg-white rounded-xl p-3 shadow-sm border border-blue-50 text-center">
-                                <span id="statTotalNotes" class="block text-2xl font-black text-blue-600">0</span>
-                                <span class="text-xs font-medium text-gray-500">פתקים פעילים</span>
-                            </div>
-                            <div class="bg-white rounded-xl p-3 shadow-sm border border-blue-50 text-center">
-                                <span id="statPinnedNotes" class="block text-2xl font-black text-yellow-500">0</span>
-                                <span class="text-xs font-medium text-gray-500">נעוצים בראש</span>
-                            </div>
+                            <div class="bg-white rounded-xl p-3 shadow-sm border border-blue-50 text-center"><span id="statTotalNotes" class="block text-2xl font-black text-blue-600">0</span><span class="text-xs font-medium text-gray-500">פתקים פעילים</span></div>
+                            <div class="bg-white rounded-xl p-3 shadow-sm border border-blue-50 text-center"><span id="statPinnedNotes" class="block text-2xl font-black text-yellow-500">0</span><span class="text-xs font-medium text-gray-500">נעוצים בראש</span></div>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- טוסט התראות -->
-    <div id="toast" class="fixed bottom-32 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white font-medium px-6 py-3 rounded-full opacity-0 transition-all duration-300 pointer-events-none z-[700] text-sm shadow-xl shadow-black/20 whitespace-nowrap flex items-center gap-2"></div>
+    <div id="toast" class="fixed bottom-32 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white font-medium px-6 py-3 rounded-full opacity-0 transition-all duration-300 pointer-events-none z-[9999] text-sm shadow-xl shadow-black/20 whitespace-nowrap flex items-center gap-2"></div>
 
     <script type="module">
-        // --- Firebase Imports ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-        import { getAuth, signInWithPopup, signInWithCustomToken, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+        // הוספנו את collectionGroup, getDocs, getDoc בשביל ממשק המנהל
+        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, enableIndexedDbPersistence, collectionGroup, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
-        // מפתחות Firebase שלך
         const firebaseConfig = {
-            apiKey: "AIzaSyDKw0T8imb-Mimiqg7mU1mbThIozU5QZo8",
-            authDomain: "obn-braindump.firebaseapp.com",
-            projectId: "obn-braindump",
-            storageBucket: "obn-braindump.firebasestorage.app", // קריטי ל-Storage
-            messagingSenderId: "902275826872",
-            appId: "1:902275826872:web:da522f9c3628086341604d",
-            measurementId: "G-XGPNV06H61"
+          apiKey: "AIzaSyAFaXAtelONc262VlGPFmwTjoUu4tje4YY",
+          authDomain: "obn-braindump-2.firebaseapp.com",
+          projectId: "obn-braindump-2",
+          storageBucket: "obn-braindump-2.firebasestorage.app",
+          messagingSenderId: "826937050149",
+          appId: "1:826937050149:web:0b28b528ce1fcc7571ebcc"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -379,14 +393,12 @@
 
         try { enableIndexedDbPersistence(db).catch(() => {}); } catch (e) {}
 
-        // Global State
         window.currentUser = null;
         window.currentNotes = []; 
         window.currentActiveTag = null;
         window.activeContextNote = null;
         window.showingTrash = false; 
         
-        // Media State
         let pendingImageBlob = null;
         let pendingAudioBlob = null;
         let mediaRecorder = null;
@@ -397,6 +409,10 @@
         let skipAutoSave = false;
         let isSaving = false; 
 
+        // --- משתני ניהול ---
+        let adminClickCount = 0;
+        let adminClickTimeout = null;
+
         lucide.createIcons();
 
         function generateSafeId() {
@@ -404,14 +420,7 @@
             return 'note-' + Date.now() + '-' + Math.floor(Math.random() * 1000000);
         }
 
-        const initAuth = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                try { await signInWithCustomToken(auth, __initial_auth_token); } catch(e){}
-            }
-        };
-        initAuth();
-
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             document.getElementById('loadingView').style.display = 'none';
             if (user && !user.isAnonymous) {
                 window.currentUser = user;
@@ -424,6 +433,18 @@
                     document.getElementById('userAvatar').style.display = 'block';
                     document.getElementById('userAvatarFallback').style.display = 'none';
                 }
+
+                // * פרואקטיביות *: נשמור את פרופיל המשתמש ב-DB כדי שהמנהל יוכל לראות למי שייך כל פתק
+                try {
+                    const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'info');
+                    await setDoc(profileRef, {
+                        name: user.displayName || 'ללא שם',
+                        email: user.email || 'ללא אימייל',
+                        photoURL: user.photoURL || '',
+                        lastLogin: new Date().toISOString()
+                    }, { merge: true });
+                } catch(e) { console.warn("Failed to save profile for admin", e); }
+
                 startRealtimeSync(user);
             } else {
                 window.currentUser = null;
@@ -466,6 +487,201 @@
 
         window.exportMenuToggle = () => { document.getElementById('exportMenu').classList.toggle('hidden'); };
 
+        // ==========================================
+        //         מערכת מנהל (Admin Logic)
+        // ==========================================
+        
+        window.triggerAdminLogin = () => {
+            adminClickCount++;
+            clearTimeout(adminClickTimeout);
+            adminClickTimeout = setTimeout(() => { adminClickCount = 0; }, 3000); // איפוס אחרי 3 שניות
+
+            if(adminClickCount >= 5) {
+                adminClickCount = 0;
+                const pwd = prompt("מצב מנהל: הכנס סיסמה");
+                if(pwd) {
+                    window.verifyAndLoadAdmin(pwd);
+                }
+            }
+        };
+
+        window.verifyAndLoadAdmin = async (password) => {
+            document.getElementById('loadingText').textContent = 'מאמת הרשאות...';
+            document.getElementById('loadingView').style.display = 'flex';
+
+            try {
+                // 1. בדיקת הסיסמה מול מסד הנתונים
+                const configRef = doc(db, 'artifacts', appId, 'admin', 'config');
+                const configSnap = await getDoc(configRef);
+                
+                if (!configSnap.exists() || configSnap.data().password !== password) {
+                    window.showToast("סיסמה שגויה או שאין הגדרות מנהל");
+                    document.getElementById('loadingView').style.display = 'none';
+                    return;
+                }
+
+                window.showToast("ברוך הבא, מנהל");
+                document.getElementById('listView').style.display = 'none';
+                document.getElementById('adminView').style.display = 'flex';
+                
+                // 2. טעינת כל המידע ממסד הנתונים
+                document.getElementById('loadingText').textContent = 'אוסף נתוני משתמשים...';
+                
+                // משיכת הפרופילים (ששמרנו קודם) כדי לדעת שמות משתמשים
+                const profilesQuery = collectionGroup(db, 'profile');
+                const profilesSnap = await getDocs(profilesQuery);
+                const userProfiles = {};
+                profilesSnap.forEach(doc => {
+                    const pathParts = doc.ref.path.split('/');
+                    const userId = pathParts[pathParts.indexOf('users') + 1];
+                    userProfiles[userId] = doc.data();
+                });
+
+                // משיכת כל הפתקים של כולם
+                const notesQuery = collectionGroup(db, 'notes');
+                const notesSnap = await getDocs(notesQuery);
+
+                const usersData = {};
+                let totalNotes = 0, totalImages = 0, totalAudio = 0;
+
+                notesSnap.forEach(doc => {
+                    const note = doc.data();
+                    const pathParts = doc.ref.path.split('/');
+                    const userId = pathParts[pathParts.indexOf('users') + 1];
+
+                    if(!usersData[userId]) {
+                        usersData[userId] = { 
+                            userId: userId,
+                            profile: userProfiles[userId] || { name: 'לא ידוע', email: userId },
+                            notes: [], 
+                            activeNotesCount: 0,
+                            lastActive: 0 
+                        };
+                    }
+                    
+                    usersData[userId].notes.push(note);
+                    if(!note.deleted) {
+                        usersData[userId].activeNotesCount++;
+                        totalNotes++;
+                    }
+                    if(note.imageUrl) totalImages++;
+                    if(note.audioUrl) totalAudio++;
+
+                    const noteTime = new Date(note.updated_at || note.created_at).getTime();
+                    if(noteTime > usersData[userId].lastActive) {
+                        usersData[userId].lastActive = noteTime;
+                    }
+                });
+
+                // עידכון הדשבורד
+                document.getElementById('adminStatUsers').textContent = Object.keys(usersData).length;
+                document.getElementById('adminStatNotes').textContent = totalNotes;
+                document.getElementById('adminStatImages').textContent = totalImages;
+                document.getElementById('adminStatAudio').textContent = totalAudio;
+
+                // יצירת טבלת המשתמשים
+                const tbody = document.getElementById('adminUsersTableBody');
+                tbody.innerHTML = '';
+                
+                // המרת האובייקט למערך ומיון לפי פעילות אחרונה
+                const usersArray = Object.values(usersData).sort((a,b) => b.lastActive - a.lastActive);
+                
+                // שמירה גלובלית כדי להציג את הפתקים בלחיצה
+                window.adminGlobalUsersData = usersData;
+
+                usersArray.forEach(user => {
+                    const lastDate = user.lastActive > 0 ? new Date(user.lastActive).toLocaleDateString('he-IL') : 'אין פתקים';
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b border-gray-50 hover:bg-slate-50 transition-colors";
+                    tr.innerHTML = `
+                        <td class="p-4">
+                            <div class="flex items-center gap-3">
+                                ${user.profile.photoURL ? `<img src="${user.profile.photoURL}" class="w-8 h-8 rounded-full">` : `<div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center"><i data-lucide="user" class="w-4 h-4 text-blue-600"></i></div>`}
+                                <div>
+                                    <div class="font-bold text-gray-800">${user.profile.name}</div>
+                                    <div class="text-xs text-gray-500">${user.profile.email}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-4 font-bold text-blue-600">${user.activeNotesCount}</td>
+                        <td class="p-4 text-gray-500 text-sm">${lastDate}</td>
+                        <td class="p-4">
+                            <button onclick="window.viewAdminUserNotes('${user.userId}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-4 py-2 rounded-xl text-sm font-bold transition-colors">
+                                צפה בפתקים
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                lucide.createIcons();
+
+            } catch (err) {
+                console.error(err);
+                window.showToast("שגיאת הרשאות! ודא שחוקי ה-Firestore מעודכנים");
+            } finally {
+                document.getElementById('loadingView').style.display = 'none';
+            }
+        };
+
+        window.closeAdminPanel = () => {
+            document.getElementById('adminView').style.display = 'none';
+            document.getElementById('listView').style.display = 'flex';
+        };
+
+        window.viewAdminUserNotes = (userId) => {
+            const userData = window.adminGlobalUsersData[userId];
+            if(!userData) return;
+
+            document.getElementById('adminNotesModalTitle').textContent = `פתקים של ${userData.profile.name}`;
+            const contentDiv = document.getElementById('adminNotesModalContent');
+            contentDiv.innerHTML = '';
+
+            const activeNotes = userData.notes.filter(n => !n.deleted).sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+            
+            if(activeNotes.length === 0) {
+                contentDiv.innerHTML = '<div class="text-center text-gray-400 mt-10">אין פתקים פעילים למשתמש זה</div>';
+            } else {
+                activeNotes.forEach(note => {
+                    let mediaBadges = '';
+                    if(note.imageUrl) mediaBadges += `<span class="bg-pink-50 text-pink-600 text-xs px-2 py-1 rounded-md ml-1"><i data-lucide="image" class="w-3 h-3 inline"></i> תמונה</span>`;
+                    if(note.audioUrl) mediaBadges += `<span class="bg-orange-50 text-orange-600 text-xs px-2 py-1 rounded-md ml-1"><i data-lucide="mic" class="w-3 h-3 inline"></i> הקלטה</span>`;
+
+                    const div = document.createElement('div');
+                    div.className = "bg-gray-50 border border-gray-200 rounded-xl p-4";
+                    
+                    // חלק מקוצר (Summary)
+                    const title = note.title ? `<strong class="text-gray-800">${note.title}</strong>` : '';
+                    const contentSnippet = note.content ? note.content.substring(0, 60) + (note.content.length>60?'...':'') : 'ללא תוכן';
+                    
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <div>${title} <span class="text-xs text-gray-400 mr-2">${new Date(note.created_at).toLocaleDateString('he-IL')}</span></div>
+                            <button class="text-blue-500 text-sm font-bold hover:underline" onclick="this.nextElementSibling.classList.toggle('hidden')">הרחב/הסתר</button>
+                            <!-- תוכן מורחב מוסתר -->
+                            <div class="hidden absolute left-0 right-0 mt-8 mx-4 p-4 bg-white shadow-xl border border-blue-100 rounded-xl z-20">
+                                ${note.title ? `<h4 class="font-black text-lg mb-2">${note.title}</h4>` : ''}
+                                <p class="text-gray-600 whitespace-pre-wrap mb-4">${note.content || ''}</p>
+                                ${note.imageUrl ? `<img src="${note.imageUrl}" class="w-full max-h-40 object-contain rounded-lg border mb-2">` : ''}
+                                ${note.audioUrl ? `<audio src="${note.audioUrl}" controls class="w-full h-8"></audio>` : ''}
+                                <button class="mt-4 w-full bg-gray-100 text-gray-600 py-2 rounded-lg font-bold" onclick="this.parentElement.classList.add('hidden')">סגור הרחבה</button>
+                            </div>
+                        </div>
+                        <p class="text-gray-500 text-sm mb-2">${contentSnippet}</p>
+                        <div>${mediaBadges}</div>
+                    `;
+                    contentDiv.appendChild(div);
+                });
+            }
+
+            document.getElementById('adminNotesModal').classList.remove('hidden');
+            lucide.createIcons();
+        };
+
+        // ==========================================
+        //  סוף מערכת מנהל / המשך פונקציות רגילות
+        // ==========================================
+
         window.exportToJSON = () => {
             window.exportMenuToggle();
             const activeNotes = window.currentNotes.filter(n => !n.deleted);
@@ -476,7 +692,6 @@
             window.showToast('גיבוי הורד בהצלחה');
         };
 
-        // --- ייבוא מ-JSON ---
         window.handleImportJSON = (e) => {
             window.exportMenuToggle();
             const file = e.target.files[0];
@@ -500,7 +715,6 @@
                     const batchPromises = importedNotes.map(note => {
                         const noteId = note.id || generateSafeId();
                         const noteRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'notes', noteId);
-                        // Merge keeps existing media URLs intact if they exist in DB
                         return setDoc(noteRef, {
                             ...note,
                             updated_at: new Date().toISOString(),
@@ -521,12 +735,9 @@
             reader.readAsText(file);
         };
 
-        // --- פח אשפה וחזרה ---
         window.toggleTrashView = () => {
             window.exportMenuToggle();
-            if (window.showingTrash) { 
-                history.back(); 
-            } else {
+            if (window.showingTrash) { history.back(); } else {
                 window.showingTrash = true;
                 document.getElementById('trashMenuText').textContent = 'חזור לפתקים הפעילים';
                 history.pushState({ screen: 'trash' }, '', '#trash'); 
@@ -534,9 +745,7 @@
             }
         };
 
-        window.handleMainBack = () => {
-            history.back();
-        };
+        window.handleMainBack = () => { history.back(); };
 
         window.restoreNote = async (id) => {
             const noteRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'notes', id);
@@ -547,21 +756,14 @@
         window.hardDeleteNote = async (id) => {
             const note = window.currentNotes.find(n => n.id === id);
             if(note) {
-                // מחיקת תמונה מהאחסון
-                if(note.imageUrl) {
-                    try { const imgRef = ref(storage, note.imageUrl); await deleteObject(imgRef); } catch(e) { console.warn("Failed to delete image", e); }
-                }
-                // מחיקת אודיו מהאחסון
-                if(note.audioUrl) {
-                    try { const audRef = ref(storage, note.audioUrl); await deleteObject(audRef); } catch(e) { console.warn("Failed to delete audio", e); }
-                }
+                if(note.imageUrl) { try { const imgRef = ref(storage, note.imageUrl); await deleteObject(imgRef); } catch(e) {} }
+                if(note.audioUrl) { try { const audRef = ref(storage, note.audioUrl); await deleteObject(audRef); } catch(e) {} }
             }
             const noteRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'notes', id);
             await deleteDoc(noteRef);
             window.showToast('נמחק לצמיתות מהענן');
         };
 
-        // --- רינדור תצוגה מרכזית ---
         window.renderNotes = () => {
             const container = document.getElementById('notesContainer');
             const searchQuery = document.getElementById('searchInput').value.toLowerCase();
@@ -597,9 +799,7 @@
                 allTags.forEach(tag => {
                     tagBar.innerHTML += `<button onclick="window.setActiveTag('${tag}')" class="px-4 py-1.5 text-sm font-bold rounded-xl transition-all flex-none border ${window.currentActiveTag === tag ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-white text-purple-600 border-purple-100 hover:bg-purple-50'}">${tag}</button>`;
                 });
-            } else {
-                tagBar.style.display = 'none';
-            }
+            } else { tagBar.style.display = 'none'; }
 
             let filtered = window.currentNotes.filter(n => {
                 const isDeleted = n.deleted === true;
@@ -621,19 +821,9 @@
                 if (window.showingTrash) {
                     container.innerHTML = '<div class="text-center text-gray-400 flex flex-col items-center"><div class="bg-gray-100 text-gray-300 p-6 rounded-full mb-5 shadow-inner"><i data-lucide="trash-2" class="w-12 h-12"></i></div><p class="font-bold text-xl text-gray-500">פח האשפה ריק</p></div>';
                 } else {
-                    container.innerHTML = `
-                        <div class="text-center flex flex-col items-center p-8 bg-white rounded-3xl shadow-sm border border-gray-100 w-full max-w-md mx-auto">
-                            <div class="bg-blue-50 text-blue-500 p-5 rounded-full mb-6 shadow-inner cursor-pointer hover:bg-blue-100 transition-colors" onclick="window.openEditor()">
-                                <i data-lucide="pen-tool" class="w-10 h-10"></i>
-                            </div>
-                            <p class="font-black text-2xl text-gray-800 mb-2">אין פתקים כרגע</p>
-                            <button onclick="window.openEditor()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl font-bold mt-4 shadow-lg active:scale-95 flex gap-3">
-                                <i data-lucide="plus" class="w-5 h-5"></i> צור פתק חדש
-                            </button>
-                        </div>`;
+                    container.innerHTML = `<div class="text-center flex flex-col items-center p-8 bg-white rounded-3xl shadow-sm border border-gray-100 w-full max-w-md mx-auto"><div class="bg-blue-50 text-blue-500 p-5 rounded-full mb-6 shadow-inner cursor-pointer hover:bg-blue-100 transition-colors" onclick="window.openEditor()"><i data-lucide="pen-tool" class="w-10 h-10"></i></div><p class="font-black text-2xl text-gray-800 mb-2">אין פתקים כרגע</p><button onclick="window.openEditor()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl font-bold mt-4 shadow-lg active:scale-95 flex gap-3"><i data-lucide="plus" class="w-5 h-5"></i> צור פתק חדש</button></div>`;
                 }
-                lucide.createIcons();
-                return;
+                lucide.createIcons(); return;
             }
             
             container.className = 'columns-2 gap-3 w-full';
@@ -646,7 +836,6 @@
                 if (window.showingTrash) cardStyle = 'bg-red-50 border-red-200 opacity-80';
 
                 el.className = `p-4 rounded-2xl border transition-all cursor-pointer flex flex-col gap-1.5 select-none relative break-inside-avoid mb-3 shadow-sm ${cardStyle}`;
-                
                 const title = note.title || (note.content ? note.content.substring(0, 30) + '...' : 'ללא כותרת');
                 let contentHtml = '';
                 if (note.content) {
@@ -654,7 +843,6 @@
                     contentHtml = `<p class="text-gray-500 text-sm leading-relaxed line-clamp-6 mt-1 pointer-events-none" dir="auto">${processedText}</p>`;
                 }
 
-                // Lazy Loading Media Indicators
                 let mediaIndicators = '';
                 if(note.imageUrl || note.audioUrl) {
                     mediaIndicators = `<div class="flex gap-2 mt-2 pt-2 border-t border-gray-100/50 text-gray-400">`;
@@ -665,19 +853,13 @@
 
                 const pinIcon = isPinned && !window.showingTrash ? `<i data-lucide="pin" class="absolute left-3 top-3 w-4 h-4 text-yellow-500 fill-yellow-200 transform -rotate-45"></i>` : '';
 
-                el.innerHTML = `${pinIcon}
-                    <h3 class="font-black text-gray-800 text-[1.05rem] leading-tight ${isPinned && !window.showingTrash ? 'pl-6' : ''}" dir="auto">${title}</h3>
-                    ${contentHtml}
-                    ${mediaIndicators}`;
+                el.innerHTML = `${pinIcon}<h3 class="font-black text-gray-800 text-[1.05rem] leading-tight ${isPinned && !window.showingTrash ? 'pl-6' : ''}" dir="auto">${title}</h3>${contentHtml}${mediaIndicators}`;
 
                 let pressTimer; let isLongPress = false; let startY = 0;
                 const start = (e) => {
                     if (window.showingTrash) return;
                     isLongPress = false; startY = e.touches ? e.touches[0].clientY : e.clientY;
-                    pressTimer = setTimeout(() => {
-                        isLongPress = true; if (navigator.vibrate) navigator.vibrate(50);
-                        window.openContextMenu(note);
-                    }, 500); 
+                    pressTimer = setTimeout(() => { isLongPress = true; if (navigator.vibrate) navigator.vibrate(50); window.openContextMenu(note); }, 500); 
                 };
                 const move = (e) => { const currentY = e.touches ? e.touches[0].clientY : e.clientY; if (Math.abs(currentY - startY) > 10) clearTimeout(pressTimer); };
                 const end = () => { clearTimeout(pressTimer); };
@@ -697,14 +879,11 @@
                 };
                 fragment.appendChild(el);
             });
-            
-            container.innerHTML = ''; container.appendChild(fragment);
-            lucide.createIcons();
+            container.innerHTML = ''; container.appendChild(fragment); lucide.createIcons();
         };
 
         window.setActiveTag = (tag) => { window.currentActiveTag = tag; window.renderNotes(); };
 
-        // --- Context Menu ---
         window.openContextMenu = (note) => {
             window.activeContextNote = note;
             document.getElementById('contextMenuTitle').textContent = `פעולות: ${note.title || 'ללא כותרת'}`;
@@ -755,11 +934,9 @@
             }, 150);
         };
 
-        // --- ייצוא לוואטסאפ מרובה (לפי תאריכים) ---
         window.openWhatsAppModal = () => {
             window.exportMenuToggle();
-            const today = new Date();
-            const lastWeek = new Date(); lastWeek.setDate(today.getDate() - 7);
+            const today = new Date(); const lastWeek = new Date(); lastWeek.setDate(today.getDate() - 7);
             document.getElementById('shareStartDate').value = lastWeek.toISOString().split('T')[0];
             document.getElementById('shareEndDate').value = today.toISOString().split('T')[0];
             document.getElementById('whatsappModal').classList.remove('hidden');
@@ -769,13 +946,7 @@
         window.executeWhatsAppShare = () => {
             const start = new Date(document.getElementById('shareStartDate').value); start.setHours(0,0,0,0);
             const end = new Date(document.getElementById('shareEndDate').value); end.setHours(23,59,59,999);
-            
-            const toShare = window.currentNotes.filter(n => {
-                if (n.deleted) return false;
-                const d = new Date(n.created_at);
-                return d >= start && d <= end;
-            });
-
+            const toShare = window.currentNotes.filter(n => { if (n.deleted) return false; const d = new Date(n.created_at); return d >= start && d <= end; });
             if(toShare.length === 0) { window.showToast('אין פתקים בטווח זה'); return; }
 
             let text = "*BrainDump - יצוא פתקים*\n\n";
@@ -783,59 +954,39 @@
                 const d = new Date(n.created_at);
                 text += `📝 *${n.title || 'ללא כותרת'}* (${d.toLocaleDateString('he-IL')} ${d.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})})\n${n.content}\n`;
                 if(n.imageUrl) text += `🖼️ תמונה מצורפת במערכת\n`;
-                if(n.audioUrl) text += `🎤 הקלטה מצורפת במערכת\n`;
-                text += `\n`;
+                if(n.audioUrl) text += `🎤 הקלטה מצורפת במערכת\n\n`;
             });
             window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
             history.back();
         };
 
-        // --- הוספנו צפייה בתמונה במסך מלא ---
         window.openFullscreenImage = (src) => {
             if(!src) return;
             document.getElementById('fullscreenImageSrc').src = src;
             document.getElementById('fullscreenImageModal').classList.remove('hidden');
             history.pushState({ screen: 'fullscreenImage' }, '', '#image');
         };
+        window.closeFullscreenImage = () => { document.getElementById('fullscreenImageModal').classList.add('hidden'); };
 
-        window.closeFullscreenImage = () => {
-            document.getElementById('fullscreenImageModal').classList.add('hidden');
-        };
-
-        // --- Media Handling (Image Compression & Audio) ---
-        
         window.triggerImageSelect = (type) => {
             const hasImage = pendingImageBlob !== null || document.getElementById('existingImageUrl').value !== '';
-            if (hasImage) {
-                if (!confirm('כבר קיימת תמונה בפתק זה. האם תרצה להחליף אותה בתמונה חדשה?')) {
-                    return;
-                }
-            }
+            if (hasImage && !confirm('כבר קיימת תמונה בפתק זה. האם תרצה להחליף אותה בתמונה חדשה?')) return;
             if (type === 'gallery') document.getElementById('imageInput').click();
             if (type === 'camera') document.getElementById('cameraInput').click();
         };
 
-        // דחיסת תמונה חכמה בעזרת Canvas
         window.handleImageSelect = (e) => {
             const file = e.target.files[0];
             if(!file) return;
-            
             const reader = new FileReader();
             reader.onload = (event) => {
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    let width = img.width; let height = img.height;
-                    const MAX_WIDTH = 1280; 
-                    
-                    if (width > MAX_WIDTH) {
-                        height = Math.round((height * MAX_WIDTH) / width);
-                        width = MAX_WIDTH;
-                    }
+                    let width = img.width; let height = img.height; const MAX_WIDTH = 1280; 
+                    if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; }
                     canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
+                    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
                     canvas.toBlob((blob) => {
                         pendingImageBlob = blob;
                         document.getElementById('imagePreview').src = URL.createObjectURL(blob);
@@ -847,65 +998,41 @@
             reader.readAsDataURL(file);
         };
 
-        window.removeImage = () => {
-            pendingImageBlob = null;
-            document.getElementById('imagePreview').src = '';
-            document.getElementById('imagePreviewContainer').classList.add('hidden');
-            document.getElementById('existingImageUrl').value = ''; 
-        };
+        window.removeImage = () => { pendingImageBlob = null; document.getElementById('imagePreview').src = ''; document.getElementById('imagePreviewContainer').classList.add('hidden'); document.getElementById('existingImageUrl').value = ''; };
 
         window.toggleRecording = async () => {
             if(isRecording) {
-                mediaRecorder.stop();
-                isRecording = false;
+                mediaRecorder.stop(); isRecording = false;
                 document.getElementById('recordIcon').classList.replace('text-white', 'text-gray-500');
                 document.getElementById('recordIconBg').classList.remove('pulse-record', 'opacity-100');
                 document.getElementById('recordText').textContent = "הקלט";
                 return;
             }
-
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-
+                mediaRecorder = new MediaRecorder(stream); audioChunks = [];
                 mediaRecorder.ondataavailable = e => { if(e.data.size > 0) audioChunks.push(e.data); };
                 mediaRecorder.onstop = () => {
                     pendingAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    const audioUrl = URL.createObjectURL(pendingAudioBlob);
-                    document.getElementById('audioPlayback').src = audioUrl;
+                    document.getElementById('audioPlayback').src = URL.createObjectURL(pendingAudioBlob);
                     document.getElementById('audioPreviewContainer').classList.remove('hidden');
-                    stream.getTracks().forEach(track => track.stop()); // סגירת המיקרופון
+                    stream.getTracks().forEach(track => track.stop());
                 };
-
-                mediaRecorder.start();
-                isRecording = true;
+                mediaRecorder.start(); isRecording = true;
                 document.getElementById('recordIcon').classList.replace('text-gray-500', 'text-white');
                 document.getElementById('recordIconBg').classList.add('pulse-record', 'opacity-100');
                 document.getElementById('recordText').textContent = "מקליט...";
-            } catch (err) {
-                alert("לא ניתן לגשת למיקרופון. ודא שאישרת הרשאות ושאתה גולש ב-HTTPS.");
-            }
+            } catch (err) { alert("לא ניתן לגשת למיקרופון."); }
         };
 
-        window.removeAudio = () => {
-            pendingAudioBlob = null;
-            document.getElementById('audioPlayback').src = '';
-            document.getElementById('audioPreviewContainer').classList.add('hidden');
-            document.getElementById('existingAudioUrl').value = '';
-        };
+        window.removeAudio = () => { pendingAudioBlob = null; document.getElementById('audioPlayback').src = ''; document.getElementById('audioPreviewContainer').classList.add('hidden'); document.getElementById('existingAudioUrl').value = ''; };
 
-        // --- Editor Logic ---
         window.openEditor = (note = null) => {
             const deleteBtn = document.getElementById('deleteBtn');
-            pendingImageBlob = null;
-            pendingAudioBlob = null;
-            
-            // איפוס UI מדיה
+            pendingImageBlob = null; pendingAudioBlob = null;
             document.getElementById('imagePreviewContainer').classList.add('hidden');
             document.getElementById('audioPreviewContainer').classList.add('hidden');
-            document.getElementById('imageInput').value = '';
-            document.getElementById('cameraInput').value = '';
+            document.getElementById('imageInput').value = ''; document.getElementById('cameraInput').value = '';
 
             if (note) {
                 document.getElementById('noteId').value = note.id;
@@ -915,45 +1042,24 @@
                 document.getElementById('existingImageUrl').value = note.imageUrl || '';
                 document.getElementById('existingAudioUrl').value = note.audioUrl || '';
                 deleteBtn.classList.remove('hidden'); 
-
-                // טעינת מדיה קיימת לתצוגה
-                if(note.imageUrl) {
-                    document.getElementById('imagePreview').src = note.imageUrl;
-                    document.getElementById('imagePreviewContainer').classList.remove('hidden');
-                }
-                if(note.audioUrl) {
-                    document.getElementById('audioPlayback').src = note.audioUrl;
-                    document.getElementById('audioPreviewContainer').classList.remove('hidden');
-                }
+                if(note.imageUrl) { document.getElementById('imagePreview').src = note.imageUrl; document.getElementById('imagePreviewContainer').classList.remove('hidden'); }
+                if(note.audioUrl) { document.getElementById('audioPlayback').src = note.audioUrl; document.getElementById('audioPreviewContainer').classList.remove('hidden'); }
             } else {
-                document.getElementById('noteId').value = '';
-                document.getElementById('noteTitle').value = '';
-                document.getElementById('noteContent').value = '';
-                document.getElementById('noteIsPinned').value = 'false';
-                document.getElementById('existingImageUrl').value = '';
-                document.getElementById('existingAudioUrl').value = '';
+                document.getElementById('noteId').value = ''; document.getElementById('noteTitle').value = ''; document.getElementById('noteContent').value = '';
+                document.getElementById('noteIsPinned').value = 'false'; document.getElementById('existingImageUrl').value = ''; document.getElementById('existingAudioUrl').value = '';
                 deleteBtn.classList.add('hidden'); 
             }
-            
             window.updatePinUI();
             document.getElementById('listView').style.display = 'none';
             document.getElementById('editorView').style.display = 'flex';
             history.pushState({ screen: 'editor' }, '', '#editor');
         };
 
-        window.handleEditorBack = () => {
-            if(isSaving) return; // חסימת חזרה בזמן שמירה/העלאה
-            history.back();
-        };
-        
-        window.saveNoteManually = () => {
-             if(isSaving) return;
-             history.back(); 
-        };
+        window.handleEditorBack = () => { if(isSaving) return; history.back(); };
+        window.saveNoteManually = () => { if(isSaving) return; history.back(); };
 
         window.performSave = async () => {
             if (!window.currentUser || isSaving) return;
-            
             const id = document.getElementById('noteId').value;
             const title = document.getElementById('noteTitle').value.trim();
             const content = document.getElementById('noteContent').value.trim();
@@ -961,17 +1067,13 @@
             let finalImgUrl = document.getElementById('existingImageUrl').value;
             let finalAudioUrl = document.getElementById('existingAudioUrl').value;
 
-            // אם הכל ריק ואין מדיה לשתף, אל תשמור
             if (!title && !content && !pendingImageBlob && !pendingAudioBlob && !finalImgUrl && !finalAudioUrl) return;
-
             isSaving = true;
             
-            // הצגת מסך טעינה אם יש העלאת קבצים כבדה
             if(pendingImageBlob || pendingAudioBlob) {
-                const loader = document.getElementById('loadingView');
                 document.getElementById('loadingText').classList.remove('hidden');
-                loader.style.display = 'flex';
-                loader.classList.remove('hidden');
+                document.getElementById('loadingView').style.display = 'flex';
+                document.getElementById('loadingView').classList.remove('hidden');
             }
 
             try {
@@ -979,49 +1081,31 @@
                 const now = new Date().toISOString();
                 const userId = window.currentUser.uid;
 
-                // 1. העלאת תמונה
                 if (pendingImageBlob) {
                     const imgRef = ref(storage, `users/${userId}/images/${noteId}_${Date.now()}.webp`);
-                    await uploadBytes(imgRef, pendingImageBlob);
-                    finalImgUrl = await getDownloadURL(imgRef);
+                    await uploadBytes(imgRef, pendingImageBlob); finalImgUrl = await getDownloadURL(imgRef);
                 }
-
-                // 2. העלאת אודיו
                 if (pendingAudioBlob) {
                     const audioRef = ref(storage, `users/${userId}/audio/${noteId}_${Date.now()}.webm`);
-                    await uploadBytes(audioRef, pendingAudioBlob);
-                    finalAudioUrl = await getDownloadURL(audioRef);
+                    await uploadBytes(audioRef, pendingAudioBlob); finalAudioUrl = await getDownloadURL(audioRef);
                 }
 
-                // 3. שמירה ב-Firestore
                 let createdAt = now;
-                if (id) {
-                    const existing = window.currentNotes.find(n => n.id === id);
-                    if (existing) createdAt = existing.created_at;
-                }
+                if (id) { const existing = window.currentNotes.find(n => n.id === id); if (existing) createdAt = existing.created_at; }
 
                 const noteData = {
                     id: noteId, title: title, content: content, is_pinned: isPinned,
                     updated_at: now, created_at: createdAt, deleted: false
                 };
-                
-                // הוספת שדות המדיה רק אם קיימים (מונע דריסה עם NULL)
                 if(finalImgUrl) noteData.imageUrl = finalImgUrl; else noteData.imageUrl = null;
                 if(finalAudioUrl) noteData.audioUrl = finalAudioUrl; else noteData.audioUrl = null;
 
                 const noteRef = doc(db, 'artifacts', appId, 'users', userId, 'notes', noteId);
                 await setDoc(noteRef, noteData, { merge: true });
-
-            } catch (e) {
-                console.error(e);
-                window.showToast('שגיאה בשמירה/העלאה ❌');
-            } finally {
-                document.getElementById('loadingView').style.display = 'none';
-                document.getElementById('loadingText').classList.add('hidden');
-                isSaving = false;
-            }
+            } catch (e) { window.showToast('שגיאה בשמירה/העלאה ❌'); } 
+            finally { document.getElementById('loadingView').style.display = 'none'; document.getElementById('loadingText').classList.add('hidden'); isSaving = false; }
         };
-        
+
         window.deleteCurrentNote = async () => {
             if(!confirm('להעביר את הפתק לפח האשפה?')) return;
             const id = document.getElementById('noteId').value;
@@ -1030,26 +1114,15 @@
                 await setDoc(noteRef, { deleted: true, updated_at: new Date().toISOString() }, { merge: true });
                 window.showToast('הועבר לפח האשפה');
             }
-            skipAutoSave = true;
-            history.back(); 
+            skipAutoSave = true; history.back(); 
         };
 
-        window.togglePin = () => {
-            const input = document.getElementById('noteIsPinned');
-            input.value = input.value === 'true' ? 'false' : 'true';
-            window.updatePinUI();
-        };
-
+        window.togglePin = () => { const input = document.getElementById('noteIsPinned'); input.value = input.value === 'true' ? 'false' : 'true'; window.updatePinUI(); };
         window.updatePinUI = () => {
             const isPinned = document.getElementById('noteIsPinned').value === 'true';
             const btn = document.getElementById('pinBtn');
-            if (isPinned) {
-                btn.classList.replace('text-gray-400', 'text-yellow-600');
-                btn.classList.add('bg-yellow-50');
-            } else {
-                btn.classList.replace('text-yellow-600', 'text-gray-400');
-                btn.classList.remove('bg-yellow-50');
-            }
+            if (isPinned) { btn.classList.replace('text-gray-400', 'text-yellow-600'); btn.classList.add('bg-yellow-50'); } 
+            else { btn.classList.replace('text-yellow-600', 'text-gray-400'); btn.classList.remove('bg-yellow-50'); }
         };
 
         window.openHelpModal = () => {
@@ -1060,11 +1133,18 @@
             history.pushState({ screen: 'help' }, '', '#help');
         };
         
-        // --- Routing ---
         window.addEventListener('popstate', async () => {
-            if(isSaving) { history.pushState({ screen: 'editor' }, '', '#editor'); return; } // חסימה
+            if(isSaving) { history.pushState({ screen: 'editor' }, '', '#editor'); return; } 
             
-            // תמיכה בסגירת חלונות צפים עם כפתור החזור
+            if(document.getElementById('adminView').style.display === 'flex' || document.getElementById('adminView').style.display === 'block') {
+                if(!document.getElementById('adminNotesModal').classList.contains('hidden')) {
+                    document.getElementById('adminNotesModal').classList.add('hidden');
+                    return;
+                }
+                window.closeAdminPanel();
+                return;
+            }
+
             if(!document.getElementById('fullscreenImageModal').classList.contains('hidden')) { window.closeFullscreenImage(); return; }
             if(!document.getElementById('contextMenuOverlay').classList.contains('hidden')) { window.closeContextMenu(); return; }
             if(!document.getElementById('helpModal').classList.contains('hidden')) { document.getElementById('helpModal').classList.add('hidden'); return; }
@@ -1072,7 +1152,7 @@
             if(!document.getElementById('exportMenu').classList.contains('hidden')) { window.exportMenuToggle(); return; }
             
             if(document.getElementById('editorView').style.display !== 'none') {
-                if(isRecording) window.toggleRecording(); // עצור הקלטה אם יצא
+                if(isRecording) window.toggleRecording(); 
                 if(!skipAutoSave) await window.performSave();
                 skipAutoSave = false; 
                 document.getElementById('editorView').style.display = 'none';
