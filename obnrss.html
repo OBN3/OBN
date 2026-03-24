@@ -145,10 +145,10 @@
                             <button onclick="toggleAllArticles(false)" class="text-xs font-bold bg-slate-100 text-slate-600 px-4 py-2 rounded-full hover:bg-slate-200 transition-colors">נקה</button>
                         </div>
                     </div>
-                    <div id="articlesList" class="space-y-6 max-h-[600px] overflow-y-auto pr-2 text-slate-400 text-center py-10">
+                    <div id="articlesList" class="space-y-6 max-h-[600px] overflow-y-auto pr-2 text-slate-400 text-center py-10 text-right">
                         <div class="opacity-50">
-                            <p class="text-4xl mb-4">🕵️‍♂️</p>
-                            <p class="text-lg">בחר מקורות משמאל ולחץ על "טען כתבות".</p>
+                            <p class="text-4xl mb-4 text-center">🕵️‍♂️</p>
+                            <p class="text-lg text-center">בחר מקורות משמאל ולחץ על "טען כתבות".</p>
                         </div>
                     </div>
                 </div>
@@ -343,7 +343,7 @@
             fetchBtn.disabled = true;
             loader.classList.remove('hidden');
             const listContainer = document.getElementById('articlesList');
-            listContainer.innerHTML = '<div class="flex flex-col items-center py-12"><div class="loader !w-10 !h-10 mb-4 border-slate-200 border-t-blue-600"></div><p class="text-slate-600 font-bold animate-pulse text-lg">סורק מקורות מידע...</p></div>';
+            listContainer.innerHTML = '<div class="flex flex-col items-center py-12"><div class="loader !w-10 !h-10 mb-4 border-slate-200 border-t-blue-600"></div><p class="text-slate-600 font-bold animate-pulse text-lg text-center">סורק מקורות מידע...</p></div>';
             allArticles = [];
             let errors = [];
             for (const id of selectedIds) {
@@ -361,15 +361,19 @@
 
         async function translateArticlesList() {
             const geminiKey = document.getElementById('geminiKey').value.trim();
+            const selectedModel = document.getElementById('geminiModel').value;
             if (!geminiKey) { alert('יש להזין מפתח Gemini כדי לתרגם את הרשימה.'); return; }
+            
             const btn = document.getElementById('translateBtn');
             const loader = document.getElementById('translateLoader');
             btn.disabled = true;
             loader.classList.remove('hidden');
+            
             const textToTranslate = allArticles.map((a, i) => `ID:${i} Title:${a.title} Desc:${a.desc}`).join('\n');
-            const prompt = `Translate the following article titles and short descriptions into Hebrew. Keep the ID prefix. Response must be in JSON format: [{"id": number, "title": "Hebrew Title", "desc": "Hebrew Description"}]\n\n${textToTranslate}`;
+            const prompt = `Translate the following article titles and short descriptions into Hebrew. Keep the ID prefix exactly. Response must be in JSON format: [{"id": number, "title": "Hebrew Title", "desc": "Hebrew Description"}]\n\n${textToTranslate}`;
+            
             try {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${geminiKey}`;
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -378,6 +382,12 @@
                         generationConfig: { responseMimeType: "application/json" }
                     })
                 });
+                
+                if (!response.ok) {
+                    const errorJson = await response.json();
+                    throw new Error(errorJson.error?.message || `HTTP error ${response.status}`);
+                }
+                
                 const data = await response.json();
                 const translated = JSON.parse(data.candidates[0].content.parts[0].text);
                 translated.forEach(item => {
@@ -387,7 +397,10 @@
                     }
                 });
                 displayArticles();
-            } catch (e) { alert('תרגום נכשל: ' + e.message); }
+            } catch (e) { 
+                console.error(e);
+                alert('תרגום נכשל: ' + e.message); 
+            }
             btn.disabled = false;
             loader.classList.add('hidden');
         }
@@ -523,7 +536,7 @@
             temp.select();
             document.execCommand('copy');
             document.body.removeChild(temp);
-            alert('הועתק!');
+            alert('הטקסט הועתק!');
         }
 
         function exportToWord() {
