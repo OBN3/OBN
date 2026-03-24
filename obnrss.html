@@ -76,13 +76,13 @@
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Gemini AI</label>
                             <input type="password" id="geminiKey" oninput="saveKeyState(this)" class="w-full p-2 border rounded-lg mb-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="הזן מפתח API...">
                             <select id="geminiModel" onchange="saveKeyState(this)" class="w-full p-2 border rounded-lg text-sm bg-white">
-                                <option value="gemini-2.5-flash-preview-09-2025">Gemini 2.5 Flash</option>
-                                <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite</option>
-                                <option value="gemma-3-1b-it">Gemma 3 1B</option>
-                                <option value="gemma-3-4b-it">Gemma 3 4B</option>
-                                <option value="gemma-3-12b-it">Gemma 3 12B</option>
-                                <option value="gemma-3-27b-it">Gemma 3 27B</option>
+                                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                                <option value="gemini-2.5-flash-preview-09-2025">Gemini 2.5 Flash (Preview)</option>
+                                <option value="custom-gemini">-- מודל מותאם אישית --</option>
                             </select>
+                            <input type="text" id="customGeminiModel" oninput="saveKeyState(this)" class="hidden w-full p-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 mt-1" placeholder="שם המודל...">
                         </div>
                         <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Groq AI</label>
@@ -90,10 +90,10 @@
                             <select id="groqModel" onchange="handleModelChange(this)" class="w-full p-2 border rounded-lg text-sm bg-white mb-2">
                                 <option value="llama-3.3-70b-versatile">Llama 3.3 70B</option>
                                 <option value="llama-3.1-8b-instant">Llama 3.1 8B</option>
-                                <option value="groq/compound">Groq Compound</option>
+                                <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
                                 <option value="custom">-- מודל מותאם אישית --</option>
                             </select>
-                            <input type="text" id="customGroqModel" oninput="saveKeyState(this)" class="hidden w-full p-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500" placeholder="שם המודל...">
+                            <input type="text" id="customGroqModel" oninput="saveKeyState(this)" class="hidden w-full p-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500" placeholder="שם המודל (למשל: llama-3.1-405b)...">
                         </div>
                     </div>
                     <p id="saveFeedback" class="text-[10px] text-emerald-600 mt-2 opacity-0 transition-opacity font-bold">ההגדרות נשמרו ✓</p>
@@ -211,7 +211,7 @@
                 document.getElementById('localWarning').classList.remove('hidden');
             }
             renderSources();
-            ['geminiKey', 'groqKey', 'geminiModel', 'groqModel', 'customGroqModel', 'systemPrompt'].forEach(id => {
+            ['geminiKey', 'groqKey', 'geminiModel', 'groqModel', 'customGroqModel', 'customGeminiModel', 'systemPrompt'].forEach(id => {
                 const val = localStorage.getItem(id);
                 if (val) {
                     const el = document.getElementById(id);
@@ -219,6 +219,7 @@
                 }
             });
             toggleCustomModel(document.getElementById('groqModel').value);
+            toggleCustomGemini(document.getElementById('geminiModel').value);
         }
 
         function renderSources() {
@@ -262,6 +263,9 @@
 
         function saveKeyState(el) {
             localStorage.setItem(el.id, el.value);
+            if (el.id === 'geminiModel') toggleCustomGemini(el.value);
+            if (el.id === 'groqModel') toggleCustomModel(el.value);
+            
             const feedback = document.getElementById('saveFeedback');
             feedback.style.opacity = '1';
             clearTimeout(saveTimeout);
@@ -278,14 +282,21 @@
             if (val === 'custom') customInput.classList.remove('hidden');
             else customInput.classList.add('hidden');
         }
+        
+        function toggleCustomGemini(val) {
+            const customInput = document.getElementById('customGeminiModel');
+            if (val === 'custom-gemini') customInput.classList.remove('hidden');
+            else customInput.classList.add('hidden');
+        }
 
         function clearAllKeys() {
-            ['geminiKey', 'groqKey', 'geminiModel', 'groqModel', 'customGroqModel'].forEach(id => {
+            ['geminiKey', 'groqKey', 'geminiModel', 'groqModel', 'customGroqModel', 'customGeminiModel'].forEach(id => {
                 localStorage.removeItem(id);
                 const el = document.getElementById(id);
                 if (el) el.value = (el.tagName === 'SELECT' ? el.options[0].value : '');
             });
             toggleCustomModel(document.getElementById('groqModel').value);
+            toggleCustomGemini(document.getElementById('geminiModel').value);
             alert('ההגדרות נמחקו.');
         }
 
@@ -378,6 +389,7 @@
                         generationConfig: { responseMimeType: "application/json" }
                     })
                 });
+                if (!response.ok) throw new Error("API call failed");
                 const data = await response.json();
                 const translated = JSON.parse(data.candidates[0].content.parts[0].text);
                 translated.forEach(item => {
@@ -422,7 +434,6 @@
         }
 
         function formatLinksInText(text) {
-            // Converts raw URLs to clickable anchor tags
             const urlRegex = /(https?:\/\/[^\s]+)/g;
             return text.replace(urlRegex, (url) => {
                 return `<a href="${url}" target="_blank" class="article-link">${url}</a>`;
@@ -430,35 +441,45 @@
         }
 
         function cleanOutput(text) {
-            // Removes # and * and trims
             return text.replace(/[#*`~]/g, '').trim();
         }
 
         async function summarize(engine) {
             const geminiKey = document.getElementById('geminiKey').value.trim();
             const groqKey = document.getElementById('groqKey').value.trim();
-            const geminiModel = document.getElementById('geminiModel').value;
+            
+            const geminiModelRaw = document.getElementById('geminiModel').value;
+            const customGeminiModel = document.getElementById('customGeminiModel').value.trim();
+            const geminiModel = geminiModelRaw === 'custom-gemini' ? customGeminiModel : geminiModelRaw;
+            
             const groqModelRaw = document.getElementById('groqModel').value;
             const customGroqModel = document.getElementById('customGroqModel').value.trim();
-            const systemPrompt = document.getElementById('systemPrompt').value;
             const groqModel = groqModelRaw === 'custom' ? customGroqModel : groqModelRaw;
+            
+            const systemPrompt = document.getElementById('systemPrompt').value;
             const selectedIndices = Array.from(document.querySelectorAll('.art-selector:checked')).map(i => parseInt(i.id.split('-')[1]));
             if (selectedIndices.length === 0) { alert('בחר לפחות כתבה אחת.'); return; }
-            localStorage.setItem('systemPrompt', systemPrompt);
+            
             const dataToProcess = selectedIndices.map(i => `מקור: ${allArticles[i].source}\nכותרת: ${allArticles[i].title}\nקישור: ${allArticles[i].link}\nתוכן: ${allArticles[i].content.replace(/<[^>]*>/g, '').slice(0, 1500)}`).join('\n\n---\n\n');
-            const fullPrompt = `${systemPrompt}\n\nלהלן הידיעות:\n${dataToProcess}`;
+            const fullPrompt = `${systemPrompt}\n\nלהלן הידיעות שנבחרו:\n${dataToProcess}`;
+            
             document.getElementById(`${engine}Loader`).classList.remove('hidden');
             try {
                 let responseText = "";
                 if (engine === 'gemini') {
                     if (!geminiKey) throw new Error("מפתח Gemini חסר.");
+                    if (!geminiModel) throw new Error("שם המודל חסר.");
                     responseText = await callGemini(geminiKey, geminiModel, fullPrompt);
                 } else {
                     if (!groqKey) throw new Error("מפתח Groq חסר.");
+                    if (!groqModel) throw new Error("שם המודל חסר.");
                     responseText = await callGroq(groqKey, groqModel, fullPrompt);
                 }
                 showResult(responseText);
-            } catch (error) { alert("שגיאת AI: " + error.message); }
+            } catch (error) { 
+                console.error(error);
+                alert("שגיאת AI: " + error.message); 
+            }
             finally { document.getElementById(`${engine}Loader`).classList.add('hidden'); }
         }
 
@@ -473,7 +494,10 @@
                 })
             });
             const data = await response.json();
-            if (data.error) throw new Error(data.error.message);
+            if (data.error) {
+                if (data.error.code === 404) throw new Error(`המודל "${model}" לא נמצא. נסה להחליף מודל או בדוק שגיאות כתיב.`);
+                throw new Error(data.error.message);
+            }
             return data.candidates?.[0]?.content?.parts?.[0]?.text || "אין תשובה.";
         }
 
@@ -485,7 +509,10 @@
                 body: JSON.stringify({ model, messages: [{ role: "user", content: prompt }], temperature: 0.7, max_tokens: 4096 })
             });
             const data = await response.json();
-            if (data.error) throw new Error(data.error.message);
+            if (data.error) {
+                if (response.status === 404) throw new Error(`המודל "${model}" לא נמצא ב-Groq.`);
+                throw new Error(data.error.message);
+            }
             return data.choices?.[0]?.message?.content || "אין תשובה.";
         }
 
@@ -494,14 +521,11 @@
                 try {
                     const response = await fetch(url, options);
                     if (response.ok) return response;
-                    if (response.status !== 429 && response.status < 500) {
-                        const err = await response.json().catch(() => ({}));
-                        throw new Error(err.error?.message || `שגיאה (${response.status})`);
-                    }
+                    if (response.status !== 429 && response.status < 500) return response; 
                 } catch (e) { if (i === retries - 1) throw e; }
                 await new Promise(res => setTimeout(res, Math.pow(2, i) * 1000));
             }
-            throw new Error("לא ניתן להתחבר ל-AI.");
+            return await fetch(url, options); 
         }
 
         function showResult(text) {
