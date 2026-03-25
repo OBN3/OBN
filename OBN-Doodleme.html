@@ -21,8 +21,7 @@
         .animate-in { animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Compact Slot Cards */
-        .slot-card { border: 1px solid #f1f5f9; transition: all 0.2s; cursor: pointer; min-height: 80px; display: flex; flex-direction: column; justify-content: center; }
+        .slot-card { border: 1px solid #f1f5f9; transition: all 0.2s; cursor: pointer; min-height: 90px; display: flex; flex-direction: column; justify-content: center; position: relative; }
         .slot-card:hover { border-color: #cbd5e1; background-color: #f8fafc; }
         .slot-card.selected { border-color: #2563eb; background-color: #eff6ff; }
 
@@ -31,6 +30,9 @@
         
         .check-circle { width: 32px; height: 32px; border-radius: 999px; border: 2px solid #e2e8f0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-weight: bold; flex-shrink: 0; }
         .selected .check-circle { background-color: #2563eb; border-color: #2563eb; color: white; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
+        
+        .admin-action-btn { position: absolute; top: 8px; left: 8px; opacity: 0; transition: opacity 0.2s; }
+        .slot-card:hover .admin-action-btn { opacity: 1; }
     </style>
 </head>
 <body class="min-h-screen pb-12">
@@ -86,12 +88,12 @@
                 <div id="events-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
             </div>
 
-            <!-- Create Event View -->
+            <!-- Create/Edit Event View -->
             <div id="view-create" class="hidden animate-in">
                 <div class="card p-8">
                     <div class="flex justify-between items-start mb-8">
                         <div>
-                            <h2 class="text-3xl font-bold text-gray-800">הגדרת אירוע חדש</h2>
+                            <h2 id="create-view-title" class="text-3xl font-bold text-gray-800">הגדרת אירוע חדש</h2>
                             <p class="text-gray-400 mt-1">מלא את הפרטים ובחר שעות מהלוח</p>
                         </div>
                         <button onclick="updateUI()" class="text-blue-500 hover:underline">חזרה לרשימה</button>
@@ -110,7 +112,7 @@
                                 <textarea id="event-desc" class="w-full p-4 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="כתבו תיאור או סדר יום"></textarea>
                             </div>
                             
-                            <button onclick="saveEvent()" class="w-full btn-primary py-4 rounded-xl font-bold text-xl shadow-lg mt-4 flex items-center justify-center gap-2">
+                            <button id="save-event-btn" onclick="saveEvent()" class="w-full btn-primary py-4 rounded-xl font-bold text-xl shadow-lg mt-4 flex items-center justify-center gap-2">
                                 <span>🚀</span> צור אירוע ושתף
                             </button>
                         </div>
@@ -134,8 +136,11 @@
                     </div>
                     
                     <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-6 mb-10">
-                        <div class="flex-1">
-                            <h2 id="vote-title" class="text-4xl font-extrabold text-gray-800 break-words"></h2>
+                        <div class="flex-1 text-right">
+                            <div class="flex items-center gap-3 mb-2">
+                                <h2 id="vote-title" class="text-4xl font-extrabold text-gray-800 break-words"></h2>
+                                <button id="admin-edit-event-btn" onclick="editEventStructure()" class="hidden text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-lg font-bold transition-colors">ערוך אירוע ⚙️</button>
+                            </div>
                             <p id="vote-desc" class="text-gray-500 mt-3 text-lg leading-relaxed"></p>
                         </div>
                         <div class="flex flex-col gap-3 min-w-[200px]">
@@ -150,7 +155,6 @@
                         </div>
                     </div>
                     
-                    <!-- Voter Info -->
                     <div class="mb-10 bg-blue-50 p-6 rounded-2xl border border-blue-100">
                         <label class="block text-sm font-bold text-blue-900 mb-2">האימייל שלכם להצבעה (הזינו מייל קיים לעריכה):</label>
                         <input type="email" id="voter-email" dir="ltr" oninput="handleEmailInput(this.value)" class="w-full p-4 bg-white border border-blue-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-400 font-bold text-lg" placeholder="your@email.com">
@@ -160,10 +164,7 @@
                         <span>📅</span> בחרו את המועדים הנוחים לכם:
                     </h3>
 
-                    <!-- Vertical Slot List - COMPACT -->
-                    <div id="slots-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-10">
-                        <!-- Slots injected here -->
-                    </div>
+                    <div id="slots-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-10"></div>
 
                     <div class="flex flex-col md:flex-row justify-between items-center gap-6 border-t pt-8 mb-12">
                         <p class="text-gray-400 text-sm italic text-center md:text-right">
@@ -174,19 +175,15 @@
                         </button>
                     </div>
 
-                    <!-- Results List for Admins / Summary -->
                     <div id="results-section" class="border-t pt-10">
                         <h3 class="text-2xl font-bold text-gray-800 mb-6">מי כבר הצביע?</h3>
-                        <div id="voters-list" class="space-y-2">
-                            <!-- Voters list -->
-                        </div>
+                        <div id="voters-list" class="space-y-2"></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Templates -->
     <template id="day-block-template">
         <div class="day-block animate-in relative shadow-sm">
             <button onclick="this.parentElement.remove()" class="absolute -top-3 -left-3 w-8 h-8 bg-white border border-red-100 text-red-500 rounded-full shadow-sm hover:bg-red-50 flex items-center justify-center transition-colors z-10">✕</button>
@@ -207,7 +204,6 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, query, where, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyBwGHroy14gSPiZSUEIN1Zo4uTKJcDMluA",
             authDomain: "obn-doodle.firebaseapp.com",
@@ -230,8 +226,7 @@
         const EMAIL_TEMPLATE_ID = "template_nkp34qa"; 
         const EMAIL_PUBLIC_KEY = "Z5HhFw_n3NPMJCeH4"; 
 
-        // State
-        let user, currentEventId, isSuperAdmin = false, allEvents = [], currentEventData = null, allVotes = [], selectedIdxs = new Set(), editingVoteId = null;
+        let user, currentEventId, isSuperAdmin = false, allEvents = [], currentEventData = null, allVotes = [], selectedIdxs = new Set(), editingVoteId = null, isStructureEdit = false;
 
         async function sha256(message) {
             const msgBuffer = new TextEncoder().encode(message.toLowerCase().trim());
@@ -264,12 +259,6 @@
                 if (user && user.email) {
                     const userHash = await sha256(user.email);
                     isSuperAdmin = (userHash === SUPER_ADMIN_HASH);
-                    
-                    console.log("%c--- אבחון SUPER ADMIN ---", "color: blue; font-weight: bold;");
-                    console.log("המייל המחובר:", user.email);
-                    console.log("ה-Hash הנוכחי:", userHash);
-                    console.log("סטטוס מנהל על:", isSuperAdmin ? "✅ מזהה אותך כמנהל-על" : "❌ לא מזוהה כמנהל-על");
-                    console.log("-----------------------");
                 } else {
                     isSuperAdmin = false;
                 }
@@ -291,15 +280,10 @@
             if (user) {
                 const isGoogle = user.providerData.some(p => p.providerId === 'google.com');
                 statusEl.innerHTML = isGoogle ? `שלום, ${user.displayName || user.email} ${isSuperAdmin ? '<span class="admin-badge mr-2">Super Admin</span>' : ''}` : `מצב אורח`;
-                
                 if(isGoogle) {
                     logoutBtn.classList.remove('hidden');
                     if (backHomeBtn) backHomeBtn.classList.remove('hidden');
                     if (isSuperAdmin && superFilters) superFilters.classList.remove('hidden');
-                } else {
-                    logoutBtn.classList.add('hidden');
-                    if (backHomeBtn) backHomeBtn.classList.add('hidden');
-                    if (superFilters) superFilters.classList.add('hidden');
                 }
             }
 
@@ -332,13 +316,8 @@
         async function showDashboard() {
             hideAll();
             document.getElementById('view-dashboard').classList.remove('hidden');
-            const statusIndicator = document.getElementById('dashboard-admin-status');
-            if (isSuperAdmin) statusIndicator.innerHTML = '<span class="text-xs text-blue-600 font-bold bg-blue-50 px-3 py-1 rounded-full border border-blue-100">מצב ניהול-על פעיל</span>';
-            else statusIndicator.innerHTML = '';
-
             const container = document.getElementById('events-list');
             container.innerHTML = '<p class="text-gray-400">טוען אירועים...</p>';
-            
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'events'), (snapshot) => {
                 allEvents = snapshot.docs;
                 applyFilters();
@@ -348,21 +327,13 @@
         window.applyFilters = () => {
             const filterValue = document.getElementById('event-filter')?.value || 'all';
             let filtered = [];
-
             if (!isSuperAdmin) {
                 filtered = allEvents.filter(d => d.data().createdBy === user.uid);
                 filtered.sort((a, b) => (b.data().createdAt || 0) - (a.data().createdAt || 0));
             } else {
-                if (filterValue === 'mine') {
-                    filtered = allEvents.filter(d => d.data().createdBy === user.uid);
-                    filtered.sort((a, b) => (b.data().createdAt || 0) - (a.data().createdAt || 0));
-                } else if (filterValue === 'others') {
-                    filtered = allEvents.filter(d => d.data().createdBy !== user.uid);
-                    filtered.sort((a, b) => (a.data().adminEmail || '').toLowerCase().localeCompare((b.data().adminEmail || '').toLowerCase()));
-                } else {
-                    filtered = [...allEvents];
-                    filtered.sort((a, b) => (b.data().createdAt || 0) - (a.data().createdAt || 0));
-                }
+                if (filterValue === 'mine') filtered = allEvents.filter(d => d.data().createdBy === user.uid).sort((a, b) => (b.data().createdAt || 0) - (a.data().createdAt || 0));
+                else if (filterValue === 'others') filtered = allEvents.filter(d => d.data().createdBy !== user.uid).sort((a, b) => (a.data().adminEmail || '').toLowerCase().localeCompare((b.data().adminEmail || '').toLowerCase()));
+                else filtered = [...allEvents].sort((a, b) => (b.data().createdAt || 0) - (a.data().createdAt || 0));
             }
             renderEvents(filtered);
         }
@@ -378,7 +349,6 @@
                 const data = docSnap.data();
                 const card = document.createElement('div');
                 card.className = 'card p-6 flex flex-col justify-between animate-in border border-gray-100 hover:border-blue-200 transition-colors shadow-sm';
-                const creationDate = data.createdAt ? new Date(data.createdAt).toLocaleDateString('he-IL') : 'תאריך לא ידוע';
                 card.innerHTML = `
                     <div>
                         <div class="flex justify-between items-start mb-2 gap-2">
@@ -386,11 +356,10 @@
                             ${data.createdBy !== user.uid ? `<span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold border border-blue-100 whitespace-nowrap" dir="ltr">${data.adminEmail || 'אנונימי'}</span>` : `<span class="text-[10px] bg-gray-50 text-gray-500 px-2 py-1 rounded font-bold border border-gray-200">שלי</span>`}
                         </div>
                         <p class="text-gray-500 text-sm mb-4 line-clamp-2">${data.desc || 'אין תיאור'}</p>
-                        <span class="text-[10px] text-gray-400">📅 נוצר: ${creationDate}</span>
                     </div>
                     <div class="flex gap-2 mt-4">
                         <a href="?id=${docSnap.id}" class="flex-1 text-center bg-blue-600 text-white py-2.5 rounded-lg font-bold text-sm hover:bg-blue-700 transition shadow-sm">נהל הצבעות</a>
-                        <button onclick="confirmDelete('${docSnap.id}')" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition">🗑️</button>
+                        <button onclick="confirmDelete('${docSnap.id}')" class="bg-red-50 text-red-500 p-2.5 rounded-lg hover:bg-red-100 transition">🗑️</button>
                     </div>
                 `;
                 container.appendChild(card);
@@ -399,24 +368,38 @@
 
         window.confirmDelete = async (id) => {
             if(!confirm("האם אתה בטוח שברצונך למחוק את האירוע?")) return;
-            try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', id));
-                alertBox("האירוע נמחק.");
-            } catch(e) { alertBox("שגיאה במחיקה."); }
+            try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', id)); alertBox("האירוע נמחק."); } catch(e) { alertBox("שגיאה במחיקה."); }
         }
 
-        window.showCreateView = () => {
+        window.showCreateView = (isEdit = false) => {
             hideAll();
             document.getElementById('view-create').classList.remove('hidden');
-            if(user.email) document.getElementById('admin-email').value = user.email;
-            if (document.getElementById('date-blocks-container').children.length === 0) addDateBlock();
+            const titleEl = document.getElementById('create-view-title');
+            const saveBtn = document.getElementById('save-event-btn');
+            
+            if (isEdit && currentEventData) {
+                isStructureEdit = true;
+                titleEl.textContent = "עריכת מועדים ופרטים";
+                saveBtn.textContent = "עדכן אירוע";
+                document.getElementById('event-title').value = currentEventData.title;
+                document.getElementById('admin-email').value = currentEventData.adminEmail;
+                document.getElementById('event-desc').value = currentEventData.desc || "";
+            } else {
+                isStructureEdit = false;
+                titleEl.textContent = "הגדרת אירוע חדש";
+                saveBtn.textContent = "צור אירוע ושתף";
+                document.getElementById('event-title').value = "";
+                document.getElementById('event-desc').value = "";
+                if(user.email) document.getElementById('admin-email').value = user.email;
+                document.getElementById('date-blocks-container').innerHTML = "";
+                addDateBlock();
+            }
         };
 
         const HOURS = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
         window.addDateBlock = () => {
             const template = document.getElementById('day-block-template');
             const clone = template.content.cloneNode(true);
-            const container = document.getElementById('date-blocks-container');
             const block = clone.querySelector('.day-block');
             block.querySelector('.block-date').valueAsDate = new Date();
             const grid = block.querySelector('.time-grid');
@@ -426,11 +409,7 @@
                 b.textContent = h; b.onclick = () => b.classList.toggle('active');
                 grid.appendChild(b);
             });
-            container.appendChild(block);
-        }
-
-        window.toggleAllTimes = (btn, s) => {
-            btn.closest('.day-block').querySelectorAll('.time-chip').forEach(c => s ? c.classList.add('active') : c.classList.remove('active'));
+            document.getElementById('date-blocks-container').appendChild(block);
         }
 
         window.saveEvent = async () => {
@@ -438,48 +417,79 @@
             const email = document.getElementById('admin-email').value.trim();
             const desc = document.getElementById('event-desc').value.trim();
             const blocks = document.querySelectorAll('.day-block');
-            let opts = [];
+            let opts = isStructureEdit ? [...currentEventData.options] : [];
+            
             blocks.forEach(b => {
                 const d = b.querySelector('.block-date').value;
-                b.querySelectorAll('.time-chip.active').forEach(c => { if(d) opts.push(`${d}T${c.textContent}`); });
+                b.querySelectorAll('.time-chip.active').forEach(c => { 
+                    const opt = `${d}T${c.textContent}`;
+                    if(!opts.includes(opt)) opts.push(opt);
+                });
             });
+            
             if(!title || !email || opts.length === 0 || !validateEmail(email)) { alertBox("בדקו את הטופס שוב."); return; }
+            
             try {
-                const now = Date.now();
-                const ref = doc(collection(db, 'artifacts', appId, 'public', 'data', 'events'));
-                await setDoc(ref, { title, desc, adminEmail: email, options: opts.sort(), createdBy: user.uid, createdAt: now });
-                const eventLink = `${window.location.origin}${window.location.pathname}?id=${ref.id}`;
-                await sendNotification(email, `אירוע חדש: ${title}`, `הקישור לשיתוף: ${eventLink}`);
-                window.history.pushState({}, '', '?id=' + ref.id);
+                if (isStructureEdit) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', currentEventId), {
+                        title, desc, adminEmail: email, options: opts.sort()
+                    });
+                    alertBox("האירוע עודכן בהצלחה!");
+                } else {
+                    const ref = doc(collection(db, 'artifacts', appId, 'public', 'data', 'events'));
+                    await setDoc(ref, { title, desc, adminEmail: email, options: opts.sort(), createdBy: user.uid, createdAt: Date.now() });
+                    window.history.pushState({}, '', '?id=' + ref.id);
+                }
                 updateUI();
             } catch(e) { alertBox("שגיאה בשמירה."); }
         }
 
-        // --- VOTING VIEW & EDITING ---
+        // --- SLOT MANAGEMENT (DELETE SPECIFIC OPTION) ---
+        window.deleteSlot = async (idx) => {
+            if (!confirm("בטוחים שברצונכם למחוק את המועד הזה? זה יסיר אותו גם מהצבעות המשתתפים.")) return;
+            
+            try {
+                const oldOptions = [...currentEventData.options];
+                const newOptions = oldOptions.filter((_, i) => i !== idx);
+                const eventRef = doc(db, 'artifacts', appId, 'public', 'data', 'events', currentEventId);
+                
+                // Update Event Options
+                await updateDoc(eventRef, { options: newOptions });
 
+                // Update All Votes in the background
+                for (const vote of allVotes) {
+                    const voteRef = doc(db, 'artifacts', appId, 'public', 'data', 'votes', vote.id);
+                    // Filter out the deleted index and shift down any higher index
+                    const newSelections = vote.selections
+                        .filter(s => s !== idx)
+                        .map(s => s > idx ? s - 1 : s);
+                    
+                    await updateDoc(voteRef, { selections: newSelections });
+                }
+                
+                alertBox("המועד הוסר בהצלחה.");
+            } catch (e) { console.error(e); alertBox("שגיאה במחיקת המועד."); }
+        }
+
+        window.editEventStructure = () => showCreateView(true);
+
+        // --- VOTING VIEW & EDITING ---
         window.handleEmailInput = (email) => {
             const trimmed = email.trim().toLowerCase();
             const existingVote = allVotes.find(v => v.email.toLowerCase() === trimmed);
-            
-            if (existingVote) {
-                loadExistingVote(existingVote);
-            } else {
-                exitEditMode();
-            }
+            if (existingVote) loadExistingVote(existingVote); else exitEditMode();
         }
 
         function loadExistingVote(vote) {
             selectedIdxs = new Set(vote.selections);
             editingVoteId = vote.id;
-            
             document.getElementById('submit-vote-btn').textContent = "עדכן את הבחירה שלי";
             document.getElementById('edit-mode-banner').classList.remove('hidden');
             renderSlots();
         }
 
         function exitEditMode() {
-            selectedIdxs = new Set();
-            editingVoteId = null;
+            selectedIdxs = new Set(); editingVoteId = null;
             document.getElementById('submit-vote-btn').textContent = "שלח את הבחירה שלי";
             document.getElementById('edit-mode-banner').classList.add('hidden');
             renderSlots();
@@ -495,89 +505,66 @@
         async function showVoteView(id) {
             hideAll();
             document.getElementById('view-vote').classList.remove('hidden');
-            
             const eventDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', id));
             if(!eventDoc.exists()) { alertBox("אירוע לא נמצא."); window.location.href = window.location.pathname; return; }
-            
             currentEventData = eventDoc.data();
             document.getElementById('vote-title').textContent = currentEventData.title;
             document.getElementById('vote-desc').textContent = currentEventData.desc;
             
             const isAdmin = user && (currentEventData.createdBy === user.uid || isSuperAdmin);
-            if(isAdmin) document.getElementById('admin-share-box').classList.remove('hidden');
+            if(isAdmin) {
+                document.getElementById('admin-share-box').classList.remove('hidden');
+                document.getElementById('admin-edit-event-btn').classList.remove('hidden');
+            }
 
-            // Global Snapshot for votes of THIS event
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'votes'), (snap) => {
-                allVotes = snap.docs
-                    .filter(d => d.data().eventId === id)
-                    .map(d => ({ id: d.id, ...d.data() }));
-                
+                allVotes = snap.docs.filter(d => d.data().eventId === id).map(d => ({ id: d.id, ...d.data() }));
                 renderSlots();
                 renderVotersList(isAdmin);
             });
         }
 
         function renderSlots() {
-            const slotsContainer = document.getElementById('slots-container');
-            slotsContainer.innerHTML = '';
-            
+            const container = document.getElementById('slots-container');
+            container.innerHTML = '';
             const counts = {};
             allVotes.forEach(v => v.selections.forEach(idx => counts[idx] = (counts[idx] || 0) + 1));
+            const isAdmin = user && (currentEventData.createdBy === user.uid || isSuperAdmin);
 
             currentEventData.options.forEach((opt, idx) => {
                 const dt = new Date(opt);
-                const voteCount = counts[idx] || 0;
                 const isSelected = selectedIdxs.has(idx);
-
                 const div = document.createElement('div');
                 div.className = `slot-card card px-5 py-3 ${isSelected ? 'selected' : ''}`;
                 div.onclick = () => {
-                    if (selectedIdxs.has(idx)) selectedIdxs.delete(idx);
-                    else selectedIdxs.add(idx);
+                    if (selectedIdxs.has(idx)) selectedIdxs.delete(idx); else selectedIdxs.add(idx);
                     renderSlots();
                 };
-
                 div.innerHTML = `
                     <div class="flex justify-between items-center gap-4">
                         <div class="flex-1">
                             <div class="text-xl text-blue-700 font-bold mb-0.5">${dt.toLocaleDateString('he-IL', {weekday:'long', day:'numeric', month:'numeric'})}</div>
                             <div class="flex items-center gap-3">
                                 <span class="text-xl font-bold text-gray-800">${opt.split('T')[1]}</span>
-                                <span class="text-xs font-bold text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-lg">
-                                    הצבעות: ${voteCount}
-                                </span>
+                                <span class="text-xs font-bold text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-lg">הצבעות: ${counts[idx] || 0}</span>
                             </div>
                         </div>
-                        <div class="check-circle shadow-sm">
-                            ${isSelected ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : ''}
-                        </div>
+                        <div class="check-circle shadow-sm">${isSelected ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : ''}</div>
+                        ${isAdmin ? `<button onclick="event.stopPropagation(); deleteSlot(${idx})" class="admin-action-btn bg-red-50 text-red-500 p-1.5 rounded-lg hover:bg-red-500 hover:text-white transition shadow-sm" title="הסר מועד זה מהרשימה">🗑️</button>` : ''}
                     </div>
                 `;
-                slotsContainer.appendChild(div);
+                container.appendChild(div);
             });
         }
 
         function renderVotersList(isAdmin) {
             const container = document.getElementById('voters-list');
-            container.innerHTML = '';
-            
-            if (allVotes.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 italic text-sm">טרם התקבלו הצבעות...</p>';
-                return;
-            }
-
+            container.innerHTML = allVotes.length === 0 ? '<p class="text-gray-400 italic text-sm">טרם התקבלו הצבעות...</p>' : '';
             allVotes.forEach(v => {
                 const div = document.createElement('div');
                 div.className = 'flex items-center justify-between p-2.5 bg-gray-50 rounded-xl border border-gray-100';
-                div.innerHTML = `
-                    <div class="flex flex-col">
-                        <span class="font-bold text-gray-700 text-sm" dir="ltr">${v.email}</span>
-                        <span class="text-[10px] text-gray-400">סימן ${v.selections.length} מועדים</span>
-                    </div>
-                    <div class="flex gap-2">
-                        ${isAdmin ? `<button onclick="adminEditVote('${v.email}')" class="text-[11px] bg-white border border-blue-200 text-blue-600 px-3 py-1 rounded-lg font-bold hover:bg-blue-50 transition-colors">ערוך ✏️</button>` : ''}
-                    </div>
-                `;
+                div.innerHTML = `<div class="flex flex-col"><span class="font-bold text-gray-700 text-sm" dir="ltr">${v.email}</span><span class="text-[10px] text-gray-400">סימן ${v.selections.length} מועדים</span></div>
+                    <div class="flex gap-2">${isAdmin ? `<button onclick="adminEditVote('${v.email}')" class="text-[11px] bg-white border border-blue-200 text-blue-600 px-3 py-1 rounded-lg font-bold hover:bg-blue-50">ערוך ✏️</button>` : ''}</div>`;
                 container.appendChild(div);
             });
         }
@@ -585,46 +572,18 @@
         window.submitVote = async () => {
             const email = document.getElementById('voter-email').value.trim();
             const sels = Array.from(selectedIdxs);
-            
-            if(!email || !validateEmail(email)) { alertBox("הזינו אימייל תקין להצבעה."); return; }
-            if(sels.length === 0) { alertBox("בחרו לפחות מועד אחד."); return; }
-            
+            if(!email || !validateEmail(email) || sels.length === 0) { alertBox("בדקו אימייל ובחרו מועד."); return; }
             try {
-                const voteData = {
-                    eventId: currentEventId, 
-                    email: email.toLowerCase(), 
-                    selections: sels, 
-                    uid: user.uid, 
-                    timestamp: Date.now()
-                };
-
-                if (editingVoteId) {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'votes', editingVoteId), voteData);
-                    alertBox("הצבעתך עודכנה בהצלחה!");
-                } else {
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'votes'), voteData);
-                    alertBox("תודה! הצבעתך נשמרה.");
-                }
-
-                document.getElementById('voter-email').value = '';
-                exitEditMode();
-                
-                const eventDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', currentEventId));
-                if (eventDoc.exists()) {
-                    const eData = eventDoc.data();
-                    await sendNotification(eData.adminEmail, `עדכון הצבעה: ${eData.title}`, `המשתמש ${email} הצביע/עדכן לאירוע שלך.`);
-                }
-
-            } catch(e) { 
-                console.error(e);
-                alertBox("שגיאה בשמירת ההצבעה."); 
-            }
+                const voteData = { eventId: currentEventId, email: email.toLowerCase(), selections: sels, uid: user.uid, timestamp: Date.now() };
+                if (editingVoteId) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'votes', editingVoteId), voteData);
+                else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'votes'), voteData);
+                document.getElementById('voter-email').value = ''; exitEditMode(); alertBox("הצבעתך נשמרה!");
+            } catch(e) { alertBox("שגיאה בשמירה."); }
         }
 
         window.copyCurrentUrl = () => {
-            const el = document.createElement('textarea');
-            el.value = window.location.href; document.body.appendChild(el); el.select();
-            document.execCommand('copy'); document.body.removeChild(el); alertBox("הקישור הועתק ללוח!");
+            const el = document.createElement('textarea'); el.value = window.location.href; document.body.appendChild(el); el.select();
+            document.execCommand('copy'); document.body.removeChild(el); alertBox("הקישור הועתק!");
         }
 
         function alertBox(m) {
