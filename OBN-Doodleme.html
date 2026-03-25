@@ -21,13 +21,17 @@
         .animate-in { animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .slot-card { border: 2px solid transparent; transition: all 0.2s; cursor: pointer; }
+        .slot-card { border: 2px solid transparent; transition: all 0.2s; cursor: pointer; border: 1px solid #f1f5f9; }
+        .slot-card:hover { border-color: #cbd5e1; }
         .slot-card.selected { border-color: #2563eb; background-color: #eff6ff; }
         .slot-card.popular { position: relative; }
-        .slot-card.popular::after { content: '🔥 הכי מבוקש'; position: absolute; top: -10px; left: 10px; background: #fbbf24; color: #78350f; font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 99px; }
+        .slot-card.popular::after { content: '🔥 הכי מבוקש'; position: absolute; top: -10px; left: 10px; background: #fbbf24; color: #78350f; font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 99px; z-index: 10; }
 
         .admin-badge { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: bold; }
         .filter-select { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: left 0.5rem center; background-repeat: no-repeat; padding-left: 2.5rem; }
+        
+        .check-circle { width: 28px; height: 28px; border-radius: 999px; border: 2px solid #e2e8f0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-weight: bold; }
+        .selected .check-circle { background-color: #2563eb; border-color: #2563eb; color: white; }
     </style>
 </head>
 <body class="min-h-screen pb-12">
@@ -125,7 +129,11 @@
 
             <!-- Voting View (VERTICAL LAYOUT) -->
             <div id="view-vote" class="hidden animate-in">
-                <div class="card p-6 md:p-10 mb-8">
+                <div class="card p-6 md:p-10 mb-8 overflow-hidden">
+                    <div id="edit-mode-banner" class="hidden -mx-10 -mt-10 mb-10 bg-blue-600 text-white p-3 text-center font-bold animate-pulse">
+                        מצב עריכה: אתם מעדכנים הצבעה קיימת ✏️
+                    </div>
+                    
                     <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-6 mb-10">
                         <div class="flex-1">
                             <h2 id="vote-title" class="text-4xl font-extrabold text-gray-800 break-words"></h2>
@@ -145,8 +153,8 @@
                     
                     <!-- Voter Info -->
                     <div class="mb-10 bg-blue-50 p-6 rounded-2xl border border-blue-100">
-                        <label class="block text-sm font-bold text-blue-900 mb-2">האימייל שלכם להצבעה:</label>
-                        <input type="email" id="voter-email" dir="ltr" class="w-full p-4 bg-white border border-blue-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold text-lg" placeholder="your@email.com">
+                        <label class="block text-sm font-bold text-blue-900 mb-2">האימייל שלכם להצבעה (הזינו מייל קיים לעריכה):</label>
+                        <input type="email" id="voter-email" dir="ltr" oninput="handleEmailInput(this.value)" class="w-full p-4 bg-white border border-blue-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-400 font-bold text-lg" placeholder="your@email.com">
                     </div>
 
                     <h3 class="text-xl font-bold text-gray-700 mb-6 flex items-center gap-2">
@@ -154,17 +162,25 @@
                     </h3>
 
                     <!-- Vertical Slot List -->
-                    <div id="slots-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <!-- Slots will be injected here -->
+                    <div id="slots-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+                        <!-- Slots injected here -->
                     </div>
-                    
-                    <div class="mt-10 flex flex-col md:flex-row justify-between items-center gap-6 border-t pt-8">
+
+                    <div class="flex flex-col md:flex-row justify-between items-center gap-6 border-t pt-8 mb-12">
                         <p class="text-gray-400 text-sm italic text-center md:text-right">
                             * ניתן לסמן מספר מועדים. הבחירה שלכם תישמר ותוצג למנהל האירוע.
                         </p>
-                        <button onclick="submitVote()" class="btn-primary w-full md:w-auto px-16 py-4 rounded-2xl font-bold text-xl shadow-xl">
+                        <button id="submit-vote-btn" onclick="submitVote()" class="btn-primary w-full md:w-auto px-16 py-4 rounded-2xl font-bold text-xl shadow-xl">
                             שלח את הבחירה שלי
                         </button>
+                    </div>
+
+                    <!-- Results List for Admins / Summary -->
+                    <div id="results-section" class="border-t pt-10">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-6">מי כבר הצביע?</h3>
+                        <div id="voters-list" class="space-y-3">
+                            <!-- Voters list with edit buttons for admins -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -190,7 +206,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, query, where, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase Config
         const firebaseConfig = {
@@ -214,6 +230,9 @@
         const EMAIL_SERVICE_ID = "service_7f2q1o6"; 
         const EMAIL_TEMPLATE_ID = "template_nkp34qa"; 
         const EMAIL_PUBLIC_KEY = "Z5HhFw_n3NPMJCeH4"; 
+
+        // State
+        let user, currentEventId, isSuperAdmin = false, allEvents = [], currentEventData = null, allVotes = [], selectedIdxs = new Set(), editingVoteId = null;
 
         async function sha256(message) {
             const msgBuffer = new TextEncoder().encode(message.toLowerCase().trim());
@@ -239,8 +258,6 @@
                 } catch (e) { console.error("Email notification failed:", e); }
             }
         }
-
-        let user, currentEventId, isSuperAdmin = false, allEvents = [];
 
         window.onload = () => {
             onAuthStateChanged(auth, async (u) => {
@@ -326,7 +343,6 @@
         window.applyFilters = () => {
             const filterValue = document.getElementById('event-filter')?.value || 'all';
             let filtered = [];
-
             if (!isSuperAdmin) {
                 filtered = allEvents.filter(d => d.data().createdBy === user.uid);
                 filtered.sort((a, b) => (b.data().createdAt || 0) - (a.data().createdAt || 0));
@@ -433,87 +449,183 @@
             } catch(e) { alertBox("שגיאה בשמירה."); }
         }
 
+        // --- VOTING VIEW & EDITING ---
+
+        window.handleEmailInput = (email) => {
+            const trimmed = email.trim().toLowerCase();
+            const existingVote = allVotes.find(v => v.email.toLowerCase() === trimmed);
+            
+            if (existingVote) {
+                loadExistingVote(existingVote);
+            } else {
+                exitEditMode();
+            }
+        }
+
+        function loadExistingVote(vote) {
+            selectedIdxs = new Set(vote.selections);
+            editingVoteId = vote.id;
+            
+            document.getElementById('submit-vote-btn').textContent = "עדכן את הבחירה שלי";
+            document.getElementById('edit-mode-banner').classList.remove('hidden');
+            renderSlots();
+        }
+
+        function exitEditMode() {
+            selectedIdxs = new Set();
+            editingVoteId = null;
+            document.getElementById('submit-vote-btn').textContent = "שלח את הבחירה שלי";
+            document.getElementById('edit-mode-banner').classList.add('hidden');
+            renderSlots();
+        }
+
+        window.adminEditVote = (email) => {
+            document.getElementById('voter-email').value = email;
+            handleEmailInput(email);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            alertBox(`עורכים את ההצבעה של: ${email}`);
+        }
+
         async function showVoteView(id) {
             hideAll();
             document.getElementById('view-vote').classList.remove('hidden');
-            const docSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', id));
-            if(!docSnap.exists()) { alertBox("אירוע לא נמצא."); window.location.href = window.location.pathname; return; }
             
-            const data = docSnap.data();
-            document.getElementById('vote-title').textContent = data.title;
-            document.getElementById('vote-desc').textContent = data.desc;
-            if(user && (data.createdBy === user.uid || isSuperAdmin)) document.getElementById('admin-share-box').classList.remove('hidden');
+            const eventDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', id));
+            if(!eventDoc.exists()) { alertBox("אירוע לא נמצא."); window.location.href = window.location.pathname; return; }
+            
+            currentEventData = eventDoc.data();
+            document.getElementById('vote-title').textContent = currentEventData.title;
+            document.getElementById('vote-desc').textContent = currentEventData.desc;
+            
+            const isAdmin = user && (currentEventData.createdBy === user.uid || isSuperAdmin);
+            if(isAdmin) document.getElementById('admin-share-box').classList.remove('hidden');
 
+            // Global Snapshot for votes of THIS event
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'votes'), (snap) => {
+                allVotes = snap.docs
+                    .filter(d => d.data().eventId === id)
+                    .map(d => ({ id: d.id, ...d.data() }));
+                
+                renderSlots();
+                renderVotersList(isAdmin);
+            });
+        }
+
+        function renderSlots() {
             const slotsContainer = document.getElementById('slots-container');
             slotsContainer.innerHTML = '';
-            const selectedIdxs = new Set();
+            
+            const counts = {};
+            allVotes.forEach(v => v.selections.forEach(idx => counts[idx] = (counts[idx] || 0) + 1));
+            const maxVotes = Math.max(...Object.values(counts), 0);
 
-            // Real-time listener for votes
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'votes'), (snap) => {
-                const allVotes = snap.docs.filter(d => d.data().eventId === id).map(d => d.data());
-                
-                // Calculate counts for popular badge
-                const counts = {};
-                allVotes.forEach(v => v.selections.forEach(idx => counts[idx] = (counts[idx] || 0) + 1));
-                const maxVotes = Math.max(...Object.values(counts), 0);
+            currentEventData.options.forEach((opt, idx) => {
+                const dt = new Date(opt);
+                const slotVoters = allVotes.filter(v => v.selections.includes(idx)).map(v => v.email);
+                const isPopular = maxVotes > 0 && (counts[idx] || 0) === maxVotes;
+                const isSelected = selectedIdxs.has(idx);
 
-                slotsContainer.innerHTML = '';
-                data.options.forEach((opt, idx) => {
-                    const dt = new Date(opt);
-                    const slotVoters = allVotes.filter(v => v.selections.includes(idx)).map(v => v.email);
-                    const isPopular = maxVotes > 0 && (counts[idx] || 0) === maxVotes;
+                const div = document.createElement('div');
+                div.className = `slot-card card p-4 flex flex-col gap-2 ${isSelected ? 'selected' : ''} ${isPopular ? 'popular' : ''}`;
+                div.onclick = () => {
+                    if (selectedIdxs.has(idx)) selectedIdxs.delete(idx);
+                    else selectedIdxs.add(idx);
+                    renderSlots(); // Re-render to update UI circles
+                };
 
-                    const div = document.createElement('div');
-                    div.className = `slot-card card p-4 flex flex-col gap-2 ${selectedIdxs.has(idx) ? 'selected' : ''} ${isPopular ? 'popular' : ''}`;
-                    div.onclick = () => {
-                        if (selectedIdxs.has(idx)) selectedIdxs.delete(idx);
-                        else selectedIdxs.add(idx);
-                        div.classList.toggle('selected');
-                    };
-
-                    div.innerHTML = `
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <div class="text-blue-700 font-bold text-lg">${dt.toLocaleDateString('he-IL', {weekday:'long', day:'numeric', month:'numeric'})}</div>
-                                <div class="text-2xl font-black text-gray-800">${opt.split('T')[1]}</div>
-                            </div>
-                            <div class="w-8 h-8 rounded-full border-2 border-gray-200 flex items-center justify-center ${selectedIdxs.has(idx) ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white'}">
-                                ${selectedIdxs.has(idx) ? '✓' : ''}
-                            </div>
+                div.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="text-blue-700 font-bold text-lg">${dt.toLocaleDateString('he-IL', {weekday:'long', day:'numeric', month:'numeric'})}</div>
+                            <div class="text-2xl font-black text-gray-800">${opt.split('T')[1]}</div>
                         </div>
-                        <div class="mt-2 pt-2 border-t border-gray-50">
-                            <span class="text-xs font-bold text-gray-400">הצבעות: ${slotVoters.length}</span>
-                            <div class="text-[10px] text-gray-400 truncate mt-1">
-                                ${slotVoters.length > 0 ? 'נבחרו ע"י: ' + slotVoters.join(', ') : 'טרם נבחר'}
-                            </div>
+                        <div class="check-circle">
+                            ${isSelected ? '✓' : ''}
                         </div>
-                    `;
-                    slotsContainer.appendChild(div);
-                });
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-gray-100">
+                        <span class="text-xs font-bold text-blue-600">הצבעות: ${slotVoters.length}</span>
+                        <div class="text-[11px] text-gray-400 truncate mt-1">
+                            ${slotVoters.length > 0 ? slotVoters.join(', ') : 'טרם נבחר'}
+                        </div>
+                    </div>
+                `;
+                slotsContainer.appendChild(div);
+            });
+        }
+
+        function renderVotersList(isAdmin) {
+            const container = document.getElementById('voters-list');
+            container.innerHTML = '';
+            
+            if (allVotes.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 italic">טרם התקבלו הצבעות...</p>';
+                return;
+            }
+
+            allVotes.forEach(v => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100';
+                div.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="font-bold text-gray-700" dir="ltr">${v.email}</span>
+                        <span class="text-xs text-gray-400">בחר ${v.selections.length} מועדים</span>
+                    </div>
+                    <div class="flex gap-2">
+                        ${isAdmin ? `<button onclick="adminEditVote('${v.email}')" class="text-xs bg-white border border-blue-200 text-blue-600 px-3 py-1.5 rounded-lg font-bold hover:bg-blue-50">ערוך ✏️</button>` : ''}
+                    </div>
+                `;
+                container.appendChild(div);
             });
         }
 
         window.submitVote = async () => {
             const email = document.getElementById('voter-email').value.trim();
-            const slotCards = document.querySelectorAll('.slot-card');
-            const sels = [];
-            slotCards.forEach((card, i) => { if(card.classList.contains('selected')) sels.push(i); });
+            const sels = Array.from(selectedIdxs);
             
-            if(!email || !validateEmail(email)) { alertBox("הזינו אימייל תקין."); return; }
+            if(!email || !validateEmail(email)) { alertBox("הזינו אימייל תקין להצבעה."); return; }
             if(sels.length === 0) { alertBox("בחרו לפחות מועד אחד."); return; }
             
             try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'votes'), {
-                    eventId: currentEventId, email, selections: sels, uid: user.uid, timestamp: Date.now()
-                });
-                alertBox("הצבעתך נשמרה!");
-            } catch(e) { alertBox("שגיאה בשליחה."); }
+                const voteData = {
+                    eventId: currentEventId, 
+                    email: email.toLowerCase(), 
+                    selections: sels, 
+                    uid: user.uid, 
+                    timestamp: Date.now()
+                };
+
+                if (editingVoteId) {
+                    // Update existing
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'votes', editingVoteId), voteData);
+                    alertBox("הצבעתך עודכנה בהצלחה!");
+                } else {
+                    // Create new
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'votes'), voteData);
+                    alertBox("תודה! הצבעתך נשמרה.");
+                }
+
+                // Clean up state
+                document.getElementById('voter-email').value = '';
+                exitEditMode();
+                
+                // Notify admin
+                const eventDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', currentEventId));
+                if (eventDoc.exists()) {
+                    const eData = eventDoc.data();
+                    await sendNotification(eData.adminEmail, `עדכון הצבעה: ${eData.title}`, `המשתמש ${email} הצביע/עדכן לאירוע שלך.`);
+                }
+
+            } catch(e) { 
+                console.error(e);
+                alertBox("שגיאה בשמירת ההצבעה."); 
+            }
         }
 
         window.copyCurrentUrl = () => {
             const el = document.createElement('textarea');
             el.value = window.location.href; document.body.appendChild(el); el.select();
-            document.execCommand('copy'); document.body.removeChild(el); alertBox("הקישור הועתק!");
+            document.execCommand('copy'); document.body.removeChild(el); alertBox("הקישור הועתק ללוח!");
         }
 
         function alertBox(m) {
