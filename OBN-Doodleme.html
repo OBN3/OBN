@@ -21,17 +21,16 @@
         .animate-in { animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .slot-card { border: 2px solid transparent; transition: all 0.2s; cursor: pointer; border: 1px solid #f1f5f9; }
-        .slot-card:hover { border-color: #cbd5e1; }
+        /* Compact Slot Cards */
+        .slot-card { border: 1px solid #f1f5f9; transition: all 0.2s; cursor: pointer; min-height: 80px; display: flex; flex-direction: column; justify-content: center; }
+        .slot-card:hover { border-color: #cbd5e1; background-color: #f8fafc; }
         .slot-card.selected { border-color: #2563eb; background-color: #eff6ff; }
-        .slot-card.popular { position: relative; }
-        .slot-card.popular::after { content: '🔥 הכי מבוקש'; position: absolute; top: -10px; left: 10px; background: #fbbf24; color: #78350f; font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 99px; z-index: 10; }
 
         .admin-badge { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: bold; }
         .filter-select { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: left 0.5rem center; background-repeat: no-repeat; padding-left: 2.5rem; }
         
-        .check-circle { width: 28px; height: 28px; border-radius: 999px; border: 2px solid #e2e8f0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-weight: bold; }
-        .selected .check-circle { background-color: #2563eb; border-color: #2563eb; color: white; }
+        .check-circle { width: 32px; height: 32px; border-radius: 999px; border: 2px solid #e2e8f0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-weight: bold; flex-shrink: 0; }
+        .selected .check-circle { background-color: #2563eb; border-color: #2563eb; color: white; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
     </style>
 </head>
 <body class="min-h-screen pb-12">
@@ -161,8 +160,8 @@
                         <span>📅</span> בחרו את המועדים הנוחים לכם:
                     </h3>
 
-                    <!-- Vertical Slot List -->
-                    <div id="slots-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+                    <!-- Vertical Slot List - COMPACT -->
+                    <div id="slots-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-10">
                         <!-- Slots injected here -->
                     </div>
 
@@ -178,8 +177,8 @@
                     <!-- Results List for Admins / Summary -->
                     <div id="results-section" class="border-t pt-10">
                         <h3 class="text-2xl font-bold text-gray-800 mb-6">מי כבר הצביע?</h3>
-                        <div id="voters-list" class="space-y-3">
-                            <!-- Voters list with edit buttons for admins -->
+                        <div id="voters-list" class="space-y-2">
+                            <!-- Voters list -->
                         </div>
                     </div>
                 </div>
@@ -265,6 +264,12 @@
                 if (user && user.email) {
                     const userHash = await sha256(user.email);
                     isSuperAdmin = (userHash === SUPER_ADMIN_HASH);
+                    
+                    console.log("%c--- אבחון SUPER ADMIN ---", "color: blue; font-weight: bold;");
+                    console.log("המייל המחובר:", user.email);
+                    console.log("ה-Hash הנוכחי:", userHash);
+                    console.log("סטטוס מנהל על:", isSuperAdmin ? "✅ מזהה אותך כמנהל-על" : "❌ לא מזוהה כמנהל-על");
+                    console.log("-----------------------");
                 } else {
                     isSuperAdmin = false;
                 }
@@ -343,6 +348,7 @@
         window.applyFilters = () => {
             const filterValue = document.getElementById('event-filter')?.value || 'all';
             let filtered = [];
+
             if (!isSuperAdmin) {
                 filtered = allEvents.filter(d => d.data().createdBy === user.uid);
                 filtered.sort((a, b) => (b.data().createdAt || 0) - (a.data().createdAt || 0));
@@ -384,7 +390,7 @@
                     </div>
                     <div class="flex gap-2 mt-4">
                         <a href="?id=${docSnap.id}" class="flex-1 text-center bg-blue-600 text-white py-2.5 rounded-lg font-bold text-sm hover:bg-blue-700 transition shadow-sm">נהל הצבעות</a>
-                        <button onclick="confirmDelete('${docSnap.id}')" class="bg-red-50 text-red-500 p-2.5 rounded-lg hover:bg-red-500 hover:text-white transition">🗑️</button>
+                        <button onclick="confirmDelete('${docSnap.id}')" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition">🗑️</button>
                     </div>
                 `;
                 container.appendChild(card);
@@ -517,36 +523,33 @@
             
             const counts = {};
             allVotes.forEach(v => v.selections.forEach(idx => counts[idx] = (counts[idx] || 0) + 1));
-            const maxVotes = Math.max(...Object.values(counts), 0);
 
             currentEventData.options.forEach((opt, idx) => {
                 const dt = new Date(opt);
-                const slotVoters = allVotes.filter(v => v.selections.includes(idx)).map(v => v.email);
-                const isPopular = maxVotes > 0 && (counts[idx] || 0) === maxVotes;
+                const voteCount = counts[idx] || 0;
                 const isSelected = selectedIdxs.has(idx);
 
                 const div = document.createElement('div');
-                div.className = `slot-card card p-4 flex flex-col gap-2 ${isSelected ? 'selected' : ''} ${isPopular ? 'popular' : ''}`;
+                div.className = `slot-card card px-5 py-3 ${isSelected ? 'selected' : ''}`;
                 div.onclick = () => {
                     if (selectedIdxs.has(idx)) selectedIdxs.delete(idx);
                     else selectedIdxs.add(idx);
-                    renderSlots(); // Re-render to update UI circles
+                    renderSlots();
                 };
 
                 div.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <div class="text-blue-700 font-bold text-lg">${dt.toLocaleDateString('he-IL', {weekday:'long', day:'numeric', month:'numeric'})}</div>
-                            <div class="text-2xl font-black text-gray-800">${opt.split('T')[1]}</div>
+                    <div class="flex justify-between items-center gap-4">
+                        <div class="flex-1">
+                            <div class="text-[11px] text-blue-600 font-bold uppercase tracking-wider mb-0.5">${dt.toLocaleDateString('he-IL', {weekday:'long', day:'numeric', month:'numeric'})}</div>
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-2xl font-black text-gray-800">${opt.split('T')[1]}</span>
+                                <span class="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-md">
+                                    הצבעות: ${voteCount}
+                                </span>
+                            </div>
                         </div>
-                        <div class="check-circle">
-                            ${isSelected ? '✓' : ''}
-                        </div>
-                    </div>
-                    <div class="mt-2 pt-2 border-t border-gray-100">
-                        <span class="text-xs font-bold text-blue-600">הצבעות: ${slotVoters.length}</span>
-                        <div class="text-[11px] text-gray-400 truncate mt-1">
-                            ${slotVoters.length > 0 ? slotVoters.join(', ') : 'טרם נבחר'}
+                        <div class="check-circle shadow-sm">
+                            ${isSelected ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : ''}
                         </div>
                     </div>
                 `;
@@ -559,20 +562,20 @@
             container.innerHTML = '';
             
             if (allVotes.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 italic">טרם התקבלו הצבעות...</p>';
+                container.innerHTML = '<p class="text-gray-400 italic text-sm">טרם התקבלו הצבעות...</p>';
                 return;
             }
 
             allVotes.forEach(v => {
                 const div = document.createElement('div');
-                div.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100';
+                div.className = 'flex items-center justify-between p-2.5 bg-gray-50 rounded-xl border border-gray-100';
                 div.innerHTML = `
                     <div class="flex flex-col">
-                        <span class="font-bold text-gray-700" dir="ltr">${v.email}</span>
-                        <span class="text-xs text-gray-400">בחר ${v.selections.length} מועדים</span>
+                        <span class="font-bold text-gray-700 text-sm" dir="ltr">${v.email}</span>
+                        <span class="text-[10px] text-gray-400">סימן ${v.selections.length} מועדים</span>
                     </div>
                     <div class="flex gap-2">
-                        ${isAdmin ? `<button onclick="adminEditVote('${v.email}')" class="text-xs bg-white border border-blue-200 text-blue-600 px-3 py-1.5 rounded-lg font-bold hover:bg-blue-50">ערוך ✏️</button>` : ''}
+                        ${isAdmin ? `<button onclick="adminEditVote('${v.email}')" class="text-[11px] bg-white border border-blue-200 text-blue-600 px-3 py-1 rounded-lg font-bold hover:bg-blue-50 transition-colors">ערוך ✏️</button>` : ''}
                     </div>
                 `;
                 container.appendChild(div);
@@ -596,20 +599,16 @@
                 };
 
                 if (editingVoteId) {
-                    // Update existing
                     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'votes', editingVoteId), voteData);
                     alertBox("הצבעתך עודכנה בהצלחה!");
                 } else {
-                    // Create new
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'votes'), voteData);
                     alertBox("תודה! הצבעתך נשמרה.");
                 }
 
-                // Clean up state
                 document.getElementById('voter-email').value = '';
                 exitEditMode();
                 
-                // Notify admin
                 const eventDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', currentEventId));
                 if (eventDoc.exists()) {
                     const eData = eventDoc.data();
