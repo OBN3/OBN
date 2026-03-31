@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>יומן תמונות</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- ספרייה לקריאת נתוני EXIF מתוך התמונות - הוחלף לגרסה המלאה -->
+    <!-- ספרייה לקריאת נתוני EXIF מתוך התמונות -->
     <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
     <style>
         body {
-            background-color: #f3f4f6; /* רקע עדין מחוץ לאפליקציה במחשב */
+            background-color: #f3f4f6;
             display: flex;
             justify-content: center;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -28,20 +28,12 @@
             overflow-x: hidden;
         }
 
-        /* מנגנון העלמת פס גלילה אבל השארת יכולת גלילה */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* אנימציות עדינות */
         .fade-in { animation: fadeIn 0.4s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* קלאס למסגרת תמונה מינימליסטית */
         .photo-frame {
             background: #fff;
             border-radius: 16px;
@@ -51,10 +43,9 @@
             border: 1px solid #f0f0f0;
         }
 
-        /* מצב זום (לייטבוקס) */
         #lightbox {
             transition: opacity 0.3s ease;
-            touch-action: none; /* מונע גלילה של המסך כשעושים זום */
+            touch-action: none;
         }
         
         #lightbox-img {
@@ -88,7 +79,6 @@
                 
                 <label class="bg-blue-600 text-white px-6 py-3 rounded-2xl shadow-md font-medium cursor-pointer hover:bg-blue-700 transition-colors inline-block">
                     בחירת תמונות
-                    <!-- webkitdirectory מאפשר בחירת תיקייה במחשב, multiple מאפשר בחירת מספר תמונות במובייל -->
                     <input type="file" id="file-input" class="hidden" multiple accept="image/jpeg, image/jpg" webkitdirectory>
                 </label>
             </div>
@@ -122,7 +112,6 @@
                     <p class="text-xs text-gray-500 mt-2">לפי תאריך זה יחושב "יום X" לכל תמונה.</p>
                 </div>
 
-                <!-- תוספת הגדרת עובי המסגרת לסימון -->
                 <div class="mb-5">
                     <label class="block text-sm font-medium text-gray-700 mb-2 flex justify-between">
                         <span>עובי מסגרת לסימון</span>
@@ -131,13 +120,19 @@
                     <input type="range" id="border-width-input" min="1" max="10" value="1" class="w-full accent-blue-600" oninput="document.getElementById('border-width-display').innerText = this.value + 'px'">
                 </div>
 
-                <div class="mb-8">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">שינוי מקור התמונות</label>
+                <div class="mb-5">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">הוספת תמונות (סנכרון)</label>
                     <label class="w-full border-2 border-dashed border-gray-300 rounded-xl px-4 py-3 flex items-center justify-center text-blue-600 font-medium cursor-pointer hover:bg-gray-50 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" class="ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                        בחר תיקייה חדשה
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" class="ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        בחר תמונות/תיקייה להוספה
                         <input type="file" id="settings-file-input" class="hidden" multiple accept="image/jpeg, image/jpg" webkitdirectory>
                     </label>
+                </div>
+
+                <div class="mb-6">
+                    <button onclick="clearAllData()" class="w-full border border-red-200 text-red-600 bg-red-50 rounded-xl py-3 font-medium hover:bg-red-100 transition-colors text-sm">
+                        מחק את כל הנתונים והתמונות מהזיכרון
+                    </button>
                 </div>
 
                 <button onclick="saveSettings()" class="w-full bg-gray-800 text-white rounded-xl py-4 font-medium hover:bg-black transition-colors">
@@ -169,13 +164,68 @@
     </div>
 
     <script>
+        // --- מסד נתונים IndexedDB לשמירת תמונות ---
+        const DB_NAME = 'PhotoJournalDB';
+        const STORE_NAME = 'images';
+        let db;
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                
+                request.onupgradeneeded = (event) => {
+                    db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+                
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    resolve();
+                };
+                
+                request.onerror = (event) => reject(event.target.error);
+            });
+        }
+
+        function saveImageToDB(imgData) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                store.put(imgData); // put מעדכן אם קיים, מוסיף אם לא (מונע כפילויות)
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        function loadImagesFromDB() {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function clearDB() {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                store.clear();
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+
         // --- משתני מערכת ---
         let startDate = null;
-        let processedImages = []; // מערך שישמור את המידע על כל תמונה
-        let originalFilesMap = new Map(); // שמירת קבצי המקור המקוריים בשביל הרזולוציה המלאה
+        let processedImages = []; 
+        let originalFilesMap = new Map(); 
         
-        // משתנים חדשים לסימון תמונות
-        let starredPhotos = []; // יכיל את מזהי התמונות המסומנות
+        let starredPhotos = []; 
         let borderThickness = 1;
 
         // אלמנטים ב-DOM
@@ -189,43 +239,55 @@
             settingsModal: document.getElementById('settings-modal'),
             settingsContent: document.getElementById('settings-content'),
             loadingText: document.getElementById('loading-text'),
-            borderWidthInput: document.getElementById('border-width-input') // הוספנו את הסליידר
+            borderWidthInput: document.getElementById('border-width-input')
         };
 
         // --- אתחול ---
-        function init() {
-            // טעינת תאריך התחלה שמור
+        async function init() {
+            // אתחול מסד הנתונים קודם כל
+            try {
+                await initDB();
+                const savedImages = await loadImagesFromDB();
+                if (savedImages && savedImages.length > 0) {
+                    processedImages = savedImages;
+                }
+            } catch (err) {
+                console.error("שגיאה בטעינת מסד הנתונים:", err);
+            }
+
             const savedDate = localStorage.getItem('photoJournalStartDate');
             if (savedDate) {
                 startDate = new Date(savedDate);
                 ui.startDateInput.value = savedDate;
             } else {
-                // פתרון פרואקטיבי: לא נשים את "היום" כברירת מחדל, אלא נשאיר ריק.
-                // המערכת תיקח אוטומטית את תאריך התמונה הישנה ביותר כ"יום 1".
-                startDate = null;
-                ui.startDateInput.value = '';
+                // ברירת מחדל קבועה לבקשתך: 16.02.2026
+                const defaultDate = '2026-02-16';
+                startDate = new Date(defaultDate);
+                ui.startDateInput.value = defaultDate;
             }
 
-            // טעינת הגדרות סימון (כוכבים ועובי) מהזיכרון
             starredPhotos = JSON.parse(localStorage.getItem('photoJournalStarred') || '[]');
             borderThickness = parseInt(localStorage.getItem('photoJournalBorder') || '1');
             ui.borderWidthInput.value = borderThickness;
             document.getElementById('border-width-display').innerText = borderThickness + 'px';
 
-            // מאזינים לקלט קבצים
             ui.fileInput.addEventListener('change', handleFilesSelected);
             ui.settingsFileInput.addEventListener('change', (e) => {
                 handleFilesSelected(e);
-                toggleSettings(); // סגירת הגדרות לאחר בחירה
+                toggleSettings(); 
             });
+
+            // אם יש תמונות מהזיכרון, נרנדר אותן מיד
+            if (processedImages.length > 0) {
+                renderGallery();
+            }
         }
 
-        // --- ניהול הגדרות ---
+        // --- ניהול הגדרות ומחיקה ---
         function toggleSettings() {
             const isHidden = ui.settingsModal.classList.contains('hidden');
             if (isHidden) {
                 ui.settingsModal.classList.remove('hidden');
-                // Timeout קטן כדי לאפשר לדפדפן לרנדר ואז להפעיל אנימציה
                 setTimeout(() => {
                     ui.settingsModal.classList.remove('opacity-0');
                     ui.settingsContent.classList.remove('translate-y-full');
@@ -246,16 +308,33 @@
                 localStorage.setItem('photoJournalStartDate', newDateVal);
             }
             
-            // שמירת עובי מסגרת
             borderThickness = parseInt(ui.borderWidthInput.value);
             localStorage.setItem('photoJournalBorder', borderThickness);
 
-            // אם יש תמונות, נרנדר אותן מחדש כדי להחיל את ההגדרות (תאריך ועובי מסגרת)
             if (processedImages.length > 0) {
                 renderGallery();
             }
-            
             toggleSettings();
+        }
+
+        async function clearAllData() {
+            if(confirm("האם אתה בטוח שברצונך למחוק את כל התמונות וההגדרות? פעולה זו אינה ניתנת לביטול.")){
+                await clearDB();
+                processedImages = [];
+                originalFilesMap.clear();
+                starredPhotos = [];
+                localStorage.removeItem('photoJournalStartDate');
+                localStorage.removeItem('photoJournalStarred');
+                localStorage.removeItem('photoJournalBorder');
+                
+                // חזרה לתאריך ברירת המחדל בעת איפוס הנתונים
+                const defaultDate = '2026-02-16';
+                ui.startDateInput.value = defaultDate;
+                startDate = new Date(defaultDate);
+                
+                toggleSettings();
+                renderGallery();
+            }
         }
 
         // --- עיבוד תמונות ---
@@ -272,19 +351,14 @@
             ui.loadingState.classList.remove('hidden');
             ui.loadingState.classList.add('flex');
             
-            processedImages = [];
-            originalFilesMap.clear();
-
             let processedCount = 0;
 
             for (const file of files) {
                 try {
                     ui.loadingText.innerText = `מעבד תמונה ${processedCount + 1} מתוך ${files.length}...`;
                     
-                    // 1. קריאת תאריך EXIF. שימוש בספריית exifr
                     let captureDate = null;
                     try {
-                        // הוספנו חיפוש של כמה שדות תאריך שונים שקיימים בפורמטים שונים של מצלמות
                         const exifData = await exifr.parse(file, {pick: ['DateTimeOriginal', 'CreateDate', 'ModifyDate']});
                         if (exifData) {
                             if (exifData.DateTimeOriginal) captureDate = new Date(exifData.DateTimeOriginal);
@@ -293,36 +367,41 @@
                         }
                     } catch (e) { console.warn("No EXIF for", file.name); }
 
-                    // פתרון פרואקטיבי: אם אין EXIF (למשל תמונות מוואטסאפ), ננסה לחלץ תאריך משם הקובץ
                     if (!captureDate || isNaN(captureDate.getTime())) {
-                        // מחפש תבניות בשם הקובץ כמו: 20240315, 2024-03-15, 2024_03_15
                         const match = file.name.match(/(20\d{2})[-_]?(\d{2})[-_]?(\d{2})/);
                         if (match) {
                             const year = parseInt(match[1]);
-                            const month = parseInt(match[2]) - 1; // חודשים ב-JS מתחילים מ-0
+                            const month = parseInt(match[2]) - 1; 
                             const day = parseInt(match[3]);
-                            captureDate = new Date(year, month, day, 12, 0); // מניח שעה 12:00 בצהריים כברירת מחדל
+                            captureDate = new Date(year, month, day, 12, 0); 
                         }
                     }
 
-                    // גיבוי אחרון - תאריך שינוי הקובץ (מעיד על זמן ההורדה למחשב)
                     if (!captureDate || isNaN(captureDate.getTime())) {
                         captureDate = new Date(file.lastModified);
                     }
 
-                    // 2. אופטימיזציה (יצירת תמונה מוקטנת לתצוגה שוטפת למניעת קריסה)
                     const thumbnailDataUrl = await generateThumbnail(file);
                     
-                    // 3. יצירת מזהה ייחודי לתמונה כדי לקשר לקובץ המקורי (ולשמירת הכוכבים)
-                    // יצירת ID חכם שמבוסס על שם ומשקל הקובץ כדי שישמר גם אם מרעננים דף
                     const imageId = encodeURIComponent(file.name) + '_' + file.size;
-                    originalFilesMap.set(imageId, file);
+                    originalFilesMap.set(imageId, file); // שומר בזיכרון הזמני בלבד (לזום איכותי בזמן אמת)
 
-                    processedImages.push({
+                    const imgData = {
                         id: imageId,
-                        date: captureDate,
+                        date: captureDate, // זה נשמר ב-DB כאובייקט Date, לכן יהיה צריך המרה כשיוצא
                         thumbnail: thumbnailDataUrl
-                    });
+                    };
+
+                    // בדיקה האם כבר קיים (כדי לא לשכפל במערך, למרות שב-DB הוא יתעדכן)
+                    const existingIndex = processedImages.findIndex(img => img.id === imageId);
+                    if (existingIndex > -1) {
+                        processedImages[existingIndex] = imgData;
+                    } else {
+                        processedImages.push(imgData);
+                    }
+
+                    // שמירה למסד הנתונים
+                    await saveImageToDB(imgData);
 
                 } catch (error) {
                     console.error("שגיאה בעיבוד התמונה:", file.name, error);
@@ -330,25 +409,16 @@
                 processedCount++;
             }
 
-            // 4. מיון כרונולוגי (מהישנה לחדשה)
-            processedImages.sort((a, b) => a.date - b.date);
+            // מיון כרונולוגי
+            processedImages.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            // פתרון פרואקטיבי: אם המשתמש לא הגדיר תאריך ידנית, התמונה הראשונה (הכי ישנה) תהיה יום 1
-            if (!localStorage.getItem('photoJournalStartDate') && processedImages.length > 0) {
-                startDate = new Date(processedImages[0].date);
-                const yyyy = startDate.getFullYear();
-                const mm = String(startDate.getMonth() + 1).padStart(2, '0');
-                const dd = String(startDate.getDate()).padStart(2, '0');
-                ui.startDateInput.value = `${yyyy}-${mm}-${dd}`;
-            }
+            // ביטלנו את מנגנון "לקיחת התאריך מהתמונה הישנה ביותר" כי הגדרנו ברירת מחדל קבועה
 
-            // 5. רינדור למסך
             ui.loadingState.classList.add('hidden');
             ui.loadingState.classList.remove('flex');
             renderGallery();
         }
 
-        // יצירת תמונה ממוזערת כדי שדפדפן מובייל לא יקרוס מרשימה ארוכה של תמונות 4K
         function generateThumbnail(file) {
             return new Promise((resolve) => {
                 const img = new Image();
@@ -358,7 +428,6 @@
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     
-                    // רוחב מקסימלי שמתאים לתצוגת המובייל שלנו (בערך כפול מרוחב המסך לחדות)
                     const MAX_WIDTH = 800; 
                     let width = img.width;
                     let height = img.height;
@@ -372,7 +441,7 @@
                     canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    URL.revokeObjectURL(objectUrl); // ניקוי זיכרון
+                    URL.revokeObjectURL(objectUrl); 
                     resolve(canvas.toDataURL('image/jpeg', 0.8));
                 };
                 img.src = objectUrl;
@@ -385,50 +454,45 @@
             
             if (processedImages.length === 0) {
                 ui.emptyState.classList.remove('hidden');
+                ui.gallery.classList.add('hidden');
                 return;
             }
 
+            ui.emptyState.classList.add('hidden');
             ui.gallery.classList.remove('hidden');
             ui.gallery.classList.add('flex');
 
-            // איפוס שעות לחישוב ימים מדויק
             const baseStartDate = new Date(startDate);
             baseStartDate.setHours(0, 0, 0, 0);
 
             processedImages.forEach((imgData, index) => {
-                // חישוב יום X
-                const imgDateOnly = new Date(imgData.date);
+                // המרה ל-Date במקרה שהגיע מה-IndexedDB כמחרוזת
+                const imgDate = new Date(imgData.date);
+                
+                const imgDateOnly = new Date(imgDate);
                 imgDateOnly.setHours(0, 0, 0, 0);
                 
-                // חישוב ההפרש בימים
                 const diffTime = imgDateOnly - baseStartDate;
                 const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                 
-                // היום הראשון (תאריך ההתחלה) הוא יום 1. 
-                // אם צולם לפני תאריך ההתחלה, זה יציג מספר שלילי (לדוגמה: יום -2).
                 const dayX = diffDays >= 0 ? diffDays + 1 : diffDays; 
                 let dayText = `יום ${dayX}`;
                 if (diffDays < 0) dayText = `לפני ${Math.abs(diffDays)} ימים`;
 
-                // פורמט תאריך dd-mm-yyyy (תוקן לבקשתך)
-                const dd = String(imgData.date.getDate()).padStart(2, '0');
-                const mm = String(imgData.date.getMonth() + 1).padStart(2, '0');
-                const yyyy = imgData.date.getFullYear();
+                const dd = String(imgDate.getDate()).padStart(2, '0');
+                const mm = String(imgDate.getMonth() + 1).padStart(2, '0');
+                const yyyy = imgDate.getFullYear();
                 
-                // פורמט שעה
-                const hh = String(imgData.date.getHours()).padStart(2, '0');
-                const min = String(imgData.date.getMinutes()).padStart(2, '0');
+                const hh = String(imgDate.getHours()).padStart(2, '0');
+                const min = String(imgDate.getMinutes()).padStart(2, '0');
                 
                 const dateString = `${dd}-${mm}-${yyyy} • ${hh}:${min}`;
 
-                // בדיקה האם התמונה סומנה בכוכב
                 const isStarred = starredPhotos.includes(imgData.id);
-                // הגדרת עיצוב המסגרת והכוכב בהתאם למצב
                 const borderStyle = isStarred ? `border: ${borderThickness}px solid #ef4444;` : '';
                 const starFill = isStarred ? 'currentColor' : 'none';
                 const starColor = isStarred ? 'text-yellow-400' : 'text-gray-300 hover:text-gray-500';
 
-                // יצירת אלמנט HTML
                 const frame = document.createElement('div');
                 frame.className = 'photo-frame fade-in cursor-pointer';
                 frame.style.cssText = `animation-delay: ${index * 0.05}s; transition: border 0.2s ease; ${borderStyle}`;
@@ -438,7 +502,6 @@
                     <img src="${imgData.thumbnail}" alt="תמונה מהיומן" class="w-full h-auto object-cover" loading="lazy">
                     <div class="px-4 py-3 bg-white flex justify-between items-center border-t border-gray-50">
                         <div class="flex items-center gap-2">
-                            <!-- כפתור הכוכב -->
                             <button onclick="toggleStar(event, '${imgData.id}', this)" class="p-1 rounded-full transition-colors ${starColor}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${starFill}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                             </button>
@@ -451,32 +514,27 @@
             });
         }
 
-        // פונקציה לסימון/ביטול סימון של תמונה
         function toggleStar(event, imageId, btnElement) {
-            event.stopPropagation(); // מונע את פתיחת התמונה המוגדלת כשלוחצים על הכוכב
+            event.stopPropagation(); 
             
             const index = starredPhotos.indexOf(imageId);
             const frame = btnElement.closest('.photo-frame');
             const svg = btnElement.querySelector('svg');
 
             if (index > -1) {
-                // הסרה מהמועדפים
                 starredPhotos.splice(index, 1);
-                frame.style.border = ''; // מחזיר לברירת מחדל של הקלאס המקורי
+                frame.style.border = ''; 
                 btnElement.className = 'p-1 rounded-full transition-colors text-gray-300 hover:text-gray-500';
                 svg.setAttribute('fill', 'none');
             } else {
-                // הוספה למועדפים
                 starredPhotos.push(imageId);
-                frame.style.border = `${borderThickness}px solid #ef4444`; // צבע אדום
+                frame.style.border = `${borderThickness}px solid #ef4444`; 
                 btnElement.className = 'p-1 rounded-full transition-colors text-yellow-400';
                 svg.setAttribute('fill', 'currentColor');
             }
             
-            // שמירה בזיכרון המקומי
             localStorage.setItem('photoJournalStarred', JSON.stringify(starredPhotos));
         }
-
 
         // --- מערכת זום ותצוגה מלאה (Lightbox & Pinch-to-Zoom) ---
         const lightboxEl = document.getElementById('lightbox');
@@ -485,33 +543,36 @@
         const lightboxContainer = document.getElementById('lightbox-container');
         let currentFullImageObjectUrl = null;
 
-        // משתני מצב זום
         let scale = 1;
         let panning = false;
         let pointX = 0;
         let pointY = 0;
         let startX = 0;
         let startY = 0;
-        // למובייל - מרחק התחלתי בין אצבעות
         let initialPinchDistance = null; 
         let initialScale = 1;
 
         function openLightbox(imageId, dayText, dateString) {
-            const originalFile = originalFilesMap.get(imageId);
-            if (!originalFile) return;
+            const imgData = processedImages.find(img => img.id === imageId);
+            if (!imgData) return;
 
-            // יצירת URL מקומי לקובץ המקורי ברזולוציה המלאה
-            currentFullImageObjectUrl = URL.createObjectURL(originalFile);
-            lightboxImg.src = currentFullImageObjectUrl;
+            const originalFile = originalFilesMap.get(imageId);
+            
+            // גיבוי חכם: אם הקובץ המקורי נמצא בזיכרון (כי המשתמש הרגע העלה אותו), נשתמש בו לאיכות 4K.
+            // אם המשתמש נכנס לאתר ביום למחרת והקובץ המקורי לא בזיכרון ה-RAM, נשתמש בגרסה ששמרנו במסד הנתונים.
+            if (originalFile) {
+                currentFullImageObjectUrl = URL.createObjectURL(originalFile);
+                lightboxImg.src = currentFullImageObjectUrl;
+            } else {
+                lightboxImg.src = imgData.thumbnail;
+            }
+
             lightboxInfo.innerText = `${dayText} | ${dateString}`;
             
             lightboxEl.classList.remove('hidden');
             lightboxEl.classList.add('flex');
             
-            // איפוס זום
             resetZoom();
-            
-            // מניעת גלילת הרקע
             document.body.style.overflow = 'hidden';
             
             setTimeout(() => { lightboxEl.style.opacity = '1'; }, 10);
@@ -543,47 +604,32 @@
             setTransform();
         }
 
-        // --- ניהול אירועי זום למחשב (עכבר) ---
         lightboxContainer.onwheel = function (e) {
             e.preventDefault();
-            
             const rect = lightboxContainer.getBoundingClientRect();
-            // חישוב המרכז של הקונטיינר
             const centerX = rect.width / 2;
             const centerY = rect.height / 2;
-
             const delta = Math.sign(e.wheelDelta || -e.deltaY);
             const oldScale = scale;
             
-            if (delta > 0) {
-                scale *= 1.2;
-            } else {
-                scale /= 1.2;
-            }
+            if (delta > 0) scale *= 1.2;
+            else scale /= 1.2;
             
-            // הגבלת זום (לא נאפשר לרדת מתחת לגודל המקורי כדי שהתמונה לא תיעלם)
             if (scale < 1) scale = 1;
             if (scale > 5) scale = 5;
 
-            // זום חכם לכיוון העכבר
             if (scale === 1) {
-                // אם חזרנו לגודל רגיל, נמרכז הכל בחזרה
                 pointX = 0;
                 pointY = 0;
             } else {
-                // חישוב המרחק של העכבר ממרכז המסך
                 const mouseX = e.clientX - rect.left - centerX;
                 const mouseY = e.clientY - rect.top - centerY;
-                
-                // הזזת התמונה כדי לפצות על שינוי הגודל כך שהנקודה תחת העכבר תישאר במקום
                 pointX -= mouseX * (scale / oldScale - 1);
                 pointY -= mouseY * (scale / oldScale - 1);
             }
-            
             setTransform();
         };
 
-        // גרירה בעכבר (Pan)
         lightboxContainer.onmousedown = function (e) {
             e.preventDefault();
             startX = e.clientX - pointX;
@@ -600,7 +646,6 @@
             setTransform();
         };
 
-        // --- ניהול אירועי מגע למובייל (Pinch / Touch) ---
         function getDistance(touches) {
             return Math.hypot(
                 touches[0].clientX - touches[1].clientX,
@@ -610,12 +655,10 @@
 
         lightboxContainer.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
-                // צביטה בשתי אצבעות
                 e.preventDefault();
                 initialPinchDistance = getDistance(e.touches);
                 initialScale = scale;
             } else if (e.touches.length === 1 && scale > 1) {
-                // גרירה באצבע אחת (רק אם יש זום)
                 startX = e.touches[0].clientX - pointX;
                 startY = e.touches[0].clientY - pointY;
                 panning = true;
@@ -624,7 +667,6 @@
 
         lightboxContainer.addEventListener('touchmove', (e) => {
             if (e.touches.length === 2) {
-                // ביצוע הזום
                 e.preventDefault();
                 const currentDistance = getDistance(e.touches);
                 const scaleModifier = currentDistance / initialPinchDistance;
@@ -639,7 +681,6 @@
                 setTransform();
                 
             } else if (e.touches.length === 1 && panning && scale > 1) {
-                // ביצוע גרירה
                 e.preventDefault();
                 pointX = e.touches[0].clientX - startX;
                 pointY = e.touches[0].clientY - startY;
@@ -653,7 +694,6 @@
             if (scale < 1) resetZoom();
         });
 
-        // סגירה בלחיצה מחוץ לתמונה
         lightboxContainer.addEventListener('click', (e) => {
             if (e.target === lightboxContainer && scale === 1) {
                 closeLightbox();
