@@ -17,7 +17,6 @@
         import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // השמה ל-window כדי ש-Babel יוכל לגשת
         window.fb = { initializeApp, getApps, getAuth, signInWithEmailAndPassword, getFirestore, collection, doc, setDoc, getDocs };
     </script>
 
@@ -53,6 +52,7 @@
             const [configInput, setConfigInput] = useState('');
             const [email, setEmail] = useState('');
             const [password, setPassword] = useState('');
+            const [showPass, setShowPass] = useState(false);
             const [jsonContent, setJsonContent] = useState('');
             const [saveStatus, setSaveStatus] = useState(false);
             const [manualNotes, setManualNotes] = useState([
@@ -62,6 +62,7 @@
             const [progress, setProgress] = useState(0);
             const [isRunning, setIsRunning] = useState(false);
             const [stats, setStats] = useState({ total: 0, added: 0, skipped: 0 });
+            const [diagInfo, setDiagInfo] = useState(null);
 
             useEffect(() => {
                 const savedConfig = localStorage.getItem(STORAGE_KEYS.CONFIG);
@@ -84,17 +85,6 @@
                 setTimeout(() => setSaveStatus(false), 2000);
             };
 
-            const generateStableId = (item) => {
-                if (item.id && !String(item.id).startsWith('gen_')) return String(item.id);
-                const str = (item.title || '') + (item.content || '');
-                let hash = 0;
-                for (let i = 0; i < str.length; i++) {
-                    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-                    hash |= 0;
-                }
-                return `gen_${Math.abs(hash)}`;
-            };
-
             const parseFirebaseConfig = (input) => {
                 try {
                     const jsonCandidate = input.replace(/const\s+\w+\s*=\s*/g, '').replace(/;/g, '').trim();
@@ -107,20 +97,32 @@
                 }
             };
 
-            const addManualField = () => {
-                setManualNotes([...manualNotes, { id: Date.now(), title: '', content: '', date: new Date().toLocaleDateString('he-IL') }]);
-            };
-
-            const removeManualField = (id) => {
-                if (manualNotes.length === 1) {
-                    setManualNotes([{ id: Date.now(), title: '', content: '', date: new Date().toLocaleDateString('he-IL') }]);
-                    return;
+            const runDiagnostics = () => {
+                try {
+                    const cfg = parseFirebaseConfig(configInput);
+                    setDiagInfo({
+                        projectId: cfg.projectId || 'Missing',
+                        apiKey: cfg.apiKey ? cfg.apiKey.substring(0, 8) + '...' : 'Missing',
+                        authDomain: cfg.authDomain || 'Missing'
+                    });
+                } catch(e) {
+                    setDiagInfo({ error: "Config לא תקין" });
                 }
-                setManualNotes(manualNotes.filter(n => n.id !== id));
             };
 
-            const updateManualField = (id, field, value) => {
-                setManualNotes(manualNotes.map(n => n.id === id ? { ...n, [field]: value } : n));
+            useEffect(() => {
+                if (configInput) runDiagnostics();
+            }, [configInput]);
+
+            const generateStableId = (item) => {
+                if (item.id && !String(item.id).startsWith('gen_')) return String(item.id);
+                const str = (item.title || '') + (item.content || '');
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                    hash |= 0;
+                }
+                return `gen_${Math.abs(hash)}`;
             };
 
             const startSync = async () => {
@@ -129,14 +131,13 @@
                     return;
                 }
 
-                if (!configInput || !email || !password) {
+                const cleanEmail = email.trim();
+                const cleanPassword = password.trim();
+
+                if (!configInput || !cleanEmail || !cleanPassword) {
                     setStatus('שגיאה: חסרים פרטי התחברות');
                     return;
                 }
-
-                // ניקוי רווחים בלתי נראים שנוצרים לפעמים בהעתקה
-                const cleanEmail = email.trim();
-                const cleanPassword = password.trim();
 
                 let dataToUpload = [];
                 if (activeTab === 'json') {
@@ -168,21 +169,17 @@
                     const db = window.fb.getFirestore(app);
                     const appId = 'obn-tips-v1';
 
-                    setStatus('מתחבר ל-Firebase...');
+                    setStatus(`מתחבר ל-${firebaseConfig.projectId}...`);
                     
                     try {
                         await window.fb.signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
                     } catch (authErr) {
-                        console.error("Firebase Auth Error:", authErr);
-                        let msg = "שגיאת התחברות.";
+                        console.error("Full Auth Error Object:", authErr);
+                        let msg = `שגיאה (${authErr.code}): `;
                         if (authErr.code === 'auth/invalid-credential') {
-                            msg = "פרטים שגויים. וודא ש-Email/Password מאופשר ב-Console ושזהו ה-Config הנכון.";
-                        } else if (authErr.code === 'auth/user-not-found') {
-                            msg = "המשתמש לא קיים בפרויקט זה.";
-                        } else if (authErr.code === 'auth/wrong-password') {
-                            msg = "סיסמה שגויה.";
-                        } else if (authErr.code === 'auth/too-many-requests') {
-                            msg = "יותר מדי ניסיונות. החשבון נחסם זמנית.";
+                            msg += "אימייל או סיסמה שגויים. וודא ב-Firebase Console שהמשתמש קיים והספק Email/Password מופעל.";
+                        } else {
+                            msg += authErr.message;
                         }
                         throw new Error(msg);
                     }
@@ -226,10 +223,6 @@
 
                     setStatus(`הושלם! נוספו: ${added}, דולגו: ${skipped}`);
                     saveSettingsOnly();
-                    
-                    if (activeTab === 'manual' && added > 0) {
-                        setManualNotes([{ id: Date.now(), title: '', content: '', date: new Date().toLocaleDateString('he-IL') }]);
-                    }
                 } catch (err) {
                     console.error(err);
                     setStatus(`שגיאה: ${err.message}`);
@@ -244,21 +237,11 @@
                         <header className="mb-10 flex flex-col md:flex-row justify-between items-center gap-6">
                             <div>
                                 <h1 className="text-4xl font-black text-slate-800 mb-2 italic">OBN Smart Sync</h1>
-                                <p className="text-slate-500 font-medium">ניהול נתונים מאובטח לענן</p>
+                                <p className="text-slate-500 font-medium">ניהול נתונים מאובטח לענן (V3.7)</p>
                             </div>
                             <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shadow-inner">
-                                <button 
-                                    onClick={() => setActiveTab('json')} 
-                                    className={`px-8 py-3 rounded-xl text-sm font-bold tab-transition ${activeTab === 'json' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
-                                >
-                                    JSON Migration
-                                </button>
-                                <button 
-                                    onClick={() => setActiveTab('manual')} 
-                                    className={`px-8 py-3 rounded-xl text-sm font-bold tab-transition ${activeTab === 'manual' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
-                                >
-                                    Manual Batch
-                                </button>
+                                <button onClick={() => setActiveTab('json')} className={`px-8 py-3 rounded-xl text-sm font-bold tab-transition ${activeTab === 'json' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}>JSON Migration</button>
+                                <button onClick={() => setActiveTab('manual')} className={`px-8 py-3 rounded-xl text-sm font-bold tab-transition ${activeTab === 'manual' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}>Manual Batch</button>
                             </div>
                         </header>
 
@@ -266,48 +249,37 @@
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-xl space-y-6 relative overflow-hidden">
                                     <div className="flex justify-between items-center relative z-10">
-                                        <h3 className="text-yellow-400 font-bold text-xs uppercase tracking-[0.2em]">Credentials</h3>
-                                        <button 
-                                            onClick={saveSettingsOnly}
-                                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${saveStatus ? 'bg-green-500 text-white success-anim' : 'bg-white/10 text-slate-300 hover:bg-white/20'}`}
-                                        >
-                                            {saveStatus ? "נשמר מקומית" : "שמור הגדרות"}
+                                        <h3 className="text-yellow-400 font-bold text-xs uppercase tracking-[0.2em]">Auth Credentials</h3>
+                                        <button onClick={saveSettingsOnly} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${saveStatus ? 'bg-green-500 text-white success-anim' : 'bg-white/10 text-slate-300 hover:bg-white/20'}`}>
+                                            {saveStatus ? "נשמר" : "שמור"}
                                         </button>
                                     </div>
                                     <div className="space-y-4 relative z-10">
                                         <div className="space-y-1">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase mr-1">Email</label>
-                                            <input 
-                                                type="email" 
-                                                autoComplete="email"
-                                                placeholder="admin@obn.tips" 
-                                                className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-yellow-400 transition-all font-mono text-sm text-right" 
-                                                value={email} 
-                                                onChange={e => setEmail(e.target.value)} 
-                                            />
+                                            <input type="email" placeholder="admin@obn.tips" className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-yellow-400 transition-all font-mono text-sm text-right" value={email} onChange={e => setEmail(e.target.value)} />
                                         </div>
-                                        <div className="space-y-1">
+                                        <div className="space-y-1 relative">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase mr-1">Password</label>
-                                            <input 
-                                                type="password" 
-                                                autoComplete="current-password"
-                                                placeholder="סיסמה" 
-                                                className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-yellow-400 transition-all font-mono text-sm text-right" 
-                                                value={password} 
-                                                onChange={e => setPassword(e.target.value)} 
-                                            />
+                                            <div className="relative">
+                                                <input type={showPass ? "text" : "password"} placeholder="סיסמה" className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-yellow-400 transition-all font-mono text-sm text-right pr-12" value={password} onChange={e => setPassword(e.target.value)} />
+                                                <button onClick={() => setShowPass(!showPass)} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors">
+                                                    {showPass ? <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg> : <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
+                                    {diagInfo && (
+                                        <div className="bg-white/5 p-4 rounded-2xl border border-white/10 mt-4 text-[10px] font-mono text-slate-400">
+                                            <div className="text-yellow-400 font-bold mb-1 uppercase">Target Project Info:</div>
+                                            <div>ID: {diagInfo.projectId}</div>
+                                            <div>Key: {diagInfo.apiKey}</div>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Firebase Config</label>
-                                    <textarea 
-                                        className="w-full h-full min-h-[160px] p-5 bg-slate-50 border border-slate-200 rounded-[1.5rem] font-mono text-[10px] outline-none focus:ring-4 focus:ring-blue-100 transition-all shadow-inner" 
-                                        dir="ltr" 
-                                        placeholder="Paste your config object here"
-                                        value={configInput} 
-                                        onChange={e => setConfigInput(e.target.value)} 
-                                    />
+                                    <textarea className="w-full h-full min-h-[160px] p-5 bg-slate-50 border border-slate-200 rounded-[1.5rem] font-mono text-[10px] outline-none focus:ring-4 focus:ring-blue-100 transition-all shadow-inner" dir="ltr" placeholder="Paste config here..." value={configInput} onChange={e => setConfigInput(e.target.value)} />
                                 </div>
                             </div>
 
@@ -318,55 +290,26 @@
                                             <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                                             JSON Content
                                         </label>
-                                        <textarea 
-                                            className="w-full h-80 p-6 bg-slate-50 border border-slate-200 rounded-[2.5rem] font-mono text-xs outline-none focus:ring-4 focus:ring-blue-50 shadow-inner" 
-                                            dir="ltr" 
-                                            placeholder='[ { "title": "...", "content": "..." } ]' 
-                                            value={jsonContent} 
-                                            onChange={e => setJsonContent(e.target.value)} 
-                                        />
+                                        <textarea className="w-full h-80 p-6 bg-slate-50 border border-slate-200 rounded-[2.5rem] font-mono text-xs outline-none focus:ring-4 focus:ring-blue-50 shadow-inner" dir="ltr" placeholder='[ { "title": "...", "content": "..." } ]' value={jsonContent} onChange={e => setJsonContent(e.target.value)} />
                                     </div>
                                 ) : (
                                     <div className="space-y-6">
                                         <div className="flex justify-between items-center bg-green-50/50 p-4 rounded-2xl border border-green-100">
-                                            <label className="text-sm font-bold text-green-800 mr-2 flex items-center gap-2">
-                                                Manual Bulk Input
-                                            </label>
-                                            <button 
-                                                onClick={addManualField} 
-                                                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl text-xs font-bold shadow-lg transition-all active:scale-95 flex items-center gap-2"
-                                            >
-                                                <span>+ הוסף שורה</span>
-                                            </button>
+                                            <label className="text-sm font-bold text-green-800 mr-2">Manual Bulk Input</label>
+                                            <button onClick={addManualField} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl text-xs font-bold shadow-lg transition-all active:scale-95 flex items-center gap-2"><span>+ הוסף שורה</span></button>
                                         </div>
-                                        <div className="space-y-6 max-h-[600px] overflow-y-auto p-4 custom-scrollbar bg-slate-50/30 rounded-[2.5rem] border border-dashed border-slate-200">
+                                        <div className="space-y-6 max-h-[400px] overflow-y-auto p-4 custom-scrollbar bg-slate-50/30 rounded-[2.5rem] border border-dashed border-slate-200">
                                             {manualNotes.map((note, index) => (
                                                 <div key={note.id} className="bg-white border border-slate-200 p-8 rounded-[2rem] relative group shadow-sm hover:shadow-xl transition-all border-r-8 border-r-blue-500">
-                                                    <button 
-                                                        onClick={() => removeManualField(note.id)} 
-                                                        className="absolute top-6 left-6 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                                                    >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                                                    </button>
-                                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                                                    <button onClick={() => removeManualField(note.id)} className="absolute top-6 left-6 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+                                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-right">
                                                         <div className="md:col-span-3 space-y-4">
-                                                            <div className="space-y-1">
-                                                                <label className="text-[10px] font-black text-slate-400 uppercase mr-2">כותרת</label>
-                                                                <input type="text" className="w-full p-4 bg-slate-50 border-none rounded-xl font-bold text-lg outline-none focus:ring-2 focus:ring-blue-200 transition-all" value={note.title} onChange={e => updateManualField(note.id, 'title', e.target.value)} />
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                <label className="text-[10px] font-black text-slate-400 uppercase mr-2">תוכן</label>
-                                                                <textarea className="w-full h-32 p-4 bg-slate-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-blue-200 text-base leading-relaxed" value={note.content} onChange={e => updateManualField(note.id, 'content', e.target.value)} />
-                                                            </div>
+                                                            <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 uppercase mr-2">כותרת</label><input type="text" className="w-full p-4 bg-slate-50 border-none rounded-xl font-bold text-lg outline-none focus:ring-2 focus:ring-blue-200 transition-all text-right" value={note.title} onChange={e => updateManualField(note.id, 'title', e.target.value)} /></div>
+                                                            <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 uppercase mr-2">תוכן</label><textarea className="w-full h-32 p-4 bg-slate-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-blue-200 text-base leading-relaxed text-right" value={note.content} onChange={e => updateManualField(note.id, 'content', e.target.value)} /></div>
                                                         </div>
                                                         <div className="flex flex-col justify-start gap-4">
-                                                            <div className="space-y-1">
-                                                                <label className="text-[10px] font-black text-slate-400 uppercase text-center block">תאריך</label>
-                                                                <input type="text" className="w-full p-4 bg-slate-50 border-none rounded-xl text-center font-mono text-xs focus:ring-2 focus:ring-blue-200 outline-none" value={note.date} onChange={e => updateManualField(note.id, 'date', e.target.value)} />
-                                                            </div>
-                                                            <div className="mt-auto pt-4 text-center border-t border-slate-50">
-                                                                <div className="text-[10px] text-slate-300 font-black uppercase tracking-tighter italic italic">#{index + 1}</div>
-                                                            </div>
+                                                            <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 uppercase text-center block">תאריך</label><input type="text" className="w-full p-4 bg-slate-50 border-none rounded-xl text-center font-mono text-xs focus:ring-2 focus:ring-blue-200 outline-none" value={note.date} onChange={e => updateManualField(note.id, 'date', e.target.value)} /></div>
+                                                            <div className="mt-auto pt-4 text-center border-t border-slate-50"><div className="text-[10px] text-slate-300 font-black uppercase tracking-tighter italic">#{index + 1}</div></div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -380,7 +323,8 @@
                                 <div className="lg:col-span-2 space-y-4">
                                     <div className="flex justify-between items-center text-sm font-black text-slate-800 px-4">
                                         <span className="uppercase tracking-widest italic text-blue-600">Progress: {progress}%</span>
-                                        <span className="text-[10px] text-slate-400 uppercase font-mono max-w-[200px] truncate">{status}</span>
+                                        <span className="text-[10px] text-red-500 uppercase font-mono max-w-[300px] truncate">{status !== 'Ready' && status.includes('שגיאה') ? status : ''}</span>
+                                        <span className="text-[10px] text-slate-400 uppercase font-mono">{!status.includes('שגיאה') ? status : ''}</span>
                                     </div>
                                     <div className="w-full bg-slate-100 h-5 rounded-full overflow-hidden shadow-inner border border-slate-200 p-1">
                                         <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 h-full rounded-full transition-all duration-700 shadow-lg relative" style={{ width: `${progress}%` }}>
@@ -389,23 +333,13 @@
                                     </div>
                                 </div>
                                 <div className="bg-slate-900 rounded-[2rem] p-8 flex justify-around items-center text-center shadow-2xl relative overflow-hidden">
-                                    <div className="relative z-10 text-white">
-                                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Writes</div>
-                                        <div className="text-3xl font-black text-green-400">{stats.added}</div>
-                                    </div>
+                                    <div className="relative z-10 text-white"><div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Writes</div><div className="text-3xl font-black text-green-400">{stats.added}</div></div>
                                     <div className="w-px h-12 bg-white/10 relative z-10"></div>
-                                    <div className="relative z-10 text-white">
-                                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Skipped</div>
-                                        <div className="text-3xl font-black text-yellow-400">{stats.skipped}</div>
-                                    </div>
+                                    <div className="relative z-10 text-white"><div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Skipped</div><div className="text-3xl font-black text-yellow-400">{stats.skipped}</div></div>
                                 </div>
                             </div>
 
-                            <button 
-                                onClick={startSync} 
-                                disabled={isRunning} 
-                                className={`w-full py-8 rounded-[2.5rem] font-black text-3xl shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-6 ${isRunning ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-black'}`}
-                            >
+                            <button onClick={startSync} disabled={isRunning} className={`w-full py-8 rounded-[2.5rem] font-black text-3xl shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-6 ${isRunning ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-black'}`}>
                                 {isRunning && <div className="w-8 h-8 border-4 border-t-white border-white/20 rounded-full animate-spin"></div>}
                                 <span>{isRunning ? 'בסנכרון...' : (activeTab === 'json' ? 'בצע סנכרון JSON חסכוני' : 'העלה לענן')}</span>
                             </button>
@@ -413,7 +347,7 @@
                     </div>
 
                     <footer className="mt-12 text-center text-slate-400 text-[10px] font-black uppercase tracking-[0.5em] opacity-40">
-                        OBN Tech Ecosystem &bull; Smart Delta Bridge V3.6 &bull; Auto-Trim Enabled
+                        OBN Tech Ecosystem &bull; Smart Delta Bridge V3.7 &bull; Diagnostics Tool Active
                     </footer>
                 </div>
             );
