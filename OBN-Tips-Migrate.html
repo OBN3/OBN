@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OBN Data Migrator - Smart Sync & Settings Persistence</title>
+    <title>OBN Data Migrator - Smart Sync</title>
     
     <!-- Scripts & Frameworks -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -13,11 +13,11 @@
     
     <!-- Firebase SDKs -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        window.fb = { initializeApp, getAuth, signInWithEmailAndPassword, getFirestore, collection, doc, setDoc, getDocs };
+        window.fb = { initializeApp, getApps, getAuth, signInWithEmailAndPassword, getFirestore, collection, doc, setDoc, getDocs };
     </script>
 
     <style>
@@ -48,23 +48,24 @@
         };
 
         const App = () => {
+            // --- State ---
             const [activeTab, setActiveTab] = useState('json'); 
             const [configInput, setConfigInput] = useState('');
             const [email, setEmail] = useState('');
             const [password, setPassword] = useState('');
+            const [showPass, setShowPass] = useState(false);
             const [jsonContent, setJsonContent] = useState('');
-            const [saveStatus, setSaveStatus] = useState(false); // Feedback for save button
-            
+            const [saveStatus, setSaveStatus] = useState(false);
             const [manualNotes, setManualNotes] = useState([
                 { id: Date.now(), title: '', content: '', date: new Date().toLocaleDateString('he-IL') }
             ]);
-            
             const [status, setStatus] = useState('Ready');
             const [progress, setProgress] = useState(0);
             const [isRunning, setIsRunning] = useState(false);
             const [stats, setStats] = useState({ total: 0, added: 0, skipped: 0 });
+            const [diagInfo, setDiagInfo] = useState(null);
 
-            // Load saved data from localStorage on component mount
+            // --- Effects ---
             useEffect(() => {
                 const savedConfig = localStorage.getItem(STORAGE_KEYS.CONFIG);
                 const savedEmail = localStorage.getItem(STORAGE_KEYS.EMAIL);
@@ -74,28 +75,49 @@
                 if (savedPass) setPassword(savedPass);
             }, []);
 
-            // Function to save only settings without uploading content
+            useEffect(() => {
+                if (configInput) runDiagnostics();
+            }, [configInput]);
+
+            // --- Helpers ---
             const saveSettingsOnly = () => {
                 if (!configInput || !email || !password) {
-                    alert('נא למלא את כל פרטי ההתחברות לפני השמירה');
+                    setStatus('שגיאה: נא למלא את כל פרטי ההתחברות');
                     return;
                 }
-                
-                // Simple validation check
-                if (!configInput.includes('apiKey') || !configInput.includes('{')) {
-                    if (!confirm('ה-Config שהזנת נראה לא תקין. האם לשמור בכל זאת?')) return;
-                }
-
                 localStorage.setItem(STORAGE_KEYS.CONFIG, configInput);
                 localStorage.setItem(STORAGE_KEYS.EMAIL, email);
                 localStorage.setItem(STORAGE_KEYS.PASS, password);
-                
                 setSaveStatus(true);
                 setTimeout(() => setSaveStatus(false), 2000);
             };
 
+            const parseFirebaseConfig = (input) => {
+                try {
+                    const clean = input.replace(/const\s+\w+\s*=\s*/g, '').replace(/;/g, '').trim();
+                    if (clean.startsWith('{')) {
+                        return new Function(`return ${clean}`)();
+                    }
+                    return JSON.parse(input);
+                } catch (e) {
+                    return null;
+                }
+            };
+
+            const runDiagnostics = () => {
+                const cfg = parseFirebaseConfig(configInput);
+                if (cfg) {
+                    setDiagInfo({
+                        projectId: cfg.projectId || 'חסר',
+                        apiKey: cfg.apiKey ? cfg.apiKey.substring(0, 10) + '...' : 'חסר',
+                        authDomain: cfg.authDomain || 'חסר'
+                    });
+                } else {
+                    setDiagInfo({ error: "Config לא תקין" });
+                }
+            };
+
             const generateStableId = (item) => {
-                if (item.id && !String(item.id).startsWith('gen_')) return String(item.id);
                 const str = (item.title || '') + (item.content || '');
                 let hash = 0;
                 for (let i = 0; i < str.length; i++) {
@@ -105,68 +127,75 @@
                 return `gen_${Math.abs(hash)}`;
             };
 
-            const parseFirebaseConfig = (input) => {
-                try { return JSON.parse(input); }
-                catch (e) {
-                    const match = input.match(/\{[\s\S]*\}/);
-                    if (match) return new Function(`return ${match[0]}`)();
-                }
-                throw new Error("Invalid Config format.");
-            };
-
+            // --- Manual Batch Functions (Fixed Scope) ---
             const addManualField = () => {
-                setManualNotes([...manualNotes, { id: Date.now(), title: '', content: '', date: new Date().toLocaleDateString('he-IL') }]);
+                setManualNotes(prev => [...prev, { 
+                    id: Date.now(), 
+                    title: '', 
+                    content: '', 
+                    date: new Date().toLocaleDateString('he-IL') 
+                }]);
             };
 
             const removeManualField = (id) => {
-                if (manualNotes.length === 1) {
-                    setManualNotes([{ id: Date.now(), title: '', content: '', date: new Date().toLocaleDateString('he-IL') }]);
-                    return;
-                }
-                setManualNotes(manualNotes.filter(n => n.id !== id));
+                setManualNotes(prev => {
+                    if (prev.length === 1) return [{ id: Date.now(), title: '', content: '', date: new Date().toLocaleDateString('he-IL') }];
+                    return prev.filter(n => n.id !== id);
+                });
             };
 
             const updateManualField = (id, field, value) => {
-                setManualNotes(manualNotes.map(n => n.id === id ? { ...n, [field]: value } : n));
+                setManualNotes(prev => prev.map(n => n.id === id ? { ...n, [field]: value } : n));
             };
 
+            // --- Core Sync Logic ---
             const startSync = async () => {
-                if (!configInput || !email || !password) {
-                    alert('נא למלא פרטי התחברות והגדרות Firebase');
+                if (!window.fb) {
+                    setStatus("שגיאה: ספריות Firebase לא נטענו");
+                    return;
+                }
+
+                const cleanEmail = email.trim();
+                const cleanPassword = password.trim();
+                const firebaseConfig = parseFirebaseConfig(configInput);
+
+                if (!firebaseConfig || !cleanEmail || !cleanPassword) {
+                    setStatus('שגיאה: וודא שכל השדות מלאים וה-Config תקין');
                     return;
                 }
 
                 let dataToUpload = [];
                 if (activeTab === 'json') {
-                    if (!jsonContent) { alert('נא להזין תוכן JSON'); return; }
                     try {
                         dataToUpload = JSON.parse(jsonContent);
-                    } catch (e) { alert('מבנה JSON לא תקין'); return; }
+                    } catch (e) { setStatus('שגיאה: מבנה JSON לא תקין'); return; }
                 } else {
                     dataToUpload = manualNotes.filter(n => n.title.trim() || n.content.trim());
-                    if (dataToUpload.length === 0) { alert('נא להזין לפחות טיפ אחד'); return; }
+                    if (dataToUpload.length === 0) { setStatus('שגיאה: אין נתונים להעלאה'); return; }
                 }
-
-                // Auto-save settings when starting sync
-                localStorage.setItem(STORAGE_KEYS.CONFIG, configInput);
-                localStorage.setItem(STORAGE_KEYS.EMAIL, email);
-                localStorage.setItem(STORAGE_KEYS.PASS, password);
 
                 setIsRunning(true);
                 setProgress(0);
-                setStats({ total: dataToUpload.length, added: 0, skipped: 0 });
                 
                 try {
-                    const firebaseConfig = parseFirebaseConfig(configInput);
-                    const app = window.fb.initializeApp(firebaseConfig);
+                    let app;
+                    const apps = window.fb.getApps();
+                    app = apps.length === 0 ? window.fb.initializeApp(firebaseConfig) : apps[0];
+
                     const auth = window.fb.getAuth(app);
                     const db = window.fb.getFirestore(app);
                     const appId = 'obn-tips-v1';
 
-                    setStatus('מתחבר...');
-                    await window.fb.signInWithEmailAndPassword(auth, email, password);
+                    setStatus(`מתחבר לפרויקט: ${firebaseConfig.projectId}...`);
+                    
+                    try {
+                        await window.fb.signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
+                    } catch (authErr) {
+                        console.error("Firebase Auth Error Detail:", authErr);
+                        throw new Error(`אימות נכשל (${authErr.code}). בדוק אימייל/סיסמה ו-Enable ב-Console.`);
+                    }
 
-                    setStatus('סורק נתונים קיימים...');
+                    setStatus('סורק דלתא (השוואת נתונים)...');
                     const colRef = window.fb.collection(db, 'artifacts', appId, 'public', 'data', 'techtips');
                     const snapshot = await window.fb.getDocs(colRef);
                     const existingDocs = {};
@@ -180,11 +209,7 @@
                         const docId = generateStableId(item);
                         const existing = existingDocs[docId];
 
-                        const isIdentical = existing && 
-                                           existing.title === item.title && 
-                                           existing.content === item.content;
-
-                        if (isIdentical) {
+                        if (existing && existing.title === item.title && existing.content === item.content) {
                             skipped++;
                         } else {
                             await window.fb.setDoc(window.fb.doc(db, 'artifacts', appId, 'public', 'data', 'techtips', docId), {
@@ -196,22 +221,15 @@
                             });
                             added++;
                         }
-
-                        const currentProgress = Math.round(((i + 1) / dataToUpload.length) * 100);
-                        setProgress(currentProgress);
+                        setProgress(Math.round(((i + 1) / dataToUpload.length) * 100));
                         setStats({ total: dataToUpload.length, added, skipped });
                         setStatus(`מעבד ${i + 1}/${dataToUpload.length}...`);
                     }
 
-                    setStatus(`הושלם! נוספו: ${added}, דולגו: ${skipped}`);
-                    
-                    if (activeTab === 'manual' && added > 0) {
-                        setManualNotes([{ id: Date.now(), title: '', content: '', date: new Date().toLocaleDateString('he-IL') }]);
-                    }
+                    setStatus(`סנכרון הושלם! ${added} נכתבו, ${skipped} דולגו.`);
+                    saveSettingsOnly();
                 } catch (err) {
-                    console.error(err);
                     setStatus(`שגיאה: ${err.message}`);
-                    setIsRunning(false);
                 } finally {
                     setIsRunning(false);
                 }
@@ -223,130 +241,77 @@
                         <header className="mb-10 flex flex-col md:flex-row justify-between items-center gap-6">
                             <div>
                                 <h1 className="text-4xl font-black text-slate-800 mb-2 italic">OBN Smart Sync</h1>
-                                <p className="text-slate-500 font-medium">ניהול נתונים חכם ושמירת הגדרות מהירה</p>
+                                <p className="text-slate-500 font-medium">Smart Delta Migration V3.8</p>
                             </div>
                             <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shadow-inner">
-                                <button 
-                                    onClick={() => setActiveTab('json')} 
-                                    className={`px-8 py-3 rounded-xl text-sm font-bold tab-transition ${activeTab === 'json' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
-                                >
-                                    JSON Migration
-                                </button>
-                                <button 
-                                    onClick={() => setActiveTab('manual')} 
-                                    className={`px-8 py-3 rounded-xl text-sm font-bold tab-transition ${activeTab === 'manual' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
-                                >
-                                    Manual Batch
-                                </button>
+                                <button onClick={() => setActiveTab('json')} className={`px-8 py-3 rounded-xl text-sm font-bold tab-transition ${activeTab === 'json' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}>JSON Migration</button>
+                                <button onClick={() => setActiveTab('manual')} className={`px-8 py-3 rounded-xl text-sm font-bold tab-transition ${activeTab === 'manual' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}>Manual Batch</button>
                             </div>
                         </header>
 
                         <div className="grid grid-cols-1 gap-8">
-                            {/* Connection Area with Save Button */}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-xl space-y-6 relative overflow-hidden">
                                     <div className="flex justify-between items-center relative z-10">
-                                        <h3 className="text-yellow-400 font-bold text-xs uppercase tracking-[0.2em]">Secure Admin Login</h3>
-                                        <button 
-                                            onClick={saveSettingsOnly}
-                                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${saveStatus ? 'bg-green-500 text-white success-anim' : 'bg-white/10 text-slate-300 hover:bg-white/20'}`}
-                                        >
-                                            {saveStatus ? (
-                                                <React.Fragment>
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                                    <span>נשמר בזיכרון</span>
-                                                </React.Fragment>
-                                            ) : (
-                                                <React.Fragment>
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                                                    <span>שמירת הגדרות בלבד</span>
-                                                </React.Fragment>
-                                            )}
+                                        <h3 className="text-yellow-400 font-bold text-xs uppercase tracking-[0.2em]">Credentials</h3>
+                                        <button onClick={saveSettingsOnly} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${saveStatus ? 'bg-green-500 text-white success-anim' : 'bg-white/10 text-slate-300 hover:bg-white/20'}`}>
+                                            {saveStatus ? "נשמר" : "שמור הגדרות"}
                                         </button>
                                     </div>
                                     <div className="space-y-4 relative z-10">
                                         <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase mr-1">Email</label>
-                                            <input type="email" placeholder="admin@obn.tips" className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-yellow-400 transition-all font-mono text-sm" value={email} onChange={e => setEmail(e.target.value)} />
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase mr-1">Admin Email</label>
+                                            <input type="email" autoComplete="username" className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-yellow-400 transition-all font-mono text-sm text-right" value={email} onChange={e => setEmail(e.target.value)} />
                                         </div>
-                                        <div className="space-y-1">
+                                        <div className="space-y-1 relative">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase mr-1">Password</label>
-                                            <input type="password" placeholder="סיסמה" className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-yellow-400 transition-all font-mono text-sm" value={password} onChange={e => setPassword(e.target.value)} />
+                                            <div className="relative">
+                                                <input type={showPass ? "text" : "password"} autoComplete="current-password" 
+                                                       className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-yellow-400 transition-all font-mono text-sm text-right pr-12" 
+                                                       value={password} onChange={e => setPassword(e.target.value)} />
+                                                <button onClick={() => setShowPass(!showPass)} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
+                                                    {showPass ? "הסתר" : "הצג"}
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-yellow-400/5 rounded-full blur-3xl"></div>
+                                    {diagInfo && !diagInfo.error && (
+                                        <div className="bg-white/5 p-4 rounded-2xl border border-white/10 mt-4 text-[10px] font-mono text-slate-400 leading-relaxed">
+                                            <div className="text-yellow-400 font-bold mb-1">TARGET: {diagInfo.projectId}</div>
+                                            <div>KEY: {diagInfo.apiKey}</div>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Firebase Config Object</label>
-                                    <textarea 
-                                        className="w-full h-full min-h-[160px] p-5 bg-slate-50 border border-slate-200 rounded-[1.5rem] font-mono text-[10px] outline-none focus:ring-4 focus:ring-blue-100 transition-all shadow-inner" 
-                                        dir="ltr" 
-                                        placeholder="const firebaseConfig = { ... };"
-                                        value={configInput} 
-                                        onChange={e => setConfigInput(e.target.value)} 
-                                    />
+                                    <textarea className="w-full h-full min-h-[160px] p-5 bg-slate-50 border border-slate-200 rounded-[1.5rem] font-mono text-[10px] outline-none focus:ring-4 focus:ring-blue-100 transition-all shadow-inner" dir="ltr" value={configInput} onChange={e => setConfigInput(e.target.value)} />
                                 </div>
                             </div>
 
-                            {/* Input Area */}
                             <div className="border-t border-slate-100 pt-8">
                                 {activeTab === 'json' ? (
                                     <div className="space-y-3">
-                                        <label className="text-sm font-bold text-slate-700 mr-2 flex items-center gap-2">
-                                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                                            הדבקת תוכן קובץ JSON
-                                        </label>
-                                        <textarea 
-                                            className="w-full h-80 p-6 bg-slate-50 border border-slate-200 rounded-[2.5rem] font-mono text-xs outline-none focus:ring-4 focus:ring-blue-50 shadow-inner" 
-                                            dir="ltr" 
-                                            placeholder='[ { "title": "...", "content": "..." }, ... ]' 
-                                            value={jsonContent} 
-                                            onChange={e => setJsonContent(e.target.value)} 
-                                        />
+                                        <label className="text-sm font-bold text-slate-700 mr-2 flex items-center gap-2">JSON Migration Content</label>
+                                        <textarea className="w-full h-80 p-6 bg-slate-50 border border-slate-200 rounded-[2.5rem] font-mono text-xs outline-none focus:ring-4 focus:ring-blue-50 shadow-inner" dir="ltr" placeholder='[ { "title": "...", "content": "..." } ]' value={jsonContent} onChange={e => setJsonContent(e.target.value)} />
                                     </div>
                                 ) : (
                                     <div className="space-y-6">
                                         <div className="flex justify-between items-center bg-green-50/50 p-4 rounded-2xl border border-green-100">
-                                            <label className="text-sm font-bold text-green-800 mr-2 flex items-center gap-2">
-                                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                                הזנה ידנית מרוכזת (Bulk)
-                                            </label>
-                                            <button 
-                                                onClick={addManualField} 
-                                                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl text-xs font-bold shadow-lg transition-all active:scale-95 flex items-center gap-2"
-                                            >
-                                                <span>+ הוסף שורת טיפ נוספת</span>
-                                            </button>
+                                            <label className="text-sm font-bold text-green-800 mr-2">Manual Batch Input</label>
+                                            <button onClick={addManualField} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl text-xs font-bold shadow-lg transition-all active:scale-95"><span>+ הוסף שורה</span></button>
                                         </div>
-                                        <div className="space-y-6 max-h-[600px] overflow-y-auto p-4 custom-scrollbar bg-slate-50/30 rounded-[2.5rem] border border-dashed border-slate-200">
+                                        <div className="space-y-6 max-h-[400px] overflow-y-auto p-4 custom-scrollbar bg-slate-50/30 rounded-[2.5rem] border border-dashed border-slate-200">
                                             {manualNotes.map((note, index) => (
                                                 <div key={note.id} className="bg-white border border-slate-200 p-8 rounded-[2rem] relative group shadow-sm hover:shadow-xl transition-all border-r-8 border-r-blue-500">
-                                                    <button 
-                                                        onClick={() => removeManualField(note.id)} 
-                                                        className="absolute top-6 left-6 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                                                        title="הסר שורה"
-                                                    >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                                                    </button>
-                                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                                                    <button onClick={() => removeManualField(note.id)} className="absolute top-6 left-6 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">הסר</button>
+                                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-right">
                                                         <div className="md:col-span-3 space-y-4">
-                                                            <div className="space-y-1">
-                                                                <label className="text-[10px] font-black text-slate-400 uppercase mr-2">כותרת הטיפ</label>
-                                                                <input type="text" placeholder="הכנס כותרת..." className="w-full p-4 bg-slate-50 border-none rounded-xl font-bold text-lg outline-none focus:ring-2 focus:ring-blue-200 transition-all" value={note.title} onChange={e => updateManualField(note.id, 'title', e.target.value)} />
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                <label className="text-[10px] font-black text-slate-400 uppercase mr-2">תוכן הטיפ</label>
-                                                                <textarea placeholder="פרט כאן את הטיפ..." className="w-full h-32 p-4 bg-slate-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-blue-200 text-base leading-relaxed" value={note.content} onChange={e => updateManualField(note.id, 'content', e.target.value)} />
-                                                            </div>
+                                                            <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 uppercase mr-2">כותרת</label><input type="text" className="w-full p-4 bg-slate-50 border-none rounded-xl font-bold text-lg outline-none focus:ring-2 focus:ring-blue-200 text-right" value={note.title} onChange={e => updateManualField(note.id, 'title', e.target.value)} /></div>
+                                                            <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 uppercase mr-2">תוכן</label><textarea className="w-full h-32 p-4 bg-slate-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-blue-200 text-base leading-relaxed text-right" value={note.content} onChange={e => updateManualField(note.id, 'content', e.target.value)} /></div>
                                                         </div>
                                                         <div className="flex flex-col justify-start gap-4">
-                                                            <div className="space-y-1">
-                                                                <label className="text-[10px] font-black text-slate-400 uppercase text-center block">תאריך</label>
-                                                                <input type="text" className="w-full p-4 bg-slate-50 border-none rounded-xl text-center font-mono text-xs focus:ring-2 focus:ring-blue-200 outline-none" value={note.date} onChange={e => updateManualField(note.id, 'date', e.target.value)} />
-                                                            </div>
-                                                            <div className="mt-auto pt-4 text-center border-t border-slate-50">
-                                                                <div className="text-[10px] text-slate-300 font-black uppercase tracking-tighter italic">בלוק הזנה #{index + 1}</div>
-                                                            </div>
+                                                            <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 uppercase text-center block">תאריך</label><input type="text" className="w-full p-4 bg-slate-50 border-none rounded-xl text-center font-mono text-xs outline-none" value={note.date} onChange={e => updateManualField(note.id, 'date', e.target.value)} /></div>
+                                                            <div className="mt-auto pt-4 text-center border-t border-slate-50"><div className="text-[10px] text-slate-300 font-black italic">ITEM #{index + 1}</div></div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -356,72 +321,31 @@
                                 )}
                             </div>
 
-                            {/* Footer Execution & Stats */}
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center border-t border-slate-100 pt-10">
-                                <div className="lg:col-span-2 space-y-4">
+                                <div className="lg:col-span-2 space-y-4 text-right">
                                     <div className="flex justify-between items-center text-sm font-black text-slate-800 px-4">
-                                        <span className="uppercase tracking-widest italic text-blue-600">Sync Progress: {progress}%</span>
-                                        <span className="text-[10px] text-slate-400 uppercase font-mono">{status}</span>
+                                        <span className="uppercase tracking-widest text-blue-600">Progress: {progress}%</span>
+                                        <span className="text-[10px] text-slate-400 font-mono">{status}</span>
                                     </div>
-                                    <div className="w-full bg-slate-100 h-5 rounded-full overflow-hidden shadow-inner border border-slate-200 p-1">
-                                        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 h-full rounded-full transition-all duration-700 shadow-lg relative" style={{ width: `${progress}%` }}>
-                                            <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
-                                        </div>
+                                    <div className="w-full bg-slate-100 h-5 rounded-full overflow-hidden border border-slate-200 p-1 shadow-inner">
+                                        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 h-full rounded-full transition-all duration-700" style={{ width: `${progress}%` }}></div>
                                     </div>
                                 </div>
-                                <div className="bg-slate-900 rounded-[2rem] p-8 flex justify-around items-center text-center shadow-2xl relative overflow-hidden">
-                                    <div className="relative z-10 text-white">
-                                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Writes</div>
-                                        <div className="text-3xl font-black text-green-400">{stats.added}</div>
-                                    </div>
-                                    <div className="w-px h-12 bg-white/10 relative z-10"></div>
-                                    <div className="relative z-10 text-white">
-                                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Skipped</div>
-                                        <div className="text-3xl font-black text-yellow-400">{stats.skipped}</div>
-                                    </div>
+                                <div className="bg-slate-900 rounded-[2rem] p-8 flex justify-around items-center text-center shadow-2xl">
+                                    <div className="text-white"><div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Added</div><div className="text-3xl font-black text-green-400">{stats.added}</div></div>
+                                    <div className="w-px h-12 bg-white/10"></div>
+                                    <div className="text-white"><div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Delta</div><div className="text-3xl font-black text-yellow-400">{stats.skipped}</div></div>
                                 </div>
                             </div>
 
-                            <button 
-                                onClick={startSync} 
-                                disabled={isRunning} 
-                                className={`w-full py-8 rounded-[2.5rem] font-black text-3xl shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-6 ${isRunning ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-black'}`}
-                            >
-                                {isRunning && <div className="w-8 h-8 border-4 border-t-white border-white/20 rounded-full animate-spin"></div>}
-                                <span>{activeTab === 'json' ? 'בצע סנכרון JSON חסכוני' : 'העלה נבחרת טיפים לענן'}</span>
+                            <button onClick={startSync} disabled={isRunning} className={`w-full py-8 rounded-[2.5rem] font-black text-3xl shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-6 ${isRunning ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-black'}`}>
+                                {isRunning ? "מעבד נתונים..." : "הפעל סנכרון חכם לענן"}
                             </button>
                         </div>
                     </div>
 
-                    {/* סעיף הסבר מעודכן */}
-                    <section className="bg-white rounded-[2.5rem] shadow-xl p-10 md:p-14 border border-slate-200 text-right space-y-8 animate-in fade-in slide-in-from-bottom duration-700">
-                        <div className="flex items-center gap-4 border-b border-slate-100 pb-6">
-                            <div className="bg-blue-100 p-3 rounded-2xl text-blue-600"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></div>
-                            <div>
-                                <h2 className="text-2xl font-black text-slate-800">אודות המערכת והוראות שימוש</h2>
-                                <p className="text-slate-400 text-sm font-bold uppercase tracking-widest italic">Knowledge Management V3.3</p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-bold text-slate-700 flex items-center gap-2 underline underline-offset-8 decoration-blue-500/20">מטרת האפליקציה</h3>
-                                <p className="text-slate-600 leading-[1.8] text-sm text-justify">
-                                    אפליקציית ה-<b>Migrator</b> נועדה להפוך את ניהול מאגר הידע שלך לתהליך פשוט ומהיר. במקום לערוך קוד או קבצי JSON ידניים, כלי זה מאפשר לך להעביר אלפי טיפים קיימים (מ-Google Keep) או להזין טיפים חדשים באופן ידני ומרוכז ישירות לענן. השימוש בענן מבטיח שהאתר שלך ב-Vercel יתעדכן מיד ללא צורך ב-Deploy נוסף.
-                                </p>
-                            </div>
-
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-bold text-slate-700 flex items-center gap-2 underline underline-offset-8 decoration-green-500/20">איך היא פועלת?</h3>
-                                <p className="text-slate-600 leading-[1.8] text-sm text-justify">
-                                    האפליקציה פועלת בשלושה מישורים: <b>אימות מאובטח</b> מול Firebase, <b>השוואת נתונים (Delta Sync)</b> שמוודאת שרק טיפים חדשים או מעודכנים נכתבים לענן, ו<b>זיכרון מקומי</b> שחוסך ממך להקליד מחדש את הגדרות המערכת בכל פעם. כעת ניתן גם לשמור את פרטי ההתחברות ללא צורך בביצוע העלאה מיידית דרך כפתור ה-"שמור הגדרות" החדש.
-                                </p>
-                            </div>
-                        </div>
-                    </section>
-
                     <footer className="mt-12 text-center text-slate-400 text-[10px] font-black uppercase tracking-[0.5em] opacity-40">
-                        OBN Tech Ecosystem &bull; Smart Delta Bridge V3.3 &bull; Cloud Storage Active
+                        OBN TECH ECOSYSTEM &bull; V3.8 STABLE
                     </footer>
                 </div>
             );
