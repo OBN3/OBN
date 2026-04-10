@@ -346,16 +346,44 @@
                 return;
             }
 
+            // סינון חכם: מציאת התמונות שכבר קיימות כדי לא לעבד אותן מחדש
+            const existingIds = new Set(processedImages.map(img => img.id));
+            const newFilesToProcess = [];
+            let skippedCount = 0;
+
+            for (const file of files) {
+                const imageId = encodeURIComponent(file.name) + '_' + file.size;
+                if (existingIds.has(imageId)) {
+                    skippedCount++;
+                    // עדיין שומרים את הקישור לקובץ המקורי כדי שהזום באיכות מלאה יעבוד עכשיו
+                    originalFilesMap.set(imageId, file);
+                } else {
+                    newFilesToProcess.push({ file, imageId });
+                }
+            }
+
+            // אם אין תמונות חדשות בכלל
+            if (newFilesToProcess.length === 0) {
+                alert(`כל התמונות שנבחרו (${skippedCount}) כבר קיימות ביומן.`);
+                if (!ui.settingsModal.classList.contains('hidden')) toggleSettings();
+                return;
+            }
+
             ui.emptyState.classList.add('hidden');
             ui.gallery.classList.add('hidden');
             ui.loadingState.classList.remove('hidden');
             ui.loadingState.classList.add('flex');
             
             let processedCount = 0;
+            const totalNew = newFilesToProcess.length;
 
-            for (const file of files) {
+            for (const { file, imageId } of newFilesToProcess) {
                 try {
-                    ui.loadingText.innerText = `מעבד תמונה ${processedCount + 1} מתוך ${files.length}...`;
+                    if (skippedCount > 0) {
+                        ui.loadingText.innerText = `דילג על ${skippedCount} קיימות. מעבד חדשה ${processedCount + 1} מתוך ${totalNew}...`;
+                    } else {
+                        ui.loadingText.innerText = `מעבד תמונה ${processedCount + 1} מתוך ${totalNew}...`;
+                    }
                     
                     let captureDate = null;
                     try {
@@ -383,7 +411,6 @@
 
                     const thumbnailDataUrl = await generateThumbnail(file);
                     
-                    const imageId = encodeURIComponent(file.name) + '_' + file.size;
                     originalFilesMap.set(imageId, file); // שומר בזיכרון הזמני בלבד (לזום איכותי בזמן אמת)
 
                     const imgData = {
@@ -392,13 +419,8 @@
                         thumbnail: thumbnailDataUrl
                     };
 
-                    // בדיקה האם כבר קיים (כדי לא לשכפל במערך, למרות שב-DB הוא יתעדכן)
-                    const existingIndex = processedImages.findIndex(img => img.id === imageId);
-                    if (existingIndex > -1) {
-                        processedImages[existingIndex] = imgData;
-                    } else {
-                        processedImages.push(imgData);
-                    }
+                    // הוספה למערך
+                    processedImages.push(imgData);
 
                     // שמירה למסד הנתונים
                     await saveImageToDB(imgData);
@@ -412,11 +434,12 @@
             // מיון כרונולוגי
             processedImages.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            // ביטלנו את מנגנון "לקיחת התאריך מהתמונה הישנה ביותר" כי הגדרנו ברירת מחדל קבועה
-
             ui.loadingState.classList.add('hidden');
             ui.loadingState.classList.remove('flex');
             renderGallery();
+            
+            // סגירת הגדרות אם אנחנו משם
+            if (!ui.settingsModal.classList.contains('hidden')) toggleSettings();
         }
 
         function generateThumbnail(file) {
