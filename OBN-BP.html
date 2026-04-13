@@ -61,7 +61,8 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="text-gray-800 h-screen flex flex-col overflow-hidden">
+<!-- הוחלף h-screen ל- h-[100dvh] כדי לפתור בעיות גלילה וכתובת דפדפן במובייל -->
+<body class="text-gray-800 h-[100dvh] flex flex-col overflow-hidden">
 
     <!-- Login Screen -->
     <div id="login-screen" class="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-6 z-50 absolute inset-0">
@@ -81,7 +82,8 @@
     </div>
 
     <!-- Main App -->
-    <div id="main-app" class="hidden flex-col h-full relative">
+    <!-- הוסף flex-1 כדי לתפוס את הגובה הנותר ולאפשר גלילה פנימית -->
+    <div id="main-app" class="hidden flex-col flex-1 w-full relative overflow-hidden">
         
         <header class="glass-header sticky top-0 z-40 px-5 py-4 flex justify-between items-center shadow-sm">
             <div class="flex items-center gap-3">
@@ -99,9 +101,9 @@
             </button>
         </header>
 
-        <main class="flex-1 overflow-y-auto p-4 pb-24">
+        <main class="flex-1 overflow-y-auto p-4 pb-28">
             
-            <!-- Tab 1: New Measurement -->
+            <!-- Tab 1: New/Edit Measurement -->
             <div id="tab-new" class="tab-content active space-y-6">
                 <!-- API Key Warning if not set -->
                 <div id="api-warning" class="hidden bg-amber-50 border border-amber-200 p-4 rounded-xl text-amber-800 text-sm flex items-start gap-3">
@@ -130,9 +132,9 @@
                     <p class="text-gray-600 font-medium animate-pulse text-center">הבינה המלאכותית מפענחת את הנתונים...</p>
                 </div>
 
-                <div id="form-area" class="hidden bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <div id="form-area" class="hidden bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-8">
                     <div class="flex justify-between items-center mb-4">
-                        <h4 class="font-bold text-lg text-gray-800">אימות נתונים</h4>
+                        <h4 id="form-title" class="font-bold text-lg text-gray-800">אימות נתונים</h4>
                         <span id="who-indicator" class="text-xs font-bold px-3 py-1 rounded-full bg-gray-100 text-gray-600">ממתין...</span>
                     </div>
                     
@@ -322,6 +324,7 @@
         let measurements = [];
         let bpChartInstance = null;
         let userSettings = { geminiApiKey: '', geminiModel: 'gemini-2.5-flash-lite' };
+        let editingId = null; // משתנה למעקב אחר מצב עריכה
 
         const ui = {
             loginScreen: document.getElementById('login-screen'),
@@ -337,6 +340,7 @@
             imageInput: document.getElementById('image-input'),
             loadingArea: document.getElementById('loading-area'),
             formArea: document.getElementById('form-area'),
+            formTitle: document.getElementById('form-title'),
             inputSys: document.getElementById('input-sys'),
             inputDia: document.getElementById('input-dia'),
             inputPulse: document.getElementById('input-pulse'),
@@ -521,34 +525,90 @@
             }, (error) => console.error(error));
         };
 
+        const resetForm = () => {
+            editingId = null;
+            ui.formTitle.innerText = 'אימות נתונים';
+            ui.btnSave.innerHTML = '<i class="fa-solid fa-check ml-2"></i>אשר ושמור';
+            ui.formArea.classList.add('hidden');
+            ui.imageInput.value = '';
+            ui.inputSys.value = '';
+            ui.inputDia.value = '';
+            ui.inputPulse.value = '';
+        };
+
         ui.btnSave.addEventListener('click', async () => {
             if (!currentUser) return;
             const sys = parseInt(ui.inputSys.value), dia = parseInt(ui.inputDia.value), dt = ui.inputDatetime.value;
             if (!sys || !dia || !dt) { showAlert('חסר מידע', 'מלא את כל השדות', 'warning'); return; }
+            
             ui.btnSave.disabled = true;
             try {
-                await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'measurements'), {
-                    sys, dia, pulse: parseInt(ui.inputPulse.value) || null,
-                    timestamp: new Date(dt).getTime(), createdAt: Date.now()
-                });
-                showToast('המדידה נשמרה');
-                ui.formArea.classList.add('hidden');
+                const data = {
+                    sys, 
+                    dia, 
+                    pulse: parseInt(ui.inputPulse.value) || null,
+                    timestamp: new Date(dt).getTime()
+                };
+
+                if (editingId) {
+                    // עדכון רשומה קיימת
+                    const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'measurements', editingId);
+                    await setDoc(docRef, data, { merge: true });
+                    showToast('המדידה עודכנה בהצלחה');
+                } else {
+                    // הוספת רשומה חדשה
+                    data.createdAt = Date.now();
+                    await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'measurements'), data);
+                    showToast('המדידה נשמרה');
+                }
+                
+                resetForm();
                 document.querySelector('[data-target="tab-history"]').click();
-            } catch (e) { showAlert('שגיאה', 'השמירה נכשלה', 'error'); } 
+            } catch (e) { 
+                showAlert('שגיאה', 'השמירה נכשלה', 'error'); 
+                console.error(e);
+            } 
             finally { ui.btnSave.disabled = false; }
         });
 
-        ui.btnCancel.addEventListener('click', () => {
-            ui.formArea.classList.add('hidden');
-            ui.imageInput.value = '';
-        });
+        ui.btnCancel.addEventListener('click', resetForm);
 
         window.handleDelete = async (id) => {
-            if (!currentUser || !confirm('למחוק?')) return;
+            if (!currentUser || !confirm('האם אתה בטוח שברצונך למחוק רשומה זו?')) return;
             try {
                 await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'measurements', id));
                 showToast('נמחק');
             } catch (e) { showAlert('שגיאה', 'המחיקה נכשלה', 'error'); }
+        };
+
+        window.handleEdit = (id) => {
+            const m = measurements.find(x => x.id === id);
+            if (!m) return;
+            
+            editingId = id;
+            ui.inputSys.value = m.sys;
+            ui.inputDia.value = m.dia;
+            ui.inputPulse.value = m.pulse || '';
+            
+            // המרת Timestamp לתצוגה המקומית בתיבת הטקסט
+            const date = new Date(m.timestamp);
+            date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+            ui.inputDatetime.value = date.toISOString().slice(0, 16);
+            
+            updateInputsAndIndicator();
+            
+            // שינוי תצוגת הטופס
+            ui.formTitle.innerText = 'עריכת נתונים';
+            ui.btnSave.innerHTML = '<i class="fa-solid fa-arrows-rotate ml-2"></i>עדכן נתונים';
+            ui.formArea.classList.remove('hidden');
+            
+            // מעבר לטאב הטופס
+            document.querySelector('[data-target="tab-new"]').click();
+            
+            // גלילה פרואקטיבית לאזור הטופס
+            setTimeout(() => {
+                ui.formArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
         };
 
         const renderHistory = () => {
@@ -564,7 +624,30 @@
                 const d = new Date(m.timestamp), st = getBPStatus(m.sys, m.dia);
                 const card = document.createElement('div');
                 card.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center text-right";
-                card.innerHTML = `<div class="flex-1"><div class="flex items-center gap-2 flex-row-reverse"><span class="text-xl font-bold">${m.sys}/${m.dia}</span>${m.pulse ? `<span class="text-xs text-red-500 bg-red-50 px-2 rounded-full font-medium">${m.pulse}</span>` : ''}</div><span class="text-[10px] text-gray-400 font-medium">${d.toLocaleDateString('he-IL')} ${d.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})}</span></div><div class="flex items-center gap-4"><div class="text-left flex flex-col items-end min-w-[70px]"><span class="w-2.5 h-2.5 rounded-full ${st.class.split(' ')[0]} mb-1"></span><span class="text-[9px] text-gray-500 font-bold">${st.text}</span></div><button onclick="handleDelete('${m.id}')" class="text-gray-300 hover:text-red-500 transition-colors p-2"><i class="fa-solid fa-trash-can"></i></button></div>`;
+                card.innerHTML = `
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 flex-row-reverse">
+                            <span class="text-xl font-bold">${m.sys}/${m.dia}</span>
+                            ${m.pulse ? `<span class="text-xs text-red-500 bg-red-50 px-2 rounded-full font-medium">${m.pulse}</span>` : ''}
+                        </div>
+                        <span class="text-[10px] text-gray-400 font-medium">
+                            ${d.toLocaleDateString('he-IL')} ${d.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})}
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="text-left flex flex-col items-end min-w-[60px]">
+                            <span class="w-2.5 h-2.5 rounded-full ${st.class.split(' ')[0]} mb-1"></span>
+                            <span class="text-[9px] text-gray-500 font-bold">${st.text}</span>
+                        </div>
+                        <div class="flex flex-col gap-1 border-r border-gray-100 pr-3">
+                            <button onclick="handleEdit('${m.id}')" class="text-gray-300 hover:text-blue-500 transition-colors p-1 active:scale-90" title="ערוך">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="handleDelete('${m.id}')" class="text-gray-300 hover:text-red-500 transition-colors p-1 active:scale-90" title="מחק">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>`;
                 ui.historyList.appendChild(card);
             });
         };
@@ -608,6 +691,10 @@
 
         ui.imageInput.addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file || !userSettings.geminiApiKey) return;
+            
+            // אם משתמש העלה תמונה, נוודא שאנחנו לא במצב עריכה
+            resetForm();
+            
             ui.loadingArea.classList.remove('hidden'); ui.loadingArea.classList.add('flex'); ui.formArea.classList.add('hidden');
             try {
                 const base64 = await new Promise((res) => {
