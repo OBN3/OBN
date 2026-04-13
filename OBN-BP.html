@@ -50,12 +50,6 @@
             padding-bottom: env(safe-area-inset-bottom);
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
         .loader {
             border: 4px solid #f3f3f3;
             border-top: 4px solid #3b82f6;
@@ -69,7 +63,7 @@
 </head>
 <body class="text-gray-800 h-screen flex flex-col overflow-hidden">
 
-    <!-- מסך התחברות -->
+    <!-- Login Screen -->
     <div id="login-screen" class="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-6 z-50 absolute inset-0">
         <div class="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full text-center">
             <div class="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl shadow-inner">
@@ -86,10 +80,9 @@
         </div>
     </div>
 
-    <!-- אפליקציה מרכזית -->
+    <!-- Main App -->
     <div id="main-app" class="hidden flex-col h-full relative">
         
-        <!-- Header -->
         <header class="glass-header sticky top-0 z-40 px-5 py-4 flex justify-between items-center shadow-sm">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-blue-100 overflow-hidden flex items-center justify-center shadow-sm border border-blue-200">
@@ -97,7 +90,7 @@
                     <i id="user-avatar-fallback" class="fa-solid fa-user text-blue-500"></i>
                 </div>
                 <div>
-                    <h2 class="text-sm font-bold text-gray-800" id="user-name">משתמש</h2>
+                    <h2 class="text-sm font-bold text-gray-800" id="user-name">טוען...</h2>
                     <p class="text-xs text-green-600 font-medium"><i class="fa-solid fa-cloud-arrow-up ml-1"></i>מחובר</p>
                 </div>
             </div>
@@ -106,31 +99,37 @@
             </button>
         </header>
 
-        <!-- אזור תוכן (Tabs) -->
         <main class="flex-1 overflow-y-auto p-4 pb-24">
             
-            <!-- Tab 1: מדידה חדשה -->
+            <!-- Tab 1: New Measurement -->
             <div id="tab-new" class="tab-content active space-y-6">
-                
+                <!-- API Key Warning if not set -->
+                <div id="api-warning" class="hidden bg-amber-50 border border-amber-200 p-4 rounded-xl text-amber-800 text-sm flex items-start gap-3">
+                    <i class="fa-solid fa-circle-exclamation mt-1"></i>
+                    <div>
+                        <p class="font-bold">חסר מפתח API</p>
+                        <p>עליך להגדיר מפתח Gemini במסך ההגדרות כדי להשתמש בזיהוי תמונה.</p>
+                        <button onclick="document.querySelector('[data-target=\'tab-settings\']').click()" class="underline font-bold mt-1">עבור להגדרות</button>
+                    </div>
+                </div>
+
                 <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
                     <i class="fa-solid fa-robot absolute -left-4 -bottom-4 text-8xl opacity-10"></i>
                     <h3 class="text-xl font-bold mb-2">מדידה חדשה בקליק</h3>
                     <p class="text-blue-100 text-sm mb-5">צלם את מסך מד לחץ הדם שלך, והבינה המלאכותית שלנו תעשה את השאר.</p>
                     
-                    <label class="w-full bg-white text-blue-600 font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-gray-50 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+                    <label id="camera-label" class="w-full bg-white text-blue-600 font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-gray-50 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95">
                         <i class="fa-solid fa-camera"></i>
                         צלם או העלה תמונה
                         <input type="file" id="image-input" accept="image/*" capture="environment" class="hidden">
                     </label>
                 </div>
 
-                <!-- אזור טעינה -->
                 <div id="loading-area" class="hidden flex-col items-center justify-center py-10">
                     <div class="loader mb-4"></div>
-                    <p class="text-gray-600 font-medium animate-pulse text-center">הבינה המלאכותית מפענחת את הנתונים...<br><span class="text-xs text-gray-400">(זה עשוי לקחת כמה שניות)</span></p>
+                    <p class="text-gray-600 font-medium animate-pulse text-center">הבינה המלאכותית מפענחת את הנתונים...</p>
                 </div>
 
-                <!-- טופס אישור נתונים -->
                 <div id="form-area" class="hidden bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
                     <div class="flex justify-between items-center mb-4">
                         <h4 class="font-bold text-lg text-gray-800">אימות נתונים</h4>
@@ -140,30 +139,29 @@
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1">Systolic (SYS)</label>
-                            <input type="number" id="input-sys" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-lg font-bold text-center focus:ring-2 focus:ring-blue-500 outline-none">
+                            <input type="number" id="input-sys" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-lg font-bold text-center outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1">Diastolic (DIA)</label>
-                            <input type="number" id="input-dia" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-lg font-bold text-center focus:ring-2 focus:ring-blue-500 outline-none">
+                            <input type="number" id="input-dia" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-lg font-bold text-center outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1">דופק (Pulse)</label>
-                            <input type="number" id="input-pulse" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-lg font-bold text-center focus:ring-2 focus:ring-blue-500 outline-none">
+                            <input type="number" id="input-pulse" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-lg font-bold text-center outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1">תאריך ושעה</label>
-                            <input type="datetime-local" id="input-datetime" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm font-bold text-center focus:ring-2 focus:ring-blue-500 outline-none">
+                            <input type="datetime-local" id="input-datetime" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm font-bold text-center outline-none">
                         </div>
                     </div>
 
-                    <button id="btn-save" class="w-full bg-green-500 text-white font-bold py-3 rounded-xl shadow-md shadow-green-200 hover:bg-green-600 transition-colors active:scale-95">
+                    <button id="btn-save" class="w-full bg-green-500 text-white font-bold py-3 rounded-xl shadow-md hover:bg-green-600 transition-colors active:scale-95">
                         <i class="fa-solid fa-check ml-2"></i>אשר ושמור נתונים
                     </button>
                 </div>
-
             </div>
 
-            <!-- Tab 2: היסטוריה -->
+            <!-- Tab 2: History -->
             <div id="tab-history" class="tab-content space-y-4">
                 <div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm">
                     <select id="sort-select" class="bg-gray-50 border border-gray-200 text-sm rounded-lg px-3 py-2 outline-none">
@@ -171,82 +169,116 @@
                         <option value="oldest">מהישן לחדש</option>
                         <option value="highest">מהגבוה לנמוך (SYS)</option>
                     </select>
-                    
                     <button id="btn-export" class="text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg text-sm font-medium transition-colors">
-                        <i class="fa-solid fa-file-csv ml-1"></i> ייצוא לרופא
+                        <i class="fa-solid fa-file-csv ml-1"></i> ייצוא
                     </button>
                 </div>
-
-                <div id="history-list" class="space-y-3 pb-4">
-                    <!-- Cards will be injected here -->
-                </div>
-                
+                <div id="history-list" class="space-y-3 pb-4"></div>
                 <div id="empty-history" class="hidden text-center py-10 text-gray-400">
                     <i class="fa-solid fa-clipboard-list text-4xl mb-3 opacity-50"></i>
                     <p>אין נתונים להצגה.</p>
                 </div>
             </div>
 
-            <!-- Tab 3: סטטיסטיקות -->
+            <!-- Tab 3: Statistics -->
             <div id="tab-stats" class="tab-content space-y-5">
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                     <h3 class="font-bold text-gray-800 mb-1">מגמות לחץ דם</h3>
-                    <p class="text-xs text-gray-500 mb-4">30 המדידות האחרונות</p>
                     <div class="relative h-64 w-full">
                         <canvas id="bpChart"></canvas>
                     </div>
                 </div>
-                
                 <div class="grid grid-cols-2 gap-4">
                     <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center">
-                        <p class="text-xs text-gray-500 mb-1">ממוצע סיסטולי (SYS)</p>
+                        <p class="text-xs text-gray-500 mb-1">ממוצע SYS</p>
                         <p id="avg-sys" class="text-2xl font-bold text-blue-600">--</p>
                     </div>
                     <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center">
-                        <p class="text-xs text-gray-500 mb-1">ממוצע דיאסטולי (DIA)</p>
+                        <p class="text-xs text-gray-500 mb-1">ממוצע DIA</p>
                         <p id="avg-dia" class="text-2xl font-bold text-indigo-600">--</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 4: Settings -->
+            <div id="tab-settings" class="tab-content space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="text-lg font-bold mb-4 text-gray-800"><i class="fa-solid fa-key ml-2 text-blue-500"></i>הגדרות בינה מלאכותית</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-2">Google Gemini API Key</label>
+                            <div class="relative">
+                                <input type="password" id="input-api-key" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 pl-10 text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="הכנס את המפתח שלך כאן...">
+                                <button id="btn-toggle-key" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
+                            <p class="text-[11px] text-gray-400 mt-2">
+                                המפתח נשמר בצורה מאובטחת בחשבון ה-Firebase הפרטי שלך.
+                                <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-500 underline mr-1">איך משיגים מפתח?</a>
+                            </p>
+                        </div>
+
+                        <div class="flex gap-2 pt-2">
+                            <button id="btn-save-settings" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-blue-700 transition-colors active:scale-95">
+                                שמור הגדרות
+                            </button>
+                            <button id="btn-test-api" class="px-4 bg-gray-100 text-gray-600 font-medium py-3 rounded-xl hover:bg-gray-200 transition-colors">
+                                בדיקה
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                    <h4 class="font-bold text-blue-800 text-sm mb-2">פרטי חשבון</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-blue-600">שם משתמש:</span>
+                            <span id="settings-user-name" class="font-medium">--</span>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                            <span class="text-blue-600">מזהה ייחודי:</span>
+                            <span id="settings-user-id" class="font-mono text-[10px]">--</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
         </main>
 
-        <!-- Bottom Navigation -->
-        <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-40 flex justify-around items-center px-2 py-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-            <button class="nav-btn flex flex-col items-center gap-1 text-blue-600 font-semibold w-1/3" data-target="tab-new">
-                <div class="w-12 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-1 transition-all">
-                    <i class="fa-solid fa-camera text-lg"></i>
-                </div>
-                <span class="text-[10px]">מדידה</span>
+        <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-40 flex justify-around items-center px-1 py-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            <button class="nav-btn flex flex-col items-center gap-1 text-blue-600 font-semibold w-1/4" data-target="tab-new">
+                <div class="w-10 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-1"><i class="fa-solid fa-camera text-lg"></i></div>
+                <span class="text-[9px]">מדידה</span>
             </button>
-            <button class="nav-btn flex flex-col items-center gap-1 text-gray-400 hover:text-gray-600 w-1/3" data-target="tab-history">
-                <div class="w-12 h-8 rounded-full flex items-center justify-center mb-1 transition-all">
-                    <i class="fa-solid fa-clock-rotate-left text-lg"></i>
-                </div>
-                <span class="text-[10px]">היסטוריה</span>
+            <button class="nav-btn flex flex-col items-center gap-1 text-gray-400 w-1/4" data-target="tab-history">
+                <div class="w-10 h-8 rounded-full flex items-center justify-center mb-1"><i class="fa-solid fa-clock-rotate-left text-lg"></i></div>
+                <span class="text-[9px]">היסטוריה</span>
             </button>
-            <button class="nav-btn flex flex-col items-center gap-1 text-gray-400 hover:text-gray-600 w-1/3" data-target="tab-stats">
-                <div class="w-12 h-8 rounded-full flex items-center justify-center mb-1 transition-all">
-                    <i class="fa-solid fa-chart-line text-lg"></i>
-                </div>
-                <span class="text-[10px]">סטטיסטיקה</span>
+            <button class="nav-btn flex flex-col items-center gap-1 text-gray-400 w-1/4" data-target="tab-stats">
+                <div class="w-10 h-8 rounded-full flex items-center justify-center mb-1"><i class="fa-solid fa-chart-line text-lg"></i></div>
+                <span class="text-[9px]">סטטיסטיקה</span>
+            </button>
+            <button class="nav-btn flex flex-col items-center gap-1 text-gray-400 w-1/4" data-target="tab-settings">
+                <div class="w-10 h-8 rounded-full flex items-center justify-center mb-1"><i class="fa-solid fa-gear text-lg"></i></div>
+                <span class="text-[9px]">הגדרות</span>
             </button>
         </nav>
-
     </div>
 
-    <!-- Notification Toast -->
+    <!-- Toast & Modal -->
     <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300 opacity-0 pointer-events-none translate-y-[-20px] flex items-center gap-2">
         <i id="toast-icon" class="fa-solid fa-info-circle"></i>
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
-    <!-- Modal הודעה -->
     <div id="alert-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl scale-95 transition-transform duration-200">
             <div id="alert-icon" class="text-4xl text-yellow-500 mb-4"><i class="fa-solid fa-triangle-exclamation"></i></div>
             <h3 id="alert-title" class="text-lg font-bold mb-2">שגיאה</h3>
-            <p id="alert-text" class="text-gray-600 text-sm mb-6"></p>
+            <p id="alert-text" class="text-gray-600 text-sm mb-6 leading-relaxed"></p>
             <button id="alert-close" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 rounded-xl transition-colors">הבנתי</button>
         </div>
     </div>
@@ -254,10 +286,10 @@
     <!-- Firebase Scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, linkWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, query, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Setup - מחובר ל-DB הפרטי שלך
+        // Firebase Setup
         const firebaseConfig = {
             apiKey: "AIzaSyAS5Rt-w9xTwgDmkffW_q4HzoUTK6QMRWY",
             authDomain: "obn-bp.firebaseapp.com",
@@ -270,12 +302,12 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // State
+        // Global State
         let currentUser = null;
         let measurements = [];
         let bpChartInstance = null;
+        let userSettings = { geminiApiKey: '' };
 
-        // DOM Elements
         const ui = {
             loginScreen: document.getElementById('login-screen'),
             mainApp: document.getElementById('main-app'),
@@ -287,8 +319,6 @@
             btnLogout: document.getElementById('btn-logout'),
             navBtns: document.querySelectorAll('.nav-btn'),
             tabContents: document.querySelectorAll('.tab-content'),
-            
-            // New Measurement
             imageInput: document.getElementById('image-input'),
             loadingArea: document.getElementById('loading-area'),
             formArea: document.getElementById('form-area'),
@@ -298,27 +328,30 @@
             inputDatetime: document.getElementById('input-datetime'),
             btnSave: document.getElementById('btn-save'),
             whoIndicator: document.getElementById('who-indicator'),
-            
-            // History
             historyList: document.getElementById('history-list'),
             emptyHistory: document.getElementById('empty-history'),
             sortSelect: document.getElementById('sort-select'),
             btnExport: document.getElementById('btn-export'),
-
-            // Stats
             avgSys: document.getElementById('avg-sys'),
             avgDia: document.getElementById('avg-dia'),
             ctxChart: document.getElementById('bpChart').getContext('2d'),
-
-            // Utils
             toast: document.getElementById('toast'),
             toastMsg: document.getElementById('toast-msg'),
             toastIcon: document.getElementById('toast-icon'),
             alertModal: document.getElementById('alert-modal'),
-            alertClose: document.getElementById('alert-close')
+            alertClose: document.getElementById('alert-close'),
+            
+            // Settings UI
+            tabSettings: document.getElementById('tab-settings'),
+            inputApiKey: document.getElementById('input-api-key'),
+            btnSaveSettings: document.getElementById('btn-save-settings'),
+            btnTestApi: document.getElementById('btn-test-api'),
+            btnToggleKey: document.getElementById('btn-toggle-key'),
+            settingsUserName: document.getElementById('settings-user-name'),
+            settingsUserId: document.getElementById('settings-user-id'),
+            apiWarning: document.getElementById('api-warning')
         };
 
-        // UI Utils
         const showToast = (msg, type = 'success') => {
             ui.toastMsg.innerText = msg;
             ui.toastIcon.className = type === 'success' ? 'fa-solid fa-check-circle text-green-400' : 'fa-solid fa-circle-exclamation text-red-400';
@@ -336,52 +369,79 @@
         
         ui.alertClose.addEventListener('click', () => ui.alertModal.classList.add('hidden'));
 
-        // ================= Authentication =================
-        const initAuth = async () => {
-            // בדיקת סביבת הרצה
-            if (window.location.protocol === 'file:') {
-                ui.loginError.innerHTML = `⚠️ <b>שים לב:</b> Firebase Google Auth לא עובד בהרצת קובץ ישירות מהמחשב (file://).<br>עליך להריץ את הקובץ דרך שרת מקומי (Local Server) או להעלות אותו לאינטרנט.`;
-                ui.loginError.classList.remove('hidden');
+        // ================= Settings Persistence =================
+        const saveUserSettings = async () => {
+            if (!currentUser) return;
+            const key = ui.inputApiKey.value.trim();
+            try {
+                ui.btnSaveSettings.disabled = true;
+                ui.btnSaveSettings.innerText = "שומר...";
+                
+                const settingsRef = doc(db, 'users', currentUser.uid, 'config', 'settings');
+                await setDoc(settingsRef, { geminiApiKey: key }, { merge: true });
+                
+                userSettings.geminiApiKey = key;
+                checkApiWarning();
+                showToast("ההגדרות נשמרו בהצלחה");
+            } catch (error) {
+                console.error("Settings save error:", error);
+                showAlert("שגיאה", "לא הצלחנו לשמור את ההגדרות. בדוק הרשאות Firebase.", "error");
+            } finally {
+                ui.btnSaveSettings.disabled = false;
+                ui.btnSaveSettings.innerText = "שמור הגדרות";
             }
         };
 
-        const handleGoogleLogin = async () => {
+        const loadUserSettings = async () => {
+            if (!currentUser) return;
             try {
-                // בדיקת פרוטוקול לפני ניסיון התחברות
-                if (window.location.protocol === 'file:') {
-                    showAlert('שגיאת סביבת הרצה', 'התחברות גוגל דורשת שרת אינטרנט (http/https). אנא הרץ את הקובץ דרך שרת מקומי כמו VS Code Live Server או Python SimpleHTTPServer.', 'error');
-                    return;
+                const settingsRef = doc(db, 'users', currentUser.uid, 'config', 'settings');
+                const docSnap = await getDoc(settingsRef);
+                if (docSnap.exists()) {
+                    userSettings = docSnap.data();
+                    ui.inputApiKey.value = userSettings.geminiApiKey || '';
                 }
+                checkApiWarning();
+            } catch (error) {
+                console.error("Settings load error:", error);
+            }
+        };
 
+        const checkApiWarning = () => {
+            if (!userSettings.geminiApiKey) {
+                ui.apiWarning.classList.remove('hidden');
+            } else {
+                ui.apiWarning.classList.add('hidden');
+            }
+        };
+
+        ui.btnSaveSettings.addEventListener('click', saveUserSettings);
+        
+        ui.btnToggleKey.addEventListener('click', () => {
+            const isPass = ui.inputApiKey.type === 'password';
+            ui.inputApiKey.type = isPass ? 'text' : 'password';
+            ui.btnToggleKey.innerHTML = isPass ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>';
+        });
+
+        // ================= Auth =================
+        ui.btnGoogleLogin.addEventListener('click', async () => {
+            if (window.location.protocol === 'file:') {
+                showAlert('שגיאת סביבה', 'התחברות גוגל דורשת שרת (http/https). הרץ את הקובץ דרך VS Code Live Server.', 'error');
+                return;
+            }
+            try {
                 ui.btnGoogleLogin.disabled = true;
-                ui.btnGoogleLogin.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> מתחבר...';
                 const provider = new GoogleAuthProvider();
-                
-                // התחברות ישירה באמצעות הפופ-אפ של גוגל
                 await signInWithPopup(auth, provider);
             } catch (error) {
-                console.error("Google Auth Error:", error);
-                
-                let errorMsg = "שגיאה בהתחברות: " + error.message;
-                if (error.code === 'auth/unauthorized-domain') {
-                    errorMsg = `הדומיין (${window.location.hostname || 'localhost'}) אינו מאושר ב-Firebase Console.<br>הוסף אותו תחת Authentication > Settings > Authorized Domains.`;
-                } else if (error.code === 'auth/operation-not-supported-in-this-environment') {
-                    errorMsg = "התחברות גוגל אינה נתמכת בפרוטוקול file://. השתמש בשרת מקומי.";
-                }
-
-                ui.loginError.innerHTML = errorMsg;
+                console.error(error);
+                ui.loginError.innerText = (error.code === 'auth/unauthorized-domain') ? "דומיין לא מאושר ב-Firebase." : error.message;
                 ui.loginError.classList.remove('hidden');
                 ui.btnGoogleLogin.disabled = false;
-                ui.btnGoogleLogin.innerHTML = '<img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-5 h-5"> התחבר עם Google';
             }
-        };
-
-        ui.btnGoogleLogin.addEventListener('click', handleGoogleLogin);
-        
-        ui.btnLogout.addEventListener('click', async () => {
-            await signOut(auth);
-            initAuth(); 
         });
+
+        ui.btnLogout.addEventListener('click', () => signOut(auth));
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -389,163 +449,104 @@
                 ui.loginScreen.classList.add('hidden');
                 ui.mainApp.classList.remove('hidden');
                 ui.mainApp.classList.add('flex');
-                ui.userName.innerText = user.displayName || "משתמש מחובר";
+                ui.userName.innerText = user.displayName;
+                ui.settingsUserName.innerText = user.displayName;
+                ui.settingsUserId.innerText = user.uid;
                 if (user.photoURL) {
                     ui.userAvatar.src = user.photoURL;
                     ui.userAvatar.classList.remove('hidden');
                     ui.userAvatarFallback.classList.add('hidden');
-                } else {
-                    ui.userAvatar.classList.add('hidden');
-                    ui.userAvatarFallback.classList.remove('hidden');
                 }
+                loadUserSettings();
                 loadData();
             } else {
                 currentUser = null;
                 ui.loginScreen.classList.remove('hidden');
                 ui.mainApp.classList.add('hidden');
-                ui.mainApp.classList.remove('flex');
             }
         });
-
-        initAuth();
 
         // ================= Navigation =================
         ui.navBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                const targetId = btn.getAttribute('data-target');
+                const target = btn.getAttribute('data-target');
                 ui.navBtns.forEach(b => {
-                    b.classList.remove('text-blue-600', 'font-semibold');
-                    b.classList.add('text-gray-400');
+                    b.classList.replace('text-blue-600', 'text-gray-400');
+                    b.classList.remove('font-semibold');
                     b.querySelector('div').classList.remove('bg-blue-100');
                 });
-                btn.classList.remove('text-gray-400');
-                btn.classList.add('text-blue-600', 'font-semibold');
+                btn.classList.replace('text-gray-400', 'text-blue-600');
+                btn.classList.add('font-semibold');
                 btn.querySelector('div').classList.add('bg-blue-100');
-                ui.tabContents.forEach(tab => tab.classList.remove('active'));
-                document.getElementById(targetId).classList.add('active');
-                if (targetId === 'tab-stats') renderChart();
+                ui.tabContents.forEach(t => t.classList.remove('active'));
+                document.getElementById(target).classList.add('active');
+                if (target === 'tab-stats') renderChart();
             });
         });
 
-        // ================= Image Processing & OCR =================
+        // ================= Data & Logic =================
         const getBPStatus = (sys, dia) => {
-            if (!sys || !dia) return { text: "חסר מידע", class: "bg-gray-100 text-gray-600" };
-            if (sys > 180 || dia > 120) return { text: "משבר יתר לחץ דם!", class: "bg-red-600 text-white animate-pulse" };
-            if (sys >= 140 || dia >= 90) return { text: "לחץ דם גבוה (שלב 2)", class: "bg-red-500 text-white" };
-            if (sys >= 130 || dia >= 80) return { text: "לחץ דם גבוה (שלב 1)", class: "bg-orange-500 text-white" };
-            if (sys >= 120 && dia < 80) return { text: "לחץ דם מוגבה", class: "bg-yellow-400 text-yellow-900" };
-            return { text: "תקין (אופטימלי)", class: "bg-green-500 text-white" };
+            if (!sys || !dia) return { text: "חסר", class: "bg-gray-100 text-gray-600" };
+            if (sys > 180 || dia > 120) return { text: "משבר!", class: "bg-red-600 text-white animate-pulse" };
+            if (sys >= 140 || dia >= 90) return { text: "גבוה 2", class: "bg-red-500 text-white" };
+            if (sys >= 130 || dia >= 80) return { text: "גבוה 1", class: "bg-orange-500 text-white" };
+            if (sys >= 120 && dia < 80) return { text: "מוגבה", class: "bg-yellow-400 text-yellow-900" };
+            return { text: "תקין", class: "bg-green-500 text-white" };
         };
-
-        const updateInputsAndIndicator = () => {
-            const sys = parseInt(ui.inputSys.value);
-            const dia = parseInt(ui.inputDia.value);
-            const status = getBPStatus(sys, dia);
-            ui.whoIndicator.className = `text-xs font-bold px-3 py-1 rounded-full ${status.class}`;
-            ui.whoIndicator.innerText = status.text;
-        };
-
-        [ui.inputSys, ui.inputDia].forEach(input => input.addEventListener('input', updateInputsAndIndicator));
-
-        const getBase64Image = (file) => {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        const MAX_SIZE = 1024;
-                        let width = img.width, height = img.height;
-                        if (width > height && width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
-                        else if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
-                        canvas.width = width; canvas.height = height;
-                        ctx.drawImage(img, 0, 0, width, height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
-                    };
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            });
-        };
-
-        const executeOCR = async (base64Image) => {
-            const apiKey = ""; 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-            const prompt = `You are a medical data extractor. Analyze the image of the blood pressure monitor display. Extract: "sys" (number), "dia" (number), "pulse" (number), "datetime" (ISO string or null). Return JSON only.`;
-            const payload = { contents: [{ role: "user", parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: base64Image } }] }], generationConfig: { responseMimeType: "application/json" } };
-            const response = await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
-            const data = await response.json();
-            return JSON.parse(data.candidates[0].content.parts[0].text);
-        };
-
-        ui.imageInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            ui.loadingArea.classList.remove('hidden'); ui.loadingArea.classList.add('flex'); ui.formArea.classList.add('hidden');
-            try {
-                const base64 = await getBase64Image(file);
-                let result = await executeOCR(base64);
-                ui.inputSys.value = result.sys || ''; ui.inputDia.value = result.dia || ''; ui.inputPulse.value = result.pulse || '';
-                const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-                ui.inputDatetime.value = result.datetime ? result.datetime.slice(0, 16) : now.toISOString().slice(0, 16);
-                updateInputsAndIndicator();
-                ui.loadingArea.classList.add('hidden'); ui.loadingArea.classList.remove('flex'); ui.formArea.classList.remove('hidden');
-            } catch (error) {
-                console.error("OCR Error:", error);
-                ui.loadingArea.classList.add('hidden'); ui.loadingArea.classList.remove('flex'); ui.formArea.classList.remove('hidden');
-                showAlert('שגיאה', 'לא הצלחנו לפענח את התמונה. אנא הזן ידנית.', 'error');
-            }
-            e.target.value = '';
-        });
-
-        // ================= Firestore Data Logic =================
-        ui.btnSave.addEventListener('click', async () => {
-            if (!currentUser) return;
-            const sys = parseInt(ui.inputSys.value), dia = parseInt(ui.inputDia.value), pulse = parseInt(ui.inputPulse.value), datetimeStr = ui.inputDatetime.value;
-            if (!sys || !dia || !datetimeStr) { showAlert('חסר מידע', 'מלא את כל השדות', 'warning'); return; }
-            ui.btnSave.disabled = true; ui.btnSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> שומר...';
-            try {
-                const measurementsRef = collection(db, 'users', currentUser.uid, 'measurements');
-                await addDoc(measurementsRef, { sys, dia, pulse: pulse || null, timestamp: new Date(datetimeStr).getTime(), createdAt: Date.now() });
-                showToast('נשמר בהצלחה');
-                ui.formArea.classList.add('hidden');
-                document.querySelector('[data-target="tab-history"]').click();
-            } catch (error) {
-                console.error("Save Error:", error);
-                showAlert('שגיאה', 'השמירה נכשלה', 'error');
-            } finally {
-                ui.btnSave.disabled = false; ui.btnSave.innerHTML = '<i class="fa-solid fa-check ml-2"></i>אשר ושמור';
-            }
-        });
 
         let unsubscribeSnapshot = null;
         const loadData = () => {
             if (!currentUser) return;
-            const measurementsRef = collection(db, 'users', currentUser.uid, 'measurements');
+            const ref = collection(db, 'users', currentUser.uid, 'measurements');
             if (unsubscribeSnapshot) unsubscribeSnapshot();
-            unsubscribeSnapshot = onSnapshot(measurementsRef, (snapshot) => {
-                measurements = [];
-                snapshot.forEach(doc => measurements.push({ id: doc.id, ...doc.data() }));
+            
+            unsubscribeSnapshot = onSnapshot(ref, (snapshot) => {
+                measurements = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
                 renderHistory();
                 if (document.getElementById('tab-stats').classList.contains('active')) renderChart();
-            }, (err) => console.error(err));
+            }, (error) => {
+                console.error("Firestore Error:", error);
+                if (error.code === 'permission-denied') {
+                    showAlert('שגיאת הרשאות', 'חסרה גישה. וודא שהגדרת את ה-Rules ב-Firebase עבור נתיב התיקייה users.', 'error');
+                }
+            });
         };
 
+        ui.btnSave.addEventListener('click', async () => {
+            if (!currentUser) return;
+            const sys = parseInt(ui.inputSys.value), dia = parseInt(ui.inputDia.value), dt = ui.inputDatetime.value;
+            if (!sys || !dia || !dt) { showAlert('חסר מידע', 'מלא ערכים ותאריך', 'warning'); return; }
+            ui.btnSave.disabled = true;
+            try {
+                await addDoc(collection(db, 'users', currentUser.uid, 'measurements'), {
+                    sys, dia, pulse: parseInt(ui.inputPulse.value) || null,
+                    timestamp: new Date(dt).getTime(), createdAt: Date.now()
+                });
+                showToast('נשמר בהצלחה');
+                ui.formArea.classList.add('hidden');
+                document.querySelector('[data-target="tab-history"]').click();
+            } catch (e) {
+                console.error(e);
+                showAlert('שגיאה', 'השמירה נכשלה.', 'error');
+            } finally { ui.btnSave.disabled = false; }
+        });
+
         const renderHistory = () => {
-            const sortVal = ui.sortSelect.value;
+            const sort = ui.sortSelect.value;
             let sorted = [...measurements];
-            if (sortVal === 'newest') sorted.sort((a, b) => b.timestamp - a.timestamp);
-            else if (sortVal === 'oldest') sorted.sort((a, b) => a.timestamp - b.timestamp);
-            else if (sortVal === 'highest') sorted.sort((a, b) => b.sys - a.sys);
+            if (sort === 'newest') sorted.sort((a,b) => b.timestamp - a.timestamp);
+            else if (sort === 'oldest') sorted.sort((a,b) => a.timestamp - b.timestamp);
+            else sorted.sort((a,b) => b.sys - a.sys);
+            
             ui.historyList.innerHTML = '';
-            if (sorted.length === 0) { ui.emptyHistory.classList.remove('hidden'); return; }
+            if (!sorted.length) { ui.emptyHistory.classList.remove('hidden'); return; }
             ui.emptyHistory.classList.add('hidden');
+            
             sorted.forEach(m => {
-                const d = new Date(m.timestamp), status = getBPStatus(m.sys, m.dia);
+                const d = new Date(m.timestamp), st = getBPStatus(m.sys, m.dia);
                 const card = document.createElement('div');
                 card.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center";
-                card.innerHTML = `<div class="flex flex-col gap-1"><div><span class="text-xl font-bold">${m.sys}/${m.dia}</span>${m.pulse ? `<span class="text-xs text-red-400 mr-2">${m.pulse} BPM</span>` : ''}</div><span class="text-[10px] text-gray-400">${d.toLocaleDateString('he-IL')} ${d.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})}</span></div><div class="text-left"><span class="w-3 h-3 inline-block rounded-full ${status.class.split(' ')[0]}"></span><p class="text-[10px] text-gray-500">${status.text}</p></div>`;
+                card.innerHTML = `<div><div class="flex items-center gap-2"><span class="text-xl font-bold">${m.sys}/${m.dia}</span>${m.pulse ? `<span class="text-xs text-red-400 bg-red-50 px-2 rounded-full">${m.pulse}</span>` : ''}</div><span class="text-[10px] text-gray-400">${d.toLocaleDateString('he-IL')} ${d.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})}</span></div><div class="text-left"><span class="w-3 h-3 inline-block rounded-full ${st.class.split(' ')[0]}"></span><p class="text-[10px] text-gray-500">${st.text}</p></div>`;
                 ui.historyList.appendChild(card);
             });
         };
@@ -553,21 +554,98 @@
         ui.sortSelect.addEventListener('change', renderHistory);
 
         const renderChart = () => {
-            if (measurements.length === 0) return;
-            let recentData = [...measurements].sort((a, b) => b.timestamp - a.timestamp).slice(0, 20).reverse();
-            const labels = recentData.map(m => new Date(m.timestamp).getDate() + '/' + (new Date(m.timestamp).getMonth()+1));
-            const dataSys = recentData.map(m => m.sys), dataDia = recentData.map(m => m.dia);
-            ui.avgSys.innerText = Math.round(dataSys.reduce((a, b) => a + b, 0) / dataSys.length);
-            ui.avgDia.innerText = Math.round(dataDia.reduce((a, b) => a + b, 0) / dataDia.length);
+            if (!measurements.length) return;
+            const recent = [...measurements].sort((a,b) => b.timestamp - a.timestamp).slice(0, 20).reverse();
+            const labels = recent.map(m => new Date(m.timestamp).getDate() + '/' + (new Date(m.timestamp).getMonth()+1));
+            const sys = recent.map(m => m.sys), dia = recent.map(m => m.dia);
+            ui.avgSys.innerText = Math.round(sys.reduce((a,b)=>a+b,0)/sys.length);
+            ui.avgDia.innerText = Math.round(dia.reduce((a,b)=>a+b,0)/dia.length);
             if (bpChartInstance) bpChartInstance.destroy();
-            bpChartInstance = new Chart(ui.ctxChart, { type: 'line', data: { labels, datasets: [{ label: 'SYS', data: dataSys, borderColor: '#3b82f6', tension: 0.3 }, { label: 'DIA', data: dataDia, borderColor: '#4f46e5', tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false } });
+            bpChartInstance = new Chart(ui.ctxChart, { type: 'line', data: { labels, datasets: [{ label: 'SYS', data: sys, borderColor: '#3b82f6', tension: 0.3 }, { label: 'DIA', data: dia, borderColor: '#4f46e5', tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false } });
         };
 
+        // ================= OCR & API Logic =================
+        const testGeminiConnection = async (key) => {
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`, {
+                    method: 'POST', 
+                    body: JSON.stringify({ contents: [{ parts: [{ text: 'Respond with "OK"' }] }] })
+                });
+                return res.ok;
+            } catch { return false; }
+        };
+
+        ui.btnTestApi.addEventListener('click', async () => {
+            const key = ui.inputApiKey.value.trim();
+            if (!key) { showAlert("מידע חסר", "נא להזין מפתח לבדיקה", "warning"); return; }
+            ui.btnTestApi.disabled = true;
+            ui.btnTestApi.innerText = "...";
+            const success = await testGeminiConnection(key);
+            ui.btnTestApi.disabled = false;
+            ui.btnTestApi.innerText = "בדיקה";
+            if (success) showToast("מפתח תקין!");
+            else showAlert("שגיאה", "המפתח אינו תקין או פג תוקף.", "error");
+        });
+
+        ui.imageInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            
+            if (!userSettings.geminiApiKey) {
+                showAlert("חסר מפתח", "נא להגדיר מפתח Gemini במסך ההגדרות כדי להשתמש ב-OCR.", "warning");
+                e.target.value = '';
+                return;
+            }
+
+            ui.loadingArea.classList.remove('hidden'); ui.loadingArea.classList.add('flex'); ui.formArea.classList.add('hidden');
+            try {
+                const base64 = await new Promise(r => {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const MAX = 1024; let w = img.width, h = img.height;
+                            if (w > h && w > MAX) { h *= MAX/w; w = MAX; } else if (h > MAX) { w *= MAX/h; h = MAX; }
+                            canvas.width = w; canvas.height = h;
+                            canvas.getContext('2d').drawImage(img, 0,0,w,h);
+                            r(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+                        };
+                        img.src = ev.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${userSettings.geminiApiKey}`, {
+                    method: 'POST', body: JSON.stringify({ contents: [{ parts: [{ text: 'Extract BP: {"sys":n,"dia":n,"pulse":n,"datetime":ISO}. JSON only.' }, { inlineData: { mimeType: "image/jpeg", data: base64 } }] }], generationConfig: { responseMimeType: "application/json" } })
+                });
+                
+                if (!res.ok) throw new Error("API Connection Failed");
+
+                const data = await res.json();
+                const result = JSON.parse(data.candidates[0].content.parts[0].text);
+
+                ui.inputSys.value = result.sys || ''; ui.inputDia.value = result.dia || ''; ui.inputPulse.value = result.pulse || '';
+                const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                ui.inputDatetime.value = result.datetime ? result.datetime.slice(0,16) : now.toISOString().slice(0,16);
+                
+                const sys = parseInt(ui.inputSys.value), dia = parseInt(ui.inputDia.value);
+                const st = getBPStatus(sys, dia);
+                ui.whoIndicator.className = `text-xs font-bold px-3 py-1 rounded-full ${st.class}`;
+                ui.whoIndicator.innerText = st.text;
+
+                ui.loadingArea.classList.add('hidden'); ui.formArea.classList.remove('hidden');
+            } catch (err) {
+                console.error(err); ui.loadingArea.classList.add('hidden'); ui.formArea.classList.remove('hidden');
+                showAlert('שגיאה', 'לא הצלחנו לפענח. בדוק את המפתח בהגדרות או הזן ידנית.', 'error');
+            }
+            e.target.value = '';
+        });
+
         ui.btnExport.addEventListener('click', () => {
-            if (measurements.length === 0) return;
+            if (!measurements.length) return;
             let csv = "\uFEFFתאריך,סיסטולי,דיאסטולי,דופק\n";
-            measurements.forEach(m => csv += `${new Date(m.timestamp).toLocaleDateString()},${m.sys},${m.dia},${m.pulse || ''}\n`);
-            const blob = new Blob([csv], { type: 'text/csv' }), url = URL.createObjectURL(blob), a = document.createElement("a");
+            measurements.forEach(m => csv += `${new Date(m.timestamp).toLocaleDateString()},${m.sys},${m.dia},${m.pulse||''}\n`);
+            const blob = new Blob([csv], {type:'text/csv'}), url = URL.createObjectURL(blob), a = document.createElement('a');
             a.href = url; a.download = "BP_Report.csv"; a.click();
         });
     </script>
