@@ -138,19 +138,19 @@
                     
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">Systolic (SYS)</label>
+                            <label class="block text-xs font-medium text-gray-500 mb-1 text-right">Systolic (SYS)</label>
                             <input type="number" id="input-sys" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-lg font-bold text-center outline-none focus:ring-2 focus:ring-blue-500 transition-all">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">Diastolic (DIA)</label>
+                            <label class="block text-xs font-medium text-gray-500 mb-1 text-right">Diastolic (DIA)</label>
                             <input type="number" id="input-dia" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-lg font-bold text-center outline-none focus:ring-2 focus:ring-blue-500 transition-all">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">דופק (Pulse)</label>
+                            <label class="block text-xs font-medium text-gray-500 mb-1 text-right">דופק (Pulse)</label>
                             <input type="number" id="input-pulse" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-lg font-bold text-center outline-none focus:ring-2 focus:ring-blue-500 transition-all">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">תאריך ושעה</label>
+                            <label class="block text-xs font-medium text-gray-500 mb-1 text-right">תאריך ושעה</label>
                             <input type="datetime-local" id="input-datetime" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm font-bold text-center outline-none focus:ring-2 focus:ring-blue-500 transition-all">
                         </div>
                     </div>
@@ -187,18 +187,18 @@
 
             <!-- Tab 3: Statistics -->
             <div id="tab-stats" class="tab-content space-y-5">
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <h3 class="font-bold text-gray-800 mb-1 text-center">מגמות לחץ דם</h3>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center">
+                    <h3 class="font-bold text-gray-800 mb-1">מגמות לחץ דם</h3>
                     <div class="relative h-64 w-full">
                         <canvas id="bpChart"></canvas>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center">
+                <div class="grid grid-cols-2 gap-4 text-center">
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                         <p class="text-xs text-gray-500 mb-1">ממוצע SYS</p>
                         <p id="avg-sys" class="text-2xl font-bold text-blue-600">--</p>
                     </div>
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center">
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                         <p class="text-xs text-gray-500 mb-1">ממוצע DIA</p>
                         <p id="avg-dia" class="text-2xl font-bold text-indigo-600">--</p>
                     </div>
@@ -208,20 +208,29 @@
             <!-- Tab 4: Settings -->
             <div id="tab-settings" class="tab-content space-y-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h3 class="text-lg font-bold mb-4 text-gray-800"><i class="fa-solid fa-key ml-2 text-blue-500"></i>הגדרות בינה מלאכותית</h3>
+                    <h3 class="text-lg font-bold mb-4 text-gray-800 text-right"><i class="fa-solid fa-key ml-2 text-blue-500"></i>הגדרות בינה מלאכותית</h3>
                     
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-2">Google Gemini API Key</label>
+                            <label class="block text-xs font-medium text-gray-500 mb-2 text-right">מודל Gemini (בחר מודל תואם למפתח)</label>
+                            <select id="select-model" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite (מהיר וחסכוני)</option>
+                                <option value="gemini-1.5-flash">gemini-1.5-flash (סטנדרטי)</option>
+                                <option value="gemini-1.5-pro">gemini-1.5-pro (מתקדם)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-2 text-right">Google Gemini API Key</label>
                             <div class="relative">
                                 <input type="password" id="input-api-key" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 pl-10 text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="הכנס את המפתח שלך כאן...">
                                 <button id="btn-toggle-key" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
                             </div>
-                            <p class="text-[11px] text-gray-400 mt-2">
+                            <p class="text-[11px] text-gray-400 mt-2 text-right leading-relaxed">
                                 המפתח נשמר בצורה מאובטחת בחשבון ה-Firebase הפרטי שלך.
-                                <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-500 underline mr-1 text-xs">איך משיגים מפתח?</a>
+                                <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-500 underline mr-1 text-xs font-bold">איך משיגים מפתח?</a>
                             </p>
                         </div>
 
@@ -282,8 +291,8 @@
     <div id="alert-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl scale-95 transition-transform duration-200">
             <div id="alert-icon" class="text-4xl text-yellow-500 mb-4"><i class="fa-solid fa-triangle-exclamation"></i></div>
-            <h3 id="alert-title" class="text-lg font-bold mb-2">שגיאה</h3>
-            <p id="alert-text" class="text-gray-600 text-sm mb-6 leading-relaxed"></p>
+            <h3 id="alert-title" class="text-lg font-bold mb-2 text-center">שגיאה</h3>
+            <p id="alert-text" class="text-gray-600 text-sm mb-6 leading-relaxed text-center"></p>
             <button id="alert-close" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 rounded-xl transition-colors">הבנתי</button>
         </div>
     </div>
@@ -294,7 +303,7 @@
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, doc, setDoc, getDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Setup - Uses your provided config
+        // Firebase Setup
         const firebaseConfig = {
             apiKey: "AIzaSyAS5Rt-w9xTwgDmkffW_q4HzoUTK6QMRWY",
             authDomain: "obn-bp.firebaseapp.com",
@@ -306,15 +315,13 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
-        // Use your project ID as the appId for consistent pathing
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'obn-bp';
+        const appId = 'obn-bp';
 
         // Global State
         let currentUser = null;
         let measurements = [];
         let bpChartInstance = null;
-        let userSettings = { geminiApiKey: '' };
+        let userSettings = { geminiApiKey: '', geminiModel: 'gemini-2.5-flash-lite' };
 
         const ui = {
             loginScreen: document.getElementById('login-screen'),
@@ -351,7 +358,7 @@
             alertClose: document.getElementById('alert-close'),
             
             // Settings UI
-            tabSettings: document.getElementById('tab-settings'),
+            selectModel: document.getElementById('select-model'),
             inputApiKey: document.getElementById('input-api-key'),
             btnSaveSettings: document.getElementById('btn-save-settings'),
             btnTestApi: document.getElementById('btn-test-api'),
@@ -382,23 +389,21 @@
         const saveUserSettings = async () => {
             if (!currentUser) return;
             const key = ui.inputApiKey.value.trim();
+            const model = ui.selectModel.value;
             try {
                 ui.btnSaveSettings.disabled = true;
                 ui.btnSaveSettings.innerText = "שומר...";
                 
-                // Using mandatory path: artifacts/{appId}/users/{userId}/settings/config
                 const settingsRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'config');
-                await setDoc(settingsRef, { geminiApiKey: key }, { merge: true });
+                await setDoc(settingsRef, { geminiApiKey: key, geminiModel: model }, { merge: true });
                 
                 userSettings.geminiApiKey = key;
+                userSettings.geminiModel = model;
                 checkApiWarning();
                 showToast("ההגדרות נשמרו בהצלחה");
             } catch (error) {
                 console.error("Settings save error:", error);
-                const msg = error.code === 'permission-denied' ? 
-                    "שגיאת הרשאות: וודא שהגדרת את ה-Rules ב-Firebase Console עבור נתיב ה-artifacts." : 
-                    "לא הצלחנו לשמור את ההגדרות. " + error.message;
-                showAlert("שגיאה", msg, "error");
+                showAlert("שגיאה", "לא הצלחנו לשמור את ההגדרות. " + error.message, "error");
             } finally {
                 ui.btnSaveSettings.disabled = false;
                 ui.btnSaveSettings.innerText = "שמור הגדרות";
@@ -411,8 +416,9 @@
                 const settingsRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'config');
                 const docSnap = await getDoc(settingsRef);
                 if (docSnap.exists()) {
-                    userSettings = docSnap.data();
+                    userSettings = { ...userSettings, ...docSnap.data() };
                     ui.inputApiKey.value = userSettings.geminiApiKey || '';
+                    ui.selectModel.value = userSettings.geminiModel || 'gemini-2.5-flash-lite';
                 }
                 checkApiWarning();
             } catch (error) {
@@ -421,15 +427,11 @@
         };
 
         const checkApiWarning = () => {
-            if (!userSettings.geminiApiKey) {
-                ui.apiWarning.classList.remove('hidden');
-            } else {
-                ui.apiWarning.classList.add('hidden');
-            }
+            if (!userSettings.geminiApiKey) ui.apiWarning.classList.remove('hidden');
+            else ui.apiWarning.classList.add('hidden');
         };
 
         ui.btnSaveSettings.addEventListener('click', saveUserSettings);
-        
         ui.btnToggleKey.addEventListener('click', () => {
             const isPass = ui.inputApiKey.type === 'password';
             ui.inputApiKey.type = isPass ? 'text' : 'password';
@@ -439,7 +441,7 @@
         // ================= Authentication =================
         ui.btnGoogleLogin.addEventListener('click', async () => {
             if (window.location.protocol === 'file:') {
-                showAlert('שגיאת סביבה', 'התחברות גוגל דורשת שרת (http/https). הרץ את הקובץ דרך שרת מקומי.', 'error');
+                showAlert('שגיאת סביבה', 'התחברות גוגל דורשת שרת (http/https).', 'error');
                 return;
             }
             try {
@@ -447,8 +449,7 @@
                 const provider = new GoogleAuthProvider();
                 await signInWithPopup(auth, provider);
             } catch (error) {
-                console.error(error);
-                ui.loginError.innerText = (error.code === 'auth/unauthorized-domain') ? "דומיין לא מאושר ב-Firebase." : "שגיאת התחברות: " + error.message;
+                ui.loginError.innerText = error.message;
                 ui.loginError.classList.remove('hidden');
                 ui.btnGoogleLogin.disabled = false;
             }
@@ -511,43 +512,30 @@
         let unsubscribeSnapshot = null;
         const loadData = () => {
             if (!currentUser) return;
-            // Using mandatory path: artifacts/{appId}/users/{userId}/measurements
             const ref = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'measurements');
             if (unsubscribeSnapshot) unsubscribeSnapshot();
-            
             unsubscribeSnapshot = onSnapshot(ref, (snapshot) => {
                 measurements = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
                 renderHistory();
                 if (document.getElementById('tab-stats').classList.contains('active')) renderChart();
-            }, (error) => {
-                console.error("Firestore Fetch Error:", error);
-                if (error.code === 'permission-denied') {
-                    showAlert('שגיאת הרשאות', 'חסרה גישה למסד הנתונים. וודא שהגדרת את ה-Rules ב-Firebase Console עבור נתיב ה-artifacts.', 'error');
-                }
-            });
+            }, (error) => console.error(error));
         };
 
         ui.btnSave.addEventListener('click', async () => {
             if (!currentUser) return;
             const sys = parseInt(ui.inputSys.value), dia = parseInt(ui.inputDia.value), dt = ui.inputDatetime.value;
-            if (!sys || !dia || !dt) { showAlert('חסר מידע', 'אנא מלא ערכי SYS, DIA ותאריך מדידה.', 'warning'); return; }
+            if (!sys || !dia || !dt) { showAlert('חסר מידע', 'מלא את כל השדות', 'warning'); return; }
             ui.btnSave.disabled = true;
             try {
-                const ref = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'measurements');
-                await addDoc(ref, {
+                await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'measurements'), {
                     sys, dia, pulse: parseInt(ui.inputPulse.value) || null,
                     timestamp: new Date(dt).getTime(), createdAt: Date.now()
                 });
-                showToast('המדידה נשמרה בהצלחה');
+                showToast('המדידה נשמרה');
                 ui.formArea.classList.add('hidden');
                 document.querySelector('[data-target="tab-history"]').click();
-            } catch (error) {
-                console.error("Save Measurement Error:", error);
-                const msg = error.code === 'permission-denied' ? 
-                    "שגיאת הרשאות: הגישה נחסמה על ידי Firebase Rules." : 
-                    "השמירה נכשלה. " + error.message;
-                showAlert('שגיאה', msg, 'error');
-            } finally { ui.btnSave.disabled = false; }
+            } catch (e) { showAlert('שגיאה', 'השמירה נכשלה', 'error'); } 
+            finally { ui.btnSave.disabled = false; }
         });
 
         ui.btnCancel.addEventListener('click', () => {
@@ -555,59 +543,28 @@
             ui.imageInput.value = '';
         });
 
-        const deleteMeasurement = async (id) => {
-            if (!currentUser) return;
-            if (!confirm('האם אתה בטוח שברצונך למחוק מדידה זו?')) return;
+        window.handleDelete = async (id) => {
+            if (!currentUser || !confirm('למחוק?')) return;
             try {
-                const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'measurements', id);
-                await deleteDoc(docRef);
-                showToast('המדידה נמחקה');
-            } catch (e) {
-                console.error("Delete Error:", e);
-                showAlert('שגיאה', 'מחיקת המדידה נכשלה.', 'error');
-            }
+                await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'measurements', id));
+                showToast('נמחק');
+            } catch (e) { showAlert('שגיאה', 'המחיקה נכשלה', 'error'); }
         };
-
-        window.handleDelete = deleteMeasurement; // Global exposing for inline onclick
 
         const renderHistory = () => {
             const sort = ui.sortSelect.value;
             let sorted = [...measurements];
-            
-            // Perform sorting in JS (Rule 2)
             if (sort === 'newest') sorted.sort((a,b) => b.timestamp - a.timestamp);
             else if (sort === 'oldest') sorted.sort((a,b) => a.timestamp - b.timestamp);
             else sorted.sort((a,b) => b.sys - a.sys);
-            
             ui.historyList.innerHTML = '';
             if (!sorted.length) { ui.emptyHistory.classList.remove('hidden'); return; }
             ui.emptyHistory.classList.add('hidden');
-            
             sorted.forEach(m => {
                 const d = new Date(m.timestamp), st = getBPStatus(m.sys, m.dia);
                 const card = document.createElement('div');
-                card.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center";
-                card.innerHTML = `
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2">
-                            <span class="text-xl font-bold text-gray-800">${m.sys}/${m.dia}</span>
-                            ${m.pulse ? `<span class="text-xs text-red-500 bg-red-50 px-2 rounded-full font-medium"><i class="fa-solid fa-heart-pulse mr-1"></i>${m.pulse}</span>` : ''}
-                        </div>
-                        <span class="text-[10px] text-gray-400 font-medium">
-                            <i class="fa-regular fa-calendar ml-1 text-blue-400"></i>${d.toLocaleDateString('he-IL')} 
-                            <i class="fa-regular fa-clock mr-2 ml-1 text-blue-400"></i>${d.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})}
-                        </span>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <div class="text-left flex flex-col items-end min-w-[70px]">
-                            <span class="w-2.5 h-2.5 rounded-full ${st.class.split(' ')[0]} mb-1"></span>
-                            <span class="text-[9px] text-gray-500 font-bold">${st.text}</span>
-                        </div>
-                        <button onclick="handleDelete('${m.id}')" class="text-gray-300 hover:text-red-500 transition-colors p-2 active:scale-90">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </div>
-                `;
+                card.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center text-right";
+                card.innerHTML = `<div class="flex-1"><div class="flex items-center gap-2 flex-row-reverse"><span class="text-xl font-bold">${m.sys}/${m.dia}</span>${m.pulse ? `<span class="text-xs text-red-500 bg-red-50 px-2 rounded-full font-medium">${m.pulse}</span>` : ''}</div><span class="text-[10px] text-gray-400 font-medium">${d.toLocaleDateString('he-IL')} ${d.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})}</span></div><div class="flex items-center gap-4"><div class="text-left flex flex-col items-end min-w-[70px]"><span class="w-2.5 h-2.5 rounded-full ${st.class.split(' ')[0]} mb-1"></span><span class="text-[9px] text-gray-500 font-bold">${st.text}</span></div><button onclick="handleDelete('${m.id}')" class="text-gray-300 hover:text-red-500 transition-colors p-2"><i class="fa-solid fa-trash-can"></i></button></div>`;
                 ui.historyList.appendChild(card);
             });
         };
@@ -616,42 +573,25 @@
 
         const renderChart = () => {
             if (!measurements.length) return;
-            // Take recent 15 records for visualization
             const recent = [...measurements].sort((a,b) => b.timestamp - a.timestamp).slice(0, 15).reverse();
             const labels = recent.map(m => new Date(m.timestamp).getDate() + '/' + (new Date(m.timestamp).getMonth()+1));
             const sysValues = recent.map(m => m.sys), diaValues = recent.map(m => m.dia);
-            
             ui.avgSys.innerText = Math.round(sysValues.reduce((a,b)=>a+b,0)/sysValues.length);
             ui.avgDia.innerText = Math.round(diaValues.reduce((a,b)=>a+b,0)/diaValues.length);
-            
             if (bpChartInstance) bpChartInstance.destroy();
             bpChartInstance = new Chart(ui.ctxChart, { 
                 type: 'line', 
-                data: { 
-                    labels, 
-                    datasets: [
-                        { label: 'SYS', data: sysValues, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.3, fill: true, pointRadius: 4 }, 
-                        { label: 'DIA', data: diaValues, borderColor: '#4f46e5', tension: 0.3, pointRadius: 4 }
-                    ] 
-                }, 
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { min: 40, max: 200, grid: { color: 'rgba(0,0,0,0.03)' } },
-                        x: { grid: { display: false } }
-                    }
-                } 
+                data: { labels, datasets: [{ label: 'SYS', data: sysValues, borderColor: '#3b82f6', tension: 0.3 }, { label: 'DIA', data: diaValues, borderColor: '#4f46e5', tension: 0.3 }] }, 
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } 
             });
         };
 
-        // ================= Gemini AI Integration =================
+        // ================= Gemini AI Logic =================
         const testGeminiConnection = async (key) => {
+            const model = ui.selectModel.value || 'gemini-2.5-flash-lite';
             try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`, {
-                    method: 'POST', 
-                    body: JSON.stringify({ contents: [{ parts: [{ text: 'Respond with "OK"' }] }] })
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+                    method: 'POST', body: JSON.stringify({ contents: [{ parts: [{ text: 'Respond with "OK"' }] }] })
                 });
                 return res.ok;
             } catch { return false; }
@@ -659,29 +599,18 @@
 
         ui.btnTestApi.addEventListener('click', async () => {
             const key = ui.inputApiKey.value.trim();
-            if (!key) { showAlert("חסר מפתח", "נא להזין מפתח לבדיקה.", "warning"); return; }
-            ui.btnTestApi.disabled = true;
+            if (!key) return showAlert("חסר מפתח", "נא להזין מפתח לבדיקה.", "warning");
             ui.btnTestApi.innerText = "...";
             const success = await testGeminiConnection(key);
-            ui.btnTestApi.disabled = false;
             ui.btnTestApi.innerText = "בדיקה";
-            if (success) showToast("מפתח תקין ומחובר!");
-            else showAlert("שגיאת חיבור", "המפתח אינו תקין או שאין גישה לשרת של גוגל.", "error");
+            if (success) showToast("מפתח תקין!"); else showAlert("שגיאה", "המפתח אינו תקין.", "error");
         });
 
         ui.imageInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0]; if (!file) return;
-            
-            if (!userSettings.geminiApiKey) {
-                showAlert("נדרשת הגדרה", "נא להגדיר מפתח Gemini במסך ההגדרות כדי להשתמש בזיהוי תמונה.", "warning");
-                e.target.value = '';
-                return;
-            }
-
+            const file = e.target.files[0]; if (!file || !userSettings.geminiApiKey) return;
             ui.loadingArea.classList.remove('hidden'); ui.loadingArea.classList.add('flex'); ui.formArea.classList.add('hidden');
             try {
-                // Image preprocessing: Base64 + Resize
-                const base64 = await new Promise((resolve, reject) => {
+                const base64 = await new Promise((res) => {
                     const reader = new FileReader();
                     reader.onload = (ev) => {
                         const img = new Image();
@@ -691,47 +620,32 @@
                             if (w > h && w > MAX) { h *= MAX/w; w = MAX; } else if (h > MAX) { w *= MAX/h; h = MAX; }
                             canvas.width = w; canvas.height = h;
                             canvas.getContext('2d').drawImage(img, 0,0,w,h);
-                            resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+                            res(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
                         };
-                        img.onerror = () => reject("Image load error");
                         img.src = ev.target.result;
                     };
-                    reader.onerror = () => reject("File read error");
                     reader.readAsDataURL(file);
                 });
 
-                // OCR Prompt
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${userSettings.geminiApiKey}`, {
+                const model = userSettings.geminiModel || 'gemini-2.5-flash-lite';
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${userSettings.geminiApiKey}`, {
                     method: 'POST', body: JSON.stringify({ 
-                        contents: [{ 
-                            parts: [
-                                { text: 'Analyze this blood pressure monitor image. Extract and return ONLY a JSON object with keys: "sys" (number), "dia" (number), "pulse" (number), and "datetime" (string in format YYYY-MM-DDTHH:MM). If missing year, use 2024.' }, 
-                                { inlineData: { mimeType: "image/jpeg", data: base64 } }
-                            ] 
-                        }], 
+                        contents: [{ parts: [{ text: 'Return JSON: {"sys":number,"dia":number,"pulse":number,"datetime":"YYYY-MM-DDTHH:MM"}. Use current year if missing.' }, { inlineData: { mimeType: "image/jpeg", data: base64 } }] }], 
                         generationConfig: { responseMimeType: "application/json" } 
                     })
                 });
                 
-                if (!res.ok) throw new Error("API call failed");
-
-                const resultJson = await res.json();
-                const result = JSON.parse(resultJson.candidates[0].content.parts[0].text);
-
-                // Populate form with parsed data
-                ui.inputSys.value = result.sys || ''; 
-                ui.inputDia.value = result.dia || ''; 
-                ui.inputPulse.value = result.pulse || '';
-                
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+                const result = JSON.parse(data.candidates[0].content.parts[0].text);
+                ui.inputSys.value = result.sys || ''; ui.inputDia.value = result.dia || ''; ui.inputPulse.value = result.pulse || '';
                 const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
                 ui.inputDatetime.value = result.datetime ? result.datetime.slice(0,16) : now.toISOString().slice(0,16);
-                
                 updateInputsAndIndicator();
                 ui.loadingArea.classList.add('hidden'); ui.formArea.classList.remove('hidden');
             } catch (err) {
-                console.error("AI Analysis Failed:", err);
                 ui.loadingArea.classList.add('hidden'); ui.formArea.classList.remove('hidden');
-                showAlert('פענוח נכשל', 'לא הצלחנו לפענח את התמונה באופן אוטומטי. אנא הזן את הנתונים ידנית.', 'error');
+                showAlert('פענוח נכשל', 'אנא הזן ידנית.', 'error');
             }
             e.target.value = '';
         });
@@ -742,20 +656,17 @@
             ui.whoIndicator.className = `text-xs font-bold px-3 py-1 rounded-full ${st.class}`;
             ui.whoIndicator.innerText = st.text;
         };
-
         [ui.inputSys, ui.inputDia].forEach(inp => inp.addEventListener('input', updateInputsAndIndicator));
 
-        // ================= CSV Export =================
         ui.btnExport.addEventListener('click', () => {
             if (!measurements.length) return;
-            let csv = "\uFEFFתאריך,שעה,סיסטולי (SYS),דיאסטולי (DIA),דופק\n";
-            const sorted = [...measurements].sort((a,b) => b.timestamp - a.timestamp);
-            sorted.forEach(m => {
+            let csv = "\uFEFFתאריך,שעה,SYS,DIA,דופק\n";
+            measurements.sort((a,b) => b.timestamp - a.timestamp).forEach(m => {
                 const d = new Date(m.timestamp);
                 csv += `${d.toLocaleDateString('he-IL')},${d.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})},${m.sys},${m.dia},${m.pulse||''}\n`;
             });
             const blob = new Blob([csv], {type:'text/csv;charset=utf-8'}), url = URL.createObjectURL(blob), a = document.createElement('a');
-            a.href = url; a.download = `BP_Report_${new Date().toLocaleDateString('he-IL').replace(/\./g,'_')}.csv`; a.click();
+            a.href = url; a.download = `BP_Report.csv`; a.click();
         });
     </script>
 </body>
