@@ -3,1004 +3,493 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FamilyCart</title>
+    <title>BP-Tracker AI | מעקב לחץ דם חכם</title>
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- HTML5 QRCode Scanner -->
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <!-- Canvas Confetti -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
-    <style>
-        /* מעברי אנימציה מותאמים אישית */
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* הסתרת פס גלילה אבל השארת פונקציונליות */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        html, body { overscroll-behavior-y: none; /* מונע רענון במשיכה בטלפון */ }
-        
-        #reader { width: 100%; max-width: 400px; margin: 0 auto; border-radius: 1rem; overflow: hidden; }
-        #reader video { border-radius: 1rem; object-fit: cover; }
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        /* סגנון לתפריט בחירת קטגוריה צף */
-        .category-select-popup {
-            position: absolute;
-            z-index: 100;
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            border: 1px solid #f3f4f6;
-            width: 180px;
-            max-height: 300px;
-            overflow-y: auto;
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Rubik', sans-serif;
+            background-color: #f3f4f6;
+            -webkit-tap-highlight-color: transparent;
         }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .glass-header {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .bottom-nav {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(0,0,0,0.05);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900 font-sans min-h-[100dvh]">
+<body class="text-gray-800 h-screen flex flex-col overflow-hidden">
 
-    <!-- Container ראשי -->
-    <div id="app" class="min-h-[100dvh] w-full max-w-md mx-auto bg-white shadow-xl relative flex flex-col">
-        <!-- התוכן ירונדר לכאן על ידי JS -->
-    </div>
-
-    <!-- Modal לסורק ברקוד מצלמה -->
-    <div id="scanner-modal" class="hidden fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4">
-        <div class="w-full max-w-sm bg-white rounded-3xl p-4 flex flex-col gap-4">
-            <div class="flex justify-between items-center">
-                <h3 class="font-bold text-lg">סרוק ברקוד</h3>
-                <button id="close-scanner" class="p-2 bg-gray-100 rounded-full text-gray-600">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
+    <!-- מסך התחברות -->
+    <div id="login-screen" class="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-6 z-50 absolute inset-0">
+        <div class="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full text-center">
+            <div class="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl shadow-inner">
+                <i class="fa-solid fa-heart-pulse"></i>
             </div>
-            <div id="reader" class="bg-black w-full aspect-square rounded-2xl"></div>
-            <p class="text-center text-sm text-gray-500">כוון את המצלמה אל ברקוד המוצר</p>
-        </div>
-    </div>
-
-    <!-- Modal מחיקת הושלמו -->
-    <div id="clear-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex flex-col items-center justify-center p-4 backdrop-blur-sm fade-in">
-        <div class="w-full max-w-sm bg-white rounded-3xl p-6 flex flex-col gap-4 text-center shadow-2xl">
-            <div class="mx-auto bg-red-100 text-red-500 p-4 rounded-full mb-2">
-                <i data-lucide="alert-triangle" class="w-8 h-8"></i>
-            </div>
-            <h3 class="font-bold text-xl text-gray-800">לנקות את כל המוצרים שהושלמו?</h3>
-            <p class="text-gray-500 text-sm">פעולה זו תמחק את כל המוצרים שסומנו כקנויים מהרשימה הנוכחית. לא ניתן לשחזר זאת.</p>
-            <div class="flex gap-3 mt-4">
-                <button onclick="closeClearModal()" class="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors">
-                    ביטול
-                </button>
-                <button onclick="confirmClear()" class="flex-1 bg-red-500 text-white py-3 rounded-xl font-medium shadow-md hover:bg-red-600 transition-colors">
-                    נקה הכל
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal עזרה / הסבר מערכת -->
-    <div id="help-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex flex-col items-center justify-center p-4 backdrop-blur-sm fade-in">
-        <div class="w-full max-w-md bg-white rounded-3xl p-6 flex flex-col gap-4 shadow-2xl max-h-[90vh] overflow-y-auto no-scrollbar">
-            <div class="flex justify-between items-center mb-2">
-                <div class="flex items-center gap-2 text-emerald-600">
-                    <i data-lucide="info" class="w-7 h-7"></i>
-                    <h3 class="font-bold text-2xl text-gray-800">איך זה עובד?</h3>
-                </div>
-                <button onclick="closeHelp()" class="p-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition-colors">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
+            <h1 class="text-2xl font-bold mb-2">BP-Tracker AI</h1>
+            <p class="text-gray-500 mb-8 text-sm">מעקב לחץ דם חכם המבוסס על בינה מלאכותית. הצטרף כדי לשמור את הנתונים שלך בצורה מאובטחת.</p>
             
-            <div class="space-y-4 text-gray-600 text-sm leading-relaxed">
-                <p class="text-base"><strong class="text-gray-800">ברוכים הבאים ל-FamilyCart! 🎉</strong><br>המערכת החכמה והמהירה לניהול רשימות קניות משותפות לכל המשפחה.</p>
-                
-                <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
-                    <h4 class="font-bold text-emerald-800 mb-1 flex items-center gap-2">
-                        <i data-lucide="users" class="w-5 h-5"></i> סנכרון משפחתי
-                    </h4>
-                    <p class="text-emerald-700">כל בני המשפחה המחוברים רואים את אותה הרשימה. מישהו סימן V על החלב בסופר? תראו את זה מיד אצלכם במסך!</p>
-                </div>
-
-                <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                    <h4 class="font-bold text-gray-800 mb-1 flex items-center gap-2">
-                        <i data-lucide="search" class="w-5 h-5 text-blue-500"></i> הוספה חכמה
-                    </h4>
-                    <p>הקלידו שם מוצר (למשל "עגבניות") והמערכת תציע אותו מיד. לחצו על הפלוס והוא יתווסף. ניתן לשנות כמויות עם כפתורי הפלוס/מינוס שעל כל מוצר ברשימה.</p>
-                </div>
-
-                <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                    <h4 class="font-bold text-gray-800 mb-1 flex items-center gap-2">
-                        <i data-lucide="camera" class="w-5 h-5 text-purple-500"></i> סורק ברקודים לומד
-                    </h4>
-                    <p>לחיצה על אייקון המצלמה בשורת החיפוש תפתח סורק. המערכת תזהה את המוצר ותוסיף אותו. <br><strong>המוצר לא קיים?</strong> הקלידו את שמו פעם אחת, והמערכת תזכור את הברקוד לפעם הבאה!</p>
-                </div>
-
-                <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                    <h4 class="font-bold text-gray-800 mb-1 flex items-center gap-2">
-                        <i data-lucide="tag" class="w-5 h-5 text-indigo-500"></i> שינוי קטגוריה
-                    </h4>
-                    <p>רוצים להעביר מוצר לקטגוריה אחרת? לחצו על אייקון ה"תג" שליד המוצר ובחרו את הקטגוריה המתאימה כדי שהרשימה תישאר מסודרת.</p>
-                </div>
-            </div>
-            
-            <button onclick="closeHelp()" class="mt-4 w-full bg-gray-800 text-white py-3.5 rounded-2xl font-bold shadow-md hover:bg-gray-900 transition-colors">
-                הבנתי, בואו נקנה!
+            <button id="btn-google-login" class="w-full bg-white border border-gray-300 text-gray-700 py-3 px-4 rounded-xl font-medium shadow-sm hover:bg-gray-50 transition-all flex items-center justify-center gap-3">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-5 h-5">
+                התחבר עם Google
             </button>
+            <p id="login-error" class="text-red-500 text-xs mt-4 hidden leading-relaxed"></p>
         </div>
     </div>
 
+    <!-- אפליקציה מרכזית -->
+    <div id="main-app" class="hidden flex-col h-full relative">
+        
+        <header class="glass-header sticky top-0 z-40 px-5 py-4 flex justify-between items-center shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-100 overflow-hidden flex items-center justify-center shadow-sm border border-blue-200">
+                    <img id="user-avatar" src="" alt="User" class="w-full h-full object-cover hidden">
+                    <i id="user-avatar-fallback" class="fa-solid fa-user text-blue-500"></i>
+                </div>
+                <div>
+                    <h2 class="text-sm font-bold text-gray-800" id="user-name">טוען...</h2>
+                    <p class="text-xs text-green-600 font-medium"><i class="fa-solid fa-cloud-arrow-up ml-1"></i>מחובר</p>
+                </div>
+            </div>
+            <button id="btn-logout" class="text-gray-400 hover:text-red-500 transition-colors bg-gray-100 p-2 rounded-full w-10 h-10 flex items-center justify-center">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </button>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 pb-24">
+            
+            <!-- Tab 1: מדידה חדשה -->
+            <div id="tab-new" class="tab-content active space-y-6">
+                <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+                    <i class="fa-solid fa-robot absolute -left-4 -bottom-4 text-8xl opacity-10"></i>
+                    <h3 class="text-xl font-bold mb-2">מדידה חדשה בקליק</h3>
+                    <p class="text-blue-100 text-sm mb-5">צלם את מסך מד לחץ הדם שלך, והבינה המלאכותית שלנו תעשה את השאר.</p>
+                    
+                    <label class="w-full bg-white text-blue-600 font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-gray-50 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+                        <i class="fa-solid fa-camera"></i>
+                        צלם או העלה תמונה
+                        <input type="file" id="image-input" accept="image/*" capture="environment" class="hidden">
+                    </label>
+                </div>
+
+                <div id="loading-area" class="hidden flex-col items-center justify-center py-10">
+                    <div class="loader mb-4"></div>
+                    <p class="text-gray-600 font-medium animate-pulse text-center">הבינה המלאכותית מפענחת את הנתונים...</p>
+                </div>
+
+                <div id="form-area" class="hidden bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="font-bold text-lg text-gray-800">אימות נתונים</h4>
+                        <span id="who-indicator" class="text-xs font-bold px-3 py-1 rounded-full bg-gray-100 text-gray-600">ממתין...</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Systolic (SYS)</label>
+                            <input type="number" id="input-sys" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-lg font-bold text-center outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Diastolic (DIA)</label>
+                            <input type="number" id="input-dia" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-lg font-bold text-center outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">דופק (Pulse)</label>
+                            <input type="number" id="input-pulse" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-lg font-bold text-center outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">תאריך ושעה</label>
+                            <input type="datetime-local" id="input-datetime" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm font-bold text-center outline-none">
+                        </div>
+                    </div>
+
+                    <button id="btn-save" class="w-full bg-green-500 text-white font-bold py-3 rounded-xl shadow-md hover:bg-green-600 transition-colors active:scale-95">
+                        <i class="fa-solid fa-check ml-2"></i>אשר ושמור נתונים
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab 2: היסטוריה -->
+            <div id="tab-history" class="tab-content space-y-4">
+                <div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm">
+                    <select id="sort-select" class="bg-gray-50 border border-gray-200 text-sm rounded-lg px-3 py-2 outline-none">
+                        <option value="newest">מהחדש לישן</option>
+                        <option value="oldest">מהישן לחדש</option>
+                        <option value="highest">מהגבוה לנמוך (SYS)</option>
+                    </select>
+                    <button id="btn-export" class="text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg text-sm font-medium transition-colors">
+                        <i class="fa-solid fa-file-csv ml-1"></i> ייצוא
+                    </button>
+                </div>
+                <div id="history-list" class="space-y-3 pb-4"></div>
+                <div id="empty-history" class="hidden text-center py-10 text-gray-400">
+                    <i class="fa-solid fa-clipboard-list text-4xl mb-3 opacity-50"></i>
+                    <p>אין נתונים להצגה.</p>
+                </div>
+            </div>
+
+            <!-- Tab 3: סטטיסטיקות -->
+            <div id="tab-stats" class="tab-content space-y-5">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-800 mb-1">מגמות לחץ דם</h3>
+                    <div class="relative h-64 w-full">
+                        <canvas id="bpChart"></canvas>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center">
+                        <p class="text-xs text-gray-500 mb-1">ממוצע SYS</p>
+                        <p id="avg-sys" class="text-2xl font-bold text-blue-600">--</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center">
+                        <p class="text-xs text-gray-500 mb-1">ממוצע DIA</p>
+                        <p id="avg-dia" class="text-2xl font-bold text-indigo-600">--</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-40 flex justify-around items-center px-2 py-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            <button class="nav-btn flex flex-col items-center gap-1 text-blue-600 font-semibold w-1/3" data-target="tab-new">
+                <div class="w-12 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-1"><i class="fa-solid fa-camera text-lg"></i></div>
+                <span class="text-[10px]">מדידה</span>
+            </button>
+            <button class="nav-btn flex flex-col items-center gap-1 text-gray-400 w-1/3" data-target="tab-history">
+                <div class="w-12 h-8 rounded-full flex items-center justify-center mb-1"><i class="fa-solid fa-clock-rotate-left text-lg"></i></div>
+                <span class="text-[10px]">היסטוריה</span>
+            </button>
+            <button class="nav-btn flex flex-col items-center gap-1 text-gray-400 w-1/3" data-target="tab-stats">
+                <div class="w-12 h-8 rounded-full flex items-center justify-center mb-1"><i class="fa-solid fa-chart-line text-lg"></i></div>
+                <span class="text-[10px]">סטטיסטיקה</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Toast & Modal -->
+    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300 opacity-0 pointer-events-none translate-y-[-20px] flex items-center gap-2">
+        <i id="toast-icon" class="fa-solid fa-info-circle"></i>
+        <span id="toast-msg" class="text-sm"></span>
+    </div>
+
+    <div id="alert-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl scale-95 transition-transform duration-200">
+            <div id="alert-icon" class="text-4xl text-yellow-500 mb-4"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <h3 id="alert-title" class="text-lg font-bold mb-2">שגיאה</h3>
+            <p id="alert-text" class="text-gray-600 text-sm mb-6 leading-relaxed"></p>
+            <button id="alert-close" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 rounded-xl transition-colors">הבנתי</button>
+        </div>
+    </div>
+
+    <!-- Firebase Scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // הגדרות Firebase של פרויקט obn-shopping
+        // Firebase Setup
         const firebaseConfig = {
-            apiKey: "AIzaSyCVDD-5659lKohVacBWyowCbF4FeZA3FQY",
-            authDomain: "obn-shopping.firebaseapp.com",
-            projectId: "obn-shopping",
-            storageBucket: "obn-shopping.firebasestorage.app",
-            messagingSenderId: "1037170144845",
-            appId: "1:1037170144845:web:eaef5edee7175d52c00e04",
-            measurementId: "G-E6Q3V76YRX"
+            apiKey: "AIzaSyAS5Rt-w9xTwgDmkffW_q4HzoUTK6QMRWY",
+            authDomain: "obn-bp.firebaseapp.com",
+            projectId: "obn-bp",
+            storageBucket: "obn-bp.firebasestorage.app",
+            messagingSenderId: "62110972975",
+            appId: "1:62110972975:web:637790db47ce46528e5ada"
         };
-        const appId = firebaseConfig.projectId;
-        
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- מסד נתונים וקבועים ---
-        const CATEGORY_COLORS = {
-            "מוצרי חלב וביצים": "bg-blue-100 text-blue-800",
-            "פירות וירקות": "bg-green-100 text-green-800",
-            "בשר ודגים": "bg-red-100 text-red-800",
-            "מאפה ולחם": "bg-orange-100 text-orange-800",
-            "מזווה ובישול": "bg-amber-100 text-amber-800",
-            "סלטים וממרחים": "bg-lime-100 text-lime-800",
-            "דגנים וחטיפים": "bg-purple-100 text-purple-800",
-            "משקאות": "bg-cyan-100 text-cyan-800",
-            "ניקיון וטואלטיקה": "bg-teal-100 text-teal-800",
-            "קפואים": "bg-indigo-100 text-indigo-800",
-            "תינוקות": "bg-rose-100 text-rose-800",
-            "חיות מחמד": "bg-stone-100 text-stone-800",
-            "שונות": "bg-slate-100 text-slate-800",
-            "אחר": "bg-gray-100 text-gray-800"
+        // State
+        let currentUser = null;
+        let measurements = [];
+        let bpChartInstance = null;
+
+        const ui = {
+            loginScreen: document.getElementById('login-screen'),
+            mainApp: document.getElementById('main-app'),
+            btnGoogleLogin: document.getElementById('btn-google-login'),
+            loginError: document.getElementById('login-error'),
+            userName: document.getElementById('user-name'),
+            userAvatar: document.getElementById('user-avatar'),
+            userAvatarFallback: document.getElementById('user-avatar-fallback'),
+            btnLogout: document.getElementById('btn-logout'),
+            navBtns: document.querySelectorAll('.nav-btn'),
+            tabContents: document.querySelectorAll('.tab-content'),
+            imageInput: document.getElementById('image-input'),
+            loadingArea: document.getElementById('loading-area'),
+            formArea: document.getElementById('form-area'),
+            inputSys: document.getElementById('input-sys'),
+            inputDia: document.getElementById('input-dia'),
+            inputPulse: document.getElementById('input-pulse'),
+            inputDatetime: document.getElementById('input-datetime'),
+            btnSave: document.getElementById('btn-save'),
+            whoIndicator: document.getElementById('who-indicator'),
+            historyList: document.getElementById('history-list'),
+            emptyHistory: document.getElementById('empty-history'),
+            sortSelect: document.getElementById('sort-select'),
+            btnExport: document.getElementById('btn-export'),
+            avgSys: document.getElementById('avg-sys'),
+            avgDia: document.getElementById('avg-dia'),
+            ctxChart: document.getElementById('bpChart').getContext('2d'),
+            toast: document.getElementById('toast'),
+            toastMsg: document.getElementById('toast-msg'),
+            toastIcon: document.getElementById('toast-icon'),
+            alertModal: document.getElementById('alert-modal'),
+            alertClose: document.getElementById('alert-close')
         };
-        const CATEGORIES = Object.keys(CATEGORY_COLORS);
+
+        const showToast = (msg, type = 'success') => {
+            ui.toastMsg.innerText = msg;
+            ui.toastIcon.className = type === 'success' ? 'fa-solid fa-check-circle text-green-400' : 'fa-solid fa-circle-exclamation text-red-400';
+            ui.toast.classList.remove('opacity-0', 'translate-y-[-20px]');
+            setTimeout(() => ui.toast.classList.add('opacity-0', 'translate-y-[-20px]'), 3000);
+        };
+
+        const showAlert = (title, text, type = 'warning') => {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-text').innerText = text;
+            const icon = document.getElementById('alert-icon');
+            icon.innerHTML = type === 'warning' ? '<i class="fa-solid fa-triangle-exclamation"></i>' : '<i class="fa-solid fa-circle-xmark text-red-500"></i>';
+            ui.alertModal.classList.remove('hidden');
+        };
         
-        // נתוני ברירת מחדל
-        const DEFAULT_PRODUCTS = [
-          { "name": "חלב 3%", "category": "מוצרי חלב וביצים", "unit": "ליטר" },
-          { "name": "גבינה צהובה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-          { "name": "קוטג'", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-          { "name": "גבינה לבנה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-          { "name": "יוגורט", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-          { "name": "חמאה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-          { "name": "ביצים L", "category": "מוצרי חלב וביצים", "unit": "תבנית" },
-          { "name": "שמנת חמוצה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-          { "name": "שמנת מתוקה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-          { "name": "גבינת פטה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-          { "name": "חלב שיבולת שועל", "category": "מוצרי חלב וביצים", "unit": "ליטר" },
-          { "name": "גבינת שמנת", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-          { "name": "לבנה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-          { "name": "חלב סויה", "category": "מוצרי חלב וביצים", "unit": "ליטר" },
-          { "name": "מעדן שוקולד", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-          { "name": "גבינה בולגרית", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-          { "name": "ריקוטה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-          { "name": "חלומי", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-          { "name": "חלב עזים", "category": "מוצרי חלב וביצים", "unit": "ליטר" },
-          { "name": "גבינת מוצרלה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-          { "name": "עגבניות", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "מלפפונים", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "פלפל גמבה", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "בצל יבש", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "תפוחי אדמה", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "גזר", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "חסה", "category": "פירות וירקות", "unit": "יח'" },
-          { "name": "תפוח עץ", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "בננה", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "לימון", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "חציל", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "קישוא", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "ברוקולי", "category": "פירות וירקות", "unit": "יח'" },
-          { "name": "כרובית", "category": "פירות וירקות", "unit": "יח'" },
-          { "name": "שום", "category": "פירות וירקות", "unit": "מארז" },
-          { "name": "פטרוזיליה", "category": "פירות וירקות", "unit": "מארז" },
-          { "name": "כוסברה", "category": "פירות וירקות", "unit": "מארז" },
-          { "name": "אבוקדו", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "אבטיח", "category": "פירות וירקות", "unit": "יח'" },
-          { "name": "ענבים", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "בטטה", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "בצל ירוק", "category": "פירות וירקות", "unit": "מארז" },
-          { "name": "פטריות שמפיניון", "category": "פירות וירקות", "unit": "מארז" },
-          { "name": "כרוב לבן", "category": "פירות וירקות", "unit": "יח'" },
-          { "name": "כרוב אדום", "category": "פירות וירקות", "unit": "יח'" },
-          { "name": "דלעת", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "צנונית", "category": "פירות וירקות", "unit": "מארז" },
-          { "name": "סלק", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "אפרסק", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "שזיף", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "מנגו", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "תות שדה", "category": "פירות וירקות", "unit": "מארז" },
-          { "name": "מלון", "category": "פירות וירקות", "unit": "יח'" },
-          { "name": "תפוז", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "קיווי", "category": "פירות וירקות", "unit": "ק\"ג" },
-          { "name": "חזה עוף", "category": "בשר ודגים", "unit": "ק\"ג" },
-          { "name": "בשר טחון", "category": "בשר ודגים", "unit": "ק\"ג" },
-          { "name": "דג סלמון", "category": "בשר ודגים", "unit": "ק\"ג" },
-          { "name": "פסטרמה", "category": "בשר ודגים", "unit": "אריזה" },
-          { "name": "כרעיים עוף", "category": "בשר ודגים", "unit": "ק\"ג" },
-          { "name": "המבורגר", "category": "בשר ודגים", "unit": "אריזה" },
-          { "name": "נקניקיות", "category": "בשר ודגים", "unit": "אריזה" },
-          { "name": "דג אמנון", "category": "בשר ודגים", "unit": "ק\"ג" },
-          { "name": "סטייק אנטריקוט", "category": "בשר ודגים", "unit": "ק\"ג" },
-          { "name": "קבב", "category": "בשר ודגים", "unit": "אריזה" },
-          { "name": "כנפיים", "category": "בשר ודגים", "unit": "ק\"ג" },
-          { "name": "שניצל מוכן", "category": "בשר ודגים", "unit": "אריזה" },
-          { "name": "דג לברק", "category": "בשר ודגים", "unit": "ק\"ג" },
-          { "name": "בשר בקר לצלי", "category": "בשר ודגים", "unit": "ק\"ג" },
-          { "name": "לחם פרוס", "category": "מאפה ולחם", "unit": "אריזה" },
-          { "name": "פיתות", "category": "מאפה ולחם", "unit": "אריזה" },
-          { "name": "לחמניות", "category": "מאפה ולחם", "unit": "אריזה" },
-          { "name": "חלה", "category": "מאפה ולחם", "unit": "יח'" },
-          { "name": "בגט", "category": "מאפה ולחם", "unit": "יח'" },
-          { "name": "לחם מחמצת", "category": "מאפה ולחם", "unit": "כיכר" },
-          { "name": "טורטיות", "category": "מאפה ולחם", "unit": "אריזה" },
-          { "name": "פיתות כוסמין", "category": "מאפה ולחם", "unit": "אריזה" },
-          { "name": "ביסקוויטים", "category": "מאפה ולחם", "unit": "אריזה" },
-          { "name": "עוגה בחושה", "category": "מאפה ולחם", "unit": "יח'" },
-          { "name": "בורקס קפוא", "category": "מאפה ולחם", "unit": "אריזה" },
-          { "name": "קרואסון", "category": "מאפה ולחם", "unit": "אריזה" },
-          { "name": "אורז לבן", "category": "מזווה ובישול", "unit": "ק\"ג" },
-          { "name": "אורז מלא", "category": "מזווה ובישול", "unit": "ק\"ג" },
-          { "name": "פסטה פוסילי", "category": "מזווה ובישול", "unit": "אריזה" },
-          { "name": "ספגטי", "category": "מזווה ובישול", "unit": "אריזה" },
-          { "name": "שמן קנולה", "category": "מזווה ובישול", "unit": "בקבוק" },
-          { "name": "שמן זית", "category": "מזווה ובישול", "unit": "בקבוק" },
-          { "name": "סוכר לבן", "category": "מזווה ובישול", "unit": "ק\"ג" },
-          { "name": "מלח שולחן", "category": "מזווה ובישול", "unit": "ק\"ג" },
-          { "name": "קפה נמס", "category": "מזווה ובישול", "unit": "יח'" },
-          { "name": "תה קלאסי", "category": "מזווה ובישול", "unit": "אריזה" },
-          { "name": "קמח חיטה", "category": "מזווה ובישול", "unit": "ק\"ג" },
-          { "name": "קמח תופח", "category": "מזווה ובישול", "unit": "ק\"ג" },
-          { "name": "רסק עגבניות", "category": "מזווה ובישול", "unit": "מארז" },
-          { "name": "טונה בשמן", "category": "מזווה ובישול", "unit": "מארז" },
-          { "name": "טונה במים", "category": "מזווה ובישול", "unit": "מארז" },
-          { "name": "תירס בשימורים", "category": "מזווה ובישול", "unit": "יח'" },
-          { "name": "דבש", "category": "מזווה ובישול", "unit": "צנצנת" },
-          { "name": "סילאן", "category": "מזווה ובישול", "unit": "בקבוק" },
-          { "name": "ריבה", "category": "מזווה ובישול", "unit": "צנצנת" },
-          { "name": "ממרח שוקולד", "category": "מזווה ובישול", "unit": "אריזה" },
-          { "name": "חמאת בוטנים", "category": "מזווה ובישול", "unit": "אריזה" },
-          { "name": "קטשופ", "category": "מזווה ובישול", "unit": "בקבוק" },
-          { "name": "מיונז", "category": "מזווה ובישול", "unit": "אריזה" },
-          { "name": "חרדל", "category": "מזווה ובישול", "unit": "בקבוק" },
-          { "name": "פתיתים", "category": "מזווה ובישול", "unit": "אריזה" },
-          { "name": "קוסקוס", "category": "מזווה ובישול", "unit": "אריזה" },
-          { "name": "פירורי לחם", "category": "מזווה ובישול", "unit": "אריזה" },
-          { "name": "שעועית לבנה", "category": "מזווה ובישול", "unit": "ק\"ג" },
-          { "name": "עדשים ירוקות", "category": "מזווה ובישול", "unit": "ק\"ג" },
-          { "name": "עדשים כתומות", "category": "מזווה ובישול", "unit": "ק\"ג" },
-          { "name": "חומץ", "category": "מזווה ובישול", "unit": "בקבוק" },
-          { "name": "רוטב סויה", "category": "מזווה ובישול", "unit": "בקבוק" },
-          { "name": "רוטב טריאקי", "category": "מזווה ובישול", "unit": "בקבוק" },
-          { "name": "רוטב צ'ילי מתוק", "category": "מזווה ובישול", "unit": "בקבוק" },
-          { "name": "שימורי פטריות", "category": "מזווה ובישול", "unit": "יח'" },
-          { "name": "אבקת מרק", "category": "מזווה ובישול", "unit": "אריזה" },
-          { "name": "סודה לשתייה", "category": "מזווה ובישול", "unit": "אריזה" },
-          { "name": "אבקת אפייה", "category": "מזווה ובישול", "unit": "מארז" },
-          { "name": "תמצית וניל", "category": "מזווה ובישול", "unit": "בקבוק" },
-          { "name": "פפריקה מתוקה", "category": "מזווה ובישול", "unit": "יח'" },
-          { "name": "כמון", "category": "מזווה ובישול", "unit": "יח'" },
-          { "name": "כורכום", "category": "מזווה ובישול", "unit": "יח'" },
-          { "name": "פלפל שחור", "category": "מזווה ובישול", "unit": "יח'" },
-          { "name": "קינמון", "category": "מזווה ובישול", "unit": "יח'" },
-          { "name": "אגוזי מלך", "category": "מזווה ובישול", "unit": "ק\"ג" },
-          { "name": "שקדים", "category": "מזווה ובישול", "unit": "ק\"ג" },
-          { "name": "חומוס מוכן", "category": "סלטים וממרחים", "unit": "אריזה" },
-          { "name": "טחינה גולמית", "category": "סלטים וממרחים", "unit": "אריזה" },
-          { "name": "טחינה מוכנה", "category": "סלטים וממרחים", "unit": "אריזה" },
-          { "name": "מטבוחה", "category": "סלטים וממרחים", "unit": "אריזה" },
-          { "name": "סלט טורקי", "category": "סלטים וממרחים", "unit": "אריזה" },
-          { "name": "סלט כרוב", "category": "סלטים וממרחים", "unit": "אריזה" },
-          { "name": "חמוצים (מלפפון)", "category": "סלטים וממרחים", "unit": "קופסא" },
-          { "name": "זיתים ירוקים", "category": "סלטים וממרחים", "unit": "קופסא" },
-          { "name": "זיתים שחורים", "category": "סלטים וממרחים", "unit": "קופסא" },
-          { "name": "פסטו", "category": "סלטים וממרחים", "unit": "צנצנת" },
-          { "name": "ממרח עגבניות מיובשות", "category": "סלטים וממרחים", "unit": "צנצנת" },
-          { "name": "קורנפלקס", "category": "דגנים וחטיפים", "unit": "אריזה" },
-          { "name": "גרנולה", "category": "דגנים וחטיפים", "unit": "אריזה" },
-          { "name": "שיבולת שועל", "category": "דגנים וחטיפים", "unit": "אריזה" },
-          { "name": "במבה", "category": "דגנים וחטיפים", "unit": "אריזה" },
-          { "name": "ביסלי", "category": "דגנים וחטיפים", "unit": "אריזה" },
-          { "name": "תפוצ'יפס", "category": "דגנים וחטיפים", "unit": "אריזה" },
-          { "name": "דוריטוס", "category": "דגנים וחטיפים", "unit": "אריזה" },
-          { "name": "בייגלה", "category": "דגנים וחטיפים", "unit": "אריזה" },
-          { "name": "שוקולד פרה", "category": "דגנים וחטיפים", "unit": "יח'" },
-          { "name": "עוגיות שוקולד צ'יפס", "category": "דגנים וחטיפים", "unit": "אריזה" },
-          { "name": "ופלים שוקולד", "category": "דגנים וחטיפים", "unit": "אריזה" },
-          { "name": "מסטיק", "category": "דגנים וחטיפים", "unit": "יח'" },
-          { "name": "סוכריות", "category": "דגנים וחטיפים", "unit": "אריזה" },
-          { "name": "חטיף אנרגיה", "category": "דגנים וחטיפים", "unit": "מארז" },
-          { "name": "פריכיות אורז", "category": "דגנים וחטיפים", "unit": "אריזה" },
-          { "name": "פיצוחים מעורבים", "category": "דגנים וחטיפים", "unit": "ק\"ג" },
-          { "name": "מים מינרליים", "category": "משקאות", "unit": "מארז" },
-          { "name": "קוקה קולה", "category": "משקאות", "unit": "בקבוק" },
-          { "name": "דיאט קולה / זירו", "category": "משקאות", "unit": "בקבוק" },
-          { "name": "סודה", "category": "משקאות", "unit": "מארז" },
-          { "name": "מיץ תפוזים", "category": "משקאות", "unit": "בקבוק" },
-          { "name": "מיץ ענבים", "category": "משקאות", "unit": "בקבוק" },
-          { "name": "בירה", "category": "משקאות", "unit": "מארז" },
-          { "name": "יין אדום", "category": "משקאות", "unit": "בקבוק" },
-          { "name": "יין לבן", "category": "משקאות", "unit": "בקבוק" },
-          { "name": "משקה אנרגיה", "category": "משקאות", "unit": "פחית" },
-          { "name": "תה קר", "category": "משקאות", "unit": "בקבוק" },
-          { "name": "נייר טואלט", "category": "ניקיון וטואלטיקה", "unit": "מארז" },
-          { "name": "נוזל כלים", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
-          { "name": "אבקת כביסה", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
-          { "name": "ג'ל כביסה", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
-          { "name": "מרכך כביסה", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
-          { "name": "טבליות למדיח", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
-          { "name": "שמפו", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
-          { "name": "מרכך שיער", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
-          { "name": "סבון גוף נוזלי", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
-          { "name": "משחת שיניים", "category": "ניקיון וטואלטיקה", "unit": "יח'" },
-          { "name": "דאודורנט", "category": "ניקיון וטואלטיקה", "unit": "יח'" },
-          { "name": "שקיות אשפה", "category": "ניקיון וטואלטיקה", "unit": "גליל" },
-          { "name": "מגבוני ניקוי", "category": "ניקיון וטואלטיקה", "unit": "מארז" },
-          { "name": "נייר אפייה", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
-          { "name": "רדיד אלומיניום", "category": "ניקיון וטואלטיקה", "unit": "גליל" },
-          { "name": "סבון ידיים", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
-          { "name": "חומר לניקוי רצפות", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
-          { "name": "חומר לניקוי חלונות", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
-          { "name": "מברשת שיניים", "category": "ניקיון וטואלטיקה", "unit": "יח'" },
-          { "name": "קיסמי שיניים", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
-          { "name": "ירקות קפואים (לקט)", "category": "קפואים", "unit": "אריזה" },
-          { "name": "אפונה קפואה", "category": "קפואים", "unit": "אריזה" },
-          { "name": "שעועית ירוקה קפואה", "category": "קפואים", "unit": "אריזה" },
-          { "name": "תירס קפוא", "category": "קפואים", "unit": "אריזה" },
-          { "name": "צ'יפס קפוא", "category": "קפואים", "unit": "אריזה" },
-          { "name": "פיצה קפואה", "category": "קפואים", "unit": "אריזה" },
-          { "name": "מלאווח", "category": "קפואים", "unit": "אריזה" },
-          { "name": "ג'חנון", "category": "קפואים", "unit": "אריזה" },
-          { "name": "גלידה משפחתית", "category": "קפואים", "unit": "קופסא" },
-          { "name": "שלגונים", "category": "קפואים", "unit": "מארז" },
-          { "name": "פירות יער קפואים", "category": "קפואים", "unit": "אריזה" },
-          { "name": "חיתולים", "category": "תינוקות", "unit": "מארז" },
-          { "name": "מגבונים לחים", "category": "תינוקות", "unit": "מארז" },
-          { "name": "תחליף חלב (מטרנה/סימילאק)", "category": "תינוקות", "unit": "אריזה" },
-          { "name": "מזון לכלבים", "category": "חיות מחמד", "unit": "שק" },
-          { "name": "מזון לחתולים", "category": "חיות מחמד", "unit": "שק" },
-          { "name": "חול לחתולים", "category": "חיות מחמד", "unit": "שק" },
-          { "name": "נרות שבת", "category": "שונות", "unit": "מארז" },
-          { "name": "סוללות AA", "category": "שונות", "unit": "מארז" },
-          { "name": "טופו", "category": "מוצרי חלב וביצים", "unit": "יח" },          
-          { "name": "סוללות AAA", "category": "שונות", "unit": "מארז" }
-        ];
+        ui.alertClose.addEventListener('click', () => ui.alertModal.classList.add('hidden'));
 
-        // --- ניהול State מקומי ---
-        const state = {
-            user: null,
-            lists: [],
-            items: [],
-            activeListId: localStorage.getItem('familyCart_lastListId') || null,
-            loading: true,
-            searchQuery: '',
-            showCompleted: true,
-            hasCelebrated: false,
-            pendingBarcode: null 
-        };
-
-        let unsubLists = null;
-        let unsubItems = null;
-        let html5QrcodeScanner = null;
-
-        // --- אתחול Firebase והתחברות Google ---
-        onAuthStateChanged(auth, (user) => {
-            state.user = user;
-            if (user) {
-                fetchData();
-            } else {
-                state.loading = false;
-                if(unsubLists) unsubLists();
-                if(unsubItems) unsubItems();
-                renderApp();
+        // ================= Auth =================
+        ui.btnGoogleLogin.addEventListener('click', async () => {
+            if (window.location.protocol === 'file:') {
+                showAlert('שגיאת סביבה', 'התחברות גוגל דורשת שרת (http/https). הרץ את הקובץ דרך VS Code Live Server.', 'error');
+                return;
+            }
+            try {
+                ui.btnGoogleLogin.disabled = true;
+                const provider = new GoogleAuthProvider();
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error(error);
+                ui.loginError.innerText = (error.code === 'auth/unauthorized-domain') ? "דומיין לא מאושר ב-Firebase." : error.message;
+                ui.loginError.classList.remove('hidden');
+                ui.btnGoogleLogin.disabled = false;
             }
         });
 
-        function fetchData() {
-            if (!state.user) return;
-            
-            // נתיב משותף ב-Firebase
-            const listsRef = collection(db, 'artifacts', appId, 'public', 'data', 'lists');
-            unsubLists = onSnapshot(listsRef, (snapshot) => {
-                state.lists = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                state.lists.sort((a, b) => b.createdAt - a.createdAt);
-                
-                if (state.activeListId && !state.lists.find(l => l.id === state.activeListId)) {
-                    setActiveList(null);
+        ui.btnLogout.addEventListener('click', () => signOut(auth));
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                ui.loginScreen.classList.add('hidden');
+                ui.mainApp.classList.remove('hidden');
+                ui.mainApp.classList.add('flex');
+                ui.userName.innerText = user.displayName;
+                if (user.photoURL) {
+                    ui.userAvatar.src = user.photoURL;
+                    ui.userAvatar.classList.remove('hidden');
+                    ui.userAvatarFallback.classList.add('hidden');
                 }
-                
-                state.loading = false;
-                renderApp();
-            });
-
-            // שליפת מוצרים משותפים
-            const itemsRef = collection(db, 'artifacts', appId, 'public', 'data', 'items');
-            unsubItems = onSnapshot(itemsRef, (snapshot) => {
-                state.items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderApp(); 
-                renderSuggestions();
-            });
-        }
-
-        // --- פונקציות עזר (Actions) ---
-
-        window.openHelp = () => {
-            document.getElementById('help-modal').classList.remove('hidden');
-            lucide.createIcons();
-        };
-
-        window.closeHelp = () => {
-            document.getElementById('help-modal').classList.add('hidden');
-        };
-
-        window.loginWithGoogle = async () => {
-            const provider = new GoogleAuthProvider();
-            try {
-                await signInWithPopup(auth, provider);
-            } catch (error) {
-                console.error("Login error", error);
-                alert("שגיאה בהתחברות: " + error.message);
-            }
-        };
-
-        window.logout = async () => {
-            if (!confirm("האם אתה בטוח שברצונך להתנתק?")) return;
-            try {
-                await signOut(auth);
-                state.lists = [];
-                state.items = [];
-                setActiveList(null);
-                window.location.reload(); 
-            } catch (error) {
-                console.error("Logout error", error);
-            }
-        };
-        
-        window.setActiveList = (listId) => {
-            state.activeListId = listId;
-            state.searchQuery = ''; 
-            if (listId) {
-                localStorage.setItem('familyCart_lastListId', listId);
+                loadData();
             } else {
-                localStorage.removeItem('familyCart_lastListId');
+                currentUser = null;
+                ui.loginScreen.classList.remove('hidden');
+                ui.mainApp.classList.add('hidden');
             }
-            renderApp();
-        };
+        });
 
-        window.createList = async (e) => {
-            e.preventDefault();
-            const input = document.getElementById('new-list-name');
-            const name = input.value.trim();
-            if (!name || !state.user) return;
-            
-            try {
-                const listsRef = collection(db, 'artifacts', appId, 'public', 'data', 'lists');
-                await addDoc(listsRef, { name, createdAt: Date.now() });
-                input.value = '';
-            } catch (error) { console.error("Error creating list", error); }
-        };
-
-        window.deleteList = async (listId) => {
-            if (!confirm("האם למחוק רשימה זו?")) return;
-            try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lists', listId));
-                if (state.activeListId === listId) setActiveList(null);
-            } catch (err) { console.error("Error deleting list", err); }
-        };
-
-        window.toggleItem = async (itemId, currentStatus) => {
-            try {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'items', itemId), { 
-                    isBought: !currentStatus 
+        // ================= Navigation =================
+        ui.navBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = btn.getAttribute('data-target');
+                ui.navBtns.forEach(b => {
+                    b.classList.replace('text-blue-600', 'text-gray-400');
+                    b.classList.remove('font-semibold');
+                    b.querySelector('div').classList.remove('bg-blue-100');
                 });
-            } catch (err) { console.error("Error toggling item", err); }
-        };
-
-        window.deleteItem = async (itemId) => {
-            try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'items', itemId));
-            } catch (err) { console.error("Error deleting item", err); }
-        };
-
-        window.showClearModal = () => {
-            document.getElementById('clear-modal').classList.remove('hidden');
-            lucide.createIcons();
-        };
-
-        window.closeClearModal = () => {
-            document.getElementById('clear-modal').classList.add('hidden');
-        };
-
-        window.confirmClear = async () => {
-            const boughtItems = state.items.filter(i => i.listId === state.activeListId && i.isBought);
-            try {
-                const promises = boughtItems.map(item => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'items', item.id)));
-                await Promise.all(promises);
-                closeClearModal();
-            } catch (err) { console.error("Error clearing", err); }
-        };
-
-        window.handleSearchInput = (e) => {
-            state.searchQuery = e.target.value;
-            renderSuggestions();
-        };
-
-        window.renameItem = async (itemId, newName) => {
-            const trimmed = newName.trim();
-            if (!trimmed || !state.user) return;
-            try {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'items', itemId), { name: trimmed });
-            } catch (err) { console.error("Error renaming", err); }
-        };
-
-        // פונקציה לשינוי קטגוריה של מוצר קיים
-        window.updateItemCategory = async (itemId, newCategory) => {
-            try {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'items', itemId), { category: newCategory });
-                // סגירת כל הפופאפים הפתוחים של בחירת קטגוריה
-                document.querySelectorAll('.category-select-popup').forEach(p => p.remove());
-            } catch (err) { console.error("Error changing category", err); }
-        };
-
-        window.toggleCategoryMenu = (event, itemId) => {
-            event.stopPropagation();
-            
-            // בדיקה אם הפופאפ כבר פתוח - אם כן סגור אותו
-            const existing = document.getElementById(`cat-popup-${itemId}`);
-            if (existing) {
-                existing.remove();
-                return;
-            }
-
-            // סגור פופאפים אחרים
-            document.querySelectorAll('.category-select-popup').forEach(p => p.remove());
-
-            // יצירת פופאפ חדש
-            const popup = document.createElement('div');
-            popup.id = `cat-popup-${itemId}`;
-            popup.className = 'category-select-popup p-2 fade-in';
-            
-            // מיקום הפופאפ מתחת לכפתור
-            const rect = event.currentTarget.getBoundingClientRect();
-            popup.style.top = (rect.bottom + window.scrollY + 5) + 'px';
-            popup.style.right = (window.innerWidth - rect.right) + 'px';
-
-            let html = '<div class="text-[10px] font-bold text-gray-400 mb-2 px-2 uppercase tracking-wider">העבר לקטגוריה:</div>';
-            CATEGORIES.forEach(cat => {
-                const colorClass = CATEGORY_COLORS[cat];
-                html += `
-                    <button onclick="updateItemCategory('${itemId}', '${cat}')" 
-                        class="w-full text-right px-3 py-2 text-xs font-bold rounded-lg mb-1 hover:brightness-95 transition-all ${colorClass}">
-                        ${cat}
-                    </button>
-                `;
+                btn.classList.replace('text-gray-400', 'text-blue-600');
+                btn.classList.add('font-semibold');
+                btn.querySelector('div').classList.add('bg-blue-100');
+                ui.tabContents.forEach(t => t.classList.remove('active'));
+                document.getElementById(target).classList.add('active');
+                if (target === 'tab-stats') renderChart();
             });
+        });
 
-            popup.innerHTML = html;
-            document.body.appendChild(popup);
+        // ================= Data Logic =================
+        const getBPStatus = (sys, dia) => {
+            if (!sys || !dia) return { text: "חסר", class: "bg-gray-100 text-gray-600" };
+            if (sys > 180 || dia > 120) return { text: "משבר!", class: "bg-red-600 text-white animate-pulse" };
+            if (sys >= 140 || dia >= 90) return { text: "גבוה 2", class: "bg-red-500 text-white" };
+            if (sys >= 130 || dia >= 80) return { text: "גבוה 1", class: "bg-orange-500 text-white" };
+            if (sys >= 120 && dia < 80) return { text: "מוגבה", class: "bg-yellow-400 text-yellow-900" };
+            return { text: "תקין", class: "bg-green-500 text-white" };
+        };
 
-            // סגירה בלחיצה בחוץ
-            const closeHandler = (e) => {
-                if (!popup.contains(e.target) && e.target !== event.currentTarget) {
-                    popup.remove();
-                    document.removeEventListener('click', closeHandler);
+        let unsubscribeSnapshot = null;
+        const loadData = () => {
+            if (!currentUser) return;
+            const ref = collection(db, 'users', currentUser.uid, 'measurements');
+            if (unsubscribeSnapshot) unsubscribeSnapshot();
+            
+            // הוספת callback לטיפול בשגיאות הרשאה (Rules)
+            unsubscribeSnapshot = onSnapshot(ref, (snapshot) => {
+                measurements = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+                renderHistory();
+                if (document.getElementById('tab-stats').classList.contains('active')) renderChart();
+            }, (error) => {
+                console.error("Firestore Error:", error);
+                if (error.code === 'permission-denied') {
+                    showAlert('שגיאת הרשאות', 'חסרה גישה למסד הנתונים. וודא שהגדרת את ה-Rules ב-Firebase Console לפי ההוראות.', 'error');
                 }
-            };
-            setTimeout(() => document.addEventListener('click', closeHandler), 10);
-        };
-
-        window.addItem = async (name, category, quantity = 1, unit = "יח'", barcode = null) => {
-            if (!name.trim() || !state.user || !state.activeListId) return;
-            
-            const trimmedName = name.trim();
-            const finalBarcode = barcode || state.pendingBarcode;
-            
-            const existingItem = state.items.find(i => i.listId === state.activeListId && i.name === trimmedName);
-            
-            try {
-                if (existingItem) {
-                    const newQty = (parseFloat(existingItem.quantity) || 1) + parseFloat(quantity);
-                    const updates = { 
-                        quantity: newQty,
-                        isBought: false 
-                    };
-                    if (finalBarcode && !existingItem.barcode) {
-                        updates.barcode = finalBarcode;
-                    }
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'items', existingItem.id), updates);
-                } else {
-                    const newItemData = {
-                        listId: state.activeListId,
-                        name: trimmedName,
-                        category: category || 'אחר',
-                        quantity: parseFloat(quantity) || 1,
-                        unit: unit,
-                        isBought: false,
-                        createdAt: Date.now()
-                    };
-                    if (finalBarcode) {
-                        newItemData.barcode = finalBarcode;
-                    }
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'items'), newItemData);
-                }
-                
-                state.pendingBarcode = null;
-                const searchInput = document.getElementById('search-input');
-                state.searchQuery = '';
-                if(searchInput) {
-                    searchInput.value = '';
-                    searchInput.placeholder = "הקלד שם מוצר להוספה...";
-                    searchInput.blur();
-                }
-                
-                renderSuggestions();
-            } catch (err) { console.error("Error adding item", err); }
-        };
-
-        window.submitCustomItem = (e) => {
-            e.preventDefault();
-            const input = document.getElementById('search-input');
-            const val = input.value.trim();
-
-            if(val) {
-                const match = DEFAULT_PRODUCTS.find(p => p.name === val);
-                addItem(val, match ? match.category : 'אחר', 1, match && match.unit ? match.unit : "יח'");
-            }
-        };
-
-        window.updateItemQty = async (itemId, delta) => {
-            const item = state.items.find(i => i.id === itemId);
-            if (!item) return;
-            const newQty = Math.max(0.5, (parseFloat(item.quantity) || 1) + delta);
-            try {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'items', itemId), { quantity: newQty });
-            } catch (err) { console.error("Error updating qty", err); }
-        };
-
-        window.toggleCompleted = () => {
-            state.showCompleted = !state.showCompleted;
-            renderApp();
-        };
-
-        window.openScanner = () => {
-            const modal = document.getElementById('scanner-modal');
-            modal.classList.remove('hidden');
-            
-            html5QrcodeScanner = new Html5Qrcode("reader");
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-            
-            html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess, onScanError)
-            .catch(err => {
-                alert("שגיאה בגישה למצלמה.");
-                closeScanner();
             });
         };
 
-        window.closeScanner = () => {
-            const modal = document.getElementById('scanner-modal');
-            modal.classList.add('hidden');
-            if (html5QrcodeScanner) {
-                html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); }).catch(console.error);
-            }
+        ui.btnSave.addEventListener('click', async () => {
+            if (!currentUser) return;
+            const sys = parseInt(ui.inputSys.value), dia = parseInt(ui.inputDia.value), dt = ui.inputDatetime.value;
+            if (!sys || !dia || !dt) { showAlert('חסר מידע', 'מלא ערכים ותאריך', 'warning'); return; }
+            ui.btnSave.disabled = true;
+            try {
+                await addDoc(collection(db, 'users', currentUser.uid, 'measurements'), {
+                    sys, dia, pulse: parseInt(ui.inputPulse.value) || null,
+                    timestamp: new Date(dt).getTime(), createdAt: Date.now()
+                });
+                showToast('נשמר בהצלחה');
+                ui.formArea.classList.add('hidden');
+                document.querySelector('[data-target="tab-history"]').click();
+            } catch (e) {
+                console.error(e);
+                showAlert('שגיאה', 'השמירה נכשלה. בדוק הרשאות (Rules) ב-Firebase.', 'error');
+            } finally { ui.btnSave.disabled = false; }
+        });
+
+        const renderHistory = () => {
+            const sort = ui.sortSelect.value;
+            let sorted = [...measurements];
+            if (sort === 'newest') sorted.sort((a,b) => b.timestamp - a.timestamp);
+            else if (sort === 'oldest') sorted.sort((a,b) => a.timestamp - b.timestamp);
+            else sorted.sort((a,b) => b.sys - a.sys);
+            
+            ui.historyList.innerHTML = '';
+            if (!sorted.length) { ui.emptyHistory.classList.remove('hidden'); return; }
+            ui.emptyHistory.classList.add('hidden');
+            
+            sorted.forEach(m => {
+                const d = new Date(m.timestamp), st = getBPStatus(m.sys, m.dia);
+                const card = document.createElement('div');
+                card.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center";
+                card.innerHTML = `<div><div class="flex items-center gap-2"><span class="text-xl font-bold">${m.sys}/${m.dia}</span>${m.pulse ? `<span class="text-xs text-red-400 bg-red-50 px-2 rounded-full">${m.pulse}</span>` : ''}</div><span class="text-[10px] text-gray-400">${d.toLocaleDateString('he-IL')} ${d.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})}</span></div><div class="text-left"><span class="w-3 h-3 inline-block rounded-full ${st.class.split(' ')[0]}"></span><p class="text-[10px] text-gray-500">${st.text}</p></div>`;
+                ui.historyList.appendChild(card);
+            });
         };
 
-        document.getElementById('close-scanner').addEventListener('click', closeScanner);
+        ui.sortSelect.addEventListener('change', renderHistory);
 
-        async function onScanSuccess(decodedText, decodedResult) {
-            closeScanner(); 
-            const existingLocalItem = state.items.find(i => i.barcode === decodedText && i.listId === state.activeListId);
-            if (existingLocalItem) {
-                const newQty = (parseFloat(existingLocalItem.quantity) || 1) + 1;
-                updateDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'items', existingLocalItem.id), { 
-                    quantity: newQty,
-                    isBought: false 
-                });
-                return;
-            }
+        const renderChart = () => {
+            if (!measurements.length) return;
+            const recent = [...measurements].sort((a,b) => b.timestamp - a.timestamp).slice(0, 20).reverse();
+            const labels = recent.map(m => new Date(m.timestamp).getDate() + '/' + (new Date(m.timestamp).getMonth()+1));
+            const sys = recent.map(m => m.sys), dia = recent.map(m => m.dia);
+            ui.avgSys.innerText = Math.round(sys.reduce((a,b)=>a+b,0)/sys.length);
+            ui.avgDia.innerText = Math.round(dia.reduce((a,b)=>a+b,0)/dia.length);
+            if (bpChartInstance) bpChartInstance.destroy();
+            bpChartInstance = new Chart(ui.ctxChart, { type: 'line', data: { labels, datasets: [{ label: 'SYS', data: sys, borderColor: '#3b82f6', tension: 0.3 }, { label: 'DIA', data: dia, borderColor: '#4f46e5', tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false } });
+        };
 
+        // ================= OCR =================
+        ui.imageInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            ui.loadingArea.classList.remove('hidden'); ui.loadingArea.classList.add('flex'); ui.formArea.classList.add('hidden');
             try {
-                const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${decodedText}.json`);
+                const base64 = await new Promise(r => {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const MAX = 1024; let w = img.width, h = img.height;
+                            if (w > h && w > MAX) { h *= MAX/w; w = MAX; } else if (h > MAX) { w *= MAX/h; h = MAX; }
+                            canvas.width = w; canvas.height = h;
+                            canvas.getContext('2d').drawImage(img, 0,0,w,h);
+                            r(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+                        };
+                        img.src = ev.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+
+                const apiKey = ""; // <--- הכנס מפתח Gemini כאן
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST', body: JSON.stringify({ contents: [{ parts: [{ text: 'Extract BP: {"sys":n,"dia":n,"pulse":n,"datetime":ISO}. JSON only.' }, { inlineData: { mimeType: "image/jpeg", data: base64 } }] }], generationConfig: { responseMimeType: "application/json" } })
+                });
                 const data = await res.json();
+                const result = JSON.parse(data.candidates[0].content.parts[0].text);
+
+                ui.inputSys.value = result.sys || ''; ui.inputDia.value = result.dia || ''; ui.inputPulse.value = result.pulse || '';
+                const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                ui.inputDatetime.value = result.datetime ? result.datetime.slice(0,16) : now.toISOString().slice(0,16);
                 
-                if (data.status === 1 && data.product) {
-                    let productName = data.product.product_name_he || data.product.product_name || 'מוצר סרוק';
-                    const engToHeb = { "milk": "חלב", "water": "מים", "bread": "לחם", "cheese": "גבינה" };
-                    if (engToHeb[productName.toLowerCase()]) productName = engToHeb[productName.toLowerCase()];
+                const sys = parseInt(ui.inputSys.value), dia = parseInt(ui.inputDia.value);
+                const st = getBPStatus(sys, dia);
+                ui.whoIndicator.className = `text-xs font-bold px-3 py-1 rounded-full ${st.class}`;
+                ui.whoIndicator.innerText = st.text;
 
-                    let cat = 'אחר';
-                    const pTags = (data.product.categories_tags || []).join(' ').toLowerCase();
-                    if (pTags.includes('dairy')) cat = 'מוצרי חלב וביצים';
-                    else if (pTags.includes('snack')) cat = 'דגנים וחטיפים';
-                    else if (pTags.includes('drink')) cat = 'משקאות';
-                    
-                    addItem(productName, cat, 1, "יח'", decodedText);
-                } else {
-                    addItem('מוצר סרוק', 'אחר', 1, "יח'", decodedText);
-                }
+                ui.loadingArea.classList.add('hidden'); ui.formArea.classList.remove('hidden');
             } catch (err) {
-                addItem('מוצר סרוק', 'אחר', 1, "יח'", decodedText);
+                console.error(err); ui.loadingArea.classList.add('hidden'); ui.formArea.classList.remove('hidden');
+                showAlert('שגיאה', 'לא הצלחנו לפענח. הזן ידנית.', 'error');
             }
-        }
+            e.target.value = '';
+        });
 
-        function onScanError(errorMessage) {}
-
-        const appContainer = document.getElementById('app');
-
-        function renderLoginScreen() {
-            return `
-                <div class="min-h-[100dvh] flex flex-col items-center justify-center p-6 bg-emerald-500 text-white fade-in text-center">
-                    <div class="bg-white/20 p-5 rounded-3xl mb-8">
-                        <i data-lucide="shopping-cart" class="w-16 h-16"></i>
-                    </div>
-                    <h1 class="text-4xl font-bold mb-3 tracking-tight">FamilyCart</h1>
-                    <p class="text-emerald-100 mb-12 text-lg px-4">התחברו עם גוגל כדי לשתף רשימות קניות עם כל המשפחה.</p>
-                    <button onclick="loginWithGoogle()" class="bg-white text-emerald-600 px-8 py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-gray-50 hover:-translate-y-1 active:scale-95 transition-all flex items-center gap-4 border border-emerald-100">
-                        <svg class="w-7 h-7" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                        התחברות עם Google
-                    </button>
-                </div>
-            `;
-        }
-
-        function renderApp() {
-            if (state.loading) {
-                appContainer.innerHTML = `<div class="min-h-[100dvh] flex items-center justify-center text-emerald-500"><i data-lucide="loader-2" class="w-10 h-10 animate-spin"></i></div>`;
-                lucide.createIcons();
-                return;
-            }
-
-            if (!state.user) {
-                appContainer.innerHTML = renderLoginScreen();
-                lucide.createIcons();
-                return;
-            }
-
-            if (!state.activeListId) {
-                appContainer.innerHTML = renderListsManager();
-            } else {
-                const activeList = state.lists.find(l => l.id === state.activeListId);
-                if(activeList) {
-                    appContainer.innerHTML = renderShoppingListWrapper(activeList);
-                    renderDynamicListContent();
-                    renderSuggestions();
-                } else {
-                    setActiveList(null);
-                }
-            }
-            lucide.createIcons();
-        }
-
-        function renderListsManager() {
-            const listsHtml = state.lists.length === 0 ? `
-                <div class="text-center text-gray-400 py-16 flex flex-col items-center fade-in">
-                    <i data-lucide="package-open" class="w-16 h-16 mb-4 opacity-50"></i>
-                    <p>אין רשימות עדיין.<br/>צור רשימה חדשה כדי להתחיל!</p>
-                </div>
-            ` : state.lists.map(list => `
-                <div onclick="setActiveList('${list.id}')" class="group flex items-center justify-between bg-white border border-gray-100 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer mb-3 fade-in">
-                    <div class="flex items-center gap-4">
-                        <div class="bg-emerald-100 text-emerald-600 p-2.5 rounded-xl"><i data-lucide="list" class="w-5 h-5"></i></div>
-                        <span class="font-bold text-lg text-gray-800">${list.name}</span>
-                    </div>
-                    <button onclick="event.stopPropagation(); deleteList('${list.id}')" class="text-gray-300 hover:text-red-500 p-2 transition-colors"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
-                </div>
-            `).join('');
-
-            const userName = state.user.displayName || state.user.email?.split('@')[0] || 'משפחה';
-            const userPhoto = state.user.photoURL || `https://ui-avatars.com/api/?name=${userName}&background=random`;
-
-            return `
-                <header class="bg-emerald-500 text-white p-6 rounded-b-[2rem] shadow-md z-30 sticky top-0">
-                    <div class="flex justify-between items-start mb-2">
-                        <div class="flex items-center gap-3">
-                            <div class="bg-white/20 p-2 rounded-xl"><i data-lucide="shopping-cart" class="w-8 h-8"></i></div>
-                            <h1 class="text-3xl font-bold tracking-tight">FamilyCart</h1>
-                        </div>
-                        <div class="flex flex-col items-end gap-1">
-                            <img src="${userPhoto}" alt="פרופיל" class="w-10 h-10 rounded-full border-2 border-white/50 object-cover shadow-sm">
-                            <div class="flex gap-2 mt-1">
-                                <button onclick="openHelp()" class="text-xs bg-white/20 hover:bg-white/30 text-white px-2 py-0.5 rounded-md transition-colors flex items-center gap-1"><i data-lucide="help-circle" class="w-3 h-3"></i> עזרה</button>
-                                <button onclick="logout()" class="text-xs bg-black/10 hover:bg-black/20 text-emerald-100 hover:text-white px-2 py-0.5 rounded-md transition-colors">התנתק</button>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="text-emerald-50 opacity-90 text-sm mt-1">שלום ${userName}, ברוכים הבאים!</p>
-                </header>
-                <main class="p-4 bg-gray-50 flex-1 flex flex-col">
-                    <form onsubmit="createList(event)" class="flex gap-2 mb-8 mt-2 relative fade-in">
-                        <input type="text" id="new-list-name" placeholder="רשימה חדשה..." class="flex-1 border-gray-200 border bg-white rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm text-base">
-                        <button type="submit" class="bg-emerald-500 text-white rounded-2xl p-3 shadow-md hover:bg-emerald-600 transition-all flex items-center justify-center aspect-square"><i data-lucide="plus" class="w-6 h-6"></i></button>
-                    </form>
-                    <div class="space-y-1 mb-8">
-                        <h2 class="font-semibold text-gray-500 mb-4 px-2">הרשימות שלי</h2>
-                        ${listsHtml}
-                    </div>
-                    <div class="mt-auto pt-8 pb-4 text-center text-sm text-gray-400 fade-in">פותח על ידי OBN. <a href="mailto:ofirbn@post.com" class="text-emerald-500 hover:text-emerald-600 underline font-medium transition-colors">ליצירת קשר</a>.</div>
-                </main>
-            `;
-        }
-
-        function renderShoppingListWrapper(list) {
-            return `
-                <header class="bg-white px-4 py-3 shadow-sm flex flex-col gap-3 border-b border-gray-100 z-30 sticky top-0">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <button onclick="setActiveList(null)" class="p-2 -mr-2 bg-gray-50 rounded-full hover:bg-gray-100 transition-colors"><i data-lucide="arrow-right" class="w-5 h-5 text-gray-600"></i></button>
-                            <h2 class="text-xl font-bold text-gray-800 truncate max-w-[200px]">${list.name}</h2>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <button onclick="openHelp()" class="p-1.5 text-gray-400 hover:text-emerald-500 bg-gray-50 hover:bg-emerald-50 rounded-full transition-colors"><i data-lucide="help-circle" class="w-5 h-5"></i></button>
-                            <div id="progress-text" class="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full"></div>
-                        </div>
-                    </div>
-                    <div class="w-full bg-gray-100 rounded-full h-4 overflow-hidden relative mt-1">
-                        <div id="progress-bar" class="bg-emerald-500 h-4 rounded-full transition-all duration-500 ease-out flex items-center justify-center text-[10px] font-bold text-white shadow-inner" style="width: 0%"></div>
-                    </div>
-                    <div class="relative mt-2">
-                        <form onsubmit="submitCustomItem(event)" class="flex gap-2 relative">
-                            <div class="relative flex-1">
-                                <input type="text" id="search-input" autocomplete="off" oninput="handleSearchInput(event)" placeholder="הקלד שם מוצר להוספה..." class="w-full border-gray-200 border bg-gray-50 rounded-2xl py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white text-base transition-colors font-medium">
-                                <button type="button" onclick="openScanner()" class="absolute left-2 top-2 p-1.5 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors shadow-sm"><i data-lucide="camera" class="w-5 h-5"></i></button>
-                            </div>
-                            <button type="submit" class="bg-emerald-500 text-white rounded-2xl px-5 font-bold shadow-md hover:bg-emerald-600 transition-colors shrink-0">הוסף</button>
-                        </form>
-                        <div id="suggestions-box" class="absolute top-full mt-2 left-0 right-0 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 empty:hidden max-h-60 overflow-y-auto"></div>
-                    </div>
-                </header>
-                <main id="list-content" class="p-4 space-y-6 bg-gray-50 pb-32 relative flex-1"></main>
-            `;
-        }
-
-        function renderSuggestions() {
-            const box = document.getElementById('suggestions-box');
-            if (!box) return;
-            const q = state.searchQuery.trim();
-            if (!q) { box.innerHTML = ''; return; }
-
-            const suggestions = DEFAULT_PRODUCTS.filter(p => p.name.includes(q)).slice(0, 6);
-            const activeItemNames = state.items.filter(i => i.listId === state.activeListId && !i.isBought).map(i => i.name);
-
-            if (suggestions.length === 0) {
-                box.innerHTML = `<div class="p-4 text-sm text-gray-500 text-center bg-gray-50">לא נמצא במאגר. לחץ "הוסף" ליצירת מוצר חדש.</div>`;
-                return;
-            }
-
-            const escapeInline = (str) => (!str ? '' : String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;'));
-
-            box.innerHTML = suggestions.map(p => {
-                const isDuplicate = activeItemNames.includes(p.name);
-                const duplicateBadge = isDuplicate ? `<span class="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded mr-2">+ כמות</span>` : '';
-                return `
-                    <div onclick="addItem('${escapeInline(p.name)}', '${escapeInline(p.category)}', 1, '${escapeInline(p.unit || "יח'")}')" class="p-3 hover:bg-emerald-50 cursor-pointer flex justify-between items-center border-b border-gray-50 last:border-0 transition-colors">
-                        <div class="flex items-center"><span class="font-bold text-gray-800">${p.name}</span>${duplicateBadge}</div>
-                        <div class="flex items-center gap-2"><span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-md border border-gray-200">${p.unit || "יח'"}</span><i data-lucide="plus" class="w-4 h-4 text-emerald-500 opacity-50"></i></div>
-                    </div>
-                `;
-            }).join('');
-            lucide.createIcons();
-        }
-
-        function renderDynamicListContent() {
-            const contentDiv = document.getElementById('list-content');
-            const progressText = document.getElementById('progress-text');
-            const progressBar = document.getElementById('progressBar');
-            if (!contentDiv) return;
-
-            const listItems = state.items.filter(i => i.listId === state.activeListId);
-            const unbought = listItems.filter(i => !i.isBought);
-            const bought = listItems.filter(i => i.isBought);
-            const progress = listItems.length === 0 ? 0 : Math.round((bought.length / listItems.length) * 100);
-
-            if(progressText) progressText.innerText = `${unbought.length} נותרו`;
-            const pb = document.getElementById('progress-bar');
-            if(pb) {
-                pb.style.width = listItems.length === 0 ? '0%' : `${progress}%`;
-                pb.innerText = progress > 5 ? `${progress}%` : ''; 
-            }
-
-            if (progress === 100 && listItems.length > 0 && !state.hasCelebrated) {
-                state.hasCelebrated = true;
-                confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, zIndex: 100, colors: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'] });
-            } else if (progress < 100) { state.hasCelebrated = false; }
-
-            if (unbought.length === 0 && bought.length === 0) {
-                contentDiv.innerHTML = `<div class="text-center text-gray-400 py-20 flex flex-col items-center"><i data-lucide="shopping-cart" class="w-16 h-16 mb-4 opacity-30"></i><p class="text-lg font-medium">הרשימה ריקה</p></div>`;
-                lucide.createIcons(); return;
-            }
-
-            const groups = {};
-            unbought.forEach(item => {
-                const cat = item.category || 'אחר';
-                if (!groups[cat]) groups[cat] = [];
-                groups[cat].push(item);
-            });
-
-            const escapeVal = (str) => (!str ? '' : String(str).replace(/"/g, '&quot;'));
-
-            let html = '';
-            Object.entries(groups).forEach(([category, items]) => {
-                const colorClass = CATEGORY_COLORS[category] || CATEGORY_COLORS['אחר'];
-                html += `
-                    <div class="space-y-2">
-                        <h3 class="text-xs font-bold px-3 py-1 inline-block rounded-lg ${colorClass}">${category}</h3>
-                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
-                            ${items.map(item => `
-                                <div class="flex items-center justify-between p-3.5 hover:bg-gray-50 transition-colors group">
-                                    <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="toggleItem('${item.id}', false)">
-                                        <div class="w-6 h-6 rounded-full flex items-center justify-center border-2 border-gray-300 group-hover:border-emerald-400 transition-colors shrink-0"></div>
-                                        <div class="flex flex-col flex-1 min-w-0 pr-1">
-                                            <input type="text" value="${escapeVal(item.name)}" 
-                                                onblur="renameItem('${item.id}', this.value)" 
-                                                onkeydown="if(event.key==='Enter') this.blur();" 
-                                                onclick="event.stopPropagation();" 
-                                                class="bg-transparent text-base text-gray-800 font-bold truncate outline-none border-b border-transparent focus:border-emerald-400 focus:bg-white w-full rounded transition-all py-1">
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="flex items-center bg-gray-100 rounded-lg p-0.5 ml-2 border border-gray-200 shrink-0">
-                                        <button onclick="event.stopPropagation(); updateItemQty('${item.id}', -1)" class="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-200 active:bg-gray-300 active:scale-95 rounded-md transition-all font-bold text-lg leading-none">-</button>
-                                        <span class="text-xs font-bold text-gray-800 w-14 text-center select-none">${item.quantity || 1} ${item.unit || "יח'"}</span>
-                                        <button onclick="event.stopPropagation(); updateItemQty('${item.id}', 1)" class="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-200 active:bg-gray-300 active:scale-95 rounded-md transition-all font-bold text-lg leading-none">+</button>
-                                    </div>
-
-                                    <!-- כפתור שינוי קטגוריה פרואקטיבי -->
-                                    <button onclick="toggleCategoryMenu(event, '${item.id}')" class="p-2 text-gray-300 hover:text-indigo-500 rounded-xl transition-all shrink-0">
-                                        <i data-lucide="tag" class="w-4 h-4"></i>
-                                    </button>
-
-                                    <button onclick="deleteItem('${item.id}')" class="p-2 text-gray-300 hover:text-red-500 rounded-xl transition-all shrink-0">
-                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                    </button>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            });
-
-            if (bought.length > 0) {
-                const chevronIcon = state.showCompleted ? 'chevron-up' : 'chevron-down';
-                html += `
-                    <div class="mt-8 border-t border-gray-200 pt-6 pb-6">
-                        <div class="flex items-center justify-between px-2 mb-3">
-                            <button onclick="toggleCompleted()" class="flex items-center gap-2 text-gray-500 hover:text-gray-700 font-semibold text-sm transition-colors">הושלמו (${bought.length})<i data-lucide="${chevronIcon}" class="w-4 h-4"></i></button>
-                            ${state.showCompleted ? `<button onclick="showClearModal()" class="text-xs font-bold text-red-600 bg-red-50 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-red-100 transition-colors"><i data-lucide="trash-2" class="w-3 h-3"></i> נקה הכל</button>` : ''}
-                        </div>
-                        ${state.showCompleted ? `
-                            <div class="bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden divide-y divide-gray-100 opacity-80">
-                                ${bought.map(item => `
-                                    <div class="flex items-center justify-between p-3.5 bg-gray-100">
-                                        <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="toggleItem('${item.id}', true)">
-                                            <div class="w-6 h-6 rounded-full flex items-center justify-center border-2 bg-emerald-500 border-emerald-500 shadow-sm shrink-0"><i data-lucide="check" class="w-4 h-4 text-white"></i></div>
-                                            <div class="flex items-center gap-2 text-gray-500 line-through decoration-emerald-500/50"><span class="text-base">${item.name}</span><span class="text-xs bg-gray-200 px-2 py-0.5 rounded-md">${item.quantity || 1} ${item.unit || "יח'"}</span></div>
-                                        </div>
-                                        <button onclick="deleteItem('${item.id}')" class="p-2 text-gray-400 hover:text-red-500 transition-all shrink-0"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            }
-            contentDiv.innerHTML = html;
-            lucide.createIcons();
-        }
+        ui.btnExport.addEventListener('click', () => {
+            if (!measurements.length) return;
+            let csv = "\uFEFFתאריך,סיסטולי,דיאסטולי,דופק\n";
+            measurements.forEach(m => csv += `${new Date(m.timestamp).toLocaleDateString()},${m.sys},${m.dia},${m.pulse||''}\n`);
+            const blob = new Blob([csv], {type:'text/csv'}), url = URL.createObjectURL(blob), a = document.createElement('a');
+            a.href = url; a.download = "BP_Report.csv"; a.click();
+        });
     </script>
 </body>
 </html>
