@@ -61,7 +61,6 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<!-- הוחלף h-screen ל- h-[100dvh] כדי לפתור בעיות גלילה וכתובת דפדפן במובייל -->
 <body class="text-gray-800 h-[100dvh] flex flex-col overflow-hidden">
 
     <!-- Login Screen -->
@@ -82,7 +81,6 @@
     </div>
 
     <!-- Main App -->
-    <!-- הוסף flex-1 כדי לתפוס את הגובה הנותר ולאפשר גלילה פנימית -->
     <div id="main-app" class="hidden flex-col flex-1 w-full relative overflow-hidden">
         
         <header class="glass-header sticky top-0 z-40 px-5 py-4 flex justify-between items-center shadow-sm">
@@ -105,7 +103,7 @@
             
             <!-- Tab 1: New/Edit Measurement -->
             <div id="tab-new" class="tab-content active space-y-6">
-                <!-- API Key Warning if not set -->
+                <!-- API Key Warning -->
                 <div id="api-warning" class="hidden bg-amber-50 border border-amber-200 p-4 rounded-xl text-amber-800 text-sm flex items-start gap-3">
                     <i class="fa-solid fa-circle-exclamation mt-1"></i>
                     <div>
@@ -117,14 +115,23 @@
 
                 <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
                     <i class="fa-solid fa-robot absolute -left-4 -bottom-4 text-8xl opacity-10"></i>
-                    <h3 class="text-xl font-bold mb-2">מדידה חדשה בקליק</h3>
-                    <p class="text-blue-100 text-sm mb-5">צלם את מסך מד לחץ הדם שלך, או העלה תמונה מהגלריה.</p>
+                    <h3 class="text-xl font-bold mb-2">מדידה חדשה</h3>
+                    <p class="text-blue-100 text-sm mb-5">הבינה המלאכותית תפענח עבורך את מסך לחץ הדם באופן אוטומטי.</p>
                     
-                    <label id="camera-label" class="w-full bg-white text-blue-600 font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-gray-50 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95">
-                        <i class="fa-solid fa-camera-rotate"></i>
-                        בחר תמונה או צלם
-                        <input type="file" id="image-input" accept="image/*" class="hidden">
-                    </label>
+                    <!-- Proactive Design: 2 Distinct Buttons for OS compatibility -->
+                    <div class="flex gap-3 relative z-10">
+                        <label class="flex-1 bg-white text-blue-600 font-bold py-4 px-2 rounded-xl shadow-md hover:bg-gray-50 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer active:scale-95 text-sm">
+                            <i class="fa-solid fa-camera text-2xl mb-1 text-blue-500"></i>
+                            צלם במקום
+                            <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden">
+                        </label>
+                        
+                        <label class="flex-1 bg-white/20 backdrop-blur-sm border border-white/30 text-white font-bold py-4 px-2 rounded-xl shadow-md hover:bg-white/30 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer active:scale-95 text-sm">
+                            <i class="fa-solid fa-images text-2xl mb-1"></i>
+                            מהגלריה
+                            <input type="file" id="gallery-input" accept="image/*" class="hidden">
+                        </label>
+                    </div>
                 </div>
 
                 <div id="loading-area" class="hidden flex-col items-center justify-center py-10">
@@ -324,7 +331,7 @@
         let measurements = [];
         let bpChartInstance = null;
         let userSettings = { geminiApiKey: '', geminiModel: 'gemini-2.5-flash-lite' };
-        let editingId = null; // משתנה למעקב אחר מצב עריכה
+        let editingId = null;
 
         const ui = {
             loginScreen: document.getElementById('login-screen'),
@@ -337,7 +344,11 @@
             btnLogout: document.getElementById('btn-logout'),
             navBtns: document.querySelectorAll('.nav-btn'),
             tabContents: document.querySelectorAll('.tab-content'),
-            imageInput: document.getElementById('image-input'),
+            
+            // Image inputs (Split into two)
+            cameraInput: document.getElementById('camera-input'),
+            galleryInput: document.getElementById('gallery-input'),
+            
             loadingArea: document.getElementById('loading-area'),
             formArea: document.getElementById('form-area'),
             formTitle: document.getElementById('form-title'),
@@ -530,7 +541,8 @@
             ui.formTitle.innerText = 'אימות נתונים';
             ui.btnSave.innerHTML = '<i class="fa-solid fa-check ml-2"></i>אשר ושמור';
             ui.formArea.classList.add('hidden');
-            ui.imageInput.value = '';
+            ui.cameraInput.value = '';
+            ui.galleryInput.value = '';
             ui.inputSys.value = '';
             ui.inputDia.value = '';
             ui.inputPulse.value = '';
@@ -551,12 +563,10 @@
                 };
 
                 if (editingId) {
-                    // עדכון רשומה קיימת
                     const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'measurements', editingId);
                     await setDoc(docRef, data, { merge: true });
                     showToast('המדידה עודכנה בהצלחה');
                 } else {
-                    // הוספת רשומה חדשה
                     data.createdAt = Date.now();
                     await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'measurements'), data);
                     showToast('המדידה נשמרה');
@@ -590,22 +600,18 @@
             ui.inputDia.value = m.dia;
             ui.inputPulse.value = m.pulse || '';
             
-            // המרת Timestamp לתצוגה המקומית בתיבת הטקסט
             const date = new Date(m.timestamp);
             date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
             ui.inputDatetime.value = date.toISOString().slice(0, 16);
             
             updateInputsAndIndicator();
             
-            // שינוי תצוגת הטופס
             ui.formTitle.innerText = 'עריכת נתונים';
             ui.btnSave.innerHTML = '<i class="fa-solid fa-arrows-rotate ml-2"></i>עדכן נתונים';
             ui.formArea.classList.remove('hidden');
             
-            // מעבר לטאב הטופס
             document.querySelector('[data-target="tab-new"]').click();
             
-            // גלילה פרואקטיבית לאזור הטופס
             setTimeout(() => {
                 ui.formArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 100);
@@ -689,11 +695,12 @@
             if (success) showToast("מפתח תקין!"); else showAlert("שגיאה", "המפתח אינו תקין.", "error");
         });
 
-        ui.imageInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0]; if (!file || !userSettings.geminiApiKey) return;
+        // פונקציה משותפת לפענוח תמונה (בין אם מהמצלמה או מהגלריה)
+        const processImage = async (e) => {
+            const file = e.target.files[0]; 
+            if (!file || !userSettings.geminiApiKey) return;
             
-            // אם משתמש העלה תמונה, נוודא שאנחנו לא במצב עריכה
-            resetForm();
+            resetForm(); // מנקה את הטופס אם היה במצב עריכה
             
             ui.loadingArea.classList.remove('hidden'); ui.loadingArea.classList.add('flex'); ui.formArea.classList.add('hidden');
             try {
@@ -717,7 +724,7 @@
                 const model = userSettings.geminiModel || 'gemini-2.5-flash-lite';
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${userSettings.geminiApiKey}`, {
                     method: 'POST', body: JSON.stringify({ 
-                        contents: [{ parts: [{ text: 'Return JSON: {"sys":number,"dia":number,"pulse":number,"datetime":"YYYY-MM-DDTHH:MM"}. Use current year if missing.' }, { inlineData: { mimeType: "image/jpeg", data: base64 } }] }], 
+                        contents: [{ parts: [{ text: 'Analyze this blood pressure monitor. Return ONLY a valid JSON: {"sys":number,"dia":number,"pulse":number}. Do not extract date or time.' }, { inlineData: { mimeType: "image/jpeg", data: base64 } }] }], 
                         generationConfig: { responseMimeType: "application/json" } 
                     })
                 });
@@ -725,17 +732,35 @@
                 if (!res.ok) throw new Error();
                 const data = await res.json();
                 const result = JSON.parse(data.candidates[0].content.parts[0].text);
-                ui.inputSys.value = result.sys || ''; ui.inputDia.value = result.dia || ''; ui.inputPulse.value = result.pulse || '';
+                
+                ui.inputSys.value = result.sys || ''; 
+                ui.inputDia.value = result.dia || ''; 
+                ui.inputPulse.value = result.pulse || '';
+                
+                // תמיד להגדיר את השעה הנוכחית כברירת מחדל, ללא קשר לבינה המלאכותית
                 const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-                ui.inputDatetime.value = result.datetime ? result.datetime.slice(0,16) : now.toISOString().slice(0,16);
+                ui.inputDatetime.value = now.toISOString().slice(0,16);
+                
                 updateInputsAndIndicator();
-                ui.loadingArea.classList.add('hidden'); ui.formArea.classList.remove('hidden');
+                ui.loadingArea.classList.add('hidden'); 
+                ui.formArea.classList.remove('hidden');
+                
+                // גלילה חלקה לטופס
+                setTimeout(() => { ui.formArea.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
+
             } catch (err) {
                 ui.loadingArea.classList.add('hidden'); ui.formArea.classList.remove('hidden');
                 showAlert('פענוח נכשל', 'אנא הזן ידנית.', 'error');
             }
-            e.target.value = '';
-        });
+            
+            // מאפס את ה-inputs כדי שאפשר יהיה לבחור שוב את אותה תמונה
+            ui.cameraInput.value = '';
+            ui.galleryInput.value = '';
+        };
+
+        // הצמדת הפונקציה המשותפת לשני סוגי הקלטים
+        ui.cameraInput.addEventListener('change', processImage);
+        ui.galleryInput.addEventListener('change', processImage);
 
         const updateInputsAndIndicator = () => {
             const sys = parseInt(ui.inputSys.value), dia = parseInt(ui.inputDia.value);
