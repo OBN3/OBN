@@ -116,7 +116,7 @@
                 <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
                     <i class="fa-solid fa-robot absolute -left-4 -bottom-4 text-8xl opacity-10"></i>
                     <h3 class="text-xl font-bold mb-2">מדידה חדשה בקליק</h3>
-                    <p class="text-blue-100 text-sm mb-5">צלם את מסך מד לחץ הדם שלך, או העלה תמונה קיימת.</p>
+                    <p class="text-blue-100 text-sm mb-5">צלם את מסך מד לחץ הדם שלך, או העלה תמונה מהגלריה.</p>
                     
                     <label id="camera-label" class="w-full bg-white text-blue-600 font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-gray-50 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95">
                         <i class="fa-solid fa-camera-rotate"></i>
@@ -221,7 +221,7 @@
                             </div>
                             <p class="text-[11px] text-gray-400 mt-2">
                                 המפתח נשמר בצורה מאובטחת בחשבון ה-Firebase הפרטי שלך.
-                                <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-500 underline mr-1">איך משיגים מפתח?</a>
+                                <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-500 underline mr-1 text-xs">איך משיגים מפתח?</a>
                             </p>
                         </div>
 
@@ -294,7 +294,7 @@
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, doc, setDoc, getDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Setup
+        // Firebase Setup - Uses your provided config
         const firebaseConfig = {
             apiKey: "AIzaSyAS5Rt-w9xTwgDmkffW_q4HzoUTK6QMRWY",
             authDomain: "obn-bp.firebaseapp.com",
@@ -306,7 +306,9 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'obn-bp-app';
+        
+        // Use your project ID as the appId for consistent pathing
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'obn-bp';
 
         // Global State
         let currentUser = null;
@@ -376,7 +378,7 @@
         
         ui.alertClose.addEventListener('click', () => ui.alertModal.classList.add('hidden'));
 
-        // ================= Settings Persistence =================
+        // ================= Settings Management =================
         const saveUserSettings = async () => {
             if (!currentUser) return;
             const key = ui.inputApiKey.value.trim();
@@ -384,7 +386,7 @@
                 ui.btnSaveSettings.disabled = true;
                 ui.btnSaveSettings.innerText = "שומר...";
                 
-                // שימוש בנתיב המנדטורי artifacts/{appId}/users/{userId}/settings/config
+                // Using mandatory path: artifacts/{appId}/users/{userId}/settings/config
                 const settingsRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'config');
                 await setDoc(settingsRef, { geminiApiKey: key }, { merge: true });
                 
@@ -393,7 +395,10 @@
                 showToast("ההגדרות נשמרו בהצלחה");
             } catch (error) {
                 console.error("Settings save error:", error);
-                showAlert("שגיאה", "לא הצלחנו לשמור את ההגדרות. וודא שחוקי ה-Rules ב-Firebase הוגדרו נכון עבור נתיב ה-artifacts.", "error");
+                const msg = error.code === 'permission-denied' ? 
+                    "שגיאת הרשאות: וודא שהגדרת את ה-Rules ב-Firebase Console עבור נתיב ה-artifacts." : 
+                    "לא הצלחנו לשמור את ההגדרות. " + error.message;
+                showAlert("שגיאה", msg, "error");
             } finally {
                 ui.btnSaveSettings.disabled = false;
                 ui.btnSaveSettings.innerText = "שמור הגדרות";
@@ -431,7 +436,7 @@
             ui.btnToggleKey.innerHTML = isPass ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>';
         });
 
-        // ================= Auth =================
+        // ================= Authentication =================
         ui.btnGoogleLogin.addEventListener('click', async () => {
             if (window.location.protocol === 'file:') {
                 showAlert('שגיאת סביבה', 'התחברות גוגל דורשת שרת (http/https). הרץ את הקובץ דרך שרת מקומי.', 'error');
@@ -493,7 +498,7 @@
             });
         });
 
-        // ================= Data & Logic =================
+        // ================= Data Operations =================
         const getBPStatus = (sys, dia) => {
             if (!sys || !dia) return { text: "חסר", class: "bg-gray-100 text-gray-600" };
             if (sys > 180 || dia > 120) return { text: "משבר!", class: "bg-red-600 text-white animate-pulse" };
@@ -506,7 +511,7 @@
         let unsubscribeSnapshot = null;
         const loadData = () => {
             if (!currentUser) return;
-            // שימוש בנתיב המנדטורי artifacts/{appId}/users/{userId}/measurements
+            // Using mandatory path: artifacts/{appId}/users/{userId}/measurements
             const ref = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'measurements');
             if (unsubscribeSnapshot) unsubscribeSnapshot();
             
@@ -515,9 +520,9 @@
                 renderHistory();
                 if (document.getElementById('tab-stats').classList.contains('active')) renderChart();
             }, (error) => {
-                console.error("Firestore Error:", error);
+                console.error("Firestore Fetch Error:", error);
                 if (error.code === 'permission-denied') {
-                    showAlert('שגיאת הרשאות', 'חסרה גישה למסד הנתונים. וודא שהגדרת את ה-Rules ב-Firebase עבור נתיב ה-artifacts.', 'error');
+                    showAlert('שגיאת הרשאות', 'חסרה גישה למסד הנתונים. וודא שהגדרת את ה-Rules ב-Firebase Console עבור נתיב ה-artifacts.', 'error');
                 }
             });
         };
@@ -536,9 +541,12 @@
                 showToast('המדידה נשמרה בהצלחה');
                 ui.formArea.classList.add('hidden');
                 document.querySelector('[data-target="tab-history"]').click();
-            } catch (e) {
-                console.error(e);
-                showAlert('שגיאה', 'השמירה נכשלה. בדוק את חיבור האינטרנט ואת הרשאות ה-Firebase.', 'error');
+            } catch (error) {
+                console.error("Save Measurement Error:", error);
+                const msg = error.code === 'permission-denied' ? 
+                    "שגיאת הרשאות: הגישה נחסמה על ידי Firebase Rules." : 
+                    "השמירה נכשלה. " + error.message;
+                showAlert('שגיאה', msg, 'error');
             } finally { ui.btnSave.disabled = false; }
         });
 
@@ -555,16 +563,18 @@
                 await deleteDoc(docRef);
                 showToast('המדידה נמחקה');
             } catch (e) {
-                console.error(e);
+                console.error("Delete Error:", e);
                 showAlert('שגיאה', 'מחיקת המדידה נכשלה.', 'error');
             }
         };
 
-        window.handleDelete = deleteMeasurement; // Expossing to global for inline onclick
+        window.handleDelete = deleteMeasurement; // Global exposing for inline onclick
 
         const renderHistory = () => {
             const sort = ui.sortSelect.value;
             let sorted = [...measurements];
+            
+            // Perform sorting in JS (Rule 2)
             if (sort === 'newest') sorted.sort((a,b) => b.timestamp - a.timestamp);
             else if (sort === 'oldest') sorted.sort((a,b) => a.timestamp - b.timestamp);
             else sorted.sort((a,b) => b.sys - a.sys);
@@ -578,22 +588,22 @@
                 const card = document.createElement('div');
                 card.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center";
                 card.innerHTML = `
-                    <div>
+                    <div class="flex-1">
                         <div class="flex items-center gap-2">
                             <span class="text-xl font-bold text-gray-800">${m.sys}/${m.dia}</span>
                             ${m.pulse ? `<span class="text-xs text-red-500 bg-red-50 px-2 rounded-full font-medium"><i class="fa-solid fa-heart-pulse mr-1"></i>${m.pulse}</span>` : ''}
                         </div>
                         <span class="text-[10px] text-gray-400 font-medium">
-                            <i class="fa-regular fa-calendar ml-1"></i>${d.toLocaleDateString('he-IL')} 
-                            <i class="fa-regular fa-clock mr-2 ml-1"></i>${d.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})}
+                            <i class="fa-regular fa-calendar ml-1 text-blue-400"></i>${d.toLocaleDateString('he-IL')} 
+                            <i class="fa-regular fa-clock mr-2 ml-1 text-blue-400"></i>${d.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})}
                         </span>
                     </div>
                     <div class="flex items-center gap-4">
-                        <div class="text-left flex flex-col items-end">
+                        <div class="text-left flex flex-col items-end min-w-[70px]">
                             <span class="w-2.5 h-2.5 rounded-full ${st.class.split(' ')[0]} mb-1"></span>
                             <span class="text-[9px] text-gray-500 font-bold">${st.text}</span>
                         </div>
-                        <button onclick="handleDelete('${m.id}')" class="text-gray-300 hover:text-red-500 transition-colors p-2">
+                        <button onclick="handleDelete('${m.id}')" class="text-gray-300 hover:text-red-500 transition-colors p-2 active:scale-90">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
@@ -606,6 +616,7 @@
 
         const renderChart = () => {
             if (!measurements.length) return;
+            // Take recent 15 records for visualization
             const recent = [...measurements].sort((a,b) => b.timestamp - a.timestamp).slice(0, 15).reverse();
             const labels = recent.map(m => new Date(m.timestamp).getDate() + '/' + (new Date(m.timestamp).getMonth()+1));
             const sysValues = recent.map(m => m.sys), diaValues = recent.map(m => m.dia);
@@ -619,8 +630,8 @@
                 data: { 
                     labels, 
                     datasets: [
-                        { label: 'SYS', data: sysValues, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.3, fill: true }, 
-                        { label: 'DIA', data: diaValues, borderColor: '#4f46e5', tension: 0.3 }
+                        { label: 'SYS', data: sysValues, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.3, fill: true, pointRadius: 4 }, 
+                        { label: 'DIA', data: diaValues, borderColor: '#4f46e5', tension: 0.3, pointRadius: 4 }
                     ] 
                 }, 
                 options: { 
@@ -628,14 +639,14 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        y: { min: 40, grid: { color: 'rgba(0,0,0,0.03)' } },
+                        y: { min: 40, max: 200, grid: { color: 'rgba(0,0,0,0.03)' } },
                         x: { grid: { display: false } }
                     }
                 } 
             });
         };
 
-        // ================= OCR & API Logic =================
+        // ================= Gemini AI Integration =================
         const testGeminiConnection = async (key) => {
             try {
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`, {
@@ -669,7 +680,8 @@
 
             ui.loadingArea.classList.remove('hidden'); ui.loadingArea.classList.add('flex'); ui.formArea.classList.add('hidden');
             try {
-                const base64 = await new Promise(r => {
+                // Image preprocessing: Base64 + Resize
+                const base64 = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = (ev) => {
                         const img = new Image();
@@ -679,18 +691,21 @@
                             if (w > h && w > MAX) { h *= MAX/w; w = MAX; } else if (h > MAX) { w *= MAX/h; h = MAX; }
                             canvas.width = w; canvas.height = h;
                             canvas.getContext('2d').drawImage(img, 0,0,w,h);
-                            r(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+                            resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
                         };
+                        img.onerror = () => reject("Image load error");
                         img.src = ev.target.result;
                     };
+                    reader.onerror = () => reject("File read error");
                     reader.readAsDataURL(file);
                 });
 
+                // OCR Prompt
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${userSettings.geminiApiKey}`, {
                     method: 'POST', body: JSON.stringify({ 
                         contents: [{ 
                             parts: [
-                                { text: 'Analyze this image of a blood pressure monitor. Extract and return ONLY a JSON object: {"sys":number,"dia":number,"pulse":number,"datetime":"YYYY-MM-DDTHH:MM"}. Use current year if missing.' }, 
+                                { text: 'Analyze this blood pressure monitor image. Extract and return ONLY a JSON object with keys: "sys" (number), "dia" (number), "pulse" (number), and "datetime" (string in format YYYY-MM-DDTHH:MM). If missing year, use 2024.' }, 
                                 { inlineData: { mimeType: "image/jpeg", data: base64 } }
                             ] 
                         }], 
@@ -698,11 +713,12 @@
                     })
                 });
                 
-                if (!res.ok) throw new Error("API Connection Failed");
+                if (!res.ok) throw new Error("API call failed");
 
-                const data = await res.json();
-                const result = JSON.parse(data.candidates[0].content.parts[0].text);
+                const resultJson = await res.json();
+                const result = JSON.parse(resultJson.candidates[0].content.parts[0].text);
 
+                // Populate form with parsed data
                 ui.inputSys.value = result.sys || ''; 
                 ui.inputDia.value = result.dia || ''; 
                 ui.inputPulse.value = result.pulse || '';
@@ -710,19 +726,26 @@
                 const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
                 ui.inputDatetime.value = result.datetime ? result.datetime.slice(0,16) : now.toISOString().slice(0,16);
                 
-                const sys = parseInt(ui.inputSys.value), dia = parseInt(ui.inputDia.value);
-                const st = getBPStatus(sys, dia);
-                ui.whoIndicator.className = `text-xs font-bold px-3 py-1 rounded-full ${st.class}`;
-                ui.whoIndicator.innerText = st.text;
-
+                updateInputsAndIndicator();
                 ui.loadingArea.classList.add('hidden'); ui.formArea.classList.remove('hidden');
             } catch (err) {
-                console.error(err); ui.loadingArea.classList.add('hidden'); ui.formArea.classList.remove('hidden');
+                console.error("AI Analysis Failed:", err);
+                ui.loadingArea.classList.add('hidden'); ui.formArea.classList.remove('hidden');
                 showAlert('פענוח נכשל', 'לא הצלחנו לפענח את התמונה באופן אוטומטי. אנא הזן את הנתונים ידנית.', 'error');
             }
             e.target.value = '';
         });
 
+        const updateInputsAndIndicator = () => {
+            const sys = parseInt(ui.inputSys.value), dia = parseInt(ui.inputDia.value);
+            const st = getBPStatus(sys, dia);
+            ui.whoIndicator.className = `text-xs font-bold px-3 py-1 rounded-full ${st.class}`;
+            ui.whoIndicator.innerText = st.text;
+        };
+
+        [ui.inputSys, ui.inputDia].forEach(inp => inp.addEventListener('input', updateInputsAndIndicator));
+
+        // ================= CSV Export =================
         ui.btnExport.addEventListener('click', () => {
             if (!measurements.length) return;
             let csv = "\uFEFFתאריך,שעה,סיסטולי (SYS),דיאסטולי (DIA),דופק\n";
