@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>צ'קליסט ציוד למסע</title>
+  <style>
+    :root{
+      --bg-1:#0f172a;
+      --bg-2:#1d4ed8;
+      --bg-3:#7c3aed;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --accent:#22c55e;
+      --accent-2:#06b6d4;
+      --danger:#f97316;
+      --pink:#ec4899;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+      --radius-xl: 22px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+      --transition: 220ms cubic-bezier(.2,.8,.2,1);
+    }
+
+    *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body{
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      font-family: "Assistant", "Segoe UI", Arial, sans-serif;
+      color: #fff;
+      background:
+        radial-gradient(circle at top right, rgba(255,255,255,.14), transparent 25%),
+        radial-gradient(circle at left bottom, rgba(255,255,255,.12), transparent 22%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2) 45%, var(--bg-3));
+    }
+
+    body{
+      padding: max(14px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));
+    }
+
+    .app{
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .hero{
+      position: relative;
+      overflow: hidden;
+      padding: 18px 18px 16px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.08));
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 40px rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.16);
+      margin-bottom: 14px;
+    }
+
+    .hero::before,
+    .hero::after{
+      content:"";
+      position:absolute;
+      border-radius:50%;
+      filter: blur(10px);
+      opacity: .25;
+      pointer-events:none;
+    }
+
+    .hero::before{
+      width:160px;height:160px;
+      background:#22d3ee;
+      top:-40px; left:-30px;
+    }
+
+    .hero::after{
+      width:150px;height:150px;
+      background:#f472b6;
+      bottom:-50px; right:-30px;
+    }
+
+    .title-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    h1{
+      margin: 0;
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      line-height: 1.15;
+      font-weight: 800;
+      letter-spacing: -.02em;
+    }
+
+    .badge{
+      white-space: nowrap;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.18);
+      font-weight: 800;
+      font-size: .95rem;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
+    }
+
+    .subtitle{
+      position: relative;
+      z-index: 1;
+      margin: 8px 0 14px;
+      color: rgba(255,255,255,.9);
+      font-size: .98rem;
+    }
+
+    .progress-wrap{
+      position: relative;
+      z-index: 1;
+    }
+
+    .progress-meta{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom: 8px;
+      gap:10px;
+      font-weight:700;
+    }
+
+    .progress-track{
+      height: 16px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.18);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: inset 0 2px 6px rgba(0,0,0,.14);
+    }
+
+    .progress-bar{
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #22c55e, #06b6d4, #a78bfa);
+      box-shadow: 0 0 20px rgba(34,197,94,.35);
+      transition: width 400ms cubic-bezier(.22,1,.36,1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-bar::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent);
+      transform: translateX(-100%);
+      animation: shimmer 2.4s infinite linear;
+    }
+
+    @keyframes shimmer{
+      to { transform: translateX(120%); }
+    }
+
+    .columns{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .panel{
+      background: rgba(255,255,255,.94);
+      color: var(--text);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,.55);
+      overflow: hidden;
+    }
+
+    .panel-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 16px 16px 10px;
+    }
+
+    .panel-title{
+      margin:0;
+      font-size:1.12rem;
+      font-weight: 800;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .panel-note{
+      color: var(--muted);
+      font-size: .92rem;
+      font-weight: 700;
+    }
+
+    .list{
+      padding: 8px 12px 14px;
+      min-height: 78px;
+    }
+
+    .item{
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      text-align: right;
+      padding: 14px 14px;
+      margin-bottom: 10px;
+      border: 0;
+      border-radius: 18px;
+      cursor: pointer;
+      overflow: hidden;
+      transform-origin: center;
+      transition:
+        transform var(--transition),
+        box-shadow var(--transition),
+        background var(--transition),
+        opacity var(--transition);
+      box-shadow: 0 6px 16px rgba(15,23,42,.08);
+    }
+
+    .item:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(15,23,42,.12);
+    }
+
+    .item:active,
+    .item.pressed{
+      transform: scale(.985);
+    }
+
+    .item.todo{
+      background: linear-gradient(135deg, #eff6ff, #ecfeff 65%, #f5f3ff);
+      color: #0f172a;
+      border: 1px solid rgba(59,130,246,.12);
+    }
+
+    .item.done{
+      background: linear-gradient(135deg, #ecfdf5, #f0fdf4 55%, #ecfeff);
+      color: #0f172a;
+      border: 1px solid rgba(34,197,94,.16);
+    }
+
+    .item.moving-out{
+      opacity: .2;
+      transform: scale(.96);
+    }
+
+    .icon{
+      flex: 0 0 44px;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display:grid;
+      place-items:center;
+      font-size: 1.1rem;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+    }
+
+    .item.todo .icon{
+      background: linear-gradient(135deg, #dbeafe, #e0f2fe);
+      color: #2563eb;
+    }
+
+    .item.done .icon{
+      background: linear-gradient(135deg, #bbf7d0, #cffafe);
+      color: #16a34a;
+    }
+
+    .content{
+      flex: 1;
+      min-width: 0;
+    }
+
+    .label{
+      font-weight: 800;
+      font-size: 1rem;
+      line-height: 1.35;
+    }
+
+    .hint{
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: .80rem;
+      font-weight: 700;
+    }
+
+    .pill{
+      flex: 0 0 auto;
+      white-space: nowrap;
+      padding: 9px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: .9rem;
+      border: 0;
+      color: white;
+      box-shadow: 0 8px 18px rgba(0,0,0,.14);
+    }
+
+    .item.todo .pill{
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+    }
+
+    .item.done .pill{
+      background: linear-gradient(135deg, #16a34a, #06b6d4);
+    }
+
+    .empty{
+      text-align:center;
+      padding: 20px 14px 24px;
+      color: var(--muted);
+      font-weight: 800;
+      background: linear-gradient(180deg, rgba(15,23,42,.02), transparent);
+      border-radius: 18px;
+      border: 1px dashed rgba(100,116,139,.25);
+    }
+
+    .footer{
+      margin-top: 10px;
+      text-align:center;
+      color: rgba(255,255,255,.85);
+      font-size: .92rem;
+      font-weight:700;
+    }
+
+    .ripple{
+      position:absolute;
+      border-radius:50%;
+      transform: scale(0);
+      animation: ripple .6s linear;
+      background: rgba(255,255,255,.45);
+      pointer-events:none;
+    }
+
+    @keyframes ripple{
+      to{
+        transform: scale(4);
+        opacity:0;
+      }
+    }
+
+    .flying{
+      position: fixed;
+      z-index: 9999;
+      margin: 0;
+      pointer-events: none;
+      box-shadow: 0 20px 40px rgba(0,0,0,.2);
+      transition:
+        transform 520ms cubic-bezier(.22,1,.36,1),
+        opacity 520ms cubic-bezier(.22,1,.36,1);
+    }
+
+    .section-accent-todo{
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip:text;
+      background-clip:text;
+      color: transparent;
+    }
+
+    .section-accent-done{
+      background: linear-gradient(90deg, #16a34a, #06b6d4);
+      -webkit-background-clip:text;
+      background-clip:text;
+      color: transparent;
+    }
+
+    @media (min-width: 760px){
+      .columns{
+        grid-template-columns: 1fr 1fr;
+      }
+      .hero{
+        padding: 22px 22px 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="hero">
+      <div class="title-row">
+        <h1>🎒 צ'קליסט ציוד למסע</h1>
+        <div class="badge" id="counterBadge">0 / 21</div>
+      </div>
+      <p class="subtitle">לוחצים על כל פריט כדי להעביר אותו בין הרשימות. הכל נשמר אוטומטית.</p>
+
+      <div class="progress-wrap">
+        <div class="progress-meta">
+          <span id="progressLabel">0% ארוז</span>
+          <span id="progressSub">יאללה מתחילים 🚀</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="columns">
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title"><span>🧳</span><span class="section-accent-todo">עוד לא ארזתי</span></h2>
+          <div class="panel-note" id="todoCount"></div>
+        </div>
+        <div class="list" id="todoList"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title"><span>✅</span><span class="section-accent-done">ארזתי כבר</span></h2>
+          <div class="panel-note" id="doneCount"></div>
+        </div>
+        <div class="list" id="doneList"></div>
+      </div>
+    </section>
+
+    <div class="footer">טיפ: אפשר לפתוח את הקובץ מהטלפון ולהשתמש בו כמו אפליקציה פשוטה.</div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "packing-checklist-v2";
+
+    const items = [
+      "תיק טיולים בו כל הציוד - עם מערכת גב טובה",
+      "אוכל ליום הראשון עד הערב",
+      "נעלי הליכה סגורות ונוחות",
+      "סנדלים לערב / לכניסה למים",
+      "שק שינה",
+      "מזרון שטח דק",
+      "מים - 4.5 ליטר חובה",
+      "כובע - חובה",
+      "קרם הגנה - מומלץ בחום",
+      "פנס / פנס ראש",
+      "נייר טואלט",
+      "כלי אוכל רב פעמיים - כף וסכין, מזלג, כוס, קופסא/קערה",
+      "היגיינה אישית - מברשת ומשחת שיניים",
+      "בגדים המספיקים ליומיים",
+      "בגדים חמים לערב",
+      "בגד ים לכניסה למים",
+      "כסף לתחבורה הציבורית",
+      "תרופות אישיות",
+      "נגד יתושים - מומלץ",
+      "עט"
+    ];
+
+    const state = loadState();
+
+    const todoList = document.getElementById("todoList");
+    const doneList = document.getElementById("doneList");
+    const progressBar = document.getElementById("progressBar");
+    const progressLabel = document.getElementById("progressLabel");
+    const progressSub = document.getElementById("progressSub");
+    const todoCount = document.getElementById("todoCount");
+    const doneCount = document.getElementById("doneCount");
+    const counterBadge = document.getElementById("counterBadge");
+
+    function loadState(){
+      try{
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if(saved && Array.isArray(saved.doneIds)){
+          return { doneIds: new Set(saved.doneIds.filter(id => id >=0 && id < items.length)) };
+        }
+      }catch(e){}
+      return { doneIds: new Set() };
+    }
+
+    function saveState(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        doneIds: [...state.doneIds]
+      }));
+    }
+
+    function getTodoIndices(){
+      return items.map((_,i)=>i).filter(i => !state.doneIds.has(i));
+    }
+
+    function getDoneIndices(){
+      return items.map((_,i)=>i).filter(i => state.doneIds.has(i));
+    }
+
+    function getProgressText(percent){
+      if(percent === 0) return "יאללה מתחילים 🚀";
+      if(percent < 25) return "כניסה טובה לעניינים 😎";
+      if(percent < 50) return "אתם על הגל 🌊";
+      if(percent < 75) return "מתקדמים יפה 🔥";
+      if(percent < 100) return "כמעט מוכנים! ✨";
+      return "סגורים למסע! 🏕️";
+    }
+
+    function render(){
+      const todoIndices = getTodoIndices();
+      const doneIndices = getDoneIndices();
+
+      todoList.innerHTML = "";
+      doneList.innerHTML = "";
+
+      if(todoIndices.length === 0){
+        todoList.innerHTML = `<div class="empty">אין יותר מה לארוז פה 🎉<br>כל הפריטים כבר עברו לרשימת "ארזתי כבר".</div>`;
+      } else {
+        todoIndices.forEach(i => todoList.appendChild(createItem(i, false)));
+      }
+
+      if(doneIndices.length === 0){
+        doneList.innerHTML = `<div class="empty">עדיין לא סימנת שום פריט.<br>לחיצה על פריט תעביר אותו לכאן.</div>`;
+      } else {
+        doneIndices.forEach(i => doneList.appendChild(createItem(i, true)));
+      }
+
+      updateProgress();
+    }
+
+    function createItem(index, isDone){
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = `item ${isDone ? "done" : "todo"}`;
+      item.dataset.index = index;
+
+      item.innerHTML = `
+        <span class="icon">${isDone ? "✔" : "🎒"}</span>
+        <span class="content">
+          <span class="label">${escapeHtml(items[index])}</span>
+          <span class="hint">${isDone ? "(לחיצה תחזיר לרשימת האריזה)" : "(לחיצה תעביר ל'ארזתי כבר')"}</span>
+        </span>
+        <span class="pill">${isDone ? "החזר" : "ארזתי"}</span>
+      `;
+
+      item.addEventListener("pointerdown", () => {
+        item.classList.add("pressed");
+      });
+
+      item.addEventListener("pointerup", () => {
+        item.classList.remove("pressed");
+      });
+
+      item.addEventListener("pointerleave", () => {
+        item.classList.remove("pressed");
+      });
+
+      item.addEventListener("click", (e) => {
+        createRipple(item, e);
+        toggleItemAnimated(item, index, isDone);
+      });
+
+      return item;
+    }
+
+    function createRipple(element, event){
+      const rect = element.getBoundingClientRect();
+      const circle = document.createElement("span");
+      const size = Math.max(rect.width, rect.height) * 0.75;
+      const x = (event.clientX || rect.left + rect.width/2) - rect.left - size / 2;
+      const y = (event.clientY || rect.top + rect.height/2) - rect.top - size / 2;
+
+      circle.className = "ripple";
+      circle.style.width = circle.style.height = `${size}px`;
+      circle.style.left = `${x}px`;
+      circle.style.top = `${y}px`;
+
+      element.appendChild(circle);
+      circle.addEventListener("animationend", () => circle.remove());
+    }
+
+    function toggleItemAnimated(sourceEl, index, currentlyDone){
+      const targetList = currentlyDone ? todoList : doneList;
+
+      sourceEl.classList.add("moving-out");
+
+      // שכפול של הפריט כדי לייצר "מעוף" ויזואלי
+      const rect = sourceEl.getBoundingClientRect();
+      const clone = sourceEl.cloneNode(true);
+      clone.classList.add("flying");
+      clone.style.width = rect.width + "px";
+      clone.style.height = rect.height + "px";
+      clone.style.top = rect.top + "px";
+      clone.style.left = rect.left + "px";
+      clone.style.transform = "translate(0,0) scale(1)";
+      clone.style.opacity = "1";
+      document.body.appendChild(clone);
+
+      // יעד האנימציה: תחילת הרשימה השנייה
+      const targetRect = getTargetRect(targetList);
+      const dx = targetRect.left - rect.left;
+      const dy = targetRect.top - rect.top;
+
+      // שינוי מצב אמיתי רק אחרי תחילת האפקט
+      setTimeout(() => {
+        if (currentlyDone) {
+          state.doneIds.delete(index);
+        } else {
+          state.doneIds.add(index);
+        }
+        saveState();
+        render();
+      }, 120);
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          clone.style.transform = `translate(${dx}px, ${dy}px) scale(.94)`;
+          clone.style.opacity = ".2";
+        });
+      });
+
+      clone.addEventListener("transitionend", () => {
+        clone.remove();
+      }, { once: true });
+    }
+
+    function getTargetRect(container){
+      const firstItem = container.querySelector(".item");
+      if(firstItem){
+        return firstItem.getBoundingClientRect();
+      }
+      const rect = container.getBoundingClientRect();
+      return {
+        left: rect.left + 8,
+        top: rect.top + 10
+      };
+    }
+
+    function updateProgress(){
+      const done = state.doneIds.size;
+      const total = items.length;
+      const percent = Math.round((done / total) * 100);
+
+      progressBar.style.width = percent + "%";
+      progressLabel.textContent = `${percent}% ארוז`;
+      progressSub.textContent = getProgressText(percent);
+      todoCount.textContent = `${total - done} פריטים`;
+      doneCount.textContent = `${done} פריטים`;
+      counterBadge.textContent = `${done} / ${total}`;
+    }
+
+    function escapeHtml(str){
+      return str
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    render();
+  </script>
+</body>
+</html>
