@@ -385,7 +385,7 @@
                 display.innerHTML = "<b>אין עדיין הצבעות לתחרות זו.</b>";
                 document.getElementById('btn-export-csv').style.display = 'none';
             } else {
-                // Calculate Team Averages
+                // 1. Calculate Overall Team Averages (Proactive Summary)
                 const teamResults = comp.teams.map(team => {
                     let totalVal = 0, count = 0;
                     allScores.forEach(s => {
@@ -398,41 +398,77 @@
                     return { name: team, score: count ? (totalVal / count).toFixed(1) : 0 };
                 }).sort((a,b) => b.score - a.score);
 
-                // Calculate Scorer Averages
-                const scorerResults = allScores.map(s => {
-                    let sum = 0, teamsCount = 0;
-                    Object.values(s.scores).forEach(ts => {
-                        sum += (Object.values(ts).reduce((a,b) => a+b, 0) * 5);
-                        teamsCount++;
+                // 2. Calculate Detailed Scores Per Scorer
+                const detailedScorerResults = allScores.map(s => {
+                    const scorerName = s.scorer;
+                    const teamScores = [];
+                    Object.keys(s.scores).forEach(team => {
+                        const sum = Object.values(s.scores[team]).reduce((a,b) => a+b, 0);
+                        teamScores.push({ team: team, score: sum * 5 }); // Convert to 100 scale
                     });
-                    return { name: s.scorer, score: teamsCount ? (sum / teamsCount).toFixed(1) : 0 };
+                    
+                    // Sort this specific scorer's table descending by score
+                    teamScores.sort((a, b) => b.score - a.score);
+                    
+                    return { name: scorerName, scores: teamScores };
                 });
 
-                display.innerHTML = `
-                    <p>סה"כ מנקדים שהצביעו: ${allScores.length}</p>
-                    <h4>טבלת קבוצות (ממוצע משוקלל ל-100)</h4>
-                    <table><tr><th>קבוצה</th><th>ציון</th></tr>${teamResults.map(tr => `<tr><td>${tr.name}</td><td>${tr.score}</td></tr>`).join('')}</table>
-                    <h4 style="margin-top:20px">פירוט מנקדים (ציון ממוצע שנתנו)</h4>
-                    <table><tr><th>מנקד</th><th>ציון</th></tr>${scorerResults.map(sr => `<tr><td>${sr.name}</td><td>${sr.score}</td></tr>`).join('')}</table>
+                // 3. Generate HTML
+                let htmlOutput = `
+                    <p style="text-align:center; font-weight:bold; color:var(--text-muted);">סה"כ מנקדים שהצביעו: ${allScores.length}</p>
+                    
+                    <h4 style="margin-top:20px; color:var(--primary);">דירוג סופי משוקלל (ממוצע)</h4>
+                    <table>
+                        <tr><th>קבוצה</th><th>ציון סופי</th></tr>
+                        ${teamResults.map(tr => `<tr><td>${tr.name}</td><td>${tr.score}</td></tr>`).join('')}
+                    </table>
+                    
+                    <h3 style="margin-top:30px; border-bottom: 2px solid var(--primary); padding-bottom: 5px;">פירוט ניקוד לפי שופטים</h3>
                 `;
+
+                detailedScorerResults.forEach(scorerData => {
+                    htmlOutput += `
+                        <h4 style="margin-top:20px; color:var(--primary-hover);">מנקד: ${scorerData.name}</h4>
+                        <table>
+                            <tr><th>קבוצה</th><th>ציון שניתן</th></tr>
+                            ${scorerData.scores.map(ts => `<tr><td>${ts.team}</td><td>${ts.score}</td></tr>`).join('')}
+                        </table>
+                    `;
+                });
+
+                display.innerHTML = htmlOutput;
                 document.getElementById('btn-export-csv').style.display = 'block';
-                window.currentResultsForExport = { teamResults, scorerResults };
+                
+                // Store data globally for CSV export
+                window.currentResultsForExport = { teamResults, detailedScorerResults };
             }
             document.getElementById('loader').style.display = 'none';
         });
 
         document.getElementById('btn-export-csv').addEventListener('click', () => {
             const data = window.currentResultsForExport;
-            let csv = "\uFEFF"; // BOM for Hebrew
+            
+            // \uFEFF is the Byte Order Mark (BOM) needed so Excel opens Hebrew CSV correctly
+            let csv = "\uFEFF"; 
+            
+            // Add global summary
+            csv += "דירוג סופי משוקלל\n";
             csv += "קבוצה,ציון סופי\n";
             data.teamResults.forEach(r => csv += `${r.name},${r.score}\n`);
-            csv += "\nמנקד,ציון ממוצע שנתן\n";
-            data.scorerResults.forEach(r => csv += `${r.name},${r.score}\n`);
+            
+            csv += "\n\n--- פירוט ניקוד לפי שופטים ---\n";
+            
+            // Add detailed scorer tables
+            data.detailedScorerResults.forEach(scorerData => {
+                csv += `\nמנקד: ${scorerData.name}\n`;
+                csv += "קבוצה,ציון שניתן\n";
+                scorerData.scores.forEach(s => csv += `${s.team},${s.score}\n`);
+            });
             
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.setAttribute("download", "OBN_Results.csv");
+            link.setAttribute("download", "OBN_Detailed_Results.csv");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
