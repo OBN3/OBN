@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>אפליקציית ניקוד מתמודדים</title>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --bg: #F3F4F6;
+            --card-bg: #FFFFFF;
+            --text-main: #1F2937;
+            --text-muted: #6B7280;
+            --success: #10B981;
+            --error: #EF4444;
+            --radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            padding: 30px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: var(--primary);
+            margin-top: 0;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input[type="text"], input[type="password"], input[type="date"], select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #E5E7EB;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            background-color: #fff;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn:disabled {
+            background-color: #9CA3AF;
+            cursor: not-allowed;
+            border-color: #9CA3AF;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* Progress Bar */
+        .progress-wrapper {
+            width: 100%;
+            background-color: #E5E7EB;
+            border-radius: 8px;
+            height: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--success);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Mobile-friendly Scoring Cards */
+        .team-card {
+            background: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .team-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #E5E7EB;
+            padding-bottom: 10px;
+        }
+
+        .category-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .category-row select {
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #D1D5DB;
+            background: white;
+            font-size: 16px;
+            width: 80px;
+        }
+
+        .category-row select.error {
+            border-color: var(--error);
+            background-color: #FEF2F2;
+        }
+
+        .error-msg {
+            color: var(--error);
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .sys-msg {
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .success-msg {
+            text-align: center;
+            color: var(--success);
+            font-size: 24px;
+            font-weight: bold;
+            margin: 40px 0;
+        }
+
+        .admin-team-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .admin-team-row input {
+            flex: 1;
+        }
+        
+        .remove-btn {
+            background: var(--error);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0 15px;
+            cursor: pointer;
+        }
+
+        .footer {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-top: auto;
+            padding-top: 20px;
+        }
+
+        /* Loading Overlay */
+        #loader {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            border-radius: var(--radius);
+            font-weight: bold;
+            color: var(--primary);
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="loader">טוען נתונים...</div>
+        
+        <!-- Screen 1: Welcome -->
+        <div id="welcome-screen" class="screen active">
+            <h1>אפליקציית ניקוד מתמודדים</h1>
+            
+            <div class="form-group">
+                <label for="comp-select">בחר תחרות:</label>
+                <select id="comp-select">
+                    <option value="" disabled selected>טוען תחרויות...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="scorer-name">שם המנקד (שם פרטי ומשפחה):</label>
+                <input type="text" id="scorer-name" placeholder="למשל: אלי כהן">
+            </div>
+            
+            <div id="welcome-error" class="error-msg">אנא בחר תחרות והכנס שם מלא.</div>
+            <button class="btn" onclick="startScoring()">התחל ניקוד</button>
+            <hr style="margin: 30px 0; border: 0; border-top: 1px solid #E5E7EB;">
+            <button class="btn btn-outline" onclick="showScreen('admin-login-screen')">Admin (מנהל)</button>
+        </div>
+
+        <!-- Screen 2: Scoring -->
+        <div id="scoring-screen" class="screen">
+            <h2 id="scoring-title">טופס ניקוד</h2>
+            <p class="subtitle">אנא נקדו כל מתמודד בסולם 1 (נמוך ביותר), עד 5 (גבוה ביותר).</p>
+            
+            <div class="progress-wrapper">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+            
+            <div id="scoring-container"></div>
+            
+            <div id="scoring-error" class="error-msg">יש למלא את כל השדות לפני שליחה</div>
+            <button class="btn" onclick="submitScores()" id="submit-btn">סיים ושלח ניקוד</button>
+            <button class="btn btn-outline" onclick="showScreen('welcome-screen')" style="margin-top: 10px;">חזור למסך הראשי</button>
+        </div>
+
+        <!-- Screen 3: Success -->
+        <div id="success-screen" class="screen">
+            <div class="success-msg" id="success-text">תודה על הניקוד, Y</div>
+            <button class="btn btn-outline" onclick="resetApp()">חזור למסך הראשי</button>
+        </div>
+
+        <!-- Screen 4: Admin Login -->
+        <div id="admin-login-screen" class="screen">
+            <h2>כניסת מנהל</h2>
+            <div class="form-group">
+                <label>סיסמה:</label>
+                <input type="password" id="admin-pass">
+            </div>
+            <div id="admin-error" class="error-msg">סיסמה שגויה</div>
+            <button class="btn" onclick="verifyAdmin()">היכנס</button>
+            <button class="btn btn-outline" onclick="showScreen('welcome-screen')">חזור</button>
+        </div>
+
+        <!-- Screen 5: Admin Panel -->
+        <div id="admin-panel-screen" class="screen">
+            <h2>יצירת תחרות חדשה</h2>
+            
+            <div class="form-group">
+                <label>תאריך התחרות:</label>
+                <input type="date" id="admin-comp-date">
+            </div>
+            <div class="form-group">
+                <label>שם / מיקום התחרות:</label>
+                <input type="text" id="admin-comp-name" placeholder="למשל: רופין">
+            </div>
+
+            <h3>קבוצות מתמודדות</h3>
+            <div id="admin-teams-list"></div>
+            <button class="btn btn-outline" onclick="addAdminTeamRow()">+ הוסף קבוצה</button>
+            
+            <hr style="margin: 30px 0; border: 0; border-top: 1px solid #E5E7EB;">
+            <div id="admin-sys-msg" class="sys-msg" style="display:none;"></div>
+            <button class="btn" onclick="saveCompetitionToDB()">שמור תחרות למערכת</button>
+            <button class="btn btn-outline" onclick="showScreen('welcome-screen')">חזור למסך הראשי</button>
+        </div>
+
+    </div>
+
+    <div class="footer">Copyright OBN 2026</div>
+
+    <!-- Firebase JS SDK (Modular) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables mapping for the app context
+        const firebaseConfig = {
+            apiKey: "AIzaSyABEFpQyeTzFLyeEAB0kIOf4VN-jk7Zt7c",
+            authDomain: "obn-hackathon.firebaseapp.com",
+            projectId: "obn-hackathon",
+            storageBucket: "obn-hackathon.firebasestorage.app",
+            messagingSenderId: "673873461849",
+            appId: "1:673873461849:web:95b9c73764507c5956a748"
+        };
+        const appId = 'obn-scoring-app';
+
+        // Init Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // State Management
+        window.db = db;
+        window.appId = appId;
+        window.currentUser = null;
+        window.competitionsData = [];
+        window.currentCompData = null;
+        
+        // Expose Firebase functions
+        window.fbCollection = collection;
+        window.fbDoc = doc;
+        window.fbSetDoc = setDoc;
+        window.fbGetDoc = getDoc;
+        window.fbOnSnapshot = onSnapshot;
+        window.fbQuery = query;
+        window.fbServerTimestamp = serverTimestamp;
+
+        // Auth Logic (Mandatory)
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (e) {
+                console.error("Auth error:", e);
+                document.getElementById('welcome-error').innerText = "שגיאת התחברות למערכת.";
+                document.getElementById('welcome-error').style.display = 'block';
+            }
+        };
+
+        // Listen to Auth state
+        onAuthStateChanged(auth, (user) => {
+            window.currentUser = user;
+            if (user) {
+                loadCompetitions();
+            }
+        });
+
+        initAuth();
+    </script>
+
+    <script>
+        const CATEGORIES = ["חדשנות", "יישומיות", "מודל עסקי", "אופן ההצגה"];
+        let currentScorerName = "";
+        let totalDropdowns = 0;
+
+        function showLoader(show) {
+            document.getElementById('loader').style.display = show ? 'flex' : 'none';
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // --- Data Fetching ---
+        function getPublicCollectionRef(colName) {
+            return window.fbCollection(window.db, 'artifacts', window.appId, 'public', 'data', colName);
+        }
+
+        function loadCompetitions() {
+            const compSelect = document.getElementById('comp-select');
+            const q = window.fbQuery(getPublicCollectionRef('competitions'));
+            
+            // Listen for real-time updates
+            window.fbOnSnapshot(q, (snapshot) => {
+                window.competitionsData = [];
+                compSelect.innerHTML = '<option value="" disabled selected>-- בחר תחרות --</option>';
+                
+                if (snapshot.empty) {
+                    compSelect.innerHTML = '<option value="" disabled>לא נמצאו תחרויות פתוחות</option>';
+                    return;
+                }
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    data.id = doc.id;
+                    window.competitionsData.push(data);
+                    
+                    const opt = document.createElement('option');
+                    opt.value = data.id;
+                    // Format Date for display
+                    const dateObj = new Date(data.date);
+                    const formattedDate = !isNaN(dateObj) ? `${dateObj.getDate()}.${dateObj.getMonth() + 1}.${dateObj.getFullYear()}` : data.date;
+                    opt.innerText = `${formattedDate}, ${data.name}`;
+                    compSelect.appendChild(opt);
+                });
+            }, (error) => {
+                console.error("Error fetching competitions:", error);
+            });
+        }
+
+        // --- User Flow: Scoring ---
+        function startScoring() {
+            const compId = document.getElementById('comp-select').value;
+            let nameInput = document.getElementById('scorer-name').value;
+            
+            // Normalize name (remove extra spaces)
+            nameInput = nameInput.trim().replace(/\s+/g, ' ');
+
+            if (!compId || !nameInput) {
+                const err = document.getElementById('welcome-error');
+                err.innerText = "אנא בחר תחרות והזן שם מלא (פרטי ומשפחה).";
+                err.style.display = 'block';
+                return;
+            }
+            if (nameInput.split(' ').length < 2) {
+                const err = document.getElementById('welcome-error');
+                err.innerText = "יש להזין שם פרטי ושם משפחה מלאים (מופרדים ברווח).";
+                err.style.display = 'block';
+                return;
+            }
+
+            document.getElementById('welcome-error').style.display = 'none';
+            currentScorerName = nameInput;
+            window.currentCompData = window.competitionsData.find(c => c.id === compId);
+            
+            // Format title
+            const dateObj = new Date(window.currentCompData.date);
+            const formattedDate = !isNaN(dateObj) ? `${dateObj.getDate()}.${dateObj.getMonth() + 1}.${dateObj.getFullYear()}` : window.currentCompData.date;
+            document.getElementById('scoring-title').innerText = `ניקוד: ${window.currentCompData.name} (${formattedDate})`;
+
+            renderScoringForm();
+            loadAutoSave();
+            updateProgress();
+            showScreen('scoring-screen');
+        }
+
+        function getAutoSaveKey() {
+            return `obn_score_${window.currentCompData.id}_${currentScorerName}`;
+        }
+
+        function handleScoreChange() {
+            updateProgress();
+            
+            // Auto Save to localStorage
+            const results = {};
+            const selects = document.querySelectorAll('.category-row select');
+            selects.forEach(select => {
+                if (select.value) {
+                    results[select.id] = select.value;
+                }
+            });
+            localStorage.setItem(getAutoSaveKey(), JSON.stringify(results));
+        }
+
+        function loadAutoSave() {
+            const saved = localStorage.getItem(getAutoSaveKey());
+            if (saved) {
+                try {
+                    const results = JSON.parse(saved);
+                    Object.keys(results).forEach(id => {
+                        const select = document.getElementById(id);
+                        if (select) {
+                            select.value = results[id];
+                        }
+                    });
+                } catch (e) {
+                    console.error("Error loading autosave", e);
+                }
+            }
+        }
+
+        function updateProgress() {
+            const selects = document.querySelectorAll('.category-row select');
+            let filled = 0;
+            selects.forEach(s => {
+                if (s.value) filled++;
+                s.classList.remove('error'); // clear errors on change
+            });
+            
+            const percentage = totalDropdowns > 0 ? (filled / totalDropdowns) * 100 : 0;
+            document.getElementById('progress-fill').style.width = `${percentage}%`;
+            
+            // Hide global error if user is fixing things
+            document.getElementById('scoring-error').style.display = 'none';
+        }
+
+        function renderScoringForm() {
+            const container = document.getElementById('scoring-container');
+            container.innerHTML = '';
+            const teams = window.currentCompData.teams || [];
+            
+            totalDropdowns = teams.length * CATEGORIES.length;
+
+            teams.forEach((teamName, index) => {
+                let card = document.createElement('div');
+                card.className = 'team-card';
+                card.innerHTML = `<div class="team-title">${teamName}</div>`;
+                
+                CATEGORIES.forEach((cat, catIndex) => {
+                    let selectHtml = `<select id="score-${index}-${catIndex}" onchange="handleScoreChange()">
+                        <option value="" disabled selected>-</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>`;
+                    
+                    let row = document.createElement('div');
+                    row.className = 'category-row';
+                    row.innerHTML = `<span>${cat}</span> ${selectHtml}`;
+                    card.appendChild(row);
+                });
+                
+                container.appendChild(card);
+            });
+        }
+
+        async function submitScores() {
+            const errorMsg = document.getElementById('scoring-error');
+            const btn = document.getElementById('submit-btn');
+            errorMsg.style.display = 'none';
+            let allValid = true;
+            let results = {};
+            const teams = window.currentCompData.teams || [];
+
+            teams.forEach((teamName, index) => {
+                results[teamName] = {};
+                CATEGORIES.forEach((cat, catIndex) => {
+                    const select = document.getElementById(`score-${index}-${catIndex}`);
+                    if (!select.value) {
+                        allValid = false;
+                        select.classList.add('error');
+                    } else {
+                        results[teamName][cat] = parseInt(select.value);
+                    }
+                });
+            });
+
+            if (!allValid) {
+                errorMsg.innerText = "יש למלא את כל השדות עבור כל הקבוצות לפני שליחה.";
+                errorMsg.style.display = 'block';
+                // Scroll to first error
+                document.querySelector('.category-row select.error').scrollIntoView({behavior: "smooth", block: "center"});
+                return;
+            }
+
+            if (!window.currentUser) {
+                alert("שגיאת התחברות. אנא רענן את העמוד ונסה שוב.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = "שולח נתונים...";
+            showLoader(true);
+
+            try {
+                // Doc ID format: compId_scorerName (spaces replaced by underscore to be safe)
+                const safeName = currentScorerName.replace(/\s+/g, '_');
+                const docId = `${window.currentCompData.id}_${safeName}`;
+                
+                const docRef = window.fbDoc(getPublicCollectionRef('scores'), docId);
+                await window.fbSetDoc(docRef, {
+                    competitionId: window.currentCompData.id,
+                    competitionName: window.currentCompData.name,
+                    scorer: currentScorerName,
+                    timestamp: window.fbServerTimestamp(),
+                    scores: results
+                });
+                
+                // Clear auto-save upon success
+                localStorage.removeItem(getAutoSaveKey());
+
+                document.getElementById('success-text').innerText = `תודה על הניקוד, ${currentScorerName}!`;
+                showScreen('success-screen');
+            } catch (e) {
+                console.error("Error saving to Firebase", e);
+                alert("אירעה שגיאה בשמירת הנתונים למערכת.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "סיים ושלח ניקוד";
+                showLoader(false);
+            }
+        }
+
+        function resetApp() {
+            document.getElementById('scorer-name').value = '';
+            document.getElementById('comp-select').value = '';
+            showScreen('welcome-screen');
+        }
+
+        // --- Admin Logic ---
+        async function verifyAdmin() {
+            const pass = document.getElementById('admin-pass').value.trim();
+            if (!pass) return;
+
+            const btn = document.querySelector('#admin-login-screen .btn');
+            btn.innerText = "מאמת נתונים...";
+            btn.disabled = true;
+
+            try {
+                // בדיקה מאובטחת: אנו מנסים לקרוא מסמך שה-ID שלו הוא הסיסמה שהוזנה.
+                const adminDocRef = window.fbDoc(getPublicCollectionRef('admins'), pass);
+                const docSnap = await window.fbGetDoc(adminDocRef);
+
+                if (docSnap.exists()) { 
+                    document.getElementById('admin-error').style.display = 'none';
+                    document.getElementById('admin-pass').value = '';
+                    
+                    // Reset admin form
+                    document.getElementById('admin-comp-date').value = '';
+                    document.getElementById('admin-comp-name').value = '';
+                    document.getElementById('admin-teams-list').innerHTML = '';
+                    document.getElementById('admin-sys-msg').style.display = 'none';
+                    addAdminTeamRow(); // Add one empty row by default
+                    
+                    showScreen('admin-panel-screen');
+                } else {
+                    document.getElementById('admin-error').innerText = "סיסמה שגויה";
+                    document.getElementById('admin-error').style.display = 'block';
+                }
+            } catch (error) {
+                console.error("Admin verification error:", error);
+                document.getElementById('admin-error').innerText = "שגיאת תקשורת עם השרת";
+                document.getElementById('admin-error').style.display = 'block';
+            } finally {
+                btn.innerText = "היכנס";
+                btn.disabled = false;
+            }
+        }
+
+        function addAdminTeamRow(val = "") {
+            const list = document.getElementById('admin-teams-list');
+            const row = document.createElement('div');
+            row.className = 'admin-team-row';
+            row.innerHTML = `
+                <input type="text" class="admin-team-input" value="${val}" placeholder="שם הקבוצה (למשל: קבוצה 1)">
+                <button class="remove-btn" onclick="this.parentElement.remove()">X</button>
+            `;
+            list.appendChild(row);
+        }
+
+        async function saveCompetitionToDB() {
+            const date = document.getElementById('admin-comp-date').value;
+            const name = document.getElementById('admin-comp-name').value.trim();
+            const inputs = document.querySelectorAll('.admin-team-input');
+            const newTeams = Array.from(inputs).map(inp => inp.value.trim()).filter(val => val !== "");
+            
+            const sysMsg = document.getElementById('admin-sys-msg');
+            sysMsg.style.display = 'none';
+            sysMsg.style.color = 'var(--primary)';
+
+            if (!date || !name) {
+                alert("יש להזין תאריך ושם לתחרות.");
+                return;
+            }
+
+            if (newTeams.length === 0) {
+                alert("יש להזין לפחות קבוצה אחת.");
+                return;
+            }
+
+            if (!window.currentUser) {
+                alert("המערכת עדיין לא התחברה לשרת, אנא המתן.");
+                return;
+            }
+
+            showLoader(true);
+
+            try {
+                // Generate a simple ID based on timestamp to ensure uniqueness
+                const compId = `comp_${Date.now()}`;
+                const docRef = window.fbDoc(getPublicCollectionRef('competitions'), compId);
+                
+                await window.fbSetDoc(docRef, {
+                    date: date,
+                    name: name,
+                    teams: newTeams,
+                    createdAt: window.fbServerTimestamp()
+                });
+
+                sysMsg.innerText = "התחרות נשמרה בהצלחה במערכת!";
+                sysMsg.style.display = 'block';
+                sysMsg.style.color = 'var(--success)';
+
+                // Clear fields for next entry if needed
+                document.getElementById('admin-comp-date').value = '';
+                document.getElementById('admin-comp-name').value = '';
+                document.getElementById('admin-teams-list').innerHTML = '';
+                addAdminTeamRow();
+
+            } catch (e) {
+                console.error("Error creating competition", e);
+                sysMsg.innerText = "שגיאה בשמירת התחרות.";
+                sysMsg.style.display = 'block';
+                sysMsg.style.color = 'var(--error)';
+            } finally {
+                showLoader(false);
+            }
+        }
+    </script>
+</body>
+</html>
