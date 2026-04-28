@@ -105,17 +105,28 @@
         <!-- Admin Dashboard -->
         <div id="admin-panel-screen" class="screen">
             <div class="admin-tabs">
-                <button id="tab-edit-btn" class="active">ניהול תחרות</button>
+                <button id="tab-edit-btn" class="active">ניהול ועריכה</button>
                 <button id="tab-results-btn">תוצאות</button>
             </div>
 
             <div id="admin-edit-section">
-                <h3>תחרות חדשה</h3>
-                <div class="form-group"><label>תאריך:</label><input type="date" id="admin-comp-date"></div>
-                <div class="form-group"><label>שם/מיקום:</label><input type="text" id="admin-comp-name"></div>
+                <h3>ניהול ועריכת תחרויות</h3>
+                <div class="form-group">
+                    <label>בחר פעולה:</label>
+                    <select id="admin-edit-comp-select">
+                        <option value="new" selected>-- 🌟 יצירת תחרות חדשה --</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>תאריך התחרות:</label><input type="date" id="admin-comp-date"></div>
+                <div class="form-group"><label>שם / מיקום התחרות:</label><input type="text" id="admin-comp-name"></div>
+                <h4 style="margin-bottom: 10px;">קבוצות מתמודדות:</h4>
                 <div id="admin-teams-list"></div>
                 <button class="btn btn-outline" id="btn-add-team-row" style="padding:5px">+ הוסף קבוצה</button>
-                <button class="btn" id="btn-save-comp" style="margin-top:20px">שמור תחרות ל-DB</button>
+                
+                <p style="font-size: 12px; color: var(--error); margin-top: 20px; line-height: 1.4;">
+                    ⚠️ <b>שים לב:</b> מחיקת קבוצה או שינוי שמה לאחר שכבר קיבלה ניקוד, תגרום לניתוק הניקוד הקודם ממנה (השמירה מבוססת על השם המדויק).
+                </p>
+                <button class="btn" id="btn-save-comp" style="margin-top:10px">שמור תחרות ל-DB</button>
             </div>
 
             <div id="admin-results-section" style="display:none;">
@@ -173,16 +184,31 @@
         signInAnonymously(auth).then(() => {
             onSnapshot(getCol('competitions'), (snap) => {
                 comps = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                const selects = [document.getElementById('comp-select'), document.getElementById('admin-view-comp-select')];
+                
+                const selects = [
+                    document.getElementById('comp-select'), 
+                    document.getElementById('admin-view-comp-select'),
+                    document.getElementById('admin-edit-comp-select')
+                ];
+                
                 selects.forEach(s => {
                     if (!s) return;
-                    s.innerHTML = '<option value="" disabled selected>-- בחר תחרות --</option>';
+                    const currentVal = s.value;
+                    const isEdit = s.id === 'admin-edit-comp-select';
+                    
+                    s.innerHTML = isEdit ? '<option value="new">-- 🌟 יצירת תחרות חדשה --</option>' : '<option value="" disabled selected>-- בחר תחרות --</option>';
+                    
                     comps.forEach(c => {
                         const opt = document.createElement('option');
                         opt.value = c.id;
                         opt.innerText = `${c.date} | ${c.name}`;
                         s.appendChild(opt);
                     });
+                    
+                    // Preserve selection if it still exists
+                    if (currentVal && Array.from(s.options).some(o => o.value === currentVal)) {
+                        s.value = currentVal;
+                    }
                 });
             });
         });
@@ -312,6 +338,17 @@
         });
 
         // --- Admin Flow ---
+        function createAdminTeamRow(val = '') {
+            const row = document.createElement('div');
+            row.style.display = 'flex'; row.style.gap = '5px'; row.style.marginBottom = '10px';
+            // Escaping quotes just in case the team name has quotes
+            const safeVal = val.replace(/"/g, '&quot;');
+            row.innerHTML = `<input type="text" class="admin-team-input" style="flex:1" placeholder="שם קבוצה" value="${safeVal}">
+                             <button style="background:var(--error); color:white; border:none; border-radius:5px; padding:0 10px; cursor:pointer;">X</button>`;
+            row.querySelector('button').onclick = () => row.remove();
+            document.getElementById('admin-teams-list').appendChild(row);
+        }
+
         document.getElementById('btn-to-admin-login').addEventListener('click', () => showScreen('admin-login-screen'));
         document.getElementById('btn-admin-back').addEventListener('click', () => showScreen('welcome-screen'));
         
@@ -323,6 +360,11 @@
                 if (adminDoc.exists()) {
                     showScreen('admin-panel-screen');
                     document.getElementById('admin-error').style.display = 'none';
+                    
+                    // Initialize empty row if list is empty
+                    if (document.getElementById('admin-teams-list').children.length === 0) {
+                        createAdminTeamRow();
+                    }
                 } else {
                     document.getElementById('admin-error').style.display = 'block';
                 }
@@ -347,16 +389,38 @@
             document.getElementById('tab-edit-btn').className = '';
         });
 
-        document.getElementById('btn-add-team-row').addEventListener('click', () => {
-            const row = document.createElement('div');
-            row.style.display = 'flex'; row.style.gap = '5px'; row.style.marginBottom = '10px';
-            row.innerHTML = `<input type="text" class="admin-team-input" style="flex:1" placeholder="שם קבוצה">
-                             <button style="background:red; color:white; border:none; border-radius:5px; padding:0 10px;">X</button>`;
-            row.querySelector('button').onclick = () => row.remove();
-            document.getElementById('admin-teams-list').appendChild(row);
+        // Load specific competition to edit when dropdown changes
+        document.getElementById('admin-edit-comp-select').addEventListener('change', (e) => {
+            const id = e.target.value;
+            const list = document.getElementById('admin-teams-list');
+            list.innerHTML = ''; // clear current rows
+            
+            if (id === 'new') {
+                document.getElementById('admin-comp-name').value = '';
+                document.getElementById('admin-comp-date').value = '';
+                createAdminTeamRow();
+                document.getElementById('btn-save-comp').innerText = "שמור תחרות חדשה ל-DB";
+            } else {
+                const comp = comps.find(c => c.id === id);
+                if (comp) {
+                    document.getElementById('admin-comp-name').value = comp.name || '';
+                    document.getElementById('admin-comp-date').value = comp.date || '';
+                    if (comp.teams && comp.teams.length > 0) {
+                        comp.teams.forEach(t => createAdminTeamRow(t));
+                    } else {
+                        createAdminTeamRow();
+                    }
+                    document.getElementById('btn-save-comp').innerText = "עדכן תחרות ב-DB";
+                }
+            }
         });
 
+        document.getElementById('btn-add-team-row').addEventListener('click', () => createAdminTeamRow());
+
         document.getElementById('btn-save-comp').addEventListener('click', async () => {
+            const selectVal = document.getElementById('admin-edit-comp-select').value;
+            const isNew = selectVal === 'new';
+            
             const name = document.getElementById('admin-comp-name').value.trim();
             const date = document.getElementById('admin-comp-date').value;
             const teams = Array.from(document.querySelectorAll('.admin-team-input')).map(i => i.value.trim()).filter(v => v);
@@ -367,10 +431,27 @@
             }
             
             document.getElementById('loader').style.display = 'flex';
-            const id = "c_" + Date.now();
-            await setDoc(doc(getCol('competitions'), id), { name, date, teams });
-            document.getElementById('loader').style.display = 'none';
-            alert("התחרות נוצרה בהצלחה!");
+            const id = isNew ? "c_" + Date.now() : selectVal;
+            
+            try {
+                // setDoc with {name, date, teams} will overwrite these fields for an existing document, which is what we want.
+                await setDoc(doc(getCol('competitions'), id), { name, date, teams });
+                
+                alert(isNew ? "התחרות נוצרה בהצלחה!" : "התחרות עודכנה בהצלחה!");
+                
+                if (isNew) {
+                    // Reset to prepare for another new one, or let the user choose it from dropdown
+                    document.getElementById('admin-comp-name').value = '';
+                    document.getElementById('admin-comp-date').value = '';
+                    document.getElementById('admin-teams-list').innerHTML = '';
+                    createAdminTeamRow();
+                    document.getElementById('admin-edit-comp-select').value = 'new';
+                }
+            } catch (e) {
+                alert("שגיאה בשמירה: " + e.message);
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+            }
         });
 
         document.getElementById('admin-view-comp-select').addEventListener('change', async (e) => {
