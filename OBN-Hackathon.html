@@ -33,6 +33,8 @@
         .btn:hover { background-color: var(--primary-hover); }
         .btn-outline { background-color: transparent; color: var(--primary); border: 2px solid var(--primary); }
         .btn-success { background-color: var(--success); }
+        .btn-danger { background-color: var(--error); }
+        .btn-danger:hover { background-color: #DC2626; }
         
         .screen { display: none; }
         .screen.active { display: block; }
@@ -57,9 +59,26 @@
         .footer { text-align: center; color: var(--text-muted); font-size: 12px; margin-top: 20px; }
         
         .status-pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; background: #E5E7EB; margin-top: 5px; }
+
+        /* Custom Modal Styles */
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:none; justify-content:center; align-items:center; z-index:200; }
+        .modal-content { background: white; padding: 25px; border-radius: var(--radius); text-align: center; max-width: 90%; width: 350px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .modal-actions button { flex: 1; margin: 0; }
     </style>
 </head>
 <body>
+
+    <!-- Custom Modal -->
+    <div id="custom-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="modal-title">הודעה</h3>
+            <p id="modal-text"></p>
+            <div class="modal-actions" id="modal-actions-container">
+                <!-- Buttons injected dynamically -->
+            </div>
+        </div>
+    </div>
 
     <div class="container">
         <div id="loader">טוען...</div>
@@ -137,6 +156,7 @@
                 </div>
                 <div id="results-display">בחר תחרות לצפייה</div>
                 <button class="btn btn-success" id="btn-export-csv" style="display:none; margin-top:15px;">הורד דוח אקסל (CSV)</button>
+                <button class="btn btn-danger" id="btn-delete-all-scores" style="display:none; margin-top:15px;">מחק את כל ההצבעות לתחרות זו</button>
             </div>
 
             <button class="btn btn-outline" id="btn-exit-admin" style="margin-top:20px">יציאה</button>
@@ -157,7 +177,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyABEFpQyeTzFLyeEAB0kIOf4VN-jk7Zt7c",
@@ -179,6 +199,42 @@
         let currentComp = null;
         let scorerName = "";
         const CATEGORIES = ["חדשנות", "יישומיות", "מודל עסקי", "אופן ההצגה"];
+
+        // --- Custom UI Modal (Replaces standard alerts/confirms) ---
+        window.showModal = (title, text, type = 'info', onConfirm = null) => {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-title').style.color = type === 'error' || type === 'confirm' ? 'var(--error)' : 'var(--primary)';
+            document.getElementById('modal-text').innerText = text;
+            
+            const actions = document.getElementById('modal-actions-container');
+            actions.innerHTML = '';
+            
+            if (type === 'confirm') {
+                const cancelBtn = document.createElement('button');
+                cancelBtn.className = 'btn btn-outline';
+                cancelBtn.innerText = 'ביטול';
+                cancelBtn.onclick = () => document.getElementById('custom-modal').style.display = 'none';
+                
+                const okBtn = document.createElement('button');
+                okBtn.className = 'btn btn-danger';
+                okBtn.innerText = 'אישור המחיקה';
+                okBtn.onclick = () => {
+                    document.getElementById('custom-modal').style.display = 'none';
+                    if (onConfirm) onConfirm();
+                };
+                
+                actions.appendChild(cancelBtn);
+                actions.appendChild(okBtn);
+            } else {
+                const okBtn = document.createElement('button');
+                okBtn.className = 'btn';
+                okBtn.innerText = 'סגור';
+                okBtn.onclick = () => document.getElementById('custom-modal').style.display = 'none';
+                actions.appendChild(okBtn);
+            }
+            
+            document.getElementById('custom-modal').style.display = 'flex';
+        };
 
         // --- Auth & Sync ---
         signInAnonymously(auth).then(() => {
@@ -331,7 +387,7 @@
                 document.getElementById('success-text').innerText = `תודה על הניקוד, ${scorerName}!`;
                 showScreen('success-screen');
             } catch (e) {
-                alert("שגיאה בשליחה: " + e.message);
+                showModal("שגיאה", "שגיאה בשליחה: " + e.message, "error");
             } finally {
                 document.getElementById('loader').style.display = 'none';
             }
@@ -341,7 +397,6 @@
         function createAdminTeamRow(val = '') {
             const row = document.createElement('div');
             row.style.display = 'flex'; row.style.gap = '5px'; row.style.marginBottom = '10px';
-            // Escaping quotes just in case the team name has quotes
             const safeVal = val.replace(/"/g, '&quot;');
             row.innerHTML = `<input type="text" class="admin-team-input" style="flex:1" placeholder="שם קבוצה" value="${safeVal}">
                              <button style="background:var(--error); color:white; border:none; border-radius:5px; padding:0 10px; cursor:pointer;">X</button>`;
@@ -361,7 +416,6 @@
                     showScreen('admin-panel-screen');
                     document.getElementById('admin-error').style.display = 'none';
                     
-                    // Initialize empty row if list is empty
                     if (document.getElementById('admin-teams-list').children.length === 0) {
                         createAdminTeamRow();
                     }
@@ -369,7 +423,7 @@
                     document.getElementById('admin-error').style.display = 'block';
                 }
             } catch (e) {
-                alert("שגיאת אימות");
+                showModal("שגיאה", "שגיאת תקשורת באימות", "error");
             } finally {
                 document.getElementById('loader').style.display = 'none';
             }
@@ -389,11 +443,10 @@
             document.getElementById('tab-edit-btn').className = '';
         });
 
-        // Load specific competition to edit when dropdown changes
         document.getElementById('admin-edit-comp-select').addEventListener('change', (e) => {
             const id = e.target.value;
             const list = document.getElementById('admin-teams-list');
-            list.innerHTML = ''; // clear current rows
+            list.innerHTML = ''; 
             
             if (id === 'new') {
                 document.getElementById('admin-comp-name').value = '';
@@ -426,7 +479,7 @@
             const teams = Array.from(document.querySelectorAll('.admin-team-input')).map(i => i.value.trim()).filter(v => v);
             
             if (!name || !date || teams.length === 0) {
-                alert("אנא מלא שם, תאריך ולפחות קבוצה אחת");
+                showModal("שגיאה", "אנא מלא שם, תאריך ולפחות קבוצה אחת", "error");
                 return;
             }
             
@@ -434,13 +487,11 @@
             const id = isNew ? "c_" + Date.now() : selectVal;
             
             try {
-                // setDoc with {name, date, teams} will overwrite these fields for an existing document, which is what we want.
                 await setDoc(doc(getCol('competitions'), id), { name, date, teams });
                 
-                alert(isNew ? "התחרות נוצרה בהצלחה!" : "התחרות עודכנה בהצלחה!");
+                showModal("הצלחה", isNew ? "התחרות נוצרה בהצלחה!" : "התחרות עודכנה בהצלחה!", "info");
                 
                 if (isNew) {
-                    // Reset to prepare for another new one, or let the user choose it from dropdown
                     document.getElementById('admin-comp-name').value = '';
                     document.getElementById('admin-comp-date').value = '';
                     document.getElementById('admin-teams-list').innerHTML = '';
@@ -448,25 +499,30 @@
                     document.getElementById('admin-edit-comp-select').value = 'new';
                 }
             } catch (e) {
-                alert("שגיאה בשמירה: " + e.message);
+                showModal("שגיאה", "שגיאה בשמירה: " + e.message, "error");
             } finally {
                 document.getElementById('loader').style.display = 'none';
             }
         });
 
+        // --- View & Delete Results ---
         document.getElementById('admin-view-comp-select').addEventListener('change', async (e) => {
             const id = e.target.value;
             document.getElementById('loader').style.display = 'flex';
             const comp = comps.find(c => c.id === id);
             const scoreSnap = await getDocs(getCol('scores'));
-            const allScores = scoreSnap.docs.map(d => d.data()).filter(s => s.compId === id);
+            const allScores = scoreSnap.docs.map(d => ({id: d.id, ...d.data()})).filter(s => s.compId === id);
             
             const display = document.getElementById('results-display');
+            const btnDeleteAll = document.getElementById('btn-delete-all-scores');
+            const btnExport = document.getElementById('btn-export-csv');
+
             if (allScores.length === 0) {
                 display.innerHTML = "<b>אין עדיין הצבעות לתחרות זו.</b>";
-                document.getElementById('btn-export-csv').style.display = 'none';
+                btnExport.style.display = 'none';
+                btnDeleteAll.style.display = 'none';
             } else {
-                // 1. Calculate Overall Team Averages (Proactive Summary)
+                // 1. Calculate Overall Team Averages
                 const teamResults = comp.teams.map(team => {
                     let totalVal = 0, count = 0;
                     allScores.forEach(s => {
@@ -482,16 +538,15 @@
                 // 2. Calculate Detailed Scores Per Scorer
                 const detailedScorerResults = allScores.map(s => {
                     const scorerName = s.scorer;
+                    const docId = s.id;
                     const teamScores = [];
                     Object.keys(s.scores).forEach(team => {
                         const sum = Object.values(s.scores[team]).reduce((a,b) => a+b, 0);
-                        teamScores.push({ team: team, score: sum * 5 }); // Convert to 100 scale
+                        teamScores.push({ team: team, score: sum * 5 });
                     });
                     
-                    // Sort this specific scorer's table descending by score
                     teamScores.sort((a, b) => b.score - a.score);
-                    
-                    return { name: scorerName, scores: teamScores };
+                    return { name: scorerName, docId: docId, scores: teamScores };
                 });
 
                 // 3. Generate HTML
@@ -509,7 +564,10 @@
 
                 detailedScorerResults.forEach(scorerData => {
                     htmlOutput += `
-                        <h4 style="margin-top:20px; color:var(--primary-hover);">מנקד: ${scorerData.name}</h4>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; background:#EEF2FF; padding:10px; border-radius:8px;">
+                            <h4 style="color:var(--primary-hover); margin:0;">מנקד: ${scorerData.name}</h4>
+                            <button class="btn btn-danger" style="width:auto; padding:5px 15px; margin:0;" onclick="deleteSpecificScorer('${scorerData.docId}', '${scorerData.name}')">מחק מנקד</button>
+                        </div>
                         <table>
                             <tr><th>קבוצה</th><th>ציון שניתן</th></tr>
                             ${scorerData.scores.map(ts => `<tr><td>${ts.team}</td><td>${ts.score}</td></tr>`).join('')}
@@ -518,31 +576,66 @@
                 });
 
                 display.innerHTML = htmlOutput;
-                document.getElementById('btn-export-csv').style.display = 'block';
+                btnExport.style.display = 'block';
+                btnDeleteAll.style.display = 'block';
                 
-                // Store data globally for CSV export
                 window.currentResultsForExport = { teamResults, detailedScorerResults };
             }
             document.getElementById('loader').style.display = 'none';
         });
 
+        // Delete specific scorer
+        window.deleteSpecificScorer = (docId, scorerName) => {
+            showModal("אישור מחיקה", `האם למחוק את כל ההצבעות של "${scorerName}"? פעולה זו בלתי הפיכה.`, "confirm", async () => {
+                document.getElementById('loader').style.display = 'flex';
+                try {
+                    await deleteDoc(doc(getCol('scores'), docId));
+                    showModal("הצלחה", "ההצבעה נמחקה.", "info");
+                    // Refresh view
+                    document.getElementById('admin-view-comp-select').dispatchEvent(new Event('change'));
+                } catch(e) {
+                    showModal("שגיאה", "שגיאה במחיקה: " + e.message, "error");
+                } finally {
+                    document.getElementById('loader').style.display = 'none';
+                }
+            });
+        };
+
+        // Delete all scorers for competition
+        document.getElementById('btn-delete-all-scores').addEventListener('click', () => {
+            const compId = document.getElementById('admin-view-comp-select').value;
+            if(!compId) return;
+            
+            showModal("אזהרה חמורה", "האם למחוק את **כל ההצבעות** של כל המנקדים לתחרות זו? זוהי פעולה בלתי הפיכה שתאפס את התחרות!", "confirm", async () => {
+                document.getElementById('loader').style.display = 'flex';
+                try {
+                    const scoreSnap = await getDocs(getCol('scores'));
+                    const docsToDelete = scoreSnap.docs.filter(d => d.data().compId === compId);
+                    
+                    for (const d of docsToDelete) {
+                        await deleteDoc(d.ref);
+                    }
+                    showModal("הצלחה", "התחרות אופסה וכל ההצבעות נמחקו.", "info");
+                    // Refresh view
+                    document.getElementById('admin-view-comp-select').dispatchEvent(new Event('change'));
+                } catch(e) {
+                    showModal("שגיאה", "שגיאה במחיקה: " + e.message, "error");
+                } finally {
+                    document.getElementById('loader').style.display = 'none';
+                }
+            });
+        });
+
         document.getElementById('btn-export-csv').addEventListener('click', () => {
             const data = window.currentResultsForExport;
-            
-            // \uFEFF is the Byte Order Mark (BOM) needed so Excel opens Hebrew CSV correctly
             let csv = "\uFEFF"; 
             
-            // Add global summary
-            csv += "דירוג סופי משוקלל\n";
-            csv += "קבוצה,ציון סופי\n";
+            csv += "דירוג סופי משוקלל\nקבוצה,ציון סופי\n";
             data.teamResults.forEach(r => csv += `${r.name},${r.score}\n`);
             
             csv += "\n\n--- פירוט ניקוד לפי שופטים ---\n";
-            
-            // Add detailed scorer tables
             data.detailedScorerResults.forEach(scorerData => {
-                csv += `\nמנקד: ${scorerData.name}\n`;
-                csv += "קבוצה,ציון שניתן\n";
+                csv += `\nמנקד: ${scorerData.name}\nקבוצה,ציון שניתן\n`;
                 scorerData.scores.forEach(s => csv += `${s.team},${s.score}\n`);
             });
             
