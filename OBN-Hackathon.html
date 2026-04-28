@@ -17,334 +17,137 @@
             --radius: 16px;
         }
 
-        * {
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 600px;
-            background: var(--card-bg);
-            border-radius: var(--radius);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            padding: 30px;
-            margin-bottom: 20px;
-            position: relative;
-        }
-
-        h1, h2 {
-            text-align: center;
-            color: var(--primary);
-            margin-top: 0;
-        }
-
-        p.subtitle {
-            text-align: center;
-            color: var(--text-muted);
-            margin-bottom: 25px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        input[type="text"], input[type="password"], input[type="date"], select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #E5E7EB;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
-            background-color: #fff;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .btn {
-            display: block;
-            width: 100%;
-            padding: 14px;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.3s ease;
-            margin-bottom: 10px;
-        }
-
-        .btn:hover {
-            background-color: var(--primary-hover);
-        }
-
-        .btn-outline {
-            background-color: transparent;
-            color: var(--primary);
-            border: 2px solid var(--primary);
-        }
-
-        .btn-outline:hover {
-            background-color: var(--primary);
-            color: white;
-        }
-
-        .btn:disabled {
-            background-color: #9CA3AF;
-            cursor: not-allowed;
-            border-color: #9CA3AF;
-        }
-
-        .screen {
-            display: none;
-        }
-
-        .screen.active {
-            display: block;
-        }
-
-        /* Progress Bar */
-        .progress-wrapper {
-            width: 100%;
-            background-color: #E5E7EB;
-            border-radius: 8px;
-            height: 10px;
-            margin-bottom: 20px;
-            overflow: hidden;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background-color: var(--success);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        /* Mobile-friendly Scoring Cards */
-        .team-card {
-            background: #F9FAFB;
-            border: 1px solid #E5E7EB;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-
-        .team-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #E5E7EB;
-            padding-bottom: 10px;
-        }
-
-        .category-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .category-row select {
-            padding: 8px;
-            border-radius: 6px;
-            border: 1px solid #D1D5DB;
-            background: white;
-            font-size: 16px;
-            width: 80px;
-        }
-
-        .category-row select.error {
-            border-color: var(--error);
-            background-color: #FEF2F2;
-        }
-
-        .error-msg {
-            color: var(--error);
-            text-align: center;
-            font-weight: bold;
-            margin-bottom: 15px;
-            display: none;
-        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background-color: var(--bg); color: var(--text-main); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .container { width: 100%; max-width: 600px; background: var(--card-bg); border-radius: var(--radius); box-shadow: 0 10px 25px rgba(0,0,0,0.05); padding: 30px; margin-bottom: 20px; position: relative; }
         
-        .sys-msg {
-            text-align: center;
-            margin-bottom: 15px;
-            font-weight: bold;
-            color: var(--primary);
-        }
-
-        .success-msg {
-            text-align: center;
-            color: var(--success);
-            font-size: 24px;
-            font-weight: bold;
-            margin: 40px 0;
-        }
-
-        .admin-team-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
+        h1, h2, h3 { text-align: center; color: var(--primary); margin-top: 0; }
+        .subtitle { text-align: center; color: var(--text-muted); margin-bottom: 25px; font-size: 14px; }
         
-        .admin-team-row input {
-            flex: 1;
-        }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; }
+        input, select { width: 100%; padding: 12px; border: 2px solid #E5E7EB; border-radius: 8px; font-size: 16px; background: #fff; appearance: none; }
+        input:focus, select:focus { outline: none; border-color: var(--primary); }
+
+        .btn { display: block; width: 100%; padding: 14px; background-color: var(--primary); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.3s; margin-bottom: 10px; text-align: center; }
+        .btn:hover { background-color: var(--primary-hover); }
+        .btn-outline { background-color: transparent; color: var(--primary); border: 2px solid var(--primary); }
+        .btn-success { background-color: var(--success); }
         
-        .remove-btn {
-            background: var(--error);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 0 15px;
-            cursor: pointer;
-        }
+        .screen { display: none; }
+        .screen.active { display: block; }
 
-        .footer {
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 14px;
-            margin-top: auto;
-            padding-top: 20px;
-        }
+        .progress-wrapper { width: 100%; background: #E5E7EB; border-radius: 10px; height: 10px; margin-bottom: 20px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--success); width: 0%; transition: width 0.3s; }
 
-        /* Loading Overlay */
-        #loader {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255,255,255,0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-            border-radius: var(--radius);
-            font-weight: bold;
-            color: var(--primary);
-            display: none;
-        }
+        .team-card { background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
+        .team-card h3 { font-size: 18px; margin-bottom: 10px; text-align: right; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .category-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .category-row select { width: 70px; padding: 5px; text-align: center; }
 
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        th, td { padding: 10px; text-align: right; border-bottom: 1px solid #E5E7EB; }
+        th { background: #EEF2FF; }
+
+        .admin-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .admin-tabs button { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--primary); cursor: pointer; background: white; color: var(--primary); font-weight: bold; }
+        .admin-tabs button.active { background: var(--primary); color: white; }
+
+        #loader { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 100; font-weight: bold; border-radius: var(--radius); }
+        .footer { text-align: center; color: var(--text-muted); font-size: 12px; margin-top: 20px; }
+        
+        .status-pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; background: #E5E7EB; margin-top: 5px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div id="loader">טוען נתונים...</div>
-        
-        <!-- Screen 1: Welcome -->
+        <div id="loader">טוען...</div>
+
+        <!-- Welcome Screen -->
         <div id="welcome-screen" class="screen active">
-            <h1>אפליקציית ניקוד מתמודדים</h1>
-            
+            <h1>אפליקציית ניקוד</h1>
             <div class="form-group">
-                <label for="comp-select">בחר תחרות:</label>
-                <select id="comp-select">
-                    <option value="" disabled selected>טוען תחרויות...</option>
-                </select>
+                <label>בחר תחרות:</label>
+                <select id="comp-select"><option disabled selected>טוען רשימה...</option></select>
             </div>
-
             <div class="form-group">
-                <label for="scorer-name">שם המנקד (שם פרטי ומשפחה):</label>
-                <input type="text" id="scorer-name" placeholder="למשל: אלי כהן">
+                <label>שם ושם משפחה:</label>
+                <input type="text" id="scorer-name" placeholder="הזן שם מלא">
             </div>
-            
-            <div id="welcome-error" class="error-msg">אנא בחר תחרות והכנס שם מלא.</div>
-            <button class="btn" onclick="startScoring()">התחל ניקוד</button>
-            <hr style="margin: 30px 0; border: 0; border-top: 1px solid #E5E7EB;">
-            <button class="btn btn-outline" onclick="showScreen('admin-login-screen')">Admin (מנהל)</button>
+            <p id="welcome-error" style="color:red; display:none; text-align:center; font-weight:bold; margin-bottom:10px;"></p>
+            <button class="btn" id="btn-start-scoring">התחל ניקוד</button>
+            <button class="btn btn-outline" id="btn-to-admin-login">כניסת Admin</button>
         </div>
 
-        <!-- Screen 2: Scoring -->
+        <!-- Scoring Screen -->
         <div id="scoring-screen" class="screen">
-            <h2 id="scoring-title">טופס ניקוד</h2>
-            <p class="subtitle">אנא נקדו כל מתמודד בסולם 1 (נמוך ביותר), עד 5 (גבוה ביותר).</p>
-            
-            <div class="progress-wrapper">
-                <div id="progress-fill" class="progress-fill"></div>
-            </div>
-            
+            <h2 id="scoring-title">ניקוד</h2>
+            <div class="progress-wrapper"><div id="progress-fill" class="progress-fill"></div></div>
+            <div id="autosave-status" class="status-pill">טרם נשמר מקומית</div>
             <div id="scoring-container"></div>
-            
-            <div id="scoring-error" class="error-msg">יש למלא את כל השדות לפני שליחה</div>
-            <button class="btn" onclick="submitScores()" id="submit-btn">סיים ושלח ניקוד</button>
-            <button class="btn btn-outline" onclick="showScreen('welcome-screen')" style="margin-top: 10px;">חזור למסך הראשי</button>
+            <p id="scoring-error" style="color:red; display:none; text-align:center; font-weight:bold;"></p>
+            <button class="btn" id="btn-submit-scores">שלח ניקוד סופי</button>
         </div>
 
-        <!-- Screen 3: Success -->
-        <div id="success-screen" class="screen">
-            <div class="success-msg" id="success-text">תודה על הניקוד, Y</div>
-            <button class="btn btn-outline" onclick="resetApp()">חזור למסך הראשי</button>
-        </div>
-
-        <!-- Screen 4: Admin Login -->
+        <!-- Admin Login Screen -->
         <div id="admin-login-screen" class="screen">
             <h2>כניסת מנהל</h2>
             <div class="form-group">
                 <label>סיסמה:</label>
                 <input type="password" id="admin-pass">
             </div>
-            <div id="admin-error" class="error-msg">סיסמה שגויה</div>
-            <button class="btn" onclick="verifyAdmin()">היכנס</button>
-            <button class="btn btn-outline" onclick="showScreen('welcome-screen')">חזור</button>
+            <p id="admin-error" style="color:red; display:none; text-align:center;">סיסמה שגויה</p>
+            <button class="btn" id="btn-admin-login">היכנס</button>
+            <button class="btn btn-outline" id="btn-admin-back">חזור</button>
         </div>
 
-        <!-- Screen 5: Admin Panel -->
+        <!-- Admin Dashboard -->
         <div id="admin-panel-screen" class="screen">
-            <h2>יצירת תחרות חדשה</h2>
-            
-            <div class="form-group">
-                <label>תאריך התחרות:</label>
-                <input type="date" id="admin-comp-date">
-            </div>
-            <div class="form-group">
-                <label>שם / מיקום התחרות:</label>
-                <input type="text" id="admin-comp-name" placeholder="למשל: רופין">
+            <div class="admin-tabs">
+                <button id="tab-edit-btn" class="active">ניהול תחרות</button>
+                <button id="tab-results-btn">תוצאות</button>
             </div>
 
-            <h3>קבוצות מתמודדות</h3>
-            <div id="admin-teams-list"></div>
-            <button class="btn btn-outline" onclick="addAdminTeamRow()">+ הוסף קבוצה</button>
-            
-            <hr style="margin: 30px 0; border: 0; border-top: 1px solid #E5E7EB;">
-            <div id="admin-sys-msg" class="sys-msg" style="display:none;"></div>
-            <button class="btn" onclick="saveCompetitionToDB()">שמור תחרות למערכת</button>
-            <button class="btn btn-outline" onclick="showScreen('welcome-screen')">חזור למסך הראשי</button>
+            <div id="admin-edit-section">
+                <h3>תחרות חדשה</h3>
+                <div class="form-group"><label>תאריך:</label><input type="date" id="admin-comp-date"></div>
+                <div class="form-group"><label>שם/מיקום:</label><input type="text" id="admin-comp-name"></div>
+                <div id="admin-teams-list"></div>
+                <button class="btn btn-outline" id="btn-add-team-row" style="padding:5px">+ הוסף קבוצה</button>
+                <button class="btn" id="btn-save-comp" style="margin-top:20px">שמור תחרות ל-DB</button>
+            </div>
+
+            <div id="admin-results-section" style="display:none;">
+                <h3>תוצאות וציונים</h3>
+                <div class="form-group">
+                    <label>בחר תחרות:</label>
+                    <select id="admin-view-comp-select"></select>
+                </div>
+                <div id="results-display">בחר תחרות לצפייה</div>
+                <button class="btn btn-success" id="btn-export-csv" style="display:none; margin-top:15px;">הורד דוח אקסל (CSV)</button>
+            </div>
+
+            <button class="btn btn-outline" id="btn-exit-admin" style="margin-top:20px">יציאה</button>
         </div>
 
+        <!-- Success Screen -->
+        <div id="success-screen" class="screen">
+            <div style="text-align:center; padding:40px 0;">
+                <h2 style="color:var(--success)">הניקוד נשלח בהצלחה!</h2>
+                <p id="success-text"></p>
+            </div>
+            <button class="btn" onclick="location.reload()">חזור להתחלה</button>
+        </div>
     </div>
 
     <div class="footer">Copyright OBN 2026</div>
 
-    <!-- Firebase JS SDK (Modular) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global variables mapping for the app context
         const firebaseConfig = {
             apiKey: "AIzaSyABEFpQyeTzFLyeEAB0kIOf4VN-jk7Zt7c",
             authDomain: "obn-hackathon.firebaseapp.com",
@@ -353,406 +156,290 @@
             messagingSenderId: "673873461849",
             appId: "1:673873461849:web:95b9c73764507c5956a748"
         };
-        const appId = 'obn-scoring-app';
 
-        // Init Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const APP_ID = 'obn-scoring-app';
 
-        // State Management
-        window.db = db;
-        window.appId = appId;
-        window.currentUser = null;
-        window.competitionsData = [];
-        window.currentCompData = null;
-        
-        // Expose Firebase functions
-        window.fbCollection = collection;
-        window.fbDoc = doc;
-        window.fbSetDoc = setDoc;
-        window.fbGetDoc = getDoc;
-        window.fbOnSnapshot = onSnapshot;
-        window.fbQuery = query;
-        window.fbServerTimestamp = serverTimestamp;
+        const getCol = (name) => collection(db, 'artifacts', APP_ID, 'public', 'data', name);
 
-        // Auth Logic (Mandatory)
-        const initAuth = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (e) {
-                console.error("Auth error:", e);
-                document.getElementById('welcome-error').innerText = "שגיאת התחברות למערכת.";
-                document.getElementById('welcome-error').style.display = 'block';
-            }
-        };
+        let comps = [];
+        let currentComp = null;
+        let scorerName = "";
+        const CATEGORIES = ["חדשנות", "יישומיות", "מודל עסקי", "אופן ההצגה"];
 
-        // Listen to Auth state
-        onAuthStateChanged(auth, (user) => {
-            window.currentUser = user;
-            if (user) {
-                loadCompetitions();
-            }
+        // --- Auth & Sync ---
+        signInAnonymously(auth).then(() => {
+            onSnapshot(getCol('competitions'), (snap) => {
+                comps = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                const selects = [document.getElementById('comp-select'), document.getElementById('admin-view-comp-select')];
+                selects.forEach(s => {
+                    if (!s) return;
+                    s.innerHTML = '<option value="" disabled selected>-- בחר תחרות --</option>';
+                    comps.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.innerText = `${c.date} | ${c.name}`;
+                        s.appendChild(opt);
+                    });
+                });
+            });
         });
 
-        initAuth();
-    </script>
-
-    <script>
-        const CATEGORIES = ["חדשנות", "יישומיות", "מודל עסקי", "אופן ההצגה"];
-        let currentScorerName = "";
-        let totalDropdowns = 0;
-
-        function showLoader(show) {
-            document.getElementById('loader').style.display = show ? 'flex' : 'none';
-        }
-
-        function showScreen(screenId) {
+        // --- Navigation ---
+        function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
+            document.getElementById(id).classList.add('active');
+            window.scrollTo(0,0);
         }
 
-        // --- Data Fetching ---
-        function getPublicCollectionRef(colName) {
-            return window.fbCollection(window.db, 'artifacts', window.appId, 'public', 'data', colName);
-        }
-
-        function loadCompetitions() {
-            const compSelect = document.getElementById('comp-select');
-            const q = window.fbQuery(getPublicCollectionRef('competitions'));
-            
-            // Listen for real-time updates
-            window.fbOnSnapshot(q, (snapshot) => {
-                window.competitionsData = [];
-                compSelect.innerHTML = '<option value="" disabled selected>-- בחר תחרות --</option>';
-                
-                if (snapshot.empty) {
-                    compSelect.innerHTML = '<option value="" disabled>לא נמצאו תחרויות פתוחות</option>';
-                    return;
-                }
-
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    data.id = doc.id;
-                    window.competitionsData.push(data);
-                    
-                    const opt = document.createElement('option');
-                    opt.value = data.id;
-                    // Format Date for display
-                    const dateObj = new Date(data.date);
-                    const formattedDate = !isNaN(dateObj) ? `${dateObj.getDate()}.${dateObj.getMonth() + 1}.${dateObj.getFullYear()}` : data.date;
-                    opt.innerText = `${formattedDate}, ${data.name}`;
-                    compSelect.appendChild(opt);
-                });
-            }, (error) => {
-                console.error("Error fetching competitions:", error);
-            });
-        }
-
-        // --- User Flow: Scoring ---
-        function startScoring() {
+        // --- Scoring Logic ---
+        document.getElementById('btn-start-scoring').addEventListener('click', () => {
             const compId = document.getElementById('comp-select').value;
-            let nameInput = document.getElementById('scorer-name').value;
+            const name = document.getElementById('scorer-name').value.trim();
+            const err = document.getElementById('welcome-error');
             
-            // Normalize name (remove extra spaces)
-            nameInput = nameInput.trim().replace(/\s+/g, ' ');
-
-            if (!compId || !nameInput) {
-                const err = document.getElementById('welcome-error');
-                err.innerText = "אנא בחר תחרות והזן שם מלא (פרטי ומשפחה).";
+            if (!compId || name.split(' ').length < 2) {
+                err.innerText = "בחר תחרות והזן שם מלא (פרטי ומשפחה)";
                 err.style.display = 'block';
                 return;
             }
-            if (nameInput.split(' ').length < 2) {
-                const err = document.getElementById('welcome-error');
-                err.innerText = "יש להזין שם פרטי ושם משפחה מלאים (מופרדים ברווח).";
-                err.style.display = 'block';
-                return;
-            }
-
-            document.getElementById('welcome-error').style.display = 'none';
-            currentScorerName = nameInput;
-            window.currentCompData = window.competitionsData.find(c => c.id === compId);
+            err.style.display = 'none';
+            currentComp = comps.find(c => c.id === compId);
+            scorerName = name;
             
-            // Format title
-            const dateObj = new Date(window.currentCompData.date);
-            const formattedDate = !isNaN(dateObj) ? `${dateObj.getDate()}.${dateObj.getMonth() + 1}.${dateObj.getFullYear()}` : window.currentCompData.date;
-            document.getElementById('scoring-title').innerText = `ניקוד: ${window.currentCompData.name} (${formattedDate})`;
-
             renderScoringForm();
-            loadAutoSave();
-            updateProgress();
+            loadLocalStorage();
             showScreen('scoring-screen');
-        }
+        });
 
-        function getAutoSaveKey() {
-            return `obn_score_${window.currentCompData.id}_${currentScorerName}`;
-        }
-
-        function handleScoreChange() {
-            updateProgress();
+        function renderScoringForm() {
+            const cont = document.getElementById('scoring-container');
+            cont.innerHTML = '';
+            document.getElementById('scoring-title').innerText = currentComp.name;
             
-            // Auto Save to localStorage
-            const results = {};
-            const selects = document.querySelectorAll('.category-row select');
-            selects.forEach(select => {
-                if (select.value) {
-                    results[select.id] = select.value;
-                }
+            currentComp.teams.forEach((team, tIdx) => {
+                const card = document.createElement('div');
+                card.className = 'team-card';
+                card.innerHTML = `<h3>${team}</h3>`;
+                
+                CATEGORIES.forEach((cat, cIdx) => {
+                    const row = document.createElement('div');
+                    row.className = 'category-row';
+                    row.innerHTML = `<span>${cat}</span>`;
+                    
+                    const sel = document.createElement('select');
+                    sel.id = `score-${tIdx}-${cIdx}`;
+                    sel.innerHTML = '<option value="">-</option>';
+                    [1,2,3,4,5].forEach(v => sel.innerHTML += `<option value="${v}">${v}</option>`);
+                    
+                    sel.addEventListener('change', runAutoSave);
+                    row.appendChild(sel);
+                    card.appendChild(row);
+                });
+                cont.appendChild(card);
             });
-            localStorage.setItem(getAutoSaveKey(), JSON.stringify(results));
-        }
-
-        function loadAutoSave() {
-            const saved = localStorage.getItem(getAutoSaveKey());
-            if (saved) {
-                try {
-                    const results = JSON.parse(saved);
-                    Object.keys(results).forEach(id => {
-                        const select = document.getElementById(id);
-                        if (select) {
-                            select.value = results[id];
-                        }
-                    });
-                } catch (e) {
-                    console.error("Error loading autosave", e);
-                }
-            }
+            updateProgress();
         }
 
         function updateProgress() {
-            const selects = document.querySelectorAll('.category-row select');
-            let filled = 0;
-            selects.forEach(s => {
-                if (s.value) filled++;
-                s.classList.remove('error'); // clear errors on change
-            });
-            
-            const percentage = totalDropdowns > 0 ? (filled / totalDropdowns) * 100 : 0;
-            document.getElementById('progress-fill').style.width = `${percentage}%`;
-            
-            // Hide global error if user is fixing things
-            document.getElementById('scoring-error').style.display = 'none';
+            const sels = document.querySelectorAll('#scoring-container select');
+            const filled = Array.from(sels).filter(s => s.value).length;
+            document.getElementById('progress-fill').style.width = (filled / sels.length * 100) + '%';
         }
 
-        function renderScoringForm() {
-            const container = document.getElementById('scoring-container');
-            container.innerHTML = '';
-            const teams = window.currentCompData.teams || [];
-            
-            totalDropdowns = teams.length * CATEGORIES.length;
-
-            teams.forEach((teamName, index) => {
-                let card = document.createElement('div');
-                card.className = 'team-card';
-                card.innerHTML = `<div class="team-title">${teamName}</div>`;
-                
-                CATEGORIES.forEach((cat, catIndex) => {
-                    let selectHtml = `<select id="score-${index}-${catIndex}" onchange="handleScoreChange()">
-                        <option value="" disabled selected>-</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                    </select>`;
-                    
-                    let row = document.createElement('div');
-                    row.className = 'category-row';
-                    row.innerHTML = `<span>${cat}</span> ${selectHtml}`;
-                    card.appendChild(row);
-                });
-                
-                container.appendChild(card);
-            });
+        function runAutoSave() {
+            updateProgress();
+            const data = {};
+            document.querySelectorAll('#scoring-container select').forEach(s => data[s.id] = s.value);
+            const key = `obn_${currentComp.id}_${scorerName.replace(/\s/g, '_')}`;
+            localStorage.setItem(key, JSON.stringify(data));
+            document.getElementById('autosave-status').innerText = "נשמר מקומית: " + new Date().toLocaleTimeString();
         }
 
-        async function submitScores() {
-            const errorMsg = document.getElementById('scoring-error');
-            const btn = document.getElementById('submit-btn');
-            errorMsg.style.display = 'none';
-            let allValid = true;
-            let results = {};
-            const teams = window.currentCompData.teams || [];
+        function loadLocalStorage() {
+            const key = `obn_${currentComp.id}_${scorerName.replace(/\s/g, '_')}`;
+            const saved = localStorage.getItem(key);
+            if (saved) {
+                const data = JSON.parse(saved);
+                Object.keys(data).forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = data[id];
+                });
+                updateProgress();
+                document.getElementById('autosave-status').innerText = "שוחזר משמירה מקומית";
+            }
+        }
 
-            teams.forEach((teamName, index) => {
-                results[teamName] = {};
-                CATEGORIES.forEach((cat, catIndex) => {
-                    const select = document.getElementById(`score-${index}-${catIndex}`);
-                    if (!select.value) {
-                        allValid = false;
-                        select.classList.add('error');
-                    } else {
-                        results[teamName][cat] = parseInt(select.value);
-                    }
+        document.getElementById('btn-submit-scores').addEventListener('click', async () => {
+            const sels = document.querySelectorAll('#scoring-container select');
+            const err = document.getElementById('scoring-error');
+            
+            if (Array.from(sels).some(s => !s.value)) {
+                err.innerText = "יש למלא את כל ציוני הקבוצות לפני השליחה";
+                err.style.display = 'block';
+                return;
+            }
+            
+            document.getElementById('loader').style.display = 'flex';
+            const results = {};
+            currentComp.teams.forEach((team, tIdx) => {
+                results[team] = {};
+                CATEGORIES.forEach((cat, cIdx) => {
+                    results[team][cat] = parseInt(document.getElementById(`score-${tIdx}-${cIdx}`).value);
                 });
             });
-
-            if (!allValid) {
-                errorMsg.innerText = "יש למלא את כל השדות עבור כל הקבוצות לפני שליחה.";
-                errorMsg.style.display = 'block';
-                // Scroll to first error
-                document.querySelector('.category-row select.error').scrollIntoView({behavior: "smooth", block: "center"});
-                return;
-            }
-
-            if (!window.currentUser) {
-                alert("שגיאת התחברות. אנא רענן את העמוד ונסה שוב.");
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerText = "שולח נתונים...";
-            showLoader(true);
 
             try {
-                // Doc ID format: compId_scorerName (spaces replaced by underscore to be safe)
-                const safeName = currentScorerName.replace(/\s+/g, '_');
-                const docId = `${window.currentCompData.id}_${safeName}`;
-                
-                const docRef = window.fbDoc(getPublicCollectionRef('scores'), docId);
-                await window.fbSetDoc(docRef, {
-                    competitionId: window.currentCompData.id,
-                    competitionName: window.currentCompData.name,
-                    scorer: currentScorerName,
-                    timestamp: window.fbServerTimestamp(),
-                    scores: results
+                const docId = `${currentComp.id}_${scorerName.replace(/\s/g, '_')}`;
+                await setDoc(doc(getCol('scores'), docId), {
+                    compId: currentComp.id,
+                    compName: currentComp.name,
+                    scorer: scorerName,
+                    scores: results,
+                    submittedAt: serverTimestamp()
                 });
                 
-                // Clear auto-save upon success
-                localStorage.removeItem(getAutoSaveKey());
-
-                document.getElementById('success-text').innerText = `תודה על הניקוד, ${currentScorerName}!`;
+                localStorage.removeItem(`obn_${currentComp.id}_${scorerName.replace(/\s/g, '_')}`);
+                document.getElementById('success-text').innerText = `תודה על הניקוד, ${scorerName}!`;
                 showScreen('success-screen');
             } catch (e) {
-                console.error("Error saving to Firebase", e);
-                alert("אירעה שגיאה בשמירת הנתונים למערכת.");
+                alert("שגיאה בשליחה: " + e.message);
             } finally {
-                btn.disabled = false;
-                btn.innerText = "סיים ושלח ניקוד";
-                showLoader(false);
+                document.getElementById('loader').style.display = 'none';
             }
-        }
+        });
 
-        function resetApp() {
-            document.getElementById('scorer-name').value = '';
-            document.getElementById('comp-select').value = '';
-            showScreen('welcome-screen');
-        }
-
-        // --- Admin Logic ---
-        async function verifyAdmin() {
-            const pass = document.getElementById('admin-pass').value.trim();
-            if (!pass) return;
-
-            const btn = document.querySelector('#admin-login-screen .btn');
-            btn.innerText = "מאמת נתונים...";
-            btn.disabled = true;
-
+        // --- Admin Flow ---
+        document.getElementById('btn-to-admin-login').addEventListener('click', () => showScreen('admin-login-screen'));
+        document.getElementById('btn-admin-back').addEventListener('click', () => showScreen('welcome-screen'));
+        
+        document.getElementById('btn-admin-login').addEventListener('click', async () => {
+            const pass = document.getElementById('admin-pass').value;
+            document.getElementById('loader').style.display = 'flex';
             try {
-                // בדיקה מאובטחת: אנו מנסים לקרוא מסמך שה-ID שלו הוא הסיסמה שהוזנה.
-                const adminDocRef = window.fbDoc(getPublicCollectionRef('admins'), pass);
-                const docSnap = await window.fbGetDoc(adminDocRef);
-
-                if (docSnap.exists()) { 
-                    document.getElementById('admin-error').style.display = 'none';
-                    document.getElementById('admin-pass').value = '';
-                    
-                    // Reset admin form
-                    document.getElementById('admin-comp-date').value = '';
-                    document.getElementById('admin-comp-name').value = '';
-                    document.getElementById('admin-teams-list').innerHTML = '';
-                    document.getElementById('admin-sys-msg').style.display = 'none';
-                    addAdminTeamRow(); // Add one empty row by default
-                    
+                const adminDoc = await getDoc(doc(getCol('admins'), pass));
+                if (adminDoc.exists()) {
                     showScreen('admin-panel-screen');
+                    document.getElementById('admin-error').style.display = 'none';
                 } else {
-                    document.getElementById('admin-error').innerText = "סיסמה שגויה";
                     document.getElementById('admin-error').style.display = 'block';
                 }
-            } catch (error) {
-                console.error("Admin verification error:", error);
-                document.getElementById('admin-error').innerText = "שגיאת תקשורת עם השרת";
-                document.getElementById('admin-error').style.display = 'block';
+            } catch (e) {
+                alert("שגיאת אימות");
             } finally {
-                btn.innerText = "היכנס";
-                btn.disabled = false;
+                document.getElementById('loader').style.display = 'none';
             }
-        }
+        });
 
-        function addAdminTeamRow(val = "") {
-            const list = document.getElementById('admin-teams-list');
+        document.getElementById('tab-edit-btn').addEventListener('click', () => {
+            document.getElementById('admin-edit-section').style.display = 'block';
+            document.getElementById('admin-results-section').style.display = 'none';
+            document.getElementById('tab-edit-btn').className = 'active';
+            document.getElementById('tab-results-btn').className = '';
+        });
+
+        document.getElementById('tab-results-btn').addEventListener('click', () => {
+            document.getElementById('admin-edit-section').style.display = 'none';
+            document.getElementById('admin-results-section').style.display = 'block';
+            document.getElementById('tab-results-btn').className = 'active';
+            document.getElementById('tab-edit-btn').className = '';
+        });
+
+        document.getElementById('btn-add-team-row').addEventListener('click', () => {
             const row = document.createElement('div');
-            row.className = 'admin-team-row';
-            row.innerHTML = `
-                <input type="text" class="admin-team-input" value="${val}" placeholder="שם הקבוצה (למשל: קבוצה 1)">
-                <button class="remove-btn" onclick="this.parentElement.remove()">X</button>
-            `;
-            list.appendChild(row);
-        }
+            row.style.display = 'flex'; row.style.gap = '5px'; row.style.marginBottom = '10px';
+            row.innerHTML = `<input type="text" class="admin-team-input" style="flex:1" placeholder="שם קבוצה">
+                             <button style="background:red; color:white; border:none; border-radius:5px; padding:0 10px;">X</button>`;
+            row.querySelector('button').onclick = () => row.remove();
+            document.getElementById('admin-teams-list').appendChild(row);
+        });
 
-        async function saveCompetitionToDB() {
-            const date = document.getElementById('admin-comp-date').value;
+        document.getElementById('btn-save-comp').addEventListener('click', async () => {
             const name = document.getElementById('admin-comp-name').value.trim();
-            const inputs = document.querySelectorAll('.admin-team-input');
-            const newTeams = Array.from(inputs).map(inp => inp.value.trim()).filter(val => val !== "");
+            const date = document.getElementById('admin-comp-date').value;
+            const teams = Array.from(document.querySelectorAll('.admin-team-input')).map(i => i.value.trim()).filter(v => v);
             
-            const sysMsg = document.getElementById('admin-sys-msg');
-            sysMsg.style.display = 'none';
-            sysMsg.style.color = 'var(--primary)';
-
-            if (!date || !name) {
-                alert("יש להזין תאריך ושם לתחרות.");
+            if (!name || !date || teams.length === 0) {
+                alert("אנא מלא שם, תאריך ולפחות קבוצה אחת");
                 return;
             }
+            
+            document.getElementById('loader').style.display = 'flex';
+            const id = "c_" + Date.now();
+            await setDoc(doc(getCol('competitions'), id), { name, date, teams });
+            document.getElementById('loader').style.display = 'none';
+            alert("התחרות נוצרה בהצלחה!");
+        });
 
-            if (newTeams.length === 0) {
-                alert("יש להזין לפחות קבוצה אחת.");
-                return;
-            }
+        document.getElementById('admin-view-comp-select').addEventListener('change', async (e) => {
+            const id = e.target.value;
+            document.getElementById('loader').style.display = 'flex';
+            const comp = comps.find(c => c.id === id);
+            const scoreSnap = await getDocs(getCol('scores'));
+            const allScores = scoreSnap.docs.map(d => d.data()).filter(s => s.compId === id);
+            
+            const display = document.getElementById('results-display');
+            if (allScores.length === 0) {
+                display.innerHTML = "<b>אין עדיין הצבעות לתחרות זו.</b>";
+                document.getElementById('btn-export-csv').style.display = 'none';
+            } else {
+                // Calculate Team Averages
+                const teamResults = comp.teams.map(team => {
+                    let totalVal = 0, count = 0;
+                    allScores.forEach(s => {
+                        if (s.scores[team]) {
+                            const sum = Object.values(s.scores[team]).reduce((a,b) => a+b, 0);
+                            totalVal += (sum * 5); // Scaling: 20 max points * 5 = 100
+                            count++;
+                        }
+                    });
+                    return { name: team, score: count ? (totalVal / count).toFixed(1) : 0 };
+                }).sort((a,b) => b.score - a.score);
 
-            if (!window.currentUser) {
-                alert("המערכת עדיין לא התחברה לשרת, אנא המתן.");
-                return;
-            }
-
-            showLoader(true);
-
-            try {
-                // Generate a simple ID based on timestamp to ensure uniqueness
-                const compId = `comp_${Date.now()}`;
-                const docRef = window.fbDoc(getPublicCollectionRef('competitions'), compId);
-                
-                await window.fbSetDoc(docRef, {
-                    date: date,
-                    name: name,
-                    teams: newTeams,
-                    createdAt: window.fbServerTimestamp()
+                // Calculate Scorer Averages
+                const scorerResults = allScores.map(s => {
+                    let sum = 0, teamsCount = 0;
+                    Object.values(s.scores).forEach(ts => {
+                        sum += (Object.values(ts).reduce((a,b) => a+b, 0) * 5);
+                        teamsCount++;
+                    });
+                    return { name: s.scorer, score: teamsCount ? (sum / teamsCount).toFixed(1) : 0 };
                 });
 
-                sysMsg.innerText = "התחרות נשמרה בהצלחה במערכת!";
-                sysMsg.style.display = 'block';
-                sysMsg.style.color = 'var(--success)';
-
-                // Clear fields for next entry if needed
-                document.getElementById('admin-comp-date').value = '';
-                document.getElementById('admin-comp-name').value = '';
-                document.getElementById('admin-teams-list').innerHTML = '';
-                addAdminTeamRow();
-
-            } catch (e) {
-                console.error("Error creating competition", e);
-                sysMsg.innerText = "שגיאה בשמירת התחרות.";
-                sysMsg.style.display = 'block';
-                sysMsg.style.color = 'var(--error)';
-            } finally {
-                showLoader(false);
+                display.innerHTML = `
+                    <p>סה"כ מנקדים שהצביעו: ${allScores.length}</p>
+                    <h4>טבלת קבוצות (ממוצע משוקלל ל-100)</h4>
+                    <table><tr><th>קבוצה</th><th>ציון</th></tr>${teamResults.map(tr => `<tr><td>${tr.name}</td><td>${tr.score}</td></tr>`).join('')}</table>
+                    <h4 style="margin-top:20px">פירוט מנקדים (ציון ממוצע שנתנו)</h4>
+                    <table><tr><th>מנקד</th><th>ציון</th></tr>${scorerResults.map(sr => `<tr><td>${sr.name}</td><td>${sr.score}</td></tr>`).join('')}</table>
+                `;
+                document.getElementById('btn-export-csv').style.display = 'block';
+                window.currentResultsForExport = { teamResults, scorerResults };
             }
-        }
+            document.getElementById('loader').style.display = 'none';
+        });
+
+        document.getElementById('btn-export-csv').addEventListener('click', () => {
+            const data = window.currentResultsForExport;
+            let csv = "\uFEFF"; // BOM for Hebrew
+            csv += "קבוצה,ציון סופי\n";
+            data.teamResults.forEach(r => csv += `${r.name},${r.score}\n`);
+            csv += "\nמנקד,ציון ממוצע שנתן\n";
+            data.scorerResults.forEach(r => csv += `${r.name},${r.score}\n`);
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", "OBN_Results.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        document.getElementById('btn-exit-admin').onclick = () => location.reload();
+
     </script>
 </body>
 </html>
