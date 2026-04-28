@@ -146,6 +146,9 @@
                     ⚠️ <b>שים לב:</b> מחיקת קבוצה או שינוי שמה לאחר שכבר קיבלה ניקוד, תגרום לניתוק הניקוד הקודם ממנה (השמירה מבוססת על השם המדויק).
                 </p>
                 <button class="btn" id="btn-save-comp" style="margin-top:10px">שמור תחרות ל-DB</button>
+                
+                <hr style="margin: 20px 0; border: 0; border-top: 2px dashed #ddd;">
+                <button class="btn btn-danger btn-outline" id="btn-hard-reset-all" style="font-size: 12px; padding: 10px;">🔥 מחיקה גורפת של כל ההצבעות (מכל התחרויות)</button>
             </div>
 
             <div id="admin-results-section" style="display:none;">
@@ -261,7 +264,6 @@
                         s.appendChild(opt);
                     });
                     
-                    // Preserve selection if it still exists
                     if (currentVal && Array.from(s.options).some(o => o.value === currentVal)) {
                         s.value = currentVal;
                     }
@@ -488,9 +490,7 @@
             
             try {
                 await setDoc(doc(getCol('competitions'), id), { name, date, teams });
-                
                 showModal("הצלחה", isNew ? "התחרות נוצרה בהצלחה!" : "התחרות עודכנה בהצלחה!", "info");
-                
                 if (isNew) {
                     document.getElementById('admin-comp-name').value = '';
                     document.getElementById('admin-comp-date').value = '';
@@ -522,20 +522,18 @@
                 btnExport.style.display = 'none';
                 btnDeleteAll.style.display = 'none';
             } else {
-                // 1. Calculate Overall Team Averages
                 const teamResults = comp.teams.map(team => {
                     let totalVal = 0, count = 0;
                     allScores.forEach(s => {
                         if (s.scores[team]) {
                             const sum = Object.values(s.scores[team]).reduce((a,b) => a+b, 0);
-                            totalVal += (sum * 5); // Scaling: 20 max points * 5 = 100
+                            totalVal += (sum * 5); 
                             count++;
                         }
                     });
                     return { name: team, score: count ? (totalVal / count).toFixed(1) : 0 };
                 }).sort((a,b) => b.score - a.score);
 
-                // 2. Calculate Detailed Scores Per Scorer
                 const detailedScorerResults = allScores.map(s => {
                     const scorerName = s.scorer;
                     const docId = s.id;
@@ -544,21 +542,14 @@
                         const sum = Object.values(s.scores[team]).reduce((a,b) => a+b, 0);
                         teamScores.push({ team: team, score: sum * 5 });
                     });
-                    
                     teamScores.sort((a, b) => b.score - a.score);
                     return { name: scorerName, docId: docId, scores: teamScores };
                 });
 
-                // 3. Generate HTML
                 let htmlOutput = `
                     <p style="text-align:center; font-weight:bold; color:var(--text-muted);">סה"כ מנקדים שהצביעו: ${allScores.length}</p>
-                    
                     <h4 style="margin-top:20px; color:var(--primary);">דירוג סופי משוקלל (ממוצע)</h4>
-                    <table>
-                        <tr><th>קבוצה</th><th>ציון סופי</th></tr>
-                        ${teamResults.map(tr => `<tr><td>${tr.name}</td><td>${tr.score}</td></tr>`).join('')}
-                    </table>
-                    
+                    <table><tr><th>קבוצה</th><th>ציון סופי</th></tr>${teamResults.map(tr => `<tr><td>${tr.name}</td><td>${tr.score}</td></tr>`).join('')}</table>
                     <h3 style="margin-top:30px; border-bottom: 2px solid var(--primary); padding-bottom: 5px;">פירוט ניקוד לפי שופטים</h3>
                 `;
 
@@ -568,30 +559,24 @@
                             <h4 style="color:var(--primary-hover); margin:0;">מנקד: ${scorerData.name}</h4>
                             <button class="btn btn-danger" style="width:auto; padding:5px 15px; margin:0;" onclick="deleteSpecificScorer('${scorerData.docId}', '${scorerData.name}')">מחק מנקד</button>
                         </div>
-                        <table>
-                            <tr><th>קבוצה</th><th>ציון שניתן</th></tr>
-                            ${scorerData.scores.map(ts => `<tr><td>${ts.team}</td><td>${ts.score}</td></tr>`).join('')}
-                        </table>
+                        <table><tr><th>קבוצה</th><th>ציון שניתן</th></tr>${scorerData.scores.map(ts => `<tr><td>${ts.team}</td><td>${ts.score}</td></tr>`).join('')}</table>
                     `;
                 });
 
                 display.innerHTML = htmlOutput;
                 btnExport.style.display = 'block';
                 btnDeleteAll.style.display = 'block';
-                
                 window.currentResultsForExport = { teamResults, detailedScorerResults };
             }
             document.getElementById('loader').style.display = 'none';
         });
 
-        // Delete specific scorer
         window.deleteSpecificScorer = (docId, scorerName) => {
             showModal("אישור מחיקה", `האם למחוק את כל ההצבעות של "${scorerName}"? פעולה זו בלתי הפיכה.`, "confirm", async () => {
                 document.getElementById('loader').style.display = 'flex';
                 try {
                     await deleteDoc(doc(getCol('scores'), docId));
                     showModal("הצלחה", "ההצבעה נמחקה.", "info");
-                    // Refresh view
                     document.getElementById('admin-view-comp-select').dispatchEvent(new Event('change'));
                 } catch(e) {
                     showModal("שגיאה", "שגיאה במחיקה: " + e.message, "error");
@@ -601,22 +586,21 @@
             });
         };
 
-        // Delete all scorers for competition
         document.getElementById('btn-delete-all-scores').addEventListener('click', () => {
             const compId = document.getElementById('admin-view-comp-select').value;
             if(!compId) return;
             
-            showModal("אזהרה חמורה", "האם למחוק את **כל ההצבעות** של כל המנקדים לתחרות זו? זוהי פעולה בלתי הפיכה שתאפס את התחרות!", "confirm", async () => {
+            showModal("אזהרה חמורה", "האם למחוק את **כל ההצבעות** לתחרות זו? זה יאפס את הנתונים שלה.", "confirm", async () => {
                 document.getElementById('loader').style.display = 'flex';
                 try {
                     const scoreSnap = await getDocs(getCol('scores'));
-                    const docsToDelete = scoreSnap.docs.filter(d => d.data().compId === compId);
+                    // Robust check: By field compId AND if document ID starts with compId
+                    const docsToDelete = scoreSnap.docs.filter(d => d.data().compId === compId || d.id.startsWith(compId));
                     
                     for (const d of docsToDelete) {
                         await deleteDoc(d.ref);
                     }
-                    showModal("הצלחה", "התחרות אופסה וכל ההצבעות נמחקו.", "info");
-                    // Refresh view
+                    showModal("הצלחה", "התחרות אופסה.", "info");
                     document.getElementById('admin-view-comp-select').dispatchEvent(new Event('change'));
                 } catch(e) {
                     showModal("שגיאה", "שגיאה במחיקה: " + e.message, "error");
@@ -626,19 +610,37 @@
             });
         });
 
+        // Hard Reset: Delete EVERYTHING from the scores collection
+        document.getElementById('btn-hard-reset-all').addEventListener('click', () => {
+            showModal("🔥 איפוס טוטאלי סופר-מסוכן", "האם אתה בטוח שברצונך למחוק **את כלל ההצבעות** מכל התחרויות שקיימות ב-DB? פעולה זו תנקה שאריות מכל סוג שהוא.", "confirm", async () => {
+                document.getElementById('loader').style.display = 'flex';
+                try {
+                    const scoreSnap = await getDocs(getCol('scores'));
+                    for (const d of scoreSnap.docs) {
+                        await deleteDoc(d.ref);
+                    }
+                    showModal("הצלחה", "כל ההצבעות ב-DB נמחקו לצמיתות.", "info");
+                    if (document.getElementById('admin-view-comp-select').value) {
+                        document.getElementById('admin-view-comp-select').dispatchEvent(new Event('change'));
+                    }
+                } catch(e) {
+                    showModal("שגיאה", "שגיאה באיפוס המערכת: " + e.message, "error");
+                } finally {
+                    document.getElementById('loader').style.display = 'none';
+                }
+            });
+        });
+
         document.getElementById('btn-export-csv').addEventListener('click', () => {
             const data = window.currentResultsForExport;
             let csv = "\uFEFF"; 
-            
             csv += "דירוג סופי משוקלל\nקבוצה,ציון סופי\n";
             data.teamResults.forEach(r => csv += `${r.name},${r.score}\n`);
-            
             csv += "\n\n--- פירוט ניקוד לפי שופטים ---\n";
             data.detailedScorerResults.forEach(scorerData => {
                 csv += `\nמנקד: ${scorerData.name}\nקבוצה,ציון שניתן\n`;
                 scorerData.scores.forEach(s => csv += `${s.team},${s.score}\n`);
             });
-            
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
