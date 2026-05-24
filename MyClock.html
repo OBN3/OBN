@@ -21,6 +21,10 @@
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* הסרת חיצים משדות מספר */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="text-slate-800 flex flex-col h-screen">
@@ -50,7 +54,7 @@
     </nav>
 
     <!-- אזור התוכן הראשי -->
-    <main class="container mx-auto px-4 py-6 flex-1 overflow-y-auto">
+    <main class="container mx-auto px-4 py-6 flex-1 overflow-y-auto relative">
         
         <!-- מסך התחברות -->
         <div id="login-screen" class="flex flex-col items-center justify-center h-full text-center px-4">
@@ -68,17 +72,17 @@
         </div>
 
         <!-- אפליקציה - מוסתר עד התחברות -->
-        <div id="app-content" class="hidden">
+        <div id="app-content" class="hidden pb-10">
 
             <!-- מסך דשבורד -->
             <section id="dashboard" class="tab-content active">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                    <h2 class="text-2xl font-bold text-slate-700">סיכום נתונים חודשי</h2>
+                    <h2 id="dash-main-title" class="text-2xl font-bold text-slate-700">סיכום נתונים חודשי</h2>
                 </div>
 
                 <!-- כרטיסיות סיכום -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition">
                         <div class="bg-indigo-100 text-indigo-600 p-4 rounded-full text-2xl">
                             <i class="fas fa-hourglass-half"></i>
                         </div>
@@ -87,7 +91,7 @@
                             <p id="dash-total-hours" class="text-3xl font-bold text-slate-800 mt-1">00:00</p>
                         </div>
                     </div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition">
                         <div class="bg-green-100 text-green-600 p-4 rounded-full text-2xl">
                             <i class="fas fa-shekel-sign"></i>
                         </div>
@@ -98,26 +102,14 @@
                     </div>
                 </div>
 
-                <!-- פילוח הכנסות -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    <!-- פר לקוח -->
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
-                            <h3 class="font-bold text-slate-700"><i class="fas fa-chart-pie text-indigo-500 ml-2"></i>הכנסות פר לקוח (החודש)</h3>
-                        </div>
-                        <div id="dash-client-breakdown" class="p-6 space-y-4">
-                            <!-- יאוכלס דינמית -->
-                        </div>
+                <!-- פילוח הכנסות היררכי (לקוח -> פרויקט) -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden mb-8">
+                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
+                        <i class="fas fa-network-wired text-indigo-500"></i>
+                        <h3 class="font-bold text-slate-700">התפלגות הכנסות ושעות - לקוחות ופרויקטים</h3>
                     </div>
-
-                    <!-- פר פרויקט -->
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
-                            <h3 class="font-bold text-slate-700"><i class="fas fa-project-diagram text-indigo-500 ml-2"></i>הכנסות פר פרויקט (החודש)</h3>
-                        </div>
-                        <div id="dash-project-breakdown" class="p-6 space-y-4">
-                            <!-- יאוכלס דינמית -->
-                        </div>
+                    <div id="dash-hierarchical-breakdown" class="p-6">
+                        <!-- יאוכלס דינמית ע"י ה-JS -->
                     </div>
                 </div>
             </section>
@@ -154,34 +146,40 @@
                     </div>
                 </div>
 
-                <!-- הזנה ידנית (כולל שדה תיאור) -->
+                <!-- הזנה ידנית שופרה -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                    <h3 class="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2"><i class="fas fa-keyboard text-indigo-500"></i> הזנה ידנית (בדיעבד)</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4 items-end text-right">
-                        <div>
+                    <h3 class="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2"><i class="fas fa-keyboard text-indigo-500"></i> הזנה ידנית (משך זמן עבודה)</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-4 items-end text-right">
+                        <div class="md:col-span-2">
                             <label class="block text-sm text-slate-500 mb-1">תאריך</label>
                             <input type="date" id="manualDate" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
                         </div>
-                        <div>
+                        <div class="md:col-span-2">
                             <label class="block text-sm text-slate-500 mb-1">לקוח</label>
                             <select id="manualClientSelect" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
-                                <option value="">-- כללי (ללא לקוח) --</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm text-slate-500 mb-1">פרויקט</label>
-                            <select id="manualProjectSelect" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
-                                <option value="">-- בחר פרויקט --</option>
+                                <option value="">-- כללי --</option>
                             </select>
                         </div>
                         <div class="md:col-span-2">
+                            <label class="block text-sm text-slate-500 mb-1">פרויקט</label>
+                            <select id="manualProjectSelect" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
+                                <option value="">-- כללי --</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-3">
                             <label class="block text-sm text-slate-500 mb-1">תיאור משימה</label>
                             <input type="text" id="manualDesc" placeholder="מה ביצעת?" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
                         </div>
-                        <div class="flex gap-2 items-end">
-                            <div class="flex-1">
-                                <label class="block text-sm text-slate-500 mb-1">זמן (שעות:דקות)</label>
-                                <input type="time" id="manualTime" value="01:00" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500" dir="ltr">
+                        <div class="md:col-span-3 flex gap-2 items-end">
+                            <div class="flex-1 flex gap-1">
+                                <div class="w-1/2 relative">
+                                    <label class="block text-sm text-slate-500 mb-1 text-center">שעות</label>
+                                    <input type="number" id="manualHours" value="1" min="0" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500 text-center text-lg">
+                                </div>
+                                <div class="w-1/2 relative">
+                                    <label class="block text-sm text-slate-500 mb-1 text-center">דקות</label>
+                                    <input type="number" id="manualMinutes" value="0" min="0" max="59" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500 text-center text-lg">
+                                </div>
                             </div>
                             <button onclick="saveManualEntry()" class="bg-slate-800 text-white p-2 rounded-lg hover:bg-slate-700 transition w-12 h-[42px] flex items-center justify-center" title="שמור הזנה">
                                 <i class="fas fa-save"></i>
@@ -194,7 +192,7 @@
             <!-- מסך דוחות חכמים -->
             <section id="reports" class="tab-content">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                    <h2 class="text-2xl font-bold text-slate-700">הפקת דוחות</h2>
+                    <h2 class="text-2xl font-bold text-slate-700">הפקת דוחות (ועריכת רשומות)</h2>
                     <button onclick="exportFilteredReport()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow transition flex items-center gap-2 w-full sm:w-auto justify-center">
                         <i class="fas fa-file-excel"></i> ייצא דוח לאקסל
                     </button>
@@ -256,8 +254,8 @@
                                     <th class="p-4 font-medium">פרויקט</th>
                                     <th class="p-4 font-medium w-1/4">תיאור</th>
                                     <th class="p-4 font-medium">משך זמן</th>
-                                    <th class="p-4 font-medium text-center">סוג דיווח</th>
-                                    <th class="p-4 font-medium text-center">מחק</th>
+                                    <th class="p-4 font-medium text-center">סוג</th>
+                                    <th class="p-4 font-medium text-center">פעולות</th>
                                 </tr>
                             </thead>
                             <tbody id="report-table-body" class="text-sm">
@@ -273,34 +271,79 @@
                 <h2 class="text-2xl font-bold text-slate-700 mb-6">הגדרות לקוחות ופרויקטים</h2>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col h-full">
                         <h3 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2">הוספת לקוח</h3>
                         <div class="flex flex-col gap-3 mb-6">
                             <input type="text" id="newClientName" placeholder="שם הלקוח" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:border-indigo-500 outline-none">
                             <input type="number" id="newClientRate" placeholder="תעריף שעתי (₪) - אופציונלי" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:border-indigo-500 outline-none">
-                            <button onclick="addClient()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">שמור לקוח</button>
+                            <button onclick="addClient()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">שמור לקוח חדש</button>
                         </div>
-                        <h4 class="font-medium text-slate-600 mb-2">לקוחות קיימים:</h4>
-                        <ul id="clients-list" class="space-y-2 text-sm max-h-48 overflow-y-auto"></ul>
+                        <h4 class="font-medium text-slate-600 mb-2">לקוחות קיימים (עריכה ומחיקה):</h4>
+                        <ul id="clients-list" class="space-y-2 text-sm flex-1 overflow-y-auto pr-2"></ul>
                     </div>
 
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col h-full">
                         <h3 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2">הוספת פרויקט</h3>
                         <div class="flex flex-col gap-3 mb-6">
                             <select id="newProjectClient" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:border-indigo-500 outline-none">
                                 <option value="">-- בחר לקוח קשור --</option>
                             </select>
                             <input type="text" id="newProjectName" placeholder="שם הפרויקט" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:border-indigo-500 outline-none">
-                            <button onclick="addProject()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">שמור פרויקט</button>
+                            <button onclick="addProject()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">שמור פרויקט חדש</button>
                         </div>
-                        <h4 class="font-medium text-slate-600 mb-2">פרויקטים קיימים:</h4>
-                        <ul id="projects-list" class="space-y-2 text-sm max-h-48 overflow-y-auto"></ul>
+                        <h4 class="font-medium text-slate-600 mb-2">פרויקטים קיימים (עריכה ומחיקה):</h4>
+                        <ul id="projects-list" class="space-y-2 text-sm flex-1 overflow-y-auto pr-2"></ul>
                     </div>
                 </div>
             </section>
 
         </div>
     </main>
+
+    <!-- Modal for Editing Time Entries -->
+    <div id="edit-entry-modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-50 hidden flex justify-center items-center px-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-700 text-lg"><i class="fas fa-edit text-indigo-500 mr-2"></i> עריכת רשומת זמן</h3>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="editEntryId">
+                <div>
+                    <label class="block text-sm text-slate-500 mb-1">תאריך</label>
+                    <input type="date" id="editEntryDate" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-500 mb-1">לקוח</label>
+                    <select id="editEntryClient" onchange="filterProjectsByClient('editEntryClient', 'editEntryProject')" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-500 mb-1">פרויקט</label>
+                    <select id="editEntryProject" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-500 mb-1">תיאור משימה</label>
+                    <input type="text" id="editEntryDesc" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
+                </div>
+                <div class="flex gap-4">
+                    <div class="w-1/2">
+                        <label class="block text-sm text-slate-500 mb-1">שעות</label>
+                        <input type="number" id="editEntryHours" min="0" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500 text-center">
+                    </div>
+                    <div class="w-1/2">
+                        <label class="block text-sm text-slate-500 mb-1">דקות</label>
+                        <input type="number" id="editEntryMinutes" min="0" max="59" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500 text-center">
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <button onclick="closeEditModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg transition">ביטול</button>
+                <button onclick="saveEditEntry()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-sm">שמור שינויים</button>
+            </div>
+        </div>
+    </div>
 
     <!-- UI Overlay for Messages -->
     <div id="toast" class="fixed bottom-4 left-4 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-xl transform transition-transform translate-y-20 opacity-0 z-50">
@@ -310,9 +353,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, onSnapshot, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // הגדרות הפרויקט שלך
         const firebaseConfig = {
             apiKey: "AIzaSyBzXRUcnLuqH8rAaHdu6uGehgatD6hsIV0",
             authDomain: "myclock-6ba87.firebaseapp.com",
@@ -325,7 +367,6 @@
         
         let app, auth, db, userId;
         
-        // State של האפליקציה
         let clientsData = [];
         let projectsData = [];
         let entriesData = [];
@@ -373,7 +414,6 @@
                         document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/150';
                         
                         document.getElementById('manualDate').valueAsDate = new Date();
-                        // אתחול תאריכי הדוח לחודש הנוכחי כברירת מחדל
                         window.setReportDates('thisMonth');
                         
                         setupListeners();
@@ -397,8 +437,7 @@
             document.getElementById('clients-list').innerHTML = '';
             document.getElementById('projects-list').innerHTML = '';
             document.getElementById('report-table-body').innerHTML = '';
-            document.getElementById('dash-client-breakdown').innerHTML = '';
-            document.getElementById('dash-project-breakdown').innerHTML = '';
+            document.getElementById('dash-hierarchical-breakdown').innerHTML = '';
         }
 
         const getDbRef = (colName) => collection(db, 'artifacts', appId, 'users', userId, colName);
@@ -425,14 +464,15 @@
             }, (e) => console.error(e)));
         }
 
-        // --- עדכוני ממשק (UI) ---
+        // --- UI UPDATES ---
         
         function updateClientsUI() {
             const selects = [
                 { id: 'timerClientSelect', text: '-- בחר לקוח (לא חובה) --' }, 
                 { id: 'manualClientSelect', text: '-- כללי (ללא לקוח) --' }, 
                 { id: 'newProjectClient', text: '-- בחר לקוח קשור --' }, 
-                { id: 'filterClientSelect', text: '-- כל הלקוחות --' }
+                { id: 'filterClientSelect', text: '-- כל הלקוחות --' },
+                { id: 'editEntryClient', text: '-- כללי (ללא לקוח) --'}
             ];
             
             selects.forEach(sel => {
@@ -449,9 +489,12 @@
             clientsData.forEach(c => {
                 const rateText = c.hourlyRate ? `(₪${c.hourlyRate}/שעה)` : '';
                 list.innerHTML += `
-                    <li class="flex justify-between items-center p-2 bg-slate-50 rounded border border-slate-100">
-                        <span><i class="fas fa-user text-indigo-400 ml-2"></i>${c.name} <span class="text-slate-400 text-xs">${rateText}</span></span>
-                        <button onclick="deleteDocById('clients', '${c.id}')" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
+                    <li class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100 hover:border-indigo-200 transition">
+                        <span class="font-medium"><i class="fas fa-user text-indigo-400 ml-2"></i>${c.name} <span class="text-slate-400 text-xs">${rateText}</span></span>
+                        <div class="flex gap-3">
+                            <button onclick="editClientPrompt('${c.id}', '${c.name}', ${c.hourlyRate || 0})" class="text-slate-400 hover:text-indigo-600 transition" title="ערוך לקוח"><i class="fas fa-pen"></i></button>
+                            <button onclick="deleteDocById('clients', '${c.id}')" class="text-slate-400 hover:text-red-600 transition" title="מחק לקוח"><i class="fas fa-trash"></i></button>
+                        </div>
                     </li>`;
             });
             updateDashboardStats();
@@ -464,31 +507,38 @@
             projectsData.forEach(p => {
                 const client = clientsData.find(c => c.id === p.clientId);
                 list.innerHTML += `
-                    <li class="flex justify-between items-center p-2 bg-slate-50 rounded border border-slate-100">
-                        <span><i class="fas fa-folder text-indigo-400 ml-2"></i>${p.name} <span class="text-xs text-slate-400">(${client ? client.name : 'לקוח נמחק'})</span></span>
-                        <button onclick="deleteDocById('projects', '${p.id}')" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
+                    <li class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100 hover:border-indigo-200 transition">
+                        <span class="font-medium"><i class="fas fa-folder text-indigo-400 ml-2"></i>${p.name} <span class="text-xs text-slate-400">(${client ? client.name : 'לקוח נמחק'})</span></span>
+                        <div class="flex gap-3">
+                            <button onclick="editProjectPrompt('${p.id}', '${p.name}')" class="text-slate-400 hover:text-indigo-600 transition" title="ערוך פרויקט"><i class="fas fa-pen"></i></button>
+                            <button onclick="deleteDocById('projects', '${p.id}')" class="text-slate-400 hover:text-red-600 transition" title="מחק פרויקט"><i class="fas fa-trash"></i></button>
+                        </div>
                     </li>`;
             });
             
-            filterProjectsByClient('timerClientSelect', 'timerProjectSelect', '-- בחר פרויקט --');
-            filterProjectsByClient('manualClientSelect', 'manualProjectSelect', '-- בחר פרויקט --');
+            window.filterProjectsByClient('timerClientSelect', 'timerProjectSelect');
+            window.filterProjectsByClient('manualClientSelect', 'manualProjectSelect');
             window.filterProjectsInReport();
             
             updateDashboardStats();
             window.generateReport();
         }
 
-        // פילוח דשבורד
+        // פילוח דשבורד (היררכי - מעודכן לפי הדרישות)
         function updateDashboardStats() {
             const now = new Date();
             const currentMonth = now.getMonth();
             const currentYear = now.getFullYear();
+            
+            // עדכון כותרת דינמית
+            const monthName = now.toLocaleDateString('he-IL', { month: 'long', year: 'numeric' });
+            document.getElementById('dash-main-title').innerText = `סיכום נתונים חודשי - ${monthName}`;
 
             let totalSeconds = 0;
             let totalEarnings = 0;
             
-            const clientTotals = {};
-            const projectTotals = {};
+            // מבנה עץ היררכי: לקוח -> פרויקט
+            const hierarchy = {};
 
             entriesData.forEach(entry => {
                 const d = new Date(entry.date);
@@ -501,54 +551,75 @@
                     
                     totalEarnings += earnings;
 
-                    if(entry.clientId) {
-                        if(!clientTotals[entry.clientId]) clientTotals[entry.clientId] = { seconds: 0, earnings: 0, name: client ? client.name : 'לא ידוע' };
-                        clientTotals[entry.clientId].seconds += entry.durationSeconds;
-                        clientTotals[entry.clientId].earnings += earnings;
-                    }
+                    // בניית העץ
+                    const cId = entry.clientId || 'general';
+                    const cName = client ? client.name : 'לקוחות כלליים / ללא לקוח';
+                    
+                    const pId = entry.projectId || 'general_proj';
+                    const proj = projectsData.find(p => p.id === entry.projectId);
+                    const pName = proj ? proj.name : 'משימות כלליות';
 
-                    if(entry.projectId) {
-                        const proj = projectsData.find(p => p.id === entry.projectId);
-                        if(!projectTotals[entry.projectId]) projectTotals[entry.projectId] = { seconds: 0, earnings: 0, name: proj ? proj.name : 'לא ידוע' };
-                        projectTotals[entry.projectId].seconds += entry.durationSeconds;
-                        projectTotals[entry.projectId].earnings += earnings;
+                    if(!hierarchy[cId]) {
+                        hierarchy[cId] = { name: cName, seconds: 0, earnings: 0, projects: {} };
                     }
+                    
+                    hierarchy[cId].seconds += entry.durationSeconds;
+                    hierarchy[cId].earnings += earnings;
+
+                    if(!hierarchy[cId].projects[pId]) {
+                        hierarchy[cId].projects[pId] = { name: pName, seconds: 0, earnings: 0 };
+                    }
+                    hierarchy[cId].projects[pId].seconds += entry.durationSeconds;
+                    hierarchy[cId].projects[pId].earnings += earnings;
                 }
             });
 
             document.getElementById('dash-total-hours').innerText = formatSeconds(totalSeconds, true);
             document.getElementById('dash-total-earnings').innerText = '₪' + Math.round(totalEarnings).toLocaleString();
 
-            renderBreakdownList('dash-client-breakdown', clientTotals, totalEarnings);
-            renderBreakdownList('dash-project-breakdown', projectTotals, totalEarnings);
+            renderHierarchicalBreakdown(hierarchy, totalEarnings);
         }
 
-        function renderBreakdownList(containerId, totalsObj, grandTotalEarnings) {
-            const container = document.getElementById(containerId);
+        function renderHierarchicalBreakdown(hierarchy, grandTotalEarnings) {
+            const container = document.getElementById('dash-hierarchical-breakdown');
             container.innerHTML = '';
             
-            const sorted = Object.values(totalsObj).sort((a, b) => b.earnings - a.earnings);
+            const sortedClients = Object.values(hierarchy).sort((a, b) => b.earnings - a.earnings);
             
-            if(sorted.length === 0) {
+            if(sortedClients.length === 0) {
                 container.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">אין נתונים לחודש הנוכחי</p>';
                 return;
             }
 
-            sorted.forEach(item => {
-                const percent = grandTotalEarnings > 0 ? (item.earnings / grandTotalEarnings) * 100 : 0;
-                const hrsStr = formatSeconds(item.seconds, true);
+            sortedClients.forEach(client => {
+                const cPercent = grandTotalEarnings > 0 ? (client.earnings / grandTotalEarnings) * 100 : 0;
+                const cHrsStr = formatSeconds(client.seconds, true);
                 
-                container.innerHTML += `
-                    <div class="mb-3">
-                        <div class="flex justify-between text-sm mb-1">
-                            <span class="font-medium text-slate-700">${item.name}</span>
-                            <span class="text-slate-500 font-bold">₪${Math.round(item.earnings).toLocaleString()} <span class="font-normal text-xs ml-1">(${hrsStr} שעות)</span></span>
+                let html = `
+                    <div class="mb-5 bg-white border border-slate-100 rounded-lg p-4 shadow-sm">
+                        <div class="flex justify-between items-end mb-2">
+                            <span class="font-bold text-slate-800 text-lg"><i class="fas fa-user-circle text-indigo-400 ml-2"></i>${client.name}</span>
+                            <span class="text-indigo-600 font-bold text-lg">₪${Math.round(client.earnings).toLocaleString()} <span class="font-normal text-sm text-slate-500 ml-1">(${cHrsStr} ש')</span></span>
                         </div>
-                        <div class="w-full bg-slate-100 rounded-full h-2">
-                            <div class="bg-indigo-500 h-2 rounded-full" style="width: ${percent}%"></div>
+                        <div class="w-full bg-slate-100 rounded-full h-2 mb-4">
+                            <div class="bg-indigo-500 h-2 rounded-full" style="width: ${cPercent}%"></div>
                         </div>
-                    </div>
+                        <div class="space-y-3 pr-4 border-r-2 border-indigo-100 mr-2">
                 `;
+
+                const sortedProjects = Object.values(client.projects).sort((a, b) => b.earnings - a.earnings);
+                sortedProjects.forEach(proj => {
+                    const pHrsStr = formatSeconds(proj.seconds, true);
+                    html += `
+                        <div class="flex justify-between text-sm items-center bg-slate-50 p-2 rounded">
+                            <span class="text-slate-600"><i class="fas fa-caret-left text-slate-400 ml-2"></i>${proj.name}</span>
+                            <span class="text-slate-600 font-medium">₪${Math.round(proj.earnings).toLocaleString()} <span class="text-xs text-slate-400 ml-1">(${pHrsStr} ש')</span></span>
+                        </div>
+                    `;
+                });
+
+                html += `</div></div>`;
+                container.innerHTML += html;
             });
         }
 
@@ -584,7 +655,7 @@
         };
 
         window.filterProjectsInReport = () => {
-            filterProjectsByClient('filterClientSelect', 'filterProjectSelect', '-- כל הפרויקטים --');
+            window.filterProjectsByClient('filterClientSelect', 'filterProjectSelect', '-- כל הפרויקטים --');
         };
 
         window.generateReport = () => {
@@ -625,22 +696,22 @@
                         totalEarnings += (entry.durationSeconds / 3600) * client.hourlyRate;
                     }
                     
-                    // תגית המעידה האם זוהי הזנה ידנית או באמצעות הטיימר
                     const typeBadge = entry.entryType === 'manual' 
-                        ? `<span class="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full whitespace-nowrap"><i class="fas fa-keyboard ml-1"></i>ידני</span>`
-                        : `<span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full whitespace-nowrap"><i class="fas fa-stopwatch ml-1"></i>טיימר</span>`;
+                        ? `<span class="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full whitespace-nowrap" title="הוזן ידנית"><i class="fas fa-keyboard"></i></span>`
+                        : `<span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full whitespace-nowrap" title="הוקלט בטיימר"><i class="fas fa-stopwatch"></i></span>`;
 
                     const tr = document.createElement('tr');
                     tr.className = "border-b border-slate-100 hover:bg-slate-50 transition";
                     tr.innerHTML = `
                         <td class="p-4 whitespace-nowrap">${new Date(entry.date).toLocaleDateString('he-IL')}</td>
-                        <td class="p-4 font-medium">${client ? client.name : 'כללי'}</td>
-                        <td class="p-4">${project ? project.name : 'כללי'}</td>
+                        <td class="p-4 font-medium">${client ? client.name : '-'}</td>
+                        <td class="p-4">${project ? project.name : '-'}</td>
                         <td class="p-4 text-slate-600">${entry.description || '-'}</td>
-                        <td class="p-4 text-indigo-600 font-medium" dir="ltr">${formatSeconds(entry.durationSeconds)}</td>
+                        <td class="p-4 text-indigo-600 font-bold" dir="ltr">${formatSeconds(entry.durationSeconds, true)}</td>
                         <td class="p-4 text-center">${typeBadge}</td>
-                        <td class="p-4 text-center">
-                            <button onclick="deleteDocById('entries', '${entry.id}')" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
+                        <td class="p-4 text-center flex justify-center gap-3">
+                            <button onclick="openEditModal('${entry.id}')" class="text-slate-400 hover:text-indigo-600 transition" title="ערוך רשומה"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteDocById('entries', '${entry.id}')" class="text-slate-400 hover:text-red-600 transition" title="מחק רשומה"><i class="fas fa-trash"></i></button>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -652,7 +723,7 @@
         };
 
 
-        // --- פעולות שמירה ---
+        // --- פעולות שמירה ועריכה במסד הנתונים ---
         
         window.addClient = async () => {
             const name = document.getElementById('newClientName').value.trim();
@@ -669,6 +740,21 @@
             showToast("לקוח נוסף בהצלחה");
         };
 
+        window.editClientPrompt = async (id, currentName, currentRate) => {
+            const newName = prompt("ערוך שם לקוח:", currentName);
+            if (newName === null || newName.trim() === "") return;
+            
+            const newRateRaw = prompt("ערוך תעריף שעתי (₪):", currentRate || 0);
+            if (newRateRaw === null) return;
+            const newRate = Number(newRateRaw);
+
+            await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'clients', id), {
+                name: newName.trim(),
+                hourlyRate: isNaN(newRate) ? 0 : newRate
+            });
+            showToast("לקוח עודכן בהצלחה");
+        };
+
         window.addProject = async () => {
             const clientId = document.getElementById('newProjectClient').value;
             const name = document.getElementById('newProjectName').value.trim();
@@ -683,8 +769,18 @@
             showToast("פרויקט נוסף בהצלחה");
         };
 
+        window.editProjectPrompt = async (id, currentName) => {
+            const newName = prompt("ערוך שם פרויקט:", currentName);
+            if (newName === null || newName.trim() === "") return;
+
+            await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'projects', id), {
+                name: newName.trim()
+            });
+            showToast("פרויקט עודכן בהצלחה");
+        };
+
         window.deleteDocById = async (collectionName, id) => {
-            if(confirm("למחוק רשומה זו?")) {
+            if(confirm("למחוק רשומה זו לחלוטין?")) {
                 await deleteDoc(doc(db, 'artifacts', appId, 'users', userId, collectionName, id));
                 showToast("נמחק בהצלחה");
             }
@@ -694,35 +790,92 @@
             const date = document.getElementById('manualDate').value;
             const clientId = document.getElementById('manualClientSelect').value;
             const projectId = document.getElementById('manualProjectSelect').value;
-            const timeStr = document.getElementById('manualTime').value;
+            const hours = Number(document.getElementById('manualHours').value) || 0;
+            const minutes = Number(document.getElementById('manualMinutes').value) || 0;
             const desc = document.getElementById('manualDesc').value.trim(); 
             
-            // תאריך וזמן הם שדות החובה היחידים כעת. לקוח יכול להיות "כללי" (ריק)
-            if(!date || !timeStr) return showToast("יש למלא תאריך וזמן (לקוח ופרויקט אינם חובה)");
+            if(!date || (hours === 0 && minutes === 0)) return showToast("יש למלא תאריך ולהזין משך זמן (שעות/דקות)");
             
-            const [hours, minutes] = timeStr.split(':').map(Number);
             const durationSeconds = (hours * 3600) + (minutes * 60);
             
-            if(durationSeconds <= 0) return showToast("זמן חייב להיות גדול מאפס");
-
             await addDoc(getDbRef('entries'), {
                 date,
                 clientId: clientId || null,
                 projectId: projectId || null,
-                description: desc, // נשמר בדיוק מה שהוזן, בלי טקסט מוגדר מראש
-                entryType: 'manual', // סיווג סוג ההזנה
+                description: desc,
+                entryType: 'manual',
                 durationSeconds,
                 createdAt: serverTimestamp()
             });
             
-            document.getElementById('manualDesc').value = ''; 
+            document.getElementById('manualDesc').value = '';
+            document.getElementById('manualHours').value = '1';
+            document.getElementById('manualMinutes').value = '0';
             showToast("רשומה ידנית נשמרה בהצלחה");
         };
 
-        function filterProjectsByClient(clientSelectId, projectSelectId, defaultText = '-- בחר פרויקט --') {
-            const clientId = document.getElementById(clientSelectId).value;
-            const projSelect = document.getElementById(projectSelectId);
+        // --- פונקציות חלונית עריכת דיווח (Modal) ---
+        
+        window.openEditModal = (entryId) => {
+            const entry = entriesData.find(e => e.id === entryId);
+            if(!entry) return;
+
+            document.getElementById('editEntryId').value = entry.id;
             
+            // Format date for input[type=date]
+            const dateObj = new Date(entry.date);
+            const offsetDate = new Date(dateObj.getTime() - (dateObj.getTimezoneOffset() * 60000));
+            document.getElementById('editEntryDate').value = offsetDate.toISOString().split('T')[0];
+            
+            document.getElementById('editEntryClient').value = entry.clientId || '';
+            window.filterProjectsByClient('editEntryClient', 'editEntryProject', '-- כללי --');
+            document.getElementById('editEntryProject').value = entry.projectId || '';
+            
+            document.getElementById('editEntryDesc').value = entry.description || '';
+            
+            const totalMinutes = Math.floor(entry.durationSeconds / 60);
+            document.getElementById('editEntryHours').value = Math.floor(totalMinutes / 60);
+            document.getElementById('editEntryMinutes').value = totalMinutes % 60;
+
+            document.getElementById('edit-entry-modal').classList.remove('hidden');
+        };
+
+        window.closeEditModal = () => {
+            document.getElementById('edit-entry-modal').classList.add('hidden');
+        };
+
+        window.saveEditEntry = async () => {
+            const id = document.getElementById('editEntryId').value;
+            const date = document.getElementById('editEntryDate').value;
+            const clientId = document.getElementById('editEntryClient').value;
+            const projectId = document.getElementById('editEntryProject').value;
+            const desc = document.getElementById('editEntryDesc').value.trim();
+            const hours = Number(document.getElementById('editEntryHours').value) || 0;
+            const minutes = Number(document.getElementById('editEntryMinutes').value) || 0;
+
+            if(!date || (hours === 0 && minutes === 0)) return showToast("חובה להזין תאריך וזמן עבודה תקין");
+
+            const durationSeconds = (hours * 3600) + (minutes * 60);
+
+            await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'entries', id), {
+                date,
+                clientId: clientId || null,
+                projectId: projectId || null,
+                description: desc,
+                durationSeconds
+            });
+
+            closeEditModal();
+            showToast("רשומה עודכנה בהצלחה");
+        };
+
+
+        window.filterProjectsByClient = (clientSelectId, projectSelectId, defaultText = '-- בחר פרויקט --') => {
+            const clientEl = document.getElementById(clientSelectId);
+            const projSelect = document.getElementById(projectSelectId);
+            if(!clientEl || !projSelect) return;
+            
+            const clientId = clientEl.value;
             projSelect.innerHTML = `<option value="">${defaultText}</option>`;
             if(clientId) {
                 const filtered = projectsData.filter(p => p.clientId === clientId);
@@ -731,10 +884,11 @@
             } else {
                 projSelect.disabled = true;
             }
-        }
+        };
         
-        document.getElementById('timerClientSelect').addEventListener('change', () => filterProjectsByClient('timerClientSelect', 'timerProjectSelect'));
-        document.getElementById('manualClientSelect').addEventListener('change', () => filterProjectsByClient('manualClientSelect', 'manualProjectSelect'));
+        // Listeners for dependent dropdowns
+        document.getElementById('timerClientSelect')?.addEventListener('change', () => window.filterProjectsByClient('timerClientSelect', 'timerProjectSelect'));
+        document.getElementById('manualClientSelect')?.addEventListener('change', () => window.filterProjectsByClient('manualClientSelect', 'manualProjectSelect', '-- כללי --'));
 
         // --- לוגיקת טיימר חיה ---
         let timerInterval;
@@ -776,7 +930,7 @@
                         clientId: clientId || null,
                         projectId: projectId || null,
                         description: desc || "",
-                        entryType: 'auto', // סיווג סוג ההזנה אוטומטי
+                        entryType: 'auto',
                         durationSeconds: secondsElapsed,
                         createdAt: serverTimestamp()
                     });
@@ -804,9 +958,9 @@
                     "לקוח": client ? client.name : 'כללי',
                     "פרויקט": project ? project.name : 'כללי',
                     "תיאור משימה": entry.description || '',
-                    "סוג דיווח": entry.entryType === 'manual' ? 'ידני' : 'אוטומטי (טיימר)', // העמודה החדשה שנוספה
+                    "סוג דיווח": entry.entryType === 'manual' ? 'ידני' : 'אוטומטי (טיימר)',
                     "שעות עבודה (עשרוני)": +(entry.durationSeconds / 3600).toFixed(2),
-                    "זמן מדויק (HH:MM:SS)": formatSeconds(entry.durationSeconds)
+                    "זמן מדויק (HH:MM)": formatSeconds(entry.durationSeconds, true)
                 };
             });
 
