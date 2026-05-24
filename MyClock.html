@@ -136,7 +136,7 @@
                     
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 text-right">
                         <select id="timerClientSelect" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-full transition">
-                            <option value="">-- בחר לקוח --</option>
+                            <option value="">-- בחר לקוח (לא חובה) --</option>
                         </select>
                         <select id="timerProjectSelect" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-full transition disabled:opacity-50">
                             <option value="">-- בחר פרויקט --</option>
@@ -164,11 +164,15 @@
                         </div>
                         <div>
                             <label class="block text-sm text-slate-500 mb-1">לקוח</label>
-                            <select id="manualClientSelect" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500"></select>
+                            <select id="manualClientSelect" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
+                                <option value="">-- כללי (ללא לקוח) --</option>
+                            </select>
                         </div>
                         <div>
                             <label class="block text-sm text-slate-500 mb-1">פרויקט</label>
-                            <select id="manualProjectSelect" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500"></select>
+                            <select id="manualProjectSelect" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
+                                <option value="">-- בחר פרויקט --</option>
+                            </select>
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-sm text-slate-500 mb-1">תיאור משימה</label>
@@ -250,8 +254,9 @@
                                     <th class="p-4 font-medium whitespace-nowrap">תאריך</th>
                                     <th class="p-4 font-medium">לקוח</th>
                                     <th class="p-4 font-medium">פרויקט</th>
-                                    <th class="p-4 font-medium w-1/3">תיאור</th>
+                                    <th class="p-4 font-medium w-1/4">תיאור</th>
                                     <th class="p-4 font-medium">משך זמן</th>
+                                    <th class="p-4 font-medium text-center">סוג דיווח</th>
                                     <th class="p-4 font-medium text-center">מחק</th>
                                 </tr>
                             </thead>
@@ -324,7 +329,7 @@
         let clientsData = [];
         let projectsData = [];
         let entriesData = [];
-        let filteredReportData = []; // הנתונים העדכניים של הדוח המפולטר
+        let filteredReportData = []; 
         
         let unsubscribes = [];
 
@@ -416,20 +421,25 @@
                 entriesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 entriesData.sort((a, b) => new Date(b.date) - new Date(a.date));
                 updateDashboardStats();
-                window.generateReport(); // רענון הדוח
+                window.generateReport(); 
             }, (e) => console.error(e)));
         }
 
         // --- עדכוני ממשק (UI) ---
         
         function updateClientsUI() {
-            const selects = ['timerClientSelect', 'manualClientSelect', 'newProjectClient', 'filterClientSelect'];
-            selects.forEach(id => {
-                const el = document.getElementById(id);
+            const selects = [
+                { id: 'timerClientSelect', text: '-- בחר לקוח (לא חובה) --' }, 
+                { id: 'manualClientSelect', text: '-- כללי (ללא לקוח) --' }, 
+                { id: 'newProjectClient', text: '-- בחר לקוח קשור --' }, 
+                { id: 'filterClientSelect', text: '-- כל הלקוחות --' }
+            ];
+            
+            selects.forEach(sel => {
+                const el = document.getElementById(sel.id);
                 if(!el) return;
                 const currentVal = el.value;
-                const defaultText = el.options[0].text;
-                el.innerHTML = `<option value="">${defaultText}</option>`;
+                el.innerHTML = `<option value="">${sel.text}</option>`;
                 clientsData.forEach(c => { el.innerHTML += `<option value="${c.id}">${c.name}</option>`; });
                 if (clientsData.find(c => c.id === currentVal)) el.value = currentVal;
             });
@@ -477,7 +487,6 @@
             let totalSeconds = 0;
             let totalEarnings = 0;
             
-            // צבירת נתונים לפילוח
             const clientTotals = {};
             const projectTotals = {};
 
@@ -492,14 +501,12 @@
                     
                     totalEarnings += earnings;
 
-                    // הוספה לצבירת הלקוחות
                     if(entry.clientId) {
                         if(!clientTotals[entry.clientId]) clientTotals[entry.clientId] = { seconds: 0, earnings: 0, name: client ? client.name : 'לא ידוע' };
                         clientTotals[entry.clientId].seconds += entry.durationSeconds;
                         clientTotals[entry.clientId].earnings += earnings;
                     }
 
-                    // הוספה לצבירת הפרויקטים
                     if(entry.projectId) {
                         const proj = projectsData.find(p => p.id === entry.projectId);
                         if(!projectTotals[entry.projectId]) projectTotals[entry.projectId] = { seconds: 0, earnings: 0, name: proj ? proj.name : 'לא ידוע' };
@@ -512,18 +519,14 @@
             document.getElementById('dash-total-hours').innerText = formatSeconds(totalSeconds, true);
             document.getElementById('dash-total-earnings').innerText = '₪' + Math.round(totalEarnings).toLocaleString();
 
-            // ציור הפירוט ללקוחות
             renderBreakdownList('dash-client-breakdown', clientTotals, totalEarnings);
-            // ציור הפירוט לפרויקטים
             renderBreakdownList('dash-project-breakdown', projectTotals, totalEarnings);
         }
 
-        // פונקציית עזר ליצירת הפסים (Progress bars) בדשבורד
         function renderBreakdownList(containerId, totalsObj, grandTotalEarnings) {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
             
-            // המרה למערך ומיון לפי הכנסות
             const sorted = Object.values(totalsObj).sort((a, b) => b.earnings - a.earnings);
             
             if(sorted.length === 0) {
@@ -557,7 +560,7 @@
             
             if (preset === 'thisMonth') {
                 start = new Date(today.getFullYear(), today.getMonth(), 1);
-                end = new Date(today.getFullYear(), today.getMonth() + 1, 0); // יום אחרון בחודש
+                end = new Date(today.getFullYear(), today.getMonth() + 1, 0); 
             } else if (preset === 'lastMonth') {
                 start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
                 end = new Date(today.getFullYear(), today.getMonth(), 0);
@@ -571,7 +574,6 @@
                 return;
             }
 
-            // עדכון השדות בפורמט YYYY-MM-DD
             const offsetStart = new Date(start.getTime() - (start.getTimezoneOffset() * 60000));
             const offsetEnd = new Date(end.getTime() - (end.getTimezoneOffset() * 60000));
             
@@ -594,7 +596,6 @@
             const startDate = startVal ? new Date(startVal).setHours(0,0,0,0) : null;
             const endDate = endVal ? new Date(endVal).setHours(23,59,59,999) : null;
 
-            // סינון הנתונים
             filteredReportData = entriesData.filter(entry => {
                 const entryDate = new Date(entry.date).getTime();
                 
@@ -606,7 +607,6 @@
                 return true;
             });
 
-            // עדכון טבלת הדוח
             const tbody = document.getElementById('report-table-body');
             tbody.innerHTML = '';
             
@@ -614,7 +614,7 @@
             let totalEarnings = 0;
 
             if(filteredReportData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400">לא נמצאו רשומות שתואמות לסינון</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-slate-400">לא נמצאו רשומות שתואמות לסינון</td></tr>';
             } else {
                 filteredReportData.forEach(entry => {
                     const client = clientsData.find(c => c.id === entry.clientId);
@@ -624,6 +624,11 @@
                     if(client && client.hourlyRate) {
                         totalEarnings += (entry.durationSeconds / 3600) * client.hourlyRate;
                     }
+                    
+                    // תגית המעידה האם זוהי הזנה ידנית או באמצעות הטיימר
+                    const typeBadge = entry.entryType === 'manual' 
+                        ? `<span class="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full whitespace-nowrap"><i class="fas fa-keyboard ml-1"></i>ידני</span>`
+                        : `<span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full whitespace-nowrap"><i class="fas fa-stopwatch ml-1"></i>טיימר</span>`;
 
                     const tr = document.createElement('tr');
                     tr.className = "border-b border-slate-100 hover:bg-slate-50 transition";
@@ -633,6 +638,7 @@
                         <td class="p-4">${project ? project.name : 'כללי'}</td>
                         <td class="p-4 text-slate-600">${entry.description || '-'}</td>
                         <td class="p-4 text-indigo-600 font-medium" dir="ltr">${formatSeconds(entry.durationSeconds)}</td>
+                        <td class="p-4 text-center">${typeBadge}</td>
                         <td class="p-4 text-center">
                             <button onclick="deleteDocById('entries', '${entry.id}')" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
                         </td>
@@ -641,7 +647,6 @@
                 });
             }
 
-            // עדכון סיכומי הדוח
             document.getElementById('report-total-hours').innerText = formatSeconds(totalSeconds, true);
             document.getElementById('report-total-earnings').innerText = '₪' + Math.round(totalEarnings).toLocaleString();
         };
@@ -690,9 +695,10 @@
             const clientId = document.getElementById('manualClientSelect').value;
             const projectId = document.getElementById('manualProjectSelect').value;
             const timeStr = document.getElementById('manualTime').value;
-            const desc = document.getElementById('manualDesc').value.trim(); // התיאור החדש
+            const desc = document.getElementById('manualDesc').value.trim(); 
             
-            if(!date || !clientId || !projectId || !timeStr) return showToast("יש למלא את כל שדות החובה");
+            // תאריך וזמן הם שדות החובה היחידים כעת. לקוח יכול להיות "כללי" (ריק)
+            if(!date || !timeStr) return showToast("יש למלא תאריך וזמן (לקוח ופרויקט אינם חובה)");
             
             const [hours, minutes] = timeStr.split(':').map(Number);
             const durationSeconds = (hours * 3600) + (minutes * 60);
@@ -701,15 +707,16 @@
 
             await addDoc(getDbRef('entries'), {
                 date,
-                clientId,
-                projectId,
-                description: desc || "הזנה ידנית", // שימוש בתיאור
+                clientId: clientId || null,
+                projectId: projectId || null,
+                description: desc, // נשמר בדיוק מה שהוזן, בלי טקסט מוגדר מראש
+                entryType: 'manual', // סיווג סוג ההזנה
                 durationSeconds,
                 createdAt: serverTimestamp()
             });
             
-            document.getElementById('manualDesc').value = ''; // ניקוי התיאור
-            showToast("רשומה ידנית נשמרה");
+            document.getElementById('manualDesc').value = ''; 
+            showToast("רשומה ידנית נשמרה בהצלחה");
         };
 
         function filterProjectsByClient(clientSelectId, projectSelectId, defaultText = '-- בחר פרויקט --') {
@@ -769,6 +776,7 @@
                         clientId: clientId || null,
                         projectId: projectId || null,
                         description: desc || "",
+                        entryType: 'auto', // סיווג סוג ההזנה אוטומטי
                         durationSeconds: secondsElapsed,
                         createdAt: serverTimestamp()
                     });
@@ -796,6 +804,7 @@
                     "לקוח": client ? client.name : 'כללי',
                     "פרויקט": project ? project.name : 'כללי',
                     "תיאור משימה": entry.description || '',
+                    "סוג דיווח": entry.entryType === 'manual' ? 'ידני' : 'אוטומטי (טיימר)', // העמודה החדשה שנוספה
                     "שעות עבודה (עשרוני)": +(entry.durationSeconds / 3600).toFixed(2),
                     "זמן מדויק (HH:MM:SS)": formatSeconds(entry.durationSeconds)
                 };
