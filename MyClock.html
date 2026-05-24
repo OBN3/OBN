@@ -15,22 +15,28 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         /* מניעת גלילה אופקית במובייל */
         html, body { max-width: 100%; overflow-x: hidden; }
+        
+        /* עיצוב פס גלילה מותאם */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body class="text-slate-800 flex flex-col h-screen">
 
-    <!-- Navbar -->
+    <!-- שורת ניווט עליונה -->
     <nav class="bg-indigo-600 text-white shadow-lg shrink-0">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <h1 class="text-xl font-bold flex items-center gap-2">
                 <i class="fas fa-clock"></i> TimeTracker Pro
             </h1>
             
-            <!-- Proactive: User Profile & Navigation -->
             <div class="flex items-center gap-4">
-                <div id="nav-menus" class="hidden sm:flex gap-2 sm:gap-4 overflow-x-auto text-sm sm:text-base pb-1 sm:pb-0">
+                <div id="nav-menus" class="hidden sm:flex gap-2 sm:gap-4 overflow-x-auto text-sm sm:text-base pb-1 sm:pb-0 scrollbar-hide">
                     <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn px-3 py-1 rounded-full bg-indigo-700 font-medium transition whitespace-nowrap">דשבורד</button>
                     <button onclick="switchTab('tracker')" id="nav-tracker" class="nav-btn px-3 py-1 rounded-full hover:bg-indigo-500 transition whitespace-nowrap">טיימר ודיווח</button>
+                    <button onclick="switchTab('reports')" id="nav-reports" class="nav-btn px-3 py-1 rounded-full hover:bg-indigo-500 transition whitespace-nowrap">דוחות חכמים</button>
                     <button onclick="switchTab('manage')" id="nav-manage" class="nav-btn px-3 py-1 rounded-full hover:bg-indigo-500 transition whitespace-nowrap">לקוחות ופרויקטים</button>
                 </div>
                 
@@ -43,10 +49,10 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
+    <!-- אזור התוכן הראשי -->
     <main class="container mx-auto px-4 py-6 flex-1 overflow-y-auto">
         
-        <!-- Login Screen (Replaces the old loading state) -->
+        <!-- מסך התחברות -->
         <div id="login-screen" class="flex flex-col items-center justify-center h-full text-center px-4">
             <div class="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 max-w-md w-full">
                 <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
@@ -61,18 +67,16 @@
             </div>
         </div>
 
-        <!-- App Content (Hidden until auth) -->
+        <!-- אפליקציה - מוסתר עד התחברות -->
         <div id="app-content" class="hidden">
 
-            <!-- DASHBOARD TAB -->
+            <!-- מסך דשבורד -->
             <section id="dashboard" class="tab-content active">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                     <h2 class="text-2xl font-bold text-slate-700">סיכום נתונים חודשי</h2>
-                    <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow transition flex items-center gap-2 w-full sm:w-auto justify-center">
-                        <i class="fas fa-file-excel"></i> ייצוא לאקסל (ללא מגבלות)
-                    </button>
                 </div>
 
+                <!-- כרטיסיות סיכום -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
                         <div class="bg-indigo-100 text-indigo-600 p-4 rounded-full text-2xl">
@@ -88,37 +92,37 @@
                             <i class="fas fa-shekel-sign"></i>
                         </div>
                         <div>
-                            <h3 class="text-slate-500 text-sm font-medium">הערכת הכנסות</h3>
+                            <h3 class="text-slate-500 text-sm font-medium">הערכת הכנסות (כלל הפרויקטים החודש)</h3>
                             <p id="dash-total-earnings" class="text-3xl font-bold text-slate-800 mt-1">₪0</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-slate-100">
-                        <h3 class="font-bold text-slate-700">רשומות אחרונות</h3>
+                <!-- פילוח הכנסות -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <!-- פר לקוח -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
+                            <h3 class="font-bold text-slate-700"><i class="fas fa-chart-pie text-indigo-500 ml-2"></i>הכנסות פר לקוח (החודש)</h3>
+                        </div>
+                        <div id="dash-client-breakdown" class="p-6 space-y-4">
+                            <!-- יאוכלס דינמית -->
+                        </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-right border-collapse">
-                            <thead>
-                                <tr class="bg-slate-50 text-slate-500 text-sm border-b border-slate-100">
-                                    <th class="p-4 font-medium">תאריך</th>
-                                    <th class="p-4 font-medium">לקוח</th>
-                                    <th class="p-4 font-medium">פרויקט</th>
-                                    <th class="p-4 font-medium">תיאור</th>
-                                    <th class="p-4 font-medium">משך זמן</th>
-                                    <th class="p-4 font-medium">פעולות</th>
-                                </tr>
-                            </thead>
-                            <tbody id="entries-table-body" class="text-sm">
-                                <!-- Data will be populated here -->
-                            </tbody>
-                        </table>
+
+                    <!-- פר פרויקט -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
+                            <h3 class="font-bold text-slate-700"><i class="fas fa-project-diagram text-indigo-500 ml-2"></i>הכנסות פר פרויקט (החודש)</h3>
+                        </div>
+                        <div id="dash-project-breakdown" class="p-6 space-y-4">
+                            <!-- יאוכלס דינמית -->
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <!-- TRACKER TAB -->
+            <!-- מסך דיווח וטיימר -->
             <section id="tracker" class="tab-content">
                 <h2 class="text-2xl font-bold text-slate-700 mb-6">רישום זמנים</h2>
                 
@@ -150,10 +154,10 @@
                     </div>
                 </div>
 
-                <!-- Proactive: Manual Entry -->
+                <!-- הזנה ידנית (כולל שדה תיאור) -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
                     <h3 class="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2"><i class="fas fa-keyboard text-indigo-500"></i> הזנה ידנית (בדיעבד)</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end text-right">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4 items-end text-right">
                         <div>
                             <label class="block text-sm text-slate-500 mb-1">תאריך</label>
                             <input type="date" id="manualDate" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
@@ -166,21 +170,104 @@
                             <label class="block text-sm text-slate-500 mb-1">פרויקט</label>
                             <select id="manualProjectSelect" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500"></select>
                         </div>
-                        <div>
-                            <label class="block text-sm text-slate-500 mb-1">זמן (שעות:דקות)</label>
-                            <input type="time" id="manualTime" value="01:00" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500" dir="ltr">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm text-slate-500 mb-1">תיאור משימה</label>
+                            <input type="text" id="manualDesc" placeholder="מה ביצעת?" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
                         </div>
-                        <button onclick="saveManualEntry()" class="bg-slate-800 text-white p-2 rounded-lg hover:bg-slate-700 transition w-full h-[42px]">שמור הזנה</button>
+                        <div class="flex gap-2 items-end">
+                            <div class="flex-1">
+                                <label class="block text-sm text-slate-500 mb-1">זמן (שעות:דקות)</label>
+                                <input type="time" id="manualTime" value="01:00" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500" dir="ltr">
+                            </div>
+                            <button onclick="saveManualEntry()" class="bg-slate-800 text-white p-2 rounded-lg hover:bg-slate-700 transition w-12 h-[42px] flex items-center justify-center" title="שמור הזנה">
+                                <i class="fas fa-save"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <!-- MANAGE TAB -->
+            <!-- מסך דוחות חכמים -->
+            <section id="reports" class="tab-content">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <h2 class="text-2xl font-bold text-slate-700">הפקת דוחות</h2>
+                    <button onclick="exportFilteredReport()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow transition flex items-center gap-2 w-full sm:w-auto justify-center">
+                        <i class="fas fa-file-excel"></i> ייצא דוח לאקסל
+                    </button>
+                </div>
+
+                <!-- אזור סינון -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 mb-6">
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button onclick="setReportDates('thisMonth')" class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-100 transition">החודש</button>
+                        <button onclick="setReportDates('lastMonth')" class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-100 transition">חודש שעבר</button>
+                        <button onclick="setReportDates('thisYear')" class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-100 transition">השנה</button>
+                        <button onclick="setReportDates('all')" class="text-xs bg-slate-100 text-slate-700 px-3 py-1 rounded-full hover:bg-slate-200 transition">הכל</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
+                        <div>
+                            <label class="block text-sm text-slate-500 mb-1">מתאריך</label>
+                            <input type="date" id="filterStartDate" onchange="generateReport()" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-500 mb-1">עד תאריך</label>
+                            <input type="date" id="filterEndDate" onchange="generateReport()" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-500 mb-1">לקוח</label>
+                            <select id="filterClientSelect" onchange="filterProjectsInReport(); generateReport();" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
+                                <option value="">-- כל הלקוחות --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-500 mb-1">פרויקט</label>
+                            <select id="filterProjectSelect" onchange="generateReport()" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
+                                <option value="">-- כל הפרויקטים --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- סיכום הדוח המפולטר -->
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
+                        <span class="text-indigo-600 text-sm font-bold">סה"כ שעות בסינון:</span>
+                        <span id="report-total-hours" class="text-2xl font-bold text-slate-800 mr-2 block mt-1">00:00</span>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg border border-green-100">
+                        <span class="text-green-600 text-sm font-bold">הכנסות בסינון:</span>
+                        <span id="report-total-earnings" class="text-2xl font-bold text-slate-800 mr-2 block mt-1">₪0</span>
+                    </div>
+                </div>
+
+                <!-- טבלת התוצאות -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-right border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 text-sm border-b border-slate-100">
+                                    <th class="p-4 font-medium whitespace-nowrap">תאריך</th>
+                                    <th class="p-4 font-medium">לקוח</th>
+                                    <th class="p-4 font-medium">פרויקט</th>
+                                    <th class="p-4 font-medium w-1/3">תיאור</th>
+                                    <th class="p-4 font-medium">משך זמן</th>
+                                    <th class="p-4 font-medium text-center">מחק</th>
+                                </tr>
+                            </thead>
+                            <tbody id="report-table-body" class="text-sm">
+                                <!-- Data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- מסך ניהול לקוחות ופרויקטים -->
             <section id="manage" class="tab-content">
                 <h2 class="text-2xl font-bold text-slate-700 mb-6">הגדרות לקוחות ופרויקטים</h2>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- ניהול לקוחות -->
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
                         <h3 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2">הוספת לקוח</h3>
                         <div class="flex flex-col gap-3 mb-6">
@@ -192,7 +279,6 @@
                         <ul id="clients-list" class="space-y-2 text-sm max-h-48 overflow-y-auto"></ul>
                     </div>
 
-                    <!-- ניהול פרויקטים -->
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
                         <h3 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2">הוספת פרויקט</h3>
                         <div class="flex flex-col gap-3 mb-6">
@@ -218,11 +304,10 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        // Updated Imports for Google Auth
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Initialization Context - Updated with your specific project settings
+        // הגדרות הפרויקט שלך
         const firebaseConfig = {
             apiKey: "AIzaSyBzXRUcnLuqH8rAaHdu6uGehgatD6hsIV0",
             authDomain: "myclock-6ba87.firebaseapp.com",
@@ -235,129 +320,117 @@
         
         let app, auth, db, userId;
         
-        // App State
+        // State של האפליקציה
         let clientsData = [];
         let projectsData = [];
         let entriesData = [];
+        let filteredReportData = []; // הנתונים העדכניים של הדוח המפולטר
         
-        // Listeners Cleanup Array (Proactive memory management)
         let unsubscribes = [];
 
-        // UI Initialization & Auth
         window.addEventListener('DOMContentLoaded', async () => {
+            if (window.location.protocol === 'file:') {
+                const loginContainer = document.querySelector('#login-screen .bg-white');
+                if(loginContainer) {
+                    loginContainer.innerHTML += `
+                        <div class="mt-6 p-4 bg-red-50 text-red-700 rounded-lg text-sm border border-red-200 text-right">
+                            <i class="fas fa-exclamation-triangle ml-2"></i> 
+                            <strong>שגיאת סביבת פיתוח:</strong> זיהינו שהקובץ נפתח ישירות מהמחשב (file://). 
+                            התחברות עם Google דורשת הפעלה דרך שרת מקומי (localhost).
+                        </div>`;
+                }
+            }
+
             if(Object.keys(firebaseConfig).length > 0) {
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
                 const provider = new GoogleAuthProvider();
 
-                // Google Login Action
                 document.getElementById('google-login-btn').addEventListener('click', async () => {
-                    try {
-                        await signInWithPopup(auth, provider);
-                    } catch (error) {
-                        console.error("Login error:", error);
-                        showToast("שגיאה בהתחברות. ודא ש-Google Auth מופעל במסוף.");
-                    }
+                    try { await signInWithPopup(auth, provider); } 
+                    catch (error) { showToast("שגיאה בהתחברות."); }
                 });
 
-                // Logout Action
                 document.getElementById('logout-btn').addEventListener('click', async () => {
                     await signOut(auth);
                     showToast("התנתקת בהצלחה");
                 });
 
-                // Auth State Listener
                 onAuthStateChanged(auth, user => {
                     if (user) {
                         userId = user.uid;
-                        
-                        // Show App UI
                         document.getElementById('login-screen').classList.add('hidden');
                         document.getElementById('app-content').classList.remove('hidden');
                         document.getElementById('nav-menus').classList.replace('hidden', 'flex');
-                        
-                        // Populate User Profile
                         document.getElementById('user-profile').classList.replace('hidden', 'flex');
                         document.getElementById('user-name').innerText = user.displayName || 'משתמש';
                         document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/150';
                         
                         document.getElementById('manualDate').valueAsDate = new Date();
+                        // אתחול תאריכי הדוח לחודש הנוכחי כברירת מחדל
+                        window.setReportDates('thisMonth');
+                        
                         setupListeners();
                     } else {
-                        // Show Login UI
                         userId = null;
                         document.getElementById('login-screen').classList.remove('hidden');
                         document.getElementById('app-content').classList.add('hidden');
                         document.getElementById('nav-menus').classList.replace('flex', 'hidden');
                         document.getElementById('user-profile').classList.replace('flex', 'hidden');
-                        
-                        // Clean up data and listeners on logout
                         cleanupData();
                     }
                 });
-            } else {
-                showToast("שגיאה: חסרות הגדרות Firebase.");
             }
         });
 
         function cleanupData() {
-            // Unsubscribe from all active Firestore listeners
             unsubscribes.forEach(unsub => unsub());
             unsubscribes = [];
+            clientsData = []; projectsData = []; entriesData = []; filteredReportData = [];
             
-            // Clear local arrays
-            clientsData = [];
-            projectsData = [];
-            entriesData = [];
-            
-            // Clear UI elements
             document.getElementById('clients-list').innerHTML = '';
             document.getElementById('projects-list').innerHTML = '';
-            document.getElementById('entries-table-body').innerHTML = '';
-            document.getElementById('dash-total-hours').innerText = '00:00';
-            document.getElementById('dash-total-earnings').innerText = '₪0';
+            document.getElementById('report-table-body').innerHTML = '';
+            document.getElementById('dash-client-breakdown').innerHTML = '';
+            document.getElementById('dash-project-breakdown').innerHTML = '';
         }
 
-        // Path Helper (Rule 1)
         const getDbRef = (colName) => collection(db, 'artifacts', appId, 'users', userId, colName);
 
-        // Listeners for Real-time Updates (Rule 2: No complex queries, fetch all and filter in JS)
         function setupListeners() {
             if (!userId) return;
-            cleanupData(); // Ensure clean state before setting new listeners
+            cleanupData();
 
-            // Clients
             unsubscribes.push(onSnapshot(getDbRef('clients'), (snapshot) => {
                 clientsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 updateClientsUI();
-            }, (error) => console.error(error)));
+            }, (e) => console.error(e)));
 
-            // Projects
             unsubscribes.push(onSnapshot(getDbRef('projects'), (snapshot) => {
                 projectsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 updateProjectsUI();
-            }, (error) => console.error(error)));
+            }, (e) => console.error(e)));
 
-            // Time Entries
             unsubscribes.push(onSnapshot(getDbRef('entries'), (snapshot) => {
                 entriesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                // Sort by date descending in JS
                 entriesData.sort((a, b) => new Date(b.date) - new Date(a.date));
-                updateEntriesUI();
-            }, (error) => console.error(error)));
+                updateDashboardStats();
+                window.generateReport(); // רענון הדוח
+            }, (e) => console.error(e)));
         }
 
-        // --- UI Updates ---
+        // --- עדכוני ממשק (UI) ---
+        
         function updateClientsUI() {
-            const selects = ['timerClientSelect', 'manualClientSelect', 'newProjectClient'];
+            const selects = ['timerClientSelect', 'manualClientSelect', 'newProjectClient', 'filterClientSelect'];
             selects.forEach(id => {
                 const el = document.getElementById(id);
+                if(!el) return;
                 const currentVal = el.value;
-                el.innerHTML = '<option value="">-- בחר לקוח --</option>';
-                clientsData.forEach(c => {
-                    el.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-                });
+                const defaultText = el.options[0].text;
+                el.innerHTML = `<option value="">${defaultText}</option>`;
+                clientsData.forEach(c => { el.innerHTML += `<option value="${c.id}">${c.name}</option>`; });
                 if (clientsData.find(c => c.id === currentVal)) el.value = currentVal;
             });
 
@@ -372,6 +445,7 @@
                     </li>`;
             });
             updateDashboardStats();
+            window.generateReport();
         }
 
         function updateProjectsUI() {
@@ -379,48 +453,22 @@
             list.innerHTML = '';
             projectsData.forEach(p => {
                 const client = clientsData.find(c => c.id === p.clientId);
-                const clientName = client ? client.name : 'לקוח נמחק';
                 list.innerHTML += `
                     <li class="flex justify-between items-center p-2 bg-slate-50 rounded border border-slate-100">
-                        <span><i class="fas fa-folder text-indigo-400 ml-2"></i>${p.name} <span class="text-xs text-slate-400">(${clientName})</span></span>
+                        <span><i class="fas fa-folder text-indigo-400 ml-2"></i>${p.name} <span class="text-xs text-slate-400">(${client ? client.name : 'לקוח נמחק'})</span></span>
                         <button onclick="deleteDocById('projects', '${p.id}')" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
                     </li>`;
             });
             
-            // Trigger cascade update for project selects based on currently selected client
-            filterProjectsByClient('timerClientSelect', 'timerProjectSelect');
-            filterProjectsByClient('manualClientSelect', 'manualProjectSelect');
-        }
-
-        function updateEntriesUI() {
-            const tbody = document.getElementById('entries-table-body');
-            tbody.innerHTML = '';
+            filterProjectsByClient('timerClientSelect', 'timerProjectSelect', '-- בחר פרויקט --');
+            filterProjectsByClient('manualClientSelect', 'manualProjectSelect', '-- בחר פרויקט --');
+            window.filterProjectsInReport();
             
-            if(entriesData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">אין רשומות עדיין. התחל לעבוד!</td></tr>';
-            }
-
-            entriesData.forEach(entry => {
-                const client = clientsData.find(c => c.id === entry.clientId);
-                const project = projectsData.find(p => p.id === entry.projectId);
-                
-                const tr = document.createElement('tr');
-                tr.className = "border-b border-slate-100 hover:bg-slate-50 transition";
-                tr.innerHTML = `
-                    <td class="p-4">${new Date(entry.date).toLocaleDateString('he-IL')}</td>
-                    <td class="p-4 font-medium">${client ? client.name : 'כללי'}</td>
-                    <td class="p-4">${project ? project.name : 'כללי'}</td>
-                    <td class="p-4">${entry.description || '-'}</td>
-                    <td class="p-4 text-indigo-600 font-medium" dir="ltr">${formatSeconds(entry.durationSeconds)}</td>
-                    <td class="p-4">
-                        <button onclick="deleteDocById('entries', '${entry.id}')" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
             updateDashboardStats();
+            window.generateReport();
         }
 
+        // פילוח דשבורד
         function updateDashboardStats() {
             const now = new Date();
             const currentMonth = now.getMonth();
@@ -428,25 +476,178 @@
 
             let totalSeconds = 0;
             let totalEarnings = 0;
+            
+            // צבירת נתונים לפילוח
+            const clientTotals = {};
+            const projectTotals = {};
 
             entriesData.forEach(entry => {
                 const d = new Date(entry.date);
                 if(d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
                     totalSeconds += entry.durationSeconds;
                     
+                    const hours = entry.durationSeconds / 3600;
                     const client = clientsData.find(c => c.id === entry.clientId);
-                    if(client && client.hourlyRate) {
-                        const hours = entry.durationSeconds / 3600;
-                        totalEarnings += (hours * client.hourlyRate);
+                    const earnings = (client && client.hourlyRate) ? (hours * client.hourlyRate) : 0;
+                    
+                    totalEarnings += earnings;
+
+                    // הוספה לצבירת הלקוחות
+                    if(entry.clientId) {
+                        if(!clientTotals[entry.clientId]) clientTotals[entry.clientId] = { seconds: 0, earnings: 0, name: client ? client.name : 'לא ידוע' };
+                        clientTotals[entry.clientId].seconds += entry.durationSeconds;
+                        clientTotals[entry.clientId].earnings += earnings;
+                    }
+
+                    // הוספה לצבירת הפרויקטים
+                    if(entry.projectId) {
+                        const proj = projectsData.find(p => p.id === entry.projectId);
+                        if(!projectTotals[entry.projectId]) projectTotals[entry.projectId] = { seconds: 0, earnings: 0, name: proj ? proj.name : 'לא ידוע' };
+                        projectTotals[entry.projectId].seconds += entry.durationSeconds;
+                        projectTotals[entry.projectId].earnings += earnings;
                     }
                 }
             });
 
             document.getElementById('dash-total-hours').innerText = formatSeconds(totalSeconds, true);
             document.getElementById('dash-total-earnings').innerText = '₪' + Math.round(totalEarnings).toLocaleString();
+
+            // ציור הפירוט ללקוחות
+            renderBreakdownList('dash-client-breakdown', clientTotals, totalEarnings);
+            // ציור הפירוט לפרויקטים
+            renderBreakdownList('dash-project-breakdown', projectTotals, totalEarnings);
         }
 
-        // --- Interactions & CRUD ---
+        // פונקציית עזר ליצירת הפסים (Progress bars) בדשבורד
+        function renderBreakdownList(containerId, totalsObj, grandTotalEarnings) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            // המרה למערך ומיון לפי הכנסות
+            const sorted = Object.values(totalsObj).sort((a, b) => b.earnings - a.earnings);
+            
+            if(sorted.length === 0) {
+                container.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">אין נתונים לחודש הנוכחי</p>';
+                return;
+            }
+
+            sorted.forEach(item => {
+                const percent = grandTotalEarnings > 0 ? (item.earnings / grandTotalEarnings) * 100 : 0;
+                const hrsStr = formatSeconds(item.seconds, true);
+                
+                container.innerHTML += `
+                    <div class="mb-3">
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="font-medium text-slate-700">${item.name}</span>
+                            <span class="text-slate-500 font-bold">₪${Math.round(item.earnings).toLocaleString()} <span class="font-normal text-xs ml-1">(${hrsStr} שעות)</span></span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2">
+                            <div class="bg-indigo-500 h-2 rounded-full" style="width: ${percent}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- מודול הדוחות החכמים ---
+        
+        window.setReportDates = (preset) => {
+            const today = new Date();
+            let start, end;
+            
+            if (preset === 'thisMonth') {
+                start = new Date(today.getFullYear(), today.getMonth(), 1);
+                end = new Date(today.getFullYear(), today.getMonth() + 1, 0); // יום אחרון בחודש
+            } else if (preset === 'lastMonth') {
+                start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                end = new Date(today.getFullYear(), today.getMonth(), 0);
+            } else if (preset === 'thisYear') {
+                start = new Date(today.getFullYear(), 0, 1);
+                end = new Date(today.getFullYear(), 11, 31);
+            } else if (preset === 'all') {
+                document.getElementById('filterStartDate').value = '';
+                document.getElementById('filterEndDate').value = '';
+                window.generateReport();
+                return;
+            }
+
+            // עדכון השדות בפורמט YYYY-MM-DD
+            const offsetStart = new Date(start.getTime() - (start.getTimezoneOffset() * 60000));
+            const offsetEnd = new Date(end.getTime() - (end.getTimezoneOffset() * 60000));
+            
+            document.getElementById('filterStartDate').value = offsetStart.toISOString().split('T')[0];
+            document.getElementById('filterEndDate').value = offsetEnd.toISOString().split('T')[0];
+            
+            window.generateReport();
+        };
+
+        window.filterProjectsInReport = () => {
+            filterProjectsByClient('filterClientSelect', 'filterProjectSelect', '-- כל הפרויקטים --');
+        };
+
+        window.generateReport = () => {
+            const startVal = document.getElementById('filterStartDate').value;
+            const endVal = document.getElementById('filterEndDate').value;
+            const clientId = document.getElementById('filterClientSelect').value;
+            const projectId = document.getElementById('filterProjectSelect').value;
+
+            const startDate = startVal ? new Date(startVal).setHours(0,0,0,0) : null;
+            const endDate = endVal ? new Date(endVal).setHours(23,59,59,999) : null;
+
+            // סינון הנתונים
+            filteredReportData = entriesData.filter(entry => {
+                const entryDate = new Date(entry.date).getTime();
+                
+                if (startDate && entryDate < startDate) return false;
+                if (endDate && entryDate > endDate) return false;
+                if (clientId && entry.clientId !== clientId) return false;
+                if (projectId && entry.projectId !== projectId) return false;
+                
+                return true;
+            });
+
+            // עדכון טבלת הדוח
+            const tbody = document.getElementById('report-table-body');
+            tbody.innerHTML = '';
+            
+            let totalSeconds = 0;
+            let totalEarnings = 0;
+
+            if(filteredReportData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400">לא נמצאו רשומות שתואמות לסינון</td></tr>';
+            } else {
+                filteredReportData.forEach(entry => {
+                    const client = clientsData.find(c => c.id === entry.clientId);
+                    const project = projectsData.find(p => p.id === entry.projectId);
+                    
+                    totalSeconds += entry.durationSeconds;
+                    if(client && client.hourlyRate) {
+                        totalEarnings += (entry.durationSeconds / 3600) * client.hourlyRate;
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b border-slate-100 hover:bg-slate-50 transition";
+                    tr.innerHTML = `
+                        <td class="p-4 whitespace-nowrap">${new Date(entry.date).toLocaleDateString('he-IL')}</td>
+                        <td class="p-4 font-medium">${client ? client.name : 'כללי'}</td>
+                        <td class="p-4">${project ? project.name : 'כללי'}</td>
+                        <td class="p-4 text-slate-600">${entry.description || '-'}</td>
+                        <td class="p-4 text-indigo-600 font-medium" dir="ltr">${formatSeconds(entry.durationSeconds)}</td>
+                        <td class="p-4 text-center">
+                            <button onclick="deleteDocById('entries', '${entry.id}')" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // עדכון סיכומי הדוח
+            document.getElementById('report-total-hours').innerText = formatSeconds(totalSeconds, true);
+            document.getElementById('report-total-earnings').innerText = '₪' + Math.round(totalEarnings).toLocaleString();
+        };
+
+
+        // --- פעולות שמירה ---
         
         window.addClient = async () => {
             const name = document.getElementById('newClientName').value.trim();
@@ -458,7 +659,6 @@
                 hourlyRate: rate ? Number(rate) : 0,
                 createdAt: serverTimestamp()
             });
-            
             document.getElementById('newClientName').value = '';
             document.getElementById('newClientRate').value = '';
             showToast("לקוח נוסף בהצלחה");
@@ -467,7 +667,6 @@
         window.addProject = async () => {
             const clientId = document.getElementById('newProjectClient').value;
             const name = document.getElementById('newProjectName').value.trim();
-            
             if(!clientId || !name) return showToast("חובה לבחור לקוח ולהזין שם");
             
             await addDoc(getDbRef('projects'), {
@@ -475,7 +674,6 @@
                 name,
                 createdAt: serverTimestamp()
             });
-            
             document.getElementById('newProjectName').value = '';
             showToast("פרויקט נוסף בהצלחה");
         };
@@ -491,9 +689,10 @@
             const date = document.getElementById('manualDate').value;
             const clientId = document.getElementById('manualClientSelect').value;
             const projectId = document.getElementById('manualProjectSelect').value;
-            const timeStr = document.getElementById('manualTime').value; // HH:MM
+            const timeStr = document.getElementById('manualTime').value;
+            const desc = document.getElementById('manualDesc').value.trim(); // התיאור החדש
             
-            if(!date || !clientId || !projectId || !timeStr) return showToast("יש למלא את כל שדות ההזנה");
+            if(!date || !clientId || !projectId || !timeStr) return showToast("יש למלא את כל שדות החובה");
             
             const [hours, minutes] = timeStr.split(':').map(Number);
             const durationSeconds = (hours * 3600) + (minutes * 60);
@@ -504,24 +703,23 @@
                 date,
                 clientId,
                 projectId,
-                description: "הזנה ידנית",
+                description: desc || "הזנה ידנית", // שימוש בתיאור
                 durationSeconds,
                 createdAt: serverTimestamp()
             });
+            
+            document.getElementById('manualDesc').value = ''; // ניקוי התיאור
             showToast("רשומה ידנית נשמרה");
         };
 
-        // Linked Selects Logic
-        function filterProjectsByClient(clientSelectId, projectSelectId) {
+        function filterProjectsByClient(clientSelectId, projectSelectId, defaultText = '-- בחר פרויקט --') {
             const clientId = document.getElementById(clientSelectId).value;
             const projSelect = document.getElementById(projectSelectId);
             
-            projSelect.innerHTML = '<option value="">-- בחר פרויקט --</option>';
+            projSelect.innerHTML = `<option value="">${defaultText}</option>`;
             if(clientId) {
                 const filtered = projectsData.filter(p => p.clientId === clientId);
-                filtered.forEach(p => {
-                    projSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
-                });
+                filtered.forEach(p => { projSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`; });
                 projSelect.disabled = false;
             } else {
                 projSelect.disabled = true;
@@ -531,8 +729,7 @@
         document.getElementById('timerClientSelect').addEventListener('change', () => filterProjectsByClient('timerClientSelect', 'timerProjectSelect'));
         document.getElementById('manualClientSelect').addEventListener('change', () => filterProjectsByClient('manualClientSelect', 'manualProjectSelect'));
 
-
-        // --- Timer Logic ---
+        // --- לוגיקת טיימר חיה ---
         let timerInterval;
         let secondsElapsed = 0;
         let isRunning = false;
@@ -544,7 +741,6 @@
             const display = document.getElementById('timerDisplay');
 
             if(!isRunning) {
-                // START
                 isRunning = true;
                 startBtn.classList.add('hidden');
                 stopBtn.classList.remove('hidden');
@@ -556,7 +752,6 @@
                     display.innerText = formatSeconds(secondsElapsed);
                 }, 1000);
             } else {
-                // STOP
                 isRunning = false;
                 clearInterval(timerInterval);
                 startBtn.classList.remove('hidden');
@@ -564,12 +759,11 @@
                 indicator.classList.add('hidden');
                 indicator.classList.replace('opacity-100', 'opacity-0');
 
-                // Save
                 const clientId = document.getElementById('timerClientSelect').value;
                 const projectId = document.getElementById('timerProjectSelect').value;
                 const desc = document.getElementById('timerDesc').value;
 
-                if(secondsElapsed > 60) { // Only save if more than 1 minute
+                if(secondsElapsed > 60) {
                      await addDoc(getDbRef('entries'), {
                         date: new Date().toISOString(),
                         clientId: clientId || null,
@@ -583,22 +777,20 @@
                     showToast("זמן קצר מדי (פחות מדקה) לא נשמר");
                 }
 
-                // Reset
                 secondsElapsed = 0;
                 display.innerText = "00:00:00";
                 document.getElementById('timerDesc').value = "";
             }
         };
 
-        // --- Export to Excel (Flawless RTL support with SheetJS) ---
-        window.exportToExcel = () => {
-            if(entriesData.length === 0) return showToast("אין נתונים לייצוא");
+        // --- ייצוא חכם לאקסל ---
+        window.exportFilteredReport = () => {
+            if(filteredReportData.length === 0) return showToast("אין נתונים בסינון הנוכחי לייצוא");
 
-            const exportData = entriesData.map(entry => {
+            const exportData = filteredReportData.map(entry => {
                 const client = clientsData.find(c => c.id === entry.clientId);
                 const project = projectsData.find(p => p.id === entry.projectId);
                 
-                // Using standard Hebrew keys - SheetJS handles RTL nicely in native Excel!
                 return {
                     "תאריך": new Date(entry.date).toLocaleDateString('he-IL'),
                     "לקוח": client ? client.name : 'כללי',
@@ -610,19 +802,16 @@
             });
 
             const ws = XLSX.utils.json_to_sheet(exportData);
-            
-            // Set RTL direction for the worksheet
             if(!ws['!dir']) ws['!dir'] = 'rtl';
 
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "שעות עבודה");
+            XLSX.utils.book_append_sheet(wb, ws, "דוח מסונן");
             
-            const fileName = `TimeTracker_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
+            const fileName = `TimeTracker_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
             XLSX.writeFile(wb, fileName);
-            showToast("הקובץ הורד בהצלחה!");
+            showToast("הדוח הורד בהצלחה!");
         };
 
-        // --- Utilities ---
         function formatSeconds(sec, hideSeconds = false) {
             const h = String(Math.floor(sec / 3600)).padStart(2, '0');
             const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
