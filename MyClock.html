@@ -215,10 +215,10 @@
                 <!-- אזור סינון -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 mb-6">
                     <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="setReportDates('thisMonth')" class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-100 transition">החודש</button>
-                        <button onclick="setReportDates('lastMonth')" class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-100 transition">חודש שעבר</button>
-                        <button onclick="setReportDates('thisYear')" class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-100 transition">השנה</button>
-                        <button onclick="setReportDates('all')" class="text-xs bg-slate-800 text-white px-3 py-1 rounded-full hover:bg-slate-700 transition" id="btn-filter-all">הכל (ברירת מחדל)</button>
+                        <button onclick="setReportDates('thisMonth', this)" class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-100 transition">החודש</button>
+                        <button onclick="setReportDates('lastMonth', this)" class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-100 transition">חודש שעבר</button>
+                        <button onclick="setReportDates('thisYear', this)" class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-100 transition">השנה</button>
+                        <button onclick="setReportDates('all', this)" class="text-xs bg-slate-800 text-white px-3 py-1 rounded-full hover:bg-slate-700 transition" id="btn-filter-all">הכל (ברירת מחדל)</button>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
@@ -492,8 +492,9 @@
                         document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/150';
                         
                         document.getElementById('manualDate').valueAsDate = new Date();
-                        // הוגדר ברירת מחדל ל"הכל" במסך הדוחות כבקשתך
-                        window.setReportDates('all'); 
+                        
+                        // קריאה ראשונית בטוחה ללא אירוע לחיצה
+                        window.setReportDates('all', null); 
                         
                         setupListeners();
                     } else {
@@ -701,18 +702,19 @@
 
         // --- מודול הדוחות החכמים ---
         
-        window.setReportDates = (preset) => {
-            // הוספת מנגנון הדגשת כפתור פעיל עם הגנה מפני קריאה ללא אובייקט אירוע
+        window.setReportDates = (preset, btnElement = null) => {
+            // איפוס כל הכפתורים למצב ברירת מחדל
             document.querySelectorAll('#reports .bg-slate-800, #reports .bg-indigo-50').forEach(btn => {
                 btn.className = "text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-100 transition";
             });
             
-            // Check if triggered by an event or called programmatically
-            if (window.event && window.event.currentTarget) {
-                 window.event.currentTarget.classList.replace('bg-indigo-50', 'bg-slate-800');
-                 window.event.currentTarget.classList.replace('text-indigo-700', 'text-white');
+            // הדגשת הכפתור הפעיל על ידי אלמנט שהועבר בצורה מפורשת
+            if (btnElement) {
+                 btnElement.classList.replace('bg-indigo-50', 'bg-slate-800');
+                 btnElement.classList.replace('text-indigo-700', 'text-white');
             } else if (preset === 'all') {
-                 document.getElementById('btn-filter-all').className = "text-xs bg-slate-800 text-white px-3 py-1 rounded-full transition";
+                 const allBtn = document.getElementById('btn-filter-all');
+                 if(allBtn) allBtn.className = "text-xs bg-slate-800 text-white px-3 py-1 rounded-full transition";
             }
 
             const today = new Date();
