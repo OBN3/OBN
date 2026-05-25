@@ -702,12 +702,18 @@
         // --- מודול הדוחות החכמים ---
         
         window.setReportDates = (preset) => {
-            // הוספת מנגנון הדגשת כפתור פעיל
+            // הוספת מנגנון הדגשת כפתור פעיל עם הגנה מפני קריאה ללא אובייקט אירוע
             document.querySelectorAll('#reports .bg-slate-800, #reports .bg-indigo-50').forEach(btn => {
                 btn.className = "text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-100 transition";
             });
-            event?.currentTarget?.classList.replace('bg-indigo-50', 'bg-slate-800');
-            event?.currentTarget?.classList.replace('text-indigo-700', 'text-white');
+            
+            // Check if triggered by an event or called programmatically
+            if (window.event && window.event.currentTarget) {
+                 window.event.currentTarget.classList.replace('bg-indigo-50', 'bg-slate-800');
+                 window.event.currentTarget.classList.replace('text-indigo-700', 'text-white');
+            } else if (preset === 'all') {
+                 document.getElementById('btn-filter-all').className = "text-xs bg-slate-800 text-white px-3 py-1 rounded-full transition";
+            }
 
             const today = new Date();
             let start, end;
@@ -724,7 +730,6 @@
             } else if (preset === 'all') {
                 document.getElementById('filterStartDate').value = '';
                 document.getElementById('filterEndDate').value = '';
-                document.getElementById('btn-filter-all').className = "text-xs bg-slate-800 text-white px-3 py-1 rounded-full transition";
                 window.generateReport();
                 return;
             }
