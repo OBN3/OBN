@@ -27,6 +27,9 @@
         /* הסרת חיצים משדות מספר */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        /* עיצוב שדות נעולים */
+        input:disabled, select:disabled { opacity: 0.6; cursor: not-allowed; background-color: #e2e8f0; }
     </style>
 </head>
 <body class="text-slate-800 flex flex-col h-screen">
@@ -142,12 +145,12 @@
                     
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 text-right">
                         <select id="timerClientSelect" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-full transition">
-                            <option value="">-- בחר לקוח (לא חובה) --</option>
+                            <option value="">-- בחר לקוח --</option>
                         </select>
                         <select id="timerProjectSelect" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-full transition disabled:opacity-50">
                             <option value="">-- בחר פרויקט --</option>
                         </select>
-                        <input type="text" id="timerDesc" placeholder="מה אתה עושה עכשיו?" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-full transition">
+                        <input type="text" id="timerDesc" placeholder="מה אתה עושה עכשיו? (לא חובה)" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-full transition">
                     </div>
 
                     <div class="flex justify-center gap-4">
@@ -171,13 +174,13 @@
                         <div class="md:col-span-2">
                             <label class="block text-sm text-slate-500 mb-1">לקוח</label>
                             <select id="manualClientSelect" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
-                                <option value="">-- כללי --</option>
+                                <option value="">-- בחר לקוח --</option>
                             </select>
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-sm text-slate-500 mb-1">פרויקט</label>
                             <select id="manualProjectSelect" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
-                                <option value="">-- כללי --</option>
+                                <option value="">-- בחר פרויקט --</option>
                             </select>
                         </div>
                         <div class="md:col-span-3">
@@ -343,7 +346,7 @@
                             <h3 class="text-lg font-bold text-slate-800 mb-2"><i class="fas fa-stopwatch text-indigo-500 ml-2"></i> טיימר ודיווח (Tracker)</h3>
                             <p>הלב של המערכת. מסך זה מתחלק לשני אזורים:</p>
                             <ul class="list-disc list-inside mt-2 space-y-1 pr-4">
-                                <li><strong>טיימר חי:</strong> בחר לקוח, פרויקט (לא חובה), הקלד מה אתה עושה ולחץ על "התחל טיימר". כשהטיימר עובד, תראה חיווי גלובלי בחלק העליון של המסך המאפשר לך לנווט למסכים אחרים מבלי לאבד מעקב.</li>
+                                <li><strong>טיימר חי:</strong> בחר לקוח, פרויקט (חובה לבחור את שניהם), הקלד מה אתה עושה ולחץ על "התחל טיימר". כשהטיימר עובד, תראה חיווי גלובלי בחלק העליון של המסך המאפשר לך לנווט למסכים אחרים מבלי לאבד מעקב.</li>
                                 <li><strong>הזנה ידנית:</strong> שכחת להפעיל טיימר? אין בעיה. בחלק התחתון תוכל להזין תאריך, לבחור לקוח ופרויקט, ולהזין את משך זמן העבודה המדויק (שעות ודקות) באופן ידני.</li>
                             </ul>
                         </div>
@@ -393,7 +396,7 @@
                 </div>
                 <div>
                     <label class="block text-sm text-slate-500 mb-1">לקוח</label>
-                    <select id="editEntryClient" onchange="window.filterProjectsByClient('editEntryClient', 'editEntryProject', '-- כללי --')" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
+                    <select id="editEntryClient" onchange="window.filterProjectsByClient('editEntryClient', 'editEntryProject', '-- בחר פרויקט --')" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
                     </select>
                 </div>
                 <div>
@@ -548,11 +551,11 @@
         
         function updateClientsUI() {
             const selects = [
-                { id: 'timerClientSelect', text: '-- בחר לקוח (לא חובה) --' }, 
-                { id: 'manualClientSelect', text: '-- כללי (ללא לקוח) --' }, 
+                { id: 'timerClientSelect', text: '-- בחר לקוח --' }, 
+                { id: 'manualClientSelect', text: '-- בחר לקוח --' }, 
                 { id: 'newProjectClient', text: '-- בחר לקוח קשור --' }, 
                 { id: 'filterClientSelect', text: '-- כל הלקוחות --' },
-                { id: 'editEntryClient', text: '-- כללי (ללא לקוח) --'}
+                { id: 'editEntryClient', text: '-- בחר לקוח --'}
             ];
             
             selects.forEach(sel => {
@@ -596,8 +599,8 @@
                     </li>`;
             });
             
-            window.filterProjectsByClient('timerClientSelect', 'timerProjectSelect');
-            window.filterProjectsByClient('manualClientSelect', 'manualProjectSelect');
+            window.filterProjectsByClient('timerClientSelect', 'timerProjectSelect', '-- בחר פרויקט --');
+            window.filterProjectsByClient('manualClientSelect', 'manualProjectSelect', '-- בחר פרויקט --');
             window.updateReportProjectFilter();
             
             updateDashboardStats();
@@ -911,14 +914,16 @@
             const minutes = Number(document.getElementById('manualMinutes').value) || 0;
             const desc = document.getElementById('manualDesc').value.trim(); 
             
-            if(!date || (hours === 0 && minutes === 0)) return showToast("יש למלא תאריך ולהזין משך זמן (שעות/דקות)");
+            if(!date || !clientId || !projectId || (hours === 0 && minutes === 0)) {
+                return showToast("יש למלא תאריך, לבחור לקוח ופרויקט, ולהזין זמן עבודה");
+            }
             
             const durationSeconds = (hours * 3600) + (minutes * 60);
             
             await addDoc(getDbRef('entries'), {
                 date,
-                clientId: clientId || null,
-                projectId: projectId || null,
+                clientId: clientId,
+                projectId: projectId,
                 description: desc,
                 entryType: 'manual',
                 durationSeconds,
@@ -944,7 +949,7 @@
             document.getElementById('editEntryDate').value = offsetDate.toISOString().split('T')[0];
             
             document.getElementById('editEntryClient').value = entry.clientId || '';
-            window.filterProjectsByClient('editEntryClient', 'editEntryProject', '-- כללי --');
+            window.filterProjectsByClient('editEntryClient', 'editEntryProject', '-- בחר פרויקט --');
             document.getElementById('editEntryProject').value = entry.projectId || '';
             
             document.getElementById('editEntryDesc').value = entry.description || '';
@@ -969,14 +974,16 @@
             const hours = Number(document.getElementById('editEntryHours').value) || 0;
             const minutes = Number(document.getElementById('editEntryMinutes').value) || 0;
 
-            if(!date || (hours === 0 && minutes === 0)) return showToast("חובה להזין תאריך וזמן עבודה תקין");
+            if(!date || !clientId || !projectId || (hours === 0 && minutes === 0)) {
+                return showToast("חובה למלא תאריך, לקוח, פרויקט וזמן עבודה תקין");
+            }
 
             const durationSeconds = (hours * 3600) + (minutes * 60);
 
             await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'entries', id), {
                 date,
-                clientId: clientId || null,
-                projectId: projectId || null,
+                clientId: clientId,
+                projectId: projectId,
                 description: desc,
                 durationSeconds
             });
@@ -1002,7 +1009,7 @@
         };
         
         document.getElementById('timerClientSelect')?.addEventListener('change', () => window.filterProjectsByClient('timerClientSelect', 'timerProjectSelect'));
-        document.getElementById('manualClientSelect')?.addEventListener('change', () => window.filterProjectsByClient('manualClientSelect', 'manualProjectSelect', '-- כללי --'));
+        document.getElementById('manualClientSelect')?.addEventListener('change', () => window.filterProjectsByClient('manualClientSelect', 'manualProjectSelect', '-- בחר פרויקט --'));
 
         // --- לוגיקת טיימר חיה מעודכנת עם חיווי גלובלי ---
         let timerInterval;
@@ -1010,6 +1017,12 @@
         let isRunning = false;
 
         window.toggleTimer = async () => {
+            const clientId = document.getElementById('timerClientSelect').value;
+            const projectId = document.getElementById('timerProjectSelect').value;
+            const descInput = document.getElementById('timerDesc');
+            const clientInput = document.getElementById('timerClientSelect');
+            const projectInput = document.getElementById('timerProjectSelect');
+
             const startBtn = document.getElementById('startTimerBtn');
             const stopBtn = document.getElementById('stopTimerBtn');
             const indicator = document.getElementById('live-indicator');
@@ -1019,7 +1032,18 @@
             const globalTimerDisplay = document.getElementById('global-timer-time');
 
             if(!isRunning) {
+                // ולידציית חובה לפני הפעלת הטיימר
+                if (!clientId || !projectId) {
+                    return showToast("חובה לבחור לקוח ופרויקט לפני הפעלת הטיימר");
+                }
+
                 isRunning = true;
+                
+                // נעילת השדות למניעת שינויים תוך כדי עבודה
+                clientInput.disabled = true;
+                projectInput.disabled = true;
+                descInput.disabled = true;
+
                 startBtn.classList.add('hidden');
                 stopBtn.classList.remove('hidden');
                 indicator.classList.remove('hidden');
@@ -1030,26 +1054,30 @@
                     secondsElapsed++;
                     const timeStr = formatSeconds(secondsElapsed);
                     display.innerText = timeStr;
-                    globalTimerDisplay.innerText = timeStr; // עדכון הבר העליון
+                    globalTimerDisplay.innerText = timeStr; 
                 }, 1000);
             } else {
                 isRunning = false;
                 clearInterval(timerInterval);
+                
+                // שחרור נעילת השדות
+                clientInput.disabled = false;
+                projectInput.disabled = false;
+                descInput.disabled = false;
+
                 startBtn.classList.remove('hidden');
                 stopBtn.classList.add('hidden');
                 indicator.classList.add('hidden');
                 indicator.classList.replace('opacity-100', 'opacity-0');
-                globalTimerCon.classList.add('hidden'); // הסתרת הבר העליון
+                globalTimerCon.classList.add('hidden'); 
 
-                const clientId = document.getElementById('timerClientSelect').value;
-                const projectId = document.getElementById('timerProjectSelect').value;
-                const desc = document.getElementById('timerDesc').value;
+                const desc = descInput.value;
 
                 if(secondsElapsed > 60) {
                      await addDoc(getDbRef('entries'), {
                         date: new Date().toISOString(),
-                        clientId: clientId || null,
-                        projectId: projectId || null,
+                        clientId: clientId,
+                        projectId: projectId,
                         description: desc || "",
                         entryType: 'auto',
                         durationSeconds: secondsElapsed,
@@ -1063,7 +1091,11 @@
                 secondsElapsed = 0;
                 display.innerText = "00:00:00";
                 globalTimerDisplay.innerText = "00:00:00";
-                document.getElementById('timerDesc').value = "";
+                descInput.value = "";
+                
+                // איפוס שדות הבחירה כדי שהמשתמש יבחר שוב בפעם הבאה
+                clientInput.value = "";
+                window.filterProjectsByClient('timerClientSelect', 'timerProjectSelect', '-- בחר פרויקט --');
             }
         };
 
