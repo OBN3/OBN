@@ -13,6 +13,7 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
         /* מניעת גלילה אופקית במובייל */
         html, body { max-width: 100%; overflow-x: hidden; }
         
@@ -21,6 +22,7 @@
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         
         /* הסרת חיצים משדות מספר */
         input[type=number]::-webkit-inner-spin-button, 
@@ -30,21 +32,33 @@
 <body class="text-slate-800 flex flex-col h-screen">
 
     <!-- שורת ניווט עליונה -->
-    <nav class="bg-indigo-600 text-white shadow-lg shrink-0">
+    <nav class="bg-indigo-600 text-white shadow-lg shrink-0 z-10 relative">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <h1 class="text-xl font-bold flex items-center gap-2">
                 <i class="fas fa-clock"></i> TimeTracker Pro
             </h1>
             
-            <div class="flex items-center gap-4">
-                <div id="nav-menus" class="hidden sm:flex gap-2 sm:gap-4 overflow-x-auto text-sm sm:text-base pb-1 sm:pb-0 scrollbar-hide">
+            <div class="flex items-center gap-2 sm:gap-4">
+                
+                <!-- טיימר גלובלי (יופיע כשמופעל) -->
+                <div id="global-timer" onclick="switchTab('tracker')" class="hidden cursor-pointer flex items-center gap-2 bg-indigo-800 text-indigo-50 px-3 py-1.5 rounded-full border border-indigo-400 hover:bg-indigo-700 transition shadow-inner mr-2" title="חזור למסך הדיווח">
+                    <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                    <span id="global-timer-time" class="font-mono font-medium tracking-wider text-sm">00:00:00</span>
+                </div>
+
+                <div id="nav-menus" class="hidden sm:flex gap-1 sm:gap-2 overflow-x-auto text-sm sm:text-base pb-1 sm:pb-0 scrollbar-hide items-center">
                     <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn px-3 py-1 rounded-full bg-indigo-700 font-medium transition whitespace-nowrap">דשבורד</button>
                     <button onclick="switchTab('tracker')" id="nav-tracker" class="nav-btn px-3 py-1 rounded-full hover:bg-indigo-500 transition whitespace-nowrap">טיימר ודיווח</button>
-                    <button onclick="switchTab('reports')" id="nav-reports" class="nav-btn px-3 py-1 rounded-full hover:bg-indigo-500 transition whitespace-nowrap">דוחות חכמים</button>
-                    <button onclick="switchTab('manage')" id="nav-manage" class="nav-btn px-3 py-1 rounded-full hover:bg-indigo-500 transition whitespace-nowrap">לקוחות ופרויקטים</button>
+                    <button onclick="switchTab('reports')" id="nav-reports" class="nav-btn px-3 py-1 rounded-full hover:bg-indigo-500 transition whitespace-nowrap">דוחות</button>
+                    <button onclick="switchTab('manage')" id="nav-manage" class="nav-btn px-3 py-1 rounded-full hover:bg-indigo-500 transition whitespace-nowrap">הגדרות</button>
+                    
+                    <!-- כפתור עזרה חדש -->
+                    <button onclick="switchTab('help')" id="nav-help" class="nav-btn px-3 py-1 rounded-full hover:bg-indigo-500 transition text-indigo-200 hover:text-white" title="מרכז עזרה">
+                        <i class="fas fa-question-circle text-lg"></i>
+                    </button>
                 </div>
                 
-                <div id="user-profile" class="hidden items-center gap-3 border-r border-indigo-400 pr-4 ml-2">
+                <div id="user-profile" class="hidden items-center gap-3 border-r border-indigo-400 pr-4 ml-1">
                     <img id="user-avatar" src="" alt="User" class="w-8 h-8 rounded-full border-2 border-indigo-300">
                     <span id="user-name" class="hidden md:inline font-medium text-sm"></span>
                     <button id="logout-btn" class="text-indigo-200 hover:text-white transition" title="התנתק"><i class="fas fa-sign-out-alt"></i></button>
@@ -54,10 +68,10 @@
     </nav>
 
     <!-- אזור התוכן הראשי -->
-    <main class="container mx-auto px-4 py-6 flex-1 overflow-y-auto relative">
+    <main class="container mx-auto px-4 py-6 flex-1 overflow-y-auto relative flex flex-col">
         
         <!-- מסך התחברות -->
-        <div id="login-screen" class="flex flex-col items-center justify-center h-full text-center px-4">
+        <div id="login-screen" class="flex flex-col items-center justify-center h-full text-center px-4 flex-1">
             <div class="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 max-w-md w-full">
                 <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
                     <i class="fas fa-clock"></i>
@@ -72,10 +86,10 @@
         </div>
 
         <!-- אפליקציה - מוסתר עד התחברות -->
-        <div id="app-content" class="hidden pb-10">
+        <div id="app-content" class="hidden flex-1 flex flex-col pb-6">
 
             <!-- מסך דשבורד -->
-            <section id="dashboard" class="tab-content active">
+            <section id="dashboard" class="tab-content active flex-1">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                     <h2 id="dash-main-title" class="text-2xl font-bold text-slate-700">סיכום נתונים חודשי</h2>
                 </div>
@@ -102,20 +116,20 @@
                     </div>
                 </div>
 
-                <!-- פילוח הכנסות היררכי (לקוח -> פרויקט) -->
+                <!-- פילוח הכנסות היררכי -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden mb-8">
                     <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
                         <i class="fas fa-network-wired text-indigo-500"></i>
                         <h3 class="font-bold text-slate-700">התפלגות הכנסות ושעות - לקוחות ופרויקטים</h3>
                     </div>
                     <div id="dash-hierarchical-breakdown" class="p-6">
-                        <!-- יאוכלס דינמית ע"י ה-JS -->
+                        <!-- יאוכלס דינמית -->
                     </div>
                 </div>
             </section>
 
             <!-- מסך דיווח וטיימר -->
-            <section id="tracker" class="tab-content">
+            <section id="tracker" class="tab-content flex-1">
                 <h2 class="text-2xl font-bold text-slate-700 mb-6">רישום זמנים</h2>
                 
                 <div class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-100 mb-8 text-center relative overflow-hidden">
@@ -146,7 +160,7 @@
                     </div>
                 </div>
 
-                <!-- הזנה ידנית שופרה -->
+                <!-- הזנה ידנית -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
                     <h3 class="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2"><i class="fas fa-keyboard text-indigo-500"></i> הזנה ידנית (משך זמן עבודה)</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-4 items-end text-right">
@@ -174,7 +188,7 @@
                             <div class="flex-1 flex gap-1">
                                 <div class="w-1/2 relative">
                                     <label class="block text-sm text-slate-500 mb-1 text-center">שעות</label>
-                                    <input type="number" id="manualHours" value="1" min="0" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500 text-center text-lg">
+                                    <input type="number" id="manualHours" value="0" min="0" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500 text-center text-lg">
                                 </div>
                                 <div class="w-1/2 relative">
                                     <label class="block text-sm text-slate-500 mb-1 text-center">דקות</label>
@@ -190,7 +204,7 @@
             </section>
 
             <!-- מסך דוחות חכמים -->
-            <section id="reports" class="tab-content">
+            <section id="reports" class="tab-content flex-1">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                     <h2 class="text-2xl font-bold text-slate-700">הפקת דוחות (ועריכת רשומות)</h2>
                     <button onclick="exportFilteredReport()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow transition flex items-center gap-2 w-full sm:w-auto justify-center">
@@ -204,29 +218,33 @@
                         <button onclick="setReportDates('thisMonth')" class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-100 transition">החודש</button>
                         <button onclick="setReportDates('lastMonth')" class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-100 transition">חודש שעבר</button>
                         <button onclick="setReportDates('thisYear')" class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-100 transition">השנה</button>
-                        <button onclick="setReportDates('all')" class="text-xs bg-slate-100 text-slate-700 px-3 py-1 rounded-full hover:bg-slate-200 transition">הכל</button>
+                        <button onclick="setReportDates('all')" class="text-xs bg-slate-800 text-white px-3 py-1 rounded-full hover:bg-slate-700 transition" id="btn-filter-all">הכל (ברירת מחדל)</button>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
                         <div>
                             <label class="block text-sm text-slate-500 mb-1">מתאריך</label>
-                            <input type="date" id="filterStartDate" onchange="generateReport()" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
+                            <input type="date" id="filterStartDate" onchange="generateReport()" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500 h-10">
                         </div>
                         <div>
                             <label class="block text-sm text-slate-500 mb-1">עד תאריך</label>
-                            <input type="date" id="filterEndDate" onchange="generateReport()" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
+                            <input type="date" id="filterEndDate" onchange="generateReport()" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500 h-10">
                         </div>
                         <div>
                             <label class="block text-sm text-slate-500 mb-1">לקוח</label>
-                            <select id="filterClientSelect" onchange="filterProjectsInReport(); generateReport();" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
+                            <select id="filterClientSelect" onchange="updateReportProjectFilter(); generateReport();" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500 h-10">
                                 <option value="">-- כל הלקוחות --</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm text-slate-500 mb-1">פרויקט</label>
-                            <select id="filterProjectSelect" onchange="generateReport()" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
-                                <option value="">-- כל הפרויקטים --</option>
+                            <div class="flex justify-between items-end mb-1">
+                                <label class="block text-sm text-slate-500">פרויקט (בחירה מרובה)</label>
+                                <button onclick="document.getElementById('filterProjectSelect').selectedIndex = -1; generateReport();" class="text-[11px] font-medium text-indigo-500 hover:underline">נקה בחירה</button>
+                            </div>
+                            <select id="filterProjectSelect" multiple size="3" onchange="generateReport()" class="border border-slate-200 p-1 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500 text-sm overflow-y-auto custom-scrollbar h-20">
+                                <!-- יאוכלס דינמית ע"י JS -->
                             </select>
+                            <p class="text-[10px] text-slate-400 mt-1">החזק Ctrl/Cmd לבחירה מרובה. ללא בחירה = הצג הכל.</p>
                         </div>
                     </div>
                 </div>
@@ -267,35 +285,95 @@
             </section>
 
             <!-- מסך ניהול לקוחות ופרויקטים -->
-            <section id="manage" class="tab-content">
+            <section id="manage" class="tab-content flex-1">
                 <h2 class="text-2xl font-bold text-slate-700 mb-6">הגדרות לקוחות ופרויקטים</h2>
                 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col h-full">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col h-full max-h-[600px]">
                         <h3 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2">הוספת לקוח</h3>
-                        <div class="flex flex-col gap-3 mb-6">
+                        <div class="flex flex-col gap-3 mb-6 shrink-0">
                             <input type="text" id="newClientName" placeholder="שם הלקוח" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:border-indigo-500 outline-none">
                             <input type="number" id="newClientRate" placeholder="תעריף שעתי (₪) - אופציונלי" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:border-indigo-500 outline-none">
                             <button onclick="addClient()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">שמור לקוח חדש</button>
                         </div>
-                        <h4 class="font-medium text-slate-600 mb-2">לקוחות קיימים (עריכה ומחיקה):</h4>
-                        <ul id="clients-list" class="space-y-2 text-sm flex-1 overflow-y-auto pr-2"></ul>
+                        <h4 class="font-medium text-slate-600 mb-2 shrink-0">לקוחות קיימים (עריכה ומחיקה):</h4>
+                        <ul id="clients-list" class="space-y-2 text-sm flex-1 overflow-y-auto pr-2 custom-scrollbar"></ul>
                     </div>
 
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col h-full">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col h-full max-h-[600px]">
                         <h3 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2">הוספת פרויקט</h3>
-                        <div class="flex flex-col gap-3 mb-6">
+                        <div class="flex flex-col gap-3 mb-6 shrink-0">
                             <select id="newProjectClient" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:border-indigo-500 outline-none">
                                 <option value="">-- בחר לקוח קשור --</option>
                             </select>
                             <input type="text" id="newProjectName" placeholder="שם הפרויקט" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:border-indigo-500 outline-none">
                             <button onclick="addProject()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">שמור פרויקט חדש</button>
                         </div>
-                        <h4 class="font-medium text-slate-600 mb-2">פרויקטים קיימים (עריכה ומחיקה):</h4>
-                        <ul id="projects-list" class="space-y-2 text-sm flex-1 overflow-y-auto pr-2"></ul>
+                        <h4 class="font-medium text-slate-600 mb-2 shrink-0">פרויקטים קיימים (עריכה ומחיקה):</h4>
+                        <ul id="projects-list" class="space-y-2 text-sm flex-1 overflow-y-auto pr-2 custom-scrollbar"></ul>
                     </div>
                 </div>
             </section>
+
+            <!-- מסך עזרה -->
+            <section id="help" class="tab-content flex-1 max-w-4xl mx-auto w-full">
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+                    <div class="flex items-center gap-4 mb-6 border-b border-slate-100 pb-4">
+                        <div class="bg-indigo-100 text-indigo-600 p-3 rounded-full text-2xl">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-800">מרכז עזרה והדרכה</h2>
+                    </div>
+                    
+                    <div class="space-y-6 text-slate-600 leading-relaxed">
+                        
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2"><i class="fas fa-bullseye text-indigo-500"></i> מטרת המערכת</h3>
+                            <p>מערכת <strong>TimeTracker Pro</strong> נבנתה במיוחד עבור פרילנסרים ועצמאיים. היא נועדה לעשות סדר בניהול הזמן שלך, למדוד במדויק כל דקה שאתה משקיע בעבודה, ולתרגם את הזמן הזה להכנסות בפועל. המערכת שומרת את הנתונים בענן מאובטח ופרטי משלך (Firebase) ומאפשרת ייצוא נקי לאקסל.</p>
+                        </div>
+
+                        <hr class="border-slate-100">
+
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800 mb-2"><i class="fas fa-tachometer-alt text-indigo-500 ml-2"></i> דשבורד (Dashboard)</h3>
+                            <p>מסך הבית שלך המספק מבט על של הפעילות העסקית בחודש הנוכחי. כאן תראה סיכום של סך השעות שעבדת והערכת הכנסות (המחושבת לפי התעריף השעתי שהגדרת ללקוחות). בנוסף, מוצגת חלוקה היררכית וגרפית ברורה של הכנסות פר לקוח ופר פרויקט.</p>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800 mb-2"><i class="fas fa-stopwatch text-indigo-500 ml-2"></i> טיימר ודיווח (Tracker)</h3>
+                            <p>הלב של המערכת. מסך זה מתחלק לשני אזורים:</p>
+                            <ul class="list-disc list-inside mt-2 space-y-1 pr-4">
+                                <li><strong>טיימר חי:</strong> בחר לקוח, פרויקט (לא חובה), הקלד מה אתה עושה ולחץ על "התחל טיימר". כשהטיימר עובד, תראה חיווי גלובלי בחלק העליון של המסך המאפשר לך לנווט למסכים אחרים מבלי לאבד מעקב.</li>
+                                <li><strong>הזנה ידנית:</strong> שכחת להפעיל טיימר? אין בעיה. בחלק התחתון תוכל להזין תאריך, לבחור לקוח ופרויקט, ולהזין את משך זמן העבודה המדויק (שעות ודקות) באופן ידני.</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800 mb-2"><i class="fas fa-chart-line text-indigo-500 ml-2"></i> דוחות חכמים (Reports)</h3>
+                            <p>כאן תוכל לסנן ולנתח את כל היסטוריית העבודה שלך. ברירת המחדל היא הצגת "הכל".</p>
+                            <ul class="list-disc list-inside mt-2 space-y-1 pr-4">
+                                <li>ניתן לסנן לפי טווחי תאריכים, לקוח ספציפי, ולבחור <strong>מספר פרויקטים במקביל</strong> (החזק את מקש ה-Ctrl או Cmd תוך כדי לחיצה על הפרויקטים).</li>
+                                <li>לחצן <strong>"נקה בחירה"</strong> יאפס את סינון הפרויקטים ויציג את כולם.</li>
+                                <li><strong>עריכת רשומות:</strong> זיהית טעות? לחץ על סמל העיפרון (<i class="fas fa-edit text-indigo-400"></i>) בשורת הדיווח ותוכל לתקן את התאריך, השעות או הלקוח המקושר.</li>
+                                <li>ניתן <strong>לייצא לאקסל</strong> את הדוח המסונן. האקסל שנוצר תומך באופן מושלם בעברית (RTL).</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800 mb-2"><i class="fas fa-users-cog text-indigo-500 ml-2"></i> הגדרות (לקוחות ופרויקטים)</h3>
+                            <p>כדי להתחיל לעבוד בצורה מסודרת, יש להגדיר תחילה את הלקוחות שלך. לכל לקוח ניתן (אך לא חובה) להצמיד תעריף שעתי, אשר ישמש לחישוב ההכנסות בדשבורד ובדוחות.</p>
+                            <p class="mt-1">לאחר יצירת לקוח, תוכל ליצור פרויקטים ולשייך אותם אליו. היררכיה זו עוזרת לשמור על סדר ולא להציף אותך ברשימות ארוכות ומבלבלות במסך הדיווח. ניתן לערוך שמות ותעריפים, או למחוק לקוחות/פרויקטים קיימים.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- פוטר מערכת -->
+            <footer class="mt-auto pt-6 pb-2 text-center text-sm text-slate-500">
+                <a href="mailto:mordicon@mail.com" class="hover:text-indigo-600 transition inline-flex items-center gap-2">
+                    <i class="far fa-copyright"></i> כל הזכויות שמורות OBN (mordicon@mail.com)
+                </a>
+            </footer>
 
         </div>
     </main>
@@ -315,7 +393,7 @@
                 </div>
                 <div>
                     <label class="block text-sm text-slate-500 mb-1">לקוח</label>
-                    <select id="editEntryClient" onchange="filterProjectsByClient('editEntryClient', 'editEntryProject')" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
+                    <select id="editEntryClient" onchange="window.filterProjectsByClient('editEntryClient', 'editEntryProject', '-- כללי --')" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
                     </select>
                 </div>
                 <div>
@@ -414,7 +492,8 @@
                         document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/150';
                         
                         document.getElementById('manualDate').valueAsDate = new Date();
-                        window.setReportDates('thisMonth');
+                        // הוגדר ברירת מחדל ל"הכל" במסך הדוחות כבקשתך
+                        window.setReportDates('all'); 
                         
                         setupListeners();
                     } else {
@@ -518,26 +597,24 @@
             
             window.filterProjectsByClient('timerClientSelect', 'timerProjectSelect');
             window.filterProjectsByClient('manualClientSelect', 'manualProjectSelect');
-            window.filterProjectsInReport();
+            window.updateReportProjectFilter();
             
             updateDashboardStats();
             window.generateReport();
         }
 
-        // פילוח דשבורד (היררכי - מעודכן לפי הדרישות)
+        // פילוח דשבורד היררכי 
         function updateDashboardStats() {
             const now = new Date();
             const currentMonth = now.getMonth();
             const currentYear = now.getFullYear();
             
-            // עדכון כותרת דינמית
             const monthName = now.toLocaleDateString('he-IL', { month: 'long', year: 'numeric' });
             document.getElementById('dash-main-title').innerText = `סיכום נתונים חודשי - ${monthName}`;
 
             let totalSeconds = 0;
             let totalEarnings = 0;
             
-            // מבנה עץ היררכי: לקוח -> פרויקט
             const hierarchy = {};
 
             entriesData.forEach(entry => {
@@ -551,7 +628,6 @@
                     
                     totalEarnings += earnings;
 
-                    // בניית העץ
                     const cId = entry.clientId || 'general';
                     const cName = client ? client.name : 'לקוחות כלליים / ללא לקוח';
                     
@@ -626,6 +702,13 @@
         // --- מודול הדוחות החכמים ---
         
         window.setReportDates = (preset) => {
+            // הוספת מנגנון הדגשת כפתור פעיל
+            document.querySelectorAll('#reports .bg-slate-800, #reports .bg-indigo-50').forEach(btn => {
+                btn.className = "text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-100 transition";
+            });
+            event?.currentTarget?.classList.replace('bg-indigo-50', 'bg-slate-800');
+            event?.currentTarget?.classList.replace('text-indigo-700', 'text-white');
+
             const today = new Date();
             let start, end;
             
@@ -641,6 +724,7 @@
             } else if (preset === 'all') {
                 document.getElementById('filterStartDate').value = '';
                 document.getElementById('filterEndDate').value = '';
+                document.getElementById('btn-filter-all').className = "text-xs bg-slate-800 text-white px-3 py-1 rounded-full transition";
                 window.generateReport();
                 return;
             }
@@ -654,15 +738,40 @@
             window.generateReport();
         };
 
-        window.filterProjectsInReport = () => {
-            window.filterProjectsByClient('filterClientSelect', 'filterProjectSelect', '-- כל הפרויקטים --');
+        // פונקציה ייעודית לתיבת הבחירה המרובה של פרויקטים בדוחות
+        window.updateReportProjectFilter = () => {
+            const clientEl = document.getElementById('filterClientSelect');
+            const projSelect = document.getElementById('filterProjectSelect');
+            if(!clientEl || !projSelect) return;
+            
+            const clientId = clientEl.value;
+            projSelect.innerHTML = ``; // ניקוי
+            
+            let relevantProjects = projectsData;
+            if (clientId) {
+                relevantProjects = projectsData.filter(p => p.clientId === clientId);
+            }
+            
+            relevantProjects.forEach(p => { 
+                projSelect.innerHTML += `<option value="${p.id}" class="p-1 cursor-pointer rounded mb-1">${p.name}</option>`; 
+            });
+            
+            if(relevantProjects.length === 0) {
+                projSelect.innerHTML = `<option value="" disabled class="text-slate-400 p-1">אין פרויקטים</option>`;
+                projSelect.disabled = true;
+            } else {
+                projSelect.disabled = false;
+            }
         };
 
         window.generateReport = () => {
             const startVal = document.getElementById('filterStartDate').value;
             const endVal = document.getElementById('filterEndDate').value;
             const clientId = document.getElementById('filterClientSelect').value;
-            const projectId = document.getElementById('filterProjectSelect').value;
+            
+            // שאיבת כל הפרויקטים שנבחרו
+            const projectSelect = document.getElementById('filterProjectSelect');
+            const selectedProjects = Array.from(projectSelect.selectedOptions).map(opt => opt.value);
 
             const startDate = startVal ? new Date(startVal).setHours(0,0,0,0) : null;
             const endDate = endVal ? new Date(endVal).setHours(23,59,59,999) : null;
@@ -673,7 +782,8 @@
                 if (startDate && entryDate < startDate) return false;
                 if (endDate && entryDate > endDate) return false;
                 if (clientId && entry.clientId !== clientId) return false;
-                if (projectId && entry.projectId !== projectId) return false;
+                // אם נבחרו פרויקטים ספציפיים (ולא השאירו ריק להצגת הכל), סנן לפיהם:
+                if (selectedProjects.length > 0 && !selectedProjects.includes(entry.projectId || '')) return false;
                 
                 return true;
             });
@@ -809,7 +919,7 @@
             });
             
             document.getElementById('manualDesc').value = '';
-            document.getElementById('manualHours').value = '1';
+            document.getElementById('manualHours').value = '0';
             document.getElementById('manualMinutes').value = '0';
             showToast("רשומה ידנית נשמרה בהצלחה");
         };
@@ -822,7 +932,6 @@
 
             document.getElementById('editEntryId').value = entry.id;
             
-            // Format date for input[type=date]
             const dateObj = new Date(entry.date);
             const offsetDate = new Date(dateObj.getTime() - (dateObj.getTimezoneOffset() * 60000));
             document.getElementById('editEntryDate').value = offsetDate.toISOString().split('T')[0];
@@ -869,7 +978,6 @@
             showToast("רשומה עודכנה בהצלחה");
         };
 
-
         window.filterProjectsByClient = (clientSelectId, projectSelectId, defaultText = '-- בחר פרויקט --') => {
             const clientEl = document.getElementById(clientSelectId);
             const projSelect = document.getElementById(projectSelectId);
@@ -886,11 +994,10 @@
             }
         };
         
-        // Listeners for dependent dropdowns
         document.getElementById('timerClientSelect')?.addEventListener('change', () => window.filterProjectsByClient('timerClientSelect', 'timerProjectSelect'));
         document.getElementById('manualClientSelect')?.addEventListener('change', () => window.filterProjectsByClient('manualClientSelect', 'manualProjectSelect', '-- כללי --'));
 
-        // --- לוגיקת טיימר חיה ---
+        // --- לוגיקת טיימר חיה מעודכנת עם חיווי גלובלי ---
         let timerInterval;
         let secondsElapsed = 0;
         let isRunning = false;
@@ -900,6 +1007,9 @@
             const stopBtn = document.getElementById('stopTimerBtn');
             const indicator = document.getElementById('live-indicator');
             const display = document.getElementById('timerDisplay');
+            
+            const globalTimerCon = document.getElementById('global-timer');
+            const globalTimerDisplay = document.getElementById('global-timer-time');
 
             if(!isRunning) {
                 isRunning = true;
@@ -907,10 +1017,13 @@
                 stopBtn.classList.remove('hidden');
                 indicator.classList.remove('hidden');
                 indicator.classList.replace('opacity-0', 'opacity-100');
+                globalTimerCon.classList.remove('hidden');
                 
                 timerInterval = setInterval(() => {
                     secondsElapsed++;
-                    display.innerText = formatSeconds(secondsElapsed);
+                    const timeStr = formatSeconds(secondsElapsed);
+                    display.innerText = timeStr;
+                    globalTimerDisplay.innerText = timeStr; // עדכון הבר העליון
                 }, 1000);
             } else {
                 isRunning = false;
@@ -919,6 +1032,7 @@
                 stopBtn.classList.add('hidden');
                 indicator.classList.add('hidden');
                 indicator.classList.replace('opacity-100', 'opacity-0');
+                globalTimerCon.classList.add('hidden'); // הסתרת הבר העליון
 
                 const clientId = document.getElementById('timerClientSelect').value;
                 const projectId = document.getElementById('timerProjectSelect').value;
@@ -941,6 +1055,7 @@
 
                 secondsElapsed = 0;
                 display.innerText = "00:00:00";
+                globalTimerDisplay.innerText = "00:00:00";
                 document.getElementById('timerDesc').value = "";
             }
         };
@@ -989,9 +1104,14 @@
             document.querySelectorAll('.nav-btn').forEach(el => {
                 el.classList.remove('bg-indigo-700');
                 el.classList.add('hover:bg-indigo-500');
+                el.classList.remove('text-white');
             });
-            document.getElementById('nav-' + tabId).classList.add('bg-indigo-700');
-            document.getElementById('nav-' + tabId).classList.remove('hover:bg-indigo-500');
+            const activeBtn = document.getElementById('nav-' + tabId);
+            if(activeBtn) {
+                activeBtn.classList.add('bg-indigo-700');
+                activeBtn.classList.remove('hover:bg-indigo-500');
+                activeBtn.classList.add('text-white');
+            }
         };
 
         function showToast(msg) {
