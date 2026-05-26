@@ -365,7 +365,7 @@
                                 <option value="">-- בחר לקוח --</option>
                             </select>
                             <input type="text" id="newProjectName" placeholder="שם הפרויקט (חובה)" class="col-span-2 border border-slate-200 p-2 rounded-lg bg-slate-50 focus:border-indigo-500">
-                            <input type="number" id="newProjectBudget" placeholder="שעות מתוקצבות (לדוג: 50)" class="col-span-2 border border-slate-200 p-2 rounded-lg bg-slate-50">
+                            <input type="number" id="newProjectBudget" placeholder="שעות תקציב (לדוג: 50)" class="col-span-2 border border-slate-200 p-2 rounded-lg bg-slate-50">
                             <button onclick="addProject()" class="col-span-2 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition font-bold mt-1">שמור פרויקט</button>
                         </div>
                         <h4 class="font-medium text-slate-600 mb-2 shrink-0">ניהול פרויקטים:</h4>
@@ -411,7 +411,61 @@
         </div>
     </main>
 
-    <!-- Modal: Edit Entry -->
+    <!-- Modal: Edit Client -->
+    <div id="edit-client-modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-50 hidden flex justify-center items-center px-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-700 text-lg"><i class="fas fa-user-edit text-indigo-500 mr-2"></i> עריכת לקוח</h3>
+                <button onclick="closeClientModal()" class="text-slate-400 hover:text-slate-600 transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="editClientId">
+                <div>
+                    <label class="block text-xs mb-1 text-slate-600">שם הלקוח</label>
+                    <input type="text" id="editClientName" class="border border-slate-200 p-2 rounded w-full bg-slate-50 focus:border-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs mb-1 text-slate-600">תעריף שעתי (₪)</label>
+                    <input type="number" id="editClientRate" class="border border-slate-200 p-2 rounded w-full bg-slate-50 focus:border-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs mb-1 text-slate-600">תעריף לק"מ (₪)</label>
+                    <input type="number" id="editClientKmRate" class="border border-slate-200 p-2 rounded w-full bg-slate-50 focus:border-indigo-500 outline-none">
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <button onclick="closeClientModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg transition">ביטול</button>
+                <button onclick="saveClientEdit()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-sm font-bold">שמור שינויים</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Edit Project -->
+    <div id="edit-project-modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-50 hidden flex justify-center items-center px-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-700 text-lg"><i class="fas fa-folder-open text-indigo-500 mr-2"></i> עריכת פרויקט</h3>
+                <button onclick="closeProjectModal()" class="text-slate-400 hover:text-slate-600 transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="editProjectId">
+                <div>
+                    <label class="block text-xs mb-1 text-slate-600">שם הפרויקט</label>
+                    <input type="text" id="editProjectName" class="border border-slate-200 p-2 rounded w-full bg-slate-50 focus:border-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs mb-1 text-slate-600">שעות מתוקצבות</label>
+                    <input type="number" id="editProjectBudget" class="border border-slate-200 p-2 rounded w-full bg-slate-50 focus:border-indigo-500 outline-none">
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <button onclick="closeProjectModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg transition">ביטול</button>
+                <button onclick="saveProjectEdit()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-sm font-bold">שמור שינויים</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Edit Time Entry -->
     <div id="edit-entry-modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-50 hidden flex justify-center items-center px-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
             <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
@@ -944,19 +998,35 @@
             showToast("לקוח נוסף בהצלחה");
         };
 
-        window.editClientPrompt = async (id) => {
+        // --- פונקציות חלוניות עריכה מודרניות (Modals) ---
+        
+        window.editClientPrompt = (id) => {
             const client = clientsData.find(c => c.id === id);
-            const newName = prompt("ערוך שם לקוח:", client.name);
-            if (!newName) return;
-            const newRate = prompt("ערוך תעריף שעה:", client.hourlyRate || 0);
-            const newKmRate = prompt("ערוך תעריף ק\"מ:", client.kmRate || 0);
+            if(!client) return;
+            document.getElementById('editClientId').value = client.id;
+            document.getElementById('editClientName').value = client.name || '';
+            document.getElementById('editClientRate').value = client.hourlyRate || 0;
+            document.getElementById('editClientKmRate').value = client.kmRate || 0;
+            document.getElementById('edit-client-modal').classList.remove('hidden');
+        };
+
+        window.closeClientModal = () => document.getElementById('edit-client-modal').classList.add('hidden');
+
+        window.saveClientEdit = async () => {
+            const id = document.getElementById('editClientId').value;
+            const newName = document.getElementById('editClientName').value.trim();
+            const newRate = Number(document.getElementById('editClientRate').value) || 0;
+            const newKmRate = Number(document.getElementById('editClientKmRate').value) || 0;
+
+            if (!newName) return showToast("שם לקוח לא יכול להיות ריק");
 
             await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'clients', id), {
-                name: newName.trim(),
-                hourlyRate: Number(newRate) || 0,
-                kmRate: Number(newKmRate) || 0
+                name: newName,
+                hourlyRate: newRate,
+                kmRate: newKmRate
             });
-            showToast("עודכן בהצלחה");
+            closeClientModal();
+            showToast("לקוח עודכן בהצלחה");
         };
 
         window.addProject = async () => {
@@ -975,17 +1045,30 @@
             showToast("פרויקט נוסף בהצלחה");
         };
 
-        window.editProjectPrompt = async (id) => {
+        window.editProjectPrompt = (id) => {
             const p = projectsData.find(x => x.id === id);
-            const newName = prompt("ערוך שם פרויקט:", p.name);
-            if (!newName) return;
-            const newBud = prompt("ערוך שעות מתוקצבות:", p.budgetedHours || 0);
+            if(!p) return;
+            document.getElementById('editProjectId').value = p.id;
+            document.getElementById('editProjectName').value = p.name || '';
+            document.getElementById('editProjectBudget').value = p.budgetedHours || 0;
+            document.getElementById('edit-project-modal').classList.remove('hidden');
+        };
+
+        window.closeProjectModal = () => document.getElementById('edit-project-modal').classList.add('hidden');
+
+        window.saveProjectEdit = async () => {
+            const id = document.getElementById('editProjectId').value;
+            const newName = document.getElementById('editProjectName').value.trim();
+            const newBud = Number(document.getElementById('editProjectBudget').value) || 0;
+
+            if (!newName) return showToast("שם פרויקט לא יכול להיות ריק");
 
             await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'projects', id), {
-                name: newName.trim(),
-                budgetedHours: Number(newBud) || 0
+                name: newName,
+                budgetedHours: newBud
             });
-            showToast("עודכן בהצלחה");
+            closeProjectModal();
+            showToast("פרויקט עודכן בהצלחה");
         };
 
         window.deleteDocById = async (collectionName, id) => {
@@ -1031,7 +1114,7 @@
             showToast("רשומה נשמרה בהצלחה");
         };
 
-        // --- Edit Modal ---
+        // --- Edit Entry Modal ---
         window.openEditModal = (entryId) => {
             const entry = entriesData.find(e => e.id === entryId);
             if(!entry) return;
@@ -1039,7 +1122,7 @@
             document.getElementById('editEntryId').value = entry.id;
             document.getElementById('editStartDate').value = entry.startDate;
             document.getElementById('editStartTime').value = entry.startTime;
-            document.getElementById('editEndDate').value = entry.endDate || entry.startDate; // תאימות לאחור
+            document.getElementById('editEndDate').value = entry.endDate || entry.startDate; 
             document.getElementById('editEndTime').value = entry.endTime || entry.startTime;
             
             document.getElementById('editEntryClient').value = entry.clientId;
