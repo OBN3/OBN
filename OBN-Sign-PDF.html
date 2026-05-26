@@ -101,57 +101,59 @@
 				const asn1 = forgeObj.asn1.fromDer(der);
 				const p12 = forgeObj.pkcs12.pkcs12FromAsn1(asn1, password); // אם הסיסמה שגויה, תזרק שגיאה כאן
 
-// 4. עיצוב והזרקת חותמת גרפית מרשימה בתחתית המסמך
+// 4. עיצוב והזרקת חותמת גרפית מוקטנת בפינה השמאלית העליונה
 pdfDoc.setTitle('קבלה חתומה דיגיטלית');
-pdfDoc.setAuthor('אופיר בן נתן'); // שם העסק שלך
+pdfDoc.setAuthor('אופיר בן נתן');
 
 const pages = pdfDoc.getPages();
 const firstPage = pages[0];
 const { width, height } = firstPage.getSize();
 
-// הגדרת מיקום לחותמת (למשל, בפינה השמאלית התחתונה או העליונה)
-const xPos = 50; 
-const yPos = 50; 
+// הגדרת מיקום מדויק בפינה השמאלית העליונה
+// width - 160 מציב את החותמת קרוב לקצה השמאלי, height - 60 מציב אותה קרוב לקצה העליון
+const xPos = width - 160; 
+const yPos = height - 60; 
 
-// א. ציור רקע חצי שקוף עדין לחותמת
+// א. ציור רקע מלבני קטן, דק וחצי שקוף
 firstPage.drawRectangle({
     x: xPos,
     y: yPos,
-    width: 180,
-    height: 45,
-    borderColor: PDFLib.rgb(0.7, 0.8, 0.9),
-    borderWidth: 1,
-    color: PDFLib.rgb(0.96, 0.98, 1), // רקע כחלחל בהיר מאוד
-    opacity: 0.9,
+    width: 135, // מוקטן מ-180
+    height: 30, // מוקטן מ-45
+    borderColor: PDFLib.rgb(0.75, 0.85, 0.95),
+    borderWidth: 0.5,
+    color: PDFLib.rgb(0.96, 0.98, 1), // רקע כחלחל בהיר
+    opacity: 0.85,
 });
 
-// ב. ציור אייקון המפתח/וי המאובטח (עיגול כחול עם סימון)
+// ב. ציור אייקון וי (✓) קטנטן ומאובטח (עיגול כחול קטן)
 firstPage.drawCircle({
-    x: xPos + 15,
-    y: yPos + 22,
-    radius: 8,
-    color: PDFLib.rgb(0, 0.45, 0.85), // כחול הגנה
+    x: xPos + 12,
+    y: yPos + 15,
+    radius: 5, // מוקטן מ-8 למימדים עדינים
+    color: PDFLib.rgb(0, 0.45, 0.85),
 });
 
-// ג. הוספת טקסט האישור הרשמי (תומך באנגלית/ספרות בצורה מובנית ב-pdf-lib)
+// ג. הוספת טקסט האישור הרשמי בגופן קטן ונקי
 const today = new Date().toLocaleDateString('im-IL').replace(/\./g, '/');
 
-firstPage.drawText('Digitally Signed & Secured', {
-    x: xPos + 30,
-    y: yPos + 25,
-    size: 10,
+firstPage.drawText('Secured & Signed', {
+    x: xPos + 24,
+    y: yPos + 16,
+    size: 7.5, // מוקטן מ-10
     color: PDFLib.rgb(0.1, 0.2, 0.3),
 });
 
 firstPage.drawText(`Date: ${today}`, {
-    x: xPos + 30,
-    y: yPos + 12,
-    size: 9,
+    x: xPos + 24,
+    y: yPos + 6,
+    size: 6.5, // מוקטן מ-9
     color: PDFLib.rgb(0.4, 0.4, 0.5),
 });
 
-// 5. שמירת ה-PDF החדש
+// 5. שמירת ה-PDF החדש (המשך הקוד כרגיל)
 const signedPdfBytes = await pdfDoc.save();
+
 
                 // 6. יצירת קישור והורדה מיידית למחשב
                 const blob = new Blob([signedPdfBytes], { type: 'application/pdf' });
