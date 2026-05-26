@@ -296,6 +296,18 @@
                     </div>
                 </div>
 
+                <!-- סיכום הדוח המפולטר -->
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
+                        <span class="text-indigo-600 text-sm font-bold">סה"כ שעות בסינון:</span>
+                        <span id="report-total-hours" class="text-2xl font-bold text-slate-800 mr-2 block mt-1">00:00</span>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg border border-green-100">
+                        <span class="text-green-600 text-sm font-bold">הכנסות בסינון (לפני מע"מ):</span>
+                        <span id="report-total-earnings" class="text-2xl font-bold text-slate-800 mr-2 block mt-1">₪0</span>
+                    </div>
+                </div>
+
                 <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full text-right border-collapse report-table min-w-[1000px]">
@@ -509,8 +521,8 @@
                 document.getElementById('logout-btn').addEventListener('click', async () => {
                     await signOut(auth);
                     cleanupData();
-                    localStorage.clear(); // קריטי: ניקוי טיימרים וזיכרון מקומי
-                    window.location.reload(); // פותר את באג ההתחברות האוטומטית
+                    localStorage.clear(); 
+                    window.location.reload(); 
                 });
 
                 onAuthStateChanged(auth, user => {
@@ -526,7 +538,7 @@
                         initDateFields();
                         window.setReportDates('all', null); 
                         setupListeners();
-                        restoreActiveTimer(); // שחזור טיימר רץ
+                        restoreActiveTimer(); 
                     } else {
                         userId = null;
                         document.getElementById('login-screen').classList.remove('hidden');
@@ -548,6 +560,12 @@
             document.getElementById('projects-list').innerHTML = '';
             document.getElementById('report-table-body').innerHTML = '';
             document.getElementById('dash-hierarchical-breakdown').innerHTML = '';
+            
+            // Protected resets
+            const hoursEl = document.getElementById('report-total-hours');
+            const earningsEl = document.getElementById('report-total-earnings');
+            if(hoursEl) hoursEl.innerText = "00:00";
+            if(earningsEl) earningsEl.innerText = "₪0";
         }
 
         const getDbRef = (colName) => collection(db, 'artifacts', appId, 'users', userId, colName);
@@ -769,7 +787,8 @@
                  btnElement.classList.replace('bg-indigo-50', 'bg-slate-800');
                  btnElement.classList.replace('text-indigo-700', 'text-white');
             } else if (preset === 'all') {
-                 document.getElementById('btn-filter-all').className = "text-xs bg-slate-800 text-white px-3 py-1 rounded-full transition";
+                 const allBtn = document.getElementById('btn-filter-all');
+                 if(allBtn) allBtn.className = "text-xs bg-slate-800 text-white px-3 py-1 rounded-full transition";
             }
 
             const today = new Date();
@@ -876,8 +895,11 @@
                 });
             }
 
-            document.getElementById('report-total-hours').innerText = formatSeconds(totalSeconds, true);
-            document.getElementById('report-total-earnings').innerText = '₪' + Math.round(totalEarnings).toLocaleString();
+            // עדכונים מוגנים לעצי הדוח (Null Checks)
+            const hoursEl = document.getElementById('report-total-hours');
+            const earningsEl = document.getElementById('report-total-earnings');
+            if (hoursEl) hoursEl.innerText = formatSeconds(totalSeconds, true);
+            if (earningsEl) earningsEl.innerText = '₪' + Math.round(totalEarnings).toLocaleString();
         };
 
         // --- Database Actions ---
