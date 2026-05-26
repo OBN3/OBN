@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת ניהול עוסק פטור/זעיר</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- External Libraries (Excel & PDF) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap');
+        body { font-family: 'Heebo', sans-serif; }
+        
+        /* View Management */
+        .view-section { display: none; opacity: 0; transition: opacity 0.3s ease-in; }
+        .view-section.active { display: block; opacity: 1; }
+        
+        /* Modal & Loader */
+        .modal { display: none; }
+        .modal.active { display: flex; }
+        #loader { display: flex; }
+        #app-content { display: none; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 h-screen overflow-hidden flex flex-col md:flex-row">
+
+    <!-- Loading Screen -->
+    <div id="loader" class="fixed inset-0 bg-gray-50 z-50 flex items-center justify-center">
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin text-blue-600 text-4xl mb-4"></i>
+            <h2 class="text-xl font-medium text-gray-700">טוען מערכת ומתחבר למסד הנתונים...</h2>
+        </div>
+    </div>
+
+    <!-- Main App Layout (Hidden until auth) -->
+    <div id="app-content" class="w-full h-full flex flex-col md:flex-row">
+        
+        <!-- Mobile Header -->
+        <div class="md:hidden bg-white border-b border-gray-200 flex justify-between items-center p-4 z-40 relative shadow-sm">
+            <h1 id="mobile-business-name" class="text-lg font-bold text-gray-800">המערכת שלי</h1>
+            <button onclick="toggleMobileMenu()" class="text-gray-600 text-2xl"><i class="fas fa-bars"></i></button>
+        </div>
+
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="hidden md:flex flex-col w-full md:w-64 bg-white border-l border-gray-200 h-full absolute md:relative z-30 transition-transform">
+            <div class="p-6 border-b border-gray-100 flex items-center gap-3">
+                <i class="fas fa-building text-blue-600 text-xl"></i>
+                <h1 id="desktop-business-name" class="text-xl font-bold text-gray-900 truncate">המערכת שלי</h1>
+            </div>
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto" id="nav-links">
+                <button onclick="switchView('dashboard')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-600 hover:bg-gray-100 active-nav">
+                    <i class="fas fa-chart-pie w-5"></i> <span class="font-medium">לוח בקרה</span>
+                </button>
+                <button onclick="switchView('incomes')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-600 hover:bg-gray-100">
+                    <i class="fas fa-arrow-down text-green-500 w-5"></i> <span class="font-medium">הכנסות</span>
+                </button>
+                <button onclick="switchView('expenses')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-600 hover:bg-gray-100">
+                    <i class="fas fa-arrow-up text-red-500 w-5"></i> <span class="font-medium">הוצאות</span>
+                </button>
+                <button onclick="switchView('taxAdvances')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-600 hover:bg-gray-100">
+                    <i class="fas fa-file-invoice-dollar w-5"></i> <span class="font-medium">מקדמות מס</span>
+                </button>
+                <button onclick="switchView('receipt')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-600 hover:bg-gray-100">
+                    <i class="fas fa-print w-5"></i> <span class="font-medium">הפקת קבלה</span>
+                </button>
+                <button onclick="switchView('settings')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-600 hover:bg-gray-100">
+                    <i class="fas fa-cog w-5"></i> <span class="font-medium">הגדרות</span>
+                </button>
+            </nav>
+            <div class="p-4 border-t border-gray-100 bg-gray-50 text-sm flex justify-between items-center">
+                <span id="user-info" class="text-gray-500 truncate w-32"></span>
+                <button onclick="logout()" title="התנתק" class="text-red-400 hover:text-red-600"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto p-4 md:p-8 relative">
+            <div class="max-w-6xl mx-auto">
+                
+                <!-- DASHBOARD VIEW -->
+                <section id="view-dashboard" class="view-section active">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <h2 class="text-3xl font-bold text-gray-800">לוח בקרה</h2>
+                        <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-sm transition-colors flex items-center gap-2">
+                            <i class="fas fa-file-excel"></i> ייצוא דוח אקסל
+                        </button>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap gap-3 items-center mb-6">
+                        <span class="text-gray-500 font-medium ml-2">סינון:</span>
+                        <select id="dash-filter" onchange="renderDashboard()" class="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                            <option value="month">החודש הנוכחי</option>
+                            <option value="lastMonth">חודש קודם</option>
+                            <option value="year">השנה הנוכחית</option>
+                            <option value="all">כל הזמנים</option>
+                            <option value="custom">טווח תאריכים מותאם</option>
+                        </select>
+                        <div id="dash-custom-dates" class="hidden items-center gap-2">
+                            <input type="date" id="dash-start" onchange="renderDashboard()" class="border border-gray-300 rounded-lg p-2 text-sm">
+                            <span>-</span>
+                            <input type="date" id="dash-end" onchange="renderDashboard()" class="border border-gray-300 rounded-lg p-2 text-sm">
+                        </div>
+                    </div>
+
+                    <!-- Stat Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-green-100 border-b-4 border-b-green-500">
+                            <h3 class="text-gray-500 text-sm font-medium">סה"כ הכנסות</h3>
+                            <div id="dash-tot-income" class="text-3xl font-bold text-green-600 mt-2">₪0</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-red-100 border-b-4 border-b-red-500">
+                            <h3 class="text-gray-500 text-sm font-medium">סה"כ הוצאות (כולל מע"מ)</h3>
+                            <div id="dash-tot-expense" class="text-3xl font-bold text-red-500 mt-2">₪0</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-blue-100 border-b-4 border-b-blue-500">
+                            <h3 class="text-gray-500 text-sm font-medium">רווח נקי משוער</h3>
+                            <div id="dash-profit" class="text-3xl font-bold text-blue-600 mt-2">₪0</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-purple-100 border-b-4 border-b-purple-500">
+                            <h3 class="text-gray-500 text-sm font-medium">מס הכנסה משוער <span id="dash-tax-rate">(0%)</span></h3>
+                            <div id="dash-tax-est" class="text-3xl font-bold text-purple-600 mt-2">₪0</div>
+                            <p class="text-xs text-gray-500 mt-2">מקדמות שולמו: <span id="dash-tax-paid" class="font-bold">₪0</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Recent Lists -->
+                    <div class="grid lg:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                            <h3 class="text-lg font-bold mb-4 text-gray-800 border-b pb-2">הכנסות אחרונות</h3>
+                            <div id="dash-recent-incomes" class="space-y-3"></div>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                            <h3 class="text-lg font-bold mb-4 text-gray-800 border-b pb-2">הוצאות אחרונות</h3>
+                            <div id="dash-recent-expenses" class="space-y-3"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- DATA LIST VIEW (Reusable structure for Incomes, Expenses, Tax) -->
+                <section id="view-list" class="view-section">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 id="list-title" class="text-2xl font-bold text-gray-800">ניהול נתונים</h2>
+                        <button onclick="openFormModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 shadow-sm transition-colors">
+                            <i class="fas fa-plus"></i> <span id="btn-add-text">הוסף חדש</span>
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-sm">
+                                <thead class="bg-gray-50 text-gray-600 border-b border-gray-100" id="list-thead"></thead>
+                                <tbody class="divide-y divide-gray-50" id="list-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- RECEIPT VIEW -->
+                <section id="view-receipt" class="view-section">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">הפקת קבלה (מספר בא: <span id="rec-next-num" class="text-blue-600"></span>)</h2>
+                    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">בחר לקוח</label>
+                                <select id="rec-customer" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-blue-500">
+                                    <option value="">בחר לקוח מהרשימה...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">תאריך הפקה</label>
+                                <input type="date" id="rec-date" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-4 pb-2 border-b">
+                                <h3 class="font-bold text-lg text-gray-800">פירוט תקבולים</h3>
+                                <button onclick="addReceiptPaymentRow()" class="text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+                                    <i class="fas fa-plus"></i> הוסף שורה
+                                </button>
+                            </div>
+                            <div id="rec-payments-container" class="space-y-4">
+                                <!-- Dynamic rows inserted here -->
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">הערות על גבי הקבלה</label>
+                            <textarea id="rec-notes" class="w-full border border-gray-300 rounded-lg p-3 min-h-[100px] outline-none focus:border-blue-500" placeholder="הערות להדפסה..."></textarea>
+                        </div>
+
+                        <div class="pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <div class="font-bold text-2xl text-gray-800">סה"כ קבלה: <span id="rec-total" class="text-blue-600">₪0</span></div>
+                            <button onclick="generateReceiptPDF()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all flex items-center gap-2 w-full sm:w-auto justify-center">
+                                <i class="fas fa-file-pdf"></i> הפק מסמך PDF ושמור
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SETTINGS VIEW -->
+                <section id="view-settings" class="view-section">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">הגדרות מערכת וניהול גורמים</h2>
+                    
+                    <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
+                        <button onclick="switchSettingsTab('general')" id="tab-general" class="pb-3 px-6 font-medium whitespace-nowrap border-b-2 border-blue-600 text-blue-600">הגדרות כלליות</button>
+                        <button onclick="switchSettingsTab('customers')" id="tab-customers" class="pb-3 px-6 font-medium whitespace-nowrap text-gray-500 hover:text-gray-700">ניהול לקוחות</button>
+                        <button onclick="switchSettingsTab('suppliers')" id="tab-suppliers" class="pb-3 px-6 font-medium whitespace-nowrap text-gray-500 hover:text-gray-700">ניהול ספקים</button>
+                    </div>
+
+                    <!-- General Settings -->
+                    <div id="set-general" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 max-w-2xl space-y-5 block">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">שם העסק (יופיע בקבלות)</label>
+                            <input type="text" id="set-biz-name" class="w-full border border-gray-300 rounded-lg p-3">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">מספר קבלה הבא</label>
+                                <input type="number" id="set-next-rec" class="w-full border border-gray-300 rounded-lg p-3">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">אחוז מס הכנסה משוער (%)</label>
+                                <input type="number" step="0.1" id="set-tax-pct" class="w-full border border-gray-300 rounded-lg p-3">
+                            </div>
+                        </div>
+                        <button onclick="saveGeneralSettings()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium w-full sm:w-auto">שמור שינויים</button>
+                    </div>
+
+                    <!-- Entities Settings (Customers/Suppliers) -->
+                    <div id="set-entities" class="hidden grid md:grid-cols-3 gap-6">
+                        <div class="md:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-fit">
+                            <h3 class="font-bold text-lg mb-4 border-b pb-2" id="ent-form-title">הוספת חדש</h3>
+                            <form id="entity-form" onsubmit="saveEntity(event)" class="space-y-4">
+                                <input type="hidden" id="ent-id">
+                                <div><label class="block text-sm text-gray-600 mb-1">שם (חובה)</label><input type="text" id="ent-name" required class="w-full border p-2 rounded"></div>
+                                <div><label class="block text-sm text-gray-600 mb-1">ע.מ / ת.ז</label><input type="text" id="ent-idnum" class="w-full border p-2 rounded"></div>
+                                <div><label class="block text-sm text-gray-600 mb-1">אימייל</label><input type="email" id="ent-email" class="w-full border p-2 rounded"></div>
+                                <div><label class="block text-sm text-gray-600 mb-1">טלפון</label><input type="text" id="ent-phone" class="w-full border p-2 rounded"></div>
+                                <div><label class="block text-sm text-gray-600 mb-1">כתובת</label><input type="text" id="ent-address" class="w-full border p-2 rounded"></div>
+                                <div class="flex gap-2 pt-2">
+                                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded font-medium">שמור</button>
+                                    <button type="button" onclick="resetEntityForm()" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded">נקה</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="md:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <table class="w-full text-right text-sm">
+                                <thead class="bg-gray-50 border-b"><tr class="text-gray-600"><th class="p-3">שם</th><th class="p-3">מזהה</th><th class="p-3">קשר</th><th class="p-3">פעולות</th></tr></thead>
+                                <tbody id="ent-table-body" class="divide-y divide-gray-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- MAIN DATA FORM MODAL -->
+    <div id="data-modal" class="modal fixed inset-0 bg-black/50 z-50 items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
+                <h3 id="modal-title" class="text-xl font-bold text-gray-800">הוספת רשומה</h3>
+                <button onclick="closeFormModal()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <form id="data-form" onsubmit="saveDataRecord(event)" class="space-y-4">
+                    <input type="hidden" id="form-id">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><label class="block text-sm font-medium mb-1">תאריך</label><input type="date" id="form-date" required class="w-full border border-gray-300 rounded p-2.5"></div>
+                        
+                        <div id="wrapper-entity"><label id="label-entity" class="block text-sm font-medium mb-1">לקוח/ספק</label>
+                            <select id="form-entity" class="w-full border border-gray-300 rounded p-2.5"></select>
+                        </div>
+                        
+                        <div><label class="block text-sm font-medium mb-1">סכום בש"ח (כולל מע"מ)</label><input type="number" step="0.01" id="form-amount" required class="w-full border border-gray-300 rounded p-2.5 font-bold text-blue-600"></div>
+                        
+                        <div id="wrapper-amount-usd" class="hidden"><label class="block text-sm font-medium mb-1">סכום דולר (אופציונלי)</label><input type="number" step="0.01" id="form-amount-usd" class="w-full border border-gray-300 rounded p-2.5"></div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-1">אמצעי תשלום</label>
+                            <select id="form-payment-method" class="w-full border border-gray-300 rounded p-2.5">
+                                <option>העברה בנקאית</option><option>אשראי</option><option>צ'ק</option><option>מזומן</option><option>אפליקציה (Bit/Paybox)</option><option>PayPal</option><option>הוראת קבע</option><option>אחר</option>
+                            </select>
+                        </div>
+                        
+                        <div><label class="block text-sm font-medium mb-1">תיאור (חובה)</label><input type="text" id="form-desc" required class="w-full border border-gray-300 rounded p-2.5"></div>
+                        
+                        <div><label class="block text-sm font-medium mb-1">אסמכתא תשלום</label><input type="text" id="form-ref" class="w-full border border-gray-300 rounded p-2.5"></div>
+                        
+                        <div id="wrapper-invoice" class="hidden"><label class="block text-sm font-medium mb-1">מספר חשבונית ספק</label><input type="text" id="form-invoice" class="w-full border border-gray-300 rounded p-2.5"></div>
+                        
+                        <div id="wrapper-receipt-num" class="hidden"><label class="block text-sm font-medium mb-1">מספר קבלה שלך (אופציונלי)</label><input type="text" id="form-receipt-num" class="w-full border border-gray-300 rounded p-2.5"></div>
+                        
+                        <div id="wrapper-due-date" class="hidden"><label class="block text-sm font-medium mb-1">תאריך פירעון צפוי</label><input type="date" id="form-due-date" class="w-full border border-gray-300 rounded p-2.5"></div>
+                    </div>
+
+                    <div id="wrapper-notes" class="hidden pt-2">
+                        <label class="block text-sm font-medium mb-1">הערות פנימיות</label>
+                        <textarea id="form-notes" class="w-full border border-gray-300 rounded p-2.5 min-h-[80px]"></textarea>
+                    </div>
+
+                    <div class="pt-4 border-t flex justify-end gap-3 mt-4">
+                        <button type="button" onclick="closeFormModal()" class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">ביטול</button>
+                        <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 shadow-md">שמור רשומה</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Printable Template for PDF Engine -->
+    <div class="hidden">
+        <div id="print-template" class="bg-white font-sans text-gray-800" dir="rtl" style="width: 210mm; min-height: 297mm; padding: 20mm; box-sizing: border-box;">
+            <!-- Rendered by JS -->
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInWithCustomToken, signInAnonymously, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Configuration (From Environment variables)
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Global State
+        window.AppData = {
+            user: null, currentView: 'dashboard', currentListType: '',
+            settings: { businessName: '', nextReceipt: 8000, taxPercent: 10 },
+            customers: [], suppliers: [], incomes: [], expenses: [], taxAdvances: [],
+            receiptPayments: [],
+            entitiesTab: 'general'
+        };
+
+        // UI Helpers
+        const el = (id) => document.getElementById(id);
+        
+        // ------------------ AUTHENTICATION (RULE 3) ------------------
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) { console.error("Auth error:", err); alert("שגיאת התחברות."); }
+        }
+        
+        initAuth();
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.AppData.user = user;
+                el('loader').style.display = 'none';
+                el('app-content').style.display = 'flex';
+                el('user-info').innerText = user.isAnonymous ? "משתמש זמני" : user.email;
+                setupDatabaseListeners();
+                
+                // Initialize View
+                window.switchView('dashboard');
+                // Set today's date for receipt form
+                el('rec-date').value = new Date().toISOString().split('T')[0];
+                window.addReceiptPaymentRow(); // Add first empty row
+            } else {
+                window.location.reload();
+            }
+        });
+
+        window.logout = () => signOut(auth);
+
+        // ------------------ DATABASE LISTENERS (RULE 1 & 2) ------------------
+        function getBasePath() { return `artifacts/${appId}/users/${window.AppData.user.uid}`; }
+
+        function setupDatabaseListeners() {
+            const bp = getBasePath();
+            
+            // Settings
+            onSnapshot(doc(db, bp, 'settings', 'main'), (docSnap) => {
+                if (docSnap.exists()) {
+                    window.AppData.settings = docSnap.data();
+                    updateSettingsUI();
+                    window.renderDashboard();
+                }
+            }, console.error);
+
+            // Fetch generic collections
+            const collections = ['customers', 'suppliers', 'incomes', 'expenses', 'taxAdvances'];
+            collections.forEach(colName => {
+                onSnapshot(collection(db, bp, colName), (snapshot) => {
+                    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    // Sort lists by date descending if applicable
+                    if(['incomes', 'expenses', 'taxAdvances'].includes(colName)) {
+                        data.sort((a,b) => new Date(b.date) - new Date(a.date));
+                    }
+                    window.AppData[colName] = data;
+                    
+                    // Trigger re-renders
+                    if(colName === 'customers' || colName === 'suppliers') {
+                        updateSelectDropdowns();
+                        if(window.AppData.currentView === 'settings') window.renderEntitiesTable();
+                    }
+                    if(['incomes', 'expenses', 'taxAdvances'].includes(colName)) {
+                        window.renderDashboard();
+                        if(window.AppData.currentView === colName) window.renderListTable();
+                    }
+                }, console.error);
+            });
+        }
+
+        // ------------------ VIEW MANAGEMENT ------------------
+        window.switchView = function(viewName) {
+            window.AppData.currentView = viewName;
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-50', 'text-blue-700', 'font-bold', 'border-r-4', 'border-blue-600');
+            });
+            
+            // Activate proper view block
+            if(['incomes', 'expenses', 'taxAdvances'].includes(viewName)) {
+                el('view-list').classList.add('active');
+                window.AppData.currentListType = viewName;
+                setupListHeaders();
+                window.renderListTable();
+            } else {
+                el(`view-${viewName}`).classList.add('active');
+            }
+
+            // Highlight nav button
+            const navMap = {'dashboard':0, 'incomes':1, 'expenses':2, 'taxAdvances':3, 'receipt':4, 'settings':5};
+            const btns = document.querySelectorAll('.nav-btn');
+            if(btns[navMap[viewName]]) {
+                btns[navMap[viewName]].classList.add('bg-blue-50', 'text-blue-700', 'font-bold', 'border-r-4', 'border-blue-600');
+            }
+            if(window.innerWidth < 768) el('sidebar').classList.add('hidden'); // Close mobile menu
+        };
+
+        window.toggleMobileMenu = function() {
+            el('sidebar').classList.toggle('hidden');
+        };
+
+        // ------------------ DASHBOARD RENDERING ------------------
+        window.renderDashboard = function() {
+            const ad = window.AppData;
+            const filterType = el('dash-filter').value;
+            const customStart = el('dash-start').value;
+            const customEnd = el('dash-end').value;
+            
+            el('dash-custom-dates').style.display = (filterType === 'custom') ? 'flex' : 'none';
+
+            const now = new Date();
+            const currYear = now.getFullYear();
+            const currMonth = now.getMonth();
+
+            const inRange = (dStr) => {
+                const d = new Date(dStr);
+                if(filterType === 'all') return true;
+                if(filterType === 'year') return d.getFullYear() === currYear;
+                if(filterType === 'month') return d.getFullYear() === currYear && d.getMonth() === currMonth;
+                if(filterType === 'lastMonth') {
+                    let y = currMonth === 0 ? currYear - 1 : currYear;
+                    let m = currMonth === 0 ? 11 : currMonth - 1;
+                    return d.getFullYear() === y && d.getMonth() === m;
+                }
+                if(filterType === 'custom' && customStart && customEnd) {
+                    return d >= new Date(customStart) && d <= new Date(customEnd);
+                }
+                return true;
+            };
+
+            const fInc = ad.incomes.filter(i => inRange(i.date));
+            const fExp = ad.expenses.filter(e => inRange(e.date));
+            const fTax = ad.taxAdvances.filter(t => inRange(t.date));
+
+            const sumInc = fInc.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+            const sumExp = fExp.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+            const sumTax = fTax.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+            const profit = sumInc - sumExp;
+            const estTax = profit > 0 ? (profit * (ad.settings.taxPercent / 100)) : 0;
+
+            el('dash-tot-income').innerText = `₪${sumInc.toLocaleString()}`;
+            el('dash-tot-expense').innerText = `₪${sumExp.toLocaleString()}`;
+            el('dash-profit').innerText = `₪${profit.toLocaleString()}`;
+            el('dash-tax-est').innerText = `₪${Math.round(estTax).toLocaleString()}`;
+            el('dash-tax-rate').innerText = `(${ad.settings.taxPercent}%)`;
+            el('dash-tax-paid').innerText = `₪${sumTax.toLocaleString()}`;
+
+            // Recent lists
+            const mapCust = id => ad.customers.find(c=>c.id===id)?.name || 'לא ידוע';
+            
+            let incHTML = '';
+            fInc.slice(0,5).forEach(i => {
+                incHTML += `<div class="flex justify-between items-center py-2 border-b border-gray-50 last:border-0 hover:bg-gray-50 rounded px-2">
+                    <div><p class="font-bold text-gray-700">${mapCust(i.entityId)}</p><p class="text-xs text-gray-500">${i.date} | ${i.description}</p></div>
+                    <span class="text-green-600 font-bold">+₪${Number(i.amount).toLocaleString()}</span>
+                </div>`;
+            });
+            el('dash-recent-incomes').innerHTML = incHTML || '<p class="text-gray-400 text-sm py-4">אין נתונים בתקופה זו.</p>';
+
+            let expHTML = '';
+            fExp.slice(0,5).forEach(e => {
+                expHTML += `<div class="flex justify-between items-center py-2 border-b border-gray-50 last:border-0 hover:bg-gray-50 rounded px-2">
+                    <div><p class="font-bold text-gray-700">${e.description}</p><p class="text-xs text-gray-500">${e.date}</p></div>
+                    <span class="text-red-500 font-bold">-₪${Number(e.amount).toLocaleString()}</span>
+                </div>`;
+            });
+            el('dash-recent-expenses').innerHTML = expHTML || '<p class="text-gray-400 text-sm py-4">אין נתונים בתקופה זו.</p>';
+        };
+
+        // ------------------ DATA LISTS (INCOMES/EXPENSES/TAX) ------------------
+        function setupListHeaders() {
+            const type = window.AppData.currentListType;
+            let th = '', title = '';
+            if(type === 'incomes') {
+                title = 'ניהול הכנסות';
+                th = '<tr><th class="p-3">תאריך</th><th class="p-3">לקוח</th><th class="p-3">תיאור</th><th class="p-3">סכום</th><th class="p-3 w-24">פעולות</th></tr>';
+            } else if(type === 'expenses') {
+                title = 'ניהול הוצאות';
+                th = '<tr><th class="p-3">תאריך</th><th class="p-3">ספק/לקוח</th><th class="p-3">תיאור / חשבונית</th><th class="p-3">סכום (₪)</th><th class="p-3 w-24">פעולות</th></tr>';
+            } else {
+                title = 'מקדמות מס ששולמו';
+                th = '<tr><th class="p-3">תאריך</th><th class="p-3">תיאור</th><th class="p-3">אמצעי תשלום</th><th class="p-3">סכום</th><th class="p-3 w-24">פעולות</th></tr>';
+            }
+            el('list-title').innerText = title;
+            el('list-thead').innerHTML = th;
+        }
+
+        window.renderListTable = function() {
+            const type = window.AppData.currentListType;
+            const data = window.AppData[type];
+            const tbody = el('list-tbody');
+            
+            const getEntityName = (id) => {
+                const e = [...window.AppData.customers, ...window.AppData.suppliers].find(x => x.id === id);
+                return e ? e.name : '-';
+            };
+
+            if(data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">לא נמצאו רשומות עדיין. לחץ על 'הוסף חדש' כדי להתחיל.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            data.forEach(item => {
+                let rowInner = '';
+                const dateStr = item.date.split('-').reverse().join('/');
+                const amountFmt = `₪${Number(item.amount).toLocaleString()}`;
+                const actionsStr = `
+                    <div class="flex gap-2">
+                        <button onclick="editDataRecord('${item.id}')" class="text-blue-500 hover:bg-blue-50 p-1.5 rounded" title="ערוך"><i class="fas fa-edit"></i></button>
+                        <button onclick="duplicateDataRecord('${item.id}')" class="text-green-500 hover:bg-green-50 p-1.5 rounded" title="שכפל"><i class="fas fa-copy"></i></button>
+                        <button onclick="deleteDataRecord('${item.id}')" class="text-red-500 hover:bg-red-50 p-1.5 rounded" title="מחק"><i class="fas fa-trash-alt"></i></button>
+                    </div>`;
+
+                if(type === 'incomes') {
+                    rowInner = `<td class="p-3">${dateStr}</td><td class="p-3 font-medium">${getEntityName(item.entityId)}</td><td class="p-3 text-sm">${item.description}</td><td class="p-3 font-bold text-green-600">${amountFmt}</td>`;
+                } else if(type === 'expenses') {
+                    rowInner = `<td class="p-3">${dateStr}</td><td class="p-3 font-medium">${getEntityName(item.entityId)}</td><td class="p-3 text-sm">${item.description}<br><span class="text-xs text-gray-400">ח#' ${item.invoice||'-'}</span></td><td class="p-3 font-bold text-red-500">${amountFmt}</td>`;
+                } else {
+                    rowInner = `<td class="p-3">${dateStr}</td><td class="p-3 text-sm">${item.description}</td><td class="p-3 text-sm">${item.paymentMethod}</td><td class="p-3 font-bold text-gray-800">${amountFmt}</td>`;
+                }
+                html += `<tr class="hover:bg-blue-50/50 transition-colors">${rowInner}<td class="p-3">${actionsStr}</td></tr>`;
+            });
+            tbody.innerHTML = html;
+        };
+
+        // ------------------ MAIN DATA FORM MODAL ------------------
+        window.openFormModal = function(idToEdit = null) {
+            const type = window.AppData.currentListType;
+            el('data-form').reset();
+            el('form-id').value = '';
+            el('form-date').value = new Date().toISOString().split('T')[0];
+            el('modal-title').innerText = idToEdit ? 'עריכת רשומה' : 'הוספת רשומה';
+            
+            // Adjust form fields visibility based on type
+            el('wrapper-entity').style.display = type === 'taxAdvances' ? 'none' : 'block';
+            el('wrapper-amount-usd').style.display = type === 'expenses' ? 'block' : 'none';
+            el('wrapper-invoice').style.display = type === 'expenses' ? 'block' : 'none';
+            el('wrapper-receipt-num').style.display = type === 'incomes' ? 'block' : 'none';
+            el('wrapper-due-date').style.display = type === 'incomes' ? 'block' : 'none';
+            el('wrapper-notes').style.display = type === 'incomes' ? 'block' : 'none';
+
+            // Populate entity select
+            const sel = el('form-entity');
+            sel.innerHTML = '<option value="">בחר...</option>';
+            if(type === 'incomes') {
+                el('label-entity').innerText = 'לקוח (חובה)';
+                window.AppData.customers.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+                sel.required = true;
+            } else if (type === 'expenses') {
+                el('label-entity').innerText = 'ספק/לקוח (חובה)';
+                [...window.AppData.suppliers, ...window.AppData.customers].forEach(c => sel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+                sel.required = true;
+            } else {
+                sel.required = false;
+            }
+
+            // Load data if editing
+            if(idToEdit) {
+                const item = window.AppData[type].find(x => x.id === idToEdit);
+                if(item) {
+                    el('form-id').value = item.id;
+                    el('form-date').value = item.date || '';
+                    if(type !== 'taxAdvances') el('form-entity').value = item.entityId || '';
+                    el('form-amount').value = item.amount || '';
+                    if(type==='expenses') el('form-amount-usd').value = item.amountUSD || '';
+                    el('form-payment-method').value = item.paymentMethod || '';
+                    el('form-desc').value = item.description || '';
+                    el('form-ref').value = item.reference || '';
+                    if(type==='expenses') el('form-invoice').value = item.invoice || '';
+                    if(type==='incomes') {
+                        el('form-receipt-num').value = item.receiptNum || '';
+                        el('form-due-date').value = item.dueDate || '';
+                        el('form-notes').value = item.notes || '';
+                    }
+                }
+            }
+            el('data-modal').classList.add('active');
+        };
+
+        window.closeFormModal = function() { el('data-modal').classList.remove('active'); };
+
+        window.saveDataRecord = async function(e) {
+            e.preventDefault();
+            const type = window.AppData.currentListType;
+            const id = el('form-id').value;
+            
+            const data = {
+                date: el('form-date').value,
+                amount: el('form-amount').value,
+                paymentMethod: el('form-payment-method').value,
+                description: el('form-desc').value,
+                reference: el('form-ref').value
+            };
+            
+            if(type !== 'taxAdvances') data.entityId = el('form-entity').value;
+            if(type === 'expenses') {
+                data.amountUSD = el('form-amount-usd').value;
+                data.invoice = el('form-invoice').value;
+            }
+            if(type === 'incomes') {
+                data.receiptNum = el('form-receipt-num').value;
+                data.dueDate = el('form-due-date').value;
+                data.notes = el('form-notes').value;
+            }
+
+            try {
+                const ref = collection(db, `${getBasePath()}/${type}`);
+                if(id) {
+                    await updateDoc(doc(db, `${getBasePath()}/${type}`, id), data);
+                } else {
+                    await addDoc(ref, data);
+                }
+                closeFormModal();
+            } catch(err) { console.error(err); alert("שגיאה בשמירה!"); }
+        };
+
+        window.editDataRecord = function(id) { openFormModal(id); };
+        window.duplicateDataRecord = function(id) {
+            openFormModal(id);
+            el('form-id').value = ''; // clear ID so it saves as new
+            el('form-date').value = new Date().toISOString().split('T')[0]; // set to today
+            el('modal-title').innerText = 'הוספת רשומה (משוכפלת)';
+        };
+        window.deleteDataRecord = async function(id) {
+            if(confirm("למחוק שורה זו לצמיתות?")) {
+                await deleteDoc(doc(db, `${getBasePath()}/${window.AppData.currentListType}`, id));
+            }
+        };
+
+        // ------------------ SETTINGS & ENTITIES ------------------
+        function updateSettingsUI() {
+            const s = window.AppData.settings;
+            el('desktop-business-name').innerText = s.businessName || 'המערכת שלי';
+            el('mobile-business-name').innerText = s.businessName || 'המערכת שלי';
+            el('set-biz-name').value = s.businessName || '';
+            el('set-next-rec').value = s.nextReceipt || 8000;
+            el('set-tax-pct').value = s.taxPercent || 10;
+            el('rec-next-num').innerText = s.nextReceipt || 8000;
+        }
+
+        window.switchSettingsTab = function(tabName) {
+            window.AppData.entitiesTab = tabName;
+            ['general', 'customers', 'suppliers'].forEach(t => {
+                el(`tab-${t}`).className = `pb-3 px-6 font-medium whitespace-nowrap ${t===tabName ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`;
+            });
+            el('set-general').style.display = tabName === 'general' ? 'block' : 'none';
+            el('set-entities').style.display = tabName !== 'general' ? 'grid' : 'none';
+            
+            if(tabName !== 'general') {
+                el('ent-form-title').innerText = `הוספת ${tabName === 'customers' ? 'לקוח' : 'ספק'} חדש`;
+                window.resetEntityForm();
+                window.renderEntitiesTable();
+            }
+        };
+
+        window.saveGeneralSettings = async function() {
+            const s = {
+                businessName: el('set-biz-name').value,
+                nextReceipt: Number(el('set-next-rec').value),
+                taxPercent: Number(el('set-tax-pct').value)
+            };
+            await setDoc(doc(db, getBasePath(), 'settings', 'main'), s);
+            alert("הגדרות נשמרו!");
+        };
+
+        window.resetEntityForm = function() {
+            el('entity-form').reset();
+            el('ent-id').value = '';
+        };
+
+        window.saveEntity = async function(e) {
+            e.preventDefault();
+            const tab = window.AppData.entitiesTab;
+            const id = el('ent-id').value;
+            const data = {
+                name: el('ent-name').value, idNumber: el('ent-idnum').value,
+                email: el('ent-email').value, phone: el('ent-phone').value, address: el('ent-address').value
+            };
+            try {
+                if(id) await updateDoc(doc(db, `${getBasePath()}/${tab}`, id), data);
+                else await addDoc(collection(db, `${getBasePath()}/${tab}`), data);
+                resetEntityForm();
+            } catch(err) { console.error(err); alert("שגיאה!"); }
+        };
+
+        window.renderEntitiesTable = function() {
+            const tab = window.AppData.entitiesTab;
+            if(tab === 'general') return;
+            const data = window.AppData[tab];
+            const tbody = el('ent-table-body');
+            
+            if(data.length === 0) { tbody.innerHTML='<tr><td colspan="4" class="p-4 text-center">אין רשומות</td></tr>'; return; }
+            
+            let html = '';
+            data.forEach(item => {
+                const contact = [item.phone, item.email].filter(Boolean).join('<br>');
+                html += `<tr class="hover:bg-gray-50 border-b">
+                    <td class="p-3 font-medium">${item.name}</td>
+                    <td class="p-3 text-sm text-gray-600">${item.idNumber||'-'}</td>
+                    <td class="p-3 text-sm text-gray-600" dir="ltr">${contact}</td>
+                    <td class="p-3">
+                        <button type="button" onclick="window.editEntity('${item.id}')" class="text-blue-600 px-2 py-1"><i class="fas fa-edit"></i></button>
+                        <button type="button" onclick="window.deleteEntity('${item.id}')" class="text-red-500 px-2 py-1"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        };
+
+        window.editEntity = function(id) {
+            const item = window.AppData[window.AppData.entitiesTab].find(x => x.id === id);
+            if(item) {
+                el('ent-id').value = item.id; el('ent-name').value = item.name;
+                el('ent-idnum').value = item.idNumber||''; el('ent-email').value = item.email||'';
+                el('ent-phone').value = item.phone||''; el('ent-address').value = item.address||'';
+            }
+        };
+
+        window.deleteEntity = async function(id) {
+            if(confirm("למחוק?")) await deleteDoc(doc(db, `${getBasePath()}/${window.AppData.entitiesTab}`, id));
+        };
+
+        function updateSelectDropdowns() {
+            const rCust = el('rec-customer');
+            const currVal = rCust.value;
+            rCust.innerHTML = '<option value="">בחר לקוח...</option>';
+            window.AppData.customers.forEach(c => rCust.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+            rCust.value = currVal;
+        }
+
+        // ------------------ EXCEL EXPORT ------------------
+        window.exportToExcel = function() {
+            if(!window.XLSX) return alert("ספריית אקסל עדיין נטענת...");
+            const wb = window.XLSX.utils.book_new();
+            const ad = window.AppData;
+            
+            const mapCust = id => ad.customers.find(c=>c.id===id)?.name || 'לא ידוע';
+            const mapSup = id => {
+                let e = [...ad.suppliers, ...ad.customers].find(x=>x.id===id); return e ? e.name : 'לא ידוע';
+            };
+
+            const incData = ad.incomes.map(i => ({
+                'תאריך': i.date, 'לקוח': mapCust(i.entityId), 'תיאור': i.description,
+                'סכום ₪': Number(i.amount), 'אמצעי תשלום': i.paymentMethod, 'אסמכתא': i.reference
+            }));
+            const expData = ad.expenses.map(e => ({
+                'תאריך': e.date, 'ספק/לקוח': mapSup(e.entityId), 'תיאור': e.description,
+                'חשבונית': e.invoice, 'סכום כולל מע"מ ₪': Number(e.amount), 'דולר': e.amountUSD, 'אמצעי תשלום': e.paymentMethod
+            }));
+
+            window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.json_to_sheet(incData), "הכנסות");
+            window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.json_to_sheet(expData), "הוצאות");
+            window.XLSX.writeFile(wb, `דוח_הכנסות_הוצאות_${new Date().toISOString().split('T')[0]}.xlsx`);
+        };
+
+        // ------------------ RECEIPT GENERATOR (PDF) ------------------
+        window.addReceiptPaymentRow = function() {
+            window.AppData.receiptPayments.push({ method: 'העברה בנקאית', amount: '', details: '' });
+            renderReceiptPayments();
+        };
+
+        window.removeReceiptPaymentRow = function(idx) {
+            window.AppData.receiptPayments.splice(idx, 1);
+            renderReceiptPayments();
+        };
+
+        window.updateReceiptRow = function(idx, field, val) {
+            window.AppData.receiptPayments[idx][field] = val;
+            let sum = window.AppData.receiptPayments.reduce((acc, curr) => acc + Number(curr.amount||0), 0);
+            el('rec-total').innerText = `₪${sum.toLocaleString()}`;
+        };
+
+        function renderReceiptPayments() {
+            const cont = el('rec-payments-container');
+            cont.innerHTML = '';
+            window.AppData.receiptPayments.forEach((p, i) => {
+                cont.innerHTML += `
+                <div class="p-4 bg-gray-50 border border-gray-200 rounded-xl flex flex-col md:flex-row gap-3 relative pr-10">
+                    <button type="button" onclick="removeReceiptPaymentRow(${i})" class="absolute top-4 right-2 text-red-400 hover:text-red-600"><i class="fas fa-times"></i></button>
+                    <select onchange="updateReceiptRow(${i}, 'method', this.value)" class="border p-2 rounded flex-1 text-sm outline-none">
+                        <option ${p.method==='העברה בנקאית'?'selected':''}>העברה בנקאית</option>
+                        <option ${p.method==='צ\'ק'?'selected':''}>צ'ק</option>
+                        <option ${p.method==='אשראי'?'selected':''}>אשראי</option>
+                        <option ${p.method==='מזומן'?'selected':''}>מזומן</option>
+                        <option ${p.method==='אפליקציה'?'selected':''}>אפליקציה (Bit/Paybox)</option>
+                    </select>
+                    <input type="number" placeholder="סכום ₪" value="${p.amount}" onchange="updateReceiptRow(${i}, 'amount', this.value)" class="border p-2 rounded w-full md:w-32 text-sm font-bold text-blue-600 outline-none">
+                    <input type="text" placeholder="פרטים (מס' אסמכתא, צ'ק, בנק...)" value="${p.details}" onchange="updateReceiptRow(${i}, 'details', this.value)" class="border p-2 rounded flex-2 w-full md:w-1/2 text-sm outline-none">
+                </div>`;
+            });
+            let sum = window.AppData.receiptPayments.reduce((acc, curr) => acc + Number(curr.amount||0), 0);
+            el('rec-total').innerText = `₪${sum.toLocaleString()}`;
+        }
+
+        window.generateReceiptPDF = async function() {
+            const custId = el('rec-customer').value;
+            const date = el('rec-date').value;
+            const notes = el('rec-notes').value;
+            const payments = window.AppData.receiptPayments;
+            
+            if(!custId) return alert("חובה לבחור לקוח!");
+            if(payments.length === 0 || payments.every(p=>!p.amount)) return alert("חובה להזין לפחות שורת תשלום אחת עם סכום!");
+            if(!window.html2pdf) return alert("ספריית PDF טרם נטענה.");
+
+            const cust = window.AppData.customers.find(c=>c.id === custId);
+            const num = window.AppData.settings.nextReceipt;
+            let sum = payments.reduce((acc, curr) => acc + Number(curr.amount||0), 0);
+
+            // Construct HTML for Print
+            let pt = el('print-template');
+            let rowsHtml = '';
+            payments.filter(p=>p.amount).forEach(p => {
+                rowsHtml += `<tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px; font-weight: bold;">${p.method}</td>
+                    <td style="padding: 12px; color:#4b5563;">${p.details||'-'}</td>
+                    <td style="padding: 12px; text-align: left; font-weight: bold; font-size: 1.1em;">₪${Number(p.amount).toLocaleString()}</td>
+                </tr>`;
+            });
+
+            pt.innerHTML = `
+                <div style="border-bottom: 3px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between;">
+                    <div>
+                        <h1 style="color:#1d4ed8; font-size: 2.5rem; margin:0;">${window.AppData.settings.businessName || 'שם העסק'}</h1>
+                        <p style="color:#4b5563; font-size: 1.2rem; margin-top:5px;">עוסק פטור / זעיר</p>
+                    </div>
+                    <div style="text-align: left; background: #f3f4f6; padding: 15px; border-radius: 8px;">
+                        <h2 style="margin:0; font-size: 1.5rem; color:#1f2937;">קבלה / מסמך תקבול</h2>
+                        <p style="margin: 5px 0 0 0; font-weight: bold; font-size: 1.1rem;">מספר: ${num}</p>
+                        <p style="margin: 5px 0 0 0;">תאריך הפקה: ${date.split('-').reverse().join('/')}</p>
+                    </div>
+                </div>
+                
+                <div style="background: #eff6ff; padding: 20px; border-radius: 10px; border: 1px solid #bfdbfe; margin-bottom: 30px;">
+                    <h3 style="margin-top:0; color:#1e40af; border-bottom: 1px solid #93c5fd; padding-bottom: 5px;">פרטי לקוח</h3>
+                    <p style="margin: 5px 0; font-size: 1.2rem; font-weight: bold;">${cust.name}</p>
+                    <p style="margin: 5px 0;">ת.ז / ע.מ: ${cust.idNumber||'-'}</p>
+                    <p style="margin: 5px 0;">כתובת: ${cust.address||'-'}</p>
+                </div>
+
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; text-align: right;">
+                    <thead style="background: #f3f4f6;">
+                        <tr>
+                            <th style="padding: 12px; border-bottom: 2px solid #d1d5db;">אמצעי תשלום</th>
+                            <th style="padding: 12px; border-bottom: 2px solid #d1d5db;">פרטים מזהים (אסמכתא, מס' בנק)</th>
+                            <th style="padding: 12px; border-bottom: 2px solid #d1d5db; text-align: left;">סכום</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rowsHtml}</tbody>
+                </table>
+
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 30px;">
+                    <div style="background: #f3f4f6; padding: 15px 30px; border-radius: 8px; font-size: 1.3rem;">
+                        <strong>סה"כ שנתקבל:</strong> <span style="color:#1d4ed8; font-weight: 900; margin-right: 15px;">₪${sum.toLocaleString()}</span>
+                    </div>
+                </div>
+
+                ${notes ? `<div style="margin-bottom: 30px;"><h4 style="margin-bottom:5px;">הערות:</h4><p style="white-space: pre-wrap; color:#4b5563;">${notes}</p></div>` : ''}
+                
+                <div style="text-align: center; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 50px;">
+                    מסמך זה הופק דיגיטלית - תודה רבה
+                </div>
+            `;
+
+            // Setup PDF Config
+            const opt = {
+                margin: 0,
+                filename: `קבלה_${num}_${cust.name.replace(/\s+/g, '_')}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Temporarily show template to render, then hide
+            pt.parentElement.classList.remove('hidden');
+            
+            try {
+                await window.html2pdf().set(opt).from(pt).save();
+                
+                // Save logic
+                await addDoc(collection(db, `${getBasePath()}/incomes`), {
+                    date, entityId: cust.id, amount: sum, description: `תקבול מלקוח (קבלה ${num})`,
+                    paymentMethod: payments[0].method, reference: payments.map(p=>p.details).join(', '),
+                    receiptNum: String(num), notes
+                });
+                
+                await setDoc(doc(db, getBasePath(), 'settings', 'main'), { ...window.AppData.settings, nextReceipt: Number(num) + 1 });
+                
+                alert("הקבלה הופקה (PDF ירד למחשב) ונשמרה אוטומטית בהכנסות העסק!");
+                window.AppData.receiptPayments = [];
+                el('rec-notes').value = '';
+                addReceiptPaymentRow();
+
+            } catch(e) {
+                console.error(e);
+                alert("שגיאה בהפקה");
+            } finally {
+                pt.parentElement.classList.add('hidden');
+            }
+        };
+
+    </script>
+</body>
+</html>
