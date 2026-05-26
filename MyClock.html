@@ -615,7 +615,6 @@
             document.getElementById('report-table-body').innerHTML = '';
             document.getElementById('dash-hierarchical-breakdown').innerHTML = '';
             
-            // Protected resets
             const hoursEl = document.getElementById('report-total-hours');
             const earningsEl = document.getElementById('report-total-earnings');
             if(hoursEl) hoursEl.innerText = "00:00";
@@ -650,12 +649,9 @@
                 entriesData = snapshot.docs.map(doc => {
                     const data = doc.data();
                     
-                    // --- תאימות לאחור (Backwards Compatibility לנתונים ישנים) ---
-                    // 1. משלים נתון עשרוני אם חסר
                     if (data.durationDec === undefined) {
                         data.durationDec = (data.durationSeconds || 0) / 3600;
                     }
-                    // 2. משלים תאריכי התחלה וסיום אם הדיווח נוצר בגרסה ישנה של המערכת
                     if (!data.startDate) {
                         const d = data.date ? new Date(data.date) : new Date();
                         data.startDate = d.toISOString().split('T')[0];
@@ -663,12 +659,10 @@
                         data.endDate = data.startDate;
                         data.endTime = data.startTime;
                     }
-                    // -----------------------------------------------------------
                     
                     return { id: doc.id, ...data };
                 });
                 
-                // מיון בטוח לפי תאריכי ההתחלה המלאים
                 entriesData.sort((a, b) => new Date(`${b.startDate}T${b.startTime}`) - new Date(`${a.startDate}T${a.startTime}`));
                 
                 updateDashboardStats();
@@ -971,7 +965,6 @@
                 });
             }
 
-            // עדכונים מוגנים לעצי הדוח (Null Checks)
             const hoursEl = document.getElementById('report-total-hours');
             const earningsEl = document.getElementById('report-total-earnings');
             if (hoursEl) hoursEl.innerText = formatSeconds(totalSeconds, true);
@@ -1110,7 +1103,7 @@
             document.getElementById('manualDesc').value = '';
             document.getElementById('manualTravelDesc').value = '';
             document.getElementById('manualTravelKm').value = '';
-            initDateFields(); // איפוס זמנים
+            initDateFields(); 
             showToast("רשומה נשמרה בהצלחה");
         };
 
@@ -1190,7 +1183,6 @@
             const stored = localStorage.getItem('timerData');
             if (stored) {
                 const data = JSON.parse(stored);
-                // שחזור UI בלבד אם הנתונים קיימים
                 document.getElementById('timerClientSelect').value = data.clientId;
                 window.filterProjectsByClient('timerClientSelect', 'timerProjectSelect');
                 document.getElementById('timerProjectSelect').value = data.projectId;
@@ -1242,7 +1234,6 @@
             const startD = new Date(data.startTs);
             const endD = new Date();
             
-            // Populating Finalize Screen
             document.getElementById('timerStartDate').value = startD.toISOString().split('T')[0];
             document.getElementById('timerStartTime').value = startD.toTimeString().substring(0, 5);
             document.getElementById('timerEndDate').value = endD.toISOString().split('T')[0];
@@ -1311,7 +1302,7 @@
             document.getElementById('global-timer').classList.add('hidden');
         }
 
-        // --- Excel Export (2 Tables, Complex layout) ---
+        // --- Excel Export ---
         window.exportToExcel = () => {
             if(filteredReportData.length === 0) return showToast("אין נתונים בסינון הנוכחי לייצוא");
 
@@ -1323,7 +1314,6 @@
             
             let grandDec = 0, grandBill = 0, grandVat = 0, grandTotal = 0;
             
-            // Group by project
             const projectsGroup = {};
             filteredReportData.forEach(entry => {
                 const pId = entry.projectId || 'none';
@@ -1367,11 +1357,9 @@
                 
                 grandDec += pDec; grandBill += pBill; grandVat += pVat; grandTotal += pTotal;
                 
-                // Subtotal Row
                 wsData.push(["", "סה\"כ לפרויקט:", "", "", "", "", "", "", pDec.toFixed(2), "", pBill.toFixed(2), pVat.toFixed(2), pTotal.toFixed(2)]);
             }
             
-            // Grand Total Row
             wsData.push([]);
             wsData.push(["סה\"כ עבודה כולל:", "", "", "", "", "", "", "", grandDec.toFixed(2), "", grandBill.toFixed(2), grandVat.toFixed(2), grandTotal.toFixed(2)]);
             wsData.push([]);
@@ -1380,12 +1368,13 @@
             // --- TABLE 2: TRAVEL ---
             const travelEntries = filteredReportData.filter(e => e.travelKm > 0);
             if(travelEntries.length > 0) {
-                wsData.push(["תיאור הנסיעה", "תאריך", "שעה", "ק\"מ", "תעריף לק\"מ", "סה\"כ לפני מעמ", "סה\"כ כולל מעמ"]);
+                wsData.push(["לקוח", "פרויקט", "תיאור הנסיעה", "תאריך", "שעה", "ק\"מ", "תעריף לק\"מ", "סה\"כ לפני מעמ", "סה\"כ כולל מעמ"]);
                 
                 let tGrandNet = 0, tGrandGross = 0;
                 
                 travelEntries.forEach(entry => {
                     const client = clientsData.find(c => c.id === entry.clientId);
+                    const project = projectsData.find(p => p.id === entry.projectId);
                     const kmRate = client ? (client.kmRate || 0) : 0;
                     const net = entry.travelKm * kmRate;
                     const gross = net * (1 + (globalVatRate/100));
@@ -1394,6 +1383,8 @@
                     tGrandGross += gross;
                     
                     wsData.push([
+                        client ? client.name : '-',
+                        project ? project.name : '-',
                         entry.travelDesc || '-',
                         new Date(entry.startDate).toLocaleDateString('he-IL'),
                         entry.startTime,
@@ -1403,7 +1394,7 @@
                         gross.toFixed(2)
                     ]);
                 });
-                wsData.push(["סה\"כ נסיעות:", "", "", "", "", tGrandNet.toFixed(2), tGrandGross.toFixed(2)]);
+                wsData.push(["סה\"כ נסיעות:", "", "", "", "", "", "", tGrandNet.toFixed(2), tGrandGross.toFixed(2)]);
             }
 
             const ws = XLSX.utils.aoa_to_sheet(wsData);
