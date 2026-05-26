@@ -593,8 +593,30 @@
             }));
 
             unsubscribes.push(onSnapshot(getDbRef('entries'), (snapshot) => {
-                entriesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                entriesData = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    
+                    // --- תאימות לאחור (Backwards Compatibility לנתונים ישנים) ---
+                    // 1. משלים נתון עשרוני אם חסר
+                    if (data.durationDec === undefined) {
+                        data.durationDec = (data.durationSeconds || 0) / 3600;
+                    }
+                    // 2. משלים תאריכי התחלה וסיום אם הדיווח נוצר בגרסה ישנה של המערכת
+                    if (!data.startDate) {
+                        const d = data.date ? new Date(data.date) : new Date();
+                        data.startDate = d.toISOString().split('T')[0];
+                        data.startTime = d.toTimeString().substring(0, 5);
+                        data.endDate = data.startDate;
+                        data.endTime = data.startTime;
+                    }
+                    // -----------------------------------------------------------
+                    
+                    return { id: doc.id, ...data };
+                });
+                
+                // מיון בטוח לפי תאריכי ההתחלה המלאים
                 entriesData.sort((a, b) => new Date(`${b.startDate}T${b.startTime}`) - new Date(`${a.startDate}T${a.startTime}`));
+                
                 updateDashboardStats();
                 window.generateReport(); 
             }));
