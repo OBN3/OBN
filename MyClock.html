@@ -14,27 +14,25 @@
         .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* מניעת גלילה אופקית במובייל */
         html, body { max-width: 100%; overflow-x: hidden; }
         
-        /* עיצוב פס גלילה מותאם */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         
-        /* הסרת חיצים משדות מספר */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         
-        /* עיצוב שדות נעולים */
         input:disabled, select:disabled { opacity: 0.6; cursor: not-allowed; background-color: #e2e8f0; }
+        
+        .report-table th, .report-table td { padding: 10px; font-size: 0.85rem; border-bottom: 1px solid #e2e8f0; }
+        .report-table th { background-color: #f8fafc; font-weight: 600; color: #475569; }
     </style>
 </head>
 <body class="text-slate-800 flex flex-col h-screen">
 
-    <!-- שורת ניווט עליונה -->
     <nav class="bg-indigo-600 text-white shadow-lg shrink-0 z-10 relative">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <h1 class="text-xl font-bold flex items-center gap-2">
@@ -42,23 +40,17 @@
             </h1>
             
             <div class="flex items-center gap-2 sm:gap-4">
-                
-                <!-- טיימר גלובלי (יופיע כשמופעל) -->
                 <div id="global-timer" onclick="switchTab('tracker')" class="hidden cursor-pointer flex items-center gap-2 bg-indigo-800 text-indigo-50 px-3 py-1.5 rounded-full border border-indigo-400 hover:bg-indigo-700 transition shadow-inner mr-2" title="חזור למסך הדיווח">
                     <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                    <span id="global-timer-time" class="font-mono font-medium tracking-wider text-sm">00:00:00</span>
+                    <span id="global-timer-time" class="font-mono font-medium tracking-wider text-sm" dir="ltr">00:00:00</span>
                 </div>
 
                 <div id="nav-menus" class="hidden sm:flex gap-1 sm:gap-2 overflow-x-auto text-sm sm:text-base pb-1 sm:pb-0 scrollbar-hide items-center">
-                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn px-3 py-1 rounded-full bg-indigo-700 font-medium transition whitespace-nowrap">דשבורד</button>
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn px-3 py-1 rounded-full bg-indigo-700 font-medium transition whitespace-nowrap text-white">דשבורד</button>
                     <button onclick="switchTab('tracker')" id="nav-tracker" class="nav-btn px-3 py-1 rounded-full hover:bg-indigo-500 transition whitespace-nowrap">טיימר ודיווח</button>
                     <button onclick="switchTab('reports')" id="nav-reports" class="nav-btn px-3 py-1 rounded-full hover:bg-indigo-500 transition whitespace-nowrap">דוחות</button>
                     <button onclick="switchTab('manage')" id="nav-manage" class="nav-btn px-3 py-1 rounded-full hover:bg-indigo-500 transition whitespace-nowrap">הגדרות</button>
-                    
-                    <!-- כפתור עזרה חדש -->
-                    <button onclick="switchTab('help')" id="nav-help" class="nav-btn px-3 py-1 rounded-full hover:bg-indigo-500 transition text-indigo-200 hover:text-white" title="מרכז עזרה">
-                        <i class="fas fa-question-circle text-lg"></i>
-                    </button>
+                    <button onclick="switchTab('help')" id="nav-help" class="nav-btn px-3 py-1 rounded-full hover:bg-indigo-500 transition text-indigo-200 hover:text-white" title="מרכז עזרה"><i class="fas fa-question-circle text-lg"></i></button>
                 </div>
                 
                 <div id="user-profile" class="hidden items-center gap-3 border-r border-indigo-400 pr-4 ml-1">
@@ -70,172 +62,225 @@
         </div>
     </nav>
 
-    <!-- אזור התוכן הראשי -->
     <main class="container mx-auto px-4 py-6 flex-1 overflow-y-auto relative flex flex-col">
         
-        <!-- מסך התחברות -->
         <div id="login-screen" class="flex flex-col items-center justify-center h-full text-center px-4 flex-1">
             <div class="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 max-w-md w-full">
-                <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
-                    <i class="fas fa-clock"></i>
-                </div>
+                <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4"><i class="fas fa-clock"></i></div>
                 <h2 class="text-2xl font-bold text-slate-800 mb-2">ברוכים הבאים</h2>
                 <p class="text-slate-500 mb-8">התחבר כדי לנהל את שעות העבודה שלך</p>
                 <button id="google-login-btn" class="w-full bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition shadow-sm font-medium">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" class="w-5 h-5">
-                    התחברות עם Google
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" class="w-5 h-5"> התחברות עם Google
                 </button>
             </div>
         </div>
 
-        <!-- אפליקציה - מוסתר עד התחברות -->
         <div id="app-content" class="hidden flex-1 flex flex-col pb-6">
 
-            <!-- מסך דשבורד -->
+            <!-- Dashboard -->
             <section id="dashboard" class="tab-content active flex-1">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                <div class="flex justify-between items-center mb-6">
                     <h2 id="dash-main-title" class="text-2xl font-bold text-slate-700">סיכום נתונים חודשי</h2>
                 </div>
 
-                <!-- כרטיסיות סיכום -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition">
-                        <div class="bg-indigo-100 text-indigo-600 p-4 rounded-full text-2xl">
-                            <i class="fas fa-hourglass-half"></i>
-                        </div>
+                        <div class="bg-indigo-100 text-indigo-600 p-4 rounded-full text-2xl"><i class="fas fa-hourglass-half"></i></div>
                         <div>
                             <h3 class="text-slate-500 text-sm font-medium">סה"כ שעות שדווחו (החודש)</h3>
                             <p id="dash-total-hours" class="text-3xl font-bold text-slate-800 mt-1">00:00</p>
                         </div>
                     </div>
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition">
-                        <div class="bg-green-100 text-green-600 p-4 rounded-full text-2xl">
-                            <i class="fas fa-shekel-sign"></i>
-                        </div>
+                        <div class="bg-green-100 text-green-600 p-4 rounded-full text-2xl"><i class="fas fa-shekel-sign"></i></div>
                         <div>
-                            <h3 class="text-slate-500 text-sm font-medium">הערכת הכנסות (כלל הפרויקטים החודש)</h3>
+                            <h3 class="text-slate-500 text-sm font-medium">הערכת הכנסות לפני מע"מ (החודש)</h3>
                             <p id="dash-total-earnings" class="text-3xl font-bold text-slate-800 mt-1">₪0</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- פילוח הכנסות היררכי -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden mb-8">
                     <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
-                        <i class="fas fa-network-wired text-indigo-500"></i>
-                        <h3 class="font-bold text-slate-700">התפלגות הכנסות ושעות - לקוחות ופרויקטים</h3>
+                        <i class="fas fa-chart-bar text-indigo-500"></i>
+                        <h3 class="font-bold text-slate-700">סטטוס ביצוע פרויקטים (מול תקציב)</h3>
                     </div>
-                    <div id="dash-hierarchical-breakdown" class="p-6">
-                        <!-- יאוכלס דינמית -->
-                    </div>
+                    <div id="dash-hierarchical-breakdown" class="p-6"></div>
                 </div>
             </section>
 
-            <!-- מסך דיווח וטיימר -->
+            <!-- Tracker -->
             <section id="tracker" class="tab-content flex-1">
-                <h2 class="text-2xl font-bold text-slate-700 mb-6">רישום זמנים</h2>
+                <h2 class="text-2xl font-bold text-slate-700 mb-6">רישום זמנים ונסיעות</h2>
                 
-                <div class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-100 mb-8 text-center relative overflow-hidden">
+                <!-- Auto Timer -->
+                <div class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-100 mb-8 relative overflow-hidden transition-all duration-300">
                     <div class="absolute top-0 right-0 w-full h-2 bg-indigo-500 opacity-20"></div>
-                    <div id="live-indicator" class="absolute top-4 right-4 flex items-center gap-2 text-red-500 text-sm font-bold hidden opacity-0 transition-opacity">
-                        <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> מקליט...
+                    
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold text-slate-700 flex items-center gap-2"><i class="fas fa-stopwatch text-indigo-500"></i> טיימר חי</h3>
+                        <div id="live-indicator" class="flex items-center gap-2 text-red-500 text-sm font-bold hidden opacity-0 transition-opacity">
+                            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> מקליט...
+                        </div>
                     </div>
 
-                    <div class="text-7xl sm:text-8xl font-light text-slate-800 mb-8 font-mono tracking-wider" id="timerDisplay" dir="ltr">00:00:00</div>
+                    <div class="text-7xl sm:text-8xl font-light text-slate-800 mb-8 font-mono tracking-wider text-center" id="timerDisplay" dir="ltr">00:00:00</div>
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 text-right">
+                    <!-- Timer Inputs -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 text-right">
                         <select id="timerClientSelect" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-full transition">
-                            <option value="">-- בחר לקוח --</option>
+                            <option value="">-- בחר לקוח (חובה) --</option>
                         </select>
                         <select id="timerProjectSelect" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-full transition disabled:opacity-50">
-                            <option value="">-- בחר פרויקט --</option>
+                            <option value="">-- בחר פרויקט (חובה) --</option>
                         </select>
-                        <input type="text" id="timerDesc" placeholder="מה אתה עושה עכשיו? (לא חובה)" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-full transition">
+                        <input type="text" id="timerDesc" placeholder="תיאור המשימה (לא חובה)" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-full transition">
                     </div>
 
-                    <div class="flex justify-center gap-4">
-                        <button id="startTimerBtn" onclick="toggleTimer()" class="bg-indigo-600 text-white px-8 py-3 rounded-full shadow-lg hover:bg-indigo-700 transition-all font-medium text-lg flex items-center gap-2">
+                    <div class="flex justify-center gap-4 mb-4">
+                        <button id="startTimerBtn" onclick="startAutoTimer()" class="bg-indigo-600 text-white px-10 py-3 rounded-full shadow-lg hover:bg-indigo-700 transition-all font-bold text-lg flex items-center gap-2">
                             <i class="fas fa-play"></i> התחל טיימר
                         </button>
-                        <button id="stopTimerBtn" onclick="toggleTimer()" class="bg-red-500 text-white px-8 py-3 rounded-full shadow-lg hover:bg-red-600 transition-all font-medium text-lg flex items-center gap-2 hidden">
-                            <i class="fas fa-stop"></i> עצור ושמור
+                        <button id="stopTimerBtn" onclick="stopAutoTimer()" class="bg-red-500 text-white px-10 py-3 rounded-full shadow-lg hover:bg-red-600 transition-all font-bold text-lg flex items-center gap-2 hidden">
+                            <i class="fas fa-stop"></i> עצור טיימר
                         </button>
+                    </div>
+
+                    <!-- Post-Stop Details (Hidden until timer stops) -->
+                    <div id="timer-finalize-section" class="hidden border-t border-slate-100 pt-6 mt-6 animate-fadeIn">
+                        <h4 class="font-bold text-slate-600 mb-4 text-center">אשר פרטי ביצוע לפני שמירה</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end mb-4 bg-indigo-50 p-4 rounded-lg">
+                            <div>
+                                <label class="block text-xs text-slate-500 mb-1">תאריך התחלה</label>
+                                <input type="date" id="timerStartDate" class="border border-slate-200 p-2 rounded w-full">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-500 mb-1">שעת התחלה</label>
+                                <input type="time" id="timerStartTime" class="border border-slate-200 p-2 rounded w-full" dir="ltr">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-500 mb-1">תאריך סיום</label>
+                                <input type="date" id="timerEndDate" class="border border-slate-200 p-2 rounded w-full">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-500 mb-1">שעת סיום</label>
+                                <input type="time" id="timerEndTime" class="border border-slate-200 p-2 rounded w-full" dir="ltr">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end mb-6 bg-amber-50 p-4 rounded-lg">
+                            <div>
+                                <label class="block text-xs text-amber-700 mb-1"><i class="fas fa-car ml-1"></i>תיאור נסיעה (אופציונלי)</label>
+                                <input type="text" id="timerTravelDesc" placeholder="לאן נסעת?" class="border border-amber-200 p-2 rounded w-full bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-amber-700 mb-1">מרחק נסיעה בק"מ (אופציונלי)</label>
+                                <input type="number" id="timerTravelKm" min="0" placeholder="0" class="border border-amber-200 p-2 rounded w-full bg-white text-left" dir="ltr">
+                            </div>
+                        </div>
+                        <div class="flex justify-center gap-4">
+                            <button onclick="cancelAutoTimer()" class="px-6 py-2 text-slate-500 hover:bg-slate-100 rounded-full transition">בטל ומחק</button>
+                            <button onclick="saveAutoTimer()" class="px-8 py-2 bg-green-600 text-white font-bold rounded-full shadow hover:bg-green-700 transition">שמור דיווח למערכת</button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- הזנה ידנית -->
+                <!-- Manual Entry -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                    <h3 class="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2"><i class="fas fa-keyboard text-indigo-500"></i> הזנה ידנית (משך זמן עבודה)</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-4 items-end text-right">
-                        <div class="md:col-span-2">
-                            <label class="block text-sm text-slate-500 mb-1">תאריך</label>
-                            <input type="date" id="manualDate" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
+                    <h3 class="text-lg font-bold text-slate-700 mb-6 flex items-center gap-2"><i class="fas fa-keyboard text-indigo-500"></i> הזנה ידנית (מדויקת)</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="space-y-4 border-l border-slate-100 pl-6">
+                            <h4 class="font-semibold text-sm text-slate-500">1. שיוך למשימה</h4>
+                            <div>
+                                <label class="block text-xs mb-1 text-slate-600">לקוח (חובה)</label>
+                                <select id="manualClientSelect" class="border border-slate-200 p-2 rounded w-full bg-slate-50 focus:border-indigo-500"></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs mb-1 text-slate-600">פרויקט (חובה)</label>
+                                <select id="manualProjectSelect" class="border border-slate-200 p-2 rounded w-full bg-slate-50 focus:border-indigo-500"></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs mb-1 text-slate-600">תיאור</label>
+                                <input type="text" id="manualDesc" placeholder="מה ביצעת?" class="border border-slate-200 p-2 rounded w-full bg-slate-50 focus:border-indigo-500">
+                            </div>
                         </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-sm text-slate-500 mb-1">לקוח</label>
-                            <select id="manualClientSelect" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
-                                <option value="">-- בחר לקוח --</option>
-                            </select>
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-sm text-slate-500 mb-1">פרויקט</label>
-                            <select id="manualProjectSelect" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
-                                <option value="">-- בחר פרויקט --</option>
-                            </select>
-                        </div>
-                        <div class="md:col-span-3">
-                            <label class="block text-sm text-slate-500 mb-1">תיאור משימה</label>
-                            <input type="text" id="manualDesc" placeholder="מה ביצעת?" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
-                        </div>
-                        <div class="md:col-span-3 flex gap-2 items-end">
-                            <div class="flex-1 flex gap-1">
-                                <div class="w-1/2 relative">
-                                    <label class="block text-sm text-slate-500 mb-1 text-center">שעות</label>
-                                    <input type="number" id="manualHours" value="0" min="0" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500 text-center text-lg">
+                        
+                        <div class="space-y-4 border-l border-slate-100 pl-6">
+                            <h4 class="font-semibold text-sm text-slate-500">2. זמני ביצוע</h4>
+                            <div class="flex gap-2">
+                                <div class="w-1/2">
+                                    <label class="block text-xs mb-1 text-slate-600">תאריך התחלה</label>
+                                    <input type="date" id="manualStartDate" onchange="calcManualDuration()" class="border border-slate-200 p-2 rounded w-full bg-slate-50">
                                 </div>
-                                <div class="w-1/2 relative">
-                                    <label class="block text-sm text-slate-500 mb-1 text-center">דקות</label>
-                                    <input type="number" id="manualMinutes" value="0" min="0" max="59" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500 text-center text-lg">
+                                <div class="w-1/2">
+                                    <label class="block text-xs mb-1 text-slate-600">שעת התחלה</label>
+                                    <input type="time" id="manualStartTime" onchange="calcManualDuration()" class="border border-slate-200 p-2 rounded w-full bg-slate-50" dir="ltr">
                                 </div>
                             </div>
-                            <button onclick="saveManualEntry()" class="bg-slate-800 text-white p-2 rounded-lg hover:bg-slate-700 transition w-12 h-[42px] flex items-center justify-center" title="שמור הזנה">
-                                <i class="fas fa-save"></i>
-                            </button>
+                            <div class="flex gap-2">
+                                <div class="w-1/2">
+                                    <label class="block text-xs mb-1 text-slate-600">תאריך סיום</label>
+                                    <input type="date" id="manualEndDate" onchange="calcManualDuration()" class="border border-slate-200 p-2 rounded w-full bg-slate-50">
+                                </div>
+                                <div class="w-1/2">
+                                    <label class="block text-xs mb-1 text-slate-600">שעת סיום</label>
+                                    <input type="time" id="manualEndTime" onchange="calcManualDuration()" class="border border-slate-200 p-2 rounded w-full bg-slate-50" dir="ltr">
+                                </div>
+                            </div>
+                            <div class="bg-indigo-50 p-2 rounded text-center text-sm font-mono text-indigo-700" id="manualDurationDisplay">
+                                סה"כ זמן: 00:00 (0.00 שעות)
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <h4 class="font-semibold text-sm text-amber-600">3. נסיעות (אופציונלי)</h4>
+                            <div>
+                                <label class="block text-xs mb-1 text-slate-600">יעד / תיאור הנסיעה</label>
+                                <input type="text" id="manualTravelDesc" placeholder="לדוגמה: פגישה בחיפה" class="border border-slate-200 p-2 rounded w-full bg-amber-50 focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs mb-1 text-slate-600">מרחק בק"מ</label>
+                                <input type="number" id="manualTravelKm" min="0" placeholder="0" class="border border-slate-200 p-2 rounded w-full bg-amber-50 focus:border-amber-500 text-left" dir="ltr">
+                            </div>
+                            <div class="pt-2">
+                                <button onclick="saveManualEntry()" class="bg-slate-800 text-white p-3 rounded-lg hover:bg-slate-700 transition w-full font-bold shadow-md">
+                                    <i class="fas fa-save mr-2"></i>שמור דיווח תקין
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- מסך דוחות חכמים -->
+            <!-- Reports -->
             <section id="reports" class="tab-content flex-1">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                    <h2 class="text-2xl font-bold text-slate-700">הפקת דוחות (ועריכת רשומות)</h2>
-                    <button onclick="exportFilteredReport()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow transition flex items-center gap-2 w-full sm:w-auto justify-center">
-                        <i class="fas fa-file-excel"></i> ייצא דוח לאקסל
+                    <h2 class="text-2xl font-bold text-slate-700">הפקת דוחות מתקדמים</h2>
+                    <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow transition flex items-center gap-2 font-bold w-full sm:w-auto justify-center">
+                        <i class="fas fa-file-excel"></i> ייצוא מלא לאקסל
                     </button>
                 </div>
 
-                <!-- אזור סינון -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 mb-6">
                     <div class="flex flex-wrap gap-2 mb-4">
                         <button onclick="setReportDates('thisMonth', this)" class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-100 transition">החודש</button>
                         <button onclick="setReportDates('lastMonth', this)" class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-100 transition">חודש שעבר</button>
                         <button onclick="setReportDates('thisYear', this)" class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-100 transition">השנה</button>
-                        <button onclick="setReportDates('all', this)" class="text-xs bg-slate-800 text-white px-3 py-1 rounded-full hover:bg-slate-700 transition" id="btn-filter-all">הכל (ברירת מחדל)</button>
+                        <button onclick="setReportDates('all', this)" class="text-xs bg-slate-800 text-white px-3 py-1 rounded-full transition" id="btn-filter-all">הכל (ברירת מחדל)</button>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
                         <div>
                             <label class="block text-sm text-slate-500 mb-1">מתאריך</label>
-                            <input type="date" id="filterStartDate" onchange="generateReport()" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500 h-10">
+                            <input type="date" id="filterStartDate" onchange="generateReport()" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 h-10">
                         </div>
                         <div>
                             <label class="block text-sm text-slate-500 mb-1">עד תאריך</label>
-                            <input type="date" id="filterEndDate" onchange="generateReport()" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500 h-10">
+                            <input type="date" id="filterEndDate" onchange="generateReport()" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 h-10">
                         </div>
                         <div>
                             <label class="block text-sm text-slate-500 mb-1">לקוח</label>
-                            <select id="filterClientSelect" onchange="updateReportProjectFilter(); generateReport();" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500 h-10">
+                            <select id="filterClientSelect" onchange="updateReportProjectFilter(); generateReport();" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 h-10">
                                 <option value="">-- כל הלקוחות --</option>
                             </select>
                         </div>
@@ -244,184 +289,173 @@
                                 <label class="block text-sm text-slate-500">פרויקט (בחירה מרובה)</label>
                                 <button onclick="document.getElementById('filterProjectSelect').selectedIndex = -1; generateReport();" class="text-[11px] font-medium text-indigo-500 hover:underline">נקה בחירה</button>
                             </div>
-                            <select id="filterProjectSelect" multiple size="3" onchange="generateReport()" class="border border-slate-200 p-1 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500 text-sm overflow-y-auto custom-scrollbar h-20">
-                                <!-- יאוכלס דינמית ע"י JS -->
+                            <select id="filterProjectSelect" multiple size="3" onchange="generateReport()" class="border border-slate-200 p-1 rounded-lg w-full bg-slate-50 text-sm overflow-y-auto custom-scrollbar h-20">
                             </select>
-                            <p class="text-[10px] text-slate-400 mt-1">החזק Ctrl/Cmd לבחירה מרובה. ללא בחירה = הצג הכל.</p>
+                            <p class="text-[10px] text-slate-400 mt-1">החזק Ctrl/Cmd לבחירה מרובה.</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- סיכום הדוח המפולטר -->
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
-                        <span class="text-indigo-600 text-sm font-bold">סה"כ שעות בסינון:</span>
-                        <span id="report-total-hours" class="text-2xl font-bold text-slate-800 mr-2 block mt-1">00:00</span>
-                    </div>
-                    <div class="bg-green-50 p-4 rounded-lg border border-green-100">
-                        <span class="text-green-600 text-sm font-bold">הכנסות בסינון:</span>
-                        <span id="report-total-earnings" class="text-2xl font-bold text-slate-800 mr-2 block mt-1">₪0</span>
-                    </div>
-                </div>
-
-                <!-- טבלת התוצאות -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
                     <div class="overflow-x-auto">
-                        <table class="w-full text-right border-collapse">
+                        <table class="w-full text-right border-collapse report-table min-w-[1000px]">
                             <thead>
-                                <tr class="bg-slate-50 text-slate-500 text-sm border-b border-slate-100">
-                                    <th class="p-4 font-medium whitespace-nowrap">תאריך</th>
-                                    <th class="p-4 font-medium">לקוח</th>
-                                    <th class="p-4 font-medium">פרויקט</th>
-                                    <th class="p-4 font-medium w-1/4">תיאור</th>
-                                    <th class="p-4 font-medium">משך זמן</th>
-                                    <th class="p-4 font-medium text-center">סוג</th>
-                                    <th class="p-4 font-medium text-center">פעולות</th>
+                                <tr>
+                                    <th>תאריך התחלה</th>
+                                    <th>לקוח</th>
+                                    <th>פרויקט</th>
+                                    <th class="w-1/5">תיאור</th>
+                                    <th>משך (שעות)</th>
+                                    <th>משך (עשרוני)</th>
+                                    <th>חיוב נטו</th>
+                                    <th>מע"מ</th>
+                                    <th>סה"כ כולל</th>
+                                    <th>נסיעה</th>
+                                    <th class="text-center">פעולות</th>
                                 </tr>
                             </thead>
-                            <tbody id="report-table-body" class="text-sm">
-                                <!-- Data will be populated here -->
+                            <tbody id="report-table-body">
                             </tbody>
                         </table>
                     </div>
                 </div>
             </section>
 
-            <!-- מסך ניהול לקוחות ופרויקטים -->
+            <!-- Manage Settings -->
             <section id="manage" class="tab-content flex-1">
-                <h2 class="text-2xl font-bold text-slate-700 mb-6">הגדרות לקוחות ופרויקטים</h2>
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-slate-700">הגדרות מערכת</h2>
+                    <div class="bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200 flex items-center gap-3">
+                        <label class="text-sm font-bold text-slate-700">מע"מ גלובלי (%):</label>
+                        <input type="number" id="vatRateSetting" class="border border-slate-300 rounded p-1 w-16 text-center focus:border-indigo-500" value="18" min="0" onchange="saveVatSetting()">
+                    </div>
+                </div>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+                    <!-- Clients -->
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col h-full max-h-[600px]">
-                        <h3 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2">הוספת לקוח</h3>
-                        <div class="flex flex-col gap-3 mb-6 shrink-0">
-                            <input type="text" id="newClientName" placeholder="שם הלקוח" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:border-indigo-500 outline-none">
-                            <input type="number" id="newClientRate" placeholder="תעריף שעתי (₪) - אופציונלי" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:border-indigo-500 outline-none">
-                            <button onclick="addClient()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">שמור לקוח חדש</button>
+                        <h3 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2">הוספת לקוח חדש</h3>
+                        <div class="grid grid-cols-2 gap-3 mb-4 shrink-0">
+                            <input type="text" id="newClientName" placeholder="שם הלקוח (חובה)" class="col-span-2 border border-slate-200 p-2 rounded-lg bg-slate-50 focus:border-indigo-500">
+                            <input type="number" id="newClientRate" placeholder="תעריף שעתי ₪" class="border border-slate-200 p-2 rounded-lg bg-slate-50">
+                            <input type="number" id="newClientKmRate" placeholder="תעריף לק״מ ₪" class="border border-slate-200 p-2 rounded-lg bg-slate-50">
+                            <button onclick="addClient()" class="col-span-2 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition font-bold mt-1">שמור לקוח</button>
                         </div>
-                        <h4 class="font-medium text-slate-600 mb-2 shrink-0">לקוחות קיימים (עריכה ומחיקה):</h4>
+                        <h4 class="font-medium text-slate-600 mb-2 shrink-0">ניהול לקוחות:</h4>
                         <ul id="clients-list" class="space-y-2 text-sm flex-1 overflow-y-auto pr-2 custom-scrollbar"></ul>
                     </div>
 
+                    <!-- Projects -->
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col h-full max-h-[600px]">
-                        <h3 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2">הוספת פרויקט</h3>
-                        <div class="flex flex-col gap-3 mb-6 shrink-0">
-                            <select id="newProjectClient" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:border-indigo-500 outline-none">
-                                <option value="">-- בחר לקוח קשור --</option>
+                        <h3 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2">הוספת פרויקט חדש</h3>
+                        <div class="grid grid-cols-2 gap-3 mb-4 shrink-0">
+                            <select id="newProjectClient" class="col-span-2 border border-slate-200 p-2 rounded-lg bg-slate-50 focus:border-indigo-500">
+                                <option value="">-- בחר לקוח --</option>
                             </select>
-                            <input type="text" id="newProjectName" placeholder="שם הפרויקט" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:border-indigo-500 outline-none">
-                            <button onclick="addProject()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">שמור פרויקט חדש</button>
+                            <input type="text" id="newProjectName" placeholder="שם הפרויקט (חובה)" class="col-span-2 border border-slate-200 p-2 rounded-lg bg-slate-50 focus:border-indigo-500">
+                            <input type="number" id="newProjectBudget" placeholder="שעות מתוקצבות (לדוג: 50)" class="col-span-2 border border-slate-200 p-2 rounded-lg bg-slate-50">
+                            <button onclick="addProject()" class="col-span-2 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition font-bold mt-1">שמור פרויקט</button>
                         </div>
-                        <h4 class="font-medium text-slate-600 mb-2 shrink-0">פרויקטים קיימים (עריכה ומחיקה):</h4>
+                        <h4 class="font-medium text-slate-600 mb-2 shrink-0">ניהול פרויקטים:</h4>
                         <ul id="projects-list" class="space-y-2 text-sm flex-1 overflow-y-auto pr-2 custom-scrollbar"></ul>
                     </div>
                 </div>
             </section>
 
-            <!-- מסך עזרה -->
+            <!-- Help -->
             <section id="help" class="tab-content flex-1 max-w-4xl mx-auto w-full">
                 <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
                     <div class="flex items-center gap-4 mb-6 border-b border-slate-100 pb-4">
-                        <div class="bg-indigo-100 text-indigo-600 p-3 rounded-full text-2xl">
-                            <i class="fas fa-info-circle"></i>
-                        </div>
+                        <div class="bg-indigo-100 text-indigo-600 p-3 rounded-full text-2xl"><i class="fas fa-info-circle"></i></div>
                         <h2 class="text-2xl font-bold text-slate-800">מרכז עזרה והדרכה</h2>
                     </div>
                     
-                    <div class="space-y-6 text-slate-600 leading-relaxed">
-                        
+                    <div class="space-y-6 text-slate-600 leading-relaxed text-sm">
                         <div>
-                            <h3 class="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2"><i class="fas fa-bullseye text-indigo-500"></i> מטרת המערכת</h3>
-                            <p>מערכת <strong>TimeTracker Pro</strong> נבנתה במיוחד עבור פרילנסרים ועצמאיים. היא נועדה לעשות סדר בניהול הזמן שלך, למדוד במדויק כל דקה שאתה משקיע בעבודה, ולתרגם את הזמן הזה להכנסות בפועל. המערכת שומרת את הנתונים בענן מאובטח ופרטי משלך (Firebase) ומאפשרת ייצוא נקי לאקסל.</p>
+                            <h3 class="font-bold text-slate-800 mb-1"><i class="fas fa-tachometer-alt text-indigo-500 ml-2"></i> דשבורד</h3>
+                            <p>מבט על של שעות והכנסות (לפני מע"מ). מציג גרפי התקדמות עבור פרויקטים להם הגדרת "תקציב שעות", כך שתוכל לדעת בכל רגע אם חרגת ממה שסוכם מול הלקוח.</p>
                         </div>
-
-                        <hr class="border-slate-100">
-
                         <div>
-                            <h3 class="text-lg font-bold text-slate-800 mb-2"><i class="fas fa-tachometer-alt text-indigo-500 ml-2"></i> דשבורד (Dashboard)</h3>
-                            <p>מסך הבית שלך המספק מבט על של הפעילות העסקית בחודש הנוכחי. כאן תראה סיכום של סך השעות שעבדת והערכת הכנסות (המחושבת לפי התעריף השעתי שהגדרת ללקוחות). בנוסף, מוצגת חלוקה היררכית וגרפית ברורה של הכנסות פר לקוח ופר פרויקט.</p>
+                            <h3 class="font-bold text-slate-800 mb-1"><i class="fas fa-stopwatch text-indigo-500 ml-2"></i> טיימר חכם</h3>
+                            <p>בחירת לקוח ופרויקט היא <strong>חובה</strong> לפני הפעלה. בזמן שהטיימר רץ, לא ניתן לשנות את השיוך כדי למנוע טעויות. בעת הלחיצה על "עצור טיימר", ייפתחו לך שדות לאישור זמני ההתחלה והסיום המדויקים, וכן אפשרות להוספת פרטי <strong>נסיעה (תיאור וק"מ)</strong> אם נדרש, לפני השמירה לענן.</p>
                         </div>
-
                         <div>
-                            <h3 class="text-lg font-bold text-slate-800 mb-2"><i class="fas fa-stopwatch text-indigo-500 ml-2"></i> טיימר ודיווח (Tracker)</h3>
-                            <p>הלב של המערכת. מסך זה מתחלק לשני אזורים:</p>
-                            <ul class="list-disc list-inside mt-2 space-y-1 pr-4">
-                                <li><strong>טיימר חי:</strong> בחר לקוח, פרויקט (חובה לבחור את שניהם), הקלד מה אתה עושה ולחץ על "התחל טיימר". כשהטיימר עובד, תראה חיווי גלובלי בחלק העליון של המסך המאפשר לך לנווט למסכים אחרים מבלי לאבד מעקב.</li>
-                                <li><strong>הזנה ידנית:</strong> שכחת להפעיל טיימר? אין בעיה. בחלק התחתון תוכל להזין תאריך, לבחור לקוח ופרויקט, ולהזין את משך זמן העבודה המדויק (שעות ודקות) באופן ידני.</li>
-                            </ul>
+                            <h3 class="font-bold text-slate-800 mb-1"><i class="fas fa-keyboard text-indigo-500 ml-2"></i> הזנה ידנית</h3>
+                            <p>מאפשרת הזנת תאריכי ושעות התחלה/סיום במדויק. המערכת מחשבת אוטומטית את משך הזמן והייצוג העשרוני שלו בזמן אמת. תומכת גם בהזנת נסיעות בדיעבד.</p>
                         </div>
-
                         <div>
-                            <h3 class="text-lg font-bold text-slate-800 mb-2"><i class="fas fa-chart-line text-indigo-500 ml-2"></i> דוחות חכמים (Reports)</h3>
-                            <p>כאן תוכל לסנן ולנתח את כל היסטוריית העבודה שלך. ברירת המחדל היא הצגת "הכל".</p>
-                            <ul class="list-disc list-inside mt-2 space-y-1 pr-4">
-                                <li>ניתן לסנן לפי טווחי תאריכים, לקוח ספציפי, ולבחור <strong>מספר פרויקטים במקביל</strong> (החזק את מקש ה-Ctrl או Cmd תוך כדי לחיצה על הפרויקטים).</li>
-                                <li>לחצן <strong>"נקה בחירה"</strong> יאפס את סינון הפרויקטים ויציג את כולם.</li>
-                                <li><strong>עריכת רשומות:</strong> זיהית טעות? לחץ על סמל העיפרון (<i class="fas fa-edit text-indigo-400"></i>) בשורת הדיווח ותוכל לתקן את התאריך, השעות או הלקוח המקושר.</li>
-                                <li>ניתן <strong>לייצא לאקסל</strong> את הדוח המסונן. האקסל שנוצר תומך באופן מושלם בעברית (RTL).</li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h3 class="text-lg font-bold text-slate-800 mb-2"><i class="fas fa-users-cog text-indigo-500 ml-2"></i> הגדרות (לקוחות ופרויקטים)</h3>
-                            <p>כדי להתחיל לעבוד בצורה מסודרת, יש להגדיר תחילה את הלקוחות שלך. לכל לקוח ניתן (אך לא חובה) להצמיד תעריף שעתי, אשר ישמש לחישוב ההכנסות בדשבורד ובדוחות.</p>
-                            <p class="mt-1">לאחר יצירת לקוח, תוכל ליצור פרויקטים ולשייך אותם אליו. היררכיה זו עוזרת לשמור על סדר ולא להציף אותך ברשימות ארוכות ומבלבלות במסך הדיווח. ניתן לערוך שמות ותעריפים, או למחוק לקוחות/פרויקטים קיימים.</p>
+                            <h3 class="font-bold text-slate-800 mb-1"><i class="fas fa-file-excel text-indigo-500 ml-2"></i> ייצוא ואקסל</h3>
+                            <p>ייצוא האקסל במסך הדוחות מפיק קובץ מתקדם בן 2 טבלאות. <strong>טבלה ראשונה:</strong> כלל שעות העבודה המסוננות, מקובצות לפי פרויקט, כולל סיכומי ביניים (חיוב לפי תעריף לקוח + תוספת אחוז המע"מ הגלובלי). <strong>טבלה שנייה:</strong> סיכום כל הנסיעות שהתרחשו בתקופה זו, המחושבות לפי התעריף לק"מ שהגדרת ללקוח.</p>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- פוטר מערכת -->
             <footer class="mt-auto pt-6 pb-2 text-center text-sm text-slate-500">
                 <a href="mailto:mordicon@mail.com" class="hover:text-indigo-600 transition inline-flex items-center gap-2">
                     <i class="far fa-copyright"></i> כל הזכויות שמורות OBN (mordicon@mail.com)
                 </a>
             </footer>
-
         </div>
     </main>
 
-    <!-- Modal for Editing Time Entries -->
+    <!-- Modal: Edit Entry -->
     <div id="edit-entry-modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-50 hidden flex justify-center items-center px-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
             <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <h3 class="font-bold text-slate-700 text-lg"><i class="fas fa-edit text-indigo-500 mr-2"></i> עריכת רשומת זמן</h3>
+                <h3 class="font-bold text-slate-700 text-lg"><i class="fas fa-edit text-indigo-500 mr-2"></i> עריכת דיווח</h3>
                 <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 transition"><i class="fas fa-times text-xl"></i></button>
             </div>
-            <div class="p-6 space-y-4">
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                 <input type="hidden" id="editEntryId">
-                <div>
-                    <label class="block text-sm text-slate-500 mb-1">תאריך</label>
-                    <input type="date" id="editEntryDate" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-sm text-slate-500 mb-1">לקוח</label>
-                    <select id="editEntryClient" onchange="window.filterProjectsByClient('editEntryClient', 'editEntryProject', '-- בחר פרויקט --')" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm text-slate-500 mb-1">פרויקט</label>
-                    <select id="editEntryProject" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm text-slate-500 mb-1">תיאור משימה</label>
-                    <input type="text" id="editEntryDesc" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500">
-                </div>
-                <div class="flex gap-4">
-                    <div class="w-1/2">
-                        <label class="block text-sm text-slate-500 mb-1">שעות</label>
-                        <input type="number" id="editEntryHours" min="0" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500 text-center">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2 sm:col-span-1">
+                        <label class="block text-xs mb-1 text-slate-600">לקוח</label>
+                        <select id="editEntryClient" onchange="window.filterProjectsByClient('editEntryClient', 'editEntryProject', '-- בחר פרויקט --')" class="border border-slate-200 p-2 rounded w-full bg-slate-50"></select>
                     </div>
-                    <div class="w-1/2">
-                        <label class="block text-sm text-slate-500 mb-1">דקות</label>
-                        <input type="number" id="editEntryMinutes" min="0" max="59" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 outline-none focus:border-indigo-500 text-center">
+                    <div class="col-span-2 sm:col-span-1">
+                        <label class="block text-xs mb-1 text-slate-600">פרויקט</label>
+                        <select id="editEntryProject" class="border border-slate-200 p-2 rounded w-full bg-slate-50"></select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs mb-1 text-slate-600">תיאור משימה</label>
+                        <input type="text" id="editEntryDesc" class="border border-slate-200 p-2 rounded w-full bg-slate-50">
+                    </div>
+                    
+                    <!-- Times -->
+                    <div>
+                        <label class="block text-xs mb-1 text-slate-600">תאריך התחלה</label>
+                        <input type="date" id="editStartDate" class="border border-slate-200 p-2 rounded w-full">
+                    </div>
+                    <div>
+                        <label class="block text-xs mb-1 text-slate-600">שעת התחלה</label>
+                        <input type="time" id="editStartTime" class="border border-slate-200 p-2 rounded w-full" dir="ltr">
+                    </div>
+                    <div>
+                        <label class="block text-xs mb-1 text-slate-600">תאריך סיום</label>
+                        <input type="date" id="editEndDate" class="border border-slate-200 p-2 rounded w-full">
+                    </div>
+                    <div>
+                        <label class="block text-xs mb-1 text-slate-600">שעת סיום</label>
+                        <input type="time" id="editEndTime" class="border border-slate-200 p-2 rounded w-full" dir="ltr">
+                    </div>
+                    
+                    <!-- Travel -->
+                    <div class="col-span-2 bg-amber-50 p-3 rounded border border-amber-100 grid grid-cols-2 gap-4">
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-xs mb-1 text-amber-700">תיאור נסיעה</label>
+                            <input type="text" id="editTravelDesc" class="border border-amber-200 p-2 rounded w-full bg-white">
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-xs mb-1 text-amber-700">קילומטראז'</label>
+                            <input type="number" id="editTravelKm" min="0" class="border border-amber-200 p-2 rounded w-full bg-white" dir="ltr">
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
                 <button onclick="closeEditModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg transition">ביטול</button>
-                <button onclick="saveEditEntry()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-sm">שמור שינויים</button>
+                <button onclick="saveEditEntry()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-sm font-bold">שמור שינויים</button>
             </div>
         </div>
     </div>
@@ -434,7 +468,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, updateDoc, onSnapshot, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, onSnapshot, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBzXRUcnLuqH8rAaHdu6uGehgatD6hsIV0",
@@ -452,36 +486,31 @@
         let projectsData = [];
         let entriesData = [];
         let filteredReportData = []; 
+        let globalVatRate = 18;
         
         let unsubscribes = [];
 
         window.addEventListener('DOMContentLoaded', async () => {
             if (window.location.protocol === 'file:') {
                 const loginContainer = document.querySelector('#login-screen .bg-white');
-                if(loginContainer) {
-                    loginContainer.innerHTML += `
-                        <div class="mt-6 p-4 bg-red-50 text-red-700 rounded-lg text-sm border border-red-200 text-right">
-                            <i class="fas fa-exclamation-triangle ml-2"></i> 
-                            <strong>שגיאת סביבת פיתוח:</strong> זיהינו שהקובץ נפתח ישירות מהמחשב (file://). 
-                            התחברות עם Google דורשת הפעלה דרך שרת מקומי (localhost).
-                        </div>`;
-                }
+                if(loginContainer) loginContainer.innerHTML += `<div class="mt-6 p-4 bg-red-50 text-red-700 rounded-lg text-sm border border-red-200">יש להריץ דרך שרת מקומי (localhost)</div>`;
             }
 
             if(Object.keys(firebaseConfig).length > 0) {
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
-                const provider = new GoogleAuthProvider();
 
                 document.getElementById('google-login-btn').addEventListener('click', async () => {
-                    try { await signInWithPopup(auth, provider); } 
+                    try { await signInWithPopup(auth, new GoogleAuthProvider()); } 
                     catch (error) { showToast("שגיאה בהתחברות."); }
                 });
 
                 document.getElementById('logout-btn').addEventListener('click', async () => {
                     await signOut(auth);
-                    showToast("התנתקת בהצלחה");
+                    cleanupData();
+                    localStorage.clear(); // קריטי: ניקוי טיימרים וזיכרון מקומי
+                    window.location.reload(); // פותר את באג ההתחברות האוטומטית
                 });
 
                 onAuthStateChanged(auth, user => {
@@ -494,12 +523,10 @@
                         document.getElementById('user-name').innerText = user.displayName || 'משתמש';
                         document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/150';
                         
-                        document.getElementById('manualDate').valueAsDate = new Date();
-                        
-                        // קריאה ראשונית בטוחה ללא אירוע לחיצה
+                        initDateFields();
                         window.setReportDates('all', null); 
-                        
                         setupListeners();
+                        restoreActiveTimer(); // שחזור טיימר רץ
                     } else {
                         userId = null;
                         document.getElementById('login-screen').classList.remove('hidden');
@@ -529,40 +556,80 @@
             if (!userId) return;
             cleanupData();
 
+            unsubscribes.push(onSnapshot(doc(db, 'artifacts', appId, 'users', userId, 'settings', 'general'), (docSnap) => {
+                if(docSnap.exists() && docSnap.data().vatRate !== undefined) {
+                    globalVatRate = docSnap.data().vatRate;
+                    document.getElementById('vatRateSetting').value = globalVatRate;
+                }
+                if(entriesData.length > 0) window.generateReport();
+            }));
+
             unsubscribes.push(onSnapshot(getDbRef('clients'), (snapshot) => {
                 clientsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 updateClientsUI();
-            }, (e) => console.error(e)));
+            }));
 
             unsubscribes.push(onSnapshot(getDbRef('projects'), (snapshot) => {
                 projectsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 updateProjectsUI();
-            }, (e) => console.error(e)));
+            }));
 
             unsubscribes.push(onSnapshot(getDbRef('entries'), (snapshot) => {
                 entriesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                entriesData.sort((a, b) => new Date(b.date) - new Date(a.date));
+                entriesData.sort((a, b) => new Date(`${b.startDate}T${b.startTime}`) - new Date(`${a.startDate}T${a.startTime}`));
                 updateDashboardStats();
                 window.generateReport(); 
-            }, (e) => console.error(e)));
+            }));
         }
+
+        // --- Core Time Calculations ---
+        function getDurationDecimal(startD, startT, endD, endT) {
+            if(!startD || !startT || !endD || !endT) return { sec: 0, dec: 0 };
+            const start = new Date(`${startD}T${startT}`);
+            const end = new Date(`${endD}T${endT}`);
+            const diffSec = Math.max(0, (end - start) / 1000);
+            return { sec: diffSec, dec: diffSec / 3600 };
+        }
+
+        function initDateFields() {
+            const now = new Date();
+            const offsetDate = new Date(now.getTime() - (now.getTimezoneOffset() * 60000));
+            const dateStr = offsetDate.toISOString().split('T')[0];
+            const timeStr = now.toTimeString().substring(0, 5);
+            
+            document.getElementById('manualStartDate').value = dateStr;
+            document.getElementById('manualStartTime').value = timeStr;
+            document.getElementById('manualEndDate').value = dateStr;
+            document.getElementById('manualEndTime').value = timeStr;
+            window.calcManualDuration();
+        }
+
+        window.calcManualDuration = () => {
+            const sd = document.getElementById('manualStartDate').value;
+            const st = document.getElementById('manualStartTime').value;
+            const ed = document.getElementById('manualEndDate').value;
+            const et = document.getElementById('manualEndTime').value;
+            const res = getDurationDecimal(sd, st, ed, et);
+            document.getElementById('manualDurationDisplay').innerText = `סה"כ זמן: ${formatSeconds(res.sec, true)} (${res.dec.toFixed(2)} שעות עשרוניות)`;
+        };
+
+        window.saveVatSetting = async () => {
+            const val = Number(document.getElementById('vatRateSetting').value);
+            if(val >= 0) {
+                await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'settings', 'general'), { vatRate: val }, { merge: true });
+                showToast("אחוז מע\"מ עודכן בהצלחה");
+            }
+        };
 
         // --- UI UPDATES ---
         
         function updateClientsUI() {
-            const selects = [
-                { id: 'timerClientSelect', text: '-- בחר לקוח --' }, 
-                { id: 'manualClientSelect', text: '-- בחר לקוח --' }, 
-                { id: 'newProjectClient', text: '-- בחר לקוח קשור --' }, 
-                { id: 'filterClientSelect', text: '-- כל הלקוחות --' },
-                { id: 'editEntryClient', text: '-- בחר לקוח --'}
-            ];
-            
-            selects.forEach(sel => {
-                const el = document.getElementById(sel.id);
+            const selects = ['timerClientSelect', 'manualClientSelect', 'newProjectClient', 'filterClientSelect', 'editEntryClient'];
+            selects.forEach(id => {
+                const el = document.getElementById(id);
                 if(!el) return;
                 const currentVal = el.value;
-                el.innerHTML = `<option value="">${sel.text}</option>`;
+                el.innerHTML = `<option value="">-- בחר לקוח --</option>`;
                 clientsData.forEach(c => { el.innerHTML += `<option value="${c.id}">${c.name}</option>`; });
                 if (clientsData.find(c => c.id === currentVal)) el.value = currentVal;
             });
@@ -571,16 +638,16 @@
             list.innerHTML = '';
             clientsData.forEach(c => {
                 const rateText = c.hourlyRate ? `(₪${c.hourlyRate}/שעה)` : '';
+                const kmRateText = c.kmRate ? `| (₪${c.kmRate}/ק"מ)` : '';
                 list.innerHTML += `
-                    <li class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100 hover:border-indigo-200 transition">
-                        <span class="font-medium"><i class="fas fa-user text-indigo-400 ml-2"></i>${c.name} <span class="text-slate-400 text-xs">${rateText}</span></span>
+                    <li class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
+                        <span class="font-medium"><i class="fas fa-user text-indigo-400 ml-2"></i>${c.name} <span class="text-slate-500 text-xs font-normal">${rateText} ${kmRateText}</span></span>
                         <div class="flex gap-3">
-                            <button onclick="editClientPrompt('${c.id}', '${c.name}', ${c.hourlyRate || 0})" class="text-slate-400 hover:text-indigo-600 transition" title="ערוך לקוח"><i class="fas fa-pen"></i></button>
-                            <button onclick="deleteDocById('clients', '${c.id}')" class="text-slate-400 hover:text-red-600 transition" title="מחק לקוח"><i class="fas fa-trash"></i></button>
+                            <button onclick="editClientPrompt('${c.id}')" class="text-slate-400 hover:text-indigo-600"><i class="fas fa-pen"></i></button>
+                            <button onclick="deleteDocById('clients', '${c.id}')" class="text-slate-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
                         </div>
                     </li>`;
             });
-            updateDashboardStats();
             window.generateReport();
         }
 
@@ -589,66 +656,55 @@
             list.innerHTML = '';
             projectsData.forEach(p => {
                 const client = clientsData.find(c => c.id === p.clientId);
+                const budgetTxt = p.budgetedHours ? `| ${p.budgetedHours} שעות תקציב` : '';
                 list.innerHTML += `
-                    <li class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100 hover:border-indigo-200 transition">
-                        <span class="font-medium"><i class="fas fa-folder text-indigo-400 ml-2"></i>${p.name} <span class="text-xs text-slate-400">(${client ? client.name : 'לקוח נמחק'})</span></span>
+                    <li class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
+                        <span class="font-medium"><i class="fas fa-folder text-indigo-400 ml-2"></i>${p.name} <span class="text-xs text-slate-500 font-normal">(${client ? client.name : '-'}) ${budgetTxt}</span></span>
                         <div class="flex gap-3">
-                            <button onclick="editProjectPrompt('${p.id}', '${p.name}')" class="text-slate-400 hover:text-indigo-600 transition" title="ערוך פרויקט"><i class="fas fa-pen"></i></button>
-                            <button onclick="deleteDocById('projects', '${p.id}')" class="text-slate-400 hover:text-red-600 transition" title="מחק פרויקט"><i class="fas fa-trash"></i></button>
+                            <button onclick="editProjectPrompt('${p.id}')" class="text-slate-400 hover:text-indigo-600"><i class="fas fa-pen"></i></button>
+                            <button onclick="deleteDocById('projects', '${p.id}')" class="text-slate-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
                         </div>
                     </li>`;
             });
             
-            window.filterProjectsByClient('timerClientSelect', 'timerProjectSelect', '-- בחר פרויקט --');
-            window.filterProjectsByClient('manualClientSelect', 'manualProjectSelect', '-- בחר פרויקט --');
+            window.filterProjectsByClient('timerClientSelect', 'timerProjectSelect');
+            window.filterProjectsByClient('manualClientSelect', 'manualProjectSelect');
             window.updateReportProjectFilter();
-            
             updateDashboardStats();
             window.generateReport();
         }
 
-        // פילוח דשבורד היררכי 
         function updateDashboardStats() {
             const now = new Date();
             const currentMonth = now.getMonth();
             const currentYear = now.getFullYear();
             
-            const monthName = now.toLocaleDateString('he-IL', { month: 'long', year: 'numeric' });
-            document.getElementById('dash-main-title').innerText = `סיכום נתונים חודשי - ${monthName}`;
+            document.getElementById('dash-main-title').innerText = `סיכום נתונים חודשי - ${now.toLocaleDateString('he-IL', { month: 'long', year: 'numeric' })}`;
 
             let totalSeconds = 0;
             let totalEarnings = 0;
-            
             const hierarchy = {};
 
             entriesData.forEach(entry => {
-                const d = new Date(entry.date);
+                const d = new Date(entry.startDate);
                 if(d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
                     totalSeconds += entry.durationSeconds;
                     
-                    const hours = entry.durationSeconds / 3600;
                     const client = clientsData.find(c => c.id === entry.clientId);
-                    const earnings = (client && client.hourlyRate) ? (hours * client.hourlyRate) : 0;
-                    
+                    const earnings = (client && client.hourlyRate) ? (entry.durationDec * client.hourlyRate) : 0;
                     totalEarnings += earnings;
 
                     const cId = entry.clientId || 'general';
-                    const cName = client ? client.name : 'לקוחות כלליים / ללא לקוח';
-                    
+                    const cName = client ? client.name : 'ללא לקוח';
                     const pId = entry.projectId || 'general_proj';
                     const proj = projectsData.find(p => p.id === entry.projectId);
-                    const pName = proj ? proj.name : 'משימות כלליות';
+                    const pName = proj ? proj.name : 'ללא פרויקט';
 
-                    if(!hierarchy[cId]) {
-                        hierarchy[cId] = { name: cName, seconds: 0, earnings: 0, projects: {} };
-                    }
-                    
+                    if(!hierarchy[cId]) hierarchy[cId] = { name: cName, seconds: 0, earnings: 0, projects: {} };
                     hierarchy[cId].seconds += entry.durationSeconds;
                     hierarchy[cId].earnings += earnings;
 
-                    if(!hierarchy[cId].projects[pId]) {
-                        hierarchy[cId].projects[pId] = { name: pName, seconds: 0, earnings: 0 };
-                    }
+                    if(!hierarchy[cId].projects[pId]) hierarchy[cId].projects[pId] = { name: pName, seconds: 0, earnings: 0, budgetedHours: proj?.budgetedHours || 0 };
                     hierarchy[cId].projects[pId].seconds += entry.durationSeconds;
                     hierarchy[cId].projects[pId].earnings += earnings;
                 }
@@ -657,67 +713,63 @@
             document.getElementById('dash-total-hours').innerText = formatSeconds(totalSeconds, true);
             document.getElementById('dash-total-earnings').innerText = '₪' + Math.round(totalEarnings).toLocaleString();
 
-            renderHierarchicalBreakdown(hierarchy, totalEarnings);
-        }
-
-        function renderHierarchicalBreakdown(hierarchy, grandTotalEarnings) {
             const container = document.getElementById('dash-hierarchical-breakdown');
             container.innerHTML = '';
             
             const sortedClients = Object.values(hierarchy).sort((a, b) => b.earnings - a.earnings);
-            
-            if(sortedClients.length === 0) {
-                container.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">אין נתונים לחודש הנוכחי</p>';
-                return;
-            }
+            if(sortedClients.length === 0) return container.innerHTML = '<p class="text-slate-400 text-center">אין נתונים לחודש הנוכחי</p>';
 
             sortedClients.forEach(client => {
-                const cPercent = grandTotalEarnings > 0 ? (client.earnings / grandTotalEarnings) * 100 : 0;
-                const cHrsStr = formatSeconds(client.seconds, true);
-                
                 let html = `
-                    <div class="mb-5 bg-white border border-slate-100 rounded-lg p-4 shadow-sm">
-                        <div class="flex justify-between items-end mb-2">
-                            <span class="font-bold text-slate-800 text-lg"><i class="fas fa-user-circle text-indigo-400 ml-2"></i>${client.name}</span>
-                            <span class="text-indigo-600 font-bold text-lg">₪${Math.round(client.earnings).toLocaleString()} <span class="font-normal text-sm text-slate-500 ml-1">(${cHrsStr} ש')</span></span>
+                    <div class="mb-4 bg-white border border-slate-200 rounded p-4">
+                        <div class="flex justify-between items-end mb-3 border-b pb-2">
+                            <span class="font-bold text-slate-800 text-lg"><i class="fas fa-building text-indigo-400 ml-2"></i>${client.name}</span>
+                            <span class="text-indigo-600 font-bold">₪${Math.round(client.earnings).toLocaleString()} <span class="font-normal text-sm">(${formatSeconds(client.seconds, true)} שעות)</span></span>
                         </div>
-                        <div class="w-full bg-slate-100 rounded-full h-2 mb-4">
-                            <div class="bg-indigo-500 h-2 rounded-full" style="width: ${cPercent}%"></div>
-                        </div>
-                        <div class="space-y-3 pr-4 border-r-2 border-indigo-100 mr-2">
+                        <div class="space-y-4">
                 `;
 
-                const sortedProjects = Object.values(client.projects).sort((a, b) => b.earnings - a.earnings);
-                sortedProjects.forEach(proj => {
-                    const pHrsStr = formatSeconds(proj.seconds, true);
+                Object.values(client.projects).forEach(proj => {
+                    const pHours = proj.seconds / 3600;
+                    let budgetHtml = '';
+                    if(proj.budgetedHours > 0) {
+                        const pct = Math.min(100, (pHours / proj.budgetedHours) * 100);
+                        const colorClass = pct > 90 ? 'bg-red-500' : (pct > 75 ? 'bg-amber-400' : 'bg-green-500');
+                        budgetHtml = `
+                            <div class="mt-1">
+                                <div class="flex justify-between text-xs text-slate-500 mb-1">
+                                    <span>נוצלו ${pHours.toFixed(1)} מתוך ${proj.budgetedHours} שעות</span>
+                                    <span class="font-bold">${pct.toFixed(1)}%</span>
+                                </div>
+                                <div class="w-full bg-slate-200 rounded-full h-1.5"><div class="${colorClass} h-1.5 rounded-full" style="width: ${pct}%"></div></div>
+                            </div>
+                        `;
+                    }
+                    
                     html += `
-                        <div class="flex justify-between text-sm items-center bg-slate-50 p-2 rounded">
-                            <span class="text-slate-600"><i class="fas fa-caret-left text-slate-400 ml-2"></i>${proj.name}</span>
-                            <span class="text-slate-600 font-medium">₪${Math.round(proj.earnings).toLocaleString()} <span class="text-xs text-slate-400 ml-1">(${pHrsStr} ש')</span></span>
+                        <div class="bg-slate-50 p-3 rounded">
+                            <div class="flex justify-between text-sm items-center mb-1">
+                                <span class="font-medium text-slate-700">${proj.name}</span>
+                                <span class="text-slate-600">₪${Math.round(proj.earnings).toLocaleString()} (${pHours.toFixed(2)} שעות)</span>
+                            </div>
+                            ${budgetHtml}
                         </div>
                     `;
                 });
-
                 html += `</div></div>`;
                 container.innerHTML += html;
             });
         }
 
-        // --- מודול הדוחות החכמים ---
-        
         window.setReportDates = (preset, btnElement = null) => {
-            // איפוס כל הכפתורים למצב ברירת מחדל
             document.querySelectorAll('#reports .bg-slate-800, #reports .bg-indigo-50').forEach(btn => {
                 btn.className = "text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-100 transition";
             });
-            
-            // הדגשת הכפתור הפעיל על ידי אלמנט שהועבר בצורה מפורשת
             if (btnElement) {
                  btnElement.classList.replace('bg-indigo-50', 'bg-slate-800');
                  btnElement.classList.replace('text-indigo-700', 'text-white');
             } else if (preset === 'all') {
-                 const allBtn = document.getElementById('btn-filter-all');
-                 if(allBtn) allBtn.className = "text-xs bg-slate-800 text-white px-3 py-1 rounded-full transition";
+                 document.getElementById('btn-filter-all').className = "text-xs bg-slate-800 text-white px-3 py-1 rounded-full transition";
             }
 
             const today = new Date();
@@ -741,60 +793,38 @@
 
             const offsetStart = new Date(start.getTime() - (start.getTimezoneOffset() * 60000));
             const offsetEnd = new Date(end.getTime() - (end.getTimezoneOffset() * 60000));
-            
             document.getElementById('filterStartDate').value = offsetStart.toISOString().split('T')[0];
             document.getElementById('filterEndDate').value = offsetEnd.toISOString().split('T')[0];
-            
             window.generateReport();
         };
 
-        // פונקציה ייעודית לתיבת הבחירה המרובה של פרויקטים בדוחות
         window.updateReportProjectFilter = () => {
             const clientEl = document.getElementById('filterClientSelect');
             const projSelect = document.getElementById('filterProjectSelect');
             if(!clientEl || !projSelect) return;
             
             const clientId = clientEl.value;
-            projSelect.innerHTML = ``; // ניקוי
+            projSelect.innerHTML = ``;
+            let relevantProjects = clientId ? projectsData.filter(p => p.clientId === clientId) : projectsData;
             
-            let relevantProjects = projectsData;
-            if (clientId) {
-                relevantProjects = projectsData.filter(p => p.clientId === clientId);
-            }
-            
-            relevantProjects.forEach(p => { 
-                projSelect.innerHTML += `<option value="${p.id}" class="p-1 cursor-pointer rounded mb-1">${p.name}</option>`; 
-            });
-            
-            if(relevantProjects.length === 0) {
-                projSelect.innerHTML = `<option value="" disabled class="text-slate-400 p-1">אין פרויקטים</option>`;
-                projSelect.disabled = true;
-            } else {
-                projSelect.disabled = false;
-            }
+            relevantProjects.forEach(p => { projSelect.innerHTML += `<option value="${p.id}" class="p-1 cursor-pointer rounded mb-1">${p.name}</option>`; });
         };
 
         window.generateReport = () => {
             const startVal = document.getElementById('filterStartDate').value;
             const endVal = document.getElementById('filterEndDate').value;
             const clientId = document.getElementById('filterClientSelect').value;
-            
-            // שאיבת כל הפרויקטים שנבחרו
-            const projectSelect = document.getElementById('filterProjectSelect');
-            const selectedProjects = Array.from(projectSelect.selectedOptions).map(opt => opt.value);
+            const selectedProjects = Array.from(document.getElementById('filterProjectSelect').selectedOptions).map(opt => opt.value);
 
             const startDate = startVal ? new Date(startVal).setHours(0,0,0,0) : null;
             const endDate = endVal ? new Date(endVal).setHours(23,59,59,999) : null;
 
             filteredReportData = entriesData.filter(entry => {
-                const entryDate = new Date(entry.date).getTime();
-                
+                const entryDate = new Date(entry.startDate).getTime();
                 if (startDate && entryDate < startDate) return false;
                 if (endDate && entryDate > endDate) return false;
                 if (clientId && entry.clientId !== clientId) return false;
-                // אם נבחרו פרויקטים ספציפיים (ולא השאירו ריק להצגת הכל), סנן לפיהם:
                 if (selectedProjects.length > 0 && !selectedProjects.includes(entry.projectId || '')) return false;
-                
                 return true;
             });
 
@@ -805,33 +835,41 @@
             let totalEarnings = 0;
 
             if(filteredReportData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-slate-400">לא נמצאו רשומות שתואמות לסינון</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="11" class="p-8 text-center text-slate-400">לא נמצאו רשומות</td></tr>';
             } else {
                 filteredReportData.forEach(entry => {
                     const client = clientsData.find(c => c.id === entry.clientId);
                     const project = projectsData.find(p => p.id === entry.projectId);
                     
                     totalSeconds += entry.durationSeconds;
-                    if(client && client.hourlyRate) {
-                        totalEarnings += (entry.durationSeconds / 3600) * client.hourlyRate;
-                    }
+                    let billableNet = 0;
+                    if(client && client.hourlyRate) billableNet = entry.durationDec * client.hourlyRate;
                     
-                    const typeBadge = entry.entryType === 'manual' 
-                        ? `<span class="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full whitespace-nowrap" title="הוזן ידנית"><i class="fas fa-keyboard"></i></span>`
-                        : `<span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full whitespace-nowrap" title="הוקלט בטיימר"><i class="fas fa-stopwatch"></i></span>`;
+                    const vatAmount = billableNet * (globalVatRate / 100);
+                    const totalGross = billableNet + vatAmount;
+                    totalEarnings += billableNet;
+                    
+                    const travelIcon = entry.travelKm > 0 ? `<i class="fas fa-car text-amber-500" title="${entry.travelDesc} (${entry.travelKm}km)"></i>` : '';
 
                     const tr = document.createElement('tr');
-                    tr.className = "border-b border-slate-100 hover:bg-slate-50 transition";
+                    tr.className = "hover:bg-slate-50 transition";
                     tr.innerHTML = `
-                        <td class="p-4 whitespace-nowrap">${new Date(entry.date).toLocaleDateString('he-IL')}</td>
-                        <td class="p-4 font-medium">${client ? client.name : '-'}</td>
-                        <td class="p-4">${project ? project.name : '-'}</td>
-                        <td class="p-4 text-slate-600">${entry.description || '-'}</td>
-                        <td class="p-4 text-indigo-600 font-bold" dir="ltr">${formatSeconds(entry.durationSeconds, true)}</td>
-                        <td class="p-4 text-center">${typeBadge}</td>
-                        <td class="p-4 text-center flex justify-center gap-3">
-                            <button onclick="openEditModal('${entry.id}')" class="text-slate-400 hover:text-indigo-600 transition" title="ערוך רשומה"><i class="fas fa-edit"></i></button>
-                            <button onclick="deleteDocById('entries', '${entry.id}')" class="text-slate-400 hover:text-red-600 transition" title="מחק רשומה"><i class="fas fa-trash"></i></button>
+                        <td>
+                            <div>${new Date(entry.startDate).toLocaleDateString('he-IL')}</div>
+                            <div class="text-xs text-slate-400">${entry.startTime}</div>
+                        </td>
+                        <td class="font-medium">${client ? client.name : '-'}</td>
+                        <td>${project ? project.name : '-'}</td>
+                        <td class="text-slate-600 truncate max-w-[150px]" title="${entry.description || ''}">${entry.description || '-'}</td>
+                        <td dir="ltr" class="font-bold text-slate-700">${formatSeconds(entry.durationSeconds, true)}</td>
+                        <td class="text-indigo-600">${entry.durationDec.toFixed(2)}</td>
+                        <td>₪${billableNet.toFixed(2)}</td>
+                        <td class="text-slate-400 text-xs">₪${vatAmount.toFixed(2)}</td>
+                        <td class="font-bold text-green-700">₪${totalGross.toFixed(2)}</td>
+                        <td class="text-center">${travelIcon}</td>
+                        <td class="text-center flex justify-center gap-2">
+                            <button onclick="openEditModal('${entry.id}')" class="text-indigo-400 hover:text-indigo-700"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteDocById('entries', '${entry.id}')" class="text-red-400 hover:text-red-700"><i class="fas fa-trash"></i></button>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -842,154 +880,163 @@
             document.getElementById('report-total-earnings').innerText = '₪' + Math.round(totalEarnings).toLocaleString();
         };
 
-
-        // --- פעולות שמירה ועריכה במסד הנתונים ---
+        // --- Database Actions ---
         
         window.addClient = async () => {
             const name = document.getElementById('newClientName').value.trim();
             const rate = document.getElementById('newClientRate').value;
+            const kmRate = document.getElementById('newClientKmRate').value;
             if(!name) return showToast("חובה להזין שם לקוח");
             
             await addDoc(getDbRef('clients'), {
                 name,
                 hourlyRate: rate ? Number(rate) : 0,
+                kmRate: kmRate ? Number(kmRate) : 0,
                 createdAt: serverTimestamp()
             });
             document.getElementById('newClientName').value = '';
             document.getElementById('newClientRate').value = '';
+            document.getElementById('newClientKmRate').value = '';
             showToast("לקוח נוסף בהצלחה");
         };
 
-        window.editClientPrompt = async (id, currentName, currentRate) => {
-            const newName = prompt("ערוך שם לקוח:", currentName);
-            if (newName === null || newName.trim() === "") return;
-            
-            const newRateRaw = prompt("ערוך תעריף שעתי (₪):", currentRate || 0);
-            if (newRateRaw === null) return;
-            const newRate = Number(newRateRaw);
+        window.editClientPrompt = async (id) => {
+            const client = clientsData.find(c => c.id === id);
+            const newName = prompt("ערוך שם לקוח:", client.name);
+            if (!newName) return;
+            const newRate = prompt("ערוך תעריף שעה:", client.hourlyRate || 0);
+            const newKmRate = prompt("ערוך תעריף ק\"מ:", client.kmRate || 0);
 
             await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'clients', id), {
                 name: newName.trim(),
-                hourlyRate: isNaN(newRate) ? 0 : newRate
+                hourlyRate: Number(newRate) || 0,
+                kmRate: Number(newKmRate) || 0
             });
-            showToast("לקוח עודכן בהצלחה");
+            showToast("עודכן בהצלחה");
         };
 
         window.addProject = async () => {
             const clientId = document.getElementById('newProjectClient').value;
             const name = document.getElementById('newProjectName').value.trim();
+            const budget = document.getElementById('newProjectBudget').value;
             if(!clientId || !name) return showToast("חובה לבחור לקוח ולהזין שם");
             
             await addDoc(getDbRef('projects'), {
-                clientId,
-                name,
+                clientId, name,
+                budgetedHours: budget ? Number(budget) : 0,
                 createdAt: serverTimestamp()
             });
             document.getElementById('newProjectName').value = '';
+            document.getElementById('newProjectBudget').value = '';
             showToast("פרויקט נוסף בהצלחה");
         };
 
-        window.editProjectPrompt = async (id, currentName) => {
-            const newName = prompt("ערוך שם פרויקט:", currentName);
-            if (newName === null || newName.trim() === "") return;
+        window.editProjectPrompt = async (id) => {
+            const p = projectsData.find(x => x.id === id);
+            const newName = prompt("ערוך שם פרויקט:", p.name);
+            if (!newName) return;
+            const newBud = prompt("ערוך שעות מתוקצבות:", p.budgetedHours || 0);
 
             await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'projects', id), {
-                name: newName.trim()
+                name: newName.trim(),
+                budgetedHours: Number(newBud) || 0
             });
-            showToast("פרויקט עודכן בהצלחה");
+            showToast("עודכן בהצלחה");
         };
 
         window.deleteDocById = async (collectionName, id) => {
-            if(confirm("למחוק רשומה זו לחלוטין?")) {
+            if(confirm("למחוק רשומה זו? (לא ניתן לשחזר)")) {
                 await deleteDoc(doc(db, 'artifacts', appId, 'users', userId, collectionName, id));
                 showToast("נמחק בהצלחה");
             }
         };
 
         window.saveManualEntry = async () => {
-            const date = document.getElementById('manualDate').value;
+            const startDate = document.getElementById('manualStartDate').value;
+            const startTime = document.getElementById('manualStartTime').value;
+            const endDate = document.getElementById('manualEndDate').value;
+            const endTime = document.getElementById('manualEndTime').value;
+            
             const clientId = document.getElementById('manualClientSelect').value;
             const projectId = document.getElementById('manualProjectSelect').value;
-            const hours = Number(document.getElementById('manualHours').value) || 0;
-            const minutes = Number(document.getElementById('manualMinutes').value) || 0;
-            const desc = document.getElementById('manualDesc').value.trim(); 
+            const desc = document.getElementById('manualDesc').value.trim();
+            const travelDesc = document.getElementById('manualTravelDesc').value.trim();
+            const travelKm = Number(document.getElementById('manualTravelKm').value) || 0;
             
-            if(!date || !clientId || !projectId || (hours === 0 && minutes === 0)) {
-                return showToast("יש למלא תאריך, לבחור לקוח ופרויקט, ולהזין זמן עבודה");
+            if(!startDate || !startTime || !endDate || !endTime || !clientId || !projectId) {
+                return showToast("חובה למלא לקוח, פרויקט וזמנים תקינים.");
             }
             
-            const durationSeconds = (hours * 3600) + (minutes * 60);
+            const res = getDurationDecimal(startDate, startTime, endDate, endTime);
+            if(res.sec <= 0) return showToast("תאריך/שעת הסיום חייבים להיות אחרי ההתחלה.");
             
             await addDoc(getDbRef('entries'), {
-                date,
-                clientId: clientId,
-                projectId: projectId,
-                description: desc,
+                startDate, startTime, endDate, endTime,
+                durationSeconds: res.sec,
+                durationDec: res.dec,
+                clientId, projectId, description: desc,
+                travelDesc, travelKm,
                 entryType: 'manual',
-                durationSeconds,
                 createdAt: serverTimestamp()
             });
             
             document.getElementById('manualDesc').value = '';
-            document.getElementById('manualHours').value = '0';
-            document.getElementById('manualMinutes').value = '0';
-            showToast("רשומה ידנית נשמרה בהצלחה");
+            document.getElementById('manualTravelDesc').value = '';
+            document.getElementById('manualTravelKm').value = '';
+            initDateFields(); // איפוס זמנים
+            showToast("רשומה נשמרה בהצלחה");
         };
 
-        // --- פונקציות חלונית עריכת דיווח (Modal) ---
-        
+        // --- Edit Modal ---
         window.openEditModal = (entryId) => {
             const entry = entriesData.find(e => e.id === entryId);
             if(!entry) return;
 
             document.getElementById('editEntryId').value = entry.id;
+            document.getElementById('editStartDate').value = entry.startDate;
+            document.getElementById('editStartTime').value = entry.startTime;
+            document.getElementById('editEndDate').value = entry.endDate || entry.startDate; // תאימות לאחור
+            document.getElementById('editEndTime').value = entry.endTime || entry.startTime;
             
-            const dateObj = new Date(entry.date);
-            const offsetDate = new Date(dateObj.getTime() - (dateObj.getTimezoneOffset() * 60000));
-            document.getElementById('editEntryDate').value = offsetDate.toISOString().split('T')[0];
-            
-            document.getElementById('editEntryClient').value = entry.clientId || '';
-            window.filterProjectsByClient('editEntryClient', 'editEntryProject', '-- בחר פרויקט --');
-            document.getElementById('editEntryProject').value = entry.projectId || '';
+            document.getElementById('editEntryClient').value = entry.clientId;
+            window.filterProjectsByClient('editEntryClient', 'editEntryProject');
+            document.getElementById('editEntryProject').value = entry.projectId;
             
             document.getElementById('editEntryDesc').value = entry.description || '';
-            
-            const totalMinutes = Math.floor(entry.durationSeconds / 60);
-            document.getElementById('editEntryHours').value = Math.floor(totalMinutes / 60);
-            document.getElementById('editEntryMinutes').value = totalMinutes % 60;
+            document.getElementById('editTravelDesc').value = entry.travelDesc || '';
+            document.getElementById('editTravelKm').value = entry.travelKm || 0;
 
             document.getElementById('edit-entry-modal').classList.remove('hidden');
         };
 
-        window.closeEditModal = () => {
-            document.getElementById('edit-entry-modal').classList.add('hidden');
-        };
+        window.closeEditModal = () => document.getElementById('edit-entry-modal').classList.add('hidden');
 
         window.saveEditEntry = async () => {
             const id = document.getElementById('editEntryId').value;
-            const date = document.getElementById('editEntryDate').value;
+            const startDate = document.getElementById('editStartDate').value;
+            const startTime = document.getElementById('editStartTime').value;
+            const endDate = document.getElementById('editEndDate').value;
+            const endTime = document.getElementById('editEndTime').value;
             const clientId = document.getElementById('editEntryClient').value;
             const projectId = document.getElementById('editEntryProject').value;
             const desc = document.getElementById('editEntryDesc').value.trim();
-            const hours = Number(document.getElementById('editEntryHours').value) || 0;
-            const minutes = Number(document.getElementById('editEntryMinutes').value) || 0;
+            const travelDesc = document.getElementById('editTravelDesc').value.trim();
+            const travelKm = Number(document.getElementById('editTravelKm').value) || 0;
 
-            if(!date || !clientId || !projectId || (hours === 0 && minutes === 0)) {
-                return showToast("חובה למלא תאריך, לקוח, פרויקט וזמן עבודה תקין");
-            }
+            if(!startDate || !endDate || !clientId || !projectId) return showToast("חובה למלא לקוח, פרויקט וזמנים תקינים");
 
-            const durationSeconds = (hours * 3600) + (minutes * 60);
+            const res = getDurationDecimal(startDate, startTime, endDate, endTime);
+            if(res.sec <= 0) return showToast("זמנים שגויים: סיום חייב להיות אחרי התחלה");
 
             await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'entries', id), {
-                date,
-                clientId: clientId,
-                projectId: projectId,
-                description: desc,
-                durationSeconds
+                startDate, startTime, endDate, endTime,
+                durationSeconds: res.sec, durationDec: res.dec,
+                clientId, projectId, description: desc,
+                travelDesc, travelKm
             });
 
             closeEditModal();
-            showToast("רשומה עודכנה בהצלחה");
+            showToast("רשומה עודכנה");
         };
 
         window.filterProjectsByClient = (clientSelectId, projectSelectId, defaultText = '-- בחר פרויקט --') => {
@@ -997,136 +1044,247 @@
             const projSelect = document.getElementById(projectSelectId);
             if(!clientEl || !projSelect) return;
             
-            const clientId = clientEl.value;
             projSelect.innerHTML = `<option value="">${defaultText}</option>`;
-            if(clientId) {
-                const filtered = projectsData.filter(p => p.clientId === clientId);
-                filtered.forEach(p => { projSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`; });
+            if(clientEl.value) {
+                projectsData.filter(p => p.clientId === clientEl.value).forEach(p => { 
+                    projSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`; 
+                });
                 projSelect.disabled = false;
-            } else {
-                projSelect.disabled = true;
-            }
+            } else { projSelect.disabled = true; }
         };
         
         document.getElementById('timerClientSelect')?.addEventListener('change', () => window.filterProjectsByClient('timerClientSelect', 'timerProjectSelect'));
-        document.getElementById('manualClientSelect')?.addEventListener('change', () => window.filterProjectsByClient('manualClientSelect', 'manualProjectSelect', '-- בחר פרויקט --'));
+        document.getElementById('manualClientSelect')?.addEventListener('change', () => window.filterProjectsByClient('manualClientSelect', 'manualProjectSelect'));
 
-        // --- לוגיקת טיימר חיה מעודכנת עם חיווי גלובלי ---
+        // --- Persistent Auto Timer ---
         let timerInterval;
-        let secondsElapsed = 0;
-        let isRunning = false;
+        
+        function restoreActiveTimer() {
+            const stored = localStorage.getItem('timerData');
+            if (stored) {
+                const data = JSON.parse(stored);
+                // שחזור UI בלבד אם הנתונים קיימים
+                document.getElementById('timerClientSelect').value = data.clientId;
+                window.filterProjectsByClient('timerClientSelect', 'timerProjectSelect');
+                document.getElementById('timerProjectSelect').value = data.projectId;
+                document.getElementById('timerDesc').value = data.desc;
+                
+                startTimerUIInterval(data.startTs);
+            }
+        }
 
-        window.toggleTimer = async () => {
+        window.startAutoTimer = () => {
             const clientId = document.getElementById('timerClientSelect').value;
             const projectId = document.getElementById('timerProjectSelect').value;
-            const descInput = document.getElementById('timerDesc');
-            const clientInput = document.getElementById('timerClientSelect');
-            const projectInput = document.getElementById('timerProjectSelect');
+            const desc = document.getElementById('timerDesc').value;
 
-            const startBtn = document.getElementById('startTimerBtn');
-            const stopBtn = document.getElementById('stopTimerBtn');
-            const indicator = document.getElementById('live-indicator');
-            const display = document.getElementById('timerDisplay');
+            if (!clientId || !projectId) return showToast("חובה לבחור לקוח ופרויקט!");
+
+            const startTs = Date.now();
+            localStorage.setItem('timerData', JSON.stringify({ startTs, clientId, projectId, desc }));
             
-            const globalTimerCon = document.getElementById('global-timer');
-            const globalTimerDisplay = document.getElementById('global-timer-time');
+            startTimerUIInterval(startTs);
+        };
+        
+        function startTimerUIInterval(startTs) {
+            document.getElementById('timerClientSelect').disabled = true;
+            document.getElementById('timerProjectSelect').disabled = true;
+            document.getElementById('timerDesc').disabled = true;
 
-            if(!isRunning) {
-                // ולידציית חובה לפני הפעלת הטיימר
-                if (!clientId || !projectId) {
-                    return showToast("חובה לבחור לקוח ופרויקט לפני הפעלת הטיימר");
-                }
+            document.getElementById('startTimerBtn').classList.add('hidden');
+            document.getElementById('stopTimerBtn').classList.remove('hidden');
+            document.getElementById('live-indicator').classList.remove('hidden');
+            document.getElementById('live-indicator').classList.replace('opacity-0', 'opacity-100');
+            document.getElementById('global-timer').classList.remove('hidden');
+            
+            timerInterval = setInterval(() => {
+                const sec = Math.floor((Date.now() - startTs) / 1000);
+                const timeStr = formatSeconds(sec);
+                document.getElementById('timerDisplay').innerText = timeStr;
+                document.getElementById('global-timer-time').innerText = timeStr; 
+            }, 1000);
+        }
 
-                isRunning = true;
-                
-                // נעילת השדות למניעת שינויים תוך כדי עבודה
-                clientInput.disabled = true;
-                projectInput.disabled = true;
-                descInput.disabled = true;
+        window.stopAutoTimer = () => {
+            clearInterval(timerInterval);
+            
+            const stored = localStorage.getItem('timerData');
+            if(!stored) return;
+            const data = JSON.parse(stored);
+            
+            const startD = new Date(data.startTs);
+            const endD = new Date();
+            
+            // Populating Finalize Screen
+            document.getElementById('timerStartDate').value = startD.toISOString().split('T')[0];
+            document.getElementById('timerStartTime').value = startD.toTimeString().substring(0, 5);
+            document.getElementById('timerEndDate').value = endD.toISOString().split('T')[0];
+            document.getElementById('timerEndTime').value = endD.toTimeString().substring(0, 5);
+            
+            document.getElementById('timerTravelDesc').value = '';
+            document.getElementById('timerTravelKm').value = '';
 
-                startBtn.classList.add('hidden');
-                stopBtn.classList.remove('hidden');
-                indicator.classList.remove('hidden');
-                indicator.classList.replace('opacity-0', 'opacity-100');
-                globalTimerCon.classList.remove('hidden');
-                
-                timerInterval = setInterval(() => {
-                    secondsElapsed++;
-                    const timeStr = formatSeconds(secondsElapsed);
-                    display.innerText = timeStr;
-                    globalTimerDisplay.innerText = timeStr; 
-                }, 1000);
-            } else {
-                isRunning = false;
-                clearInterval(timerInterval);
-                
-                // שחרור נעילת השדות
-                clientInput.disabled = false;
-                projectInput.disabled = false;
-                descInput.disabled = false;
-
-                startBtn.classList.remove('hidden');
-                stopBtn.classList.add('hidden');
-                indicator.classList.add('hidden');
-                indicator.classList.replace('opacity-100', 'opacity-0');
-                globalTimerCon.classList.add('hidden'); 
-
-                const desc = descInput.value;
-
-                if(secondsElapsed > 60) {
-                     await addDoc(getDbRef('entries'), {
-                        date: new Date().toISOString(),
-                        clientId: clientId,
-                        projectId: projectId,
-                        description: desc || "",
-                        entryType: 'auto',
-                        durationSeconds: secondsElapsed,
-                        createdAt: serverTimestamp()
-                    });
-                    showToast("הזמן נשמר בענן");
-                } else {
-                    showToast("זמן קצר מדי (פחות מדקה) לא נשמר");
-                }
-
-                secondsElapsed = 0;
-                display.innerText = "00:00:00";
-                globalTimerDisplay.innerText = "00:00:00";
-                descInput.value = "";
-                
-                // איפוס שדות הבחירה כדי שהמשתמש יבחר שוב בפעם הבאה
-                clientInput.value = "";
-                window.filterProjectsByClient('timerClientSelect', 'timerProjectSelect', '-- בחר פרויקט --');
-            }
+            document.getElementById('stopTimerBtn').classList.add('hidden');
+            document.getElementById('timer-finalize-section').classList.remove('hidden');
+            document.getElementById('live-indicator').classList.replace('opacity-100', 'opacity-0');
+            document.getElementById('global-timer').classList.add('hidden'); 
         };
 
-        // --- ייצוא חכם לאקסל ---
-        window.exportFilteredReport = () => {
-            if(filteredReportData.length === 0) return showToast("אין נתונים בסינון הנוכחי לייצוא");
+        window.cancelAutoTimer = () => {
+            localStorage.removeItem('timerData');
+            resetTimerUI();
+            showToast("טיימר בוטל");
+        };
 
-            const exportData = filteredReportData.map(entry => {
-                const client = clientsData.find(c => c.id === entry.clientId);
-                const project = projectsData.find(p => p.id === entry.projectId);
-                
-                return {
-                    "תאריך": new Date(entry.date).toLocaleDateString('he-IL'),
-                    "לקוח": client ? client.name : 'כללי',
-                    "פרויקט": project ? project.name : 'כללי',
-                    "תיאור משימה": entry.description || '',
-                    "סוג דיווח": entry.entryType === 'manual' ? 'ידני' : 'אוטומטי (טיימר)',
-                    "שעות עבודה (עשרוני)": +(entry.durationSeconds / 3600).toFixed(2),
-                    "זמן מדויק (HH:MM)": formatSeconds(entry.durationSeconds, true)
-                };
+        window.saveAutoTimer = async () => {
+            const stored = localStorage.getItem('timerData');
+            if(!stored) return resetTimerUI();
+            const data = JSON.parse(stored);
+            
+            const startDate = document.getElementById('timerStartDate').value;
+            const startTime = document.getElementById('timerStartTime').value;
+            const endDate = document.getElementById('timerEndDate').value;
+            const endTime = document.getElementById('timerEndTime').value;
+            const travelDesc = document.getElementById('timerTravelDesc').value.trim();
+            const travelKm = Number(document.getElementById('timerTravelKm').value) || 0;
+
+            const res = getDurationDecimal(startDate, startTime, endDate, endTime);
+            if(res.sec < 60) {
+                if(!confirm("משך העבודה פחות מדקה. לשמור בכל זאת?")) return cancelAutoTimer();
+            }
+
+            await addDoc(getDbRef('entries'), {
+                startDate, startTime, endDate, endTime,
+                durationSeconds: res.sec, durationDec: res.dec,
+                clientId: data.clientId, projectId: data.projectId, description: data.desc,
+                travelDesc, travelKm,
+                entryType: 'auto',
+                createdAt: serverTimestamp()
             });
 
-            const ws = XLSX.utils.json_to_sheet(exportData);
-            if(!ws['!dir']) ws['!dir'] = 'rtl';
+            localStorage.removeItem('timerData');
+            resetTimerUI();
+            showToast("עבודה נשמרה בהצלחה בענן");
+        };
+
+        function resetTimerUI() {
+            document.getElementById('timerClientSelect').disabled = false;
+            document.getElementById('timerClientSelect').value = "";
+            window.filterProjectsByClient('timerClientSelect', 'timerProjectSelect');
+            document.getElementById('timerProjectSelect').disabled = false;
+            document.getElementById('timerDesc').disabled = false;
+            document.getElementById('timerDesc').value = "";
+            document.getElementById('timerDisplay').innerText = "00:00:00";
+            document.getElementById('global-timer-time').innerText = "00:00:00";
+            
+            document.getElementById('startTimerBtn').classList.remove('hidden');
+            document.getElementById('stopTimerBtn').classList.add('hidden');
+            document.getElementById('timer-finalize-section').classList.add('hidden');
+            document.getElementById('live-indicator').classList.add('hidden');
+            document.getElementById('global-timer').classList.add('hidden');
+        }
+
+        // --- Excel Export (2 Tables, Complex layout) ---
+        window.exportToExcel = () => {
+            if(filteredReportData.length === 0) return showToast("אין נתונים בסינון הנוכחי לייצוא");
 
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "דוח מסונן");
+            const wsData = [];
             
-            const fileName = `TimeTracker_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
-            XLSX.writeFile(wb, fileName);
-            showToast("הדוח הורד בהצלחה!");
+            // --- TABLE 1: HOURS ---
+            wsData.push(["Customer", "Project", "Description", "Start Date", "Start Time", "End Date", "End Time", "Duration (h)", "Duration (decimal)", "Billable Rate (NIS)", "Billable Amount (NIS)", "מעמ", "חיוב כולל מעמ"]);
+            
+            let grandDec = 0, grandBill = 0, grandVat = 0, grandTotal = 0;
+            
+            // Group by project
+            const projectsGroup = {};
+            filteredReportData.forEach(entry => {
+                const pId = entry.projectId || 'none';
+                if(!projectsGroup[pId]) projectsGroup[pId] = [];
+                projectsGroup[pId].push(entry);
+            });
+
+            for (const pId in projectsGroup) {
+                let pDec = 0, pBill = 0, pVat = 0, pTotal = 0;
+                
+                projectsGroup[pId].forEach(entry => {
+                    const client = clientsData.find(c => c.id === entry.clientId);
+                    const project = projectsData.find(p => p.id === entry.projectId);
+                    
+                    const rate = client ? (client.hourlyRate || 0) : 0;
+                    const billNet = entry.durationDec * rate;
+                    const vat = billNet * (globalVatRate / 100);
+                    const totalGross = billNet + vat;
+                    
+                    pDec += entry.durationDec;
+                    pBill += billNet;
+                    pVat += vat;
+                    pTotal += totalGross;
+                    
+                    wsData.push([
+                        client ? client.name : '-',
+                        project ? project.name : '-',
+                        entry.description || '',
+                        new Date(entry.startDate).toLocaleDateString('he-IL'),
+                        entry.startTime,
+                        new Date(entry.endDate).toLocaleDateString('he-IL'),
+                        entry.endTime,
+                        formatSeconds(entry.durationSeconds, true),
+                        entry.durationDec.toFixed(2),
+                        rate,
+                        billNet.toFixed(2),
+                        vat.toFixed(2),
+                        totalGross.toFixed(2)
+                    ]);
+                });
+                
+                grandDec += pDec; grandBill += pBill; grandVat += pVat; grandTotal += pTotal;
+                
+                // Subtotal Row
+                wsData.push(["", "סה\"כ לפרויקט:", "", "", "", "", "", "", pDec.toFixed(2), "", pBill.toFixed(2), pVat.toFixed(2), pTotal.toFixed(2)]);
+            }
+            
+            // Grand Total Row
+            wsData.push([]);
+            wsData.push(["סה\"כ עבודה כולל:", "", "", "", "", "", "", "", grandDec.toFixed(2), "", grandBill.toFixed(2), grandVat.toFixed(2), grandTotal.toFixed(2)]);
+            wsData.push([]);
+            wsData.push([]);
+
+            // --- TABLE 2: TRAVEL ---
+            const travelEntries = filteredReportData.filter(e => e.travelKm > 0);
+            if(travelEntries.length > 0) {
+                wsData.push(["תיאור הנסיעה", "תאריך", "שעה", "ק\"מ", "תעריף לק\"מ", "סה\"כ לפני מעמ", "סה\"כ כולל מעמ"]);
+                
+                let tGrandNet = 0, tGrandGross = 0;
+                
+                travelEntries.forEach(entry => {
+                    const client = clientsData.find(c => c.id === entry.clientId);
+                    const kmRate = client ? (client.kmRate || 0) : 0;
+                    const net = entry.travelKm * kmRate;
+                    const gross = net * (1 + (globalVatRate/100));
+                    
+                    tGrandNet += net;
+                    tGrandGross += gross;
+                    
+                    wsData.push([
+                        entry.travelDesc || '-',
+                        new Date(entry.startDate).toLocaleDateString('he-IL'),
+                        entry.startTime,
+                        entry.travelKm,
+                        kmRate,
+                        net.toFixed(2),
+                        gross.toFixed(2)
+                    ]);
+                });
+                wsData.push(["סה\"כ נסיעות:", "", "", "", "", tGrandNet.toFixed(2), tGrandGross.toFixed(2)]);
+            }
+
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            if(!ws['!dir']) ws['!dir'] = 'rtl';
+            XLSX.utils.book_append_sheet(wb, ws, "דוח מרכז");
+            
+            XLSX.writeFile(wb, `TimeTracker_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+            showToast("דוח מקצועי הופק בהצלחה!");
         };
 
         function formatSeconds(sec, hideSeconds = false) {
@@ -1141,15 +1299,13 @@
             document.getElementById(tabId).classList.add('active');
             
             document.querySelectorAll('.nav-btn').forEach(el => {
-                el.classList.remove('bg-indigo-700');
+                el.classList.remove('bg-indigo-700', 'text-white');
                 el.classList.add('hover:bg-indigo-500');
-                el.classList.remove('text-white');
             });
             const activeBtn = document.getElementById('nav-' + tabId);
             if(activeBtn) {
-                activeBtn.classList.add('bg-indigo-700');
+                activeBtn.classList.add('bg-indigo-700', 'text-white');
                 activeBtn.classList.remove('hover:bg-indigo-500');
-                activeBtn.classList.add('text-white');
             }
         };
 
