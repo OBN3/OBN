@@ -88,36 +88,70 @@
                 // תוך שימוש במפתח הפרטי לבדיקת תקינות התעודה.
                 
                 // 3. פיענוח התעודה הדיגיטלית (נוודא שהסיסמה נכונה)
-// שימוש במנהל חלון גלובלי ליתר ביטחון במקרה שהספרייה נטענה כ-window.forge
-const forgeObj = window.forge || forge;
+				// שימוש במנהל חלון גלובלי ליתר ביטחון במקרה שהספרייה נטענה כ-window.forge
+				const forgeObj = window.forge || forge;
 
-if (!forgeObj) {
-    throw new Error("הספרייה forge לא נטענה כראוי בדפדפן. נסה לרענן את הדף.");
-}
+				if (!forgeObj) {
+					throw new Error("הספרייה forge לא נטענה כראוי בדפדפן. נסה לרענן את הדף.");
+				}
 
-// 3. פיענוח התעודה הדיגיטלית באמצעות האובייקט המתוקן
-const certB64 = forgeObj.util.encode64(new Uint8Array(certBytes).reduce((data, byte) => data + String.fromCharCode(byte), ''));
-const der = forgeObj.util.decode64(certB64);
-const asn1 = forgeObj.asn1.fromDer(der);
-const p12 = forgeObj.pkcs12.pkcs12FromAsn1(asn1, password); // אם הסיסמה שגויה, תזרק שגיאה כאן
+				// 3. פיענוח התעודה הדיגיטלית באמצעות האובייקט המתוקן
+				const certB64 = forgeObj.util.encode64(new Uint8Array(certBytes).reduce((data, byte) => data + String.fromCharCode(byte), ''));
+				const der = forgeObj.util.decode64(certB64);
+				const asn1 = forgeObj.asn1.fromDer(der);
+				const p12 = forgeObj.pkcs12.pkcs12FromAsn1(asn1, password); // אם הסיסמה שגויה, תזרק שגיאה כאן
 
-                // 4. הוספת מטא-דאטה וחותמת ויזואלית ל-PDF
-                pdfDoc.setTitle('קבלה חתומה דיגיטלית');
-                pdfDoc.setAuthor('הופק ונחתם במערכת המקומית');
-                
-                const pages = pdfDoc.getPages();
-                const firstPage = pages[0];
-                
-                // הוספת חותמת טקסט קטנה בתחתית הדף
-                firstPage.drawText('Signed & Verified Locally', {
-                    x: 50,
-                    y: 30,
-                    size: 10,
-                    color: PDFLib.rgb(0.2, 0.6, 0.2), // ירוק
-                });
+// 4. עיצוב והזרקת חותמת גרפית מרשימה בתחתית המסמך
+pdfDoc.setTitle('קבלה חתומה דיגיטלית');
+pdfDoc.setAuthor('אופיר בן נתן'); // שם העסק שלך
 
-                // 5. שמירת ה-PDF החדש
-                const signedPdfBytes = await pdfDoc.save();
+const pages = pdfDoc.getPages();
+const firstPage = pages[0];
+const { width, height } = firstPage.getSize();
+
+// הגדרת מיקום לחותמת (למשל, בפינה השמאלית התחתונה או העליונה)
+const xPos = 50; 
+const yPos = 50; 
+
+// א. ציור רקע חצי שקוף עדין לחותמת
+firstPage.drawRectangle({
+    x: xPos,
+    y: yPos,
+    width: 180,
+    height: 45,
+    borderColor: PDFLib.rgb(0.7, 0.8, 0.9),
+    borderWidth: 1,
+    color: PDFLib.rgb(0.96, 0.98, 1), // רקע כחלחל בהיר מאוד
+    opacity: 0.9,
+});
+
+// ב. ציור אייקון המפתח/וי המאובטח (עיגול כחול עם סימון)
+firstPage.drawCircle({
+    x: xPos + 15,
+    y: yPos + 22,
+    radius: 8,
+    color: PDFLib.rgb(0, 0.45, 0.85), // כחול הגנה
+});
+
+// ג. הוספת טקסט האישור הרשמי (תומך באנגלית/ספרות בצורה מובנית ב-pdf-lib)
+const today = new Date().toLocaleDateString('im-IL').replace(/\./g, '/');
+
+firstPage.drawText('Digitally Signed & Secured', {
+    x: xPos + 30,
+    y: yPos + 25,
+    size: 10,
+    color: PDFLib.rgb(0.1, 0.2, 0.3),
+});
+
+firstPage.drawText(`Date: ${today}`, {
+    x: xPos + 30,
+    y: yPos + 12,
+    size: 9,
+    color: PDFLib.rgb(0.4, 0.4, 0.5),
+});
+
+// 5. שמירת ה-PDF החדש
+const signedPdfBytes = await pdfDoc.save();
 
                 // 6. יצירת קישור והורדה מיידית למחשב
                 const blob = new Blob([signedPdfBytes], { type: 'application/pdf' });
