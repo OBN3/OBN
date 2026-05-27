@@ -199,6 +199,23 @@
                         <p id="import-instructions-text" class="leading-relaxed"></p>
                     </div>
 
+                    <!-- List Filters -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap gap-3 items-center mb-6">
+                        <span class="text-gray-500 font-medium ml-2">סינון:</span>
+                        <select id="list-filter" class="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                            <option value="all" selected>כל הזמנים</option>
+                            <option value="month">החודש הנוכחי</option>
+                            <option value="lastMonth">חודש קודם</option>
+                            <option value="year">השנה הנוכחית</option>
+                            <option value="custom">טווח תאריכים מותאם</option>
+                        </select>
+                        <div id="list-custom-dates" class="hidden items-center gap-2">
+                            <input type="date" id="list-start" class="border border-gray-300 rounded-lg p-2 text-sm">
+                            <span>-</span>
+                            <input type="date" id="list-end" class="border border-gray-300 rounded-lg p-2 text-sm">
+                        </div>
+                    </div>
+
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                         <div class="overflow-x-auto">
                             <table class="w-full text-right text-sm">
@@ -485,6 +502,10 @@
             el('data-form')?.addEventListener('submit', saveDataRecord);
             el('list-tbody')?.addEventListener('click', handleListTableClick);
             
+            el('list-filter')?.addEventListener('change', renderListTable);
+            el('list-start')?.addEventListener('input', renderListTable);
+            el('list-end')?.addEventListener('input', renderListTable);
+            
             el('btn-import-excel')?.addEventListener('click', () => el('file-import-excel').click());
             el('file-import-excel')?.addEventListener('change', handleExcelImport);
 
@@ -764,16 +785,54 @@
 
         function renderListTable() {
             const type = AppData.currentListType;
-            const data = AppData[type];
+            let data = AppData[type];
             const tbody = el('list-tbody');
+            
+            // --- FILTERING LOGIC ---
+            const filterType = el('list-filter') ? el('list-filter').value : 'all';
+            const customStart = el('list-start') ? el('list-start').value : '';
+            const customEnd = el('list-end') ? el('list-end').value : '';
+
+            if(el('list-custom-dates')) {
+                el('list-custom-dates').style.display = (filterType === 'custom') ? 'flex' : 'none';
+            }
+
+            const now = new Date();
+            const currYear = now.getFullYear();
+            const currMonth = now.getMonth();
+
+            const inRange = (dStr) => {
+                if(!dStr) return false;
+                const d = parseToLocal(dStr);
+                if(filterType === 'all') return true;
+                if(filterType === 'year') return d.y === currYear;
+                if(filterType === 'month') return d.y === currYear && d.m === currMonth;
+                if(filterType === 'lastMonth') {
+                    let checkY = currMonth === 0 ? currYear - 1 : currYear;
+                    let checkM = currMonth === 0 ? 11 : currMonth - 1;
+                    return d.y === checkY && d.m === checkM;
+                }
+                if(filterType === 'custom' && customStart && customEnd) {
+                    const s = parseToLocal(customStart);
+                    const e = parseToLocal(customEnd);
+                    const dateVal = d.y * 10000 + d.m * 100 + d.d;
+                    const startVal = s.y * 10000 + s.m * 100 + s.d;
+                    const endVal = e.y * 10000 + e.m * 100 + e.d;
+                    return dateVal >= startVal && dateVal <= endVal;
+                }
+                return true;
+            };
+
+            if(data) data = data.filter(item => inRange(item.date));
+            // -----------------------
             
             const getEntityName = (id) => {
                 const e = [...AppData.customers, ...AppData.suppliers].find(x => x.id === id);
                 return e ? e.name : '-';
             };
 
-            if(data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">לא נמצאו רשומות עדיין. לחץ על 'הוסף חדש' או על 'ייבוא מאקסל'.</td></tr>`;
+            if(!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">לא נמצאו רשומות לתצוגה.</td></tr>`;
                 return;
             }
 
