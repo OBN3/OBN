@@ -296,6 +296,60 @@
         </main>
     </div>
 
+    <!-- MAIN DATA FORM MODAL -->
+    <div id="data-modal" class="fixed inset-0 bg-black/50 z-[60] hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col transform transition-transform">
+            <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
+                <h3 id="data-modal-title" class="text-xl font-bold text-gray-800">הוספת רשומה</h3>
+                <button type="button" class="text-gray-400 hover:text-gray-700 text-2xl leading-none btn-close-data-modal">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <form id="data-form" class="space-y-4">
+                    <input type="hidden" id="form-id">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><label class="block text-sm font-medium mb-1">תאריך</label><input type="date" id="form-date" required class="w-full border border-gray-300 rounded p-2.5"></div>
+                        
+                        <div id="wrapper-entity"><label id="label-entity" class="block text-sm font-medium mb-1">לקוח/ספק</label>
+                            <select id="form-entity" class="w-full border border-gray-300 rounded p-2.5"></select>
+                        </div>
+                        
+                        <div><label class="block text-sm font-medium mb-1">סכום בש"ח (כולל מע"מ)</label><input type="number" step="0.01" id="form-amount" required class="w-full border border-gray-300 rounded p-2.5 font-bold text-blue-600"></div>
+                        
+                        <div id="wrapper-amount-usd" class="hidden"><label class="block text-sm font-medium mb-1">סכום דולר (אופציונלי)</label><input type="number" step="0.01" id="form-amount-usd" class="w-full border border-gray-300 rounded p-2.5"></div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-1">אמצעי תשלום</label>
+                            <select id="form-payment-method" class="w-full border border-gray-300 rounded p-2.5">
+                                <option>העברה בנקאית</option><option>אשראי</option><option>צ'ק</option><option>מזומן</option><option>אפליקציה (Bit/Paybox)</option><option>PayPal</option><option>הוראת קבע</option><option>אחר</option>
+                            </select>
+                        </div>
+                        
+                        <div><label class="block text-sm font-medium mb-1">תיאור (חובה)</label><input type="text" id="form-desc" required class="w-full border border-gray-300 rounded p-2.5"></div>
+                        
+                        <div><label class="block text-sm font-medium mb-1">אסמכתא תשלום</label><input type="text" id="form-ref" class="w-full border border-gray-300 rounded p-2.5"></div>
+                        
+                        <div id="wrapper-invoice" class="hidden"><label class="block text-sm font-medium mb-1">מספר חשבונית ספק</label><input type="text" id="form-invoice" class="w-full border border-gray-300 rounded p-2.5"></div>
+                        
+                        <div id="wrapper-receipt-num" class="hidden"><label class="block text-sm font-medium mb-1">מספר קבלה שלך (אופציונלי)</label><input type="text" id="form-receipt-num" class="w-full border border-gray-300 rounded p-2.5"></div>
+                        
+                        <div id="wrapper-due-date" class="hidden"><label class="block text-sm font-medium mb-1">תאריך פירעון צפוי</label><input type="date" id="form-due-date" class="w-full border border-gray-300 rounded p-2.5"></div>
+                    </div>
+
+                    <div id="wrapper-notes" class="hidden pt-2">
+                        <label class="block text-sm font-medium mb-1">הערות פנימיות</label>
+                        <textarea id="form-notes" class="w-full border border-gray-300 rounded p-2.5 min-h-[80px]"></textarea>
+                    </div>
+
+                    <div class="pt-4 border-t flex justify-end gap-3 mt-4">
+                        <button type="button" class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 btn-close-data-modal">ביטול</button>
+                        <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 shadow-md">שמור רשומה</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Hidden Printable Template for PDF Engine -->
     <div class="hidden">
         <div id="print-template" class="bg-white font-sans text-gray-800" dir="rtl" style="width: 210mm; min-height: 297mm; padding: 20mm; box-sizing: border-box;">
@@ -370,45 +424,52 @@
         };
         
         // --- 1. SETUP EVENT LISTENERS ---
-        document.addEventListener('DOMContentLoaded', () => {
+        function initAppEventListeners() {
             // Login & Auth
-            el('btn-login-google').addEventListener('click', loginWithGoogle);
-            el('btn-logout').addEventListener('click', logout);
+            el('btn-login-google')?.addEventListener('click', loginWithGoogle);
+            el('btn-logout')?.addEventListener('click', logout);
             
             // Navigation
-            el('btn-mobile-toggle').addEventListener('click', toggleMobileMenu);
-            el('nav-links').addEventListener('click', (e) => {
+            el('btn-mobile-toggle')?.addEventListener('click', toggleMobileMenu);
+            el('nav-links')?.addEventListener('click', (e) => {
                 const btn = e.target.closest('.nav-btn');
                 if (btn) switchView(btn.dataset.view);
             });
             
             // Dashboard
-            el('btn-export-excel').addEventListener('click', exportToExcel);
-            el('dash-filter').addEventListener('change', renderDashboard);
-            el('dash-start').addEventListener('input', renderDashboard);
-            el('dash-end').addEventListener('input', renderDashboard);
+            el('btn-export-excel')?.addEventListener('click', exportToExcel);
+            el('dash-filter')?.addEventListener('change', renderDashboard);
+            el('dash-start')?.addEventListener('input', renderDashboard);
+            el('dash-end')?.addEventListener('input', renderDashboard);
             
             // Data Lists
-            el('btn-add-record').addEventListener('click', () => openFormModal());
-            document.querySelectorAll('.btn-close-data-modal').forEach(btn => btn.addEventListener('click', closeFormModal));
-            el('data-form').addEventListener('submit', saveDataRecord);
-            el('list-tbody').addEventListener('click', handleListTableClick);
+            el('btn-add-record')?.addEventListener('click', () => openFormModal());
+            document.querySelectorAll('.btn-close-data-modal').forEach(btn => btn?.addEventListener('click', closeFormModal));
+            el('data-form')?.addEventListener('submit', saveDataRecord);
+            el('list-tbody')?.addEventListener('click', handleListTableClick);
             
             // Receipts
-            el('btn-add-receipt-row').addEventListener('click', addReceiptPaymentRow);
-            el('btn-generate-pdf').addEventListener('click', generateReceiptPDF);
-            el('rec-payments-container').addEventListener('click', handleReceiptContainerClick);
-            el('rec-payments-container').addEventListener('input', handleReceiptContainerInput);
+            el('btn-add-receipt-row')?.addEventListener('click', addReceiptPaymentRow);
+            el('btn-generate-pdf')?.addEventListener('click', generateReceiptPDF);
+            el('rec-payments-container')?.addEventListener('click', handleReceiptContainerClick);
+            el('rec-payments-container')?.addEventListener('input', handleReceiptContainerInput);
             
             // Settings
-            el('tab-general').addEventListener('click', () => switchSettingsTab('general'));
-            el('tab-customers').addEventListener('click', () => switchSettingsTab('customers'));
-            el('tab-suppliers').addEventListener('click', () => switchSettingsTab('suppliers'));
-            el('btn-save-general').addEventListener('click', saveGeneralSettings);
-            el('entity-form').addEventListener('submit', saveEntity);
-            el('btn-reset-entity').addEventListener('click', resetEntityForm);
-            el('ent-table-body').addEventListener('click', handleEntityTableClick);
-        });
+            el('tab-general')?.addEventListener('click', () => switchSettingsTab('general'));
+            el('tab-customers')?.addEventListener('click', () => switchSettingsTab('customers'));
+            el('tab-suppliers')?.addEventListener('click', () => switchSettingsTab('suppliers'));
+            el('btn-save-general')?.addEventListener('click', saveGeneralSettings);
+            el('entity-form')?.addEventListener('submit', saveEntity);
+            el('btn-reset-entity')?.addEventListener('click', resetEntityForm);
+            el('ent-table-body')?.addEventListener('click', handleEntityTableClick);
+        }
+
+        // הפעלה בטוחה של המאזינים (מתמודד עם מצב שהסקריפט נטען אחרי ה-DOM)
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAppEventListeners);
+        } else {
+            initAppEventListeners();
+        }
 
         // --- 2. AUTHENTICATION ---
         async function loginWithGoogle() {
