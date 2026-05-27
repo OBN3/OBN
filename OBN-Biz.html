@@ -11,9 +11,8 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- External Libraries (Excel & PDF) -->
+    <!-- External Libraries (Excel) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap');
@@ -231,8 +230,8 @@
 
                         <div class="pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
                             <div class="font-bold text-2xl text-gray-800">סה"כ קבלה: <span id="rec-total" class="text-blue-600">₪0</span></div>
-                            <button id="btn-generate-pdf" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all flex items-center gap-2 w-full sm:w-auto justify-center">
-                                <i class="fas fa-file-pdf"></i> הפק מסמך PDF ושמור
+                            <button id="btn-print-receipt" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all flex items-center gap-2 w-full sm:w-auto justify-center">
+                                <i class="fas fa-print"></i> הדפס קבלה ושמור
                             </button>
                         </div>
                     </div>
@@ -350,13 +349,6 @@
         </div>
     </div>
 
-    <!-- Hidden Printable Template for PDF Engine -->
-    <div class="hidden">
-        <div id="print-template" class="bg-white font-sans text-gray-800" dir="rtl" style="width: 210mm; min-height: 297mm; padding: 20mm; box-sizing: border-box;">
-            <!-- Rendered by JS -->
-        </div>
-    </div>
-
     <!-- Firebase SDKs & App Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -450,7 +442,7 @@
             
             // Receipts
             el('btn-add-receipt-row')?.addEventListener('click', addReceiptPaymentRow);
-            el('btn-generate-pdf')?.addEventListener('click', generateReceiptPDF);
+            el('btn-print-receipt')?.addEventListener('click', generateReceiptPrint);
             el('rec-payments-container')?.addEventListener('click', handleReceiptContainerClick);
             el('rec-payments-container')?.addEventListener('input', handleReceiptContainerInput);
             
@@ -1003,7 +995,7 @@
             window.XLSX.writeFile(wb, `דוח_הכנסות_הוצאות_${new Date().toISOString().split('T')[0]}.xlsx`);
         }
 
-        // --- 10. RECEIPT GENERATOR (PDF) ---
+        // --- 10. RECEIPT GENERATOR (NATIVE HTML PRINT) ---
         function addReceiptPaymentRow() {
             AppData.receiptPayments.push({ method: 'העברה בנקאית', amount: '', details: '' });
             renderReceiptPayments();
@@ -1055,7 +1047,7 @@
             el('rec-total').innerText = `₪${sum.toLocaleString()}`;
         }
 
-        async function generateReceiptPDF() {
+        async function generateReceiptPrint() {
             const custId = el('rec-customer').value;
             const date = el('rec-date').value;
             const notes = el('rec-notes').value;
@@ -1063,123 +1055,151 @@
             
             if(!custId) return showMsg("חסרים פרטים", "חובה לבחור לקוח על מנת להפיק קבלה.", "error");
             if(payments.length === 0 || payments.every(p=>!p.amount)) return showMsg("חסרים פרטים", "חובה להזין לפחות שורת תשלום אחת הכוללת סכום.", "error");
-            if(!window.html2pdf) return showMsg("סבלנות", "מערכת יצירת ה-PDF נטענת. נסה שוב בעוד רגע.", "error");
 
             const cust = AppData.customers.find(c=>c.id === custId);
             const num = AppData.settings.nextReceipt;
             let sum = payments.reduce((acc, curr) => acc + Number(curr.amount||0), 0);
 
-            let pt = el('print-template');
-            
-            // בניה מחודשת של שורות התשלום תוך שימוש בכיווניות מפורשת
+            // פתיחת חלון באופן מיידי בעת הלחיצה כדי לעקוף חוסמי Popup
+            const printWin = window.open('', '_blank');
+            if(!printWin) {
+                return showMsg("חסימת חלונות קופצים", "נראה שהדפדפן חסם את פתיחת הקבלה. אנא אשר חלונות קופצים (Popups) לאתר זה ונסה שוב.", "error");
+            }
+
             let rowsHtml = '';
             payments.filter(p=>p.amount).forEach(p => {
                 rowsHtml += `
-                <tr style="border-bottom: 1px solid #e5e7eb;">
-                    <td style="padding: 12px; font-weight: bold; font-size: 14px;">${p.method}</td>
-                    <td style="padding: 12px; color:#4b5563; font-size: 14px;">${p.details||'-'}</td>
-                    <td style="padding: 12px; text-align: left; font-weight: bold; font-size: 16px;" dir="ltr"><span style="font-family: Arial, sans-serif;">&#8362;</span> ${Number(p.amount).toLocaleString()}</td>
+                <tr>
+                    <td>${p.method}</td>
+                    <td>${p.details||'-'}</td>
+                    <td dir="ltr" style="text-align: right; font-weight: bold; font-family: Arial, sans-serif;">&#8362; ${Number(p.amount).toLocaleString()}</td>
                 </tr>`;
             });
 
-            // בניה מחדש של תבנית ה-HTML עם טבלאות קשיחות (Table Layout) במקום Flexbox,
-            // והפרדה מוחלטת של תוויות (Labels) מערכים (Values) לתוך תאים שונים בטבלה.
-            // זה מונע מ-html2canvas לבלבל את כיווניות הטקסט בעברית.
-            pt.innerHTML = `
-                <div style="font-family: 'Heebo', sans-serif; direction: rtl; text-align: right; color: #1f2937; padding: 10px;">
-                    
-                    <!-- כותרת עליונה -->
-                    <table style="width: 100%; border-bottom: 3px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; border-collapse: collapse;">
-                        <tr>
-                            <td style="vertical-align: top; width: 60%;">
-                                <h1 style="color:#1d4ed8; font-size: 32px; margin:0;">${AppData.settings.businessName || 'שם העסק'}</h1>
-                                <p style="color:#4b5563; font-size: 18px; margin: 5px 0 0 0;">עוסק פטור / זעיר</p>
-                            </td>
-                            <td style="vertical-align: top; width: 40%; text-align: left;">
-                                <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; display: inline-block; text-align: right; min-width: 220px;">
-                                    <h2 style="margin:0 0 15px 0; font-size: 22px; color:#1f2937; border-bottom: 1px solid #d1d5db; padding-bottom: 5px;">קבלה / מסמך תקבול</h2>
-                                    <table style="width: 100%; font-size: 16px; border-collapse: collapse;">
-                                        <tr>
-                                            <td style="padding-bottom: 5px; color:#4b5563; width: 80px;">מספר:</td>
-                                            <td style="padding-bottom: 5px; font-weight: bold;" dir="ltr">${num}</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="color:#4b5563;">תאריך:</td>
-                                            <td style="font-weight: bold;" dir="ltr">${date.split('-').reverse().join('/')}</td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
-                    
-                    <!-- פרטי לקוח -->
-                    <div style="background: #eff6ff; padding: 20px; border-radius: 10px; border: 1px solid #bfdbfe; margin-bottom: 30px;">
-                        <h3 style="margin:0 0 15px 0; color:#1e40af; border-bottom: 1px solid #93c5fd; padding-bottom: 5px; font-size: 18px;">פרטי לקוח</h3>
-                        <div style="font-size: 20px; font-weight: bold; margin-bottom: 10px;">${cust.name}</div>
-                        <table style="font-size: 16px; border-collapse: collapse;">
-                            <tr>
-                                <td style="padding-bottom: 5px; color:#4b5563; width: 100px;">ת.ז / ע.מ:</td>
-                                <td style="padding-bottom: 5px;">${cust.idNumber||'-'}</td>
-                            </tr>
-                            <tr>
-                                <td style="color:#4b5563;">כתובת:</td>
-                                <td>${cust.address||'-'}</td>
-                            </tr>
-                        </table>
+            // יצירת קוד HTML נקי להדפסה, מותאם לעברית לחלוטין.
+            const printHTML = `
+                <!DOCTYPE html>
+                <html lang="he" dir="rtl">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>קבלה ${num} - ${cust.name}</title>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap');
+                        body { 
+                            font-family: 'Heebo', Arial, sans-serif; 
+                            padding: 40px; 
+                            color: #1f2937; 
+                            line-height: 1.6;
+                            max-width: 800px;
+                            margin: 0 auto;
+                        }
+                        .header { 
+                            display: flex; 
+                            justify-content: space-between; 
+                            border-bottom: 3px solid #2563eb; 
+                            padding-bottom: 20px; 
+                            margin-bottom: 30px; 
+                        }
+                        .biz-title h1 { color: #1d4ed8; font-size: 32px; margin: 0; }
+                        .biz-title p { color: #4b5563; font-size: 18px; margin: 5px 0 0 0; }
+                        
+                        .receipt-meta { background: #f3f4f6; padding: 15px 25px; border-radius: 8px; text-align: right; min-width: 200px; }
+                        .receipt-meta h2 { margin: 0 0 15px 0; font-size: 22px; border-bottom: 1px solid #d1d5db; padding-bottom: 5px; color: #1f2937;}
+                        .meta-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 16px; }
+                        
+                        .customer-box { background: #eff6ff; padding: 20px; border-radius: 8px; border: 1px solid #bfdbfe; margin-bottom: 30px; }
+                        .customer-box h3 { margin: 0 0 15px 0; color: #1e40af; border-bottom: 1px solid #93c5fd; padding-bottom: 5px; font-size: 18px; }
+                        .customer-box p { margin: 5px 0; font-size: 16px; }
+                        
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+                        th { padding: 12px; border-bottom: 2px solid #d1d5db; text-align: right; font-size: 16px; background: #f9fafb; color: #4b5563; }
+                        td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 16px; color: #1f2937; }
+                        
+                        .total-box { display: inline-block; background: #f3f4f6; padding: 15px 30px; border-radius: 8px; font-size: 22px; float: left; }
+                        .total-box span.sum { color: #1d4ed8; font-weight: 900; font-family: Arial, sans-serif; }
+                        
+                        .notes-box { clear: both; margin-top: 70px; padding: 15px; border: 1px dashed #d1d5db; border-radius: 8px; background: #fff; }
+                        .notes-box h4 { margin: 0 0 8px 0; color: #4b5563; font-size: 16px; }
+                        
+                        .footer { text-align: center; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 50px; font-size: 14px; clear: both; }
+                        
+                        /* התאמות ספציפיות בעת ההדפסה עצמה */
+                        @media print {
+                            body { padding: 0; max-width: 100%; }
+                            .no-print { display: none; }
+                            @page { margin: 1cm; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <!-- כפתור הדפסה ידנית - יוסתר בהדפסה עצמה -->
+                    <div class="no-print" style="text-align: left; margin-bottom: 20px;">
+                        <button onclick="window.print()" style="background: #2563eb; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; font-family: inherit;">הדפס קבלה</button>
                     </div>
 
-                    <!-- טבלת פירוט תשלומים -->
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
-                        <thead style="background: #f3f4f6;">
+                    <div class="header">
+                        <div class="biz-title">
+                            <h1>${AppData.settings.businessName || 'שם העסק'}</h1>
+                            <p>עוסק פטור / זעיר</p>
+                        </div>
+                        <div class="receipt-meta">
+                            <h2>קבלה / מסמך תקבול</h2>
+                            <div class="meta-row"><span>מספר:</span> <strong dir="ltr">${num}</strong></div>
+                            <div class="meta-row"><span>תאריך:</span> <strong dir="ltr">${date.split('-').reverse().join('/')}</strong></div>
+                        </div>
+                    </div>
+
+                    <div class="customer-box">
+                        <h3>פרטי לקוח</h3>
+                        <p style="font-size: 22px; font-weight: bold; margin-bottom: 10px;">${cust.name}</p>
+                        <p><strong>ת.ז / ע.מ:</strong> ${cust.idNumber||'-'}</p>
+                        <p><strong>כתובת:</strong> ${cust.address||'-'}</p>
+                    </div>
+
+                    <table>
+                        <thead>
                             <tr>
-                                <th style="padding: 12px; border-bottom: 2px solid #d1d5db; text-align: right; width: 30%; font-size: 16px;">אמצעי תשלום</th>
-                                <!-- שינינו את הכותרת מעט כדי להימנע מגרש וסוגריים שגורמים לשיבוש -->
-                                <th style="padding: 12px; border-bottom: 2px solid #d1d5db; text-align: right; width: 50%; font-size: 16px;">פרטים מזהים (אסמכתא)</th>
-                                <th style="padding: 12px; border-bottom: 2px solid #d1d5db; text-align: left; width: 20%; font-size: 16px;">סכום</th>
+                                <th style="width: 30%;">אמצעי תשלום</th>
+                                <th style="width: 50%;">פרטים מזהים (אסמכתא)</th>
+                                <th style="width: 20%;">סכום</th>
                             </tr>
                         </thead>
-                        <tbody>${rowsHtml}</tbody>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
                     </table>
 
-                    <!-- סך הכל -->
-                    <table style="width: 100%; margin-bottom: 30px; border-collapse: collapse;">
-                        <tr>
-                            <td style="text-align: left;">
-                                <div style="background: #f3f4f6; padding: 15px 30px; border-radius: 8px; font-size: 22px; display: inline-block;">
-                                    <span style="color:#4b5563; margin-left: 15px;">סה"כ שנתקבל:</span>
-                                    <span style="color:#1d4ed8; font-weight: 900;" dir="ltr"><span style="font-family: Arial, sans-serif;">&#8362;</span> ${sum.toLocaleString()}</span>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
+                    <div class="total-box">
+                        סה"כ שנתקבל: <span class="sum" dir="ltr">&#8362; ${sum.toLocaleString()}</span>
+                    </div>
 
-                    <!-- הערות -->
                     ${notes ? `
-                    <div style="margin-bottom: 30px; background: #fff; padding: 15px; border: 1px dashed #d1d5db; border-radius: 8px;">
-                        <h4 style="margin: 0 0 8px 0; color: #4b5563; font-size: 16px;">הערות נוספות:</h4>
+                    <div class="notes-box">
+                        <h4>הערות נוספות:</h4>
                         <div style="white-space: pre-wrap; font-size: 15px;">${notes}</div>
                     </div>` : ''}
-                    
-                    <div style="text-align: center; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 50px; font-size: 14px;">
+
+                    <div class="footer">
                         מסמך זה הופק דיגיטלית - תודה רבה
                     </div>
-                </div>
+
+                    <!-- פקודת הדפסה אוטומטית כשהחלון נטען -->
+                    <script>
+                        window.onload = function() {
+                            setTimeout(() => { window.print(); }, 300);
+                        };
+                    <\/script>
+                </body>
+                </html>
             `;
 
-            const opt = {
-                margin: 0,
-                filename: `קבלה_${num}_${cust.name.replace(/\s+/g, '_')}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            pt.parentElement.classList.remove('hidden');
+            // כתיבת ה-HTML לחלון החדש שנפתח
+            printWin.document.open();
+            printWin.document.write(printHTML);
+            printWin.document.close();
             
             try {
-                await window.html2pdf().set(opt).from(pt).save();
-                
+                // רק לאחר מכן מתבצעת השמירה למסד הנתונים
                 await addDoc(collection(db, `${getBasePath()}/incomes`), {
                     date, entityId: cust.id, amount: sum, description: `תקבול מלקוח (קבלה ${num})`,
                     paymentMethod: payments[0].method, reference: payments.map(p=>p.details).join(', '),
@@ -1187,19 +1207,16 @@
                     createdAt: new Date().toISOString()
                 });
                 
-                // עדכון מדויק למספר הקבלה בלי לדרוס שום דבר אחר
                 await setDoc(doc(db, getBasePath(), 'settings', 'main'), { nextReceipt: Number(num) + 1 }, { merge: true });
                 
-                showMsg("הצלחה!", "הקבלה הופקה (מסמך ה-PDF ירד למחשב שלך) ונשמרה אוטומטית בהכנסות העסק.");
+                showMsg("הצלחה!", "הקבלה נשמרה במערכת. חלון ההדפסה נפתח כעת (אם לא נפתח, בדוק את חוסם החלונות הקופצים שלך).");
                 AppData.receiptPayments = [];
                 el('rec-notes').value = '';
                 addReceiptPaymentRow();
 
             } catch(e) {
                 console.error(e);
-                showMsg("שגיאה", "שגיאה בתהליך יצירת הקבלה.", "error");
-            } finally {
-                pt.parentElement.classList.add('hidden');
+                showMsg("שגיאה", "הקבלה נפתחה להדפסה, אך הייתה שגיאה בשמירה למסד הנתונים.", "error");
             }
         }
     </script>
