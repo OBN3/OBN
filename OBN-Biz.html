@@ -355,7 +355,7 @@
     <!-- Firebase SDKs & App Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInAnonymously, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously, signOut, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, doc, setDoc, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase configuration
@@ -378,7 +378,8 @@
             settings: { businessName: '', nextReceipt: 8000, taxPercent: 10 },
             customers: [], suppliers: [], incomes: [], expenses: [], taxAdvances: [],
             receiptPayments: [],
-            entitiesTab: 'general'
+            entitiesTab: 'general',
+            unsubscribers: [] // PROACTIVE: Keep track of listeners to close them on logout/switch
         };
 
         const el = (id) => document.getElementById(id);
@@ -424,6 +425,20 @@
             el('entity-form').addEventListener('submit', saveEntity);
             el('btn-reset-entity').addEventListener('click', resetEntityForm);
             el('ent-table-body').addEventListener('click', handleEntityTableClick);
+
+            // Handle redirect result back from Google Login
+            getRedirectResult(auth).then((result) => {
+                if (result) {
+                    el('login-screen').style.display = 'none';
+                    el('loader').style.display = 'flex';
+                }
+            }).catch((error) => {
+                console.error("Redirect error:", error);
+                el('loader').style.display = 'none';
+                el('login-screen').style.display = 'flex';
+                el('login-error').innerText = "שגיאה בהתחברות עם גוגל. נסה שוב.";
+                el('login-error').style.display = 'block';
+            });
         });
 
         // --- 2. AUTHENTICATION ---
@@ -436,7 +451,7 @@
                 console.error("Auth error:", err); 
                 el('loader').style.display = 'none';
                 el('login-screen').style.display = 'flex';
-                el('login-error').innerText = "שגיאה. ודא שהפעלת 'Anonymous' או 'Google' במסוף Firebase.";
+                el('login-error').innerText = "שגיאה. ודא שהפעלת 'Anonymous' במסוף Firebase.";
                 el('login-error').style.display = 'block';
             }
         }
@@ -447,11 +462,14 @@
         async function loginWithGoogle() {
             try {
                 el('login-error').style.display = 'none';
+                el('loader').style.display = 'flex';
                 const provider = new GoogleAuthProvider();
-                await signInWithPopup(auth, provider);
+                // Changed from signInWithPopup to signInWithRedirect to fix cross-origin policy block
+                await signInWithRedirect(auth, provider);
             } catch (error) {
                 console.error("Google login failed", error);
-                el('login-error').innerText = "ההתחברות בוטלה או נכשלה. נסה שוב.";
+                el('loader').style.display = 'none';
+                el('login-error').innerText = "ההתחברות נכשלה או בוטלה. נסה שוב.";
                 el('login-error').style.display = 'block';
             }
         }
@@ -486,6 +504,9 @@
 
         async function logout() {
             if(confirm("האם אתה בטוח שברצונך להתנתק?")) {
+                // PROACTIVE: Cleanup listeners before logout to avoid permission errors
+                AppData.unsubscribers.forEach(unsub => unsub());
+                AppData.unsubscribers = [];
                 await signOut(auth);
             }
         }
@@ -496,19 +517,25 @@
         }
 
         function setupDatabaseListeners() {
+            // PROACTIVE: Clear existing listeners before starting new ones.
+            // This prevents the "Missing Permissions" error when upgrading from Anonymous to Google Auth
+            AppData.unsubscribers.forEach(unsub => unsub());
+            AppData.unsubscribers = [];
+
             const bp = getBasePath();
             
-            onSnapshot(doc(db, bp, 'settings', 'main'), (docSnap) => {
+            const unsubSettings = onSnapshot(doc(db, bp, 'settings', 'main'), (docSnap) => {
                 if (docSnap.exists()) {
                     AppData.settings = docSnap.data();
                     updateSettingsUI();
                     renderDashboard();
                 }
             }, console.error);
+            AppData.unsubscribers.push(unsubSettings);
 
             const collections = ['customers', 'suppliers', 'incomes', 'expenses', 'taxAdvances'];
             collections.forEach(colName => {
-                onSnapshot(collection(db, bp, colName), (snapshot) => {
+                const unsub = onSnapshot(collection(db, bp, colName), (snapshot) => {
                     const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     if(['incomes', 'expenses', 'taxAdvances'].includes(colName)) {
                         data.sort((a,b) => new Date(b.date) - new Date(a.date));
@@ -524,6 +551,7 @@
                         if(AppData.currentView === colName) renderListTable();
                     }
                 }, console.error);
+                AppData.unsubscribers.push(unsub);
             });
         }
 
