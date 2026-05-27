@@ -234,9 +234,14 @@
 
                         <div class="pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
                             <div class="font-bold text-2xl text-gray-800">סה"כ קבלה: <span id="rec-total" class="text-blue-600">₪0</span></div>
-                            <button id="btn-print-receipt" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all flex items-center gap-2 w-full sm:w-auto justify-center">
-                                <i class="fas fa-print"></i> הדפס קבלה ושמור
-                            </button>
+                            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                                <button id="btn-preview-receipt" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-3.5 rounded-xl font-bold transition-all flex items-center gap-2 justify-center border border-gray-300">
+                                    <i class="fas fa-eye"></i> תצוגה מקדימה
+                                </button>
+                                <button id="btn-print-receipt" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all flex items-center gap-2 justify-center">
+                                    <i class="fas fa-print"></i> הדפס קבלה ושמור
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -467,6 +472,7 @@
             
             // Receipts
             el('btn-add-receipt-row')?.addEventListener('click', addReceiptPaymentRow);
+            el('btn-preview-receipt')?.addEventListener('click', previewReceiptPrint);
             el('btn-print-receipt')?.addEventListener('click', generateReceiptPrint);
             el('rec-payments-container')?.addEventListener('click', handleReceiptContainerClick);
             el('rec-payments-container')?.addEventListener('input', handleReceiptContainerInput);
@@ -1021,7 +1027,7 @@
             };
 
             const incData = ad.incomes.map(i => ({
-                'תאריך': i.date, 'תאריך העברה': i.transferDate || '-', 'לקוח': mapCust(i.entityId), 'תיאור': i.description,
+                'תאריך': i.date, 'תאריך העברה': i.transferDate || '-', 'לקוח': mapCust(i.entityId), 'תיאור': i.description, 'הערות': i.notes || '',
                 'סכום ₪': Number(i.amount), 'אמצעי תשלום': i.paymentMethod, 'אסמכתא': i.reference
             }));
             const expData = ad.expenses.map(e => ({
@@ -1086,26 +1092,7 @@
             el('rec-total').innerText = `₪${sum.toLocaleString()}`;
         }
 
-        async function generateReceiptPrint() {
-            const custId = el('rec-customer').value;
-            const date = el('rec-date').value;
-            const transferDate = el('rec-transfer-date').value;
-            const notes = el('rec-notes').value;
-            const payments = AppData.receiptPayments;
-            
-            if(!custId) return showMsg("חסרים פרטים", "חובה לבחור לקוח על מנת להפיק קבלה.", "error");
-            if(payments.length === 0 || payments.every(p=>!p.amount)) return showMsg("חסרים פרטים", "חובה להזין לפחות שורת תשלום אחת הכוללת סכום.", "error");
-
-            const cust = AppData.customers.find(c=>c.id === custId);
-            const num = AppData.settings.nextReceipt;
-            let sum = payments.reduce((acc, curr) => acc + Number(curr.amount||0), 0);
-
-            // פתיחת חלון באופן מיידי בעת הלחיצה כדי לעקוף חוסמי Popup
-            const printWin = window.open('', '_blank');
-            if(!printWin) {
-                return showMsg("חסימת חלונות קופצים", "נראה שהדפדפן חסם את פתיחת הקבלה. אנא אשר חלונות קופצים (Popups) לאתר זה ונסה שוב.", "error");
-            }
-
+        function getReceiptHTMLTemplate(cust, num, date, transferDate, notes, payments, sum, isPreview = false) {
             let rowsHtml = '';
             payments.filter(p=>p.amount).forEach(p => {
                 rowsHtml += `
@@ -1116,13 +1103,27 @@
                 </tr>`;
             });
 
-            // יצירת קוד HTML נקי להדפסה, מותאם לעברית לחלוטין.
-            const printHTML = `
+            const autoPrintScript = isPreview ? '' : `
+                    <script>
+                        window.onload = function() {
+                            setTimeout(() => { window.print(); }, 300);
+                        };
+                    <\/script>
+            `;
+
+            const previewBanner = isPreview ? `
+                    <div class="no-print" style="background: #fef3c7; color: #92400e; padding: 15px; text-align: center; font-weight: bold; font-size: 18px; border-bottom: 2px solid #f59e0b; margin-bottom: 20px; border-radius: 8px;">
+                        <i class="fas fa-exclamation-triangle"></i> מצב תצוגה מקדימה - הקבלה טרם נשמרה במערכת! לא נעשה חיוב ולא נרשמה הכנסה.
+                    </div>
+            ` : '';
+
+            return `
                 <!DOCTYPE html>
                 <html lang="he" dir="rtl">
                 <head>
                     <meta charset="UTF-8">
-                    <title>קבלה ${num} - ${cust.name}</title>
+                    <title>${isPreview ? 'תצוגה מקדימה - ' : ''}קבלה ${num} - ${cust.name}</title>
+                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                     <style>
                         @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap');
                         body { 
@@ -1168,12 +1169,13 @@
                         /* התאמות ספציפיות בעת ההדפסה עצמה */
                         @media print {
                             body { padding: 0; max-width: 100%; }
-                            .no-print { display: none; }
+                            .no-print { display: none !important; }
                             @page { margin: 1cm; }
                         }
                     </style>
                 </head>
                 <body>
+                    ${previewBanner}
                     <!-- כפתור הדפסה ידנית - יוסתר בהדפסה עצמה -->
                     <div class="no-print" style="text-align: left; margin-bottom: 20px;">
                         <button onclick="window.print()" style="background: #2563eb; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; font-family: inherit;">הדפס קבלה</button>
@@ -1232,15 +1234,58 @@
                         מסמך זה הופק דיגיטלית - תודה רבה
                     </div>
 
-                    <!-- פקודת הדפסה אוטומטית כשהחלון נטען -->
-                    <script>
-                        window.onload = function() {
-                            setTimeout(() => { window.print(); }, 300);
-                        };
-                    <\/script>
+                    ${autoPrintScript}
                 </body>
                 </html>
             `;
+        }
+
+        async function previewReceiptPrint() {
+            const custId = el('rec-customer').value;
+            const date = el('rec-date').value;
+            const transferDate = el('rec-transfer-date').value;
+            const notes = el('rec-notes').value;
+            const payments = AppData.receiptPayments;
+            
+            if(!custId) return showMsg("חסרים פרטים", "חובה לבחור לקוח על מנת להפיק קבלה.", "error");
+            if(payments.length === 0 || payments.every(p=>!p.amount)) return showMsg("חסרים פרטים", "חובה להזין לפחות שורת תשלום אחת הכוללת סכום.", "error");
+
+            const cust = AppData.customers.find(c=>c.id === custId);
+            const num = AppData.settings.nextReceipt;
+            let sum = payments.reduce((acc, curr) => acc + Number(curr.amount||0), 0);
+
+            const printWin = window.open('', '_blank');
+            if(!printWin) {
+                return showMsg("חסימת חלונות קופצים", "נראה שהדפדפן חסם את פתיחת התצוגה המקדימה. אנא אשר חלונות קופצים (Popups) לאתר זה ונסה שוב.", "error");
+            }
+
+            const printHTML = getReceiptHTMLTemplate(cust, num, date, transferDate, notes, payments, sum, true);
+            printWin.document.open();
+            printWin.document.write(printHTML);
+            printWin.document.close();
+        }
+
+        async function generateReceiptPrint() {
+            const custId = el('rec-customer').value;
+            const date = el('rec-date').value;
+            const transferDate = el('rec-transfer-date').value;
+            const notes = el('rec-notes').value;
+            const payments = AppData.receiptPayments;
+            
+            if(!custId) return showMsg("חסרים פרטים", "חובה לבחור לקוח על מנת להפיק קבלה.", "error");
+            if(payments.length === 0 || payments.every(p=>!p.amount)) return showMsg("חסרים פרטים", "חובה להזין לפחות שורת תשלום אחת הכוללת סכום.", "error");
+
+            const cust = AppData.customers.find(c=>c.id === custId);
+            const num = AppData.settings.nextReceipt;
+            let sum = payments.reduce((acc, curr) => acc + Number(curr.amount||0), 0);
+
+            // פתיחת חלון באופן מיידי בעת הלחיצה כדי לעקוף חוסמי Popup
+            const printWin = window.open('', '_blank');
+            if(!printWin) {
+                return showMsg("חסימת חלונות קופצים", "נראה שהדפדפן חסם את פתיחת הקבלה. אנא אשר חלונות קופצים (Popups) לאתר זה ונסה שוב.", "error");
+            }
+
+            const printHTML = getReceiptHTMLTemplate(cust, num, date, transferDate, notes, payments, sum, false);
 
             // כתיבת ה-HTML לחלון החדש שנפתח
             printWin.document.open();
