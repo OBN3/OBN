@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת ניהול עוסק פטור/זעיר</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap');
+        body { font-family: 'Heebo', sans-serif; }
+        
+        /* View Management */
+        .view-section { display: none; opacity: 0; transition: opacity 0.3s ease-in; }
+        .view-section.active { display: block; opacity: 1; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 h-screen overflow-hidden flex flex-col md:flex-row">
+
+    <div id="loader" class="fixed inset-0 bg-gray-50 z-50 flex items-center justify-center">
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin text-blue-600 text-4xl mb-4"></i>
+            <h2 class="text-xl font-medium text-gray-700">טוען מערכת...</h2>
+        </div>
+    </div>
+
+    <div id="login-screen" class="fixed inset-0 bg-gray-50 z-50 hidden items-center justify-center">
+        <div class="bg-white p-8 rounded-2xl shadow-xl text-center max-w-sm w-full mx-4 border border-gray-100">
+            <i class="fas fa-shield-alt text-blue-600 text-5xl mb-4"></i>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">התחברות למערכת</h2>
+            <p class="text-gray-500 mb-6 text-sm">המערכת מאובטחת ומגובה בענן. אנא התחבר לחשבונך.</p>
+            
+            <button id="btn-login-google" class="w-full bg-white border border-gray-300 text-gray-700 py-3 rounded-xl hover:bg-gray-50 transition-colors font-medium flex justify-center items-center gap-3 shadow-sm">
+                <i class="fab fa-google text-red-500 text-lg"></i> התחבר באמצעות Google
+            </button>
+        </div>
+    </div>
+
+    <div id="msg-box" class="fixed inset-0 bg-black/50 z-[100] hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center transform scale-100 transition-transform">
+            <div id="msg-icon" class="mb-4"></div>
+            <h3 id="msg-title" class="text-xl font-bold text-gray-800 mb-2"></h3>
+            <p id="msg-text" class="text-gray-600 mb-6 text-sm whitespace-pre-line"></p>
+            <div class="flex gap-3 justify-center" id="msg-buttons">
+                </div>
+        </div>
+    </div>
+
+    <div id="app-content" class="w-full h-full flex flex-col md:flex-row hidden">
+        
+        <div class="md:hidden bg-white border-b border-gray-200 flex justify-between items-center p-4 z-40 relative shadow-sm">
+            <h1 id="mobile-business-name" class="text-lg font-bold text-gray-800">המערכת שלי</h1>
+            <button id="btn-mobile-toggle" class="text-gray-600 text-2xl"><i class="fas fa-bars"></i></button>
+        </div>
+
+        <aside id="sidebar" class="hidden md:flex flex-col w-full md:w-64 bg-white border-l border-gray-200 h-full absolute md:relative z-30 transition-transform">
+            <div class="p-6 border-b border-gray-100 flex items-center gap-3">
+                <i class="fas fa-building text-blue-600 text-xl"></i>
+                <h1 id="desktop-business-name" class="text-xl font-bold text-gray-900 truncate">המערכת שלי</h1>
+            </div>
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto" id="nav-links">
+                <button data-view="dashboard" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-600 hover:bg-gray-100 active-nav">
+                    <i class="fas fa-chart-pie w-5"></i> <span class="font-medium">לוח בקרה</span>
+                </button>
+                <button data-view="incomes" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-600 hover:bg-gray-100">
+                    <i class="fas fa-arrow-down text-green-500 w-5"></i> <span class="font-medium">הכנסות</span>
+                </button>
+                <button data-view="expenses" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-600 hover:bg-gray-100">
+                    <i class="fas fa-arrow-up text-red-500 w-5"></i> <span class="font-medium">הוצאות</span>
+                </button>
+                <button data-view="taxAdvances" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-600 hover:bg-gray-100">
+                    <i class="fas fa-file-invoice-dollar w-5"></i> <span class="font-medium">מקדמות מס</span>
+                </button>
+                <button data-view="receipt" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-600 hover:bg-gray-100">
+                    <i class="fas fa-print w-5"></i> <span class="font-medium">הפקת קבלה</span>
+                </button>
+                <button data-view="settings" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-600 hover:bg-gray-100">
+                    <i class="fas fa-cog w-5"></i> <span class="font-medium">הגדרות</span>
+                </button>
+            </nav>
+            <div id="auth-section" class="p-4 border-t border-gray-100 bg-gray-50 flex flex-col gap-3">
+                <div class="flex justify-between items-center text-sm w-full">
+                    <div class="flex items-center gap-2 text-gray-600">
+                        <i class="fas fa-user-circle text-lg"></i>
+                        <span id="user-info" class="truncate w-32 font-medium">מחובר</span>
+                    </div>
+                    <button id="btn-logout" title="התנתק" class="text-red-400 hover:text-red-600 p-1 bg-red-50 hover:bg-red-100 rounded-lg px-2 py-1 flex items-center gap-1 transition-colors">
+                        <i class="fas fa-sign-out-alt"></i> יציאה
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto p-4 md:p-8 relative">
+            <div class="max-w-6xl mx-auto">
+                
+                <section id="view-dashboard" class="view-section active">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <h2 class="text-3xl font-bold text-gray-800">לוח בקרה</h2>
+                        <button id="btn-export-excel" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-sm transition-colors flex items-center gap-2">
+                            <i class="fas fa-file-excel"></i> ייצוא דוח אקסל
+                        </button>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap gap-3 items-center mb-6">
+                        <span class="text-gray-500 font-medium ml-2">סינון:</span>
+                        <select id="dash-filter" class="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                            <option value="month">החודש הנוכחי</option>
+                            <option value="lastMonth">חודש קודם</option>
+                            <option value="year">השנה הנוכחית</option>
+                            <option value="all">כל הזמנים</option>
+                            <option value="custom">טווח תאריכים מותאם</option>
+                        </select>
+                        <div id="dash-custom-dates" class="hidden items-center gap-2">
+                            <input type="date" id="dash-start" class="border border-gray-300 rounded-lg p-2 text-sm">
+                            <span>-</span>
+                            <input type="date" id="dash-end" class="border border-gray-300 rounded-lg p-2 text-sm">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-green-100 border-b-4 border-b-green-500">
+                            <h3 class="text-gray-500 text-sm font-medium">סה"כ הכנסות</h3>
+                            <div id="dash-tot-income" class="text-3xl font-bold text-green-600 mt-2">₪0</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-red-100 border-b-4 border-b-red-500">
+                            <h3 class="text-gray-500 text-sm font-medium">סה"כ הוצאות (כולל מע"מ)</h3>
+                            <div id="dash-tot-expense" class="text-3xl font-bold text-red-500 mt-2">₪0</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-blue-100 border-b-4 border-b-blue-500">
+                            <h3 class="text-gray-500 text-sm font-medium">רווח נקי משוער</h3>
+                            <div id="dash-profit" class="text-3xl font-bold text-blue-600 mt-2">₪0</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-purple-100 border-b-4 border-b-purple-500">
+                            <h3 class="text-gray-500 text-sm font-medium">מס הכנסה משוער <span id="dash-tax-rate">(0%)</span></h3>
+                            <div id="dash-tax-est" class="text-3xl font-bold text-purple-600 mt-2">₪0</div>
+                            <p class="text-xs text-gray-500 mt-2">מקדמות שולמו: <span id="dash-tax-paid" class="font-bold">₪0</span></p>
+                        </div>
+                    </div>
+
+                    <div class="grid lg:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                            <h3 class="text-lg font-bold mb-4 text-gray-800 border-b pb-2">הכנסות אחרונות</h3>
+                            <div id="dash-recent-incomes" class="space-y-3"></div>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                            <h3 class="text-lg font-bold mb-4 text-gray-800 border-b pb-2">הוצאות אחרונות</h3>
+                            <div id="dash-recent-expenses" class="space-y-3"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="view-list" class="view-section">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                        <h2 id="list-title" class="text-2xl font-bold text-gray-800">ניהול נתונים</h2>
+                        <div class="flex flex-wrap gap-2">
+                            <input type="file" id="file-import-excel" accept=".xlsx, .xls, .csv" class="hidden">
+                            
+                            <button id="btn-import-excel" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-5 py-2.5 rounded-xl flex items-center gap-2 shadow-sm transition-colors border border-gray-200">
+                                <i class="fas fa-file-import"></i> <span>ייבוא מאקסל</span>
+                            </button>
+                            <button id="btn-add-record" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 shadow-sm transition-colors">
+                                <i class="fas fa-plus"></i> <span id="btn-add-text">הוסף חדש</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="import-instructions" class="hidden bg-blue-50 text-blue-800 text-sm p-4 rounded-xl border border-blue-100 mb-6">
+                        <h4 class="font-bold mb-1 text-base"><i class="fas fa-info-circle"></i> הנחיות לייבוא מאקסל:</h4>
+                        <p id="import-instructions-text" class="leading-relaxed"></p>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap gap-3 items-center mb-6">
+                        <span class="text-gray-500 font-medium ml-2">סינון:</span>
+                        <select id="list-filter" class="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                            <option value="all" selected>כל הזמנים</option>
+                            <option value="month">החודש הנוכחי</option>
+                            <option value="lastMonth">חודש קודם</option>
+                            <option value="year">השנה הנוכחית</option>
+                            <option value="custom">טווח תאריכים מותאם</option>
+                        </select>
+                        <div id="list-custom-dates" class="hidden items-center gap-2">
+                            <input type="date" id="list-start" class="border border-gray-300 rounded-lg p-2 text-sm">
+                            <span>-</span>
+                            <input type="date" id="list-end" class="border border-gray-300 rounded-lg p-2 text-sm">
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-sm">
+                                <thead class="bg-gray-50 text-gray-600 border-b border-gray-100" id="list-thead"></thead>
+                                <tbody class="divide-y divide-gray-50" id="list-tbody"></tbody>
+                                <tfoot id="list-tfoot" class="bg-gray-50 border-t-2 border-gray-200"></tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="view-receipt" class="view-section">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">הפקת קבלה (מספר בא: <span id="rec-next-num" class="text-blue-600"></span>)</h2>
+                    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">בחר לקוח</label>
+                                <select id="rec-customer" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-blue-500">
+                                    <option value="">בחר לקוח מהרשימה...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">תאריך הפקה</label>
+                                <input type="date" id="rec-date" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">תאריך העברה (בפועל)</label>
+                                <input type="date" id="rec-transfer-date" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-4 pb-2 border-b">
+                                <h3 class="font-bold text-lg text-gray-800">פירוט תקבולים</h3>
+                                <button id="btn-add-receipt-row" class="text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+                                    <i class="fas fa-plus"></i> הוסף שורה
+                                </button>
+                            </div>
+                            <div id="rec-payments-container" class="space-y-4">
+                                </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">הערות על גבי הקבלה</label>
+                            <textarea id="rec-notes" class="w-full border border-gray-300 rounded-lg p-3 min-h-[100px] outline-none focus:border-blue-500" placeholder="הערות להדפסה..."></textarea>
+                        </div>
+
+                        <div class="pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <div class="font-bold text-2xl text-gray-800">סה"כ קבלה: <span id="rec-total" class="text-blue-600">₪0</span></div>
+                            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                                <button id="btn-preview-receipt" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-3.5 rounded-xl font-bold transition-all flex items-center gap-2 justify-center border border-gray-300">
+                                    <i class="fas fa-eye"></i> תצוגה מקדימה
+                                </button>
+                                <button id="btn-print-receipt" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all flex items-center gap-2 justify-center">
+                                    <i class="fas fa-print"></i> הדפס קבלה ושמור
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="view-settings" class="view-section">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">הגדרות מערכת וניהול גורמים</h2>
+                    
+                    <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
+                        <button data-tab="general" id="tab-general" class="pb-3 px-6 font-medium whitespace-nowrap border-b-2 border-blue-600 text-blue-600">הגדרות כלליות</button>
+                        <button data-tab="customers" id="tab-customers" class="pb-3 px-6 font-medium whitespace-nowrap text-gray-500 hover:text-gray-700">ניהול לקוחות</button>
+                        <button data-tab="suppliers" id="tab-suppliers" class="pb-3 px-6 font-medium whitespace-nowrap text-gray-500 hover:text-gray-700">ניהול ספקים</button>
+                    </div>
+
+                    <div id="set-general" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 max-w-3xl space-y-5 block">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">שם העסק (יופיע בקבלות)</label>
+                            <input type="text" id="set-biz-name" class="w-full border border-gray-300 rounded-lg p-3">
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">מספר עוסק / ת.ז.</label>
+                                <input type="text" id="set-biz-id" class="w-full border border-gray-300 rounded-lg p-3">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">טלפון</label>
+                                <input type="text" id="set-biz-phone" class="w-full border border-gray-300 rounded-lg p-3">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">אימייל</label>
+                                <input type="email" id="set-biz-email" class="w-full border border-gray-300 rounded-lg p-3">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">כתובת</label>
+                                <input type="text" id="set-biz-address" class="w-full border border-gray-300 rounded-lg p-3">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 border-t border-gray-100 pt-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">מספר קבלה הבא</label>
+                                <input type="number" id="set-next-rec" class="w-full border border-gray-300 rounded-lg p-3">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">אחוז מס הכנסה משוער (%)</label>
+                                <input type="number" step="0.1" id="set-tax-pct" class="w-full border border-gray-300 rounded-lg p-3">
+                            </div>
+                        </div>
+
+                        <button id="btn-save-general" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium w-full sm:w-auto mt-4">שמור שינויים</button>
+                    </div>
+
+                    <div id="set-entities" class="hidden grid md:grid-cols-3 gap-6">
+                        <div class="md:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-fit">
+                            <h3 class="font-bold text-lg mb-4 border-b pb-2" id="ent-form-title">הוספת חדש</h3>
+                            <form id="entity-form" class="space-y-4">
+                                <input type="hidden" id="ent-id">
+                                <div><label class="block text-sm text-gray-600 mb-1">שם (חובה)</label><input type="text" id="ent-name" required class="w-full border p-2 rounded"></div>
+                                <div><label class="block text-sm text-gray-600 mb-1">ע.מ / ת.ז</label><input type="text" id="ent-idnum" class="w-full border p-2 rounded"></div>
+                                <div><label class="block text-sm text-gray-600 mb-1">אימייל</label><input type="email" id="ent-email" class="w-full border p-2 rounded"></div>
+                                <div><label class="block text-sm text-gray-600 mb-1">טלפון</label><input type="text" id="ent-phone" class="w-full border p-2 rounded"></div>
+                                <div><label class="block text-sm text-gray-600 mb-1">כתובת</label><input type="text" id="ent-address" class="w-full border p-2 rounded"></div>
+                                <div class="flex gap-2 pt-2">
+                                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded font-medium">שמור</button>
+                                    <button type="button" id="btn-reset-entity" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded">נקה</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="md:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <table class="w-full text-right text-sm">
+                                <thead class="bg-gray-50 border-b"><tr class="text-gray-600"><th class="p-3">שם</th><th class="p-3">מזהה</th><th class="p-3">קשר</th><th class="p-3">פעולות</th></tr></thead>
+                                <tbody id="ent-table-body" class="divide-y divide-gray-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <div id="data-modal" class="fixed inset-0 bg-black/50 z-[60] hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col transform transition-transform">
+            <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
+                <h3 id="data-modal-title" class="text-xl font-bold text-gray-800">הוספת רשומה</h3>
+                <button type="button" class="text-gray-400 hover:text-gray-700 text-2xl leading-none btn-close-data-modal">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <form id="data-form" class="space-y-4">
+                    <input type="hidden" id="form-id">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><label class="block text-sm font-medium mb-1">תאריך</label><input type="date" id="form-date" required class="w-full border border-gray-300 rounded p-2.5"></div>
+                        
+                        <div id="wrapper-entity"><label id="label-entity" class="block text-sm font-medium mb-1">לקוח/ספק</label>
+                            <select id="form-entity" class="w-full border border-gray-300 rounded p-2.5"></select>
+                        </div>
+                        
+                        <div><label class="block text-sm font-medium mb-1">סכום בש"ח (כולל מע"מ)</label><input type="number" step="0.01" id="form-amount" required class="w-full border border-gray-300 rounded p-2.5 font-bold text-blue-600"></div>
+                        
+                        <div id="wrapper-amount-usd" class="hidden"><label class="block text-sm font-medium mb-1">סכום דולר (אופציונלי)</label><input type="number" step="0.01" id="form-amount-usd" class="w-full border border-gray-300 rounded p-2.5"></div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-1">אמצעי תשלום</label>
+                            <select id="form-payment-method" class="w-full border border-gray-300 rounded p-2.5">
+                                <option>העברה בנקאית</option><option>אשראי</option><option>צ'ק</option><option>מזומן</option><option>אפליקציה (Bit/Paybox)</option><option>PayPal</option><option>העברה מחזורית</option><option>אחר</option>
+                            </select>
+                        </div>
+                        
+                        <div><label class="block text-sm font-medium mb-1">תיאור (חובה)</label><input type="text" id="form-desc" required class="w-full border border-gray-300 rounded p-2.5"></div>
+                        
+                        <div><label class="block text-sm font-medium mb-1">אסמכתא תשלום</label><input type="text" id="form-ref" class="w-full border border-gray-300 rounded p-2.5"></div>
+                        
+                        <div id="wrapper-invoice" class="hidden"><label class="block text-sm font-medium mb-1">מספר חשבונית ספק</label><input type="text" id="form-invoice" class="w-full border border-gray-300 rounded p-2.5"></div>
+                        
+                        <div id="wrapper-receipt-num" class="hidden"><label class="block text-sm font-medium mb-1">מספר קבלה שלך (אופציונלי)</label><input type="text" id="form-receipt-num" class="w-full border border-gray-300 rounded p-2.5"></div>
+                        
+                        <div id="wrapper-due-date" class="hidden"><label class="block text-sm font-medium mb-1">תאריך פירעון צפוי</label><input type="date" id="form-due-date" class="w-full border border-gray-300 rounded p-2.5"></div>
+                    </div>
+
+                    <div id="wrapper-notes" class="hidden pt-2">
+                        <label class="block text-sm font-medium mb-1">הערות פנימיות</label>
+                        <textarea id="form-notes" class="w-full border border-gray-300 rounded p-2.5 min-h-[80px]"></textarea>
+                    </div>
+
+                    <div class="pt-4 border-t flex justify-end gap-3 mt-4">
+                        <button type="button" class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 btn-close-data-modal">ביטול</button>
+                        <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 shadow-md">שמור רשומה</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDmt7unmeQWehEp-nf3i-Aj_rZ6yyjorEI",
+            authDomain: "obn-biz.firebaseapp.com",
+            projectId: "obn-biz",
+            storageBucket: "obn-biz.firebasestorage.app",
+            messagingSenderId: "45008919323",
+            appId: "1:45008919323:web:0b9262b36ea0aa4c0551be"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // State Management
+        const AppData = {
+            user: null, currentView: 'dashboard', currentListType: '',
+            settings: { businessName: '', businessId: '', email: '', phone: '', address: '', nextReceipt: 8000, taxPercent: 10 },
+            customers: [], suppliers: [], incomes: [], expenses: [], taxAdvances: [],
+            receiptPayments: [],
+            entitiesTab: 'general',
+            unsubscribers: []
+        };
+
+        const el = (id) => document.getElementById(id);
+        
+        // --- CUSTOM MODAL SYSTEM ---
+        window.showMsg = function(title, text, type = 'info') {
+            el('msg-title').innerText = title;
+            el('msg-text').innerText = text;
+            el('msg-icon').innerHTML = type === 'error' ? '<i class="fas fa-exclamation-circle text-red-500 text-4xl"></i>' : '<i class="fas fa-info-circle text-blue-500 text-4xl"></i>';
+            el('msg-buttons').innerHTML = `<button id="btn-msg-ok" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-medium w-full">הבנתי</button>`;
+            
+            el('msg-box').classList.remove('hidden');
+            el('msg-box').classList.add('flex');
+            
+            el('btn-msg-ok').addEventListener('click', closeMsg);
+        };
+
+        window.showConfirm = function(title, text, onConfirmCallback) {
+            el('msg-title').innerText = title;
+            el('msg-text').innerText = text;
+            el('msg-icon').innerHTML = '<i class="fas fa-question-circle text-orange-500 text-4xl"></i>';
+            el('msg-buttons').innerHTML = `
+                <button id="btn-confirm-yes" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-xl font-medium flex-1">כן, בצע</button>
+                <button id="btn-confirm-no" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-2.5 rounded-xl font-medium flex-1">ביטול</button>
+            `;
+            
+            el('msg-box').classList.remove('hidden');
+            el('msg-box').classList.add('flex');
+            
+            el('btn-confirm-yes').addEventListener('click', () => { closeMsg(); onConfirmCallback(); });
+            el('btn-confirm-no').addEventListener('click', closeMsg);
+        };
+
+        window.closeMsg = function() {
+            el('msg-box').classList.add('hidden');
+            el('msg-box').classList.remove('flex');
+        };
+        
+        // --- 1. SETUP EVENT LISTENERS & UI ---
+        function setupDynamicYears() {
+            const currYear = new Date().getFullYear();
+            const optionsHTML = `
+                <option value="year-${currYear - 1}">שנת ${currYear - 1}</option>
+                <option value="year-${currYear - 2}">שנת ${currYear - 2}</option>
+                <option value="year-${currYear - 3}">שנת ${currYear - 3}</option>
+            `;
+            
+            const dashSelect = el('dash-filter');
+            const listSelect = el('list-filter');
+            
+            const dashYearOpt = dashSelect.querySelector('option[value="year"]');
+            const listYearOpt = listSelect.querySelector('option[value="year"]');
+            
+            if (dashYearOpt && !dashSelect.querySelector(`option[value="year-${currYear - 1}"]`)) {
+                dashYearOpt.insertAdjacentHTML('afterend', optionsHTML);
+            }
+            if (listYearOpt && !listSelect.querySelector(`option[value="year-${currYear - 1}"]`)) {
+                listYearOpt.insertAdjacentHTML('afterend', optionsHTML);
+            }
+        }
+
+        function initAppEventListeners() {
+            setupDynamicYears();
+
+            // Login & Auth
+            el('btn-login-google')?.addEventListener('click', loginWithGoogle);
+            el('btn-logout')?.addEventListener('click', logout);
+            
+            // Navigation
+            el('btn-mobile-toggle')?.addEventListener('click', toggleMobileMenu);
+            el('nav-links')?.addEventListener('click', (e) => {
+                const btn = e.target.closest('.nav-btn');
+                if (btn) switchView(btn.dataset.view);
+            });
+            
+            // Dashboard & Tools
+            el('btn-export-excel')?.addEventListener('click', exportToExcel);
+            el('dash-filter')?.addEventListener('change', renderDashboard);
+            el('dash-start')?.addEventListener('input', renderDashboard);
+            el('dash-end')?.addEventListener('input', renderDashboard);
+            
+            // Data Lists & Import
+            el('btn-add-record')?.addEventListener('click', () => openFormModal());
+            document.querySelectorAll('.btn-close-data-modal').forEach(btn => btn?.addEventListener('click', closeFormModal));
+            el('data-form')?.addEventListener('submit', saveDataRecord);
+            el('list-tbody')?.addEventListener('click', handleListTableClick);
+            
+            el('list-filter')?.addEventListener('change', renderListTable);
+            el('list-start')?.addEventListener('input', renderListTable);
+            el('list-end')?.addEventListener('input', renderListTable);
+            
+            el('btn-import-excel')?.addEventListener('click', () => el('file-import-excel').click());
+            el('file-import-excel')?.addEventListener('change', handleExcelImport);
+
+            // Receipts
+            el('btn-add-receipt-row')?.addEventListener('click', addReceiptPaymentRow);
+            el('btn-preview-receipt')?.addEventListener('click', previewReceiptPrint);
+            el('btn-print-receipt')?.addEventListener('click', generateReceiptPrint);
+            el('rec-payments-container')?.addEventListener('click', handleReceiptContainerClick);
+            el('rec-payments-container')?.addEventListener('input', handleReceiptContainerInput);
+            
+            // Settings
+            el('tab-general')?.addEventListener('click', () => switchSettingsTab('general'));
+            el('tab-customers')?.addEventListener('click', () => switchSettingsTab('customers'));
+            el('tab-suppliers')?.addEventListener('click', () => switchSettingsTab('suppliers'));
+            el('btn-save-general')?.addEventListener('click', saveGeneralSettings);
+            el('entity-form')?.addEventListener('submit', saveEntity);
+            el('btn-reset-entity')?.addEventListener('click', resetEntityForm);
+            el('ent-table-body')?.addEventListener('click', handleEntityTableClick);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAppEventListeners);
+        } else {
+            initAppEventListeners();
+        }
+
+        // --- 2. AUTHENTICATION ---
+        async function loginWithGoogle() {
+            try {
+                el('loader').style.display = 'flex';
+                const provider = new GoogleAuthProvider();
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Google login failed", error);
+                el('loader').style.display = 'none';
+                showMsg('שגיאת התחברות', 'התחברות עם גוגל נכשלה או בוטלה.', 'error');
+            }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                AppData.user = user;
+                el('loader').style.display = 'none';
+                el('login-screen').style.display = 'none';
+                el('app-content').style.display = 'flex';
+                el('app-content').classList.remove('hidden');
+                
+                el('user-info').innerText = user.email || user.displayName || "מחובר למערכת";
+                
+                setupDatabaseListeners();
+                switchView('dashboard');
+                
+                const today = new Date().toISOString().split('T')[0];
+                el('rec-date').value = today;
+                el('rec-transfer-date').value = today;
+                
+                AppData.receiptPayments = [];
+                addReceiptPaymentRow();
+            } else {
+                el('loader').style.display = 'none';
+                el('app-content').classList.add('hidden');
+                el('app-content').style.display = 'none';
+                el('login-screen').style.display = 'flex';
+            }
+        });
+
+        function logout() {
+            showConfirm('התנתקות', 'האם אתה בטוח שברצונך להתנתק מהמערכת?', async () => {
+                AppData.unsubscribers.forEach(unsub => unsub());
+                AppData.unsubscribers = [];
+                await signOut(auth);
+            });
+        }
+
+        // --- 3. DATABASE LISTENERS ---
+        function getBasePath() { 
+            return `users/${AppData.user.uid}`; 
+        }
+
+        function setupDatabaseListeners() {
+            AppData.unsubscribers.forEach(unsub => unsub());
+            AppData.unsubscribers = [];
+
+            const bp = getBasePath();
+            
+            const unsubSettings = onSnapshot(doc(db, bp, 'settings', 'main'), (docSnap) => {
+                if (docSnap.exists()) {
+                    AppData.settings = { ...AppData.settings, ...docSnap.data() };
+                    updateSettingsUI();
+                    renderDashboard();
+                }
+            }, (err) => {
+                 if(err.code !== 'permission-denied') console.error(err);
+            });
+            AppData.unsubscribers.push(unsubSettings);
+
+            const collections = ['customers', 'suppliers', 'incomes', 'expenses', 'taxAdvances'];
+            collections.forEach(colName => {
+                const unsub = onSnapshot(collection(db, bp, colName), (snapshot) => {
+                    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    if(['incomes', 'expenses', 'taxAdvances'].includes(colName)) {
+                        data.sort((a,b) => {
+                            const dateA = new Date(a.date).getTime() || 0;
+                            const dateB = new Date(b.date).getTime() || 0;
+                            if (dateA === dateB) {
+                                const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                                const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                                return timeB - timeA;
+                            }
+                            return dateB - dateA;
+                        });
+                    }
+                    AppData[colName] = data;
+                    
+                    if(colName === 'customers' || colName === 'suppliers') {
+                        updateSelectDropdowns();
+                        if(AppData.currentView === 'settings') renderEntitiesTable();
+                    }
+                    if(['incomes', 'expenses', 'taxAdvances'].includes(colName)) {
+                        renderDashboard();
+                        if(AppData.currentView === colName) renderListTable();
+                    }
+                }, (err) => {
+                    if(err.code !== 'permission-denied') console.error(err);
+                });
+                AppData.unsubscribers.push(unsub);
+            });
+        }
+
+        // --- 4. VIEW MANAGEMENT ---
+        function switchView(viewName) {
+            AppData.currentView = viewName;
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-50', 'text-blue-700', 'font-bold', 'border-r-4', 'border-blue-600');
+            });
+            
+            if(['incomes', 'expenses', 'taxAdvances'].includes(viewName)) {
+                el('view-list').classList.add('active');
+                AppData.currentListType = viewName;
+                setupListHeaders();
+                renderListTable();
+            } else {
+                el(`view-${viewName}`).classList.add('active');
+                if (viewName === 'dashboard') renderDashboard();
+            }
+
+            const activeBtn = document.querySelector(`.nav-btn[data-view="${viewName}"]`);
+            if (activeBtn) activeBtn.classList.add('bg-blue-50', 'text-blue-700', 'font-bold', 'border-r-4', 'border-blue-600');
+            
+            if(window.innerWidth < 768) el('sidebar').classList.add('hidden');
+        }
+
+        function toggleMobileMenu() {
+            el('sidebar').classList.toggle('hidden');
+        }
+
+        const parseToLocal = (dStr) => {
+            if(!dStr) return {y:0, m:0, d:0};
+            const parts = dStr.split('-');
+            return { y: parseInt(parts[0], 10), m: parseInt(parts[1], 10) - 1, d: parseInt(parts[2], 10) };
+        };
+
+        // --- 5. DASHBOARD RENDERING ---
+        function renderDashboard() {
+            const ad = AppData;
+            const filterType = el('dash-filter').value;
+            const customStart = el('dash-start').value;
+            const customEnd = el('dash-end').value;
+            
+            el('dash-custom-dates').style.display = (filterType === 'custom') ? 'flex' : 'none';
+
+            const now = new Date();
+            const currYear = now.getFullYear();
+            const currMonth = now.getMonth();
+
+            const inRange = (dStr) => {
+                const d = parseToLocal(dStr);
+                if(filterType === 'all') return true;
+                if(filterType === 'year') return d.y === currYear;
+                if(filterType.startsWith('year-')) {
+                    const targetYear = parseInt(filterType.split('-')[1], 10);
+                    return d.y === targetYear;
+                }
+                if(filterType === 'month') return d.y === currYear && d.m === currMonth;
+                if(filterType === 'lastMonth') {
+                    let checkY = currMonth === 0 ? currYear - 1 : currYear;
+                    let checkM = currMonth === 0 ? 11 : currMonth - 1;
+                    return d.y === checkY && d.m === checkM;
+                }
+                if(filterType === 'custom' && customStart && customEnd) {
+                    const s = parseToLocal(customStart);
+                    const e = parseToLocal(customEnd);
+                    const dateVal = d.y * 10000 + d.m * 100 + d.d;
+                    const startVal = s.y * 10000 + s.m * 100 + s.d;
+                    const endVal = e.y * 10000 + e.m * 100 + e.d;
+                    return dateVal >= startVal && dateVal <= endVal;
+                }
+                return true;
+            };
+
+            const fInc = ad.incomes.filter(i => inRange(i.date));
+            const fExp = ad.expenses.filter(e => inRange(e.date));
+            const fTax = ad.taxAdvances.filter(t => inRange(t.date));
+
+            const sumInc = fInc.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+            const sumExp = fExp.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+            const sumTax = fTax.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+            const profit = sumInc - sumExp;
+            const estTax = profit > 0 ? (profit * (ad.settings.taxPercent / 100)) : 0;
+
+            el('dash-tot-income').innerText = `₪${sumInc.toLocaleString()}`;
+            el('dash-tot-expense').innerText = `₪${sumExp.toLocaleString()}`;
+            el('dash-profit').innerText = `₪${profit.toLocaleString()}`;
+            el('dash-tax-est').innerText = `₪${Math.round(estTax).toLocaleString()}`;
+            el('dash-tax-rate').innerText = `(${ad.settings.taxPercent}%)`;
+            el('dash-tax-paid').innerText = `₪${sumTax.toLocaleString()}`;
+
+            const mapCust = id => ad.customers.find(c=>c.id===id)?.name || 'לא ידוע';
+            
+            let incHTML = '';
+            fInc.slice(0,5).forEach(i => {
+                incHTML += `<div class="flex justify-between items-center py-2 border-b border-gray-50 last:border-0 hover:bg-gray-50 rounded px-2">
+                    <div><p class="font-bold text-gray-700">${mapCust(i.entityId)}</p><p class="text-xs text-gray-500">${i.date.split('-').reverse().join('/')} | ${i.description}</p></div>
+                    <span class="text-green-600 font-bold">+₪${Number(i.amount).toLocaleString()}</span>
+                </div>`;
+            });
+            el('dash-recent-incomes').innerHTML = incHTML || '<p class="text-gray-400 text-sm py-4">אין נתונים בתקופה זו.</p>';
+
+            let expHTML = '';
+            fExp.slice(0,5).forEach(e => {
+                expHTML += `<div class="flex justify-between items-center py-2 border-b border-gray-50 last:border-0 hover:bg-gray-50 rounded px-2">
+                    <div><p class="font-bold text-gray-700">${e.description}</p><p class="text-xs text-gray-500">${e.date.split('-').reverse().join('/')}</p></div>
+                    <span class="text-red-500 font-bold">-₪${Number(e.amount).toLocaleString()}</span>
+                </div>`;
+            });
+            el('dash-recent-expenses').innerHTML = expHTML || '<p class="text-gray-400 text-sm py-4">אין נתונים בתקופה זו.</p>';
+        }
+
+        // --- 6. DATA LISTS HANDLING ---
+        function setupListHeaders() {
+            const type = AppData.currentListType;
+            let th = '', title = '';
+            
+            const btnImport = el('btn-import-excel');
+            const importInst = el('import-instructions');
+            const importInstText = el('import-instructions-text');
+
+            if (type === 'incomes' || type === 'expenses') {
+                if(btnImport) btnImport.style.display = 'flex';
+                if(importInst) importInst.classList.remove('hidden');
+
+                if (type === 'incomes') {
+                    importInstText.innerHTML = `<strong>עמודות חובה:</strong> תאריך, סכום, תיאור.<br><strong>עמודות רשות:</strong> לקוח, אמצעי תשלום, אסמכתא, הערות. (אם הלקוח אינו קיים במערכת, הוא ייווצר אוטומטית).`;
+                } else if (type === 'expenses') {
+                    importInstText.innerHTML = `<strong>עמודות חובה:</strong> תאריך, סכום, תיאור.<br><strong>עמודות רשות:</strong> ספק (או לקוח), חשבונית, אמצעי תשלום, דולר. (אם הספק אינו קיים במערכת, הוא ייווצר אוטומטית).`;
+                }
+            } else {
+                if(btnImport) btnImport.style.display = 'none';
+                if(importInst) importInst.classList.add('hidden');
+            }
+
+            if(type === 'incomes') {
+                title = 'ניהול הכנסות';
+                th = '<tr><th class="p-3">תאריך</th><th class="p-3">לקוח</th><th class="p-3">תיאור</th><th class="p-3">סכום</th><th class="p-3 w-24">פעולות</th></tr>';
+            } else if(type === 'expenses') {
+                title = 'ניהול הוצאות';
+                th = '<tr><th class="p-3">תאריך</th><th class="p-3">ספק/לקוח</th><th class="p-3">תיאור / חשבונית</th><th class="p-3">סכום (₪)</th><th class="p-3 w-24">פעולות</th></tr>';
+            } else {
+                title = 'מקדמות מס ששולמו';
+                th = '<tr><th class="p-3">תאריך</th><th class="p-3">תיאור</th><th class="p-3">אמצעי תשלום</th><th class="p-3">סכום</th><th class="p-3 w-24">פעולות</th></tr>';
+            }
+            el('data-modal-title').innerText = title;
+            el('list-title').innerText = title;
+            el('list-thead').innerHTML = th;
+        }
+
+        function renderListTable() {
+            const type = AppData.currentListType;
+            let data = AppData[type];
+            const tbody = el('list-tbody');
+            const tfoot = el('list-tfoot');
+            
+            // --- FILTERING LOGIC ---
+            const filterType = el('list-filter') ? el('list-filter').value : 'all';
+            const customStart = el('list-start') ? el('list-start').value : '';
+            const customEnd = el('list-end') ? el('list-end').value : '';
+
+            if(el('list-custom-dates')) {
+                el('list-custom-dates').style.display = (filterType === 'custom') ? 'flex' : 'none';
+            }
+
+            const now = new Date();
+            const currYear = now.getFullYear();
+            const currMonth = now.getMonth();
+
+            const inRange = (dStr) => {
+                if(!dStr) return false;
+                const d = parseToLocal(dStr);
+                if(filterType === 'all') return true;
+                if(filterType === 'year') return d.y === currYear;
+                if(filterType.startsWith('year-')) {
+                    const targetYear = parseInt(filterType.split('-')[1], 10);
+                    return d.y === targetYear;
+                }
+                if(filterType === 'month') return d.y === currYear && d.m === currMonth;
+                if(filterType === 'lastMonth') {
+                    let checkY = currMonth === 0 ? currYear - 1 : currYear;
+                    let checkM = currMonth === 0 ? 11 : currMonth - 1;
+                    return d.y === checkY && d.m === checkM;
+                }
+                if(filterType === 'custom' && customStart && customEnd) {
+                    const s = parseToLocal(customStart);
+                    const e = parseToLocal(customEnd);
+                    const dateVal = d.y * 10000 + d.m * 100 + d.d;
+                    const startVal = s.y * 10000 + s.m * 100 + s.d;
+                    const endVal = e.y * 10000 + e.m * 100 + e.d;
+                    return dateVal >= startVal && dateVal <= endVal;
+                }
+                return true;
+            };
+
+            if(data) data = data.filter(item => inRange(item.date));
+            // -----------------------
+            
+            const getEntityName = (id) => {
+                const e = [...AppData.customers, ...AppData.suppliers].find(x => x.id === id);
+                return e ? e.name : '-';
+            };
+
+            if(!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">לא נמצאו רשומות לתצוגה.</td></tr>`;
+                tfoot.innerHTML = ''; // Clear footer if no data
+                return;
+            }
+
+            let html = '';
+            data.forEach(item => {
+                let rowInner = '';
+                const dateStr = item.date.split('-').reverse().join('/');
+                const amountFmt = `₪${Number(item.amount).toLocaleString()}`;
+                
+                const actionsStr = `
+                    <div class="flex gap-2">
+                        <button data-action="edit" data-id="${item.id}" class="text-blue-500 hover:bg-blue-50 p-1.5 rounded" title="ערוך"><i class="fas fa-edit"></i></button>
+                        <button data-action="duplicate" data-id="${item.id}" class="text-green-500 hover:bg-green-50 p-1.5 rounded" title="שכפל"><i class="fas fa-copy"></i></button>
+                        <button data-action="delete" data-id="${item.id}" class="text-red-500 hover:bg-red-50 p-1.5 rounded" title="מחק"><i class="fas fa-trash-alt"></i></button>
+                    </div>`;
+
+                if(type === 'incomes') {
+                    rowInner = `<td class="p-3">${dateStr}</td><td class="p-3 font-medium">${getEntityName(item.entityId)}</td><td class="p-3 text-sm">${item.description}</td><td class="p-3 font-bold text-green-600">${amountFmt}</td>`;
+                } else if(type === 'expenses') {
+                    rowInner = `<td class="p-3">${dateStr}</td><td class="p-3 font-medium">${getEntityName(item.entityId)}</td><td class="p-3 text-sm">${item.description}<br><span class="text-xs text-gray-400">ח#' ${item.invoice||'-'}</span></td><td class="p-3 font-bold text-red-500">${amountFmt}</td>`;
+                } else {
+                    rowInner = `<td class="p-3">${dateStr}</td><td class="p-3 text-sm">${item.description}</td><td class="p-3 text-sm">${item.paymentMethod}</td><td class="p-3 font-bold text-gray-800">${amountFmt}</td>`;
+                }
+                html += `<tr class="hover:bg-blue-50/50 transition-colors">${rowInner}<td class="p-3">${actionsStr}</td></tr>`;
+            });
+            tbody.innerHTML = html;
+
+            // --- Render Dynamic Footer Sum ---
+            const totalSum = data.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+            let footHtml = '';
+            if (type === 'incomes' || type === 'expenses') {
+                const colorClass = type === 'incomes' ? 'text-green-600' : 'text-red-500';
+                footHtml = `<tr>
+                                <td colspan="3" class="p-3 font-bold text-gray-700">סה"כ סכומים לתקופה זו:</td>
+                                <td class="p-3 font-bold ${colorClass}">₪${totalSum.toLocaleString()}</td>
+                                <td class="p-3"></td>
+                            </tr>`;
+            } else { // taxAdvances
+                footHtml = `<tr>
+                                <td colspan="3" class="p-3 font-bold text-gray-700">סה"כ שולמו:</td>
+                                <td class="p-3 font-bold text-gray-800">₪${totalSum.toLocaleString()}</td>
+                                <td class="p-3"></td>
+                            </tr>`;
+            }
+            tfoot.innerHTML = footHtml;
+        }
+
+        function handleListTableClick(e) {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            const action = btn.dataset.action;
+            const id = btn.dataset.id;
+            
+            if (action === 'edit') editDataRecord(id);
+            else if (action === 'duplicate') duplicateDataRecord(id);
+            else if (action === 'delete') deleteDataRecord(id);
+        }
+
+        // --- 6.5. EXCEL IMPORT HANDLING ---
+        function parseExcelDate(val) {
+            if (!val) return '';
+            if (typeof val === 'number') {
+                const date = new Date(Math.round((val - 25569) * 86400 * 1000));
+                return date.toISOString().split('T')[0];
+            }
+            if (typeof val === 'string') {
+                if (val.includes('/')) {
+                    const parts = val.split('/');
+                    if (parts.length === 3) {
+                        return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                    }
+                }
+                if (val.includes('-')) {
+                    return val.split('T')[0];
+                }
+            }
+            return '';
+        }
+
+        async function handleExcelImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (!window.XLSX) {
+                showMsg("סבלנות", "מנגנון האקסל עדיין נטען. נסה שוב בעוד מספר שניות.");
+                return;
+            }
+
+            el('loader').style.display = 'flex';
+            
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = window.XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const json = window.XLSX.utils.sheet_to_json(worksheet);
+
+                    let importedCount = 0;
+                    const type = AppData.currentListType; 
+
+                    for (const row of json) {
+                        const amount = parseFloat(row['סכום'] || row['Amount'] || 0);
+                        if (!amount) continue; 
+
+                        const rawDate = row['תאריך'] || row['Date'] || '';
+                        const dateVal = parseExcelDate(rawDate) || new Date().toISOString().split('T')[0];
+                        
+                        const description = row['תיאור'] || row['Description'] || 'יובא מאקסל';
+                        const entityName = row['לקוח'] || row['ספק'] || row['Customer'] || row['Supplier'] || '';
+                        let entityId = '';
+
+                        if (entityName) {
+                            const entities = type === 'incomes' ? AppData.customers : [...AppData.suppliers, ...AppData.customers];
+                            const existing = entities.find(x => x.name.trim() === entityName.trim());
+                            
+                            if (existing) {
+                                entityId = existing.id;
+                            } else {
+                                const newEntity = { name: entityName.trim(), createdAt: new Date().toISOString() };
+                                const entityType = type === 'incomes' ? 'customers' : 'suppliers';
+                                const added = await addDoc(collection(db, `${getBasePath()}/${entityType}`), newEntity);
+                                entityId = added.id;
+                                
+                                if(type === 'incomes') AppData.customers.push({id: added.id, ...newEntity});
+                                else AppData.suppliers.push({id: added.id, ...newEntity});
+                            }
+                        }
+
+                        const docData = {
+                            date: dateVal,
+                            amount: amount,
+                            paymentMethod: row['אמצעי תשלום'] || row['Payment Method'] || 'אחר',
+                            description: description,
+                            reference: row['אסמכתא'] || row['Reference'] || '',
+                            entityId: entityId,
+                            createdAt: new Date().toISOString()
+                        };
+
+                        if (type === 'expenses') {
+                            docData.invoice = String(row['חשבונית'] || '');
+                            docData.amountUSD = row['דולר'] || row['USD'] || '';
+                        } else if (type === 'incomes') {
+                            docData.notes = String(row['הערות'] || '');
+                        }
+
+                        await addDoc(collection(db, `${getBasePath()}/${type}`), docData);
+                        importedCount++;
+                    }
+
+                    showMsg('הצלחה', `יובאו ${importedCount} שורות בהצלחה מתוך קובץ האקסל.`);
+                } catch (err) {
+                    console.error(err);
+                    showMsg('שגיאה', 'אירעה שגיאה בייבוא הקובץ. אנא ודא ששמות העמודות (תאריך, סכום, תיאור, לקוח/ספק...) תקינים לפי התבנית.', 'error');
+                }
+                
+                el('loader').style.display = 'none';
+                el('file-import-excel').value = ''; 
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // --- 7. MODALS & DATA ENTRY ---
+        function openFormModal(idToEdit = null) {
+            const type = AppData.currentListType;
+            el('data-form').reset();
+            el('form-id').value = '';
+            el('form-date').value = new Date().toISOString().split('T')[0];
+            el('data-modal-title').innerText = idToEdit ? 'עריכת רשומה' : 'הוספת רשומה';
+            
+            el('wrapper-entity').style.display = type === 'taxAdvances' ? 'none' : 'block';
+            el('wrapper-amount-usd').style.display = type === 'expenses' ? 'block' : 'none';
+            el('wrapper-invoice').style.display = type === 'expenses' ? 'block' : 'none';
+            el('wrapper-receipt-num').style.display = type === 'incomes' ? 'block' : 'none';
+            el('wrapper-due-date').style.display = type === 'incomes' ? 'block' : 'none';
+            el('wrapper-notes').style.display = type === 'incomes' ? 'block' : 'none';
+
+            const sel = el('form-entity');
+            sel.innerHTML = '<option value="">בחר...</option>';
+            if(type === 'incomes') {
+                el('label-entity').innerText = 'לקוח (חובה)';
+                AppData.customers.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+                sel.required = true;
+            } else if (type === 'expenses') {
+                el('label-entity').innerText = 'ספק/לקוח (חובה)';
+                [...AppData.suppliers, ...AppData.customers].forEach(c => sel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+                sel.required = true;
+            } else {
+                sel.required = false;
+            }
+
+            if(idToEdit) {
+                const item = AppData[type].find(x => x.id === idToEdit);
+                if(item) {
+                    el('form-id').value = item.id;
+                    el('form-date').value = item.date || '';
+                    if(type !== 'taxAdvances') el('form-entity').value = item.entityId || '';
+                    el('form-amount').value = item.amount || '';
+                    if(type==='expenses') el('form-amount-usd').value = item.amountUSD || '';
+                    el('form-payment-method').value = item.paymentMethod || '';
+                    el('form-desc').value = item.description || '';
+                    el('form-ref').value = item.reference || '';
+                    if(type==='expenses') el('form-invoice').value = item.invoice || '';
+                    if(type==='incomes') {
+                        el('form-receipt-num').value = item.receiptNum || '';
+                        el('form-due-date').value = item.dueDate || '';
+                        el('form-notes').value = item.notes || '';
+                    }
+                }
+            }
+            el('data-modal').classList.remove('hidden');
+            el('data-modal').classList.add('flex');
+        }
+
+        function closeFormModal() { 
+            el('data-modal').classList.add('hidden'); 
+            el('data-modal').classList.remove('flex'); 
+        }
+
+        async function saveDataRecord(e) {
+            e.preventDefault();
+            const type = AppData.currentListType;
+            const id = el('form-id').value;
+            
+            const data = {
+                date: el('form-date').value,
+                amount: el('form-amount').value,
+                paymentMethod: el('form-payment-method').value,
+                description: el('form-desc').value,
+                reference: el('form-ref').value,
+                createdAt: new Date().toISOString()
+            };
+            
+            if(type !== 'taxAdvances') data.entityId = el('form-entity').value;
+            if(type === 'expenses') {
+                data.amountUSD = el('form-amount-usd').value;
+                data.invoice = el('form-invoice').value;
+            }
+            if(type === 'incomes') {
+                data.receiptNum = el('form-receipt-num').value;
+                data.dueDate = el('form-due-date').value;
+                data.notes = el('form-notes').value;
+            }
+
+            try {
+                const ref = collection(db, `${getBasePath()}/${type}`);
+                if(id) {
+                    await updateDoc(doc(db, `${getBasePath()}/${type}`, id), data);
+                } else {
+                    await addDoc(ref, data);
+                }
+                closeFormModal();
+            } catch(err) { console.error(err); showMsg("שגיאה", "אירעה שגיאה בשמירת הרשומה.", "error"); }
+        }
+
+        function editDataRecord(id) { openFormModal(id); }
+        function duplicateDataRecord(id) {
+            openFormModal(id);
+            el('form-id').value = ''; 
+            el('form-date').value = new Date().toISOString().split('T')[0];
+            el('data-modal-title').innerText = 'הוספת רשומה (משוכפלת)';
+        }
+        function deleteDataRecord(id) {
+            showConfirm('מחיקת רשומה', 'למחוק שורה זו לצמיתות?', async () => {
+                await deleteDoc(doc(db, `${getBasePath()}/${AppData.currentListType}`, id));
+            });
+        }
+
+        // --- 8. SETTINGS & ENTITIES ---
+        function updateSettingsUI() {
+            const s = AppData.settings;
+            el('desktop-business-name').innerText = s.businessName || 'המערכת שלי';
+            el('mobile-business-name').innerText = s.businessName || 'המערכת שלי';
+            el('set-biz-name').value = s.businessName || '';
+            
+            el('set-biz-id').value = s.businessId || '';
+            el('set-biz-phone').value = s.phone || '';
+            el('set-biz-email').value = s.email || '';
+            el('set-biz-address').value = s.address || '';
+            
+            el('set-next-rec').value = s.nextReceipt || 8000;
+            el('set-tax-pct').value = s.taxPercent || 10;
+            el('rec-next-num').innerText = s.nextReceipt || 8000;
+        }
+
+        function switchSettingsTab(tabName) {
+            AppData.entitiesTab = tabName;
+            ['general', 'customers', 'suppliers'].forEach(t => {
+                el(`tab-${t}`).className = `pb-3 px-6 font-medium whitespace-nowrap ${t===tabName ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`;
+            });
+            el('set-general').style.display = tabName === 'general' ? 'block' : 'none';
+            el('set-entities').style.display = tabName !== 'general' ? 'grid' : 'none';
+            
+            if(tabName !== 'general') {
+                el('ent-form-title').innerText = `הוספת ${tabName === 'customers' ? 'לקוח' : 'ספק'} חדש`;
+                resetEntityForm();
+                renderEntitiesTable();
+            }
+        }
+
+        async function saveGeneralSettings() {
+            const inputNextRec = Number(el('set-next-rec').value);
+            
+            const updates = {
+                businessName: el('set-biz-name').value,
+                businessId: el('set-biz-id').value,
+                phone: el('set-biz-phone').value,
+                email: el('set-biz-email').value,
+                address: el('set-biz-address').value,
+                taxPercent: Number(el('set-tax-pct').value)
+            };
+
+            if (inputNextRec !== AppData.settings.nextReceipt) {
+                updates.nextReceipt = inputNextRec;
+            }
+
+            try {
+                await setDoc(doc(db, getBasePath(), 'settings', 'main'), updates, { merge: true });
+                showMsg('הצלחה', 'ההגדרות נשמרו במערכת.');
+            } catch (err) {
+                console.error(err);
+                showMsg('שגיאה', 'לא ניתן לשמור הגדרות.', 'error');
+            }
+        }
+
+        function resetEntityForm() {
+            el('entity-form').reset();
+            el('ent-id').value = '';
+        }
+
+        async function saveEntity(e) {
+            e.preventDefault();
+            const tab = AppData.entitiesTab;
+            const id = el('ent-id').value;
+            const data = {
+                name: el('ent-name').value, idNumber: el('ent-idnum').value,
+                email: el('ent-email').value, phone: el('ent-phone').value, address: el('ent-address').value
+            };
+            try {
+                if(id) await updateDoc(doc(db, `${getBasePath()}/${tab}`, id), data);
+                else await addDoc(collection(db, `${getBasePath()}/${tab}`), data);
+                resetEntityForm();
+            } catch(err) { console.error(err); showMsg("שגיאה", "אירעה שגיאה בשמירת הגורם.", "error"); }
+        }
+
+        function renderEntitiesTable() {
+            const tab = AppData.entitiesTab;
+            if(tab === 'general') return;
+            const data = AppData[tab];
+            const tbody = el('ent-table-body');
+            
+            if(data.length === 0) { tbody.innerHTML='<tr><td colspan="4" class="p-4 text-center">אין רשומות</td></tr>'; return; }
+            
+            let html = '';
+            data.forEach(item => {
+                const contact = [item.phone, item.email].filter(Boolean).join('<br>');
+                html += `<tr class="hover:bg-gray-50 border-b">
+                    <td class="p-3 font-medium">${item.name}</td>
+                    <td class="p-3 text-sm text-gray-600">${item.idNumber||'-'}</td>
+                    <td class="p-3 text-sm text-gray-600" dir="ltr">${contact}</td>
+                    <td class="p-3">
+                        <button type="button" data-action="edit" data-id="${item.id}" class="text-blue-600 px-2 py-1"><i class="fas fa-edit"></i></button>
+                        <button type="button" data-action="delete" data-id="${item.id}" class="text-red-500 px-2 py-1"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function handleEntityTableClick(e) {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            if (btn.dataset.action === 'edit') editEntity(btn.dataset.id);
+            else if (btn.dataset.action === 'delete') deleteEntity(btn.dataset.id);
+        }
+
+        function editEntity(id) {
+            const item = AppData[AppData.entitiesTab].find(x => x.id === id);
+            if(item) {
+                el('ent-id').value = item.id; el('ent-name').value = item.name;
+                el('ent-idnum').value = item.idNumber||''; el('ent-email').value = item.email||'';
+                el('ent-phone').value = item.phone||''; el('ent-address').value = item.address||'';
+            }
+        }
+
+        function deleteEntity(id) {
+            showConfirm("מחיקה", "האם אתה בטוח שברצונך למחוק גורם זה לצמיתות?", async () => {
+                await deleteDoc(doc(db, `${getBasePath()}/${AppData.entitiesTab}`, id));
+            });
+        }
+
+        function updateSelectDropdowns() {
+            const rCust = el('rec-customer');
+            const currVal = rCust.value;
+            rCust.innerHTML = '<option value="">בחר לקוח...</option>';
+            AppData.customers.forEach(c => rCust.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+            rCust.value = currVal;
+        }
+
+        // --- 9. EXCEL EXPORT ---
+        function exportToExcel() {
+            if(!window.XLSX) return showMsg("סבלנות", "ספריית האקסל עדיין נטענת. נסה שוב בעוד מספר שניות.");
+            const wb = window.XLSX.utils.book_new();
+            const ad = AppData;
+            
+            const mapCust = id => ad.customers.find(c=>c.id===id)?.name || 'לא ידוע';
+            const mapSup = id => {
+                let e = [...ad.suppliers, ...ad.customers].find(x=>x.id===id); return e ? e.name : 'לא ידוע';
+            };
+
+            const incData = ad.incomes.map(i => ({
+                'תאריך': i.date, 'תאריך העברה': i.transferDate || '-', 'לקוח': mapCust(i.entityId), 'תיאור': i.description, 'הערות': i.notes || '',
+                'סכום ₪': Number(i.amount), 'אמצעי תשלום': i.paymentMethod, 'אסמכתא': i.reference
+            }));
+            const expData = ad.expenses.map(e => ({
+                'תאריך': e.date, 'ספק/לקוח': mapSup(e.entityId), 'תיאור': e.description,
+                'חשבונית': e.invoice, 'סכום כולל מע"מ ₪': Number(e.amount), 'דולר': e.amountUSD, 'אמצעי תשלום': e.paymentMethod
+            }));
+            const taxData = ad.taxAdvances.map(t => ({
+                'תאריך': t.date, 'תיאור': t.description, 'אמצעי תשלום': t.paymentMethod,
+                'סכום ₪': Number(t.amount), 'אסמכתא': t.reference || ''
+            }));
+
+            window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.json_to_sheet(incData), "הכנסות");
+            window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.json_to_sheet(expData), "הוצאות");
+            window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.json_to_sheet(taxData), "מקדמות");
+            window.XLSX.writeFile(wb, `דוח_פעילות_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
+        // --- 10. RECEIPT GENERATOR (NATIVE HTML PRINT) ---
+        function addReceiptPaymentRow() {
+            AppData.receiptPayments.push({ method: 'העברה בנקאית', amount: '', details: '' });
+            renderReceiptPayments();
+        }
+
+        function removeReceiptPaymentRow(idx) {
+            AppData.receiptPayments.splice(idx, 1);
+            renderReceiptPayments();
+        }
+
+        function updateReceiptRow(idx, field, val) {
+            AppData.receiptPayments[idx][field] = val;
+            let sum = AppData.receiptPayments.reduce((acc, curr) => acc + Number(curr.amount||0), 0);
+            el('rec-total').innerText = `₪${sum.toLocaleString()}`;
+        }
+
+        function handleReceiptContainerClick(e) {
+            const btn = e.target.closest('button');
+            if (btn && btn.dataset.action === 'remove-row') {
+                removeReceiptPaymentRow(Number(btn.dataset.index));
+            }
+        }
+
+        function handleReceiptContainerInput(e) {
+            if (e.target.dataset.action === 'update-row') {
+                updateReceiptRow(Number(e.target.dataset.index), e.target.dataset.field, e.target.value);
+            }
+        }
+
+        function renderReceiptPayments() {
+            const cont = el('rec-payments-container');
+            cont.innerHTML = '';
+            AppData.receiptPayments.forEach((p, i) => {
+                cont.innerHTML += `
+                <div class="p-4 bg-gray-50 border border-gray-200 rounded-xl flex flex-col md:flex-row gap-3 relative pr-10">
+                    <button type="button" data-action="remove-row" data-index="${i}" class="absolute top-4 right-2 text-red-400 hover:text-red-600"><i class="fas fa-times"></i></button>
+                    <select data-action="update-row" data-index="${i}" data-field="method" class="border p-2 rounded flex-1 text-sm outline-none">
+                        <option ${p.method==='העברה בנקאית'?'selected':''}>העברה בנקאית</option>
+                        <option ${p.method==='צ\'ק'?'selected':''}>צ'ק</option>
+                        <option ${p.method==='אשראי'?'selected':''}>אשראי</option>
+                        <option ${p.method==='מזומן'?'selected':''}>מזומן</option>
+                        <option ${p.method==='אפליקציה'?'selected':''}>אפליקציה (Bit/Paybox)</option>
+                    </select>
+                    <input type="number" placeholder="סכום ₪" value="${p.amount}" data-action="update-row" data-index="${i}" data-field="amount" class="border p-2 rounded w-full md:w-32 text-sm font-bold text-blue-600 outline-none">
+                    <input type="text" placeholder="פרטים (מס' אסמכתא, צ'ק, בנק...)" value="${p.details}" data-action="update-row" data-index="${i}" data-field="details" class="border p-2 rounded flex-2 w-full md:w-1/2 text-sm outline-none">
+                </div>`;
+            });
+            let sum = AppData.receiptPayments.reduce((acc, curr) => acc + Number(curr.amount||0), 0);
+            el('rec-total').innerText = `₪${sum.toLocaleString()}`;
+        }
+
+        function getReceiptHTMLTemplate(cust, num, date, transferDate, notes, payments, sum, isPreview = false) {
+            let rowsHtml = '';
+            payments.filter(p=>p.amount).forEach(p => {
+                rowsHtml += `
+                <tr>
+                    <td>${p.method}</td>
+                    <td>${p.details||'-'}</td>
+                    <td dir="ltr" style="text-align: right; font-weight: bold; font-family: Arial, sans-serif;">&#8362; ${Number(p.amount).toLocaleString()}</td>
+                </tr>`;
+            });
+
+            const autoPrintScript = isPreview ? '' : `
+                    <script>
+                        window.onload = function() {
+                            setTimeout(() => { window.print(); }, 300);
+                        };
+                    <\/script>
+            `;
+
+            const previewBanner = isPreview ? `
+                    <div class="no-print" style="background: #fef3c7; color: #92400e; padding: 15px; text-align: center; font-weight: bold; font-size: 18px; border-bottom: 2px solid #f59e0b; margin-bottom: 20px; border-radius: 8px;">
+                        <i class="fas fa-exclamation-triangle"></i> מצב תצוגה מקדימה - הקבלה טרם נשמרה במערכת! לא נעשה חיוב ולא נרשמה הכנסה.
+                    </div>
+            ` : '';
+
+            return `
+                <!DOCTYPE html>
+                <html lang="he" dir="rtl">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>${isPreview ? 'תצוגה מקדימה - ' : ''}קבלה ${num} - ${cust.name}</title>
+                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap');
+                        body { 
+                            font-family: 'Heebo', Arial, sans-serif; 
+                            padding: 40px; 
+                            color: #1f2937; 
+                            line-height: 1.6;
+                            max-width: 800px;
+                            margin: 0 auto;
+                        }
+                        .header { 
+                            display: flex; 
+                            justify-content: space-between; 
+                            border-bottom: 3px solid #2563eb; 
+                            padding-bottom: 20px; 
+                            margin-bottom: 30px; 
+                        }
+                        .biz-title h1 { color: #1d4ed8; font-size: 32px; margin: 0; }
+                        .biz-title p { color: #4b5563; font-size: 18px; margin: 5px 0 0 0; }
+                        .biz-details { margin-top: 10px; font-size: 15px; color: #4b5563; line-height: 1.5; }
+                        .biz-details strong { color: #1f2937; }
+                        
+                        .receipt-meta { background: #f3f4f6; padding: 15px 25px; border-radius: 8px; text-align: right; min-width: 220px; height: fit-content; }
+                        .receipt-meta h2 { margin: 0 0 15px 0; font-size: 22px; border-bottom: 1px solid #d1d5db; padding-bottom: 5px; color: #1f2937;}
+                        .meta-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 16px; gap: 15px; }
+                        
+                        .customer-box { background: #eff6ff; padding: 20px; border-radius: 8px; border: 1px solid #bfdbfe; margin-bottom: 30px; }
+                        .customer-box h3 { margin: 0 0 15px 0; color: #1e40af; border-bottom: 1px solid #93c5fd; padding-bottom: 5px; font-size: 18px; }
+                        .customer-box p { margin: 5px 0; font-size: 16px; }
+                        
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+                        th { padding: 12px; border-bottom: 2px solid #d1d5db; text-align: right; font-size: 16px; background: #f9fafb; color: #4b5563; }
+                        td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 16px; color: #1f2937; }
+                        
+                        .total-box { display: inline-block; background: #f3f4f6; padding: 15px 30px; border-radius: 8px; font-size: 22px; float: left; }
+                        .total-box span.sum { color: #1d4ed8; font-weight: 900; font-family: Arial, sans-serif; }
+                        
+                        .notes-box { clear: both; margin-top: 70px; padding: 15px; border: 1px dashed #d1d5db; border-radius: 8px; background: #fff; }
+                        .notes-box h4 { margin: 0 0 8px 0; color: #4b5563; font-size: 16px; }
+                        
+                        .footer { text-align: center; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 50px; font-size: 14px; clear: both; }
+                        
+                        /* התאמות ספציפיות בעת ההדפסה עצמה */
+                        @media print {
+                            body { padding: 0; max-width: 100%; }
+                            .no-print { display: none !important; }
+                            @page { margin: 1cm; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${previewBanner}
+                    <div class="no-print" style="text-align: left; margin-bottom: 20px;">
+                        <button onclick="window.print()" style="background: #2563eb; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; font-family: inherit;">הדפס קבלה</button>
+                    </div>
+
+                    <div class="header">
+                        <div class="biz-title">
+                            <h1>${AppData.settings.businessName || 'שם העסק'}</h1>
+                            <p>עוסק פטור / זעיר</p>
+                            <div class="biz-details">
+                                ${AppData.settings.businessId ? `<div><strong>ע.מ / ת.ז:</strong> ${AppData.settings.businessId}</div>` : ''}
+                                ${AppData.settings.phone ? `<div><strong>טלפון:</strong> ${AppData.settings.phone}</div>` : ''}
+                                ${AppData.settings.email ? `<div><strong>דוא"ל:</strong> ${AppData.settings.email}</div>` : ''}
+                                ${AppData.settings.address ? `<div><strong>כתובת:</strong> ${AppData.settings.address}</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="receipt-meta">
+                            <h2>קבלה / מסמך תקבול</h2>
+                            <div class="meta-row"><span>מספר:</span> <strong dir="ltr">${num}</strong></div>
+                            <div class="meta-row"><span>תאריך הפקה:</span> <strong dir="ltr">${date.split('-').reverse().join('/')}</strong></div>
+                            ${transferDate ? `<div class="meta-row"><span>תאריך העברה:</span> <strong dir="ltr">${transferDate.split('-').reverse().join('/')}</strong></div>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="customer-box">
+                        <h3>פרטי לקוח</h3>
+                        <p style="font-size: 22px; font-weight: bold; margin-bottom: 10px;">${cust.name}</p>
+                        <p><strong>ת.ז / ח.פ:</strong> ${cust.idNumber||'-'}</p>
+                        <p><strong>כתובת:</strong> ${cust.address||'-'}</p>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 30%;">אמצעי תשלום</th>
+                                <th style="width: 50%;">פרטים מזהים (אסמכתא)</th>
+                                <th style="width: 20%;">סכום</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+
+                    <div class="total-box">
+                        סה"כ שנתקבל: <span class="sum" dir="ltr">&#8362; ${sum.toLocaleString()}</span>
+                    </div>
+
+                    ${notes ? `
+                    <div class="notes-box">
+                        <h4>הערות נוספות:</h4>
+                        <div style="white-space: pre-wrap; font-size: 15px;">${notes}</div>
+                    </div>` : ''}
+
+                    <div class="footer">
+                        מסמך זה הופק דיגיטלית - תודה רבה
+                    </div>
+
+                    ${autoPrintScript}
+                </body>
+                </html>
+            `;
+        }
+
+        async function previewReceiptPrint() {
+            const custId = el('rec-customer').value;
+            const date = el('rec-date').value;
+            const transferDate = el('rec-transfer-date').value;
+            const notes = el('rec-notes').value;
+            const payments = AppData.receiptPayments;
+            
+            if(!custId) return showMsg("חסרים פרטים", "חובה לבחור לקוח על מנת להפיק קבלה.", "error");
+            if(payments.length === 0 || payments.every(p=>!p.amount)) return showMsg("חסרים פרטים", "חובה להזין לפחות שורת תשלום אחת הכוללת סכום.", "error");
+
+            const cust = AppData.customers.find(c=>c.id === custId);
+            const num = AppData.settings.nextReceipt;
+            let sum = payments.reduce((acc, curr) => acc + Number(curr.amount||0), 0);
+
+            const printWin = window.open('', '_blank');
+            if(!printWin) {
+                return showMsg("חסימת חלונות קופצים", "נראה שהדפדפן חסם את פתיחת התצוגה המקדימה. אנא אשר חלונות קופצים (Popups) לאתר זה ונסה שוב.", "error");
+            }
+
+            const printHTML = getReceiptHTMLTemplate(cust, num, date, transferDate, notes, payments, sum, true);
+            printWin.document.open();
+            printWin.document.write(printHTML);
+            printWin.document.close();
+        }
+
+        async function generateReceiptPrint() {
+            const custId = el('rec-customer').value;
+            const date = el('rec-date').value;
+            const transferDate = el('rec-transfer-date').value;
+            const notes = el('rec-notes').value;
+            const payments = AppData.receiptPayments;
+            
+            if(!custId) return showMsg("חסרים פרטים", "חובה לבחור לקוח על מנת להפיק קבלה.", "error");
+            if(payments.length === 0 || payments.every(p=>!p.amount)) return showMsg("חסרים פרטים", "חובה להזין לפחות שורת תשלום אחת הכוללת סכום.", "error");
+
+            const cust = AppData.customers.find(c=>c.id === custId);
+            const num = AppData.settings.nextReceipt;
+            let sum = payments.reduce((acc, curr) => acc + Number(curr.amount||0), 0);
+
+            const printWin = window.open('', '_blank');
+            if(!printWin) {
+                return showMsg("חסימת חלונות קופצים", "נראה שהדפדפן חסם את פתיחת הקבלה. אנא אשר חלונות קופצים (Popups) לאתר זה ונסה שוב.", "error");
+            }
+
+            const printHTML = getReceiptHTMLTemplate(cust, num, date, transferDate, notes, payments, sum, false);
+
+            printWin.document.open();
+            printWin.document.write(printHTML);
+            printWin.document.close();
+            
+            try {
+                await addDoc(collection(db, `${getBasePath()}/incomes`), {
+                    date, 
+                    transferDate,
+                    entityId: cust.id, amount: sum, description: `תקבול מלקוח (קבלה ${num})`,
+                    paymentMethod: payments[0].method, reference: payments.map(p=>p.details).join(', '),
+                    receiptNum: String(num), notes,
+                    createdAt: new Date().toISOString()
+                });
+                
+                await setDoc(doc(db, getBasePath(), 'settings', 'main'), { nextReceipt: Number(num) + 1 }, { merge: true });
+                
+                showMsg("הצלחה!", "הקבלה נשמרה במערכת. חלון ההדפסה נפתח כעת (אם לא נפתח, בדוק את חוסם החלונות הקופצים שלך).");
+                AppData.receiptPayments = [];
+                el('rec-notes').value = '';
+                addReceiptPaymentRow();
+
+            } catch(e) {
+                console.error(e);
+                showMsg("שגיאה", "הקבלה נפתחה להדפסה, אך הייתה שגיאה בשמירה למסד הנתונים.", "error");
+            }
+        }
+    </script>
+</body>
+</html>
