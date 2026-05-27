@@ -1068,34 +1068,37 @@
                 rowsHtml += `<tr style="border-bottom: 1px solid #e5e7eb;">
                     <td style="padding: 12px; font-weight: bold;">${p.method}</td>
                     <td style="padding: 12px; color:#4b5563;">${p.details||'-'}</td>
-                    <td style="padding: 12px; text-align: left; font-weight: bold; font-size: 1.1em;">₪${Number(p.amount).toLocaleString()}</td>
+                    <td style="padding: 12px; text-align: left; font-weight: bold; font-size: 1.1em;" dir="ltr">₪${Number(p.amount).toLocaleString()}</td>
                 </tr>`;
             });
 
+            // תיקוני RTL וריווח עבור html2pdf
+            // שימוש ב-&nbsp; במקום רווח רגיל במילים בעייתיות שנוטות להתחבר,
+            // והפרדת סימני פיסוק כדי למנוע קפיצה שלהם שמאלה/ימינה.
             pt.innerHTML = `
                 <div style="border-bottom: 3px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between;">
                     <div>
-                        <h1 style="color:#1d4ed8; font-size: 2.5rem; margin:0;">${AppData.settings.businessName || 'שם העסק'}</h1>
-                        <p style="color:#4b5563; font-size: 1.2rem; margin-top:5px;">עוסק פטור / זעיר</p>
+                        <h1 style="color:#1d4ed8; font-size: 2.5rem; margin:0;">${AppData.settings.businessName || 'שם&nbsp;העסק'}</h1>
+                        <p style="color:#4b5563; font-size: 1.2rem; margin-top:5px;">עוסק&nbsp;פטור&nbsp;/&nbsp;זעיר</p>
                     </div>
                     <div style="text-align: left; background: #f3f4f6; padding: 15px; border-radius: 8px;">
-                        <h2 style="margin:0; font-size: 1.5rem; color:#1f2937;">קבלה / מסמך תקבול</h2>
-                        <p style="margin: 5px 0 0 0; font-weight: bold; font-size: 1.1rem;">מספר: ${num}</p>
-                        <p style="margin: 5px 0 0 0;">תאריך הפקה: ${date.split('-').reverse().join('/')}</p>
+                        <h2 style="margin:0; font-size: 1.5rem; color:#1f2937;">קבלה&nbsp;/&nbsp;מסמך&nbsp;תקבול</h2>
+                        <div style="margin: 5px 0 0 0; font-weight: bold; font-size: 1.1rem; display: flex; justify-content: flex-end; gap: 5px;"><span>${num}</span> <span>:מספר</span></div>
+                        <div style="margin: 5px 0 0 0; display: flex; justify-content: flex-end; gap: 5px;"><span>${date.split('-').reverse().join('/')}</span> <span>:תאריך הפקה</span></div>
                     </div>
                 </div>
                 
                 <div style="background: #eff6ff; padding: 20px; border-radius: 10px; border: 1px solid #bfdbfe; margin-bottom: 30px;">
-                    <h3 style="margin-top:0; color:#1e40af; border-bottom: 1px solid #93c5fd; padding-bottom: 5px;">פרטי לקוח</h3>
+                    <h3 style="margin-top:0; color:#1e40af; border-bottom: 1px solid #93c5fd; padding-bottom: 5px;">פרטי&nbsp;לקוח</h3>
                     <p style="margin: 5px 0; font-size: 1.2rem; font-weight: bold;">${cust.name}</p>
-                    <p style="margin: 5px 0;">ת.ז / ע.מ: ${cust.idNumber||'-'}</p>
-                    <p style="margin: 5px 0;">כתובת: ${cust.address||'-'}</p>
+                    <div style="margin: 5px 0; display: flex; gap: 5px;"><span>ת.ז&nbsp;/&nbsp;ע.מ:</span> <span>${cust.idNumber||'-'}</span></div>
+                    <div style="margin: 5px 0; display: flex; gap: 5px;"><span>כתובת:</span> <span>${cust.address||'-'}</span></div>
                 </div>
 
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; text-align: right;">
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; text-align: right;" dir="rtl">
                     <thead style="background: #f3f4f6;">
                         <tr>
-                            <th style="padding: 12px; border-bottom: 2px solid #d1d5db;">אמצעי תשלום</th>
+                            <th style="padding: 12px; border-bottom: 2px solid #d1d5db;">אמצעי&nbsp;תשלום</th>
                             <th style="padding: 12px; border-bottom: 2px solid #d1d5db;">פרטים מזהים (אסמכתא, מס' בנק)</th>
                             <th style="padding: 12px; border-bottom: 2px solid #d1d5db; text-align: left;">סכום</th>
                         </tr>
@@ -1104,12 +1107,12 @@
                 </table>
 
                 <div style="display: flex; justify-content: flex-end; margin-bottom: 30px;">
-                    <div style="background: #f3f4f6; padding: 15px 30px; border-radius: 8px; font-size: 1.3rem;">
-                        <strong>סה"כ שנתקבל:</strong> <span style="color:#1d4ed8; font-weight: 900; margin-right: 15px;">₪${sum.toLocaleString()}</span>
+                    <div style="background: #f3f4f6; padding: 15px 30px; border-radius: 8px; font-size: 1.3rem; display: flex; gap: 10px; align-items: center;">
+                         <span style="color:#1d4ed8; font-weight: 900;" dir="ltr">₪${sum.toLocaleString()}</span> <strong>:סה"כ&nbsp;שנתקבל</strong>
                     </div>
                 </div>
 
-                ${notes ? `<div style="margin-bottom: 30px;"><h4 style="margin-bottom:5px;">הערות:</h4><p style="white-space: pre-wrap; color:#4b5563;">${notes}</p></div>` : ''}
+                ${notes ? `<div style="margin-bottom: 30px;"><h4 style="margin-bottom:5px; text-align: right;">:הערות</h4><p style="white-space: pre-wrap; color:#4b5563; text-align: right;">${notes}</p></div>` : ''}
                 
                 <div style="text-align: center; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 50px;">
                     מסמך זה הופק דיגיטלית - תודה רבה
