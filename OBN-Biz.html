@@ -35,7 +35,7 @@
     <div id="loader" class="fixed inset-0 bg-gray-50 z-50 flex items-center justify-center">
         <div class="text-center">
             <i class="fas fa-spinner fa-spin text-blue-600 text-4xl mb-4"></i>
-            <h2 class="text-xl font-medium text-gray-700">טוען מערכת ומתחבר למסד הנתונים...</h2>
+            <h2 class="text-xl font-medium text-gray-700">טוען מערכת...</h2>
         </div>
     </div>
 
@@ -178,11 +178,19 @@
 
                 <!-- DATA LIST VIEW -->
                 <section id="view-list" class="view-section">
-                    <div class="flex justify-between items-center mb-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                         <h2 id="list-title" class="text-2xl font-bold text-gray-800">ניהול נתונים</h2>
-                        <button id="btn-add-record" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 shadow-sm transition-colors">
-                            <i class="fas fa-plus"></i> <span id="btn-add-text">הוסף חדש</span>
-                        </button>
+                        <div class="flex flex-wrap gap-2">
+                            <!-- Hidden input for file upload -->
+                            <input type="file" id="file-import-excel" accept=".xlsx, .xls, .csv" class="hidden">
+                            
+                            <button id="btn-import-excel" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-5 py-2.5 rounded-xl flex items-center gap-2 shadow-sm transition-colors border border-gray-200">
+                                <i class="fas fa-file-import"></i> <span>ייבוא מאקסל</span>
+                            </button>
+                            <button id="btn-add-record" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 shadow-sm transition-colors">
+                                <i class="fas fa-plus"></i> <span id="btn-add-text">הוסף חדש</span>
+                            </button>
+                        </div>
                     </div>
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                         <div class="overflow-x-auto">
@@ -458,18 +466,21 @@
                 if (btn) switchView(btn.dataset.view);
             });
             
-            // Dashboard
+            // Dashboard & Tools
             el('btn-export-excel')?.addEventListener('click', exportToExcel);
             el('dash-filter')?.addEventListener('change', renderDashboard);
             el('dash-start')?.addEventListener('input', renderDashboard);
             el('dash-end')?.addEventListener('input', renderDashboard);
             
-            // Data Lists
+            // Data Lists & Import
             el('btn-add-record')?.addEventListener('click', () => openFormModal());
             document.querySelectorAll('.btn-close-data-modal').forEach(btn => btn?.addEventListener('click', closeFormModal));
             el('data-form')?.addEventListener('submit', saveDataRecord);
             el('list-tbody')?.addEventListener('click', handleListTableClick);
             
+            el('btn-import-excel')?.addEventListener('click', () => el('file-import-excel').click());
+            el('file-import-excel')?.addEventListener('change', handleExcelImport);
+
             // Receipts
             el('btn-add-receipt-row')?.addEventListener('click', addReceiptPaymentRow);
             el('btn-preview-receipt')?.addEventListener('click', previewReceiptPrint);
@@ -709,6 +720,11 @@
         function setupListHeaders() {
             const type = AppData.currentListType;
             let th = '', title = '';
+            
+            // תצוגת/הסתרת כפתור הייבוא בהתאם ללשונית
+            const btnImport = el('btn-import-excel');
+            if (btnImport) btnImport.style.display = (type === 'incomes' || type === 'expenses') ? 'flex' : 'none';
+
             if(type === 'incomes') {
                 title = 'ניהול הכנסות';
                 th = '<tr><th class="p-3">תאריך</th><th class="p-3">לקוח</th><th class="p-3">תיאור</th><th class="p-3">סכום</th><th class="p-3 w-24">פעולות</th></tr>';
@@ -735,7 +751,7 @@
             };
 
             if(data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">לא נמצאו רשומות עדיין. לחץ על 'הוסף חדש' כדי להתחיל.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">לא נמצאו רשומות עדיין. לחץ על 'הוסף חדש' או על 'ייבוא מאקסל'.</td></tr>`;
                 return;
             }
 
@@ -773,6 +789,115 @@
             if (action === 'edit') editDataRecord(id);
             else if (action === 'duplicate') duplicateDataRecord(id);
             else if (action === 'delete') deleteDataRecord(id);
+        }
+
+        // --- 6.5. EXCEL IMPORT HANDLING ---
+        function parseExcelDate(val) {
+            if (!val) return '';
+            // Handle numeric dates (Excel serial dates)
+            if (typeof val === 'number') {
+                const date = new Date(Math.round((val - 25569) * 86400 * 1000));
+                return date.toISOString().split('T')[0];
+            }
+            // Handle string dates
+            if (typeof val === 'string') {
+                if (val.includes('/')) { // assume DD/MM/YYYY
+                    const parts = val.split('/');
+                    if (parts.length === 3) {
+                        return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                    }
+                }
+                if (val.includes('-')) {
+                    return val.split('T')[0];
+                }
+            }
+            return '';
+        }
+
+        async function handleExcelImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (!window.XLSX) {
+                showMsg("סבלנות", "מנגנון האקסל עדיין נטען. נסה שוב בעוד מספר שניות.");
+                return;
+            }
+
+            el('loader').style.display = 'flex';
+            
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = window.XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const json = window.XLSX.utils.sheet_to_json(worksheet);
+
+                    let importedCount = 0;
+                    const type = AppData.currentListType; // 'incomes' or 'expenses'
+
+                    for (const row of json) {
+                        const amount = parseFloat(row['סכום'] || row['Amount'] || 0);
+                        if (!amount) continue; // דילוג על שורות ללא סכום תקין
+
+                        const rawDate = row['תאריך'] || row['Date'] || '';
+                        const dateVal = parseExcelDate(rawDate) || new Date().toISOString().split('T')[0];
+                        
+                        const description = row['תיאור'] || row['Description'] || 'יובא מאקסל';
+                        const entityName = row['לקוח'] || row['ספק'] || row['Customer'] || row['Supplier'] || '';
+                        let entityId = '';
+
+                        // חיפוש אוטומטי של הגורם (לקוח/ספק), ואם לא קיים - יצירה אוטומטית
+                        if (entityName) {
+                            const entities = type === 'incomes' ? AppData.customers : [...AppData.suppliers, ...AppData.customers];
+                            const existing = entities.find(x => x.name.trim() === entityName.trim());
+                            
+                            if (existing) {
+                                entityId = existing.id;
+                            } else {
+                                const newEntity = { name: entityName.trim(), createdAt: new Date().toISOString() };
+                                const entityType = type === 'incomes' ? 'customers' : 'suppliers';
+                                const added = await addDoc(collection(db, `${getBasePath()}/${entityType}`), newEntity);
+                                entityId = added.id;
+                                
+                                // נוסיף מקומית כדי למנוע יצירת כפילויות באותו סיבוב לולאה
+                                if(type === 'incomes') AppData.customers.push({id: added.id, ...newEntity});
+                                else AppData.suppliers.push({id: added.id, ...newEntity});
+                            }
+                        }
+
+                        const docData = {
+                            date: dateVal,
+                            amount: amount,
+                            paymentMethod: row['אמצעי תשלום'] || row['Payment Method'] || 'אחר',
+                            description: description,
+                            reference: row['אסמכתא'] || row['Reference'] || '',
+                            entityId: entityId,
+                            createdAt: new Date().toISOString()
+                        };
+
+                        if (type === 'expenses') {
+                            docData.invoice = String(row['חשבונית'] || '');
+                            docData.amountUSD = row['דולר'] || row['USD'] || '';
+                        } else if (type === 'incomes') {
+                            docData.notes = String(row['הערות'] || '');
+                        }
+
+                        await addDoc(collection(db, `${getBasePath()}/${type}`), docData);
+                        importedCount++;
+                    }
+
+                    showMsg('הצלחה', `יובאו ${importedCount} שורות בהצלחה מתוך קובץ האקסל.`);
+                } catch (err) {
+                    console.error(err);
+                    showMsg('שגיאה', 'אירעה שגיאה בייבוא הקובץ. אנא ודא ששמות העמודות (תאריך, סכום, תיאור, לקוח/ספק...) תקינים לפי התבנית.', 'error');
+                }
+                
+                el('loader').style.display = 'none';
+                el('file-import-excel').value = ''; // איפוס כדי לאפשר העלאה חוזרת של אותו קובץ
+            };
+            reader.readAsArrayBuffer(file);
         }
 
         // --- 7. MODALS & DATA ENTRY ---
