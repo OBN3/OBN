@@ -23,12 +23,6 @@
         .view-section { display: none; opacity: 0; transition: opacity 0.3s ease-in; }
         .view-section.active { display: block; opacity: 1; }
         
-        /* Modal & Loader */
-        .modal { display: none; }
-        .modal.active { display: flex; }
-        #loader { display: flex; }
-        #app-content { display: none; }
-        
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -42,25 +36,44 @@
     <div id="loader" class="fixed inset-0 bg-gray-50 z-50 flex items-center justify-center">
         <div class="text-center">
             <i class="fas fa-spinner fa-spin text-blue-600 text-4xl mb-4"></i>
-            <h2 class="text-xl font-medium text-gray-700">טוען מערכת ומתחבר...</h2>
+            <h2 class="text-xl font-medium text-gray-700">טוען מערכת ומתחבר למסד הנתונים...</h2>
         </div>
     </div>
 
-    <!-- Login Screen (Fallback only) -->
+    <!-- Login Screen -->
     <div id="login-screen" class="fixed inset-0 bg-gray-50 z-50 hidden items-center justify-center">
         <div class="bg-white p-8 rounded-2xl shadow-xl text-center max-w-sm w-full mx-4 border border-gray-100">
             <i class="fas fa-shield-alt text-blue-600 text-5xl mb-4"></i>
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">חיבור נכשל</h2>
-            <p class="text-gray-500 mb-6 text-sm">המערכת לא הצליחה לאמת את המשתמש שלך באופן אוטומטי.</p>
-            <button id="btn-login-screen-anon" class="w-full bg-blue-50 text-blue-700 py-3 rounded-xl hover:bg-blue-100 transition-colors font-medium text-sm">
-                נסה להתחבר מחדש
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">התחברות למערכת</h2>
+            <p class="text-gray-500 mb-6 text-sm">המערכת דורשת הזדהות כדי לשמור את הנתונים שלך בענן בצורה מאובטחת.</p>
+            <button id="btn-login-google" class="w-full bg-white border border-gray-300 text-gray-700 py-3 rounded-xl hover:bg-gray-50 transition-colors font-medium flex justify-center items-center gap-3 mb-4 shadow-sm">
+                <i class="fab fa-google text-red-500 text-lg"></i> התחבר באמצעות Google
             </button>
-            <p id="login-error" class="text-red-500 text-sm mt-4 hidden"></p>
+            <div class="relative flex items-center py-2 mb-4">
+                <div class="flex-grow border-t border-gray-200"></div>
+                <span class="flex-shrink-0 mx-4 text-gray-400 text-sm">או</span>
+                <div class="flex-grow border-t border-gray-200"></div>
+            </div>
+            <button id="btn-login-anon" class="w-full bg-blue-50 text-blue-700 py-3 rounded-xl hover:bg-blue-100 transition-colors font-medium text-sm">
+                המשך ללא חשבון (משתמש זמני)
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Message/Confirm Box -->
+    <div id="msg-box" class="fixed inset-0 bg-black/50 z-[100] hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center transform scale-100 transition-transform">
+            <div id="msg-icon" class="mb-4"></div>
+            <h3 id="msg-title" class="text-xl font-bold text-gray-800 mb-2"></h3>
+            <p id="msg-text" class="text-gray-600 mb-6 text-sm"></p>
+            <div class="flex gap-3 justify-center" id="msg-buttons">
+                <!-- dynamic buttons injected here -->
+            </div>
         </div>
     </div>
 
     <!-- Main App Layout -->
-    <div id="app-content" class="w-full h-full flex flex-col md:flex-row">
+    <div id="app-content" class="w-full h-full flex flex-col md:flex-row hidden">
         
         <!-- Mobile Header -->
         <div class="md:hidden bg-white border-b border-gray-200 flex justify-between items-center p-4 z-40 relative shadow-sm">
@@ -100,7 +113,9 @@
                         <i class="fas fa-user-circle text-lg"></i>
                         <span id="user-info" class="truncate w-32 font-medium">מחובר</span>
                     </div>
-                    <button id="btn-logout" title="רענן התחברות" class="text-gray-400 hover:text-blue-600 p-1"><i class="fas fa-sync-alt"></i></button>
+                    <button id="btn-logout" title="התנתק" class="text-red-400 hover:text-red-600 p-1 bg-red-50 hover:bg-red-100 rounded-lg px-2 py-1 flex items-center gap-1 transition-colors">
+                        <i class="fas fa-sign-out-alt"></i> יציאה
+                    </button>
                 </div>
             </div>
         </aside>
@@ -289,11 +304,11 @@
     </div>
 
     <!-- MAIN DATA FORM MODAL -->
-    <div id="data-modal" class="modal fixed inset-0 bg-black/50 z-50 items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+    <div id="data-modal" class="fixed inset-0 bg-black/50 z-[60] hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col transform transition-transform">
             <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
-                <h3 id="modal-title" class="text-xl font-bold text-gray-800">הוספת רשומה</h3>
-                <button type="button" class="text-gray-400 hover:text-gray-700 text-2xl leading-none btn-close-modal">&times;</button>
+                <h3 id="data-modal-title" class="text-xl font-bold text-gray-800">הוספת רשומה</h3>
+                <button type="button" class="text-gray-400 hover:text-gray-700 text-2xl leading-none btn-close-data-modal">&times;</button>
             </div>
             <div class="p-6 overflow-y-auto">
                 <form id="data-form" class="space-y-4">
@@ -334,7 +349,7 @@
                     </div>
 
                     <div class="pt-4 border-t flex justify-end gap-3 mt-4">
-                        <button type="button" class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 btn-close-modal">ביטול</button>
+                        <button type="button" class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 btn-close-data-modal">ביטול</button>
                         <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 shadow-md">שמור רשומה</button>
                     </div>
                 </form>
@@ -352,8 +367,7 @@
     <!-- Firebase SDKs & App Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        // הוספנו את signInWithCustomToken כדי למשוך את ההרשאה ישירות מהמערכת
-        import { getAuth, onAuthStateChanged, signInAnonymously, signOut, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, doc, setDoc, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase configuration
@@ -370,7 +384,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // State Management within Module
+        // State Management
         const AppData = {
             user: null, currentView: 'dashboard', currentListType: '',
             settings: { businessName: '', nextReceipt: 8000, taxPercent: 10 },
@@ -382,12 +396,48 @@
 
         const el = (id) => document.getElementById(id);
         
+        // --- CUSTOM MODAL SYSTEM (No Alerts/Confirms) ---
+        window.showMsg = function(title, text, type = 'info') {
+            el('msg-title').innerText = title;
+            el('msg-text').innerText = text;
+            el('msg-icon').innerHTML = type === 'error' ? '<i class="fas fa-exclamation-circle text-red-500 text-4xl"></i>' : '<i class="fas fa-info-circle text-blue-500 text-4xl"></i>';
+            el('msg-buttons').innerHTML = `<button id="btn-msg-ok" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-medium w-full">הבנתי</button>`;
+            
+            el('msg-box').classList.remove('hidden');
+            el('msg-box').classList.add('flex');
+            
+            el('btn-msg-ok').addEventListener('click', closeMsg);
+        };
+
+        window.showConfirm = function(title, text, onConfirmCallback) {
+            el('msg-title').innerText = title;
+            el('msg-text').innerText = text;
+            el('msg-icon').innerHTML = '<i class="fas fa-question-circle text-orange-500 text-4xl"></i>';
+            el('msg-buttons').innerHTML = `
+                <button id="btn-confirm-yes" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-xl font-medium flex-1">כן, בצע</button>
+                <button id="btn-confirm-no" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-2.5 rounded-xl font-medium flex-1">ביטול</button>
+            `;
+            
+            el('msg-box').classList.remove('hidden');
+            el('msg-box').classList.add('flex');
+            
+            el('btn-confirm-yes').addEventListener('click', () => { closeMsg(); onConfirmCallback(); });
+            el('btn-confirm-no').addEventListener('click', closeMsg);
+        };
+
+        window.closeMsg = function() {
+            el('msg-box').classList.add('hidden');
+            el('msg-box').classList.remove('flex');
+        };
+        
         // --- 1. SETUP EVENT LISTENERS ---
         document.addEventListener('DOMContentLoaded', () => {
-            el('btn-login-screen-anon').addEventListener('click', initAuth);
+            // Login & Auth
+            el('btn-login-google').addEventListener('click', loginWithGoogle);
+            el('btn-login-anon').addEventListener('click', loginAnonymous);
             el('btn-logout').addEventListener('click', logout);
             
-            // Navigation & Layout
+            // Navigation
             el('btn-mobile-toggle').addEventListener('click', toggleMobileMenu);
             el('nav-links').addEventListener('click', (e) => {
                 const btn = e.target.closest('.nav-btn');
@@ -400,9 +450,9 @@
             el('dash-start').addEventListener('input', renderDashboard);
             el('dash-end').addEventListener('input', renderDashboard);
             
-            // Data Lists & Forms
+            // Data Lists
             el('btn-add-record').addEventListener('click', () => openFormModal());
-            document.querySelectorAll('.btn-close-modal').forEach(btn => btn.addEventListener('click', closeFormModal));
+            document.querySelectorAll('.btn-close-data-modal').forEach(btn => btn.addEventListener('click', closeFormModal));
             el('data-form').addEventListener('submit', saveDataRecord);
             el('list-tbody').addEventListener('click', handleListTableClick);
             
@@ -412,7 +462,7 @@
             el('rec-payments-container').addEventListener('click', handleReceiptContainerClick);
             el('rec-payments-container').addEventListener('input', handleReceiptContainerInput);
             
-            // Settings & Entities
+            // Settings
             el('tab-general').addEventListener('click', () => switchSettingsTab('general'));
             el('tab-customers').addEventListener('click', () => switchSettingsTab('customers'));
             el('tab-suppliers').addEventListener('click', () => switchSettingsTab('suppliers'));
@@ -422,30 +472,34 @@
             el('ent-table-body').addEventListener('click', handleEntityTableClick);
         });
 
-        // --- 2. AUTHENTICATION (PROACTIVE FIX) ---
-        async function initAuth() {
+        // --- 2. AUTHENTICATION ---
+        async function loginAnonymous() {
             try {
                 el('loader').style.display = 'flex';
                 el('login-screen').style.display = 'none';
-                
-                // כאן הקסם: הסביבה מספקת "אסימון התחברות" אוטומטי.
-                // זה חוסך את הצורך בחלון קופץ שעלול להיחסם.
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                await signInAnonymously(auth);
             } catch (err) { 
                 console.error("Auth error:", err); 
                 el('loader').style.display = 'none';
                 el('login-screen').style.display = 'flex';
-                el('login-error').innerText = "שגיאה בחיבור למסד הנתונים. ודא שהפעלת אפשרויות זיהוי תקינות ב-Firebase.";
-                el('login-error').style.display = 'block';
+                showMsg('שגיאת התחברות', 'לא ניתן להתחבר כמשתמש זמני. ודא שהפעלת אפשרות Anonymous ב-Firebase.', 'error');
             }
         }
-        
-        // Start Auth process
-        initAuth();
+
+        async function loginWithGoogle() {
+            try {
+                const provider = new GoogleAuthProvider();
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Google login failed", error);
+                // Check if it's the Cross-Origin popup error specifically
+                if (error.message && error.message.includes('Cross-Origin-Opener-Policy')) {
+                    showMsg('חסימת חלון קופץ', 'סביבת התצוגה המקדימה הזו חוסמת חלונות קופצים של התחברות לגוגל מטעמי אבטחה. כשתעלה את האתר לשרת משלך - זה יעבוד מצוין! לעת עתה, השתמש בהתחברות זמנית.', 'error');
+                } else {
+                    showMsg('שגיאת התחברות', 'התחברות עם גוגל נכשלה או בוטלה.', 'error');
+                }
+            }
+        }
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -453,11 +507,12 @@
                 el('loader').style.display = 'none';
                 el('login-screen').style.display = 'none';
                 el('app-content').style.display = 'flex';
+                el('app-content').classList.remove('hidden');
                 
                 if (user.isAnonymous) {
                     el('user-info').innerText = "משתמש זמני";
                 } else {
-                    el('user-info').innerText = user.email || "מחובר למערכת";
+                    el('user-info').innerText = user.email || user.displayName;
                 }
                 
                 setupDatabaseListeners();
@@ -468,14 +523,18 @@
                 addReceiptPaymentRow();
             } else {
                 el('loader').style.display = 'none';
+                el('app-content').classList.add('hidden');
                 el('app-content').style.display = 'none';
                 el('login-screen').style.display = 'flex';
             }
         });
 
-        async function logout() {
-            // במקום לצאת לגמרי, רק נרענן את המערכת כדי למשוך שוב את הטוקן המאובטח
-            window.location.reload();
+        function logout() {
+            showConfirm('התנתקות', 'האם אתה בטוח שברצונך להתנתק מהמערכת?', async () => {
+                AppData.unsubscribers.forEach(unsub => unsub());
+                AppData.unsubscribers = [];
+                await signOut(auth);
+            });
         }
 
         // --- 3. DATABASE LISTENERS ---
@@ -495,7 +554,11 @@
                     updateSettingsUI();
                     renderDashboard();
                 }
-            }, console.error);
+            }, (err) => {
+                 if(err.code === 'permission-denied') {
+                     console.warn("Permission denied for settings, maybe switching user.");
+                 } else { console.error(err); }
+            });
             AppData.unsubscribers.push(unsubSettings);
 
             const collections = ['customers', 'suppliers', 'incomes', 'expenses', 'taxAdvances'];
@@ -515,12 +578,14 @@
                         renderDashboard();
                         if(AppData.currentView === colName) renderListTable();
                     }
-                }, console.error);
+                }, (err) => {
+                    if(err.code !== 'permission-denied') console.error(err);
+                });
                 AppData.unsubscribers.push(unsub);
             });
         }
 
-        // --- 4. VIEW MANAGEMENT ---
+        // --- STREAMING_CHUNK:View Management ---
         function switchView(viewName) {
             AppData.currentView = viewName;
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
@@ -614,7 +679,7 @@
             el('dash-recent-expenses').innerHTML = expHTML || '<p class="text-gray-400 text-sm py-4">אין נתונים בתקופה זו.</p>';
         }
 
-        // --- 6. DATA LISTS (INCOMES/EXPENSES/TAX) ---
+        // --- STREAMING_CHUNK:Data Lists Handling ---
         function setupListHeaders() {
             const type = AppData.currentListType;
             let th = '', title = '';
@@ -628,6 +693,7 @@
                 title = 'מקדמות מס ששולמו';
                 th = '<tr><th class="p-3">תאריך</th><th class="p-3">תיאור</th><th class="p-3">אמצעי תשלום</th><th class="p-3">סכום</th><th class="p-3 w-24">פעולות</th></tr>';
             }
+            el('data-modal-title').innerText = title;
             el('list-title').innerText = title;
             el('list-thead').innerHTML = th;
         }
@@ -689,7 +755,7 @@
             el('data-form').reset();
             el('form-id').value = '';
             el('form-date').value = new Date().toISOString().split('T')[0];
-            el('modal-title').innerText = idToEdit ? 'עריכת רשומה' : 'הוספת רשומה';
+            el('data-modal-title').innerText = idToEdit ? 'עריכת רשומה' : 'הוספת רשומה';
             
             el('wrapper-entity').style.display = type === 'taxAdvances' ? 'none' : 'block';
             el('wrapper-amount-usd').style.display = type === 'expenses' ? 'block' : 'none';
@@ -731,11 +797,13 @@
                     }
                 }
             }
-            el('data-modal').classList.add('active');
+            el('data-modal').classList.remove('hidden');
+            el('data-modal').classList.add('flex');
         }
 
         function closeFormModal() { 
-            el('data-modal').classList.remove('active'); 
+            el('data-modal').classList.add('hidden'); 
+            el('data-modal').classList.remove('flex'); 
         }
 
         async function saveDataRecord(e) {
@@ -770,22 +838,23 @@
                     await addDoc(ref, data);
                 }
                 closeFormModal();
-            } catch(err) { console.error(err); alert("שגיאה בשמירה!"); }
+            } catch(err) { console.error(err); showMsg("שגיאה", "אירעה שגיאה בשמירת הרשומה.", "error"); }
         }
 
         function editDataRecord(id) { openFormModal(id); }
         function duplicateDataRecord(id) {
             openFormModal(id);
             el('form-id').value = ''; 
-            el('form-date').value = new DatetoISOString().split('T')[0];
-            el('modal-title').innerText = 'הוספת רשומה (משוכפלת)';
+            el('form-date').value = new Date().toISOString().split('T')[0];
+            el('data-modal-title').innerText = 'הוספת רשומה (משוכפלת)';
         }
-        async function deleteDataRecord(id) {
-            if(confirm("למחוק שורה זו לצמיתות?")) {
+        function deleteDataRecord(id) {
+            showConfirm('מחיקת רשומה', 'למחוק שורה זו לצמיתות?', async () => {
                 await deleteDoc(doc(db, `${getBasePath()}/${AppData.currentListType}`, id));
-            }
+            });
         }
 
+        // --- STREAMING_CHUNK:Settings & Excel ---
         // --- 8. SETTINGS & ENTITIES ---
         function updateSettingsUI() {
             const s = AppData.settings;
@@ -818,8 +887,13 @@
                 nextReceipt: Number(el('set-next-rec').value),
                 taxPercent: Number(el('set-tax-pct').value)
             };
-            await setDoc(doc(db, getBasePath(), 'settings', 'main'), s);
-            alert("הגדרות נשמרו!");
+            try {
+                await setDoc(doc(db, getBasePath(), 'settings', 'main'), s);
+                showMsg('הצלחה', 'ההגדרות נשמרו במערכת.');
+            } catch (err) {
+                console.error(err);
+                showMsg('שגיאה', 'לא ניתן לשמור הגדרות.', 'error');
+            }
         }
 
         function resetEntityForm() {
@@ -839,7 +913,7 @@
                 if(id) await updateDoc(doc(db, `${getBasePath()}/${tab}`, id), data);
                 else await addDoc(collection(db, `${getBasePath()}/${tab}`), data);
                 resetEntityForm();
-            } catch(err) { console.error(err); alert("שגיאה!"); }
+            } catch(err) { console.error(err); showMsg("שגיאה", "אירעה שגיאה בשמירת הגורם.", "error"); }
         }
 
         function renderEntitiesTable() {
@@ -882,8 +956,10 @@
             }
         }
 
-        async function deleteEntity(id) {
-            if(confirm("למחוק?")) await deleteDoc(doc(db, `${getBasePath()}/${AppData.entitiesTab}`, id));
+        function deleteEntity(id) {
+            showConfirm("מחיקה", "האם אתה בטוח שברצונך למחוק גורם זה לצמיתות?", async () => {
+                await deleteDoc(doc(db, `${getBasePath()}/${AppData.entitiesTab}`, id));
+            });
         }
 
         function updateSelectDropdowns() {
@@ -896,7 +972,7 @@
 
         // --- 9. EXCEL EXPORT ---
         function exportToExcel() {
-            if(!window.XLSX) return alert("ספריית אקסל עדיין נטענת...");
+            if(!window.XLSX) return showMsg("סבלנות", "ספריית האקסל עדיין נטענת. נסה שוב בעוד מספר שניות.");
             const wb = window.XLSX.utils.book_new();
             const ad = AppData;
             
@@ -919,6 +995,7 @@
             window.XLSX.writeFile(wb, `דוח_הכנסות_הוצאות_${new Date().toISOString().split('T')[0]}.xlsx`);
         }
 
+        // --- STREAMING_CHUNK:Receipt PDF Engine ---
         // --- 10. RECEIPT GENERATOR (PDF) ---
         function addReceiptPaymentRow() {
             AppData.receiptPayments.push({ method: 'העברה בנקאית', amount: '', details: '' });
@@ -977,9 +1054,9 @@
             const notes = el('rec-notes').value;
             const payments = AppData.receiptPayments;
             
-            if(!custId) return alert("חובה לבחור לקוח!");
-            if(payments.length === 0 || payments.every(p=>!p.amount)) return alert("חובה להזין לפחות שורת תשלום אחת עם סכום!");
-            if(!window.html2pdf) return alert("ספריית PDF טרם נטענה.");
+            if(!custId) return showMsg("חסרים פרטים", "חובה לבחור לקוח על מנת להפיק קבלה.", "error");
+            if(payments.length === 0 || payments.every(p=>!p.amount)) return showMsg("חסרים פרטים", "חובה להזין לפחות שורת תשלום אחת הכוללת סכום.", "error");
+            if(!window.html2pdf) return showMsg("סבלנות", "מערכת יצירת ה-PDF נטענת. נסה שוב בעוד רגע.", "error");
 
             const cust = AppData.customers.find(c=>c.id === custId);
             const num = AppData.settings.nextReceipt;
@@ -1060,14 +1137,14 @@
                 
                 await setDoc(doc(db, getBasePath(), 'settings', 'main'), { ...AppData.settings, nextReceipt: Number(num) + 1 });
                 
-                alert("הקבלה הופקה (PDF ירד למחשב) ונשמרה אוטומטית בהכנסות העסק!");
+                showMsg("הצלחה!", "הקבלה הופקה (מסמך ה-PDF ירד למחשב שלך) ונשמרה אוטומטית בהכנסות העסק.");
                 AppData.receiptPayments = [];
                 el('rec-notes').value = '';
                 addReceiptPaymentRow();
 
             } catch(e) {
                 console.error(e);
-                alert("שגיאה בהפקה");
+                showMsg("שגיאה", "שגיאה בתהליך יצירת הקבלה.", "error");
             } finally {
                 pt.parentElement.classList.add('hidden');
             }
