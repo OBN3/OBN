@@ -5,10 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>מערכת ניהול עוסק פטור/זעיר</title>
     
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- External Libraries (Excel) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
@@ -28,6 +31,7 @@
 </head>
 <body class="bg-gray-50 text-gray-800 h-screen overflow-hidden flex flex-col md:flex-row">
 
+    <!-- Loading Screen -->
     <div id="loader" class="fixed inset-0 bg-gray-50 z-50 flex items-center justify-center">
         <div class="text-center">
             <i class="fas fa-spinner fa-spin text-blue-600 text-4xl mb-4"></i>
@@ -35,6 +39,7 @@
         </div>
     </div>
 
+    <!-- Login Screen -->
     <div id="login-screen" class="fixed inset-0 bg-gray-50 z-50 hidden items-center justify-center">
         <div class="bg-white p-8 rounded-2xl shadow-xl text-center max-w-sm w-full mx-4 border border-gray-100">
             <i class="fas fa-shield-alt text-blue-600 text-5xl mb-4"></i>
@@ -47,23 +52,28 @@
         </div>
     </div>
 
+    <!-- Custom Message/Confirm Box -->
     <div id="msg-box" class="fixed inset-0 bg-black/50 z-[100] hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center transform scale-100 transition-transform">
             <div id="msg-icon" class="mb-4"></div>
             <h3 id="msg-title" class="text-xl font-bold text-gray-800 mb-2"></h3>
             <p id="msg-text" class="text-gray-600 mb-6 text-sm whitespace-pre-line"></p>
             <div class="flex gap-3 justify-center" id="msg-buttons">
-                </div>
+                <!-- dynamic buttons injected here -->
+            </div>
         </div>
     </div>
 
+    <!-- Main App Layout -->
     <div id="app-content" class="w-full h-full flex flex-col md:flex-row hidden">
         
+        <!-- Mobile Header -->
         <div class="md:hidden bg-white border-b border-gray-200 flex justify-between items-center p-4 z-40 relative shadow-sm">
             <h1 id="mobile-business-name" class="text-lg font-bold text-gray-800">המערכת שלי</h1>
             <button id="btn-mobile-toggle" class="text-gray-600 text-2xl"><i class="fas fa-bars"></i></button>
         </div>
 
+        <!-- Sidebar Navigation -->
         <aside id="sidebar" class="hidden md:flex flex-col w-full md:w-64 bg-white border-l border-gray-200 h-full absolute md:relative z-30 transition-transform">
             <div class="p-6 border-b border-gray-100 flex items-center gap-3">
                 <i class="fas fa-building text-blue-600 text-xl"></i>
@@ -102,9 +112,11 @@
             </div>
         </aside>
 
+        <!-- Main Content Area -->
         <main class="flex-1 overflow-y-auto p-4 md:p-8 relative">
             <div class="max-w-6xl mx-auto">
                 
+                <!-- DASHBOARD VIEW -->
                 <section id="view-dashboard" class="view-section active">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                         <h2 class="text-3xl font-bold text-gray-800">לוח בקרה</h2>
@@ -113,6 +125,7 @@
                         </button>
                     </div>
 
+                    <!-- Filters -->
                     <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap gap-3 items-center mb-6">
                         <span class="text-gray-500 font-medium ml-2">סינון:</span>
                         <select id="dash-filter" class="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
@@ -129,6 +142,7 @@
                         </div>
                     </div>
 
+                    <!-- Stat Cards -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                         <div class="bg-white p-6 rounded-2xl shadow-sm border border-green-100 border-b-4 border-b-green-500">
                             <h3 class="text-gray-500 text-sm font-medium">סה"כ הכנסות</h3>
@@ -149,6 +163,7 @@
                         </div>
                     </div>
 
+                    <!-- Recent Lists -->
                     <div class="grid lg:grid-cols-2 gap-6">
                         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
                             <h3 class="text-lg font-bold mb-4 text-gray-800 border-b pb-2">הכנסות אחרונות</h3>
@@ -161,10 +176,12 @@
                     </div>
                 </section>
 
+                <!-- DATA LIST VIEW -->
                 <section id="view-list" class="view-section">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                         <h2 id="list-title" class="text-2xl font-bold text-gray-800">ניהול נתונים</h2>
                         <div class="flex flex-wrap gap-2">
+                            <!-- Hidden input for file upload -->
                             <input type="file" id="file-import-excel" accept=".xlsx, .xls, .csv" class="hidden">
                             
                             <button id="btn-import-excel" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-5 py-2.5 rounded-xl flex items-center gap-2 shadow-sm transition-colors border border-gray-200">
@@ -176,11 +193,13 @@
                         </div>
                     </div>
                     
+                    <!-- Import Instructions Banner -->
                     <div id="import-instructions" class="hidden bg-blue-50 text-blue-800 text-sm p-4 rounded-xl border border-blue-100 mb-6">
                         <h4 class="font-bold mb-1 text-base"><i class="fas fa-info-circle"></i> הנחיות לייבוא מאקסל:</h4>
                         <p id="import-instructions-text" class="leading-relaxed"></p>
                     </div>
 
+                    <!-- List Filters -->
                     <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap gap-3 items-center mb-6">
                         <span class="text-gray-500 font-medium ml-2">סינון:</span>
                         <select id="list-filter" class="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
@@ -208,6 +227,7 @@
                     </div>
                 </section>
 
+                <!-- RECEIPT VIEW -->
                 <section id="view-receipt" class="view-section">
                     <h2 class="text-2xl font-bold text-gray-800 mb-6">הפקת קבלה (מספר בא: <span id="rec-next-num" class="text-blue-600"></span>)</h2>
                     <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
@@ -236,7 +256,8 @@
                                 </button>
                             </div>
                             <div id="rec-payments-container" class="space-y-4">
-                                </div>
+                                <!-- Dynamic rows inserted here -->
+                            </div>
                         </div>
 
                         <div>
@@ -258,6 +279,7 @@
                     </div>
                 </section>
 
+                <!-- SETTINGS VIEW -->
                 <section id="view-settings" class="view-section">
                     <h2 class="text-2xl font-bold text-gray-800 mb-6">הגדרות מערכת וניהול גורמים</h2>
                     
@@ -267,6 +289,7 @@
                         <button data-tab="suppliers" id="tab-suppliers" class="pb-3 px-6 font-medium whitespace-nowrap text-gray-500 hover:text-gray-700">ניהול ספקים</button>
                     </div>
 
+                    <!-- General Settings -->
                     <div id="set-general" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 max-w-3xl space-y-5 block">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">שם העסק (יופיע בקבלות)</label>
@@ -306,6 +329,7 @@
                         <button id="btn-save-general" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium w-full sm:w-auto mt-4">שמור שינויים</button>
                     </div>
 
+                    <!-- Entities Settings (Customers/Suppliers) -->
                     <div id="set-entities" class="hidden grid md:grid-cols-3 gap-6">
                         <div class="md:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-fit">
                             <h3 class="font-bold text-lg mb-4 border-b pb-2" id="ent-form-title">הוספת חדש</h3>
@@ -334,6 +358,7 @@
         </main>
     </div>
 
+    <!-- MAIN DATA FORM MODAL -->
     <div id="data-modal" class="fixed inset-0 bg-black/50 z-[60] hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col transform transition-transform">
             <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
@@ -348,7 +373,7 @@
                         <div><label class="block text-sm font-medium mb-1">תאריך</label><input type="date" id="form-date" required class="w-full border border-gray-300 rounded p-2.5"></div>
                         
                         <div id="wrapper-entity"><label id="label-entity" class="block text-sm font-medium mb-1">לקוח/ספק</label>
-                            <select id="form-entity" class="w-full border border-gray-300 rounded p-2.5"></select>
+                            <select id="form-entity" class="w-full border border-gray-300 rounded p-2.5 outline-none focus:border-blue-500"></select>
                         </div>
                         
                         <div><label class="block text-sm font-medium mb-1">סכום בש"ח (כולל מע"מ)</label><input type="number" step="0.01" id="form-amount" required class="w-full border border-gray-300 rounded p-2.5 font-bold text-blue-600"></div>
@@ -387,6 +412,31 @@
         </div>
     </div>
 
+    <!-- QUICK ADD ENTITY MODAL -->
+    <div id="quick-entity-modal" class="fixed inset-0 bg-black/60 z-[80] hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col transform transition-transform border border-gray-100">
+            <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
+                <h3 id="qe-title" class="text-lg font-bold text-gray-800">הוספת חדש</h3>
+                <button type="button" class="text-gray-400 hover:text-gray-700 text-2xl leading-none btn-close-quick-modal">&times;</button>
+            </div>
+            <div class="p-6">
+                <form id="quick-entity-form" class="space-y-4">
+                    <div><label class="block text-sm text-gray-600 mb-1 font-medium">שם (חובה)</label><input type="text" id="qe-name" required class="w-full border border-gray-300 focus:border-blue-500 outline-none p-2.5 rounded-lg"></div>
+                    <div><label class="block text-sm text-gray-600 mb-1 font-medium">ע.מ / ת.ז</label><input type="text" id="qe-idnum" class="w-full border border-gray-300 focus:border-blue-500 outline-none p-2.5 rounded-lg"></div>
+                    <div><label class="block text-sm text-gray-600 mb-1 font-medium">אימייל</label><input type="email" id="qe-email" class="w-full border border-gray-300 focus:border-blue-500 outline-none p-2.5 rounded-lg"></div>
+                    <div><label class="block text-sm text-gray-600 mb-1 font-medium">טלפון</label><input type="text" id="qe-phone" class="w-full border border-gray-300 focus:border-blue-500 outline-none p-2.5 rounded-lg"></div>
+                    <div><label class="block text-sm text-gray-600 mb-1 font-medium">כתובת</label><input type="text" id="qe-address" class="w-full border border-gray-300 focus:border-blue-500 outline-none p-2.5 rounded-lg"></div>
+                    
+                    <div class="pt-5 border-t border-gray-100 flex gap-3 mt-2">
+                        <button type="submit" class="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-medium shadow-sm hover:bg-blue-700 transition-colors">שמור והוסף</button>
+                        <button type="button" class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl font-medium hover:bg-gray-200 transition-colors btn-close-quick-modal">ביטול</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs & App Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -413,7 +463,11 @@
             customers: [], suppliers: [], incomes: [], expenses: [], taxAdvances: [],
             receiptPayments: [],
             entitiesTab: 'general',
-            unsubscribers: []
+            unsubscribers: [],
+            pendingSelectedEntityId: null,      // For receipt screen select
+            pendingSelectedFormEntityId: null,  // For data entry form select
+            quickEntityType: '',
+            quickEntityTarget: ''
         };
 
         const el = (id) => document.getElementById(id);
@@ -508,6 +562,12 @@
             el('btn-import-excel')?.addEventListener('click', () => el('file-import-excel').click());
             el('file-import-excel')?.addEventListener('change', handleExcelImport);
 
+            // Select Dropdowns & Quick Add
+            el('rec-customer')?.addEventListener('change', handleDropdownChange);
+            el('form-entity')?.addEventListener('change', handleDropdownChange);
+            document.querySelectorAll('.btn-close-quick-modal').forEach(b => b.addEventListener('click', closeQuickEntityModal));
+            el('quick-entity-form')?.addEventListener('submit', saveQuickEntity);
+
             // Receipts
             el('btn-add-receipt-row')?.addEventListener('click', addReceiptPaymentRow);
             el('btn-preview-receipt')?.addEventListener('click', previewReceiptPrint);
@@ -529,6 +589,74 @@
             document.addEventListener('DOMContentLoaded', initAppEventListeners);
         } else {
             initAppEventListeners();
+        }
+
+        // --- QUICK ADD ENTITY MODAL LOGIC ---
+        function handleDropdownChange(e) {
+            const val = e.target.value;
+            const targetId = e.target.id; // 'rec-customer' or 'form-entity'
+            
+            if (val === 'add_new_customer') {
+                openQuickEntityModal('customers', targetId);
+                e.target.value = ''; // Reset until saved
+            } else if (val === 'add_new_supplier') {
+                openQuickEntityModal('suppliers', targetId);
+                e.target.value = '';
+            }
+        }
+
+        function openQuickEntityModal(type, targetSelectId) {
+            AppData.quickEntityType = type;
+            AppData.quickEntityTarget = targetSelectId;
+            
+            el('quick-entity-form').reset();
+            el('qe-title').innerText = type === 'customers' ? 'הוספת לקוח חדש' : 'הוספת ספק/לקוח חדש';
+            
+            el('quick-entity-modal').classList.remove('hidden');
+            el('quick-entity-modal').classList.add('flex');
+            
+            setTimeout(() => el('qe-name').focus(), 100);
+        }
+
+        function closeQuickEntityModal() {
+            el('quick-entity-modal').classList.add('hidden');
+            el('quick-entity-modal').classList.remove('flex');
+        }
+
+        async function saveQuickEntity(e) {
+            e.preventDefault();
+            const name = el('qe-name').value.trim();
+            const idNumber = el('qe-idnum').value.trim();
+            const email = el('qe-email').value.trim();
+            const phone = el('qe-phone').value.trim();
+            const address = el('qe-address').value.trim();
+            const type = AppData.quickEntityType; // 'customers' or 'suppliers'
+            
+            // Validation against duplicates
+            const existingEntities = type === 'customers' ? AppData.customers : [...AppData.suppliers, ...AppData.customers];
+            const duplicateByName = existingEntities.find(x => x.name.trim() === name);
+            const duplicateById = idNumber ? existingEntities.find(x => x.idNumber && x.idNumber.trim() === idNumber) : null;
+            
+            if (duplicateByName) return showMsg('שגיאה', 'קיים כבר גורם במערכת עם השם הזה.', 'error');
+            if (duplicateById) return showMsg('שגיאה', 'קיים כבר גורם במערכת עם מספר העוסק/ת.ז הזה.', 'error');
+            
+            try {
+                const data = { name, idNumber, email, phone, address, createdAt: new Date().toISOString() };
+                const docRef = await addDoc(collection(db, `${getBasePath()}/${type}`), data);
+                
+                // Set pending ID so updateSelectDropdowns selects it automatically
+                if (AppData.quickEntityTarget === 'rec-customer') {
+                    AppData.pendingSelectedEntityId = docRef.id;
+                } else if (AppData.quickEntityTarget === 'form-entity') {
+                    AppData.pendingSelectedFormEntityId = docRef.id;
+                }
+                
+                closeQuickEntityModal();
+                showMsg('הצלחה!', 'הגורם נוצר ונבחר בהצלחה ברשימה.');
+            } catch (err) {
+                console.error(err);
+                showMsg('שגיאה', 'אירעה שגיאה בשמירת הרשומה.', 'error');
+            }
         }
 
         // --- 2. AUTHENTICATION ---
@@ -838,7 +966,7 @@
 
             if(!data || data.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">לא נמצאו רשומות לתצוגה.</td></tr>`;
-                tfoot.innerHTML = ''; // Clear footer if no data
+                tfoot.innerHTML = ''; 
                 return;
             }
 
@@ -876,7 +1004,7 @@
                                 <td class="p-3 font-bold ${colorClass}">₪${totalSum.toLocaleString()}</td>
                                 <td class="p-3"></td>
                             </tr>`;
-            } else { // taxAdvances
+            } else { 
                 footHtml = `<tr>
                                 <td colspan="3" class="p-3 font-bold text-gray-700">סה"כ שולמו:</td>
                                 <td class="p-3 font-bold text-gray-800">₪${totalSum.toLocaleString()}</td>
@@ -1018,13 +1146,17 @@
             el('wrapper-notes').style.display = type === 'incomes' ? 'block' : 'none';
 
             const sel = el('form-entity');
+            const currFVal = AppData.pendingSelectedFormEntityId;
             sel.innerHTML = '<option value="">בחר...</option>';
+            
             if(type === 'incomes') {
                 el('label-entity').innerText = 'לקוח (חובה)';
+                sel.innerHTML += '<option value="add_new_customer" class="font-bold text-blue-600 bg-blue-50">+ הוסף לקוח חדש...</option>';
                 AppData.customers.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
                 sel.required = true;
             } else if (type === 'expenses') {
                 el('label-entity').innerText = 'ספק/לקוח (חובה)';
+                sel.innerHTML += '<option value="add_new_supplier" class="font-bold text-blue-600 bg-blue-50">+ הוסף ספק/לקוח חדש...</option>';
                 [...AppData.suppliers, ...AppData.customers].forEach(c => sel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
                 sel.required = true;
             } else {
@@ -1036,7 +1168,7 @@
                 if(item) {
                     el('form-id').value = item.id;
                     el('form-date').value = item.date || '';
-                    if(type !== 'taxAdvances') el('form-entity').value = item.entityId || '';
+                    if(type !== 'taxAdvances') sel.value = item.entityId || '';
                     el('form-amount').value = item.amount || '';
                     if(type==='expenses') el('form-amount-usd').value = item.amountUSD || '';
                     el('form-payment-method').value = item.paymentMethod || '';
@@ -1049,7 +1181,11 @@
                         el('form-notes').value = item.notes || '';
                     }
                 }
+            } else if (currFVal) {
+                sel.value = currFVal;
+                AppData.pendingSelectedFormEntityId = null;
             }
+            
             el('data-modal').classList.remove('hidden');
             el('data-modal').classList.add('flex');
         }
@@ -1232,11 +1368,42 @@
         }
 
         function updateSelectDropdowns() {
+            // Receipt Dropdown
             const rCust = el('rec-customer');
-            const currVal = rCust.value;
-            rCust.innerHTML = '<option value="">בחר לקוח...</option>';
-            AppData.customers.forEach(c => rCust.innerHTML += `<option value="${c.id}">${c.name}</option>`);
-            rCust.value = currVal;
+            if (rCust) {
+                const currVal = AppData.pendingSelectedEntityId || rCust.value;
+                rCust.innerHTML = '<option value="">בחר לקוח מהרשימה...</option>';
+                rCust.innerHTML += '<option value="add_new_customer" class="font-bold text-blue-600 bg-blue-50">+ הוסף לקוח חדש...</option>';
+                
+                AppData.customers.forEach(c => rCust.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+                if (currVal && AppData.customers.find(c => c.id === currVal)) {
+                    rCust.value = currVal;
+                } else {
+                    rCust.value = "";
+                }
+            }
+            AppData.pendingSelectedEntityId = null;
+
+            // Form Entry Dropdown (if modal is open and active)
+            const fEnt = el('form-entity');
+            if (fEnt && !el('data-modal').classList.contains('hidden')) {
+                const type = AppData.currentListType;
+                if(type === 'incomes' || type === 'expenses') {
+                    const currFVal = AppData.pendingSelectedFormEntityId || fEnt.value;
+                    fEnt.innerHTML = '<option value="">בחר...</option>';
+                    if(type === 'incomes') {
+                        fEnt.innerHTML += '<option value="add_new_customer" class="font-bold text-blue-600 bg-blue-50">+ הוסף לקוח חדש...</option>';
+                        AppData.customers.forEach(c => fEnt.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+                    } else if (type === 'expenses') {
+                        fEnt.innerHTML += '<option value="add_new_supplier" class="font-bold text-blue-600 bg-blue-50">+ הוסף ספק/לקוח חדש...</option>';
+                        [...AppData.suppliers, ...AppData.customers].forEach(c => fEnt.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+                    }
+                    if (currFVal && [...AppData.suppliers, ...AppData.customers].find(c => c.id === currFVal)) {
+                        fEnt.value = currFVal;
+                    }
+                }
+            }
+            AppData.pendingSelectedFormEntityId = null;
         }
 
         // --- 9. EXCEL EXPORT ---
@@ -1405,6 +1572,7 @@
                 </head>
                 <body>
                     ${previewBanner}
+                    <!-- כפתור הדפסה ידנית - יוסתר בהדפסה עצמה -->
                     <div class="no-print" style="text-align: left; margin-bottom: 20px;">
                         <button onclick="window.print()" style="background: #2563eb; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; font-family: inherit;">הדפס קבלה</button>
                     </div>
