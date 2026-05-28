@@ -720,7 +720,7 @@
             }
         };
 
-        // --- Dashboard Filters Initialization (New Feature) ---
+        // --- Dashboard Filters Initialization ---
         window.initDashboardFilters = () => {
             const select = document.getElementById('dashFilterSelect');
             const now = new Date();
@@ -732,12 +732,13 @@
             const prevMonthDate = new Date(currYear, currMonth - 1, 1);
             
             select.innerHTML = `
-                <option value="currentMonth">חודש נוכחי (${hebrewMonths[currMonth]} ${currYear})</option>
+                <option value="currentMonth" selected>חודש נוכחי (${hebrewMonths[currMonth]} ${currYear})</option>
                 <option value="prevMonth">חודש קודם (${hebrewMonths[prevMonthDate.getMonth()]} ${prevMonthDate.getFullYear()})</option>
                 <option value="currentYear">שנה נוכחית (${currYear})</option>
                 <option value="yearMinus1">שנת ${currYear - 1}</option>
                 <option value="yearMinus2">שנת ${currYear - 2}</option>
                 <option value="yearMinus3">שנת ${currYear - 3}</option>
+                <option value="all">הכל (כל הזמנים)</option>
                 <option value="custom">מותאם אישית...</option>
             `;
             
@@ -771,6 +772,9 @@
             } else if (val === 'yearMinus3') {
                 start = new Date(now.getFullYear() - 3, 0, 1);
                 end = new Date(now.getFullYear() - 3, 11, 31);
+            } else if (val === 'all') {
+                document.getElementById('dashStartDate').value = '';
+                document.getElementById('dashEndDate').value = '';
             } else if (val === 'custom') {
                 customDates.classList.remove('hidden');
                 customDates.classList.add('flex');
@@ -841,7 +845,6 @@
             window.generateReport();
         }
 
-        // Updated Dashboard Stats Function with Filtering
         window.updateDashboardStats = () => {
             const startVal = document.getElementById('dashStartDate')?.value;
             const endVal = document.getElementById('dashEndDate')?.value;
@@ -849,7 +852,6 @@
             const startDate = startVal ? new Date(startVal).setHours(0,0,0,0) : null;
             const endDate = endVal ? new Date(endVal).setHours(23,59,59,999) : null;
             
-            // עדכון הכותרת לטקסט הנבחר
             const selectEl = document.getElementById('dashFilterSelect');
             const titleText = selectEl && selectEl.selectedIndex > -1 ? selectEl.options[selectEl.selectedIndex].text : 'סיכום נתונים';
             document.getElementById('dash-main-title').innerText = `סיכום נתונים - ${titleText}`;
