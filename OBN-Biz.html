@@ -5,13 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>מערכת ניהול עוסק פטור/זעיר</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- External Libraries (Excel) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
@@ -31,7 +28,6 @@
 </head>
 <body class="bg-gray-50 text-gray-800 h-screen overflow-hidden flex flex-col md:flex-row">
 
-    <!-- Loading Screen -->
     <div id="loader" class="fixed inset-0 bg-gray-50 z-50 flex items-center justify-center">
         <div class="text-center">
             <i class="fas fa-spinner fa-spin text-blue-600 text-4xl mb-4"></i>
@@ -39,7 +35,6 @@
         </div>
     </div>
 
-    <!-- Login Screen -->
     <div id="login-screen" class="fixed inset-0 bg-gray-50 z-50 hidden items-center justify-center">
         <div class="bg-white p-8 rounded-2xl shadow-xl text-center max-w-sm w-full mx-4 border border-gray-100">
             <i class="fas fa-shield-alt text-blue-600 text-5xl mb-4"></i>
@@ -52,28 +47,23 @@
         </div>
     </div>
 
-    <!-- Custom Message/Confirm Box -->
     <div id="msg-box" class="fixed inset-0 bg-black/50 z-[100] hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center transform scale-100 transition-transform">
             <div id="msg-icon" class="mb-4"></div>
             <h3 id="msg-title" class="text-xl font-bold text-gray-800 mb-2"></h3>
             <p id="msg-text" class="text-gray-600 mb-6 text-sm whitespace-pre-line"></p>
             <div class="flex gap-3 justify-center" id="msg-buttons">
-                <!-- dynamic buttons injected here -->
-            </div>
+                </div>
         </div>
     </div>
 
-    <!-- Main App Layout -->
     <div id="app-content" class="w-full h-full flex flex-col md:flex-row hidden">
         
-        <!-- Mobile Header -->
         <div class="md:hidden bg-white border-b border-gray-200 flex justify-between items-center p-4 z-40 relative shadow-sm">
             <h1 id="mobile-business-name" class="text-lg font-bold text-gray-800">המערכת שלי</h1>
             <button id="btn-mobile-toggle" class="text-gray-600 text-2xl"><i class="fas fa-bars"></i></button>
         </div>
 
-        <!-- Sidebar Navigation -->
         <aside id="sidebar" class="hidden md:flex flex-col w-full md:w-64 bg-white border-l border-gray-200 h-full absolute md:relative z-30 transition-transform">
             <div class="p-6 border-b border-gray-100 flex items-center gap-3">
                 <i class="fas fa-building text-blue-600 text-xl"></i>
@@ -112,11 +102,9 @@
             </div>
         </aside>
 
-        <!-- Main Content Area -->
         <main class="flex-1 overflow-y-auto p-4 md:p-8 relative">
             <div class="max-w-6xl mx-auto">
                 
-                <!-- DASHBOARD VIEW -->
                 <section id="view-dashboard" class="view-section active">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                         <h2 class="text-3xl font-bold text-gray-800">לוח בקרה</h2>
@@ -125,7 +113,6 @@
                         </button>
                     </div>
 
-                    <!-- Filters -->
                     <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap gap-3 items-center mb-6">
                         <span class="text-gray-500 font-medium ml-2">סינון:</span>
                         <select id="dash-filter" class="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
@@ -142,7 +129,6 @@
                         </div>
                     </div>
 
-                    <!-- Stat Cards -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                         <div class="bg-white p-6 rounded-2xl shadow-sm border border-green-100 border-b-4 border-b-green-500">
                             <h3 class="text-gray-500 text-sm font-medium">סה"כ הכנסות</h3>
@@ -163,7 +149,6 @@
                         </div>
                     </div>
 
-                    <!-- Recent Lists -->
                     <div class="grid lg:grid-cols-2 gap-6">
                         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
                             <h3 class="text-lg font-bold mb-4 text-gray-800 border-b pb-2">הכנסות אחרונות</h3>
@@ -176,12 +161,10 @@
                     </div>
                 </section>
 
-                <!-- DATA LIST VIEW -->
                 <section id="view-list" class="view-section">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                         <h2 id="list-title" class="text-2xl font-bold text-gray-800">ניהול נתונים</h2>
                         <div class="flex flex-wrap gap-2">
-                            <!-- Hidden input for file upload -->
                             <input type="file" id="file-import-excel" accept=".xlsx, .xls, .csv" class="hidden">
                             
                             <button id="btn-import-excel" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-5 py-2.5 rounded-xl flex items-center gap-2 shadow-sm transition-colors border border-gray-200">
@@ -193,13 +176,11 @@
                         </div>
                     </div>
                     
-                    <!-- Import Instructions Banner -->
                     <div id="import-instructions" class="hidden bg-blue-50 text-blue-800 text-sm p-4 rounded-xl border border-blue-100 mb-6">
                         <h4 class="font-bold mb-1 text-base"><i class="fas fa-info-circle"></i> הנחיות לייבוא מאקסל:</h4>
                         <p id="import-instructions-text" class="leading-relaxed"></p>
                     </div>
 
-                    <!-- List Filters -->
                     <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap gap-3 items-center mb-6">
                         <span class="text-gray-500 font-medium ml-2">סינון:</span>
                         <select id="list-filter" class="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
@@ -221,12 +202,12 @@
                             <table class="w-full text-right text-sm">
                                 <thead class="bg-gray-50 text-gray-600 border-b border-gray-100" id="list-thead"></thead>
                                 <tbody class="divide-y divide-gray-50" id="list-tbody"></tbody>
+                                <tfoot id="list-tfoot" class="bg-gray-50 border-t-2 border-gray-200"></tfoot>
                             </table>
                         </div>
                     </div>
                 </section>
 
-                <!-- RECEIPT VIEW -->
                 <section id="view-receipt" class="view-section">
                     <h2 class="text-2xl font-bold text-gray-800 mb-6">הפקת קבלה (מספר בא: <span id="rec-next-num" class="text-blue-600"></span>)</h2>
                     <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
@@ -255,8 +236,7 @@
                                 </button>
                             </div>
                             <div id="rec-payments-container" class="space-y-4">
-                                <!-- Dynamic rows inserted here -->
-                            </div>
+                                </div>
                         </div>
 
                         <div>
@@ -278,7 +258,6 @@
                     </div>
                 </section>
 
-                <!-- SETTINGS VIEW -->
                 <section id="view-settings" class="view-section">
                     <h2 class="text-2xl font-bold text-gray-800 mb-6">הגדרות מערכת וניהול גורמים</h2>
                     
@@ -288,7 +267,6 @@
                         <button data-tab="suppliers" id="tab-suppliers" class="pb-3 px-6 font-medium whitespace-nowrap text-gray-500 hover:text-gray-700">ניהול ספקים</button>
                     </div>
 
-                    <!-- General Settings -->
                     <div id="set-general" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 max-w-3xl space-y-5 block">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">שם העסק (יופיע בקבלות)</label>
@@ -328,7 +306,6 @@
                         <button id="btn-save-general" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium w-full sm:w-auto mt-4">שמור שינויים</button>
                     </div>
 
-                    <!-- Entities Settings (Customers/Suppliers) -->
                     <div id="set-entities" class="hidden grid md:grid-cols-3 gap-6">
                         <div class="md:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-fit">
                             <h3 class="font-bold text-lg mb-4 border-b pb-2" id="ent-form-title">הוספת חדש</h3>
@@ -357,7 +334,6 @@
         </main>
     </div>
 
-    <!-- MAIN DATA FORM MODAL -->
     <div id="data-modal" class="fixed inset-0 bg-black/50 z-[60] hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col transform transition-transform">
             <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
@@ -382,7 +358,7 @@
                         <div>
                             <label class="block text-sm font-medium mb-1">אמצעי תשלום</label>
                             <select id="form-payment-method" class="w-full border border-gray-300 rounded p-2.5">
-                                <option>העברה בנקאית</option><option>אשראי</option><option>צ'ק</option><option>מזומן</option><option>אפליקציה (Bit/Paybox)</option><option>PayPal</option><option>הוראת קבע</option><option>אחר</option>
+                                <option>העברה בנקאית</option><option>אשראי</option><option>צ'ק</option><option>מזומן</option><option>אפליקציה (Bit/Paybox)</option><option>PayPal</option><option>העברה מחזורית</option><option>אחר</option>
                             </select>
                         </div>
                         
@@ -411,7 +387,6 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs & App Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -443,7 +418,7 @@
 
         const el = (id) => document.getElementById(id);
         
-        // --- CUSTOM MODAL SYSTEM (No Alerts/Confirms) ---
+        // --- CUSTOM MODAL SYSTEM ---
         window.showMsg = function(title, text, type = 'info') {
             el('msg-title').innerText = title;
             el('msg-text').innerText = text;
@@ -477,8 +452,32 @@
             el('msg-box').classList.remove('flex');
         };
         
-        // --- 1. SETUP EVENT LISTENERS ---
+        // --- 1. SETUP EVENT LISTENERS & UI ---
+        function setupDynamicYears() {
+            const currYear = new Date().getFullYear();
+            const optionsHTML = `
+                <option value="year-${currYear - 1}">שנת ${currYear - 1}</option>
+                <option value="year-${currYear - 2}">שנת ${currYear - 2}</option>
+                <option value="year-${currYear - 3}">שנת ${currYear - 3}</option>
+            `;
+            
+            const dashSelect = el('dash-filter');
+            const listSelect = el('list-filter');
+            
+            const dashYearOpt = dashSelect.querySelector('option[value="year"]');
+            const listYearOpt = listSelect.querySelector('option[value="year"]');
+            
+            if (dashYearOpt && !dashSelect.querySelector(`option[value="year-${currYear - 1}"]`)) {
+                dashYearOpt.insertAdjacentHTML('afterend', optionsHTML);
+            }
+            if (listYearOpt && !listSelect.querySelector(`option[value="year-${currYear - 1}"]`)) {
+                listYearOpt.insertAdjacentHTML('afterend', optionsHTML);
+            }
+        }
+
         function initAppEventListeners() {
+            setupDynamicYears();
+
             // Login & Auth
             el('btn-login-google')?.addEventListener('click', loginWithGoogle);
             el('btn-logout')?.addEventListener('click', logout);
@@ -526,7 +525,6 @@
             el('ent-table-body')?.addEventListener('click', handleEntityTableClick);
         }
 
-        // הפעלה בטוחה של המאזינים
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initAppEventListeners);
         } else {
@@ -608,7 +606,6 @@
                 const unsub = onSnapshot(collection(db, bp, colName), (snapshot) => {
                     const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     
-                    // מיון חכם: קודם לפי תאריך ההזנה, ואז לפי תאריך ושעת יצירת הרשומה בפועל
                     if(['incomes', 'expenses', 'taxAdvances'].includes(colName)) {
                         data.sort((a,b) => {
                             const dateA = new Date(a.date).getTime() || 0;
@@ -689,6 +686,10 @@
                 const d = parseToLocal(dStr);
                 if(filterType === 'all') return true;
                 if(filterType === 'year') return d.y === currYear;
+                if(filterType.startsWith('year-')) {
+                    const targetYear = parseInt(filterType.split('-')[1], 10);
+                    return d.y === targetYear;
+                }
                 if(filterType === 'month') return d.y === currYear && d.m === currMonth;
                 if(filterType === 'lastMonth') {
                     let checkY = currMonth === 0 ? currYear - 1 : currYear;
@@ -749,7 +750,6 @@
             const type = AppData.currentListType;
             let th = '', title = '';
             
-            // כפתור והנחיות ייבוא אקסל
             const btnImport = el('btn-import-excel');
             const importInst = el('import-instructions');
             const importInstText = el('import-instructions-text');
@@ -787,6 +787,7 @@
             const type = AppData.currentListType;
             let data = AppData[type];
             const tbody = el('list-tbody');
+            const tfoot = el('list-tfoot');
             
             // --- FILTERING LOGIC ---
             const filterType = el('list-filter') ? el('list-filter').value : 'all';
@@ -806,6 +807,10 @@
                 const d = parseToLocal(dStr);
                 if(filterType === 'all') return true;
                 if(filterType === 'year') return d.y === currYear;
+                if(filterType.startsWith('year-')) {
+                    const targetYear = parseInt(filterType.split('-')[1], 10);
+                    return d.y === targetYear;
+                }
                 if(filterType === 'month') return d.y === currYear && d.m === currMonth;
                 if(filterType === 'lastMonth') {
                     let checkY = currMonth === 0 ? currYear - 1 : currYear;
@@ -833,6 +838,7 @@
 
             if(!data || data.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">לא נמצאו רשומות לתצוגה.</td></tr>`;
+                tfoot.innerHTML = ''; // Clear footer if no data
                 return;
             }
 
@@ -859,6 +865,25 @@
                 html += `<tr class="hover:bg-blue-50/50 transition-colors">${rowInner}<td class="p-3">${actionsStr}</td></tr>`;
             });
             tbody.innerHTML = html;
+
+            // --- Render Dynamic Footer Sum ---
+            const totalSum = data.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+            let footHtml = '';
+            if (type === 'incomes' || type === 'expenses') {
+                const colorClass = type === 'incomes' ? 'text-green-600' : 'text-red-500';
+                footHtml = `<tr>
+                                <td colspan="3" class="p-3 font-bold text-gray-700">סה"כ סכומים לתקופה זו:</td>
+                                <td class="p-3 font-bold ${colorClass}">₪${totalSum.toLocaleString()}</td>
+                                <td class="p-3"></td>
+                            </tr>`;
+            } else { // taxAdvances
+                footHtml = `<tr>
+                                <td colspan="3" class="p-3 font-bold text-gray-700">סה"כ שולמו:</td>
+                                <td class="p-3 font-bold text-gray-800">₪${totalSum.toLocaleString()}</td>
+                                <td class="p-3"></td>
+                            </tr>`;
+            }
+            tfoot.innerHTML = footHtml;
         }
 
         function handleListTableClick(e) {
@@ -875,14 +900,12 @@
         // --- 6.5. EXCEL IMPORT HANDLING ---
         function parseExcelDate(val) {
             if (!val) return '';
-            // Handle numeric dates (Excel serial dates)
             if (typeof val === 'number') {
                 const date = new Date(Math.round((val - 25569) * 86400 * 1000));
                 return date.toISOString().split('T')[0];
             }
-            // Handle string dates
             if (typeof val === 'string') {
-                if (val.includes('/')) { // assume DD/MM/YYYY
+                if (val.includes('/')) {
                     const parts = val.split('/');
                     if (parts.length === 3) {
                         return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
@@ -916,11 +939,11 @@
                     const json = window.XLSX.utils.sheet_to_json(worksheet);
 
                     let importedCount = 0;
-                    const type = AppData.currentListType; // 'incomes' or 'expenses'
+                    const type = AppData.currentListType; 
 
                     for (const row of json) {
                         const amount = parseFloat(row['סכום'] || row['Amount'] || 0);
-                        if (!amount) continue; // דילוג על שורות ללא סכום תקין
+                        if (!amount) continue; 
 
                         const rawDate = row['תאריך'] || row['Date'] || '';
                         const dateVal = parseExcelDate(rawDate) || new Date().toISOString().split('T')[0];
@@ -929,7 +952,6 @@
                         const entityName = row['לקוח'] || row['ספק'] || row['Customer'] || row['Supplier'] || '';
                         let entityId = '';
 
-                        // חיפוש אוטומטי של הגורם (לקוח/ספק), ואם לא קיים - יצירה אוטומטית
                         if (entityName) {
                             const entities = type === 'incomes' ? AppData.customers : [...AppData.suppliers, ...AppData.customers];
                             const existing = entities.find(x => x.name.trim() === entityName.trim());
@@ -942,7 +964,6 @@
                                 const added = await addDoc(collection(db, `${getBasePath()}/${entityType}`), newEntity);
                                 entityId = added.id;
                                 
-                                // נוסיף מקומית כדי למנוע יצירת כפילויות באותו סיבוב לולאה
                                 if(type === 'incomes') AppData.customers.push({id: added.id, ...newEntity});
                                 else AppData.suppliers.push({id: added.id, ...newEntity});
                             }
@@ -976,7 +997,7 @@
                 }
                 
                 el('loader').style.display = 'none';
-                el('file-import-excel').value = ''; // איפוס כדי לאפשר העלאה חוזרת של אותו קובץ
+                el('file-import-excel').value = ''; 
             };
             reader.readAsArrayBuffer(file);
         }
@@ -1094,7 +1115,6 @@
             el('mobile-business-name').innerText = s.businessName || 'המערכת שלי';
             el('set-biz-name').value = s.businessName || '';
             
-            // New Business Details
             el('set-biz-id').value = s.businessId || '';
             el('set-biz-phone').value = s.phone || '';
             el('set-biz-email').value = s.email || '';
@@ -1132,13 +1152,11 @@
                 taxPercent: Number(el('set-tax-pct').value)
             };
 
-            // אם המשתמש התערב ידנית ושינה את שדה המספר קבלה הבא, רק אז נעדכן גם אותו במסד
             if (inputNextRec !== AppData.settings.nextReceipt) {
                 updates.nextReceipt = inputNextRec;
             }
 
             try {
-                // שימוש ב-merge אומר שמעדכנים רק את השדות ששלחנו בלי לדרוס הכל
                 await setDoc(doc(db, getBasePath(), 'settings', 'main'), updates, { merge: true });
                 showMsg('הצלחה', 'ההגדרות נשמרו במערכת.');
             } catch (err) {
@@ -1240,10 +1258,15 @@
                 'תאריך': e.date, 'ספק/לקוח': mapSup(e.entityId), 'תיאור': e.description,
                 'חשבונית': e.invoice, 'סכום כולל מע"מ ₪': Number(e.amount), 'דולר': e.amountUSD, 'אמצעי תשלום': e.paymentMethod
             }));
+            const taxData = ad.taxAdvances.map(t => ({
+                'תאריך': t.date, 'תיאור': t.description, 'אמצעי תשלום': t.paymentMethod,
+                'סכום ₪': Number(t.amount), 'אסמכתא': t.reference || ''
+            }));
 
             window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.json_to_sheet(incData), "הכנסות");
             window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.json_to_sheet(expData), "הוצאות");
-            window.XLSX.writeFile(wb, `דוח_הכנסות_הוצאות_${new Date().toISOString().split('T')[0]}.xlsx`);
+            window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.json_to_sheet(taxData), "מקדמות");
+            window.XLSX.writeFile(wb, `דוח_פעילות_${new Date().toISOString().split('T')[0]}.xlsx`);
         }
 
         // --- 10. RECEIPT GENERATOR (NATIVE HTML PRINT) ---
@@ -1382,7 +1405,6 @@
                 </head>
                 <body>
                     ${previewBanner}
-                    <!-- כפתור הדפסה ידנית - יוסתר בהדפסה עצמה -->
                     <div class="no-print" style="text-align: left; margin-bottom: 20px;">
                         <button onclick="window.print()" style="background: #2563eb; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; font-family: inherit;">הדפס קבלה</button>
                     </div>
@@ -1485,7 +1507,6 @@
             const num = AppData.settings.nextReceipt;
             let sum = payments.reduce((acc, curr) => acc + Number(curr.amount||0), 0);
 
-            // פתיחת חלון באופן מיידי בעת הלחיצה כדי לעקוף חוסמי Popup
             const printWin = window.open('', '_blank');
             if(!printWin) {
                 return showMsg("חסימת חלונות קופצים", "נראה שהדפדפן חסם את פתיחת הקבלה. אנא אשר חלונות קופצים (Popups) לאתר זה ונסה שוב.", "error");
@@ -1493,16 +1514,14 @@
 
             const printHTML = getReceiptHTMLTemplate(cust, num, date, transferDate, notes, payments, sum, false);
 
-            // כתיבת ה-HTML לחלון החדש שנפתח
             printWin.document.open();
             printWin.document.write(printHTML);
             printWin.document.close();
             
             try {
-                // רק לאחר מכן מתבצעת השמירה למסד הנתונים
                 await addDoc(collection(db, `${getBasePath()}/incomes`), {
                     date, 
-                    transferDate, // שומר את תאריך ההעברה גם במסד הנתונים
+                    transferDate,
                     entityId: cust.id, amount: sum, description: `תקבול מלקוח (קבלה ${num})`,
                     paymentMethod: payments[0].method, reference: payments.map(p=>p.details).join(', '),
                     receiptNum: String(num), notes,
