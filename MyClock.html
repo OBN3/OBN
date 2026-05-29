@@ -77,13 +77,16 @@
 
         <div id="app-content" class="hidden flex-1 flex flex-col pb-6">
 
+            <!-- Dashboard -->
             <section id="dashboard" class="tab-content active flex-1">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <h2 id="dash-main-title" class="text-2xl font-bold text-slate-700">סיכום נתונים</h2>
                     
+                    <!-- Dashboard Filters -->
                     <div class="flex flex-wrap items-center gap-3 bg-white p-2 rounded-lg shadow-sm border border-slate-100">
                         <select id="dashFilterSelect" onchange="window.handleDashFilterChange()" class="border border-slate-200 p-2 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-sm font-medium text-slate-700 cursor-pointer">
-                            </select>
+                            <!-- ימולא אוטומטית מקוד ה-JS -->
+                        </select>
                         <div id="dashCustomDates" class="hidden items-center gap-2">
                             <input type="date" id="dashStartDate" onchange="window.updateDashboardStats()" class="border border-slate-200 p-1.5 rounded text-sm bg-slate-50 outline-none focus:border-indigo-500 text-slate-700 cursor-pointer">
                             <span class="text-slate-400 text-sm">-</span>
@@ -118,9 +121,11 @@
                 </div>
             </section>
 
+            <!-- Tracker -->
             <section id="tracker" class="tab-content flex-1">
                 <h2 class="text-2xl font-bold text-slate-700 mb-6">רישום זמנים ונסיעות</h2>
                 
+                <!-- Auto Timer -->
                 <div class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-100 mb-8 relative overflow-hidden transition-all duration-300">
                     <div class="absolute top-0 right-0 w-full h-2 bg-indigo-500 opacity-20"></div>
                     
@@ -133,6 +138,7 @@
 
                     <div class="text-7xl sm:text-8xl font-light text-slate-800 mb-8 font-mono tracking-wider text-center" id="timerDisplay" dir="ltr">00:00:00</div>
                     
+                    <!-- Timer Inputs -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 text-right">
                         <select id="timerClientSelect" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-full transition cursor-pointer">
                             <option value="">-- בחר לקוח (חובה) --</option>
@@ -152,6 +158,7 @@
                         </button>
                     </div>
 
+                    <!-- Post-Stop Details (Hidden until timer stops) -->
                     <div id="timer-finalize-section" class="hidden border-t border-slate-100 pt-6 mt-6 animate-fadeIn">
                         <h4 class="font-bold text-slate-600 mb-4 text-center">אשר פרטי ביצוע לפני שמירה</h4>
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end mb-4 bg-indigo-50 p-4 rounded-lg">
@@ -189,6 +196,7 @@
                     </div>
                 </div>
 
+                <!-- Manual Entry -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
                     <h3 class="text-lg font-bold text-slate-700 mb-6 flex items-center gap-2"><i class="fas fa-keyboard text-indigo-500"></i> הזנה ידנית (מדויקת)</h3>
                     
@@ -256,6 +264,7 @@
                 </div>
             </section>
 
+            <!-- Reports -->
             <section id="reports" class="tab-content flex-1">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                     <h2 class="text-2xl font-bold text-slate-700">הפקת דוחות מתקדמים</h2>
@@ -272,7 +281,7 @@
                         <button onclick="setReportDates('all', this)" class="text-xs bg-slate-800 text-white px-3 py-1 rounded-full transition" id="btn-filter-all">הכל (ברירת מחדל)</button>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-start">
                         <div>
                             <label class="block text-sm text-slate-500 mb-1">מתאריך</label>
                             <input type="date" id="filterStartDate" onchange="generateReport()" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 h-10 cursor-pointer">
@@ -296,17 +305,34 @@
                             </select>
                             <p class="text-[10px] text-slate-400 mt-1">החזק Ctrl/Cmd לבחירה מרובה.</p>
                         </div>
+                        <div>
+                            <label class="block text-sm text-slate-500 mb-1">סטטוס חיוב</label>
+                            <select id="filterBilledStatus" onchange="generateReport()" class="border border-slate-200 p-2 rounded-lg w-full bg-slate-50 h-10 cursor-pointer">
+                                <option value="all">הכל (ברירת מחדל)</option>
+                                <option value="billed">יצא חיוב</option>
+                                <option value="unbilled">לא יצא חיוב</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
-                        <span class="text-indigo-600 text-sm font-bold">סה"כ שעות בסינון:</span>
-                        <span id="report-total-hours" class="text-2xl font-bold text-slate-800 mr-2 block mt-1">00:00</span>
+                <!-- סיכום הדוח המפולטר -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100 shadow-sm">
+                        <span class="text-indigo-600 text-xs sm:text-sm font-bold">סה"כ שעות בסינון:</span>
+                        <span id="report-total-hours" class="text-xl sm:text-2xl font-bold text-slate-800 mr-2 block mt-1">00:00</span>
                     </div>
-                    <div class="bg-green-50 p-4 rounded-lg border border-green-100">
-                        <span class="text-green-600 text-sm font-bold">הכנסות בסינון (לפני מע"מ):</span>
-                        <span id="report-total-earnings" class="text-2xl font-bold text-slate-800 mr-2 block mt-1">₪0</span>
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm">
+                        <span class="text-blue-600 text-xs sm:text-sm font-bold">סה"כ הכנסות (לפני מע"מ):</span>
+                        <span id="report-total-earnings" class="text-xl sm:text-2xl font-bold text-slate-800 mr-2 block mt-1">₪0</span>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg border border-green-100 shadow-sm">
+                        <span class="text-green-600 text-xs sm:text-sm font-bold">הכנסות שחויבו בפועל:</span>
+                        <span id="report-billed-earnings" class="text-xl sm:text-2xl font-bold text-green-700 mr-2 block mt-1">₪0</span>
+                    </div>
+                    <div class="bg-amber-50 p-4 rounded-lg border border-amber-100 shadow-sm">
+                        <span class="text-amber-600 text-xs sm:text-sm font-bold">הכנסות שטרם חויבו:</span>
+                        <span id="report-unbilled-earnings" class="text-xl sm:text-2xl font-bold text-amber-700 mr-2 block mt-1">₪0</span>
                     </div>
                 </div>
 
@@ -325,6 +351,7 @@
                                     <th>מע"מ</th>
                                     <th>סה"כ כולל</th>
                                     <th>נסיעה</th>
+                                    <th class="text-center">סטטוס חיוב</th>
                                     <th class="text-center">פעולות</th>
                                 </tr>
                             </thead>
@@ -335,6 +362,7 @@
                 </div>
             </section>
 
+            <!-- Manage Settings -->
             <section id="manage" class="tab-content flex-1">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold text-slate-700">הגדרות מערכת</h2>
@@ -345,6 +373,7 @@
                 </div>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+                    <!-- Clients -->
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col h-full max-h-[600px]">
                         <h3 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2">הוספת לקוח חדש</h3>
                         <div class="grid grid-cols-2 gap-3 mb-4 shrink-0">
@@ -357,6 +386,7 @@
                         <ul id="clients-list" class="space-y-2 text-sm flex-1 overflow-y-auto pr-2 custom-scrollbar"></ul>
                     </div>
 
+                    <!-- Projects -->
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col h-full max-h-[600px]">
                         <h3 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2">הוספת פרויקט חדש</h3>
                         <div class="grid grid-cols-2 gap-3 mb-4 shrink-0">
@@ -373,6 +403,7 @@
                 </div>
             </section>
 
+            <!-- Help -->
             <section id="help" class="tab-content flex-1 max-w-4xl mx-auto w-full">
                 <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
                     <div class="flex items-center gap-4 mb-6 border-b border-slate-100 pb-4">
@@ -409,6 +440,7 @@
         </div>
     </main>
 
+    <!-- Modal: Edit Client -->
     <div id="edit-client-modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-50 hidden flex justify-center items-center px-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all">
             <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
@@ -437,6 +469,7 @@
         </div>
     </div>
 
+    <!-- Modal: Edit Project -->
     <div id="edit-project-modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-50 hidden flex justify-center items-center px-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all">
             <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
@@ -461,13 +494,14 @@
         </div>
     </div>
 
+    <!-- Modal: Edit Time Entry -->
     <div id="edit-entry-modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-50 hidden flex justify-center items-center px-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden transform transition-all">
             <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                 <h3 class="font-bold text-slate-700 text-lg"><i class="fas fa-edit text-indigo-500 mr-2"></i> עריכת דיווח</h3>
                 <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 transition"><i class="fas fa-times text-xl"></i></button>
             </div>
-            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+            <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
                 <input type="hidden" id="editEntryId">
                 <div class="grid grid-cols-2 gap-4">
                     <div class="col-span-2 sm:col-span-1">
@@ -483,6 +517,7 @@
                         <input type="text" id="editEntryDesc" class="border border-slate-200 p-2 rounded w-full bg-slate-50">
                     </div>
                     
+                    <!-- Times -->
                     <div>
                         <label class="block text-xs mb-1 text-slate-600">תאריך התחלה</label>
                         <input type="date" id="editStartDate" class="border border-slate-200 p-2 rounded w-full cursor-pointer">
@@ -500,6 +535,7 @@
                         <input type="time" id="editEndTime" class="border border-slate-200 p-2 rounded w-full cursor-pointer" dir="ltr">
                     </div>
                     
+                    <!-- Travel -->
                     <div class="col-span-2 bg-amber-50 p-3 rounded border border-amber-100 grid grid-cols-2 gap-4">
                         <div class="col-span-2 sm:col-span-1">
                             <label class="block text-xs mb-1 text-amber-700">תיאור נסיעה</label>
@@ -508,6 +544,18 @@
                         <div class="col-span-2 sm:col-span-1">
                             <label class="block text-xs mb-1 text-amber-700">קילומטראז'</label>
                             <input type="number" id="editTravelKm" min="0" class="border border-amber-200 p-2 rounded w-full bg-white" dir="ltr">
+                        </div>
+                    </div>
+                    
+                    <!-- Billing Info -->
+                    <div class="col-span-2 bg-indigo-50 p-3 rounded border border-indigo-100 grid grid-cols-2 gap-4">
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-xs mb-1 text-indigo-700">מס' חשבונית עסקה</label>
+                            <input type="text" id="editInvoiceReqNum" class="border border-indigo-200 p-2 rounded w-full bg-white" placeholder="לדוג': 10045">
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-xs mb-1 text-indigo-700">מס' חשבונית מס קבלה</label>
+                            <input type="text" id="editInvoiceReceiptNum" class="border border-indigo-200 p-2 rounded w-full bg-white" placeholder="לדוג': 20088">
                         </div>
                     </div>
                 </div>
@@ -519,6 +567,7 @@
         </div>
     </div>
 
+    <!-- UI Overlay for Messages -->
     <div id="toast" class="fixed bottom-4 left-4 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-xl transform transition-transform translate-y-20 opacity-0 z-50">
         <span id="toast-msg"></span>
     </div>
@@ -622,8 +671,12 @@
             
             const hoursEl = document.getElementById('report-total-hours');
             const earningsEl = document.getElementById('report-total-earnings');
+            const billedEl = document.getElementById('report-billed-earnings');
+            const unbilledEl = document.getElementById('report-unbilled-earnings');
             if(hoursEl) hoursEl.innerText = "00:00";
             if(earningsEl) earningsEl.innerText = "₪0";
+            if(billedEl) billedEl.innerText = "₪0";
+            if(unbilledEl) unbilledEl.innerText = "₪0";
         }
 
         const getDbRef = (colName) => collection(db, 'artifacts', appId, 'users', userId, colName);
@@ -997,6 +1050,7 @@
             const endVal = document.getElementById('filterEndDate').value;
             const clientId = document.getElementById('filterClientSelect').value;
             const selectedProjects = Array.from(document.getElementById('filterProjectSelect').selectedOptions).map(opt => opt.value);
+            const billedStatus = document.getElementById('filterBilledStatus')?.value || 'all';
 
             const startDate = startVal ? new Date(startVal).setHours(0,0,0,0) : null;
             const endDate = endVal ? new Date(endVal).setHours(23,59,59,999) : null;
@@ -1007,6 +1061,11 @@
                 if (endDate && entryDate > endDate) return false;
                 if (clientId && entry.clientId !== clientId) return false;
                 if (selectedProjects.length > 0 && !selectedProjects.includes(entry.projectId || '')) return false;
+                
+                const hasInvoice = !!entry.invoiceReqNum;
+                if (billedStatus === 'billed' && !hasInvoice) return false;
+                if (billedStatus === 'unbilled' && hasInvoice) return false;
+
                 return true;
             });
 
@@ -1015,9 +1074,11 @@
             
             let totalSeconds = 0;
             let totalEarnings = 0;
+            let totalBilledEarnings = 0;
+            let totalUnbilledEarnings = 0;
 
             if(filteredReportData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" class="p-8 text-center text-slate-400">לא נמצאו רשומות</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="12" class="p-8 text-center text-slate-400">לא נמצאו רשומות</td></tr>';
             } else {
                 filteredReportData.forEach(entry => {
                     const client = clientsData.find(c => c.id === entry.clientId);
@@ -1031,7 +1092,15 @@
                     const totalGross = billableNet + vatAmount;
                     totalEarnings += billableNet;
                     
+                    const isBilled = !!entry.invoiceReqNum;
+                    if (isBilled) {
+                        totalBilledEarnings += billableNet;
+                    } else {
+                        totalUnbilledEarnings += billableNet;
+                    }
+                    
                     const travelIcon = entry.travelKm > 0 ? `<i class="fas fa-car text-amber-500" title="${entry.travelDesc} (${entry.travelKm}km)"></i>` : '';
+                    const billedIcon = isBilled ? `<i class="fas fa-check text-green-500 text-lg" title="חשבונית עסקה: ${entry.invoiceReqNum}"></i>` : `<i class="fas fa-times text-red-500 text-lg" title="לא יצא חיוב"></i>`;
 
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50 transition";
@@ -1049,6 +1118,7 @@
                         <td class="text-slate-400 text-xs">₪${vatAmount.toFixed(2)}</td>
                         <td class="font-bold text-green-700">₪${totalGross.toFixed(2)}</td>
                         <td class="text-center">${travelIcon}</td>
+                        <td class="text-center">${billedIcon}</td>
                         <td class="text-center flex justify-center gap-2">
                             <button onclick="openEditModal('${entry.id}')" class="text-indigo-400 hover:text-indigo-700"><i class="fas fa-edit"></i></button>
                             <button onclick="deleteDocById('entries', '${entry.id}')" class="text-red-400 hover:text-red-700"><i class="fas fa-trash"></i></button>
@@ -1060,8 +1130,13 @@
 
             const hoursEl = document.getElementById('report-total-hours');
             const earningsEl = document.getElementById('report-total-earnings');
+            const billedEl = document.getElementById('report-billed-earnings');
+            const unbilledEl = document.getElementById('report-unbilled-earnings');
+            
             if (hoursEl) hoursEl.innerText = formatSeconds(totalSeconds, true);
             if (earningsEl) earningsEl.innerText = '₪' + Math.round(totalEarnings).toLocaleString();
+            if (billedEl) billedEl.innerText = '₪' + Math.round(totalBilledEarnings).toLocaleString();
+            if (unbilledEl) unbilledEl.innerText = '₪' + Math.round(totalUnbilledEarnings).toLocaleString();
         };
 
         // --- Database Actions ---
@@ -1216,6 +1291,9 @@
             document.getElementById('editEntryDesc').value = entry.description || '';
             document.getElementById('editTravelDesc').value = entry.travelDesc || '';
             document.getElementById('editTravelKm').value = entry.travelKm || 0;
+            
+            document.getElementById('editInvoiceReqNum').value = entry.invoiceReqNum || '';
+            document.getElementById('editInvoiceReceiptNum').value = entry.invoiceReceiptNum || '';
 
             document.getElementById('edit-entry-modal').classList.remove('hidden');
         };
@@ -1233,6 +1311,8 @@
             const desc = document.getElementById('editEntryDesc').value.trim();
             const travelDesc = document.getElementById('editTravelDesc').value.trim();
             const travelKm = Number(document.getElementById('editTravelKm').value) || 0;
+            const invoiceReqNum = document.getElementById('editInvoiceReqNum').value.trim();
+            const invoiceReceiptNum = document.getElementById('editInvoiceReceiptNum').value.trim();
 
             if(!startDate || !endDate || !clientId || !projectId) return showToast("חובה למלא לקוח, פרויקט וזמנים תקינים");
 
@@ -1243,7 +1323,8 @@
                 startDate, startTime, endDate, endTime,
                 durationSeconds: res.sec, durationDec: res.dec,
                 clientId, projectId, description: desc,
-                travelDesc, travelKm
+                travelDesc, travelKm,
+                invoiceReqNum, invoiceReceiptNum
             });
 
             closeEditModal();
@@ -1401,7 +1482,7 @@
             const wsData = [];
             
             // --- TABLE 1: HOURS ---
-            wsData.push(["Customer", "Project", "Description", "Start Date", "Start Time", "End Date", "End Time", "Duration (h)", "Duration (decimal)", "Billable Rate (NIS)", "Billable Amount (NIS)", "מעמ", "חיוב כולל מעמ"]);
+            wsData.push(["Customer", "Project", "Description", "Start Date", "Start Time", "End Date", "End Time", "Duration (h)", "Duration (decimal)", "Billable Rate (NIS)", "Billable Amount (NIS)", "מעמ", "חיוב כולל מעמ", "חשבונית עסקה", "חשבונית מס קבלה"]);
             
             let grandDec = 0, grandBill = 0, grandVat = 0, grandTotal = 0;
             
@@ -1442,17 +1523,19 @@
                         rate,
                         billNet.toFixed(2),
                         vat.toFixed(2),
-                        totalGross.toFixed(2)
+                        totalGross.toFixed(2),
+                        entry.invoiceReqNum || '',
+                        entry.invoiceReceiptNum || ''
                     ]);
                 });
                 
                 grandDec += pDec; grandBill += pBill; grandVat += pVat; grandTotal += pTotal;
                 
-                wsData.push(["", "סה\"כ לפרויקט:", "", "", "", "", "", "", pDec.toFixed(2), "", pBill.toFixed(2), pVat.toFixed(2), pTotal.toFixed(2)]);
+                wsData.push(["", "סה\"כ לפרויקט:", "", "", "", "", "", "", pDec.toFixed(2), "", pBill.toFixed(2), pVat.toFixed(2), pTotal.toFixed(2), "", ""]);
             }
             
             wsData.push([]);
-            wsData.push(["סה\"כ עבודה כולל:", "", "", "", "", "", "", "", grandDec.toFixed(2), "", grandBill.toFixed(2), grandVat.toFixed(2), grandTotal.toFixed(2)]);
+            wsData.push(["סה\"כ עבודה כולל:", "", "", "", "", "", "", "", grandDec.toFixed(2), "", grandBill.toFixed(2), grandVat.toFixed(2), grandTotal.toFixed(2), "", ""]);
             wsData.push([]);
             wsData.push([]);
 
