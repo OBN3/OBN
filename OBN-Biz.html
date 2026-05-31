@@ -440,7 +440,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, setDoc, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+		import { getFirestore, collection, onSnapshot, doc, setDoc, addDoc, updateDoc, deleteDoc, initializeFirestore, persistentLocalCache,  persistentMultipleTabManager } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase configuration
         const firebaseConfig = {
@@ -454,7 +454,16 @@
         
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app);
+        // אתחול מותאם אישית של Firestore
+		const db = initializeFirestore(app, {
+    // מאלץ שימוש ב-Long Polling כדי למנוע את שגיאות ה-Idle Timeout בקונסול
+    experimentalForceLongPolling: true, 
+    
+    // מפעיל מטמון מקומי - הנתונים יטענו מיידית ויהיו זמינים גם באופליין
+    localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager()
+		})
+		});
 
         // State Management
         const AppData = {
