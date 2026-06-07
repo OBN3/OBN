@@ -183,7 +183,7 @@
       <ul>
         <li><strong style="color:var(--success);">0 עד 3 מתוך 10:</strong> רמת חשד נמוכה (ירוק). מעט מאוד סימני אזהרה בודדים.</li>
         <li><strong style="color:var(--warning);">4 עד 6 מתוך 10:</strong> רמת חשד בינונית (צהוב). זוהו מספר נורות אזהרה, מחייב זהירות.</li>
-        <li><strong style="color:var(--danger);">7 עד 10 מתוך 10:</strong> רמת חשד גלויה/גבוהה (אדום). ציון כגון 9 או 10 אומר שהמשתמש ענה "כן" כמעט על כל סממני הפישינג האפשריים.</li>
+        <li><strong style="color:var(--danger);">7 עד 10 מתוך 10:</strong> רמת חשד גבוהה (אדום). ציון כגון 9 או 10 אומר שהמשתמש ענה "כן" כמעט על כל סממני הפישינג האפשריים.</li>
       </ul>
     </div>
   </div>
@@ -209,13 +209,26 @@
   const auth = getAuth(app);
   const provider = new GoogleAuthProvider();
 
+  // מילונים חסרים שהוחזרו לקוד
+  const Q_LABELS = {
+    urgentAction: "לחץ לפעולה מיידית", fearThreat: "הפחדה/איום", personalDetails: "בקשת פרטים אישיים",
+    moneyPayment: "בקשת כסף/תשלום", linkIncluded: "כלל קישור", senderKnown: "השולח ידוע",
+    knownOrganization: "התחזות לארגון", tooGoodToBeTrue: "הצעה טובה מדי", strangeLanguage: "ניסוח מוזר",
+    checkedOfficialChannel: "נבדק רשמית", consultedSomeone: "התייעץ עם אחר", alreadyActed: "כבר לחץ/שילם"
+  };
+
+  const CH_LABELS = {
+    whatsapp: "WhatsApp", sms: "SMS", email: "מייל", social: "רשתות חברתיות", website: "אתר",
+    phone_call: "שיחת טלפון", official_msg: "הודעה רשמית", investment: "השקעה/זכייה", ad: "מודעה", other: "אחר/לא בטוח"
+  };
+
   let allData = [];
   let filteredData = [];
   let currentPage = 1;
   const rowsPerPage = 20;
   let charts = {};
 
-  // ניהול מצב התחברות - מסתמך ישירות על ה-Rules ב-Firebase
+  // ניהול מצב התחברות
   onAuthStateChanged(auth, (user) => {
     if (user) {
       document.getElementById("loginContent").classList.add("hidden");
@@ -237,28 +250,35 @@
 
   document.getElementById("btnLogout").addEventListener("click", () => signOut(auth));
 
-  // אסיפת נתונים
+  // אסיפת נתונים - מופרדת מבניית התצוגה כדי למנוע באגים באבטחה
   async function fetchDatabase() {
     document.getElementById("loading").classList.remove("hidden");
     document.getElementById("mainDashboardViews").classList.add("hidden");
+    
     try {
       const q = query(collection(db, "assessments"), orderBy("createdAt", "desc"));
       const snapshot = await getDocs(q);
+      
       allData = snapshot.docs.map(doc => {
         const d = doc.data();
         return { id: doc.id, ...d, dateObj: d.createdAt ? d.createdAt.toDate() : new Date() };
       });
-      document.getElementById("loading").classList.add("hidden");
-      document.getElementById("mainDashboardViews").classList.remove("hidden");
-      applyFilters();
+      
     } catch (err) {
       console.warn("Auth check failed via Rules:", err);
+      // אם Firebase דוחה את ההרשאה (בגלל ה-Rules), נציג שגיאה ונתנתק
       document.getElementById("loading").classList.add("hidden");
       document.getElementById("dashboardContent").classList.add("hidden");
       document.getElementById("loginContent").classList.remove("hidden");
       document.getElementById("loginError").innerText = "❌ גישה נדחתה. חשבון זה אינו מורשה לצפות בדאשבורד המנהלים.";
       signOut(auth);
+      return; // עוצר כאן את המשך הריצה
     }
+
+    // אם עברנו את ההרשאות בהצלחה, נבנה את הדאשבורד
+    document.getElementById("loading").classList.add("hidden");
+    document.getElementById("mainDashboardViews").classList.remove("hidden");
+    applyFilters();
   }
 
   // פונקציית מחיקה עם אזהרה
@@ -419,8 +439,6 @@
   const modal = document.getElementById("scoreHelpModal");
   document.getElementById("btnScoreHelp").addEventListener("click", () => modal.classList.add("active"));
   document.getElementById("btnCloseModal").addEventListener("click", () => modal.classList.remove("active"));
-
-  applyFilters();
 </script>
 </body>
 </html>
