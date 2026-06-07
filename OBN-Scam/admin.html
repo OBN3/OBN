@@ -70,6 +70,20 @@
     .page-info { font-size: 14px; color: var(--muted); }
     .page-controls { display: flex; gap: 8px; }
 
+    /* Help Modal Styles */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
+    .modal-content { background: var(--card-bg); width: 90%; max-width: 550px; padding: 28px; border-radius: var(--radius); box-shadow: 0 4px 20px rgba(0,0,0,0.15); position: relative; }
+    .modal-close { position: absolute; top: 16px; left: 16px; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--muted); transition: color 0.2s; }
+    .modal-close:hover { color: var(--danger); }
+    .modal-title { font-size: 22px; font-weight: 800; margin-bottom: 16px; color: var(--primary); }
+    .modal-body { font-size: 15px; line-height: 1.6; color: var(--text); }
+    .modal-body ul { margin-right: 22px; margin-top: 8px; margin-bottom: 16px; }
+    .modal-body li { margin-bottom: 8px; }
+    
+    .help-icon { background: none; border: none; cursor: pointer; font-size: 16px; margin-right: 6px; border-radius: 50%; transition: transform 0.2s; }
+    .help-icon:hover { transform: scale(1.15); }
+
     #loading { text-align: center; padding: 40px; font-size: 20px; font-weight: bold; color: var(--primary); }
     .hidden { display: none !important; }
   </style>
@@ -137,7 +151,10 @@
           <tr>
             <th>תאריך ושעה</th>
             <th>רמת סיכון</th>
-            <th>ציון</th>
+            <th>
+              ציון 
+              <button class="help-icon" id="btnScoreHelp" title="מה זה הציון הזה?">❓</button>
+            </th>
             <th>ערוץ</th>
             <th>גיל</th>
             <th>אזור</th>
@@ -153,6 +170,28 @@
           <button class="btn" id="btnNext">הבא</button>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="scoreHelpModal">
+  <div class="modal-content">
+    <button class="modal-close" id="btnCloseModal">✖</button>
+    <h2 class="modal-title">איך מחושב הציון?</h2>
+    <div class="modal-body">
+      <p>הציון הוא מדד מספרי המייצג את רמת הסיכון של המקרה. הוא מחושב באופן הבא:</p>
+      <ul>
+        <li><strong>ניקוד בסיסי (0-3 נק'):</strong> כל שאלה מעניקה ניקוד. סימנים מובהקים כמו הפחדה, קישורים, או בקשת פרטים מזכים ב-2 עד 3 נקודות.</li>
+        <li><strong>שילובי סיכון (Combos):</strong> המערכת מוסיפה קנס של 3 נקודות נוספות אם זוהו שילובים מסוכנים. למשל: גם הודעה מגוף מוכר + גם דחיפות לפעולה + גם קישור.</li>
+        <li><strong>פעולה שבוצעה:</strong> אם המשתמש סימן שהוא כבר לחץ על הקישור או שילם, מתווספות אוטומטית 4 נקודות אזהרה.</li>
+        <li><strong>העדר התייעצות:</strong> אם הציון הצטבר מעל 4 והמשתמש לא התייעץ עם אדם נוסף, נוספת עוד נקודה למדד.</li>
+      </ul>
+      <p><strong>משמעות הציון:</strong></p>
+      <ul>
+        <li><strong style="color:var(--success);">0 עד 3:</strong> רמת חשד נמוכה (ירוק).</li>
+        <li><strong style="color:var(--warning);">4 עד 8:</strong> רמת חשד בינונית (צהוב).</li>
+        <li><strong style="color:var(--danger);">9 ומעלה:</strong> רמת חשד גבוהה (אדום). ציון כגון 30 אומר שהמשתמש ענה "כן" על כמעט כל הסימנים.</li>
+      </ul>
     </div>
   </div>
 </div>
@@ -365,15 +404,20 @@
     document.getElementById("btnNext").disabled = end >= filteredData.length;
   }
 
-  // אירועי ממשק
+  // אירועי ממשק - סינונים
   document.getElementById("dateFilter").addEventListener("change", (e) => {
     document.getElementById("customDates").classList.toggle("hidden", e.target.value !== "custom");
   });
   
   document.getElementById("btnFilter").addEventListener("click", applyFilters);
-  
   document.getElementById("btnPrev").addEventListener("click", () => { if(currentPage > 1) { currentPage--; renderTable(); }});
   document.getElementById("btnNext").addEventListener("click", () => { if(currentPage * rowsPerPage < filteredData.length) { currentPage++; renderTable(); }});
+
+  // אירועי ממשק - חלון עזרה (Modal)
+  const modal = document.getElementById("scoreHelpModal");
+  document.getElementById("btnScoreHelp").addEventListener("click", () => modal.classList.add("active"));
+  document.getElementById("btnCloseModal").addEventListener("click", () => modal.classList.remove("active"));
+  modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("active"); });
 
   // הפעלה
   init();
