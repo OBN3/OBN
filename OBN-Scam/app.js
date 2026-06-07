@@ -93,7 +93,7 @@ const I18N = {
       options: { whatsapp:"WhatsApp", sms:"SMS", email:"מייל", social:"Facebook / Instagram", website:"אתר אינטרנט", phone_call:"שיחת טלפון", official_msg:"הודעה מגוף רשמי", investment:"הצעת השקעה / זכייה", ad:"מודעה / פרסום כללי", other:"אחר / לא בטוח" }
     },
     demo: {
-      title: "רק עוד 2-3 שאלות כלליות", sub: "לפני שמציגים את התוצאות, נשמח לכמה פרטים כלליים שיעזרו לנו לשפר את הכלי עבור אנשים שונים. **אין צורך להזדהות.**",
+      title: "רק עוד 3 שאלות כלליות", sub: "לפני שמציגים את התוצאות, נשמח לכמה פרטים כלליים שיעזרו לנו לשפר את הכלי עבור אנשים שונים.",
       ageLabel: "מה הגיל שלך?", ageOpts: ["פחות מ-50","50–59","60–69","70–79","80+","מעדיף/ה לא לומר"],
       genLabel: "מין", genOpts: ["אישה","גבר","אחר","מעדיף/ה לא לומר"],
       regLabel: "אזור בארץ (לא חובה)", regOpts: ["צפון","מרכז","ירושלים והסביבה","דרום","יהודה ושומרון","אחר","מעדיף/ה לא לומר"],
@@ -151,7 +151,7 @@ const I18N = {
       options: { whatsapp:"WhatsApp", sms:"SMS", email:"Email", social:"Facebook / Instagram", website:"Website", phone_call:"Phone Call", official_msg:"Official Org. Message", investment:"Investment / Prize Offer", ad:"General Ad", other:"Other / Not Sure" }
     },
     demo: {
-      title: "Just 2-3 general questions", sub: "Before showing results, please provide some general details to help us improve. **No identification needed.**",
+      title: "Just 3 general questions", sub: "Before showing results, please provide some general details to help us improve. **No identification needed.**",
       ageLabel: "What is your age?", ageOpts: ["Under 50","50–59","60–69","70–79","80+","Prefer not to say"],
       genLabel: "Gender", genOpts: ["Female","Male","Other","Prefer not to say"],
       regLabel: "Region (Optional)", regOpts: ["North","Center","Jerusalem & surroundings","South","Judea and Samaria","Other","Prefer not to say"],
@@ -210,7 +210,7 @@ const I18N = {
       options: { whatsapp:"WhatsApp", sms:"رسالة نصية (SMS)", email:"البريد الإلكتروني", social:"Facebook / Instagram", website:"موقع إلكتروني", phone_call:"مكالمة هاتفية", official_msg:"رسالة من جهة رسمية", investment:"عرض استثمار / جائزة", ad:"إعلان عام", other:"آخر / لست متأكدًا" }
     },
     demo: {
-      title: "فقط 2-3 أسئلة عامة", sub: "قبل عرض النتائج، نود الحصول على بعض التفاصيل العامة التي ستساعدنا في تحسين الأداة. **لا حاجة للكشف عن الهوية.**",
+      title: "فقط 3 أسئلة عامة", sub: "قبل عرض النتائج، نود الحصول على بعض التفاصيل العامة التي ستساعدنا في تحسين الأداة. **لا حاجة للكشف عن الهوية.**",
       ageLabel: "ما هو عمرك؟", ageOpts: ["أقل من 50","50–59","60–69","70–79","80+","أفضل عدم الإجابة"],
       genLabel: "الجنس", genOpts: ["أنثى","ذكر","آخر","أفضل عدم الإجابة"],
       regLabel: "المنطقة (اختياري)", regOpts: ["الشمال","المركز","القدس ومحيطها","الجنوب","الضفة الغربية","آخر","أفضل عدم الإجابة"],
@@ -269,7 +269,7 @@ const I18N = {
       options: { whatsapp:"WhatsApp", sms:"SMS", email:"Эл. почта", social:"Facebook / Instagram", website:"Сайт", phone_call:"Телефонный звонок", official_msg:"Сообщение от офиц. лица", investment:"Инвестиции / Приз", ad:"Общая реклама", other:"Другое / Не уверен(а)" }
     },
     demo: {
-      title: "Ещё 2-3 общих вопроса", sub: "Перед показом результатов, пожалуйста, укажите общие данные для улучшения инструмента. **Анонимно.**",
+      title: "Ещё 3 общих вопроса", sub: "Перед показом результатов, пожалуйста, укажите общие данные для улучшения инструмента. **Анонимно.**",
       ageLabel: "Ваш возраст?", ageOpts: ["Младше 50","50–59","60–69","70–79","80+","Предпочитаю не указывать"],
       genLabel: "Пол", genOpts: ["Женский","Мужской","Другой","Предпочитаю не указывать"],
       regLabel: "Регион (Необязательно)", regOpts: ["Север","Центр","Иерусалим и окрестности","Юг","Иудея и Самария","Другое","Предпочитаю не указывать"],
