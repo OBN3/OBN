@@ -30,6 +30,8 @@
     select, input[type="date"], button { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; }
     button.btn { background: var(--primary); color: white; border: none; cursor: pointer; font-weight: 600; }
     button.btn:hover { background: #1D4ED8; }
+    button.btn-danger { background: var(--danger); }
+    button.btn-danger:hover { background: #B91C1C; }
     
     /* KPI Cards */
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
@@ -52,12 +54,10 @@
     .q-bar-label { font-size: 12px; display: flex; justify-content: space-between; margin-bottom: 4px; }
     .q-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; display: flex; }
     .q-fill-yes { background: var(--danger); }
-    .q-fill-no { background: var(--success); }
-    .q-fill-not-sure { background: var(--warning); }
 
     /* Table */
     .table-container { background: var(--card-bg); padding: 20px; border-radius: var(--radius); box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; text-align: right; min-width: 800px; }
+    table { width: 100%; border-collapse: collapse; text-align: right; min-width: 900px; }
     th, td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
     th { color: var(--muted); font-weight: 600; background: #F9FAFB; }
     .badge { padding: 4px 8px; border-radius: 99px; font-size: 12px; font-weight: 600; }
@@ -74,15 +74,12 @@
     .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
     .modal-overlay.active { opacity: 1; pointer-events: auto; }
     .modal-content { background: var(--card-bg); width: 90%; max-width: 550px; padding: 28px; border-radius: var(--radius); box-shadow: 0 4px 20px rgba(0,0,0,0.15); position: relative; }
-    .modal-close { position: absolute; top: 16px; left: 16px; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--muted); transition: color 0.2s; }
-    .modal-close:hover { color: var(--danger); }
+    .modal-close { position: absolute; top: 16px; left: 16px; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--muted); }
     .modal-title { font-size: 22px; font-weight: 800; margin-bottom: 16px; color: var(--primary); }
     .modal-body { font-size: 15px; line-height: 1.6; color: var(--text); }
     .modal-body ul { margin-right: 22px; margin-top: 8px; margin-bottom: 16px; }
     .modal-body li { margin-bottom: 8px; }
-    
-    .help-icon { background: none; border: none; cursor: pointer; font-size: 16px; margin-right: 6px; border-radius: 50%; transition: transform 0.2s; }
-    .help-icon:hover { transform: scale(1.15); }
+    .help-icon { background: none; border: none; cursor: pointer; font-size: 16px; margin-right: 6px; border-radius: 50%; }
 
     #loading { text-align: center; padding: 40px; font-size: 20px; font-weight: bold; color: var(--primary); }
     .hidden { display: none !important; }
@@ -91,83 +88,81 @@
 <body>
 
 <div class="container">
-  <div class="header">
-    <h1>📊 דאשבורד נתונים - בודקים לפני שלוחצים</h1>
-    <div class="filters">
-      <label for="dateFilter">סנן תאריכים:</label>
-      <select id="dateFilter">
-        <option value="all">הכל (כל הזמן)</option>
-        <option value="month">החודש הנוכחי</option>
-        <option value="year">השנה הנוכחית</option>
-        <option value="custom">טווח מותאם אישית...</option>
-      </select>
-      
-      <div id="customDates" class="hidden" style="display: flex; gap: 8px;">
-        <input type="date" id="startDate">
-        <input type="date" id="endDate">
-      </div>
-      <button class="btn" id="btnFilter">החל סינון</button>
-    </div>
+  
+  <div id="loginContent" class="card" style="max-width: 450px; margin: 80px auto; text-align: center; padding: 40px 30px;">
+    <span style="font-size: 50px; display: block; margin-bottom: 15px;">🔒</span>
+    <h2 style="margin-bottom: 12px; font-weight: 800;">כניסת מנהל מערכת</h2>
+    <p style="margin-bottom: 24px; color: var(--muted); font-size: 15px; line-height: 1.5;">הגישה לדאשבורד הנתונים חסומה ומורשית אך ורק לחשבון הגוגל המנהל של האפליקציה.</p>
+    <button class="btn" id="btnLogin" style="width: 100%; min-height: 48px; font-size: 16px;">🔐 התחבר באמצעות חשבון Google</button>
+    <div id="loginError" style="color: var(--danger); margin-top: 20px; font-weight: 700; font-size: 14px;"></div>
   </div>
 
-  <div id="loading">טוען נתונים מ-Firebase... אנא המתן ⏳</div>
-
   <div id="dashboardContent" class="hidden">
-    <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-title">סה"כ משיבים (לפי הסינון)</div><div class="kpi-val" id="kpiTotal">0</div></div>
-      <div class="kpi-card red"><div class="kpi-title">אחוז בסיכון גבוה</div><div class="kpi-val" id="kpiHighRisk">0%</div></div>
-      <div class="kpi-card"><div class="kpi-title">ערוץ הפנייה הנפוץ ביותר</div><div class="kpi-val" id="kpiTopChannel">-</div></div>
-      <div class="kpi-card green"><div class="kpi-title">התייעצו עם אדם נוסף (הגנה)</div><div class="kpi-val" id="kpiConsulted">0%</div></div>
-    </div>
-
-    <div class="charts-grid">
-      <div class="chart-container">
-        <h3>התפלגות רמות סיכון</h3>
-        <canvas id="chartRisk"></canvas>
+    <div class="header">
+      <div>
+        <h1>📊 דאשבורד נתונים - בודקים לפני שלוחצים</h1>
+        <div id="adminUserEmail" style="font-size: 14px; color: var(--muted); margin-top: 4px; font-weight: 600;"></div>
       </div>
-      <div class="chart-container">
-        <h3>התפלגות גילאים</h3>
-        <canvas id="chartAge"></canvas>
-      </div>
-      <div class="chart-container">
-        <h3>פילוח אזורים בארץ</h3>
-        <canvas id="chartRegion"></canvas>
-      </div>
-      <div class="chart-container">
-        <h3>ערוצי פנייה (איפה ראו את ההודעה)</h3>
-        <canvas id="chartChannel"></canvas>
-      </div>
-      
-      <div class="chart-container full-width">
-        <h3>התפלגות תשובות לפי שאלה (אחוז שענו "כן")</h3>
-        <div class="questions-grid" id="questionsStats"></div>
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <button class="btn btn-danger" id="btnLogout" style="padding: 6px 14px; font-size: 13px;">יציאה מהמערכת 🚪</button>
+        <div class="filters">
+          <label for="dateFilter">סנן תאריכים:</label>
+          <select id="dateFilter">
+            <option value="all">הכל (כל הזמן)</option>
+            <option value="month">החודש הנוכחי</option>
+            <option value="year">השנה הנוכחית</option>
+            <option value="custom">טווח מותאם אישית...</option>
+          </select>
+          <div id="customDates" class="hidden" style="display: flex; gap: 8px;">
+            <input type="date" id="startDate">
+            <input type="date" id="endDate">
+          </div>
+          <button class="btn" id="btnFilter">החל סינון</button>
+        </div>
       </div>
     </div>
 
-    <div class="table-container">
-      <h3 style="margin-bottom: 16px;">רשימת המשיבים האחרונים</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>תאריך ושעה</th>
-            <th>רמת סיכון</th>
-            <th>
-              ציון 
-              <button class="help-icon" id="btnScoreHelp" title="מה זה הציון הזה?">❓</button>
-            </th>
-            <th>ערוץ</th>
-            <th>גיל</th>
-            <th>אזור</th>
-            <th>כבר פעל?</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
-      <div class="pagination">
-        <div class="page-info" id="pageInfo">מציג 1-20 מתוך 0</div>
-        <div class="page-controls">
-          <button class="btn" id="btnPrev">הקודם</button>
-          <button class="btn" id="btnNext">הבא</button>
+    <div id="loading" class="hidden">מבצע קריאה ומעדכן נתונים... ⏳</div>
+
+    <div id="mainDashboardViews">
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-title">סה"כ משיבים (לפי הסינון)</div><div class="kpi-val" id="kpiTotal">0</div></div>
+        <div class="kpi-card red"><div class="kpi-title">אחוז בסיכון גבוה</div><div class="kpi-val" id="kpiHighRisk">0%</div></div>
+        <div class="kpi-card"><div class="kpi-title">ערוץ הפנייה הנפוץ ביותר</div><div class="kpi-val" id="kpiTopChannel">-</div></div>
+        <div class="kpi-card green"><div class="kpi-title">התייעצו עם אדם נוסף (הגנה)</div><div class="kpi-val" id="kpiConsulted">0%</div></div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-container"><h3 class="chart-title">התפלגות רמות סיכון</h3><canvas id="chartRisk"></canvas></div>
+        <div class="chart-container"><h3 class="chart-title">התפלגות גילאים</h3><canvas id="chartAge"></canvas></div>
+        <div class="chart-container"><h3 class="chart-title">פילוח אזורים בארץ</h3><canvas id="chartRegion"></canvas></div>
+        <div class="chart-container"><h3 class="chart-title">ערוצי פנייה</h3><canvas id="chartChannel"></canvas></div>
+        <div class="chart-container full-width"><h3>התפלגות תשובות לפי שאלה (אחוז שענו "כן")</h3><div class="questions-grid" id="questionsStats"></div></div>
+      </div>
+
+      <div class="table-container">
+        <h3 style="margin-bottom: 16px;">רשימת המשיבים האחרונים</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>תאריך ושעה</th>
+              <th>רמת סיכון</th>
+              <th>ציון <button class="help-icon" id="btnScoreHelp">❓</button></th>
+              <th>ערוץ</th>
+              <th>גיל</th>
+              <th>אזור</th>
+              <th>כבר פעל?</th>
+              <th style="text-align: center;">פעולות</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+        <div class="pagination">
+          <div class="page-info" id="pageInfo">מציג 1-20 מתוך 0</div>
+          <div class="page-controls">
+            <button class="btn" id="btnPrev">הקודם</button>
+            <button class="btn" id="btnNext">הבא</button>
+          </div>
         </div>
       </div>
     </div>
@@ -177,20 +172,18 @@
 <div class="modal-overlay" id="scoreHelpModal">
   <div class="modal-content">
     <button class="modal-close" id="btnCloseModal">✖</button>
-    <h2 class="modal-title">איך מחושב הציון?</h2>
+    <h2 class="modal-title">איך מחושב ציון הסיכון?</h2>
     <div class="modal-body">
-      <p>הציון הוא מדד מספרי המייצג את רמת הסיכון של המקרה. הוא מחושב באופן הבא:</p>
+      <p>הציון המוצג בטבלה (סולם 0-10) הוא נרמול של "ניקוד הפגיעות" המורכב של האפליקציה, כדי שיהיה קל וברור יותר להסבר. המערכת מחשבת זאת כך:</p>
       <ul>
-        <li><strong>ניקוד בסיסי (0-3 נק'):</strong> כל שאלה מעניקה ניקוד. סימנים מובהקים כמו הפחדה, קישורים, או בקשת פרטים מזכים ב-2 עד 3 נקודות.</li>
-        <li><strong>שילובי סיכון (Combos):</strong> המערכת מוסיפה קנס של 3 נקודות נוספות אם זוהו שילובים מסוכנים. למשל: גם הודעה מגוף מוכר + גם דחיפות לפעולה + גם קישור.</li>
-        <li><strong>פעולה שבוצעה:</strong> אם המשתמש סימן שהוא כבר לחץ על הקישור או שילם, מתווספות אוטומטית 4 נקודות אזהרה.</li>
-        <li><strong>העדר התייעצות:</strong> אם הציון הצטבר מעל 4 והמשתמש לא התייעץ עם אדם נוסף, נוספת עוד נקודה למדד.</li>
+        <li><strong>ניקוד בסיסי ושילובים:</strong> כל שאלה מעניקה 1 עד 3 נקודות לחומרה. בנוסף, המערכת קונסת בעוד 3 עד 4 נקודות את מי שהפעיל שילובים מסוכנים (למשל: הודעה מגוף מוכר + קישור + דחיפות).</li>
+        <li><strong>ההמרה לסולם ה-10:</strong> הניקוד המצטבר מתורגם לסולם של 10 לפי מדרגות סיכון.</li>
       </ul>
-      <p><strong>משמעות הציון:</strong></p>
+      <p><strong>משמעות הציון המנורמל:</strong></p>
       <ul>
-        <li><strong style="color:var(--success);">0 עד 3:</strong> רמת חשד נמוכה (ירוק).</li>
-        <li><strong style="color:var(--warning);">4 עד 8:</strong> רמת חשד בינונית (צהוב).</li>
-        <li><strong style="color:var(--danger);">9 ומעלה:</strong> רמת חשד גבוהה (אדום). ציון כגון 30 אומר שהמשתמש ענה "כן" על כמעט כל הסימנים.</li>
+        <li><strong style="color:var(--success);">0 עד 3 מתוך 10:</strong> רמת חשד נמוכה (ירוק). מעט מאוד סימני אזהרה בודדים.</li>
+        <li><strong style="color:var(--warning);">4 עד 6 מתוך 10:</strong> רמת חשד בינונית (צהוב). זוהו מספר נורות אזהרה, מחייב זהירות.</li>
+        <li><strong style="color:var(--danger);">7 עד 10 מתוך 10:</strong> רמת חשד גלויה/גבוהה (אדום). ציון כגון 9 או 10 אומר שהמשתמש ענה "כן" כמעט על כל סממני הפישינג האפשריים.</li>
       </ul>
     </div>
   </div>
@@ -198,7 +191,8 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getFirestore, collection, getDocs, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   // הגדרות Firebase
   const firebaseConfig = {
@@ -212,19 +206,8 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-
-  // מילון שמות להצגה
-  const Q_LABELS = {
-    urgentAction: "לחץ לפעולה מיידית", fearThreat: "הפחדה/איום", personalDetails: "בקשת פרטים אישיים",
-    moneyPayment: "בקשת כסף/תשלום", linkIncluded: "כלל קישור", senderKnown: "השולח ידוע",
-    knownOrganization: "התחזות לארגון", tooGoodToBeTrue: "הצעה טובה מדי", strangeLanguage: "ניסוח מוזר",
-    checkedOfficialChannel: "נבדק רשמית", consultedSomeone: "התייעץ עם אחר", alreadyActed: "כבר לחץ/שילם"
-  };
-
-  const CH_LABELS = {
-    whatsapp: "WhatsApp", sms: "SMS", email: "מייל", social: "רשתות חברתיות", website: "אתר",
-    phone_call: "שיחת טלפון", official_msg: "הודעה רשמית", investment: "השקעה/זכייה", ad: "מודעה", other: "אחר/לא בטוח"
-  };
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
 
   let allData = [];
   let filteredData = [];
@@ -232,30 +215,71 @@
   const rowsPerPage = 20;
   let charts = {};
 
-  // אתחול ואסיפת נתונים
-  async function init() {
+  // ניהול מצב התחברות - מסתמך ישירות על ה-Rules ב-Firebase
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      document.getElementById("loginContent").classList.add("hidden");
+      document.getElementById("dashboardContent").classList.remove("hidden");
+      document.getElementById("adminUserEmail").innerText = `מחובר כעת: ${user.email}`;
+      fetchDatabase();
+    } else {
+      document.getElementById("loginContent").classList.remove("hidden");
+      document.getElementById("dashboardContent").classList.add("hidden");
+    }
+  });
+
+  document.getElementById("btnLogin").addEventListener("click", () => {
+    document.getElementById("loginError").innerText = "";
+    signInWithPopup(auth, provider).catch(err => {
+      document.getElementById("loginError").innerText = "שגיאה בתהליך ההתחברות: " + err.message;
+    });
+  });
+
+  document.getElementById("btnLogout").addEventListener("click", () => signOut(auth));
+
+  // אסיפת נתונים
+  async function fetchDatabase() {
+    document.getElementById("loading").classList.remove("hidden");
+    document.getElementById("mainDashboardViews").classList.add("hidden");
     try {
       const q = query(collection(db, "assessments"), orderBy("createdAt", "desc"));
       const snapshot = await getDocs(q);
       allData = snapshot.docs.map(doc => {
         const d = doc.data();
-        return {
-          id: doc.id,
-          ...d,
-          dateObj: d.createdAt ? d.createdAt.toDate() : new Date()
-        };
+        return { id: doc.id, ...d, dateObj: d.createdAt ? d.createdAt.toDate() : new Date() };
       });
-      
       document.getElementById("loading").classList.add("hidden");
-      document.getElementById("dashboardContent").classList.remove("hidden");
+      document.getElementById("mainDashboardViews").classList.remove("hidden");
       applyFilters();
     } catch (err) {
-      console.error(err);
-      document.getElementById("loading").innerText = "⚠️ שגיאה בטעינת הנתונים. ודא שחוקי ה-Firebase (Rules) מאפשרים קריאה.";
+      console.warn("Auth check failed via Rules:", err);
+      document.getElementById("loading").classList.add("hidden");
+      document.getElementById("dashboardContent").classList.add("hidden");
+      document.getElementById("loginContent").classList.remove("hidden");
+      document.getElementById("loginError").innerText = "❌ גישה נדחתה. חשבון זה אינו מורשה לצפות בדאשבורד המנהלים.";
+      signOut(auth);
     }
   }
 
-  // סינון תאריכים
+  // פונקציית מחיקה עם אזהרה
+  async function deleteRecord(id) {
+    const confirmation = confirm("⚠️ אזהרה: האם אתה בטוח לחלוטין שברצונך למחוק רשומה זו לצמיתות מתוך בסיס הנתונים? הפעולה אינה ניתנת לביטול!");
+    if (confirmation) {
+      document.getElementById("loading").classList.remove("hidden");
+      try {
+        await deleteDoc(doc(db, "assessments", id));
+        allData = allData.filter(item => item.id !== id);
+        applyFilters();
+        document.getElementById("loading").classList.add("hidden");
+      } catch (err) {
+        alert("נכשלה מחיקת הרשומה: " + err.message);
+        document.getElementById("loading").classList.add("hidden");
+      }
+    }
+  }
+  window.deleteRecord = deleteRecord;
+
+  // סינונים
   function applyFilters() {
     const filterType = document.getElementById("dateFilter").value;
     const now = new Date();
@@ -273,10 +297,9 @@
       if(!isNaN(start) && !isNaN(end)) {
         filteredData = allData.filter(d => d.dateObj >= start && d.dateObj <= end);
       } else {
-        filteredData = [...allData]; // Fallback
+        filteredData = [...allData];
       }
     }
-
     currentPage = 1;
     updateDashboard();
   }
@@ -288,10 +311,8 @@
     renderTable();
   }
 
-  // חישוב KPI
   function updateKPIs() {
     document.getElementById("kpiTotal").innerText = filteredData.length;
-    
     const highRisk = filteredData.filter(d => d.risk?.level === "high").length;
     document.getElementById("kpiHighRisk").innerText = filteredData.length ? Math.round((highRisk / filteredData.length) * 100) + "%" : "0%";
     
@@ -307,7 +328,6 @@
     document.getElementById("kpiConsulted").innerText = filteredData.length ? Math.round((consulted / filteredData.length) * 100) + "%" : "0%";
   }
 
-  // ציור הגרפים
   function renderCharts() {
     const countOccurrences = (arr, keyPath) => {
       return arr.reduce((acc, curr) => {
@@ -322,12 +342,12 @@
     const regionData = countOccurrences(filteredData, 'demographics.region');
     const channelData = countOccurrences(filteredData, 'scenario.channel');
 
-    drawChart("chartRisk", "doughnut", ["נמוך (ירוק)", "בינוני (צהוב)", "גבוה (אדום)"], [riskData.low||0, riskData.medium||0, riskData.high||0], ['#16A34A', '#D97706', '#DC2626']);
+    drawChart("chartRisk", "doughnut", ["נמוך", "בינוני", "גבוה"], [riskData.low||0, riskData.medium||0, riskData.high||0], ['#16A34A', '#D97706', '#DC2626']);
     drawChart("chartAge", "bar", Object.keys(ageData), Object.values(ageData), '#2563EB');
     drawChart("chartRegion", "bar", Object.keys(regionData), Object.values(regionData), '#8B5CF6');
     
     const chLabels = Object.keys(channelData).map(k => CH_LABELS[k] || k);
-    drawChart("chartChannel", "pie", chLabels, Object.values(channelData), ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6']);
+    drawChart("chartChannel", "pie", chLabels, Object.values(channelData), ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6']);
   }
 
   function drawChart(canvasId, type, labels, data, colors) {
@@ -335,23 +355,11 @@
     const ctx = document.getElementById(canvasId).getContext('2d');
     charts[canvasId] = new Chart(ctx, {
       type: type,
-      data: {
-        labels: labels,
-        datasets: [{
-          data: data,
-          backgroundColor: colors,
-          borderRadius: type === 'bar' ? 4 : 0
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: type !== 'bar', position: 'bottom' } },
-        scales: type === 'bar' ? { y: { beginAtZero: true, ticks: { stepSize: 1 } } } : {}
-      }
+      data: { labels: labels, datasets: [{ data: data, backgroundColor: colors }] },
+      options: { responsive: true, plugins: { legend: { display: type !== 'bar', position: 'bottom' } } }
     });
   }
 
-  // סטטיסטיקות שאלות
   function renderQuestionsStats() {
     const qGrid = document.getElementById("questionsStats");
     qGrid.innerHTML = "";
@@ -360,23 +368,17 @@
     Object.keys(Q_LABELS).forEach(qKey => {
       const yesCount = filteredData.filter(d => d.answers?.[qKey] === "yes").length;
       const pct = Math.round((yesCount / filteredData.length) * 100);
-      
       qGrid.innerHTML += `
         <div class="q-bar-wrap">
           <div class="q-bar-label"><span>${Q_LABELS[qKey]}</span> <strong>${pct}%</strong></div>
-          <div class="q-bar">
-            <div class="q-fill-yes" style="width: ${pct}%"></div>
-          </div>
-        </div>
-      `;
+          <div class="q-bar"><div class="q-fill-yes" style="width: ${pct}%"></div></div>
+        </div>`;
     });
   }
 
-// טבלה ופאגינציה
   function renderTable() {
     const tbody = document.getElementById("tableBody");
     tbody.innerHTML = "";
-    
     const start = (currentPage - 1) * rowsPerPage;
     const end = start + rowsPerPage;
     const pageData = filteredData.slice(start, end);
@@ -385,8 +387,6 @@
       const lvlClass = d.risk?.level === "high" ? "bg-red" : (d.risk?.level === "medium" ? "bg-yellow" : "bg-green");
       const lvlText = d.risk?.level === "high" ? "גבוה" : (d.risk?.level === "medium" ? "בינוני" : "נמוך");
       const isActed = d.answers?.alreadyActed === "yes" ? "⚠️ כן" : "לא";
-      
-      // תמיכה בציון מנורמל גם אם הרשומות ישנות
       const score10 = d.risk?.score10 !== undefined ? d.risk.score10 : "-";
       
       tbody.innerHTML += `
@@ -398,33 +398,29 @@
           <td>${d.demographics?.ageGroup || "-"}</td>
           <td>${d.demographics?.region || "-"}</td>
           <td style="font-weight:bold; color: ${isActed.includes('כן') ? '#DC2626' : '#16A34A'}">${isActed}</td>
-        </tr>
-      `;
+          <td style="text-align: center;">
+            <button class="btn btn-danger" style="padding: 4px 8px; font-size: 12px; min-height: auto;" onclick="deleteRecord('${d.id}')">🗑️ מחק</button>
+          </td>
+        </tr>`;
     });
 
     document.getElementById("pageInfo").innerText = `מציג ${filteredData.length ? start + 1 : 0}-${Math.min(end, filteredData.length)} מתוך ${filteredData.length}`;
     document.getElementById("btnPrev").disabled = currentPage === 1;
     document.getElementById("btnNext").disabled = end >= filteredData.length;
   }
-  
-  // אירועי ממשק - סינונים
+
   document.getElementById("dateFilter").addEventListener("change", (e) => {
     document.getElementById("customDates").classList.toggle("hidden", e.target.value !== "custom");
   });
-  
   document.getElementById("btnFilter").addEventListener("click", applyFilters);
   document.getElementById("btnPrev").addEventListener("click", () => { if(currentPage > 1) { currentPage--; renderTable(); }});
   document.getElementById("btnNext").addEventListener("click", () => { if(currentPage * rowsPerPage < filteredData.length) { currentPage++; renderTable(); }});
 
-  // אירועי ממשק - חלון עזרה (Modal)
   const modal = document.getElementById("scoreHelpModal");
   document.getElementById("btnScoreHelp").addEventListener("click", () => modal.classList.add("active"));
   document.getElementById("btnCloseModal").addEventListener("click", () => modal.classList.remove("active"));
-  modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("active"); });
 
-  // הפעלה
-  init();
+  applyFilters();
 </script>
-
 </body>
 </html>
