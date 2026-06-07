@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="כלי לזיהוי סימני אזהרה בפרסומים חשודים עבור מבוגרים וזקנים / Fraud detection tool" />
+  <title>בודקים לפני שלוחצים | Check Before You Click</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Heebo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header class="app-header" role="banner">
+    <div class="header-inner">
+      <div class="header-brand">
+        <span class="header-icon" aria-hidden="true">🛡️</span>
+        <span class="header-title" id="ui-header-title">בודקים לפני שלוחצים</span>
+      </div>
+      
+<!-- מחליף השפות -->
+      <div class="lang-switcher">
+        <label for="lang-select" id="ui-lang-label">להחלפת שפה:</label>
+        <select id="lang-select" aria-label="בחר שפה / Select Language">
+          <option value="he">עברית</option>
+          <option value="en">English</option>
+          <option value="ru">Русский</option>
+          <option value="ar">العربية</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <main id="app" class="app-container" role="main" aria-live="polite" aria-atomic="true">
+    <noscript>
+      <div class="card">
+        <p class="card-text">אנא הפעל JavaScript בדפדפן כדי להשתמש באפליקציה.</p>
+      </div>
+    </noscript>
+  </main>
+
+  <footer class="app-footer" role="contentinfo">
+    <p id="ui-footer-text"></p>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
