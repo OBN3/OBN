@@ -2,9 +2,9 @@
  * ============================================================
  * app.js — בודקים לפני שלוחצים | Check Before You Click
  * אפליקציית Web לזיהוי סימני אזהרה בפרסומים חשודים
- * מיועדת למבוגרים וזקנים | i18n Ready
+ * מיועדת למבוגרים וזקנים | i18n Ready | 0-10 Scale
  *
- * גרסה: 1.3.0  |  שאלון: 1.0
+ * גרסה: 1.4.0  |  שאלון: 1.0
  * ============================================================
  */
 
@@ -18,11 +18,10 @@ const firebaseConfig = {
   projectId: "obn-scam",
   storageBucket: "obn-scam.firebasestorage.app",
   messagingSenderId: "721961912892",
-  appId: "1:721961912892:web:7417610692f30733071139",
-  measurementId: "G-J4M9PC7N3Q"
+  appId: "1:721961912892:web:7417610692f30733071139"
 };
 
-const APP_VERSION           = "1.3.0";
+const APP_VERSION           = "1.4.0";
 const QUESTIONNAIRE_VERSION = "1.0";
 let db = null;
 
@@ -41,16 +40,16 @@ initFirebase();
 // ============================================================
 const state = {
   lang: localStorage.getItem("user_lang") || "he",
-  step: "intro",           // intro | channel | question | demographics | results
+  step: "intro",
   currentQuestionIndex: 0,
   demographics: { ageGroup: null, gender: null, region: null },
   channel: null,
-  answers: {},             // { "yes" | "no" | "not_sure" }
-  result: { score: 0, level: null, detectedSignals: [], triggeredCombinations: [] }
+  answers: {},
+  result: { score: 0, score10: 0, level: null, detectedSignals: [], triggeredCombinations: [] }
 };
 
 // ============================================================
-// לוגיקת השאלות (ללא הטקסטים - מופרד למען i18n)
+// לוגיקת השאלות
 // ============================================================
 const QUESTIONS_CONFIG = [
   { key: "urgentAction",           score: { yes: 2, not_sure: 1, no: 0 }, rev: false, str: "medium", conditional: false },
@@ -80,7 +79,8 @@ const I18N = {
       next: "המשך ←", back: "← חזרה", start: "🔍 התחל/י בדיקה", showResult: "ראה תוצאה 🔍", restart: "🔄 בדיקה חדשה", share: "📤 שתף את האפליקציה", printBtn: "הדפס / שמור כ-PDF",
       yes: "✓ כן", no: "✗ לא", notSure: "🤔 לא בטוח/ה", req: "כדי להמשיך, יש לבחור תשובה.", offline: "⚠️ נראה שאין חיבור לאינטרנט. התשובות לא יישמרו.",
       qProgress: (curr, tot) => `שאלה ${curr} מתוך ${tot}`,
-      qNext: "השאלה הבאה ←", qFinish: "המשך לקבלת התוצאה 🔍"
+      qNext: "השאלה הבאה ←", qFinish: "המשך לקבלת התוצאה 🔍",
+      scoreStr: (s, l) => `רמת סיכון על פי התשובות בדוח: <strong>${s} מתוך 10</strong> (${l})`
     },
     intro: {
       title: "👋 ברוכים הבאים!",
@@ -137,7 +137,8 @@ const I18N = {
       next: "Next →", back: "← Back", start: "🔍 Start Check", showResult: "Show Results 🔍", restart: "🔄 New Check", share: "📤 Share App", printBtn: "Print / Save as PDF",
       yes: "✓ Yes", no: "✗ No", notSure: "🤔 Not Sure", req: "Please select an answer to continue.", offline: "⚠️ No internet connection. Answers won't be saved.",
       qProgress: (curr, tot) => `Question ${curr} of ${tot}`,
-      qNext: "Next Question →", qFinish: "Get Results 🔍"
+      qNext: "Next Question →", qFinish: "Get Results 🔍",
+      scoreStr: (s, l) => `Risk level based on report: <strong>${s} out of 10</strong> (${l})`
     },
     intro: {
       title: "👋 Welcome!",
@@ -195,7 +196,8 @@ const I18N = {
       next: "التالي ←", back: "→ عودة", start: "🔍 ابدأ الفحص", showResult: "عرض النتيجة 🔍", restart: "🔄 فحص جديد", share: "📤 شارك التطبيق", printBtn: "طباعة / حفظ كـ PDF",
       yes: "✓ نعم", no: "✗ لا", notSure: "🤔 لست متأكدًا", req: "للمتابعة، يجب اختيار إجابة.", offline: "⚠️ لا يوجد اتصال بالإنترنت. لن يتم حفظ الإجابات.",
       qProgress: (curr, tot) => `السؤال ${curr} من ${tot}`,
-      qNext: "السؤال التالي ←", qFinish: "المتابعة للحصول على النتيجة 🔍"
+      qNext: "السؤال التالي ←", qFinish: "المتابعة للحصول على النتيجة 🔍",
+      scoreStr: (s, l) => `مستوى الخطر بناءً على التقرير: <strong>${s} من 10</strong> (${l})`
     },
     intro: {
       title: "👋 أهلاً بك!",
@@ -253,7 +255,8 @@ const I18N = {
       next: "Далее →", back: "← Назад", start: "🔍 Начать проверку", showResult: "Показать результат 🔍", restart: "🔄 Новая проверка", share: "📤 Поделиться", printBtn: "Печать / Сохранить как PDF",
       yes: "✓ Да", no: "✗ Нет", notSure: "🤔 Не уверен(а)", req: "Пожалуйста, выберите ответ, чтобы продолжить.", offline: "⚠️ Нет интернета. Ответы не будут сохранены.",
       qProgress: (curr, tot) => `Вопрос ${curr} из ${tot}`,
-      qNext: "Следующий вопрос →", qFinish: "Получить результат 🔍"
+      qNext: "Следующий вопрос →", qFinish: "Получить результат 🔍",
+      scoreStr: (s, l) => `Уровень риска по ответам: <strong>${s} из 10</strong> (${l})`
     },
     intro: {
       title: "👋 Добро пожаловать!",
@@ -327,7 +330,7 @@ document.getElementById("lang-select").addEventListener("change", (e) => {
 });
 
 // ============================================================
-// לוגיקת חישוב סיכון 
+// לוגיקת חישוב ונרמול סיכון 
 // ============================================================
 function calculateRisk() {
   const a = state.answers;
@@ -335,6 +338,7 @@ function calculateRisk() {
   const detectedSignals = [];
   const triggeredCombinations = [];
 
+  // חישוב ניקוד פנימי
   QUESTIONS_CONFIG.forEach(q => {
     if (q.conditional) return;
     const ans = a[q.key];
@@ -351,7 +355,21 @@ function calculateRisk() {
   if (score >= 4 && a.consultedSomeone === "no") { score += 1; detectedSignals.push("consultedSomeone"); }
 
   const level = score <= 3 ? "low" : score <= 8 ? "medium" : "high";
-  state.result = { score, level, detectedSignals, triggeredCombinations };
+
+  // נרמול הציון לסולם מובן של 0 עד 10
+  let score10 = 0;
+  if (score > 0) {
+    if (score <= 3) score10 = score;               // 1, 2, 3 (רמה נמוכה)
+    else if (score <= 5) score10 = 4;              // 4 (בינוני)
+    else if (score <= 7) score10 = 5;              // 5 (בינוני)
+    else if (score === 8) score10 = 6;             // 6 (בינוני)
+    else if (score <= 11) score10 = 7;             // 7 (גבוה)
+    else if (score <= 14) score10 = 8;             // 8 (גבוה)
+    else if (score <= 18) score10 = 9;             // 9 (גבוה)
+    else score10 = 10;                             // 10 (מקסימום סיכון)
+  }
+
+  state.result = { score, score10, level, detectedSignals, triggeredCombinations };
 }
 
 // ============================================================
@@ -390,7 +408,7 @@ async function saveAssessment() {
 function resetAssessment() {
   state.step = "intro"; state.currentQuestionIndex = 0; state.channel = null; state.answers = {};
   state.demographics = { ageGroup: null, gender: null, region: null };
-  state.result = { score: 0, level: null, detectedSignals: [], triggeredCombinations: [] };
+  state.result = { score: 0, score10: 0, level: null, detectedSignals: [], triggeredCombinations: [] };
   renderScreen();
 }
 
@@ -597,15 +615,28 @@ function bindDemographics() {
 
 function buildResults(t) {
   const r = t.results;
-  const { level, detectedSignals } = state.result;
+  const { level, score10, detectedSignals } = state.result;
   const alreadyActed = state.answers.alreadyActed === "yes";
 
   const lvlMap = {
-    low: { icon: "🟢", label: r.lowTitle, desc: r.lowDesc },
-    medium: { icon: "🟡", label: r.medTitle, desc: r.medDesc },
-    high: { icon: "🔴", label: r.highTitle, desc: r.highDesc }
+    low: { icon: "🟢", label: r.lowTitle, desc: r.lowDesc, color: "var(--clr-green)" },
+    medium: { icon: "🟡", label: r.medTitle, desc: r.medDesc, color: "var(--clr-yellow)" },
+    high: { icon: "🔴", label: r.highTitle, desc: r.highDesc, color: "var(--clr-red)" }
   };
   const lc = lvlMap[level];
+
+  // אלמנט פרואקטיבי: בניית מד סיכון ויזואלי (Gauge) מ-0 ל-10
+  const pct = (score10 / 10) * 100;
+  const gaugeHtml = `
+    <div style="margin-top: 20px; text-align: start; background: rgba(255,255,255,0.6); padding: 12px; border-radius: 8px;">
+      <div style="font-size: 16px; margin-bottom: 8px;">${t.ui.scoreStr(score10, lc.label)}</div>
+      <div style="width: 100%; height: 12px; background: #E5E7EB; border-radius: 6px; overflow: hidden; border: 1px solid rgba(0,0,0,0.05);">
+        <div style="height: 100%; width: ${pct}%; background: ${lc.color}; transition: width 1s ease-in-out;"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--clr-muted); margin-top: 6px; font-weight: 600;">
+        <span>0</span><span>10</span>
+      </div>
+    </div>`;
 
   const emgHtml = alreadyActed ? `
 <div class="emergency">
@@ -645,6 +676,7 @@ function buildResults(t) {
   <span class="result-icon" aria-hidden="true">${lc.icon}</span>
   <div class="result-level">${lc.label}</div>
   <div class="result-desc">${lc.desc}</div>
+  ${gaugeHtml}
 </div>
 ${emgHtml}${sigsHtml}${recsHtml}${learnHtml}
 <div class="card">
@@ -669,5 +701,4 @@ window.resetAssessment = resetAssessment;
 window.addEventListener("online", renderScreen);
 window.addEventListener("offline", renderScreen);
 
-// אתחול השפה בפעם הראשונה
 setLanguage(state.lang);

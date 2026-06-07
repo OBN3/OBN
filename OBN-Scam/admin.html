@@ -372,7 +372,7 @@
     });
   }
 
-  // טבלה ופאגינציה
+// טבלה ופאגינציה
   function renderTable() {
     const tbody = document.getElementById("tableBody");
     tbody.innerHTML = "";
@@ -386,11 +386,14 @@
       const lvlText = d.risk?.level === "high" ? "גבוה" : (d.risk?.level === "medium" ? "בינוני" : "נמוך");
       const isActed = d.answers?.alreadyActed === "yes" ? "⚠️ כן" : "לא";
       
+      // תמיכה בציון מנורמל גם אם הרשומות ישנות
+      const score10 = d.risk?.score10 !== undefined ? d.risk.score10 : "-";
+      
       tbody.innerHTML += `
         <tr>
           <td>${d.dateObj.toLocaleString('he-IL')}</td>
           <td><span class="badge ${lvlClass}">${lvlText}</span></td>
-          <td>${d.risk?.score || 0}</td>
+          <td style="font-weight: 800;">${score10} / 10</td>
           <td>${CH_LABELS[d.scenario?.channel] || d.scenario?.channel || "-"}</td>
           <td>${d.demographics?.ageGroup || "-"}</td>
           <td>${d.demographics?.region || "-"}</td>
@@ -403,7 +406,7 @@
     document.getElementById("btnPrev").disabled = currentPage === 1;
     document.getElementById("btnNext").disabled = end >= filteredData.length;
   }
-
+  
   // אירועי ממשק - סינונים
   document.getElementById("dateFilter").addEventListener("change", (e) => {
     document.getElementById("customDates").classList.toggle("hidden", e.target.value !== "custom");
