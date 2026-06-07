@@ -13,12 +13,13 @@ import { getFirestore, collection, addDoc, serverTimestamp }
                                   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey:            "YOUR_API_KEY",
-  authDomain:        "YOUR_PROJECT.firebaseapp.com",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId:             "YOUR_APP_ID"
+  apiKey: "AIzaSyAV5a3n5uB_AvCx5e6SBIr-w8ONBwAmnlk",
+  authDomain: "obn-scam.firebaseapp.com",
+  projectId: "obn-scam",
+  storageBucket: "obn-scam.firebasestorage.app",
+  messagingSenderId: "721961912892",
+  appId: "1:721961912892:web:7417610692f30733071139",
+  measurementId: "G-J4M9PC7N3Q"
 };
 
 const APP_VERSION           = "1.2.0";
