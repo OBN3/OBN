@@ -4,7 +4,7 @@
  * אפליקציית Web לזיהוי סימני אזהרה בפרסומים חשודים
  * מיועדת למבוגרים וזקנים | i18n Ready
  *
- * גרסה: 1.2.0  |  שאלון: 1.0
+ * גרסה: 1.3.0  |  שאלון: 1.0
  * ============================================================
  */
 
@@ -22,7 +22,7 @@ const firebaseConfig = {
   measurementId: "G-J4M9PC7N3Q"
 };
 
-const APP_VERSION           = "1.2.0";
+const APP_VERSION           = "1.3.0";
 const QUESTIONNAIRE_VERSION = "1.0";
 let db = null;
 
@@ -77,7 +77,7 @@ const I18N = {
     langLabel: "להחלפת שפה:",
     footerText: `האפליקציה אוספת רק תשובות כלליות ואנונימיות לצורכי למידה ושיפור בלבד.<br />לא נאספים שם, טלפון, כתובת, מספר תעודת זהות, אימייל או תוכן ההודעה שקיבלת.<br /><br />פותח על ידי OBN - <a href="https://linktr.ee/ofirbn" target="_blank" rel="noopener">להערות והצעות לחצו</a>`,
     ui: {
-      next: "המשך ←", back: "← חזרה", start: "🔍 התחל/י בדיקה", showResult: "ראה תוצאה 🔍", restart: "🔄 בדיקה חדשה", share: "📤 שתף את האפליקציה", shareReport: "שלח דוח תוצאות",
+      next: "המשך ←", back: "← חזרה", start: "🔍 התחל/י בדיקה", showResult: "ראה תוצאה 🔍", restart: "🔄 בדיקה חדשה", share: "📤 שתף את האפליקציה", printBtn: "הדפס / שמור כ-PDF",
       yes: "✓ כן", no: "✗ לא", notSure: "🤔 לא בטוח/ה", req: "כדי להמשיך, יש לבחור תשובה.", offline: "⚠️ נראה שאין חיבור לאינטרנט. התשובות לא יישמרו.",
       qProgress: (curr, tot) => `שאלה ${curr} מתוך ${tot}`,
       qNext: "השאלה הבאה ←", qFinish: "המשך לקבלת התוצאה 🔍"
@@ -96,7 +96,7 @@ const I18N = {
       title: "רק עוד 2-3 שאלות כלליות", sub: "לפני שמציגים את התוצאות, נשמח לכמה פרטים כלליים שיעזרו לנו לשפר את הכלי עבור אנשים שונים. **אין צורך להזדהות.**",
       ageLabel: "מה הגיל שלך?", ageOpts: ["50–59","60–69","70–79","80+","מעדיף/ה לא לומר"],
       genLabel: "מין", genOpts: ["אישה","גבר","אחר","מעדיף/ה לא לומר"],
-      regLabel: "אזור בארץ (לא חובה)", regOpts: ["צפון","חיפה והקריות","מרכז","תל אביב והסביבה","ירושלים והסביבה","דרום","יהודה ושומרון","אחר","מעדיף/ה לא לומר"],
+      regLabel: "אזור בארץ (לא חובה)", regOpts: ["צפון","מרכז","ירושלים והסביבה","דרום","יהודה ושומרון","אחר","מעדיף/ה לא לומר"],
       disclaimer: "בלחיצה על 'הצג תוצאה' את/ה מאשר/ת שניתן לשמור את התשובות האנונימיות לצורכי למידה."
     },
     questions: {
@@ -134,7 +134,7 @@ const I18N = {
     langLabel: "Change language:",
     footerText: `The app collects only general, anonymous answers for learning purposes.<br />No names, phone numbers, IDs, or message contents are collected.<br /><br />Developed by OBN - <a href="https://linktr.ee/ofirbn" target="_blank" rel="noopener">Click here for comments and suggestions</a>`,
     ui: {
-      next: "Next →", back: "← Back", start: "🔍 Start Check", showResult: "Show Results 🔍", restart: "🔄 New Check", share: "📤 Share App", shareReport: "Send Results Report",
+      next: "Next →", back: "← Back", start: "🔍 Start Check", showResult: "Show Results 🔍", restart: "🔄 New Check", share: "📤 Share App", printBtn: "Print / Save as PDF",
       yes: "✓ Yes", no: "✗ No", notSure: "🤔 Not Sure", req: "Please select an answer to continue.", offline: "⚠️ No internet connection. Answers won't be saved.",
       qProgress: (curr, tot) => `Question ${curr} of ${tot}`,
       qNext: "Next Question →", qFinish: "Get Results 🔍"
@@ -153,7 +153,7 @@ const I18N = {
       title: "Just 2-3 general questions", sub: "Before showing results, please provide some general details to help us improve. **No identification needed.**",
       ageLabel: "What is your age?", ageOpts: ["50–59","60–69","70–79","80+","Prefer not to say"],
       genLabel: "Gender", genOpts: ["Female","Male","Other","Prefer not to say"],
-      regLabel: "Region (Optional)", regOpts: ["North","Haifa","Center","Tel Aviv","Jerusalem","South","Other","Prefer not to say"],
+      regLabel: "Region (Optional)", regOpts: ["North","Center","Jerusalem & surroundings","South","Judea and Samaria","Other","Prefer not to say"],
       disclaimer: "By clicking 'Show Results' you agree that anonymous answers may be saved for learning purposes."
     },
     questions: {
@@ -192,7 +192,7 @@ const I18N = {
     langLabel: "تغيير اللغة:",
     footerText: `يجمع التطبيق إجابات عامة ومجهولة المصدر لأغراض التعلم والتحسين فقط.<br />لا يتم جمع الاسم، رقم الهاتف، العنوان، رقم الهوية، البريد الإلكتروني أو محتوى الرسالة.<br /><br />تم التطوير بواسطة OBN - <a href="https://linktr.ee/ofirbn" target="_blank" rel="noopener">للملاحظات والاقتراحات اضغط هنا</a>`,
     ui: {
-      next: "التالي ←", back: "→ عودة", start: "🔍 ابدأ الفحص", showResult: "عرض النتيجة 🔍", restart: "🔄 فحص جديد", share: "📤 شارك التطبيق", shareReport: "إرسال تقرير النتائج",
+      next: "التالي ←", back: "→ عودة", start: "🔍 ابدأ الفحص", showResult: "عرض النتيجة 🔍", restart: "🔄 فحص جديد", share: "📤 شارك التطبيق", printBtn: "طباعة / حفظ كـ PDF",
       yes: "✓ نعم", no: "✗ لا", notSure: "🤔 لست متأكدًا", req: "للمتابعة، يجب اختيار إجابة.", offline: "⚠️ لا يوجد اتصال بالإنترنت. لن يتم حفظ الإجابات.",
       qProgress: (curr, tot) => `السؤال ${curr} من ${tot}`,
       qNext: "السؤال التالي ←", qFinish: "المتابعة للحصول على النتيجة 🔍"
@@ -211,7 +211,7 @@ const I18N = {
       title: "فقط 2-3 أسئلة عامة", sub: "قبل عرض النتائج، نود الحصول على بعض التفاصيل العامة التي ستساعدنا في تحسين الأداة. **لا حاجة للكشف عن الهوية.**",
       ageLabel: "ما هو عمرك؟", ageOpts: ["50–59","60–69","70–79","80+","أفضل عدم الإجابة"],
       genLabel: "الجنس", genOpts: ["أنثى","ذكر","آخر","أفضل عدم الإجابة"],
-      regLabel: "المنطقة (اختياري)", regOpts: ["الشمال","حيفا ومحيطها","المركز","تل أبيب ومحيطها","القدس ومحيطها","الجنوب","الضفة الغربية","آخر","أفضل عدم الإجابة"],
+      regLabel: "المنطقة (اختياري)", regOpts: ["الشمال","المركز","القدس ومحيطها","الجنوب","الضفة الغربية","آخر","أفضل عدم الإجابة"],
       disclaimer: "بالضغط على 'عرض النتيجة' أنت توافق على حفظ الإجابات المجهولة لأغراض التعلم."
     },
     questions: {
@@ -250,7 +250,7 @@ const I18N = {
     headerTitle: "Проверь перед кликом",
     footerText: `Приложение собирает только общие и анонимные ответы для обучения.<br />Имена, телефоны или содержание сообщений не сохраняются.<br /><br />Разработано OBN - <a href="https://linktr.ee/ofirbn" target="_blank" rel="noopener">Нажмите для замечаний и предложений</a>`,
     ui: {
-      next: "Далее →", back: "← Назад", start: "🔍 Начать проверку", showResult: "Показать результат 🔍", restart: "🔄 Новая проверка", share: "📤 Поделиться", shareReport: "Отправить отчет",
+      next: "Далее →", back: "← Назад", start: "🔍 Начать проверку", showResult: "Показать результат 🔍", restart: "🔄 Новая проверка", share: "📤 Поделиться", printBtn: "Печать / Сохранить как PDF",
       yes: "✓ Да", no: "✗ Нет", notSure: "🤔 Не уверен(а)", req: "Пожалуйста, выберите ответ, чтобы продолжить.", offline: "⚠️ Нет интернета. Ответы не будут сохранены.",
       qProgress: (curr, tot) => `Вопрос ${curr} из ${tot}`,
       qNext: "Следующий вопрос →", qFinish: "Получить результат 🔍"
@@ -269,7 +269,7 @@ const I18N = {
       title: "Ещё 2-3 общих вопроса", sub: "Перед показом результатов, пожалуйста, укажите общие данные для улучшения инструмента. **Анонимно.**",
       ageLabel: "Ваш возраст?", ageOpts: ["50–59","60–69","70–79","80+","Предпочитаю не указывать"],
       genLabel: "Пол", genOpts: ["Женский","Мужской","Другой","Предпочитаю не указывать"],
-      regLabel: "Регион (Необязательно)", regOpts: ["Север","Хайфа","Центр","Тель-Авив","Иерусалим","Юг","Другое","Предпочитаю не указывать"],
+      regLabel: "Регион (Необязательно)", regOpts: ["Север","Центр","Иерусалим и окрестности","Юг","Иудея и Самария","Другое","Предпочитаю не указывать"],
       disclaimer: "Нажимая 'Показать результат', вы соглашаетесь с анонимным сохранением ответов."
     },
     questions: {
@@ -310,15 +310,13 @@ function setLanguage(langKey) {
   state.lang = langKey;
   localStorage.setItem("user_lang", langKey);
   
-  // עדכון לוגי קריטי של ה-HTML
   document.documentElement.lang = langKey;
   document.documentElement.dir  = I18N[langKey].dir;
   
-  // עדכון טקסטים קבועים בכותרת/פוטר
   const t = I18N[langKey];
   document.getElementById("ui-header-title").textContent = t.headerTitle;
   document.getElementById("ui-footer-text").innerHTML = t.footerText;
-  document.getElementById("ui-lang-label").textContent = t.langLabel; // השורה שהוספנו!
+  document.getElementById("ui-lang-label").textContent = t.langLabel;
   document.getElementById("lang-select").value = langKey;
   
   renderScreen();
@@ -329,7 +327,7 @@ document.getElementById("lang-select").addEventListener("change", (e) => {
 });
 
 // ============================================================
-// לוגיקת חישוב סיכון (ללא שינוי, תלויה ב-QUESTIONS_CONFIG)
+// לוגיקת חישוב סיכון 
 // ============================================================
 function calculateRisk() {
   const a = state.answers;
@@ -387,7 +385,7 @@ async function saveAssessment() {
 }
 
 // ============================================================
-// ניהול ניווט ושיתוף
+// ניהול ניווט 
 // ============================================================
 function resetAssessment() {
   state.step = "intro"; state.currentQuestionIndex = 0; state.channel = null; state.answers = {};
@@ -420,53 +418,6 @@ async function shareApp() {
       url: window.location.href
     });
   } catch { }
-}
-
-// פונקציה חדשה: בניית הדוח ושליחתו כטקסט בוואטסאפ או בשיתוף ישיר
-async function shareReport() {
-  const t = I18N[state.lang];
-  const r = t.results;
-  const { level, detectedSignals } = state.result;
-
-  const lvlMap = {
-    low: r.lowTitle,
-    medium: r.medTitle,
-    high: r.highTitle
-  };
-
-  // בניית מחרוזת טקסט מותאמת אישית עם הדגשות של וואטסאפ
-  let reportText = `*${t.headerTitle}*\n`;
-  reportText += `--------------------\n`;
-  reportText += `📊 *${lvlMap[level]}*\n\n`;
-
-  if (detectedSignals.length > 0) {
-    reportText += `*${r.signalsTitle(detectedSignals.length)}*\n`;
-    detectedSignals.forEach(sig => {
-      reportText += `• ${t.questions[sig].n}\n`;
-    });
-    reportText += `\n`;
-  }
-
-  reportText += `*${r.recsTitle}*\n`;
-  r.recsOpts.forEach((opt, i) => {
-    reportText += `${i + 1}. ${opt}\n`;
-  });
-  
-  reportText += `\n🔗 ${window.location.href}`;
-
-  // שימוש ב-Share API (יפתח חלון בחירה בוואטסאפ/מייל בסלולר)
-  if (navigator.share) {
-    try {
-      await navigator.share({
-        title: t.headerTitle,
-        text: reportText
-      });
-    } catch (e) { /* user canceled */ }
-  } else {
-    // Fallback עבור גלישה מהמחשב - פותח ישר WhatsApp Web
-    const waLink = `https://wa.me/?text=${encodeURIComponent(reportText)}`;
-    window.open(waLink, '_blank');
-  }
 }
 
 // ============================================================
@@ -698,8 +649,8 @@ function buildResults(t) {
 ${emgHtml}${sigsHtml}${recsHtml}${learnHtml}
 <div class="card">
   <div class="btn-row">
-    <button class="btn btn-primary" onclick="resetAssessment()">${t.ui.restart}</button>
-    <button class="btn btn-secondary" onclick="shareReport()">📄 ${t.ui.shareReport}</button>
+    <button class="btn btn-primary" onclick="resetAssessment()">🔄 ${t.ui.restart}</button>
+    <button class="btn btn-secondary" onclick="window.print()">📄 ${t.ui.printBtn}</button>
     ${shareBtn}
   </div>
   <div id="save-status" class="save-status"></div>
@@ -714,7 +665,6 @@ function bindResults() { document.getElementById("btn-share-res")?.addEventListe
 window.startApp = startApp;
 window.goBack = goBack;
 window.resetAssessment = resetAssessment;
-window.shareReport = shareReport;
 
 window.addEventListener("online", renderScreen);
 window.addEventListener("offline", renderScreen);

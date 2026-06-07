@@ -41,11 +41,10 @@
 }
 
 /* ---------- Base & Dynamic Fonts ---------- */
-/* שפת ברירת מחדל לעברית/ערבית */
 html { font-size: var(--fs-base); font-family: 'Heebo', Arial, sans-serif; }
-/* החלפת פונט אופטימלית לאנגלית/רוסית */
 html[lang="en"], html[lang="ru"] { font-family: 'Inter', Arial, sans-serif; }
 html[lang="ar"] { font-family: 'Cairo', Arial, sans-serif; }
+
 body {
   background: var(--clr-bg);
   color: var(--clr-text);
@@ -77,6 +76,9 @@ body {
 .header-icon  { font-size: 26px; }
 .header-title { font-size: 20px; font-weight: 800; }
 
+/* עיצוב מחליף השפות בכותרת */
+.lang-switcher { display: flex; align-items: center; gap: 8px; }
+#ui-lang-label { font-size: 15px; font-weight: 600; color: #fff; }
 .lang-switcher select {
   background: rgba(255,255,255,0.2);
   color: #fff;
@@ -122,7 +124,6 @@ body {
   background: var(--clr-primary);
   border-radius: 99px;
   transition: width .35s ease;
-  /* תמיכה לוגית בזרימת הבר */
   transform-origin: inline-start; 
 }
 
@@ -131,7 +132,7 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px; /* מרווח פנימי לאייקונים/חצים */
+  gap: 8px;
   width: 100%;
   min-height: var(--btn-h);
   padding: 13px 20px;
@@ -149,6 +150,16 @@ body {
 .btn-primary:hover, .btn-primary:focus-visible {
   background: var(--clr-primary-dk);
   outline: 3px solid rgba(37,99,235,.45);
+  outline-offset: 2px;
+}
+.btn-secondary {
+  background: transparent;
+  color: var(--clr-primary);
+  border-color: var(--clr-primary);
+}
+.btn-secondary:hover, .btn-secondary:focus-visible {
+  background: #EFF6FF;
+  outline: 3px solid rgba(37,99,235,.3);
   outline-offset: 2px;
 }
 .btn-back {
@@ -189,7 +200,7 @@ body {
 }
 .notice-warn { background: #FFFBEB; border-color: #FCD34D; color: #92400E; }
 
-/* ---------- Form / Radio (Logical Properties) ---------- */
+/* ---------- Form / Radio ---------- */
 .form-group  { margin-bottom: 22px; }
 .form-label  { display: block; font-size: var(--fs-base); font-weight: 700; margin-bottom: 10px; }
 .req-mark    { color: var(--clr-red); margin-inline-start: 4px; }
@@ -278,6 +289,8 @@ body {
 /* ---------- Footer ---------- */
 .app-footer { background: var(--clr-card); border-top: 1px solid var(--clr-border); padding: 18px 16px; text-align: center; }
 .app-footer p { font-size: 13px; color: var(--clr-muted); line-height: 1.65; max-width: 640px; margin: 0 auto; }
+.app-footer a { color: var(--clr-primary); text-decoration: underline; font-weight: 700; transition: color var(--transition); }
+.app-footer a:hover, .app-footer a:focus-visible { color: var(--clr-primary-dk); text-decoration: none; }
 
 /* ---------- Utilities ---------- */
 .save-status { font-size: 13px; color: var(--clr-muted); text-align: center; margin-top: 10px; }
@@ -286,10 +299,40 @@ body {
 
 @media (min-width: 640px) { .app-container { padding: 32px 20px 64px; } }
 :focus-visible { outline: 3px solid var(--clr-primary); outline-offset: 2px; }
-/* עיצוב מחליף השפות בכותרת */
-.lang-switcher { display: flex; align-items: center; gap: 8px; }
-#ui-lang-label { font-size: 15px; font-weight: 600; color: #fff; }
 
-/* עיצוב הקישור בפוטר */
-.app-footer a { color: var(--clr-primary); text-decoration: underline; font-weight: 700; transition: color var(--transition); }
-.app-footer a:hover, .app-footer a:focus-visible { color: var(--clr-primary-dk); text-decoration: none; }
+/* ============================================================
+   הגדרות עבור חלון הדפסה (שמירה כ-PDF נקי ונוח)
+   ============================================================ */
+@media print {
+  body { background: #ffffff !important; }
+  
+  /* הסתרת כל האלמנטים המפריעים מה-PDF */
+  .app-header, 
+  .app-footer, 
+  .btn-row, 
+  .save-status, 
+  .progress-wrap { 
+    display: none !important; 
+  }
+  
+  .app-container { 
+    padding: 0; 
+    margin: 0; 
+    max-width: 100%; 
+  }
+  
+  /* מניעת חיתוך כרטיסיות באמצע העמוד בהדפסה */
+  .card, .result-card, .emergency, .signals-section, .rec-section, .learning-box {
+    box-shadow: none !important;
+    border: 1px solid #dddddd !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-bottom: 15px !important;
+  }
+  
+  /* אילוץ הדפדפן להדפיס גם את צבעי הרקע המקוריים של הכרטיסיות (אדום/צהוב/ירוק) */
+  * { 
+    -webkit-print-color-adjust: exact !important; 
+    print-color-adjust: exact !important; 
+  }
+}
