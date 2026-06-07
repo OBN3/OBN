@@ -75,9 +75,9 @@ const I18N = {
     dir: "rtl",
     headerTitle: "בודקים לפני שלוחצים",
     langLabel: "להחלפת שפה:",
-    footerText: `האפליקציה אוספת רק תשובות כלליות ואנונימיות לצורכי למידה ושיפור בלבד.<br />לא נאספים שם, טלפון, כתובת, מספר תעודת זהות, אימייל أو תוכן ההודעה שקיבלת.<br /><br />פותח על ידי OBN - <a href="https://linktr.ee/ofirbn" target="_blank" rel="noopener">להערות והצעות לחצו</a>`,
+    footerText: `האפליקציה אוספת רק תשובות כלליות ואנונימיות לצורכי למידה ושיפור בלבד.<br />לא נאספים שם, טלפון, כתובת, מספר תעודת זהות, אימייל או תוכן ההודעה שקיבלת.<br /><br />פותח על ידי OBN - <a href="https://linktr.ee/ofirbn" target="_blank" rel="noopener">להערות והצעות לחצו</a>`,
     ui: {
-      next: "המשך ←", back: "← חזרה", start: "🔍 התחל/י בדיקה", showResult: "ראה תוצאה 🔍", restart: "🔄 בדיקה חדשה", share: "📤 שתף את האפליקציה",
+      next: "המשך ←", back: "← חזרה", start: "🔍 התחל/י בדיקה", showResult: "ראה תוצאה 🔍", restart: "🔄 בדיקה חדשה", share: "📤 שתף את האפליקציה", shareReport: "שלח דוח תוצאות",
       yes: "✓ כן", no: "✗ לא", notSure: "🤔 לא בטוח/ה", req: "כדי להמשיך, יש לבחור תשובה.", offline: "⚠️ נראה שאין חיבור לאינטרנט. התשובות לא יישמרו.",
       qProgress: (curr, tot) => `שאלה ${curr} מתוך ${tot}`,
       qNext: "השאלה הבאה ←", qFinish: "המשך לקבלת התוצאה 🔍"
@@ -134,7 +134,7 @@ const I18N = {
     langLabel: "Change language:",
     footerText: `The app collects only general, anonymous answers for learning purposes.<br />No names, phone numbers, IDs, or message contents are collected.<br /><br />Developed by OBN - <a href="https://linktr.ee/ofirbn" target="_blank" rel="noopener">Click here for comments and suggestions</a>`,
     ui: {
-      next: "Next →", back: "← Back", start: "🔍 Start Check", showResult: "Show Results 🔍", restart: "🔄 New Check", share: "📤 Share App",
+      next: "Next →", back: "← Back", start: "🔍 Start Check", showResult: "Show Results 🔍", restart: "🔄 New Check", share: "📤 Share App", shareReport: "Send Results Report",
       yes: "✓ Yes", no: "✗ No", notSure: "🤔 Not Sure", req: "Please select an answer to continue.", offline: "⚠️ No internet connection. Answers won't be saved.",
       qProgress: (curr, tot) => `Question ${curr} of ${tot}`,
       qNext: "Next Question →", qFinish: "Get Results 🔍"
@@ -186,13 +186,13 @@ const I18N = {
     }
   },
 
-ar: {
+  ar: {
     dir: "rtl",
     headerTitle: "تحقق قبل أن تنقر",
     langLabel: "تغيير اللغة:",
     footerText: `يجمع التطبيق إجابات عامة ومجهولة المصدر لأغراض التعلم والتحسين فقط.<br />لا يتم جمع الاسم، رقم الهاتف، العنوان، رقم الهوية، البريد الإلكتروني أو محتوى الرسالة.<br /><br />تم التطوير بواسطة OBN - <a href="https://linktr.ee/ofirbn" target="_blank" rel="noopener">للملاحظات والاقتراحات اضغط هنا</a>`,
     ui: {
-      next: "التالي ←", back: "→ عودة", start: "🔍 ابدأ الفحص", showResult: "عرض النتيجة 🔍", restart: "🔄 فحص جديد", share: "📤 شارك التطبيق",
+      next: "التالي ←", back: "→ عودة", start: "🔍 ابدأ الفحص", showResult: "عرض النتيجة 🔍", restart: "🔄 فحص جديد", share: "📤 شارك التطبيق", shareReport: "إرسال تقرير النتائج",
       yes: "✓ نعم", no: "✗ لا", notSure: "🤔 لست متأكدًا", req: "للمتابعة، يجب اختيار إجابة.", offline: "⚠️ لا يوجد اتصال بالإنترنت. لن يتم حفظ الإجابات.",
       qProgress: (curr, tot) => `السؤال ${curr} من ${tot}`,
       qNext: "السؤال التالي ←", qFinish: "المتابعة للحصول على النتيجة 🔍"
@@ -250,7 +250,7 @@ ar: {
     headerTitle: "Проверь перед кликом",
     footerText: `Приложение собирает только общие и анонимные ответы для обучения.<br />Имена, телефоны или содержание сообщений не сохраняются.<br /><br />Разработано OBN - <a href="https://linktr.ee/ofirbn" target="_blank" rel="noopener">Нажмите для замечаний и предложений</a>`,
     ui: {
-      next: "Далее →", back: "← Назад", start: "🔍 Начать проверку", showResult: "Показать результат 🔍", restart: "🔄 Новая проверка", share: "📤 Поделиться",
+      next: "Далее →", back: "← Назад", start: "🔍 Начать проверку", showResult: "Показать результат 🔍", restart: "🔄 Новая проверка", share: "📤 Поделиться", shareReport: "Отправить отчет",
       yes: "✓ Да", no: "✗ Нет", notSure: "🤔 Не уверен(а)", req: "Пожалуйста, выберите ответ, чтобы продолжить.", offline: "⚠️ Нет интернета. Ответы не будут сохранены.",
       qProgress: (curr, tot) => `Вопрос ${curr} из ${tot}`,
       qNext: "Следующий вопрос →", qFinish: "Получить результат 🔍"
@@ -387,7 +387,7 @@ async function saveAssessment() {
 }
 
 // ============================================================
-// ניהול ניווט
+// ניהול ניווט ושיתוף
 // ============================================================
 function resetAssessment() {
   state.step = "intro"; state.currentQuestionIndex = 0; state.channel = null; state.answers = {};
@@ -420,6 +420,53 @@ async function shareApp() {
       url: window.location.href
     });
   } catch { }
+}
+
+// פונקציה חדשה: בניית הדוח ושליחתו כטקסט בוואטסאפ או בשיתוף ישיר
+async function shareReport() {
+  const t = I18N[state.lang];
+  const r = t.results;
+  const { level, detectedSignals } = state.result;
+
+  const lvlMap = {
+    low: r.lowTitle,
+    medium: r.medTitle,
+    high: r.highTitle
+  };
+
+  // בניית מחרוזת טקסט מותאמת אישית עם הדגשות של וואטסאפ
+  let reportText = `*${t.headerTitle}*\n`;
+  reportText += `--------------------\n`;
+  reportText += `📊 *${lvlMap[level]}*\n\n`;
+
+  if (detectedSignals.length > 0) {
+    reportText += `*${r.signalsTitle(detectedSignals.length)}*\n`;
+    detectedSignals.forEach(sig => {
+      reportText += `• ${t.questions[sig].n}\n`;
+    });
+    reportText += `\n`;
+  }
+
+  reportText += `*${r.recsTitle}*\n`;
+  r.recsOpts.forEach((opt, i) => {
+    reportText += `${i + 1}. ${opt}\n`;
+  });
+  
+  reportText += `\n🔗 ${window.location.href}`;
+
+  // שימוש ב-Share API (יפתח חלון בחירה בוואטסאפ/מייל בסלולר)
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: t.headerTitle,
+        text: reportText
+      });
+    } catch (e) { /* user canceled */ }
+  } else {
+    // Fallback עבור גלישה מהמחשב - פותח ישר WhatsApp Web
+    const waLink = `https://wa.me/?text=${encodeURIComponent(reportText)}`;
+    window.open(waLink, '_blank');
+  }
 }
 
 // ============================================================
@@ -650,7 +697,11 @@ function buildResults(t) {
 </div>
 ${emgHtml}${sigsHtml}${recsHtml}${learnHtml}
 <div class="card">
-  <div class="btn-row"><button class="btn btn-primary" onclick="resetAssessment()">${t.ui.restart}</button>${shareBtn}</div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="resetAssessment()">${t.ui.restart}</button>
+    <button class="btn btn-secondary" onclick="shareReport()">📄 ${t.ui.shareReport}</button>
+    ${shareBtn}
+  </div>
   <div id="save-status" class="save-status"></div>
 </div>`;
 }
@@ -663,6 +714,7 @@ function bindResults() { document.getElementById("btn-share-res")?.addEventListe
 window.startApp = startApp;
 window.goBack = goBack;
 window.resetAssessment = resetAssessment;
+window.shareReport = shareReport;
 
 window.addEventListener("online", renderScreen);
 window.addEventListener("offline", renderScreen);
