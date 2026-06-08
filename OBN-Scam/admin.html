@@ -10,12 +10,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
     :root {
       --bg: #F3F4F6; --card-bg: #FFFFFF; --text: #1F2937; --muted: #6B7280;
       --primary: #2563EB; --border: #E5E7EB;
       --danger: #DC2626; --warning: #D97706; --success: #16A34A;
+      --excel: #10B981;
       --radius: 12px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Heebo', sans-serif; }
@@ -32,6 +34,8 @@
     button.btn:hover { background: #1D4ED8; }
     button.btn-danger { background: var(--danger); }
     button.btn-danger:hover { background: #B91C1C; }
+    button.btn-excel { background: var(--excel); }
+    button.btn-excel:hover { background: #059669; }
     
     /* KPI Cards */
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
@@ -118,6 +122,7 @@
             <input type="date" id="endDate">
           </div>
           <button class="btn" id="btnFilter">החל סינון</button>
+          <button class="btn btn-excel" id="btnExportExcel">📥 יצוא לאקסל</button>
         </div>
       </div>
     </div>
@@ -209,7 +214,7 @@
   const auth = getAuth(app);
   const provider = new GoogleAuthProvider();
 
-  // מילונים חסרים שהוחזרו לקוד
+  // מילונים
   const Q_LABELS = {
     urgentAction: "לחץ לפעולה מיידית", fearThreat: "הפחדה/איום", personalDetails: "בקשת פרטים אישיים",
     moneyPayment: "בקשת כסף/תשלום", linkIncluded: "כלל קישור", senderKnown: "השולח ידוע",
@@ -250,7 +255,7 @@
 
   document.getElementById("btnLogout").addEventListener("click", () => signOut(auth));
 
-  // אסיפת נתונים - מופרדת מבניית התצוגה כדי למנוע באגים באבטחה
+  // אסיפת נתונים
   async function fetchDatabase() {
     document.getElementById("loading").classList.remove("hidden");
     document.getElementById("mainDashboardViews").classList.add("hidden");
@@ -266,16 +271,14 @@
       
     } catch (err) {
       console.warn("Auth check failed via Rules:", err);
-      // אם Firebase דוחה את ההרשאה (בגלל ה-Rules), נציג שגיאה ונתנתק
       document.getElementById("loading").classList.add("hidden");
       document.getElementById("dashboardContent").classList.add("hidden");
       document.getElementById("loginContent").classList.remove("hidden");
       document.getElementById("loginError").innerText = "❌ גישה נדחתה. חשבון זה אינו מורשה לצפות בדאשבורד המנהלים.";
       signOut(auth);
-      return; // עוצר כאן את המשך הריצה
+      return; 
     }
 
-    // אם עברנו את ההרשאות בהצלחה, נבנה את הדאשבורד
     document.getElementById("loading").classList.add("hidden");
     document.getElementById("mainDashboardViews").classList.remove("hidden");
     applyFilters();
@@ -429,6 +432,86 @@
     document.getElementById("btnNext").disabled = end >= filteredData.length;
   }
 
+  // --- פונקציית ייצוא לאקסל (פרואקטיבית: RTL מובנה והתאמת עמודות) ---
+  function exportToExcel() {
+    if (filteredData.length === 0) {
+      alert("אין נתונים לייצוא תחת הסינון הנוכחי.");
+      return;
+    }
+
+    // יצירת גיליון 1: סיכום נתונים (KPI + שאלות)
+    const summaryData = [];
+    summaryData.push(["--- מדדי מפתח ---"]);
+    summaryData.push(["סה\"כ משיבים", filteredData.length]);
+    
+    const highRisk = filteredData.filter(d => d.risk?.level === "high").length;
+    summaryData.push(["אחוז בסיכון גבוה", Math.round((highRisk / filteredData.length) * 100) + "%"]);
+    
+    const channels = {};
+    filteredData.forEach(d => {
+      const ch = d.scenario?.channel || "unknown";
+      if(ch !== "not_specified") channels[ch] = (channels[ch] || 0) + 1;
+    });
+    const topChannel = Object.entries(channels).sort((a,b) => b[1] - a[1])[0];
+    const topChannelStr = topChannel ? (CH_LABELS[topChannel[0]] || topChannel[0]) : "-";
+    summaryData.push(["ערוץ הפנייה הנפוץ ביותר", topChannelStr]);
+    
+    const consulted = filteredData.filter(d => d.answers?.consultedSomeone === "yes").length;
+    summaryData.push(["התייעצו עם אדם נוסף (הגנה)", Math.round((consulted / filteredData.length) * 100) + "%"]);
+
+    summaryData.push([]);
+    summaryData.push(["--- התפלגות תשובות לפי שאלה ---"]);
+    summaryData.push(["שאלה", "אחוז שענו 'כן'"]);
+
+    Object.keys(Q_LABELS).forEach(qKey => {
+      const yesCount = filteredData.filter(d => d.answers?.[qKey] === "yes").length;
+      const pct = Math.round((yesCount / filteredData.length) * 100);
+      summaryData.push([Q_LABELS[qKey], pct + "%"]);
+    });
+
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+    wsSummary['!dir'] = 'rtl'; // הגדרת כיוון מימין לשמאל באקסל
+    wsSummary['!cols'] = [{ wch: 35 }, { wch: 15 }];
+
+    // יצירת גיליון 2: רשימת המשיבים המפורטת
+    const rawData = filteredData.map(d => {
+      const lvlText = d.risk?.level === "high" ? "גבוה" : (d.risk?.level === "medium" ? "בינוני" : "נמוך");
+      const isActed = d.answers?.alreadyActed === "yes" ? "כן" : "לא";
+      return {
+        "תאריך ושעה": d.dateObj.toLocaleString('he-IL'),
+        "רמת סיכון": lvlText,
+        "ציון": d.risk?.score10 !== undefined ? d.risk.score10 : "-",
+        "ערוץ": CH_LABELS[d.scenario?.channel] || d.scenario?.channel || "-",
+        "גיל": d.demographics?.ageGroup || "-",
+        "אזור": d.demographics?.region || "-",
+        "כבר פעל?": isActed
+      };
+    });
+
+    const wsData = XLSX.utils.json_to_sheet(rawData);
+    wsData['!dir'] = 'rtl'; // הגדרת כיוון מימין לשמאל
+    
+    // התאמת רוחב עמודות נוחה למשתמש
+    wsData['!cols'] = [
+      { wch: 20 }, // תאריך
+      { wch: 12 }, // רמת סיכון
+      { wch: 8 },  // ציון
+      { wch: 15 }, // ערוץ
+      { wch: 12 }, // גיל
+      { wch: 18 }, // אזור
+      { wch: 10 }  // פעל?
+    ];
+
+    // חיבור הגיליונות ויצירת הקובץ
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, wsSummary, "סיכום הנתונים");
+    XLSX.utils.book_append_sheet(wb, wsData, "דוח משיבים");
+
+    XLSX.writeFile(wb, `Scam_Dashboard_Export_${new Date().toLocaleDateString('he-IL').replace(/\./g, '-')}.xlsx`);
+  }
+
+  // האזנה לאירועים בממשק
+  document.getElementById("btnExportExcel").addEventListener("click", exportToExcel);
   document.getElementById("dateFilter").addEventListener("change", (e) => {
     document.getElementById("customDates").classList.toggle("hidden", e.target.value !== "custom");
   });
