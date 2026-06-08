@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- ספרייה להפקת קבצי אקסל אמיתיים (XLSX) כדי למנוע בעיות קידוד וג'יבריש -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
@@ -432,46 +433,88 @@
     document.getElementById("btnNext").disabled = end >= filteredData.length;
   }
 
-  // --- פונקציית ייצוא לאקסל (פרואקטיבית: RTL מובנה והתאמת עמודות) ---
+  // --- פונקציית ייצוא לאקסל ---
   function exportToExcel() {
     if (filteredData.length === 0) {
       alert("אין נתונים לייצוא תחת הסינון הנוכחי.");
       return;
     }
 
-    // יצירת גיליון 1: סיכום נתונים (KPI + שאלות)
     const summaryData = [];
+    
+    // -- מדדי מפתח עליונים --
     summaryData.push(["--- מדדי מפתח ---"]);
-    summaryData.push(["סה\"כ משיבים", filteredData.length]);
+    summaryData.push(["סה\"כ משיבים", filteredData.length, "100%"]);
     
     const highRisk = filteredData.filter(d => d.risk?.level === "high").length;
-    summaryData.push(["אחוז בסיכון גבוה", Math.round((highRisk / filteredData.length) * 100) + "%"]);
+    summaryData.push(["נמצאים בסיכון גבוה", highRisk, Math.round((highRisk / filteredData.length) * 100) + "%"]);
+    
+    const consulted = filteredData.filter(d => d.answers?.consultedSomeone === "yes").length;
+    summaryData.push(["התייעצו עם אדם נוסף (הגנה)", consulted, Math.round((consulted / filteredData.length) * 100) + "%"]);
+
+    // -- התפלגות ערוצי פנייה --
+    summaryData.push([]);
+    summaryData.push(["--- התפלגות ערוצי פנייה ---"]);
+    summaryData.push(["ערוץ", "כמות", "אחוז מכלל המשיבים"]);
     
     const channels = {};
     filteredData.forEach(d => {
       const ch = d.scenario?.channel || "unknown";
       if(ch !== "not_specified") channels[ch] = (channels[ch] || 0) + 1;
     });
-    const topChannel = Object.entries(channels).sort((a,b) => b[1] - a[1])[0];
-    const topChannelStr = topChannel ? (CH_LABELS[topChannel[0]] || topChannel[0]) : "-";
-    summaryData.push(["ערוץ הפנייה הנפוץ ביותר", topChannelStr]);
     
-    const consulted = filteredData.filter(d => d.answers?.consultedSomeone === "yes").length;
-    summaryData.push(["התייעצו עם אדם נוסף (הגנה)", Math.round((consulted / filteredData.length) * 100) + "%"]);
+    const sortedChannels = Object.entries(channels).sort((a,b) => b[1] - a[1]);
+    sortedChannels.forEach(([chKey, count]) => {
+      const pct = Math.round((count / filteredData.length) * 100) + "%";
+      const chName = CH_LABELS[chKey] || chKey;
+      summaryData.push([chName, count, pct]);
+    });
 
+    // -- התפלגות שאלות בסיכון (אחוז שענו כן) --
     summaryData.push([]);
     summaryData.push(["--- התפלגות תשובות לפי שאלה ---"]);
-    summaryData.push(["שאלה", "אחוז שענו 'כן'"]);
+    summaryData.push(["שאלה", "כמות שענו 'כן'", "אחוז שענו 'כן'"]);
 
     Object.keys(Q_LABELS).forEach(qKey => {
       const yesCount = filteredData.filter(d => d.answers?.[qKey] === "yes").length;
-      const pct = Math.round((yesCount / filteredData.length) * 100);
-      summaryData.push([Q_LABELS[qKey], pct + "%"]);
+      const pct = Math.round((yesCount / filteredData.length) * 100) + "%";
+      summaryData.push([Q_LABELS[qKey], yesCount, pct]);
+    });
+
+    // -- פילוח רמות סיכון (פרואקטיבי) --
+    summaryData.push([]);
+    summaryData.push(["--- התפלגות רמות סיכון ---"]);
+    summaryData.push(["רמה", "כמות", "אחוז"]);
+    
+    const riskCounts = { "high": 0, "medium": 0, "low": 0 };
+    filteredData.forEach(d => {
+      const r = d.risk?.level || "low";
+      riskCounts[r] = (riskCounts[r] || 0) + 1;
+    });
+    [['high', 'גבוה'], ['medium', 'בינוני'], ['low', 'נמוך']].forEach(([k, label]) => {
+      const count = riskCounts[k];
+      const pct = Math.round((count / filteredData.length) * 100) + "%";
+      summaryData.push([label, count, pct]);
+    });
+
+    // -- פילוח גילאים (פרואקטיבי) --
+    summaryData.push([]);
+    summaryData.push(["--- התפלגות גילאים ---"]);
+    summaryData.push(["קבוצת גיל", "כמות", "אחוז"]);
+    
+    const ageCounts = {};
+    filteredData.forEach(d => {
+      const age = d.demographics?.ageGroup || "לא צוין";
+      ageCounts[age] = (ageCounts[age] || 0) + 1;
+    });
+    Object.entries(ageCounts).sort((a,b) => b[1] - a[1]).forEach(([age, count]) => {
+      const pct = Math.round((count / filteredData.length) * 100) + "%";
+      summaryData.push([age, count, pct]);
     });
 
     const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
     wsSummary['!dir'] = 'rtl'; // הגדרת כיוון מימין לשמאל באקסל
-    wsSummary['!cols'] = [{ wch: 35 }, { wch: 15 }];
+    wsSummary['!cols'] = [{ wch: 30 }, { wch: 15 }, { wch: 20 }];
 
     // יצירת גיליון 2: רשימת המשיבים המפורטת
     const rawData = filteredData.map(d => {
@@ -504,7 +547,7 @@
 
     // חיבור הגיליונות ויצירת הקובץ
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, wsSummary, "סיכום הנתונים");
+    XLSX.utils.book_append_sheet(wb, wsSummary, "סיכום ופילוחים");
     XLSX.utils.book_append_sheet(wb, wsData, "דוח משיבים");
 
     XLSX.writeFile(wb, `Scam_Dashboard_Export_${new Date().toLocaleDateString('he-IL').replace(/\./g, '-')}.xlsx`);
