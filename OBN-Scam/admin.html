@@ -256,6 +256,31 @@
 
   document.getElementById("btnLogout").addEventListener("click", () => signOut(auth));
 
+
+// מילון תרגום לאיחוד נתונים משפות זרות בחזרה לעברית
+  const TRANSLATIONS = {
+    // אזורים
+    "North": "צפון", "Север": "צפון", "الشمال": "צפון",
+    "Center": "מרכז", "Центр": "מרכז", "المركز": "מרכז",
+    "Jerusalem & surroundings": "ירושלים והסביבה", "Иерусалим и окрестности": "ירושלים והסביבה", "القدس ومحيطها": "ירושלים והסביבה",
+    "South": "דרום", "Юг": "דרום", "الجنوب": "דרום",
+    "Judea and Samaria": "יהודה ושומרון", "Иудея и Самария": "יהודה ושומרון", "الضفة الغربية": "יהודה ושומרון",
+    "Other": "אחר", "Другое": "אחר", "آخر": "אחר",
+    "Prefer not to say": "מעדיף/ה לא לומר", "Предпочитаю не указывать": "מעדיף/ה לא לומר", "أفضل عدم الإجابة": "מעדיף/ה לא לומר",
+    // גילאים
+    "Under 50": "פחות מ-50", "Младше 50": "פחות מ-50", "أقل من 50": "פחות מ-50",
+    // מין
+    "Female": "אישה", "Женский": "אישה", "أنثى": "אישה",
+    "Male": "גבר", "Мужской": "גבר", "ذكر": "גבר",
+    "Другой": "אחר" // "Other" מטופל למעלה
+  };
+
+  function translateToHebrew(val) {
+    if (!val) return "-";
+    return TRANSLATIONS[val] || val;
+  }
+
+
   // אסיפת נתונים
   async function fetchDatabase() {
     document.getElementById("loading").classList.remove("hidden");
@@ -265,9 +290,18 @@
       const q = query(collection(db, "assessments"), orderBy("createdAt", "desc"));
       const snapshot = await getDocs(q);
       
-      allData = snapshot.docs.map(doc => {
+  allData = snapshot.docs.map(doc => {
         const d = doc.data();
+        
+        // תרגום הנתונים הדמוגרפיים בחזרה לעברית לצורך איחוד הגרפים
+        if (d.demographics) {
+          if (d.demographics.region) d.demographics.region = translateToHebrew(d.demographics.region);
+          if (d.demographics.ageGroup) d.demographics.ageGroup = translateToHebrew(d.demographics.ageGroup);
+          if (d.demographics.gender) d.demographics.gender = translateToHebrew(d.demographics.gender);
+        }
+
         return { id: doc.id, ...d, dateObj: d.createdAt ? d.createdAt.toDate() : new Date() };
+
       });
       
     } catch (err) {
