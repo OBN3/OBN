@@ -386,7 +386,7 @@
     document.getElementById("kpiConsulted").innerText = filteredData.length ? Math.round((consulted / filteredData.length) * 100) + "%" : "0%";
   }
 
-  function renderCharts() {
+function renderCharts() {
     const countOccurrences = (arr, keyPath) => {
       return arr.reduce((acc, curr) => {
         const val = keyPath.split('.').reduce((o, i) => o?.[i], curr) || 'לא צוין';
@@ -396,12 +396,28 @@
     };
 
     const riskData = countOccurrences(filteredData, 'risk.level');
-    const ageData = countOccurrences(filteredData, 'demographics.ageGroup');
+    const ageDataRaw = countOccurrences(filteredData, 'demographics.ageGroup');
     const regionData = countOccurrences(filteredData, 'demographics.region');
     const channelData = countOccurrences(filteredData, 'scenario.channel');
 
+    // --- התיקון: סידור כרונולוגי קבוע של הגילאים ---
+    const ageOrder = ["פחות מ-50", "50–59", "60–69", "70–79", "80+", "מעדיף/ה לא לומר", "לא צוין"];
+    const sortedAgeKeys = Object.keys(ageDataRaw).sort((a, b) => {
+      let idxA = ageOrder.indexOf(a);
+      let idxB = ageOrder.indexOf(b);
+      // אם יש גיל לא מוכר, נזרוק אותו לסוף
+      if (idxA === -1) idxA = 99;
+      if (idxB === -1) idxB = 99;
+      return idxA - idxB;
+    });
+    const sortedAgeValues = sortedAgeKeys.map(k => ageDataRaw[k]);
+    // ------------------------------------------------
+
     drawChart("chartRisk", "doughnut", ["נמוך", "בינוני", "גבוה"], [riskData.low||0, riskData.medium||0, riskData.high||0], ['#16A34A', '#D97706', '#DC2626']);
-    drawChart("chartAge", "bar", Object.keys(ageData), Object.values(ageData), '#2563EB');
+    
+    // ציור גרף הגילאים עם הנתונים המסודרים שלנו
+    drawChart("chartAge", "bar", sortedAgeKeys, sortedAgeValues, '#2563EB');
+    
     drawChart("chartRegion", "bar", Object.keys(regionData), Object.values(regionData), '#8B5CF6');
     
     const chLabels = Object.keys(channelData).map(k => CH_LABELS[k] || k);
