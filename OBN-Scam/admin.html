@@ -10,12 +10,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
     :root {
       --bg: #F3F4F6; --card-bg: #FFFFFF; --text: #1F2937; --muted: #6B7280;
       --primary: #2563EB; --border: #E5E7EB;
       --danger: #DC2626; --warning: #D97706; --success: #16A34A;
+      --excel: #10B981;
       --radius: 12px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Heebo', sans-serif; }
@@ -32,6 +34,8 @@
     button.btn:hover { background: #1D4ED8; }
     button.btn-danger { background: var(--danger); }
     button.btn-danger:hover { background: #B91C1C; }
+    button.btn-excel { background: var(--excel); }
+    button.btn-excel:hover { background: #059669; }
     
     /* KPI Cards */
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
@@ -118,18 +122,19 @@
             <input type="date" id="endDate">
           </div>
           <button class="btn" id="btnFilter">החל סינון</button>
+          <button class="btn btn-excel" id="btnExportExcel">📥 יצוא לאקסל</button>
         </div>
       </div>
     </div>
 
     <div id="loading" class="hidden">מבצע קריאה ומעדכן נתונים... ⏳</div>
 
-    <div id="mainDashboardViews" class="hidden">
+    <div id="mainDashboardViews">
       <div class="kpi-grid">
         <div class="kpi-card"><div class="kpi-title">סה"כ משיבים (לפי הסינון)</div><div class="kpi-val" id="kpiTotal">0</div></div>
         <div class="kpi-card red"><div class="kpi-title">אחוז בסיכון גבוה</div><div class="kpi-val" id="kpiHighRisk">0%</div></div>
         <div class="kpi-card"><div class="kpi-title">ערוץ הפנייה הנפוץ ביותר</div><div class="kpi-val" id="kpiTopChannel">-</div></div>
-        <div class="kpi-card green"><div class="kpi-title">התייעצו礼 עם אדם נוסף (הגנה)</div><div class="kpi-val" id="kpiConsulted">0%</div></div>
+        <div class="kpi-card green"><div class="kpi-title">התייעצו עם אדם נוסף (הגנה)</div><div class="kpi-val" id="kpiConsulted">0%</div></div>
       </div>
 
       <div class="charts-grid">
@@ -137,7 +142,7 @@
         <div class="chart-container"><h3 class="chart-title">התפלגות גילאים</h3><canvas id="chartAge"></canvas></div>
         <div class="chart-container"><h3 class="chart-title">פילוח אזורים בארץ</h3><canvas id="chartRegion"></canvas></div>
         <div class="chart-container"><h3 class="chart-title">ערוצי פנייה</h3><canvas id="chartChannel"></canvas></div>
-        <div class="chart-container"><h3 class="chart-title">שפת ממשק מועדפת (חדש!)</h3><canvas id="chartLanguage"></canvas></div>
+        <div class="chart-container"><h3 class="chart-title">שפת ממשק מועדפת</h3><canvas id="chartLanguage"></canvas></div>
         <div class="chart-container full-width"><h3>התפלגות תשובות לפי שאלה (אחוז שענו "כן")</h3><div class="questions-grid" id="questionsStats"></div></div>
       </div>
 
@@ -196,7 +201,6 @@
   import { getFirestore, collection, getDocs, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-  // הגדרות Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyAV5a3n5uB_AvCx5e6SBIr-w8ONBwAmnlk",
     authDomain: "obn-scam.firebaseapp.com",
@@ -211,6 +215,7 @@
   const auth = getAuth(app);
   const provider = new GoogleAuthProvider();
 
+  // מילונים
   const Q_LABELS = {
     urgentAction: "לחץ לפעולה מיידית", fearThreat: "הפחדה/איום", personalDetails: "בקשת פרטים אישיים",
     moneyPayment: "בקשת כסף/תשלום", linkIncluded: "כלל קישור", senderKnown: "השולח ידוע",
@@ -223,11 +228,14 @@
     phone_call: "שיחת טלפון", official_msg: "הודעה רשמית", investment: "השקעה/זכייה", ad: "מודעה", other: "אחר/לא בטוח"
   };
 
-  // מילון תרגום קריטי לאיחוד נתונים משפות זרות בחזרה לעברית בגרפים
+  // תרגום קודי השפה לשמות ברורים בעברית
+  const LANG_NAMES = { he: "עברית", en: "אנגלית", ru: "רוסית", ar: "ערבית" };
+
+  // מילון תרגום לאיחוד נתונים משפות זרות בחזרה לעברית
   const TRANSLATIONS = {
     "North": "צפון", "Север": "צפון", "الشمال": "צפון",
     "Center": "מרכז", "Центр": "מרכז", "المركز": "מרכז",
-    "Jerusalem & surroundings": "ירושלים והסביבה", "Иерусалим и окрестности": "ירושלים והסביבה", "القدס ومحيطها": "ירושלים והסביבה",
+    "Jerusalem & surroundings": "ירושלים והסביבה", "Иерусалим и окрестности": "ירושלים והסביבה", "القدس ومحيطها": "ירושלים והסביבה",
     "South": "דרום", "Юг": "דרום", "الجنوب": "דרום",
     "Judea and Samaria": "יהודה ושומרון", "Иудея и Самария": "יהודה ושומרון", "الضفة الغربية": "יהודה ושומרון",
     "Other": "אחר", "Другое": "אחר", "آخر": "אחר",
@@ -237,7 +245,10 @@
     "Male": "גבר", "Мужской": "גבר", "ذكر": "גבר", "Другой": "אחר"
   };
 
-  const LANG_NAMES = { he: "עברית", en: "English", ru: "Русский", ar: "العربية" };
+  function translateToHebrew(val) {
+    if (!val) return "לא צוין";
+    return TRANSLATIONS[val] || val;
+  }
 
   let allData = [];
   let filteredData = [];
@@ -245,12 +256,7 @@
   const rowsPerPage = 20;
   let charts = {};
 
-  function translateToHebrew(val) {
-    if (!val) return "לא צוין";
-    return TRANSLATIONS[val] || val;
-  }
-
-  // זיהוי שינוי סטטוס התחברות
+  // ניהול מצב התחברות
   onAuthStateChanged(auth, (user) => {
     if (user) {
       document.getElementById("loginContent").classList.add("hidden");
@@ -272,7 +278,7 @@
 
   document.getElementById("btnLogout").addEventListener("click", () => signOut(auth));
 
-  // קריאת נתונים מ-Firebase
+  // אסיפת נתונים
   async function fetchDatabase() {
     document.getElementById("loading").classList.remove("hidden");
     document.getElementById("mainDashboardViews").classList.add("hidden");
@@ -284,13 +290,12 @@
       allData = snapshot.docs.map(doc => {
         const d = doc.data();
         
-        // ביצוע תרגום ואיחוד נתונים אוטומטי לגרפים
         if (d.demographics) {
           if (d.demographics.region) d.demographics.region = translateToHebrew(d.demographics.region);
           if (d.demographics.ageGroup) d.demographics.ageGroup = translateToHebrew(d.demographics.ageGroup);
           if (d.demographics.gender) d.demographics.gender = translateToHebrew(d.demographics.gender);
         }
-        
+
         return { id: doc.id, ...d, dateObj: d.createdAt ? d.createdAt.toDate() : new Date() };
       });
       
@@ -309,7 +314,7 @@
     applyFilters();
   }
 
-  // מחיקת רשומה
+  // פונקציית מחיקה עם אזהרה
   async function deleteRecord(id) {
     const confirmation = confirm("⚠️ אזהרה: האם אתה בטוח לחלוטין שברצונך למחוק רשומה זו לצמיתות מתוך בסיס הנתונים? הפעולה אינה ניתנת לביטול!");
     if (confirmation) {
@@ -327,7 +332,7 @@
   }
   window.deleteRecord = deleteRecord;
 
-  // פילטור ובניית תצוגה
+  // סינונים
   function applyFilters() {
     const filterType = document.getElementById("dateFilter").value;
     const now = new Date();
@@ -391,18 +396,18 @@
     const channelData = countOccurrences(filteredData, 'scenario.channel');
     const langDataRaw = countOccurrences(filteredData, 'metadata.language');
 
-    // סידור כרונולוגי קבוע של גרף הגילאים
     const ageOrder = ["פחות מ-50", "50–59", "60–69", "70–79", "80+", "מעדיף/ה לא לומר", "לא צוין"];
     const sortedAgeKeys = Object.keys(ageDataRaw).sort((a, b) => {
-      let idxA = ageOrder.indexOf(a); let idxB = ageOrder.indexOf(b);
-      if (idxA === -1) idxA = 99; if (idxB === -1) idxB = 99;
+      let idxA = ageOrder.indexOf(a);
+      let idxB = ageOrder.indexOf(b);
+      if (idxA === -1) idxA = 99;
+      if (idxB === -1) idxB = 99;
       return idxA - idxB;
     });
     const sortedAgeValues = sortedAgeKeys.map(k => ageDataRaw[k]);
 
-    // מיפוי שמות יפים עבור גרף השפות החדש
+    // המרת קודי השפה לשמות בעברית עבור הגרף
     const langLabels = Object.keys(langDataRaw).map(k => LANG_NAMES[k] || k);
-    const langValues = Object.values(langDataRaw);
 
     drawChart("chartRisk", "doughnut", ["נמוך", "בינוני", "גבוה"], [riskData.low||0, riskData.medium||0, riskData.high||0], ['#16A34A', '#D97706', '#DC2626']);
     drawChart("chartAge", "bar", sortedAgeKeys, sortedAgeValues, '#2563EB');
@@ -411,8 +416,7 @@
     const chLabels = Object.keys(channelData).map(k => CH_LABELS[k] || k);
     drawChart("chartChannel", "pie", chLabels, Object.values(channelData), ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6']);
     
-    // ציור גרף השפות החדש
-    drawChart("chartLanguage", "pie", langLabels, langValues, ['#10B981', '#3B82F6', '#EC4899', '#F59E0B']);
+    drawChart("chartLanguage", "pie", langLabels, Object.values(langDataRaw), ['#10B981', '#3B82F6', '#EC4899', '#F59E0B']);
   }
 
   function drawChart(canvasId, type, labels, data, colors) {
@@ -454,7 +458,6 @@
       const isActed = d.answers?.alreadyActed === "yes" ? "⚠️ כן" : "לא";
       const score10 = d.risk?.score10 !== undefined ? d.risk.score10 : "-";
       
-      // שליפת והצגת שם השפה בצורה ברורה
       const rawLang = d.metadata?.language || "he";
       const displayLang = LANG_NAMES[rawLang] || rawLang;
       
@@ -479,6 +482,152 @@
     document.getElementById("btnNext").disabled = end >= filteredData.length;
   }
 
+  // --- פונקציית ייצוא לאקסל (משופרת) ---
+  function exportToExcel() {
+    if (filteredData.length === 0) {
+      alert("אין נתונים לייצוא תחת הסינון הנוכחי.");
+      return;
+    }
+
+    const summaryData = [];
+    
+    // -- מדדי מפתח עליונים --
+    summaryData.push(["--- מדדי מפתח ---"]);
+    summaryData.push(["סה\"כ משיבים", filteredData.length, "100%"]);
+    
+    const highRisk = filteredData.filter(d => d.risk?.level === "high").length;
+    summaryData.push(["נמצאים בסיכון גבוה", highRisk, Math.round((highRisk / filteredData.length) * 100) + "%"]);
+    
+    const consulted = filteredData.filter(d => d.answers?.consultedSomeone === "yes").length;
+    summaryData.push(["התייעצו עם אדם נוסף (הגנה)", consulted, Math.round((consulted / filteredData.length) * 100) + "%"]);
+
+    // -- התפלגות ערוצי פנייה --
+    summaryData.push([]);
+    summaryData.push(["--- התפלגות ערוצי פנייה ---"]);
+    summaryData.push(["ערוץ", "כמות", "אחוז מכלל המשיבים"]);
+    
+    const channels = {};
+    filteredData.forEach(d => {
+      const ch = d.scenario?.channel || "unknown";
+      if(ch !== "not_specified") channels[ch] = (channels[ch] || 0) + 1;
+    });
+    
+    const sortedChannels = Object.entries(channels).sort((a,b) => b[1] - a[1]);
+    sortedChannels.forEach(([chKey, count]) => {
+      const pct = Math.round((count / filteredData.length) * 100) + "%";
+      const chName = CH_LABELS[chKey] || chKey;
+      summaryData.push([chName, count, pct]);
+    });
+
+    // -- התפלגות שפות (חדש באקסל) --
+    summaryData.push([]);
+    summaryData.push(["--- התפלגות שפות ממשק ---"]);
+    summaryData.push(["שפה", "כמות", "אחוז"]);
+    const langs = {};
+    filteredData.forEach(d => {
+      const l = d.metadata?.language || "he";
+      langs[l] = (langs[l] || 0) + 1;
+    });
+    Object.entries(langs).sort((a,b) => b[1] - a[1]).forEach(([langKey, count]) => {
+      const pct = Math.round((count / filteredData.length) * 100) + "%";
+      summaryData.push([LANG_NAMES[langKey] || langKey, count, pct]);
+    });
+
+    // -- התפלגות שאלות בסיכון (אחוז שענו כן) --
+    summaryData.push([]);
+    summaryData.push(["--- התפלגות תשובות לפי שאלה ---"]);
+    summaryData.push(["שאלה", "כמות שענו 'כן'", "אחוז שענו 'כן'"]);
+
+    Object.keys(Q_LABELS).forEach(qKey => {
+      const yesCount = filteredData.filter(d => d.answers?.[qKey] === "yes").length;
+      const pct = Math.round((yesCount / filteredData.length) * 100) + "%";
+      summaryData.push([Q_LABELS[qKey], yesCount, pct]);
+    });
+
+    // -- פילוח רמות סיכון --
+    summaryData.push([]);
+    summaryData.push(["--- התפלגות רמות סיכון ---"]);
+    summaryData.push(["רמה", "כמות", "אחוז"]);
+    
+    const riskCounts = { "high": 0, "medium": 0, "low": 0 };
+    filteredData.forEach(d => {
+      const r = d.risk?.level || "low";
+      riskCounts[r] = (riskCounts[r] || 0) + 1;
+    });
+    [['high', 'גבוה'], ['medium', 'בינוני'], ['low', 'נמוך']].forEach(([k, label]) => {
+      const count = riskCounts[k];
+      const pct = Math.round((count / filteredData.length) * 100) + "%";
+      summaryData.push([label, count, pct]);
+    });
+
+    // -- פילוח גילאים (מסודר כרונולוגית) --
+    summaryData.push([]);
+    summaryData.push(["--- התפלגות גילאים ---"]);
+    summaryData.push(["קבוצת גיל", "כמות", "אחוז"]);
+    
+    const ageCounts = {};
+    filteredData.forEach(d => {
+      const age = d.demographics?.ageGroup || "לא צוין";
+      ageCounts[age] = (ageCounts[age] || 0) + 1;
+    });
+    const ageOrder = ["פחות מ-50", "50–59", "60–69", "70–79", "80+", "מעדיף/ה לא לומר", "לא צוין"];
+    const sortedAgesForExcel = Object.entries(ageCounts).sort((a,b) => {
+      let idxA = ageOrder.indexOf(a[0]); let idxB = ageOrder.indexOf(b[0]);
+      if (idxA === -1) idxA = 99; if (idxB === -1) idxB = 99;
+      return idxA - idxB;
+    });
+    
+    sortedAgesForExcel.forEach(([age, count]) => {
+      const pct = Math.round((count / filteredData.length) * 100) + "%";
+      summaryData.push([age, count, pct]);
+    });
+
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+    wsSummary['!dir'] = 'rtl'; 
+    wsSummary['!cols'] = [{ wch: 30 }, { wch: 15 }, { wch: 20 }];
+
+    // יצירת גיליון 2: רשימת המשיבים המפורטת עם תרגום שפות
+    const rawData = filteredData.map(d => {
+      const lvlText = d.risk?.level === "high" ? "גבוה" : (d.risk?.level === "medium" ? "בינוני" : "נמוך");
+      const isActed = d.answers?.alreadyActed === "yes" ? "כן" : "לא";
+      const rawLang = d.metadata?.language || "he";
+      const displayLang = LANG_NAMES[rawLang] || rawLang;
+
+      return {
+        "תאריך ושעה": d.dateObj.toLocaleString('he-IL'),
+        "רמת סיכון": lvlText,
+        "ציון": d.risk?.score10 !== undefined ? d.risk.score10 : "-",
+        "שפה": displayLang,
+        "ערוץ": CH_LABELS[d.scenario?.channel] || d.scenario?.channel || "-",
+        "גיל": d.demographics?.ageGroup || "-",
+        "אזור": d.demographics?.region || "-",
+        "כבר פעל?": isActed
+      };
+    });
+
+    const wsData = XLSX.utils.json_to_sheet(rawData);
+    wsData['!dir'] = 'rtl'; 
+    
+    wsData['!cols'] = [
+      { wch: 20 }, // תאריך
+      { wch: 12 }, // רמת סיכון
+      { wch: 8 },  // ציון
+      { wch: 10 }, // שפה
+      { wch: 15 }, // ערוץ
+      { wch: 12 }, // גיל
+      { wch: 18 }, // אזור
+      { wch: 10 }  // פעל?
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, wsSummary, "סיכום ופילוחים");
+    XLSX.utils.book_append_sheet(wb, wsData, "דוח משיבים");
+
+    XLSX.writeFile(wb, `Scam_Dashboard_Export_${new Date().toLocaleDateString('he-IL').replace(/\./g, '-')}.xlsx`);
+  }
+
+  // האזנה לאירועים בממשק
+  document.getElementById("btnExportExcel").addEventListener("click", exportToExcel);
   document.getElementById("dateFilter").addEventListener("change", (e) => {
     document.getElementById("customDates").classList.toggle("hidden", e.target.value !== "custom");
   });
