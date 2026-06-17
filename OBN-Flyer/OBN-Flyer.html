@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>מחולל פרומפטים לתמונה</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Heebo', sans-serif;
+      background: linear-gradient(135deg, #f0eeff 0%, #faf5ff 50%, #eef4ff 100%);
+      min-height: 100vh;
+      padding: 24px 16px 48px;
+      color: #2d2545;
+    }
+
+    .wrapper {
+      max-width: 580px;
+      margin: 0 auto;
+    }
+
+    /* -------- HEADER -------- */
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #7c6fcd, #5b4fcf);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 20px;
+      letter-spacing: 0.4px;
+      margin-bottom: 12px;
+    }
+    .header h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: #2d2545;
+      margin-bottom: 6px;
+    }
+    .header p {
+      font-size: 14px;
+      color: #7a6e9e;
+      font-weight: 400;
+      line-height: 1.6;
+    }
+
+    /* -------- EXPLAINER BOX -------- */
+    .explainer {
+      background: linear-gradient(135deg, #f0eeff, #faf5ff);
+      border: 1.5px solid #e2dcf7;
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      line-height: 1.75;
+      color: #4a3f7a;
+      direction: rtl;
+    }
+    .explainer p.desc { margin: 0; }
+    .explainer img {
+      width: 200px;
+      height: auto;
+      display: block;
+      margin: 14px auto 0;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(91,79,207,0.15);
+    }
+    .explainer .caption {
+      text-align: center;
+      font-size: 12px;
+      color: #a899d6;
+      margin-top: 8px;
+    }
+
+    /* -------- CARD -------- */
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 4px 24px rgba(91,79,207,0.10), 0 1.5px 6px rgba(91,79,207,0.06);
+      padding: 28px 24px 24px;
+      margin-bottom: 20px;
+    }
+
+    /* -------- FIELD -------- */
+    .field { margin-bottom: 22px; }
+    .field:last-child { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #3d2f7c;
+      margin-bottom: 7px;
+    }
+    label .icon { margin-left: 5px; font-style: normal; }
+
+    input[type="text"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+      border: 1.8px solid #e2dcf7;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-family: 'Heebo', sans-serif;
+      font-size: 15px;
+      color: #2d2545;
+      background: #faf9ff;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+      outline: none;
+      direction: rtl;
+    }
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    textarea:focus,
+    select:focus {
+      border-color: #7c6fcd;
+      box-shadow: 0 0 0 3px rgba(124,111,205,0.13);
+      background: #fff;
+    }
+    textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%237c6fcd' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: left 14px center;
+      padding-left: 38px;
+    }
+    select option[value=""] { color: #aaa; }
+
+    .hint {
+      font-size: 12px;
+      color: #a899d6;
+      margin-top: 6px;
+      font-weight: 400;
+      line-height: 1.5;
+    }
+    .hint strong { color: #7c6fcd; font-weight: 600; }
+
+    /* -------- DIVIDER -------- */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 4px 0 20px;
+      color: #c8bcf0;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #ede9fc;
+    }
+
+    /* -------- BUTTON -------- */
+    .btn-generate {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #7c6fcd 0%, #5b4fcf 100%);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-family: 'Heebo', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(91,79,207,0.28);
+      transition: transform 0.15s, box-shadow 0.15s;
+      letter-spacing: 0.2px;
+    }
+    .btn-generate:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(91,79,207,0.36);
+    }
+    .btn-generate:active { transform: translateY(0); }
+
+    /* -------- OUTPUT -------- */
+    .output-section {
+      display: none;
+      animation: fadeSlideUp 0.4s ease forwards;
+    }
+    .output-section.visible { display: block; }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .output-header h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #2d2545;
+    }
+
+    .btn-copy {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #f3f0ff;
+      border: 1.5px solid #d6cfff;
+      border-radius: 10px;
+      padding: 7px 14px;
+      font-family: 'Heebo', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: #5b4fcf;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+    }
+    .btn-copy:hover { background: #e9e4ff; border-color: #b8aff0; }
+    .btn-copy.copied {
+      background: #e9faf0;
+      border-color: #7dd9a8;
+      color: #2d9e68;
+    }
+
+    .output-textarea {
+      background: #faf9ff;
+      border: 1.8px solid #e2dcf7;
+      border-radius: 14px;
+      padding: 16px;
+      font-family: 'Heebo', sans-serif;
+      font-size: 14px;
+      line-height: 1.85;
+      color: #2d2545;
+      width: 100%;
+      min-height: 260px;
+      resize: vertical;
+      direction: rtl;
+      outline: none;
+    }
+
+    /* -------- FOOTER -------- */
+    .footer {
+      text-align: center;
+      margin-top: 28px;
+      font-size: 12px;
+      color: #b5acdb;
+    }
+
+    /* -------- MODAL -------- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(30, 20, 60, 0.55);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: fadeInOverlay 0.25s ease forwards;
+    }
+    .modal-overlay.open { display: flex; }
+
+    @keyframes fadeInOverlay {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    .modal-box {
+      background: #fff;
+      border-radius: 24px;
+      padding: 36px 28px 28px;
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(91,79,207,0.25), 0 4px 16px rgba(0,0,0,0.12);
+      animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      direction: rtl;
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.85) translateY(20px); }
+      to   { opacity: 1; transform: scale(1)    translateY(0);    }
+    }
+
+    .modal-icon {
+      font-size: 52px;
+      line-height: 1;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #5b4fcf;
+      margin-bottom: 14px;
+    }
+
+    .modal-body {
+      font-size: 14.5px;
+      color: #4a3f7a;
+      line-height: 1.8;
+      margin-bottom: 26px;
+    }
+
+    .btn-modal-close {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #7c6fcd 0%, #5b4fcf 100%);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-family: 'Heebo', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(91,79,207,0.30);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-modal-close:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 22px rgba(91,79,207,0.38);
+    }
+    .btn-modal-close:active { transform: translateY(0); }
+
+    @media (max-width: 420px) {
+      .header h1 { font-size: 22px; }
+      .card { padding: 22px 16px 20px; }
+      .modal-box { padding: 28px 20px 22px; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="badge">✨ מחולל פרומפטים חכם</div>
+    <h1>יוצרים פרומפט לתמונה</h1>
+    <p>מלאו את הפרטים וקבלו פרומפט מקצועי<br/>ליצירת פוסטר אישי מרהיב</p>
+  </div>
+
+  <!-- EXPLAINER BOX -->
+  <div class="explainer">
+    <p class="desc">💡 האפליקציה תיצור עבורכם פרומפט ליצירת תמונה דומה לזו. הכניסו את הנתונים שלכם, קבלו את הפרומפט, העתיקו אותו למנוע הרצוי (ChatGPT, Gemini), העלו את התמונה שלכם, ותקבלו עיצוב יפה! אתם מוזמנים, כמובן, לשנות את הפרומפט כדי להתאים אותו אליכם.</p>
+    <img src="OBN-Flyer.png" alt="דוגמה לפוסטר" />
+    <p class="caption">דוגמה לפוסטר שנוצר</p>
+  </div>
+
+  <!-- FORM CARD -->
+  <div class="card">
+
+    <div class="field">
+      <label><i class="icon">🎉</i> אירוע</label>
+      <input type="text" id="event" placeholder="לדוגמה: יום הולדת" />
+      <p class="hint">יום הולדת, בת מצווה, חתונה, ברית מילה, בר מצווה...</p>
+    </div>
+
+    <div class="field">
+      <label><i class="icon">👤</i> שם הדמות</label>
+      <input type="text" id="name" placeholder="לדוגמה: נועה" />
+      <p class="hint">נועה, יוסי, ליב, דניאל...</p>
+    </div>
+
+    <div class="field">
+      <label><i class="icon">🎂</i> גיל</label>
+      <input type="number" id="age" placeholder="לדוגמה: 1" min="0" />
+      <p class="hint">1, 7, 18, 30, 50...</p>
+    </div>
+
+    <div class="field">
+      <label><i class="icon">💬</i> טקסט הברכה</label>
+      <textarea id="greeting" placeholder='לדוגמה: נועה, יום הולדת שמח, עוד שנים רבות של אושר!'></textarea>
+      <p class="hint">כמה מילים/משפט קצר בלבד</p>
+    </div>
+
+    <div class="divider">פרמטרים ויזואליים</div>
+
+    <div class="field">
+      <label><i class="icon">🎨</i> נושא עיצובי</label>
+      <select id="theme">
+        <option value="">בחרו נושא</option>
+        <option value="פסטל">פסטל</option>
+        <option value="צבעים עזים">צבעים עזים</option>
+        <option value="בוהו שיק">בוהו שיק</option>
+        <option value="מינימליסטי אלגנטי">מינימליסטי אלגנטי</option>
+        <option value="וינטג' רומנטי">וינטג' רומנטי</option>
+      </select>
+      <p class="hint">בחרו את הסגנון הוויזואלי לפוסטר</p>
+    </div>
+
+    <div class="field">
+      <label><i class="icon">🖌️</i> צבעים</label>
+      <input type="text" id="colors" placeholder="לדוגמה: צהוב רך, ורוד, מנטה" />
+      <p class="hint"><strong>הגדירו עד 3 צבעים</strong> — לדוגמה: כחול בהיר, לבן, זהב</p>
+    </div>
+
+  </div><!-- /card -->
+
+  <!-- GENERATE BUTTON -->
+  <button class="btn-generate" onclick="generatePrompt()">✨ צרו פרומפט</button>
+
+  <!-- OUTPUT -->
+  <div class="output-section" id="outputSection">
+    <div class="card" style="margin-top:20px;">
+      <div class="output-header">
+        <h2>הפרומפט שלכם 📄</h2>
+        <button class="btn-copy" id="copyBtn" onclick="copyPrompt()">
+          <span id="copyIcon">📋</span>
+          <span id="copyText">העתקה</span>
+        </button>
+      </div>
+      <textarea class="output-textarea" id="outputText" readonly></textarea>
+    </div>
+  </div>
+
+  <div class="footer">נבנה עם ❤️ לעיצוב יוקרתי ואישי</div>
+
+</div><!-- /wrapper -->
+
+<!-- MODAL -->
+<div class="modal-overlay" id="copiedModal" onclick="handleOverlayClick(event)">
+  <div class="modal-box" id="modalBox">
+    <span class="modal-icon">✅</span>
+    <div class="modal-title">הפרומפט הועתק!</div>
+    <div class="modal-body">
+      אתם יכולים לעבור כעת למנוע הבינה המלאכותית המועדף (ChatGPT, Gemini וכו׳), להדביק בו את הפרומפט, להעלות תמונה של הדמות שתרצו ולהפיק את הברכה.
+    </div>
+    <button class="btn-modal-close" onclick="closeModal()">סגור</button>
+  </div>
+</div>
+
+<script>
+  function val(id) {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  }
+
+  function generatePrompt() {
+    const event    = val('event')    || '[אירוע]';
+    const name     = val('name')     || '[שם הדמות]';
+    const age      = val('age')      || '[גיל]';
+    const greeting = val('greeting') || '[טקסט הברכה]';
+    const theme    = val('theme')    || '[נושא]';
+    const colors   = val('colors')   || '[צבעים]';
+
+    const prompt = `צור פוסטר עבור אירוע: ${event} יוקרתי מקצועי.
+יחס 4:5.
+הנתונים הם:
+שם הדמות: ${name}.
+גיל: ${age}.
+טקסט הברכה: "${greeting}".
+נושא: ${theme} שמח. צבעים: ${colors}.
+כל המסגרת מלאה בקיר נייר יוקרתי בצבע שמנת.
+המספר הגדול של הגיל חרוט במדויק בקיר עם עומק נראה לעין וצללים פנימיים ריאליסטיים.
+בתוך המספר: בלונים בצבעי הנושא, סידור זר אלגנטי אך שובב עם נגיעות של סרט מתנה, עיצוב חגיגי יוקרתי.
+הדמות שמחה עם תווי פנים זהים לתמונה שהעליתי, לובשת חולצת טריקו לבנה רכה וסרבל ג'ינס בצבע בהיר, צוחקת בטבעיות.
+פנים, כתף, יד אחת ורגל אחת משתרעות מחוץ למספר ויוצרות אפקט תלת-ממדי בולט ריאליסטי.
+אור שמש קולנועי חם מהפינה השמאלית עליונה, אור רך בשוליים, עור פוטוריאליסטי, צילום סטודיו יוקרתי, מיקוד חד במיוחד.
+טקסט הברכה בטיפוגרפיה על הקיר בפונט סריף אלגנטי.
+פריסה מינימליסטית נקייה, אסתטיקה יוקרתית של שער מגזין, בימוי אמנותי יוקרתי, צללים ריאליסטיים, צבעים טבעיים, ללא צללי עצים, ללא תאורה מזויפת, ללא חפצי בינה מלאכותית.
+השתמש בתמונה של הדמות שהעליתי ודייק בתווית הפנים שלה.`;
+
+    document.getElementById('outputText').value = prompt;
+
+    const section = document.getElementById('outputSection');
+    section.classList.remove('visible');
+    void section.offsetWidth;
+    section.classList.add('visible');
+
+    // Reset copy button
+    document.getElementById('copyBtn').classList.remove('copied');
+    document.getElementById('copyIcon').textContent = '📋';
+    document.getElementById('copyText').textContent = 'העתקה';
+
+    setTimeout(() => {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+
+  function copyPrompt() {
+    const text = document.getElementById('outputText').value;
+    if (!text) return;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(markCopied);
+    } else {
+      const ta = document.getElementById('outputText');
+      ta.select();
+      document.execCommand('copy');
+      markCopied();
+    }
+  }
+
+  function markCopied() {
+    // Update copy button state
+    const btn = document.getElementById('copyBtn');
+    btn.classList.add('copied');
+    document.getElementById('copyIcon').textContent = '✅';
+    document.getElementById('copyText').textContent = 'הועתק!';
+
+    // Show modal
+    const modal = document.getElementById('copiedModal');
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    const modal = document.getElementById('copiedModal');
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+
+    // Reset copy button after closing
+    setTimeout(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.classList.remove('copied');
+      document.getElementById('copyIcon').textContent = '📋';
+      document.getElementById('copyText').textContent = 'העתקה';
+    }, 300);
+  }
+
+  function handleOverlayClick(e) {
+    // Close only if clicking the overlay background, not the modal box itself
+    if (e.target === document.getElementById('copiedModal')) {
+      closeModal();
+    }
+  }
+
+  // Close modal on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+  });
+</script>
+</body>
+</html>
