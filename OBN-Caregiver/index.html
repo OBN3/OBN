@@ -64,7 +64,7 @@
             <section id="expenses-section" class="view-section hidden-view">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="font-bold text-lg">התחשבנות</h3>
-                    <button id="btn-add-expense" class="bg-green-600 text-white px-4 py-1 rounded-full text-sm">+ הוצאה</button>
+                    <button id="btn-add-expense-modal" class="bg-green-600 text-white px-4 py-1 rounded-full text-sm">+ הוצאה</button>
                 </div>
                 <div class="bg-white p-4 rounded-xl shadow-sm mb-4">
                     <h4 class="font-semibold text-gray-700 mb-2">סיכום חובות</h4>
@@ -77,11 +77,7 @@
 
             <section id="admin-section" class="view-section hidden-view">
                 <h3 class="font-bold text-lg mb-4 text-purple-700">ניהול מערכת</h3>
-                <div class="bg-white p-4 rounded-xl shadow-sm">
-                    <h4 class="font-bold mb-3 border-b pb-2 text-gray-700">כל המשימות במערכת</h4>
-                    <div id="admin-tasks-list" class="space-y-2">
-                        </div>
-                </div>
+                <p class="text-sm text-gray-600 mb-4">אזור המנהל. כרגע רוב הפעולות (עריכה/מחיקה) זמינות לך ישירות מהמסכים הראשיים של המשימות וההוצאות כדי לחסוך זמן.</p>
             </section>
 
         </div>
@@ -89,15 +85,29 @@
 
     <div id="task-modal" class="hidden-view fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl p-6 w-full max-w-md">
-            <h3 class="font-bold text-lg mb-4">משימה חדשה</h3>
+            <h3 id="task-modal-title" class="font-bold text-lg mb-4">משימה חדשה</h3>
             <form id="task-form" class="space-y-3">
                 <input type="text" id="task-title" placeholder="כותרת (למשל: תור לרופא)" class="w-full border p-2 rounded" required>
                 <textarea id="task-desc" placeholder="הנחיות מפורטות..." class="w-full border p-2 rounded rows-3"></textarea>
                 <input type="date" id="task-date" class="w-full border p-2 rounded" required>
                 <input type="text" id="task-location" placeholder="מיקום / כתובת" class="w-full border p-2 rounded">
                 <div class="flex space-x-2 space-x-reverse mt-4">
-                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded">שמור משימה</button>
+                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded">שמור</button>
                     <button type="button" id="btn-close-task-modal" class="flex-1 bg-gray-200 text-gray-800 py-2 rounded">ביטול</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="expense-modal" class="hidden-view fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <h3 id="expense-modal-title" class="font-bold text-lg mb-4">הוצאה חדשה</h3>
+            <form id="expense-form" class="space-y-3">
+                <input type="text" id="expense-desc" placeholder="על מה ההוצאה? (למשל: סופרמרקט)" class="w-full border p-2 rounded" required>
+                <input type="number" id="expense-amount" placeholder="סכום (בשקלים)" class="w-full border p-2 rounded" required step="0.01">
+                <div class="flex space-x-2 space-x-reverse mt-4">
+                    <button type="submit" class="flex-1 bg-green-600 text-white py-2 rounded">שמור</button>
+                    <button type="button" id="btn-close-expense-modal" class="flex-1 bg-gray-200 text-gray-800 py-2 rounded">ביטול</button>
                 </div>
             </form>
         </div>
