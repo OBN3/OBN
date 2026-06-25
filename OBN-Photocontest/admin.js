@@ -19,17 +19,21 @@ const ADMIN_EMAIL = "ofirbn@gmail.com";
 let submissionsData = []; 
 let isLoggingOut = false; // הדגל שמונע את הלופ
 
-// פונקציית עזר להמרת קישור מדרייב לתצוגה ישירה
+// פונקציית עזר להמרת קישור מדרייב לתצוגה ישירה (עוקף חסימות CORB)
 function getDirectImageUrl(url) {
     if (!url) return "";
     let fileId = "";
+    
+    // חילוץ מזהה הקובץ מהקישור של דרייב
     if (url.includes("id=")) {
         fileId = url.split("id=")[1].split("&")[0];
     } else if (url.includes("/d/")) {
         fileId = url.split("/d/")[1].split("/")[0];
     }
-    // החזרת קישור שמאלץ את גוגל להציג את התמונה ישירות
-    return fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : url;
+    
+    // שימוש ב-API התמונות הממוזערות של גוגל. 
+    // הפרמטר sz=w1000 מגדיר רוחב מקסימלי לתצוגה חדה ומהירה, ומאושר ל-Cross-Origin.
+    return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000` : url;
 }
 
 // 1. שכבת הגנה משופרת
