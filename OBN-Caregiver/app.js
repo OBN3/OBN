@@ -3,14 +3,13 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
 import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // === הגדרות Firebase ===
-// יש להחליף בנתונים מ-Firebase Console
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDn9MNktFcHxzwxL5hhIYPIIN635_0pST8",
+  authDomain: "obn-photocontest.firebaseapp.com",
+  projectId: "obn-photocontest",
+  storageBucket: "obn-photocontest.firebasestorage.app",
+  messagingSenderId: "833616633042",
+  appId: "1:833616633042:web:82339189ba55f3d916210b"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -19,7 +18,7 @@ const db = getFirestore(app);
 
 // === משתנים גלובליים ===
 let currentUser = null;
-const adminUid = "YOUR_ADMIN_UID_HERE"; // החלף ב-UID של חשבון הגוגל שלך
+const adminUid = "YOUR_ADMIN_UID_HERE"; // אל תשכח להחליף ב-UID של חשבון הגוגל שלך כדי לראות את כפתור הניהול
 
 // === אלמנטים מה-DOM ===
 const views = {
@@ -93,13 +92,15 @@ document.getElementById('task-form').addEventListener('submit', async (e) => {
         createdAt: new Date().toISOString()
     };
     
-    await addDoc(collection(db, "tasks"), taskData);
+    // שים לב: שונה ל-care_tasks
+    await addDoc(collection(db, "care_tasks"), taskData);
     e.target.reset();
     views.taskModal.classList.add('hidden-view');
 });
 
 function loadTasks() {
-    const q = query(collection(db, "tasks"), orderBy("date", "asc"));
+    // שים לב: שונה ל-care_tasks
+    const q = query(collection(db, "care_tasks"), orderBy("date", "asc"));
     onSnapshot(q, (snapshot) => {
         const container = document.getElementById('tasks-container');
         container.innerHTML = '';
@@ -146,7 +147,8 @@ function loadTasks() {
         document.querySelectorAll('.btn-grab').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const id = e.target.getAttribute('data-id');
-                await updateDoc(doc(db, "tasks", id), {
+                // שים לב: שונה ל-care_tasks
+                await updateDoc(doc(db, "care_tasks", id), {
                     assigneeId: currentUser.uid,
                     assigneeName: currentUser.displayName
                 });
@@ -177,7 +179,8 @@ document.getElementById('btn-add-expense').addEventListener('click', async () =>
     const desc = prompt("על מה ההוצאה? (למשל: סופרמרקט)");
     if (!desc) return;
 
-    await addDoc(collection(db, "expenses"), {
+    // שים לב: שונה ל-care_expenses
+    await addDoc(collection(db, "care_expenses"), {
         amount: parseFloat(amount),
         desc: desc,
         paidById: currentUser.uid,
@@ -187,7 +190,8 @@ document.getElementById('btn-add-expense').addEventListener('click', async () =>
 });
 
 function loadExpenses() {
-    const q = query(collection(db, "expenses"), orderBy("date", "desc"));
+    // שים לב: שונה ל-care_expenses
+    const q = query(collection(db, "care_expenses"), orderBy("date", "desc"));
     onSnapshot(q, (snapshot) => {
         const listContainer = document.getElementById('expenses-list');
         listContainer.innerHTML = '';
