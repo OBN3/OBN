@@ -136,9 +136,11 @@ document.getElementById('googleLoginBtn').addEventListener('click', async () => 
         const userEmail = result.user.email;
         
         if (userEmail === ADMIN_EMAIL) {
-            alert("זוהית כמנהל. בקרוב יוקם דשבורד האדמין.");
+            alert("זוהית כמנהל המערכת. מועבר לדשבורד האדמין...");
+            window.location.href = "admin.html"; // המעבר מופעל
         } else if (APPROVED_JUDGES.includes(userEmail)) {
-            alert("זוהית כשופט מאושר. בקרוב יוקם מסך השיפוט.");
+            alert("זוהית כשופט מאושר. מועבר למסך השיפוט...");
+            window.location.href = "judge.html"; // המעבר מופעל (יוקם בהמשך)
         } else {
             alert("האימייל אינו מורשה במערכת.");
             auth.signOut();

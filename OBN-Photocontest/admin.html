@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>דשבורד מנהל - תחרות צילום</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: #f3f4f6; color: #1f2937; margin: 0; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 30px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .header h1 { margin: 0; font-size: 24px; color: #111827; }
+        .actions button { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; margin-right: 10px; }
+        .btn-export { background-color: #10b981; color: white; }
+        .btn-export:hover { background-color: #059669; }
+        .btn-logout { background-color: #ef4444; color: white; }
+        .btn-logout:hover { background-color: #dc2626; }
+        
+        .table-container { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        th, td { padding: 12px; border-bottom: 1px solid #e5e7eb; }
+        th { background-color: #f9fafb; font-weight: 600; color: #4b5563; }
+        tr:hover { background-color: #f9fafb; }
+        .thumbnail { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 1px solid #d1d5db; }
+        .status { padding: 4px 8px; border-radius: 999px; font-size: 12px; font-weight: bold; }
+        .status.pending { background-color: #fef3c7; color: #d97706; }
+        .status.judged { background-color: #d1fae5; color: #059669; }
+        
+        #loadingMsg { text-align: center; padding: 20px; font-size: 18px; color: #6b7280; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🏆 מערכת ניהול התחרות</h1>
+    <div class="actions">
+        <button id="exportCsvBtn" class="btn-export">⬇️ ייצוא ל-CSV</button>
+        <button id="logoutBtn" class="btn-logout">התנתק</button>
+    </div>
+</div>
+
+<div class="table-container">
+    <div id="loadingMsg">טוען נתונים מפיירבייס...</div>
+    <table id="submissionsTable" style="display: none;">
+        <thead>
+            <tr>
+                <th>תמונה</th>
+                <th>שם הצלם</th>
+                <th>כותרת</th>
+                <th>זיקה לנושא</th>
+                <th>אמנותיות</th>
+                <th>איכות טכנית</th>
+                <th>אותנטיות</th>
+                <th>ציון סופי</th>
+                <th>סטטוס</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            </tbody>
+    </table>
+</div>
+
+<script type="module" src="admin.js"></script>
+</body>
+</html>
