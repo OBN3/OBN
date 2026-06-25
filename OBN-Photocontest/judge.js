@@ -2,28 +2,73 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebas
 import { getFirestore, collection, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
+
 const firebaseConfig = {
-	  apiKey: "AIzaSyDn9MNktFcHxzwxL5hhIYPIIN635_0pST8",
-  authDomain: "obn-photocontest.firebaseapp.com",
-  projectId: "obn-photocontest",
-  storageBucket: "obn-photocontest.firebasestorage.app",
-  messagingSenderId: "833616633042",
-  appId: "1:833616633042:web:2422680ceaa37b9d16210b"
+	apiKey: "AIzaSyDn9MNktFcHxzwxL5hhIYPIIN635_0pST8",
+	authDomain: "obn-photocontest.firebaseapp.com",
+	projectId: "obn-photocontest",
+	storageBucket: "obn-photocontest.firebasestorage.app",
+	messagingSenderId: "833616633042",
+	appId: "1:833616633042:web:2422680ceaa37b9d16210b"
 };
+
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-const APPROVED_JUDGES = ["oriuri02@gmail.com", "judge2@gmail.com"]; // הכנס את אימייל השופטים האמיתיים
 let currentUserEmail = "";
 let pendingPhotos = [];
 let currentIndex = 0;
+let isLoggingOut = false;
 
-// שכבת הגנה דינמית ומאובטחת לשופטים בתוך judge.js
+// ==========================================
+// פונקציית קישורי תמונות (תיקון שגיאות CORB)
+// ==========================================
+function getDirectImageUrl(url, size = 1000) {
+    if (!url) return "";
+    let fileId = "";
+    if (url.includes("id=")) {
+        fileId = url.split("id=")[1].split("&")[0];
+    } else if (url.includes("/d/")) {
+        fileId = url.split("/d/")[1].split("/")[0];
+    }
+    return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w${size}` : url;
+}
+
+// ==========================================
+// ניהול החלון הצף (Modal) עבור השופט
+// ==========================================
+window.openJudgeModal = function() {
+    const photo = pendingPhotos[currentIndex];
+    if(photo) {
+        const largeUrl = getDirectImageUrl(photo.imageUrl, 1920);
+        document.getElementById('modalImg').src = largeUrl;
+        document.getElementById('imageModal').style.display = 'flex';
+    }
+};
+
+window.onclick = function(event) {
+    const modal = document.getElementById('imageModal');
+    if (event.target === modal) {
+        modal.style.display = 'none';
+        document.getElementById('modalImg').src = '';
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('closeModal').addEventListener('click', () => {
+        document.getElementById('imageModal').style.display = 'none';
+        document.getElementById('modalImg').src = '';
+    });
+});
+
+// ==========================================
+// שכבת הגנה דינמית לשופטים
+// ==========================================
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
-        alert("עליך להתחבר כדי לגשת לעמוד זה.");
+        if (!isLoggingOut) alert("עליך להתחבר כדי לגשת לעמוד זה.");
         window.location.href = "/OBN-Photocontest/index.html";
         return;
     }
@@ -34,9 +79,9 @@ onAuthStateChanged(auth, async (user) => {
 
         if (userDocSnap.exists() && userDocSnap.data().role === "judge") {
             currentUserEmail = user.email;
-            loadPendingSubmissions(); // הכל תקין - טוען את התמונות לשיפוט
+            loadPendingSubmissions(); 
         } else {
-            alert("אין לך הרשאת שופט גישה לעמוד זה.");
+            alert("אין לך הרשאת שופט במערכת זו.");
             window.location.href = "/OBN-Photocontest/index.html";
         }
     } catch (error) {
@@ -45,7 +90,9 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// 2. משיכת תמונות שטרם דורגו על ידי השופט הנוכחי
+// ==========================================
+// משיכת התמונות לשיפוט
+// ==========================================
 async function loadPendingSubmissions() {
     try {
         const querySnapshot = await getDocs(collection(db, "submissions"));
@@ -53,7 +100,6 @@ async function loadPendingSubmissions() {
         
         querySnapshot.forEach((doc) => {
             const data = doc.data();
-            // בודק אם השופט הזה כבר דירג את התמונה. אם לא - מוסיף אותה לתור שלו.
             const hasJudged = data.evaluations && data.evaluations[currentUserEmail];
             if (!hasJudged) {
                 pendingPhotos.push({ id: doc.id, ...data });
@@ -74,22 +120,26 @@ async function loadPendingSubmissions() {
     }
 }
 
-// 3. הצגת התמונה הנוכחית על המסך
+// ==========================================
+// הצגת התמונה הנוכחית
+// ==========================================
 function showPhoto(index) {
     const photo = pendingPhotos[index];
-    document.getElementById('currentImage').src = photo.imageUrl;
+    // שימוש בפונקציה שמתקנת את הקישור מדרייב
+    document.getElementById('currentImage').src = getDirectImageUrl(photo.imageUrl, 1000);
     document.getElementById('currentTitle').innerText = photo.title;
     document.getElementById('currentDesc').innerText = photo.description || "ללא תיאור.";
     document.getElementById('progressText').innerText = `תמונה ${index + 1} מתוך ${pendingPhotos.length}`;
     
-    // איפוס סרגלים ל-5 כברירת מחדל
+    // איפוס תיבות הבחירה ל-1 כברירת מחדל
     ['relevance', 'artistry', 'quality', 'authenticity'].forEach(crit => {
-        document.getElementById(`score-${crit}`).value = 5;
-        document.getElementById(`val-${crit}`).innerText = "5";
+        document.getElementById(`score-${crit}`).value = "1";
     });
 }
 
-// 4. שמירת הציונים וחישוב ממוצע למנהל
+// ==========================================
+// שמירת ציון השופט
+// ==========================================
 document.getElementById('scoringForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('submitScoreBtn');
@@ -98,7 +148,7 @@ document.getElementById('scoringForm').addEventListener('submit', async (e) => {
 
     const currentPhotoId = pendingPhotos[currentIndex].id;
     
-    // איסוף הציונים מהסרגלים
+    // איסוף הציונים מתיבות ה-Dropdown
     const judgeScore = {
         relevance: parseInt(document.getElementById('score-relevance').value),
         artistry: parseInt(document.getElementById('score-artistry').value),
@@ -111,11 +161,10 @@ document.getElementById('scoringForm').addEventListener('submit', async (e) => {
         const docSnap = await getDoc(docRef);
         const data = docSnap.data();
         
-        // שמירת הציון של השופט הנוכחי
         let evaluations = data.evaluations || {};
         evaluations[currentUserEmail] = judgeScore;
         
-        // חישוב הממוצע החדש של כל השופטים כדי שיופיע יפה לאדמין
+        // חישוב ממוצע לאדמין
         let totalJudges = Object.keys(evaluations).length;
         let avgScores = { relevance: 0, artistry: 0, quality: 0, authenticity: 0 };
         
@@ -131,10 +180,9 @@ document.getElementById('scoringForm').addEventListener('submit', async (e) => {
         avgScores.quality = parseFloat((avgScores.quality / totalJudges).toFixed(1));
         avgScores.authenticity = parseFloat((avgScores.authenticity / totalJudges).toFixed(1));
 
-        // עדכון המסד נתונים
         await updateDoc(docRef, {
             evaluations: evaluations,
-            scores: avgScores, // זה מה שהאדמין רואה בטבלה
+            scores: avgScores,
             status: "judged"
         });
 
@@ -143,7 +191,6 @@ document.getElementById('scoringForm').addEventListener('submit', async (e) => {
         if (currentIndex < pendingPhotos.length) {
             showPhoto(currentIndex);
         } else {
-            // נגמרו התמונות
             document.getElementById('judgingWorkspace').style.display = 'none';
             document.getElementById('emptyState').style.display = 'block';
         }
@@ -156,9 +203,10 @@ document.getElementById('scoringForm').addEventListener('submit', async (e) => {
     }
 });
 
-// 5. התנתקות
+// התנתקות חלקה ללא לופים
 document.getElementById('logoutBtn').addEventListener('click', () => {
+    isLoggingOut = true;
     signOut(auth).then(() => {
-        window.location.href = "index.html";
+        window.location.href = "/OBN-Photocontest/index.html";
     });
 });
