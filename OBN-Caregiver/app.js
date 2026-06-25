@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, updateDoc, doc, query, orderBy, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+// שים לב: הוספתי פה את setDoc
+import { getFirestore, collection, addDoc, updateDoc, doc, setDoc, query, orderBy, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // === הגדרות Firebase ===
 const firebaseConfig = {
@@ -18,9 +19,10 @@ const db = getFirestore(app);
 
 // === משתנים גלובליים ===
 let currentUser = null;
-const adminUid = "QjT2Hkd8LUVme4whqUV4wFQkXJG3"; // החלף ב-UID האמיתי של ה-Admin
+const adminUid = "QjT2Hkd8LUVme4whqUV4wFQkXJG3"; // עודכן לפי בקשתך
 let unsubscribeTasks = null;
 let unsubscribeExpenses = null;
+let unsubscribeEmergency = null;
 
 // משתנים למעקב אחר מצב עריכה
 let editingTaskId = null;
@@ -31,7 +33,8 @@ const views = {
     login: document.getElementById('login-view'),
     app: document.getElementById('app-view'),
     taskModal: document.getElementById('task-modal'),
-    expenseModal: document.getElementById('expense-modal')
+    expenseModal: document.getElementById('expense-modal'),
+    emergencyModal: document.getElementById('emergency-modal')
 };
 
 // === ניהול התחברות ===
@@ -55,10 +58,12 @@ onAuthStateChanged(auth, (user) => {
         
         loadTasks();
         loadExpenses();
+        loadEmergencyInfo();
     } else {
         currentUser = null;
         if (unsubscribeTasks) unsubscribeTasks();
         if (unsubscribeExpenses) unsubscribeExpenses();
+        if (unsubscribeEmergency) unsubscribeEmergency();
 
         views.app.classList.add('hidden-view');
         views.login.classList.remove('hidden-view');
@@ -85,6 +90,68 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 });
 
 // ==========================================
+// === לוגיקת תיק חירום (קריאה וכתיבה) ===
+// ==========================================
+document.getElementById('btn-edit-emergency').addEventListener('click', (e) => {
+    e.stopPropagation(); // מונע סגירה של החלונית בלחיצה
+    views.emergencyModal.classList.remove('hidden-view');
+});
+document.getElementById('btn-close-emergency-modal').addEventListener('click', () => views.emergencyModal.classList.add('hidden-view'));
+
+document.getElementById('emergency-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const emData = {
+        doctor: document.getElementById('em-doctor').value,
+        hmo: document.getElementById('em-hmo').value,
+        blood: document.getElementById('em-blood').value,
+        allergies: document.getElementById('em-allergies').value,
+        meds: document.getElementById('em-meds').value,
+        updatedBy: currentUser.displayName,
+        updatedAt: new Date().toISOString()
+    };
+    
+    // משתמשים ב-setDoc כדי לדרוס/ליצור את המסמך היחיד 'info' תחת 'care_emergency'
+    await setDoc(doc(db, "care_emergency", "info"), emData);
+    views.emergencyModal.classList.add('hidden-view');
+});
+
+function loadEmergencyInfo() {
+    unsubscribeEmergency = onSnapshot(doc(db, "care_emergency", "info"), (docSnap) => {
+        const display = document.getElementById('emergency-data-display');
+        
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            display.innerHTML = `
+                <p><strong>רופא משפחה:</strong> ${data.doctor || 'לא הוזן'}</p>
+                <p><strong>קופת חולים:</strong> ${data.hmo || 'לא הוזן'}</p>
+                <p><strong>סוג דם:</strong> <span dir="ltr">${data.blood || 'לא הוזן'}</span></p>
+                <p><strong>רגישויות:</strong> ${data.allergies || 'לא הוזן'}</p>
+                <p><strong>תרופות קבועות:</strong> ${data.meds || 'לא הוזן'}</p>
+                <p class="text-[10px] text-gray-400 mt-2">עודכן לאחרונה ע"י: ${data.updatedBy}</p>
+            `;
+            
+            // מילוי הטופס לפעם הבאה שילחצו ערוך
+            document.getElementById('em-doctor').value = data.doctor || '';
+            document.getElementById('em-hmo').value = data.hmo || '';
+            document.getElementById('em-blood').value = data.blood || '';
+            document.getElementById('em-allergies').value = data.allergies || '';
+            document.getElementById('em-meds').value = data.meds || '';
+
+            // התנהגות כפתור העתקה פרואקטיבי
+            document.getElementById('btn-share-emergency').onclick = (e) => {
+                e.stopPropagation();
+                const textToShare = `🚨 *תיק רפואי דחוף:*\n👨‍⚕️ רופא: ${data.doctor || 'לא ידוע'}\n🏥 קופה: ${data.hmo || 'לא ידוע'}\n🩸 סוג דם: ${data.blood || 'לא ידוע'}\n⚠️ רגישויות: ${data.allergies || 'אין'}\n💊 תרופות קבועות: ${data.meds || 'אין'}`;
+                navigator.clipboard.writeText(textToShare);
+                alert("המידע הרפואי הועתק! ניתן להדביק אותו כעת בווטסאפ.");
+            };
+        } else {
+            display.innerHTML = `<p class="text-gray-500 py-2">התיק ריק. לחצו על "ערוך נתונים" כדי למלא את הפרטים הרפואיים.</p>`;
+            document.getElementById('btn-share-emergency').onclick = (e) => { e.stopPropagation(); alert("אין עדיין נתונים להעתיק."); };
+        }
+    });
+}
+
+// ==========================================
 // === לוגיקת משימות (יצירה, עריכה, מחיקה) ===
 // ==========================================
 
@@ -106,10 +173,8 @@ document.getElementById('task-form').addEventListener('submit', async (e) => {
     };
     
     if (editingTaskId) {
-        // עריכת משימה קיימת
         await updateDoc(doc(db, "care_tasks", editingTaskId), updates);
     } else {
-        // יצירת משימה חדשה (הוספת שדות ברירת מחדל)
         updates.assigneeId = null;
         updates.assigneeName = null;
         updates.status = 'open';
@@ -181,7 +246,6 @@ function loadTasks() {
             container.appendChild(div);
         });
 
-        // חיבור אירועים
         document.querySelectorAll('.btn-grab').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 await updateDoc(doc(db, "care_tasks", e.target.getAttribute('data-id')), {
@@ -226,7 +290,7 @@ function loadTasks() {
             btn.addEventListener('click', (e) => {
                 const id = e.target.getAttribute('data-id');
                 const taskRef = snapshot.docs.find(d => d.id === id).data();
-                editingTaskId = null; // אנחנו משכפלים כמשימה חדשה
+                editingTaskId = null; 
                 
                 document.getElementById('task-title').value = taskRef.title + " (העתק)";
                 document.getElementById('task-desc').value = taskRef.desc;
@@ -307,7 +371,6 @@ function loadExpenses() {
             `;
         });
 
-        // חישוב התחשבנות (3 אחים)
         const targetPerPerson = totalExpenses / 3;
         let splitHtml = `<p>סה"כ הוצאות: ₪${totalExpenses.toFixed(2)} (יעד לכל אח: ₪${targetPerPerson.toFixed(2)})</p><hr class="my-2">`;
         
@@ -323,7 +386,6 @@ function loadExpenses() {
         }
         document.getElementById('expenses-split').innerHTML = splitHtml;
 
-        // אירועי עריכה מחיקה להוצאות
         document.querySelectorAll('.btn-edit-expense').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const id = e.target.getAttribute('data-id');
