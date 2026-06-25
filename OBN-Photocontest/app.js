@@ -1,19 +1,18 @@
 // --- הגדרות השרת של גוגל דרייב ---
-// הדבק כאן את הקישור שהעתקת מה-Apps Script בשלב 1
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxN0Gin2H0LYHuUSGLN_v4CRomuaiGkJwv9QjAKu_KtCxPeikWYWB9OECszGiXWefPS/exec";
 
-// ייבוא מודולים מ-Firebase (רק למסד הנתונים וההתחברות)
+// ייבוא מודולים מ-Firebase (ייבוא מאוחד ונקי למסד הנתונים וההתחברות)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 const firebaseConfig = {
-	  apiKey: "AIzaSyDn9MNktFcHxzwxL5hhIYPIIN635_0pST8",
-  authDomain: "obn-photocontest.firebaseapp.com",
-  projectId: "obn-photocontest",
-  storageBucket: "obn-photocontest.firebasestorage.app",
-  messagingSenderId: "833616633042",
-  appId: "1:833616633042:web:2422680ceaa37b9d16210b"
+    apiKey: "AIzaSyDn9MNktFcHxzwxL5hhIYPIIN635_0pST8",
+    authDomain: "obn-photocontest.firebaseapp.com",
+    projectId: "obn-photocontest",
+    storageBucket: "obn-photocontest.firebasestorage.app",
+    messagingSenderId: "833616633042",
+    appId: "1:833616633042:web:2422680ceaa37b9d16210b"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -21,8 +20,7 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-const ADMIN_EMAIL = "ofirbn@gmail.com";
-const APPROVED_JUDGES = ["oriuri02@gmail.com", "judge2@gmail.com"]; 
+// הערה: משתני המיילים הקשיחים נמחקו. הבדיקה מתבצעת כעת דינמית מול פיירבייס.
 
 // פונקציית עזר להמרת קובץ לפורמט Base64 שניתן לשלוח ברשת
 function toBase64(fileOrBlob) {
@@ -78,13 +76,12 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     // שליפת הקובץ שהמשתמש בחר
     const file = document.getElementById('photoFile').files[0];
 
-    // === הבדיקה החדשה: מגבלת 5MB (5 * 1024 * 1024 בתים) ===
+    // בדיקת מגבלת 5MB (5 * 1024 * 1024 בתים)
     if (file && file.size > 5 * 1024 * 1024) {
         status.style.color = 'red';
         status.innerText = 'שגיאה: הקובץ חורג מ-5 מגה-בייט. אנא העלה תמונה קלה יותר.';
         return; // הפקודה הזו עוצרת מיד את ההעלאה
     }
-    // ========================================================
 
     btn.disabled = true;
     status.style.color = '#2563eb';
@@ -128,11 +125,6 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
         btn.disabled = false;
     }
 });
-
-// ייבוא פונקציית קריאת מסמך בודד מפיירבייס (הוסף אותה לשורת ה-import של ה-firestore למעלה אם היא חסרה)
-import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-
-// שים לב: המשתנים ADMIN_EMAIL ו- APPROVED_JUDGES נמחקו לחלוטין! אין מיילים חשופים בקוד.
 
 // טיפול בהתחברות צוות ושופטים דינמי ומאובטח
 document.getElementById('googleLoginBtn').addEventListener('click', async () => {
