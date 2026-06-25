@@ -18,9 +18,7 @@ const auth = getAuth(app);
 let submissionsData = []; 
 let isLoggingOut = false;
 
-// ==========================================
-// 1. ניהול החלון הצף (Modal) - חשוף ל-HTML
-// ==========================================
+// ניהול החלון הצף (Modal)
 window.openModal = function(imageUrl) {
     const modal = document.getElementById('imageModal');
     const modalImg = document.getElementById('modalImg');
@@ -28,7 +26,6 @@ window.openModal = function(imageUrl) {
     modal.style.display = 'flex';
 };
 
-// סגירת החלון בלחיצה על הרקע הכהה
 window.onclick = function(event) {
     const modal = document.getElementById('imageModal');
     if (event.target === modal) {
@@ -37,7 +34,6 @@ window.onclick = function(event) {
     }
 };
 
-// סגירת החלון דרך כפתור ה-X (ברגע שהדף נטען)
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('closeModal').addEventListener('click', () => {
         document.getElementById('imageModal').style.display = 'none';
@@ -45,10 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-
-// ==========================================
-// 2. פונקציית קישורי תמונות (עוקף CORB)
-// ==========================================
+// פונקציית קישורי תמונות (עוקף חסימות CORB)
 function getDirectImageUrl(url, size = 1000) {
     if (!url) return "";
     let fileId = "";
@@ -60,10 +53,7 @@ function getDirectImageUrl(url, size = 1000) {
     return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w${size}` : url;
 }
 
-
-// ==========================================
-// 3. הגנת אבטחה דינמית ומשיכת נתונים
-// ==========================================
+// הגנת אבטחה דינמית 
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
         if (!isLoggingOut) alert("עליך להתחבר כדי לגשת לעמוד זה.");
@@ -72,12 +62,11 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     try {
-        // בדיקה מאובטחת מול Firestore שהמשתמש הוא אכן אדמין
         const userDocRef = doc(db, "users_roles", user.email);
         const userDocSnap = await getDoc(userDocRef);
 
         if (userDocSnap.exists() && userDocSnap.data().role === "admin") {
-            fetchSubmissions(); // הכל תקין - טוען את הטבלה
+            fetchSubmissions(); 
         } else {
             alert("אין לך הרשאת מנהל גישה לעמוד זה.");
             window.location.href = "/OBN-Photocontest/index.html";
@@ -88,6 +77,12 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
+function calculateTotalScore(data) {
+    const scores = data.scores || {};
+    return (scores.relevance || 0) + (scores.artistry || 0) + (scores.quality || 0) + (scores.authenticity || 0);
+}
+
+// משיכת הנתונים מפיירבייס 
 async function fetchSubmissions() {
     const table = document.getElementById('submissionsTable');
     const tbody = document.getElementById('tableBody');
@@ -96,20 +91,36 @@ async function fetchSubmissions() {
     try {
         const querySnapshot = await getDocs(collection(db, "submissions"));
         submissionsData = [];
-        tbody.innerHTML = '';
-
+        
         querySnapshot.forEach((doc) => {
             const data = doc.data();
             submissionsData.push(data);
+        });
 
-            const relevance = data.scores?.relevance || 0;
-            const artistry = data.scores?.artistry || 0;
-            const quality = data.scores?.quality || 0;
-            const authenticity = data.scores?.authenticity || 0;
-            const totalScore = relevance + artistry + quality + authenticity;
+        // מיון אוטומטי של הטבלה
+        submissionsData.sort((a, b) => {
+            return calculateTotalScore(b) - calculateTotalScore(a); 
+        });
+
+        tbody.innerHTML = '';
+
+        submissionsData.forEach((data) => {
+            const scores = data.scores || {};
+            const totalScore = calculateTotalScore(data);
             
-            const statusClass = totalScore > 0 ? 'judged' : 'pending';
-            const statusText = totalScore > 0 ? 'דורג' : 'ממתין';
+            // פירוט שופטים בסטטוס
+            const evaluationEmails = data.evaluations ? Object.keys(data.evaluations) : [];
+            const judgeCount = evaluationEmails.length;
+            let statusHtml = '';
+
+            if (judgeCount > 0) {
+                statusHtml = `
+                    <span class="status judged">דורג (${judgeCount})</span><br>
+                    <small style="color: #6b7280; font-size: 11px;">ע"י: ${evaluationEmails.join(', ')}</small>
+                `;
+            } else {
+                statusHtml = `<span class="status pending">ממתין</span>`;
+            }
 
             const thumbUrl = getDirectImageUrl(data.imageUrl, 200);
             const largeUrl = getDirectImageUrl(data.imageUrl, 1920);
@@ -119,12 +130,12 @@ async function fetchSubmissions() {
                 <td><img src="${thumbUrl}" class="thumbnail" alt="תמונה" title="לחץ להגדלה" onclick="window.openModal('${largeUrl}')"></td>
                 <td><strong>${data.photographerName}</strong></td>
                 <td>${data.title}</td>
-                <td>${relevance}</td>
-                <td>${artistry}</td>
-                <td>${quality}</td>
-                <td>${authenticity}</td>
+                <td>${scores.relevance || 0}</td>
+                <td>${scores.artistry || 0}</td>
+                <td>${scores.quality || 0}</td>
+                <td>${scores.authenticity || 0}</td>
                 <td><strong>${totalScore}</strong></td>
-                <td><span class="status ${statusClass}">${statusText}</span></td>
+                <td>${statusHtml}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -138,34 +149,30 @@ async function fetchSubmissions() {
     }
 }
 
-
-// ==========================================
-// 4. פעולות כפתורים (ייצוא ויציאה)
-// ==========================================
+// ייצוא ויציאה
 document.getElementById('exportCsvBtn').addEventListener('click', () => {
     if (submissionsData.length === 0) {
         alert("אין נתונים לייצוא.");
         return;
     }
 
-    let csvContent = "שם הצלם,כותרת,תיאור,זיקה לנושא,אמנותיות,איכות טכנית,אותנטיות,ציון סופי,סטטוס\n";
+    let csvContent = "שם הצלם,כותרת,תיאור,זיקה לנושא,אמנותיות,איכות טכנית,אותנטיות,ציון סופי,סטטוס (כמות),שופטים שדירגו\n";
 
     submissionsData.forEach(row => {
-        const relevance = row.scores?.relevance || 0;
-        const artistry = row.scores?.artistry || 0;
-        const quality = row.scores?.quality || 0;
-        const authenticity = row.scores?.authenticity || 0;
-        const totalScore = relevance + artistry + quality + authenticity;
-        const statusText = totalScore > 0 ? 'דורג' : 'ממתין';
+        const scores = row.scores || {};
+        const totalScore = calculateTotalScore(row);
+        const evaluationEmails = row.evaluations ? Object.keys(row.evaluations) : [];
+        const judgeCount = evaluationEmails.length;
+        const statusText = judgeCount > 0 ? 'דורג' : 'ממתין';
         
-        csvContent += `"${row.photographerName}","${row.title}","${row.description || ''}",${relevance},${artistry},${quality},${authenticity},${totalScore},"${statusText}"\n`;
+        csvContent += `"${row.photographerName}","${row.title}","${row.description || ''}",${scores.relevance || 0},${scores.artistry || 0},${scores.quality || 0},${scores.authenticity || 0},${totalScore},"${statusText} (${judgeCount})","${evaluationEmails.join(', ')}"\n`;
     });
 
     const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", "נתוני_התחרות.csv");
+    link.setAttribute("download", "נתוני_התחרות_ממוינים.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
