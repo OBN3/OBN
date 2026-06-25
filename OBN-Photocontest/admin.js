@@ -19,21 +19,16 @@ const ADMIN_EMAIL = "ofirbn@gmail.com";
 let submissionsData = []; 
 let isLoggingOut = false; // הדגל שמונע את הלופ
 
-// פונקציית עזר להמרת קישור מדרייב לתצוגה ישירה (עוקף חסימות CORB)
-function getDirectImageUrl(url) {
+// פונקציה חכמה שמקבלת גם גודל רצוי
+function getDirectImageUrl(url, size = 1000) {
     if (!url) return "";
     let fileId = "";
-    
-    // חילוץ מזהה הקובץ מהקישור של דרייב
     if (url.includes("id=")) {
         fileId = url.split("id=")[1].split("&")[0];
     } else if (url.includes("/d/")) {
         fileId = url.split("/d/")[1].split("/")[0];
     }
-    
-    // שימוש ב-API התמונות הממוזערות של גוגל. 
-    // הפרמטר sz=w1000 מגדיר רוחב מקסימלי לתצוגה חדה ומהירה, ומאושר ל-Cross-Origin.
-    return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000` : url;
+    return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w${size}` : url;
 }
 
 // 1. שכבת הגנה משופרת
@@ -76,9 +71,13 @@ async function fetchSubmissions() {
             // יצירת הקישור המוצג
             const displayUrl = getDirectImageUrl(data.imageUrl);
 
+// יצירת קישור לתמונה ממוזערת (לטבלה) ולתמונה גדולה (למודל)
+            const thumbUrl = getDirectImageUrl(data.imageUrl, 200);
+            const largeUrl = getDirectImageUrl(data.imageUrl, 1920);
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><a href="${data.imageUrl}" target="_blank" title="לחץ להורדה מקורית"><img src="${displayUrl}" class="thumbnail" alt="תמונה"></a></td>
+                <td><img src="${thumbUrl}" class="thumbnail" alt="תמונה" title="לחץ להגדלה" onclick="openModal('${largeUrl}')"></td>
                 <td><strong>${data.photographerName}</strong></td>
                 <td>${data.title}</td>
                 <td>${relevance}</td>
@@ -136,4 +135,32 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
     signOut(auth).then(() => {
         window.location.href = "/OBN-Photocontest/index.html";
     });
+	
+	
+	// ניהול החלון הצף (Modal)
+const modal = document.getElementById('imageModal');
+const modalImg = document.getElementById('modalImg');
+const closeModalBtn = document.getElementById('closeModal');
+
+window.openModal = function(imageUrl) {
+    modalImg.src = imageUrl;
+    modal.style.display = 'flex';
+};
+
+// סגירת החלון בלחיצה על ה-X
+closeModalBtn.onclick = function() {
+    modal.style.display = 'none';
+    modalImg.src = ''; // ניקוי הזיכרון
+};
+
+// סגירת החלון גם בלחיצה על הרקע הכהה מסביב
+window.onclick = function(event) {
+    if (event.target === modal) {
+        modal.style.display = 'none';
+        modalImg.src = '';
+    }
+};
+	
+	
+	
 });
