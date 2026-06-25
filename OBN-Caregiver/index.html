@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניהול טיפול - אחים</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hidden-view { display: none; }
+        .orphan-alert { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+
+    <div id="login-view" class="flex items-center justify-center min-h-screen">
+        <div class="bg-white p-8 rounded-xl shadow-md text-center max-w-sm w-full">
+            <h1 class="text-2xl font-bold mb-6 text-gray-800">התחברות לאפליקציה</h1>
+            <button id="btn-login" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition">
+                התחבר באמצעות Google
+            </button>
+        </div>
+    </div>
+
+    <div id="app-view" class="hidden-view pb-20">
+        
+        <div class="sticky top-0 z-50 bg-red-50 border-b border-red-200 p-3 shadow-sm">
+            <div class="flex justify-between items-center max-w-2xl mx-auto cursor-pointer" id="toggle-emergency">
+                <span class="font-bold text-red-700">🚨 תיק חירום ומידע קריטי</span>
+                <span class="text-red-700">▼</span>
+            </div>
+            <div id="emergency-content" class="hidden max-w-2xl mx-auto mt-2 text-sm text-red-900 bg-white p-3 rounded border border-red-100">
+                <p><strong>רופא משפחה:</strong> ד"ר כהן - 050-1234567</p>
+                <p><strong>רגישויות:</strong> פניצילין</p>
+                <p><strong>תרופות קבועות:</strong> אספירין (בוקר), סטטינים (ערב)</p>
+            </div>
+        </div>
+
+        <div class="max-w-2xl mx-auto p-4">
+            <header class="flex justify-between items-center mb-6 mt-4">
+                <h2 class="text-xl font-bold" id="user-greeting">שלום, אח</h2>
+                <button id="btn-logout" class="text-sm text-gray-500 underline">התנתק</button>
+            </header>
+
+            <div class="flex space-x-2 space-x-reverse mb-6">
+                <button class="nav-btn flex-1 bg-white border border-gray-200 py-2 rounded-lg shadow-sm font-semibold text-blue-600" data-target="tasks-section">משימות</button>
+                <button class="nav-btn flex-1 bg-white border border-gray-200 py-2 rounded-lg shadow-sm font-semibold" data-target="expenses-section">הוצאות</button>
+                <button id="nav-admin" class="nav-btn flex-1 bg-white border border-gray-200 py-2 rounded-lg shadow-sm font-semibold hidden" data-target="admin-section">ניהול</button>
+            </div>
+
+            <section id="tasks-section" class="view-section">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg">לוח משימות</h3>
+                    <button id="btn-add-task" class="bg-blue-600 text-white px-4 py-1 rounded-full text-sm">+ חדש</button>
+                </div>
+                <div id="tasks-container" class="space-y-4">
+                    </div>
+            </section>
+
+            <section id="expenses-section" class="view-section hidden-view">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg">התחשבנות</h3>
+                    <button id="btn-add-expense" class="bg-green-600 text-white px-4 py-1 rounded-full text-sm">+ הוצאה</button>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm mb-4">
+                    <h4 class="font-semibold text-gray-700 mb-2">סיכום חובות</h4>
+                    <div id="expenses-split" class="text-sm space-y-1">
+                        </div>
+                </div>
+                <div id="expenses-list" class="space-y-2 mt-4">
+                    </div>
+            </section>
+
+            <section id="admin-section" class="view-section hidden-view">
+                <h3 class="font-bold text-lg mb-4 text-purple-700">ניהול מערכת</h3>
+                <p class="text-sm text-gray-600 mb-4">כאן תוכל למחוק משימות ישנות, להפיק דוחות ולנהל הרשאות.</p>
+                </section>
+
+        </div>
+    </div>
+
+    <div id="task-modal" class="hidden-view fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <h3 class="font-bold text-lg mb-4">משימה חדשה</h3>
+            <form id="task-form" class="space-y-3">
+                <input type="text" id="task-title" placeholder="כותרת (למשל: תור לרופא)" class="w-full border p-2 rounded" required>
+                <textarea id="task-desc" placeholder="הנחיות מפורטות..." class="w-full border p-2 rounded rows-3"></textarea>
+                <input type="date" id="task-date" class="w-full border p-2 rounded" required>
+                <input type="text" id="task-location" placeholder="מיקום / כתובת" class="w-full border p-2 rounded">
+                <div class="flex space-x-2 space-x-reverse mt-4">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded">שמור משימה</button>
+                    <button type="button" id="btn-close-task-modal" class="flex-1 bg-gray-200 text-gray-800 py-2 rounded">ביטול</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+</body>
+</html>
