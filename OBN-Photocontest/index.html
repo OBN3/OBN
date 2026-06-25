@@ -44,6 +44,7 @@
         .btn-submit:disabled { background-color: #94a3b8; cursor: not-allowed; }
         
         #statusMessage { margin-top: 15px; text-align: center; font-weight: bold; font-size: 16px; }
+        .required-star { color: #dc2626; margin-right: 3px; }
     </style>
 </head>
 <body>
@@ -61,7 +62,7 @@
             <li>הצילומים יישלחו בקובץ דיגיטלי בפורמט JPEG באיכות המקורית (מינימום 2MB ולא יותר מ-5MB) ללא עיבוד או שימוש במסננים (פילטרים).</li>
             <li>יש לשלוח לתחרות צילומים שצולמו ע"י העובדים עצמם. אין להגיש צילומים שבוצעו ע"י צלם מסחרי.</li>
             <li>כל משתתף רשאי לשלוח <strong>עד 3 צילומים</strong>. במקרה בו משתתף שלח יותר מ-3 צילומים - הגשותיו ייפסלו.</li>
-            <li>מידע נוסף ניתן למצוא באתר הכנס <a href="https://www.qmedconf.com/photographycompetition" target="_blank">בלינק זה</a>.</li>
+            <li>מידע נוסף ניתן למצוא באתר הכנס <a href="https://www.isqa.org.il" target="_blank">בלינק זה</a>.</li>
         </ul>
         
         <div class="deadline">⏰ מועד אחרון להגשת הצילומים: 30.7.2026</div>
@@ -77,11 +78,13 @@
                     <label for="userTitle">תואר *</label>
                     <select id="userTitle" required>
                         <option value="" disabled selected>בחר תואר...</option>
-                        <option value="ד''ר">ד"ר</option>
                         <option value="פרופ'">פרופ'</option>
-                        <option value="מר">מר</option>
+                        <option value="ד''ר">ד"ר</option>
+                        <option value="עו''ד">עו"ד</option>
+                        <option value="אינג'">אינג'</option>
+                        <option value="מגר'">מגר'</option>
                         <option value="גב'">גב'</option>
-                        <option value="אח/ות">אח/ות</option>
+                        <option value="מר">מר</option>
                     </select>
                 </div>
                 <div class="col form-group">
@@ -110,16 +113,11 @@
                     <label for="userWorkplace">מקום עבודה *</label>
                     <select id="userWorkplace" required>
                         <option value="" disabled selected>בחר מקום עבודה...</option>
-                        <option value="שירותי בריאות כללית">שירותי בריאות כללית</option>
-                        <option value="מכבי שירותי בריאות">מכבי שירותי בריאות</option>
-                        <option value="קופת חולים מאוחדת">קופת חולים מאוחדת</option>
-                        <option value="לאומית שירותי בריאות">לאומית שירותי בריאות</option>
-                        <option value="מרכז רפואי שיבא - תל השומר">מרכז רפואי שיבא</option>
-                        <option value="מרכז רפואי תל אביב (איכילוב)">מרכז רפואי איכילוב</option>
-                        <option value="מרכז רפואי רמב''ם">מרכז רפואי רמב"ם</option>
-                        <option value="מרכז רפואי סורוקה">מרכז רפואי סורוקה</option>
+                        <option value="בית חולים">בית חולים</option>
+                        <option value="קהילה (קופות חולים)">קהילה (קופות חולים)</option>
+                        <option value="אוניברסיטאות ומכללות">אוניברסיטאות ומכללות</option>
                         <option value="משרד הבריאות">משרד הבריאות</option>
-                        <option value="מגן דוד אדום">מגן דוד אדום</option>
+                        <option value="צה''ל">צה"ל</option>
                         <option value="אחר">אחר</option>
                     </select>
                 </div>
@@ -135,8 +133,8 @@
             </div>
 
             <div class="checkbox-group">
-                <input type="checkbox" id="allowEmails" checked>
-                <label for="allowEmails">אני מאשר/ת שליחת הודעות דוא"ל הכוללות אישורים, הנחיות והודעות אחרות הקשורות לכנס</label>
+                <input type="checkbox" id="allowEmails" required>
+                <label for="allowEmails">אני מאשר/ת שליחת הודעות דוא"ל הכוללות אישורים, הנחיות והודעות אחרות הקשורות לכנס <span class="required-star">*</span></label>
             </div>
         </div>
 
@@ -198,6 +196,6 @@
     </form>
 </div>
 
-<script type="module" src="/OBN-Photocontest/app.js?v=4"></script>
+<script type="module" src="/OBN-Photocontest/app.js?v=5"></script>
 </body>
 </html>
