@@ -8,6 +8,9 @@
         body { font-family: system-ui, -apple-system, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; line-height: 1.6; }
         .container { max-width: 800px; margin: 0 auto; }
         
+        /* באנר עליון */
+        .header-image { width: 100%; height: auto; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: block; object-fit: contain; }
+
         /* כרטיס קול קורא ראשי */
         .intro-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; border-top: 6px solid #2563eb; }
         .intro-card h1 { color: #1e3a8a; margin-top: 0; font-size: 26px; text-align: center; }
@@ -35,8 +38,9 @@
         /* מנגנון ספירת מילים */
         .counter-container { display: flex; justify-content: space-between; font-size: 13px; color: #6b7280; margin-top: 4px; }
         
-        /* אזור העלאת קובץ PDF מותנה */
-        .conditional-upload { background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px dashed #cbd5e1; margin-top: 12px; display: none; }
+        /* שדות דינמיים */
+        .conditional-upload, .sub-workplace { background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px dashed #cbd5e1; margin-top: 12px; display: none; }
+        .sub-workplace { padding: 10px; border: 1px solid #93c5fd; background: #eff6ff; }
         
         /* כפתור שליחה */
         .btn-submit { width: 100%; padding: 15px; background-color: #2563eb; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
@@ -51,6 +55,8 @@
 
 <div class="container">
     
+    <img src="photoheader.jpg" alt="כנס החברה הישראלית לאיכות ברפואה" class="header-image" onerror="this.style.display='none'">
+
     <div class="intro-card">
         <h1>📸 תחרות צילום - איכות במימד אנושי</h1>
         <p><strong>קול קורא לשליחת צילומים לתחרות בנושא: רפואה מותאמת אישית, מגדרית ושוויונית.</strong></p>
@@ -62,7 +68,7 @@
             <li>הצילומים יישלחו בקובץ דיגיטלי בפורמט JPEG באיכות המקורית (מינימום 2MB ולא יותר מ-5MB) ללא עיבוד או שימוש במסננים (פילטרים).</li>
             <li>יש לשלוח לתחרות צילומים שצולמו ע"י העובדים עצמם. אין להגיש צילומים שבוצעו ע"י צלם מסחרי.</li>
             <li>כל משתתף רשאי לשלוח <strong>עד 3 צילומים</strong>. במקרה בו משתתף שלח יותר מ-3 צילומים - הגשותיו ייפסלו.</li>
-            <li>מידע נוסף ניתן למצוא באתר הכנס <a href="https://www.qmedconf.com/photographycompetition" target="_blank">בלינק זה</a>.</li>
+            <li>מידע נוסף ניתן למצוא באתר הכנס <a href="https://www.isqa.org.il" target="_blank">בלינק זה</a>.</li>
         </ul>
         
         <div class="deadline">⏰ מועד אחרון להגשת הצילומים: 30.7.2026</div>
@@ -78,13 +84,13 @@
                     <label for="userTitle">תואר *</label>
                     <select id="userTitle" required>
                         <option value="" disabled selected>בחר תואר...</option>
-                        <option value="פרופ'">פרופ'</option>
-                        <option value="ד''ר">ד"ר</option>
-                        <option value="עו''ד">עו"ד</option>
-                        <option value="אינג'">אינג'</option>
-                        <option value="מגר'">מגר'</option>
-                        <option value="גב'">גב'</option>
-                        <option value="מר">מר</option>
+                        <option>פרופ'</option>
+                        <option>ד"ר</option>
+                        <option>עו"ד</option>
+                        <option>אינג'</option>
+                        <option>מגר'</option>
+                        <option>גב'</option>
+                        <option>מר</option>
                     </select>
                 </div>
                 <div class="col form-group">
@@ -108,23 +114,182 @@
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col form-group">
-                    <label for="userWorkplace">מקום עבודה *</label>
-                    <select id="userWorkplace" required>
-                        <option value="" disabled selected>בחר מקום עבודה...</option>
-                        <option value="בית חולים">בית חולים</option>
-                        <option value="קהילה (קופות חולים)">קהילה (קופות חולים)</option>
-                        <option value="אוניברסיטאות ומכללות">אוניברסיטאות ומכללות</option>
-                        <option value="משרד הבריאות">משרד הבריאות</option>
-                        <option value="צה''ל">צה"ל</option>
-                        <option value="אחר">אחר</option>
+            <div class="form-group">
+                <label for="userWorkplace">מקום עבודה *</label>
+                <select id="userWorkplace" required>
+                    <option value="" disabled selected>בחר קטגוריית עבודה...</option>
+                    <option>בית חולים</option>
+                    <option>קהילה (קופות חולים)</option>
+                    <option>אוניברסיטאות ומכללות</option>
+                    <option>משרד הבריאות</option>
+                    <option>צה"ל</option>
+                    <option>אחר</option>
+                </select>
+
+                <div id="subWorkplaceWrapper">
+                    <select id="subHospital" class="form-control sub-workplace">
+                        <option value="" disabled selected>בחר בית חולים...</option>
+                        <option>אברבנאל – מרכז לבריאות הנפש</option>
+                        <option>אוגוסטה ויקטוריה – ירושלים</option>
+                        <option>איכילוב – המרכז הרפואי תל אביב ע"ש סוראסקי</option>
+                        <option>אל-מקאסד – ירושלים</option>
+                        <option>אלי"ן – ירושלים</option>
+                        <option>אלישע – חיפה</option>
+                        <option>אסותא אשדוד – בית החולים הציבורי האוניברסיטאי</option>
+                        <option>אסותא אשדוד – כלניות</option>
+                        <option>אסותא באר שבע</option>
+                        <option>אסותא השלום – תל אביב</option>
+                        <option>אסותא חיפה</option>
+                        <option>אסותא ירושלים</option>
+                        <option>אסותא ראשון לציון</option>
+                        <option>אסותא רמת החייל</option>
+                        <option>אסותא רעננה</option>
+                        <option>באר שבע – מרכז לבריאות הנפש</option>
+                        <option>בית הדר – אשדוד</option>
+                        <option>בית רבקה – פתח תקווה</option>
+                        <option>בני ציון – חיפה</option>
+                        <option>ברזילי – אשקלון</option>
+                        <option>גהה – מרכז לבריאות הנפש</option>
+                        <option>גריאטרי קריית בנימין</option>
+                        <option>גריאטרי שיקומי הרצפלד</option>
+                        <option>האנגלי א.מ.מ.ס – נצרת</option>
+                        <option>הדסה הר הצופים – ירושלים</option>
+                        <option>הדסה עין כרם – ירושלים</option>
+                        <option>המשפחה הקדושה – האיטלקי, נצרת</option>
+                        <option>העמק – עפולה</option>
+                        <option>הרצליה מדיקל סנטר</option>
+                        <option>הרצוג – ירושלים</option>
+                        <option>וולפסון – חולון</option>
+                        <option>זוהר – נתניה</option>
+                        <option>זיו – צפת</option>
+                        <option>טלביה – מרכז לבריאות הנפש</option>
+                        <option>יוספטל – אילת</option>
+                        <option>כרמל – חיפה</option>
+                        <option>לב השרון – מרכז לבריאות הנפש</option>
+                        <option>לגליל – נהריה</option>
+                        <option>לניאדו – נתניה</option>
+                        <option>לוינשטיין – רעננה</option>
+                        <option>מאיר – כפר סבא</option>
+                        <option>מ.ר.ב – בת ים</option>
+                        <option>מדיקל סנטר - עתידים</option>
+                        <option>מזור – מרכז לבריאות הנפש, עכו</option>
+                        <option>מעלה הכרמל – מרכז לבריאות הנפש, טירת כרמל</option>
+                        <option>מעייני הישועה – בני ברק</option>
+                        <option>מרחבים – באר יעקב / נס ציונה</option>
+                        <option>משגב לדך – ירושלים</option>
+                        <option>נאות המושבה</option>
+                        <option>נווה רעיה</option>
+                        <option>נווה שלווה</option>
+                        <option>סורוקה – באר שבע</option>
+                        <option>סן ונסן דה פול – הצרפתי, נצרת</option>
+                        <option>סנט ג'וזף – ירושלים</option>
+                        <option>סטוצ'ינסקי – מרכז רמת גן לחולי אלצהיימר</option>
+                        <option>עדי נגב – נחלת ערן</option>
+                        <option>עמל הוד אדומים – מעלה אדומים</option>
+                        <option>פדה-פוריה – טבריה</option>
+                        <option>פלימן – חיפה</option>
+                        <option>קפלן – רחובות</option>
+                        <option>רבין – בילינסון</option>
+                        <option>רבין – השרון</option>
+                        <option>רמב"ם – חיפה</option>
+                        <option>רעות – תל אביב</option>
+                        <option>רפאל – תל אביב</option>
+                        <option>שיבא – תל השומר</option>
+                        <option>שמיר – אסף הרופא</option>
+                        <option>שלוותה – מרכז לבריאות הנפש</option>
+                        <option>שמואל הרופא – באר יעקב</option>
+                        <option>שער מנשה – מרכז לבריאות הנפש</option>
+                        <option>שערי צדק – ירושלים</option>
+                        <option>שניידר – פתח תקווה</option>
+                        <option>שהם – המרכז המשולב לרפואה גריאטרית</option>
                     </select>
+
+                    <select id="subCommunity" class="form-control sub-workplace">
+                        <option value="" disabled selected>בחר קופה...</option>
+                        <option>כללית</option>
+                        <option>מכבי</option>
+                        <option>מאוחדת</option>
+                        <option>לאומית</option>
+                    </select>
+
+                    <select id="subUniversity" class="form-control sub-workplace">
+                        <option value="" disabled selected>בחר מוסד אקדמי...</option>
+                        <option>אוניברסיטת אריאל שבשומרון</option>
+                        <option>אוניברסיטת בן-גוריון בנגב</option>
+                        <option>אוניברסיטת בר-אילן</option>
+                        <option>אוניברסיטת חיפה</option>
+                        <option>אוניברסיטת רייכמן</option>
+                        <option>אוניברסיטת תל אביב</option>
+                        <option>אלקאסמי – מכללה אקדמית לחינוך</option>
+                        <option>אמונה-אפרתה – מכללה אקדמית לאמנויות וחינוך</option>
+                        <option>אפקה – המכללה האקדמית להנדסה בתל-אביב</option>
+                        <option>בצלאל – אקדמיה לאמנות ועיצוב ירושלים</option>
+                        <option>האוניברסיטה העברית בירושלים</option>
+                        <option>האוניברסיטה הפתוחה</option>
+                        <option>האקדמיה למוסיקה ולמחול בירושלים</option>
+                        <option>הטכניון – מכון טכנולוגי לישראל</option>
+                        <option>המכללה האקדמית אחוה</option>
+                        <option>המכללה האקדמית אשקלון</option>
+                        <option>המכללה האקדמית בוינגייט</option>
+                        <option>המכללה האקדמית בית-ברל</option>
+                        <option>המכללה האקדמית גליל מערבי</option>
+                        <option>המכללה האקדמית הדסה ירושלים</option>
+                        <option>המכללה האקדמית הדתית לחינוך שאנן</option>
+                        <option>המכללה האקדמית הערבית לחינוך בישראל – חיפה</option>
+                        <option>המכללה האקדמית הרצוג מיסודן של מכללות ליפשיץ והרצוג</option>
+                        <option>המכללה האקדמית חמדת</option>
+                        <option>המכללה האקדמית כנרת</option>
+                        <option>המכללה האקדמית להנדסה בראודה כרמיאל</option>
+                        <option>המכללה האקדמית להנדסה ע”ש סמי שמעון</option>
+                        <option>המכללה האקדמית לחינוך גבעת וושינגטון</option>
+                        <option>המכללה האקדמית לחינוך ולספורט אוהלו בקצרין</option>
+                        <option>המכללה האקדמית לחינוך ע"ש א. ד. גורדון</option>
+                        <option>המכללה האקדמית לחינוך ע"ש דוד ילין</option>
+                        <option>המכללה האקדמית לחינוך ע"ש קיי</option>
+                        <option>המכללה האקדמית לישראל ברמת-גן</option>
+                        <option>המכללה האקדמית נתניה</option>
+                        <option>המכללה האקדמית ספיר</option>
+                        <option>המכללה האקדמית עמק יזרעאל ע"ש מקס שטרן</option>
+                        <option>המכללה האקדמית צפת</option>
+                        <option>המכללה האקדמית תל חי</option>
+                        <option>המכללה האקדמית תל-אביב יפו</option>
+                        <option>המסלול האקדמי המכללה למינהל</option>
+                        <option>המרכז האקדמי לב</option>
+                        <option>המרכז האקדמי לוינסקי-וינגייט</option>
+                        <option>המרכז האקדמי למשפט ולעסקים</option>
+                        <option>המרכז האקדמי לעיצוב ולחינוך ויצו – חיפה ע"ש נרי בלומפילד</option>
+                        <option>הממרכז האקדמי פרס</option>
+                        <option>המרכז האקדמי רופין</option>
+                        <option>המרכז האקדמי שלם</option>
+                        <option>המרכז האקדמי שערי מדע ומשפט</option>
+                        <option>הקריה האקדמית אונו</option>
+                        <option>מכון ויצמן למדע</option>
+                        <option>מכון טכנולוגי חולון – HIT</option>
+                        <option>מכון שכטר למדעי היהדות</option>
+                        <option>מכללה אקדמית לחינוך "אורנים"</option>
+                        <option>מכללה אקדמית לחינוך – אורות ישראל מיסודן של מכללת אורות ישראל ומכללת מורשת יעקב</option>
+                        <option>מכללה ירושלים</option>
+                        <option>מכללת לוינסקי לחינוך</option>
+                        <option>מכללת סכנין להכשרת עובדי הוראה</option>
+                        <option>סמינר הקיבוצים – המכללה לחינוך לטכנולוגיה ולאומנויות</option>
+                        <option>עזריאלי- מכללה אקדמית להנדסה ירושלים</option>
+                        <option>שנקר. הנדסה. עיצוב. אמנות</option>
+                        <option>תלפיות – המכללה האקדמית לחינוך</option>
+                    </select>
+
+                    <select id="subMinistry" class="form-control sub-workplace">
+                        <option value="" disabled selected>בחר יחידה...</option>
+                        <option>מטה משרד הבריאות</option>
+                        <option>לשכת בריאות</option>
+                    </select>
+
+                    <input type="text" id="subOther" class="form-control sub-workplace" placeholder="אנא פרט את מקום העבודה...">
                 </div>
-                <div class="col form-group">
-                    <label for="userDepartment">מחלקה/מרפאה/יחידה/מוקד/אגף *</label>
-                    <input type="text" id="userDepartment" class="form-control" required>
-                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="userDepartment">מחלקה/מרפאה/יחידה/מוקד/אגף *</label>
+                <input type="text" id="userDepartment" class="form-control" required>
             </div>
 
             <div class="form-group">
@@ -194,15 +359,15 @@
         <button type="submit" id="submitBtn" class="btn-submit">📤 שליחת צילום לתחרות</button>
         <div id="statusMessage"></div>
     </form>
-</div>
-
-
+    
     <div style="text-align: center; margin-top: 50px; margin-bottom: 20px;">
         <button type="button" id="googleLoginBtn" style="background: transparent; border: none; color: #9ca3af; cursor: pointer; text-decoration: underline; font-size: 14px;">
             כניסת שופטים ומנהל מערכת 🔐
         </button>
     </div>
 
-</div> <script type="module" src="/OBN-Photocontest/app.js?v=6"></script>
+</div>
+
+<script type="module" src="/OBN-Photocontest/app.js?v=7"></script>
 </body>
 </html>

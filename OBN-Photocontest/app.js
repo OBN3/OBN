@@ -1,7 +1,5 @@
-// --- הגדרות השרת של גוגל דרייב ---
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxN0Gin2H0LYHuUSGLN_v4CRomuaiGkJwv9QjAKu_KtCxPeikWYWB9OECszGiXWefPS/exec";
 
-// ייבוא מודולים מ-Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
@@ -22,12 +20,9 @@ const provider = new GoogleAuthProvider();
 
 // מנגנוני טופס דינמיים
 document.addEventListener('DOMContentLoaded', () => {
+    // מנגנון ספירת מילים
     const textarea = document.getElementById('photoDescription');
     const counter = document.getElementById('wordCounter');
-    const pdfContainer = document.getElementById('pdfUploadContainer');
-    const consentFileInput = document.getElementById('consentFile');
-    const radioButtons = document.querySelectorAll('input[name="identifiablePerson"]');
-
     if (textarea) {
         textarea.addEventListener('input', () => {
             let words = textarea.value.trim().split(/\s+/).filter(w => w.length > 0);
@@ -39,6 +34,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // העלאת PDF מותנית
+    const pdfContainer = document.getElementById('pdfUploadContainer');
+    const consentFileInput = document.getElementById('consentFile');
+    const radioButtons = document.querySelectorAll('input[name="identifiablePerson"]');
     radioButtons.forEach(radio => {
         radio.addEventListener('change', (e) => {
             if (e.target.value === 'patients') {
@@ -51,6 +50,36 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // תפריטי בחירה דינמיים למקומות עבודה
+    const wpSelect = document.getElementById('userWorkplace');
+    const subElements = {
+        'בית חולים': document.getElementById('subHospital'),
+        'קהילה (קופות חולים)': document.getElementById('subCommunity'),
+        'אוניברסיטאות ומכללות': document.getElementById('subUniversity'),
+        'משרד הבריאות': document.getElementById('subMinistry'),
+        'אחר': document.getElementById('subOther')
+    };
+
+    if (wpSelect) {
+        wpSelect.addEventListener('change', (e) => {
+            // מסתיר את כל השדות ומבטל חובת מילוי
+            Object.values(subElements).forEach(el => {
+                if (el) {
+                    el.style.display = 'none';
+                    el.required = false;
+                    el.value = ''; 
+                }
+            });
+
+            // מציג רק את השדה הרלוונטי והופך אותו לחובה (צה"ל פשוט לא יפתח כלום)
+            const selected = e.target.value;
+            if (subElements[selected]) {
+                subElements[selected].style.display = 'block';
+                subElements[selected].required = true;
+            }
+        });
+    }
 });
 
 function toBase64(fileOrBlob) {
@@ -124,10 +153,19 @@ if (uploadForm) {
             const lName = document.getElementById('lastName').value;
             const phone = document.getElementById('userPhone').value;
             const email = document.getElementById('userEmail').value;
-            const workplace = document.getElementById('userWorkplace').value;
             const dept = document.getElementById('userDepartment').value;
             const role = document.getElementById('userRole').value;
             const allowEmails = document.getElementById('allowEmails').checked;
+            
+            // עיבוד מקום העבודה (חיבור הקטגוריה + הפירוט)
+            const baseWorkplace = document.getElementById('userWorkplace').value;
+            let specificWorkplace = "";
+            
+            const activeSub = document.querySelector('.sub-workplace[style*="display: block"]');
+            if (activeSub) {
+                specificWorkplace = activeSub.value;
+            }
+            const finalWorkplace = specificWorkplace ? `${baseWorkplace} - ${specificWorkplace}` : baseWorkplace;
             
             const photoTitle = document.getElementById('photoTitle').value;
             const desc = document.getElementById('photoDescription').value;
@@ -155,6 +193,7 @@ if (uploadForm) {
             const base64Compressed = await toBase64(compressedBlob);
             const compressedUrl = await uploadToDrive(base64Compressed, `${baseFileName}_compressed.webp`, 'image/webp', false);
 
+            // שמירה ב-Firestore
             await addDoc(collection(db, "submissions"), {
                 title: uTitle,
                 firstName: fName,
@@ -162,7 +201,7 @@ if (uploadForm) {
                 photographerName: `${uTitle} ${fName} ${lName}`,
                 phone: phone,
                 email: email,
-                workplace: workplace,
+                workplace: finalWorkplace, // השדה המלא והמאוחד
                 department: dept,
                 role: role,
                 allowEmails: allowEmails,
@@ -179,6 +218,7 @@ if (uploadForm) {
             status.innerText = 'הצילום והפרטים האישיים הוגשו בהצלחה לתחרות!';
             document.getElementById('uploadForm').reset();
             document.getElementById('pdfUploadContainer').style.display = 'none';
+            document.querySelectorAll('.sub-workplace').forEach(el => el.style.display = 'none');
             document.getElementById('wordCounter').innerText = '0 / 70 מילים';
             
         } catch (error) {
@@ -191,7 +231,7 @@ if (uploadForm) {
     });
 }
 
-// התחברות צוות (מוגן בפני קריסות באמצעות בדיקת קיום האלמנט)
+// התחברות צוות אדמין / שופטים
 const googleLoginBtn = document.getElementById('googleLoginBtn');
 if (googleLoginBtn) {
     googleLoginBtn.addEventListener('click', async () => {
