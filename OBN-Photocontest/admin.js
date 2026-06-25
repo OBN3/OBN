@@ -1,22 +1,20 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
-
 const firebaseConfig = {
-	apiKey: "AIzaSyDn9MNktFcHxzwxL5hhIYPIIN635_0pST8",
-	authDomain: "obn-photocontest.firebaseapp.com",
-	projectId: "obn-photocontest",
-	storageBucket: "obn-photocontest.firebasestorage.app",
-	messagingSenderId: "833616633042",
-	appId: "1:833616633042:web:2422680ceaa37b9d16210b"
+    apiKey: "AIzaSyDn9MNktFcHxzwxL5hhIYPIIN635_0pST8",
+    authDomain: "obn-photocontest.firebaseapp.com",
+    projectId: "obn-photocontest",
+    storageBucket: "obn-photocontest.firebasestorage.app",
+    messagingSenderId: "833616633042",
+    appId: "1:833616633042:web:2422680ceaa37b9d16210b"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-const ADMIN_EMAIL = "ofirbn@gmail.com";
 let submissionsData = []; 
 let isLoggingOut = false;
 
@@ -49,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // ==========================================
-// 2. פונקציית קישורי תמונות
+// 2. פונקציית קישורי תמונות (עוקף CORB)
 // ==========================================
 function getDirectImageUrl(url, size = 1000) {
     if (!url) return "";
@@ -64,11 +62,8 @@ function getDirectImageUrl(url, size = 1000) {
 
 
 // ==========================================
-// 3. הגנת אבטחה ומשיכת נתונים
+// 3. הגנת אבטחה דינמית ומשיכת נתונים
 // ==========================================
-import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-
-// שכבת הגנה דינמית ומאובטחת לאדמין
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
         if (!isLoggingOut) alert("עליך להתחבר כדי לגשת לעמוד זה.");
@@ -77,7 +72,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     try {
-        // בדיקה בזמן אמת שהמשתמש הוא אכן אדמין
+        // בדיקה מאובטחת מול Firestore שהמשתמש הוא אכן אדמין
         const userDocRef = doc(db, "users_roles", user.email);
         const userDocSnap = await getDoc(userDocRef);
 
@@ -120,7 +115,6 @@ async function fetchSubmissions() {
             const largeUrl = getDirectImageUrl(data.imageUrl, 1920);
 
             const tr = document.createElement('tr');
-            // שים לב לשימוש ב- window.openModal כדי להבטיח זיהוי מוחלט
             tr.innerHTML = `
                 <td><img src="${thumbUrl}" class="thumbnail" alt="תמונה" title="לחץ להגדלה" onclick="window.openModal('${largeUrl}')"></td>
                 <td><strong>${data.photographerName}</strong></td>
