@@ -1,29 +1,40 @@
-// ייבוא מודולים מ-Firebase (הקפד להכניס את פרטי הפרויקט שלך ב-firebaseConfig)
+// --- הגדרות השרת של גוגל דרייב ---
+// הדבק כאן את הקישור שהעתקת מה-Apps Script בשלב 1
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxN0Gin2H0LYHuUSGLN_v4CRomuaiGkJwv9QjAKu_KtCxPeikWYWB9OECszGiXWefPS/exec";
+
+// ייבוא מודולים מ-Firebase (רק למסד הנתונים וההתחברות)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+	  apiKey: "AIzaSyDn9MNktFcHxzwxL5hhIYPIIN635_0pST8",
+  authDomain: "obn-photocontest.firebaseapp.com",
+  projectId: "obn-photocontest",
+  storageBucket: "obn-photocontest.firebasestorage.app",
+  messagingSenderId: "833616633042",
+  appId: "1:833616633042:web:2422680ceaa37b9d16210b"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const storage = getStorage(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-// הגדרת הרשאות צוות
 const ADMIN_EMAIL = "ofirbn@gmail.com";
-const APPROVED_JUDGES = ["judge1@gmail.com", "judge2@gmail.com"]; // הוסף את המיילים של השופטים כאן
+const APPROVED_JUDGES = ["judge1@gmail.com", "judge2@gmail.com"]; 
 
-// מנגנון הקטנת תמונות ישירות בדפדפן (Client-Side Compression)
+// פונקציית עזר להמרת קובץ לפורמט Base64 שניתן לשלוח ברשת
+function toBase64(fileOrBlob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(fileOrBlob);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+}
+
+// הקטנת תמונות בדפדפן
 async function compressImage(file, maxWidth = 1920) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -38,23 +49,24 @@ async function compressImage(file, maxWidth = 1920) {
                 canvas.height = img.height * scaleSize;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                
-                // המרה לפורמט WebP חסכוני במשקל
-                canvas.toBlob((blob) => {
-                    resolve(blob);
-                }, 'image/webp', 0.8); 
+                canvas.toBlob((blob) => resolve(blob), 'image/webp', 0.8); 
             };
         };
-        reader.onerror = error => reject(error);
+        reader.onerror = reject;
     });
 }
 
-// פונקציה חלופית לשליחת המקור אליך (למשל דרך Google Apps Script Webhook)
-async function sendOriginalToAdmin(originalFile, photographerName) {
-    // מכיוון שלא ניתן לשלוח קבצי ענק דרך המייל הסטנדרטי מ-Frontend, 
-    // הדרך הנכונה כאן היא להקים Google Apps Script שמקבל את הקובץ ושומר ל-Drive.
-    // אם תרצה שאכתוב לך את הסקריפט ל-Drive, רק תגיד. בינתיים זו הכנה לפונקציה:
-    console.log(`Original file ready to be sent: ${originalFile.name} by ${photographerName}`);
+// פונקציה חכמה לשליחה ל-Google Drive עם עקיפת CORS
+async function uploadToDrive(base64Data, fileName, mimeType, isOriginal) {
+    const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        // השימוש ב- text/plain מונע שגיאות CORS של הדפדפן 
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ fileData: base64Data, fileName, mimeType, isOriginal })
+    });
+    const result = await response.json();
+    if (result.status !== "success") throw new Error(result.message);
+    return result.url;
 }
 
 // טיפול בהגשת הטופס הציבורי
@@ -65,7 +77,7 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     
     btn.disabled = true;
     status.style.color = '#2563eb';
-    status.innerText = 'מעבד ומקטין את התמונה, אנא המתן...';
+    status.innerText = 'מעבד את התמונה ויוצר עותק לשופטים...';
 
     try {
         const name = document.getElementById('photographerName').value;
@@ -73,57 +85,52 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
         const desc = document.getElementById('photoDescription').value;
         const file = document.getElementById('photoFile').files[0];
 
-        // 1. טיפול בקובץ המקור (שליחה אליך בנפרד)
-        await sendOriginalToAdmin(file, name);
+        // 1. שליחת התמונה המקורית (ישירות לתיקייה החסויה שלך)
+        status.innerText = 'שולח את תמונת המקור למנהל התחרות...';
+        const base64Original = await toBase64(file);
+        await uploadToDrive(base64Original, `${name}_${file.name}`, file.type, true);
 
-        // 2. דחיסת הקובץ עבור השופטים והמערכת
+        // 2. דחיסה ושליחת עותק מוקטן למערכת השיפוט
+        status.innerText = 'מעלה את התמונה למערכת השיפוט...';
         const compressedBlob = await compressImage(file);
-        const fileName = `submissions/${Date.now()}_${file.name.split('.')[0]}.webp`;
-        const storageRef = ref(storage, fileName);
+        const base64Compressed = await toBase64(compressedBlob);
+        const compressedUrl = await uploadToDrive(base64Compressed, `${name}_compressed.webp`, 'image/webp', false);
 
-        status.innerText = 'מעלה למערכת השיפוט...';
-        
-        // 3. העלאה ל-Storage
-        const snapshot = await uploadBytes(storageRef, compressedBlob);
-        const downloadURL = await getDownloadURL(snapshot.ref);
-
-        // 4. שמירת הנתונים ב-Firestore
+        // 3. שמירת הנתונים ב-Firestore של פיירבייס
         await addDoc(collection(db, "submissions"), {
             photographerName: name,
             title: title,
             description: desc,
-            imageUrl: downloadURL,
-            status: "pending", // התמונה ממתינה לשיפוט
+            imageUrl: compressedUrl, // הקישור לדרייב החשוף לשופטים
+            status: "pending", 
             timestamp: serverTimestamp()
         });
 
         status.style.color = 'green';
-        status.innerText = 'הצילום הוגש בהצלחה! תוכל להגיש תמונה נוספת כעת.';
-        document.getElementById('uploadForm').reset(); // מאפשר העלאה נוספת
+        status.innerText = 'הצילום הוגש בהצלחה! העותק המקורי הועבר בבטחה.';
+        document.getElementById('uploadForm').reset();
         
     } catch (error) {
-        console.error("Error saving document: ", error);
+        console.error("Upload Error: ", error);
         status.style.color = 'red';
-        status.innerText = 'אירעה שגיאה בהעלאה. נסה שוב.';
+        status.innerText = 'אירעה שגיאה בהעלאה. ודא שהתמונה לא גדולה מדי נסה שוב.';
     } finally {
         btn.disabled = false;
     }
 });
 
-// טיפול בהתחברות צוות (שופטים / מנהל)
+// התחברות צוות
 document.getElementById('googleLoginBtn').addEventListener('click', async () => {
     try {
         const result = await signInWithPopup(auth, provider);
         const userEmail = result.user.email;
         
         if (userEmail === ADMIN_EMAIL) {
-            alert("זוהית כמנהל המערכת. מועבר לדשבורד האדמין...");
-            // window.location.href = "admin.html";
+            alert("זוהית כמנהל. בקרוב יוקם דשבורד האדמין.");
         } else if (APPROVED_JUDGES.includes(userEmail)) {
-            alert("זוהית כשופט מאושר. מועבר למסך השיפוט...");
-            // window.location.href = "judge.html";
+            alert("זוהית כשופט מאושר. בקרוב יוקם מסך השיפוט.");
         } else {
-            alert("האימייל אינו מורשה במערכת. מתנתק...");
+            alert("האימייל אינו מורשה במערכת.");
             auth.signOut();
         }
     } catch (error) {
