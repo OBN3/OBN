@@ -18,7 +18,7 @@ const db = getFirestore(app);
 
 // === משתנים גלובליים ===
 let currentUser = null;
-const adminUid = "ofirbn@gmail.com"; // שים לב לטיפ למעלה: כדאי להחליף ב-UID האמיתי מ-Firebase
+const adminUid = "QjT2Hkd8LUVme4whqUV4wFQkXJG3"; // שים לב לטיפ למעלה: כדאי להחליף ב-UID האמיתי מ-Firebase
 let unsubscribeTasks = null;    // משתנה לשמירת ביטול ההאזנה למשימות
 let unsubscribeExpenses = null; // משתנה לשמירת ביטול ההאזנה להוצאות
 
