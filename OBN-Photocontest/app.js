@@ -22,7 +22,7 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
 const ADMIN_EMAIL = "ofirbn@gmail.com";
-const APPROVED_JUDGES = ["judge1@gmail.com", "judge2@gmail.com"]; 
+const APPROVED_JUDGES = ["oriuri02@gmail.com", "judge2@gmail.com"]; 
 
 // פונקציית עזר להמרת קובץ לפורמט Base64 שניתן לשלוח ברשת
 function toBase64(fileOrBlob) {

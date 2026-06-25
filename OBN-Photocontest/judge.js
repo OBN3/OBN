@@ -15,7 +15,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-const APPROVED_JUDGES = ["judge1@gmail.com", "judge2@gmail.com"]; // הכנס את אימייל השופטים האמיתיים
+const APPROVED_JUDGES = ["oriuri02@gmail.com", "judge2@gmail.com"]; // הכנס את אימייל השופטים האמיתיים
 let currentUserEmail = "";
 let pendingPhotos = [];
 let currentIndex = 0;
