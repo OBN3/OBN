@@ -19,7 +19,7 @@ const db = getFirestore(app);
 
 // === משתנים גלובליים ===
 let currentUser = null;
-const adminUid = "1xO31fE1l2P5..."; // החלף ב-UID האמיתי שלך מתוך טאב Authentication בפיירבייס!
+const adminUid = "QjT2Hkd8LUVme4whqUV4wFQkXJG3"; // החלף ב-UID האמיתי שלך מתוך טאב Authentication בפיירבייס!
 let unsubscribeTasks = null;
 let unsubscribeExpenses = null;
 
