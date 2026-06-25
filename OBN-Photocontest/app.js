@@ -75,6 +75,17 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     const btn = document.getElementById('submitBtn');
     const status = document.getElementById('statusMessage');
     
+    // שליפת הקובץ שהמשתמש בחר
+    const file = document.getElementById('photoFile').files[0];
+
+    // === הבדיקה החדשה: מגבלת 5MB (5 * 1024 * 1024 בתים) ===
+    if (file && file.size > 5 * 1024 * 1024) {
+        status.style.color = 'red';
+        status.innerText = 'שגיאה: הקובץ חורג מ-5 מגה-בייט. אנא העלה תמונה קלה יותר.';
+        return; // הפקודה הזו עוצרת מיד את ההעלאה
+    }
+    // ========================================================
+
     btn.disabled = true;
     status.style.color = '#2563eb';
     status.innerText = 'מעבד את התמונה ויוצר עותק לשופטים...';
@@ -83,7 +94,6 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
         const name = document.getElementById('photographerName').value;
         const title = document.getElementById('photoTitle').value;
         const desc = document.getElementById('photoDescription').value;
-        const file = document.getElementById('photoFile').files[0];
 
         // 1. שליחת התמונה המקורית (ישירות לתיקייה החסויה שלך)
         status.innerText = 'שולח את תמונת המקור למנהל התחרות...';
@@ -113,7 +123,7 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     } catch (error) {
         console.error("Upload Error: ", error);
         status.style.color = 'red';
-        status.innerText = 'אירעה שגיאה בהעלאה. ודא שהתמונה לא גדולה מדי נסה שוב.';
+        status.innerText = 'אירעה שגיאה בהעלאה. נסה שוב.';
     } finally {
         btn.disabled = false;
     }
