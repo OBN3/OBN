@@ -1,7 +1,5 @@
-// --- הגדרות השרת של גוגל דרייב ---
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxN0Gin2H0LYHuUSGLN_v4CRomuaiGkJwv9QjAKu_KtCxPeikWYWB9OECszGiXWefPS/exec";
 
-// ייבוא מודולים מ-Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
@@ -20,6 +18,43 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
+// ==========================================
+// מנגנוני טופס דינמיים (רצים מיד עם טעינת הדף)
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const textarea = document.getElementById('photoDescription');
+    const counter = document.getElementById('wordCounter');
+    const pdfContainer = document.getElementById('pdfUploadContainer');
+    const consentFileInput = document.getElementById('consentFile');
+    const radioButtons = document.querySelectorAll('input[name="identifiablePerson"]');
+
+    // 1. מנגנון ספירת וחסימת מילים (עוצר בדיוק ב-70 מילים)
+    textarea.addEventListener('input', () => {
+        let words = textarea.value.trim().split(/\s+/).filter(w => w.length > 0);
+        if (words.length > 70) {
+            // חיתוך הטקסט ל-70 המילים הראשונות ומניעת המשך הקלדה
+            textarea.value = words.slice(0, 70).join(" ");
+            words = words.slice(0, 70);
+        }
+        counter.innerText = `${words.length} / 70 מילים`;
+    });
+
+    // 2. ניהול הצגה מותנית של העלאת ה-PDF לפי בחירת כפתור הרדיו
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (e.target.value === 'patients') {
+                pdfContainer.style.display = 'block';
+                consentFileInput.required = true;
+            } else {
+                pdfContainer.style.display = 'none';
+                consentFileInput.required = false;
+                consentFileInput.value = ''; // ניקוי הבחירה במידה ושינה דעה
+            }
+        });
+    });
+});
+
+// פונקציות עזר קבועות לקבצים
 function toBase64(fileOrBlob) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -61,7 +96,9 @@ async function uploadToDrive(base64Data, fileName, mimeType, isOriginal) {
     return result.url;
 }
 
-// טיפול בהגשת הטופס הציבורי
+// ==========================================
+// טיפול בהגשת הטופס המלא
+// ==========================================
 document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('submitBtn');
@@ -69,89 +106,121 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     
     const file = document.getElementById('photoFile').files[0];
 
-    if (file && file.size > 5 * 1024 * 1024) {
-        status.style.color = 'red';
-        status.innerText = 'שגיאה: הקובץ חורג מ-5 מגה-בייט. אנא העלה תמונה קלה יותר.';
-        return; 
+    // בדיקת טווח הגודל החדש (2MB עד 5MB)
+    const minSize = 2 * 1024 * 1024;
+    const maxSize = 5 * 1024 * 1024;
+    
+    if (file) {
+        if (file.size < minSize || file.size > maxSize) {
+            status.style.color = 'red';
+            status.innerText = 'שגיאה: קובץ הצילום חייב להיות בגודל של בין 2 מ"ב ל-5 מ"ב בלבד.';
+            return; 
+        }
     }
 
     btn.disabled = true;
     status.style.color = '#2563eb';
-    status.innerText = 'מעבד את התמונה ויוצר עותק לשופטים...';
+    status.innerText = 'מתחיל בעיבוד ההגשה והעלאת קבצים...';
 
     try {
-        const name = document.getElementById('photographerName').value;
-        const title = document.getElementById('photoTitle').value;
+        // איסוף נתוני השדות החדשים
+        const uTitle = document.getElementById('userTitle').value;
+        const fName = document.getElementById('firstName').value;
+        const lName = document.getElementById('lastName').value;
+        const phone = document.getElementById('userPhone').value;
+        const email = document.getElementById('userEmail').value;
+        const workplace = document.getElementById('userWorkplace').value;
+        const dept = document.getElementById('userDepartment').value;
+        const role = document.getElementById('userRole').value;
+        const allowEmails = document.getElementById('allowEmails').checked;
+        
+        const photoTitle = document.getElementById('photoTitle').value;
         const desc = document.getElementById('photoDescription').value;
+        const personOption = document.querySelector('input[name="identifiablePerson"]:checked').value;
+        const consentFile = document.getElementById('consentFile').files[0];
 
-        // === יצירת שם קובץ חכם וייחודי ===
-        // החלפת רווחים או תווים מיוחדים במקף, כדי שגוגל דרייב לא יעשה בעיות
-        const cleanTitle = title.replace(/[^a-zA-Zא-ת0-9]/g, '-');
-        const uniqueId = Math.floor(Math.random() * 100000); // מספר אקראי קצר
-        const baseFileName = `${name}_${cleanTitle}_${uniqueId}`;
+        const fullName = `${fName}_${lName}`;
+        const timestamp = Date.now();
+        const cleanTitle = photoTitle.replace(/[^a-zA-Zא-ת0-9]/g, '-');
+        const baseFileName = `${fullName}_${cleanTitle}_${timestamp}`;
 
-        // 1. שליחת התמונה המקורית
+        // 1. העלאת קובץ PDF מותנה (אם קיימים מטופלים ונבחר קובץ)
+        let pdfDriveUrl = "";
+        if (personOption === 'patients' && consentFile) {
+            status.innerText = 'מעלה אישור מצולמים (קובץ PDF)...';
+            const base64Pdf = await toBase64(consentFile);
+            pdfDriveUrl = await uploadToDrive(base64Pdf, `${fullName}_${timestamp}_consent.pdf`, consentFile.type, true);
+        }
+
+        // 2. שליחת הצילום המקורי
         status.innerText = 'שולח את תמונת המקור למנהל התחרות...';
         const base64Original = await toBase64(file);
         await uploadToDrive(base64Original, `${baseFileName}_original_${file.name}`, file.type, true);
 
-        // 2. דחיסה ושליחת עותק מוקטן למערכת השיפוט
+        // 3. דחיסה ושליחת עותק למערכת השיפוט
         status.innerText = 'מעלה את התמונה למערכת השיפוט...';
         const compressedBlob = await compressImage(file);
         const base64Compressed = await toBase64(compressedBlob);
-        await uploadToDrive(base64Compressed, `${baseFileName}_compressed.webp`, 'image/webp', false);
+        const compressedUrl = await uploadToDrive(base64Compressed, `${baseFileName}_compressed.webp`, 'image/webp', false);
 
-        // 3. שמירת הנתונים בפיירבייס
+        // 4. שמירה מורחבת של כל השדות החדשים ב-Firestore
         await addDoc(collection(db, "submissions"), {
-            photographerName: name,
-            title: title,
+            title: uTitle,
+            firstName: fName,
+            lastName: lName,
+            photographerName: `${uTitle} ${fName} ${lName}`, // תאימות לאחור
+            phone: phone,
+            email: email,
+            workplace: workplace,
+            department: dept,
+            role: role,
+            allowEmails: allowEmails,
+            photoTitle: photoTitle,
             description: desc,
-            imageUrl: compressedUrl, 
+            imageUrl: compressedUrl,
+            identifiablePerson: personOption,
+            consentPdfUrl: pdfDriveUrl, // נשמר הלינק לדרייב או ריק
             status: "pending", 
             timestamp: serverTimestamp()
         });
 
         status.style.color = 'green';
-        status.innerText = 'הצילום הוגש בהצלחה! העותק המקורי הועבר בבטחה.';
+        status.innerText = 'הצילום והפרטים האישיים הוגשו בהצלחה לתחרות!';
         document.getElementById('uploadForm').reset();
+        document.getElementById('pdfUploadContainer').style.display = 'none';
+        document.getElementById('wordCounter').innerText = '0 / 70 מילים';
         
     } catch (error) {
         console.error("Upload Error: ", error);
         status.style.color = 'red';
-        status.innerText = 'אירעה שגיאה בהעלאה. נסה שוב.';
+        status.innerText = 'אירעה שגיאה בתהליך השליחה. נסה שוב.';
     } finally {
         btn.disabled = false;
     }
 });
 
-// טיפול בהתחברות צוות ושופטים
+// מערכת התחברות צוות
 document.getElementById('googleLoginBtn').addEventListener('click', async () => {
     try {
         const result = await signInWithPopup(auth, provider);
         const userEmail = result.user.email;
-        
         const userDocRef = doc(db, "users_roles", userEmail);
         const userDocSnap = await getDoc(userDocRef);
 
         if (userDocSnap.exists()) {
             const userData = userDocSnap.data();
-            
             if (userData.role === "admin") {
                 alert("שלום, זוהית כמנהל המערכת. מועבר לדשבורד...");
                 window.location.href = "/OBN-Photocontest/admin.html";
             } else if (userData.role === "judge") {
-                alert("שלום, זוהית כשופט מאושר בתחרות. מועבר למסך השיפוט...");
+                alert("שלום, זוהית כשופט מאושר. מועבר למסך השיפוט...");
                 window.location.href = "/OBN-Photocontest/judge.html";
-            } else {
-                alert("משתמש רשום ללא תפקיד מוגדר במערכת.");
-                auth.signOut();
             }
         } else {
-            alert("כתובת אימייל זו אינה מורשית לגשת לאזור הצוות.");
+            alert("כתובת אימייל זו אינה מורשית.");
             auth.signOut(); 
         }
     } catch (error) {
         console.error("Login failed:", error);
-        alert("אירעה שגיאה בתהליך ההתחברות.");
     }
 });
