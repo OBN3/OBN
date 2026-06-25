@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+// שים לב: הוספתי פה את deleteDoc
+import { getFirestore, collection, addDoc, updateDoc, doc, query, orderBy, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // === הגדרות Firebase ===
 const firebaseConfig = {
@@ -18,9 +19,9 @@ const db = getFirestore(app);
 
 // === משתנים גלובליים ===
 let currentUser = null;
-const adminUid = "QjT2Hkd8LUVme4whqUV4wFQkXJG3"; // שים לב לטיפ למעלה: כדאי להחליף ב-UID האמיתי מ-Firebase
-let unsubscribeTasks = null;    // משתנה לשמירת ביטול ההאזנה למשימות
-let unsubscribeExpenses = null; // משתנה לשמירת ביטול ההאזנה להוצאות
+const adminUid = "1xO31fE1l2P5..."; // החלף ב-UID האמיתי שלך מתוך טאב Authentication בפיירבייס!
+let unsubscribeTasks = null;
+let unsubscribeExpenses = null;
 
 // === אלמנטים מה-DOM ===
 const views = {
@@ -44,7 +45,7 @@ onAuthStateChanged(auth, (user) => {
         views.app.classList.remove('hidden-view');
         document.getElementById('user-greeting').textContent = `שלום, ${user.displayName.split(' ')[0]}`;
         
-        // חשיפת כפתור אדמין אם זה אתה
+        // חשיפת כפתור אדמין
         if (user.uid === adminUid) {
             document.getElementById('nav-admin').classList.remove('hidden');
         }
@@ -53,8 +54,6 @@ onAuthStateChanged(auth, (user) => {
         loadExpenses();
     } else {
         currentUser = null;
-        
-        // ביטול ההאזנה לנתונים ברגע שמתנתקים כדי למנוע שגיאות הרשאה
         if (unsubscribeTasks) unsubscribeTasks();
         if (unsubscribeExpenses) unsubscribeExpenses();
 
@@ -106,10 +105,12 @@ document.getElementById('task-form').addEventListener('submit', async (e) => {
 
 function loadTasks() {
     const q = query(collection(db, "care_tasks"), orderBy("date", "asc"));
-    // שמירת פונקציית הביטול לתוך המשתנה
     unsubscribeTasks = onSnapshot(q, (snapshot) => {
         const container = document.getElementById('tasks-container');
+        const adminList = document.getElementById('admin-tasks-list');
+        
         container.innerHTML = '';
+        if (adminList) adminList.innerHTML = ''; // איפוס אזור מנהל
         
         const now = new Date();
         const twoDaysFromNow = new Date(now.getTime() + (48 * 60 * 60 * 1000));
@@ -119,13 +120,28 @@ function loadTasks() {
             const taskId = docSnap.id;
             const taskDate = new Date(task.date);
             
-            // זיהוי "משימה יתומה" (פחות מ-48 שעות ואין assignee)
             const isOrphan = (taskDate <= twoDaysFromNow && taskDate >= now && !task.assigneeId);
             const orphanClass = isOrphan ? 'border-red-500 border-2 orphan-alert' : 'border-gray-100 border';
             
+            // --- קביעת תצוגת הכפתורים לפי מי שלקח את המשימה ---
+            let actionHtml = '';
+            if (task.assigneeId) {
+                // אם אתה הבעלים של המשימה, תראה כפתור ביטול
+                if (task.assigneeId === currentUser.uid) {
+                    actionHtml = `
+                        <span class="text-green-600 font-semibold">✓ באחריותך</span>
+                        <button class="btn-release text-red-500 text-xs mr-2 hover:underline" data-id="${taskId}">(ביטול)</button>
+                    `;
+                } else {
+                    actionHtml = `<span class="text-green-600 font-semibold">✓ באחריות: ${task.assigneeName}</span>`;
+                }
+            } else {
+                actionHtml = `<button class="btn-grab bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 text-sm font-semibold" data-id="${taskId}">🖐️ תפוס משימה</button>`;
+            }
+            
+            // רינדור משימה למשתמש
             const div = document.createElement('div');
             div.className = `bg-white p-4 rounded-xl shadow-sm ${orphanClass}`;
-            
             div.innerHTML = `
                 <div class="flex justify-between items-start mb-2">
                     <div>
@@ -135,21 +151,29 @@ function loadTasks() {
                     ${isOrphan ? `<span class="bg-red-100 text-red-700 text-xs px-2 py-1 rounded font-bold">דחוף!</span>` : ''}
                 </div>
                 <p class="text-sm text-gray-600 mb-3">${task.desc}</p>
-                
                 <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-50">
-                    <div class="text-sm">
-                        ${task.assigneeId ? 
-                            `<span class="text-green-600 font-semibold">✓ באחריות: ${task.assigneeName}</span>` : 
-                            `<button class="btn-grab bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 text-sm font-semibold" data-id="${taskId}">🖐️ תפוס משימה</button>`
-                        }
+                    <div class="text-sm flex items-center">
+                        ${actionHtml}
                     </div>
                     <button class="btn-duplicate text-gray-400 hover:text-gray-700" data-id="${taskId}" title="שכפל משימה">⧉</button>
                 </div>
             `;
             container.appendChild(div);
+
+            // רינדור משימה למנהל (Admin)
+            if (currentUser && currentUser.uid === adminUid && adminList) {
+                adminList.innerHTML += `
+                    <div class="flex justify-between items-center bg-gray-50 p-2 rounded text-sm border">
+                        <div class="flex-1">
+                            <span class="font-bold">${task.title}</span> <span class="text-gray-500">(${task.date})</span>
+                        </div>
+                        <button class="btn-admin-delete bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200 text-xs font-bold" data-id="${taskId}">מחק</button>
+                    </div>
+                `;
+            }
         });
 
-        // חיבור אירועים דינמיים
+        // אירועי לחיצה: תפיסת משימה
         document.querySelectorAll('.btn-grab').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const id = e.target.getAttribute('data-id');
@@ -160,23 +184,44 @@ function loadTasks() {
             });
         });
 
+        // אירועי לחיצה: שחרור משימה
+        document.querySelectorAll('.btn-release').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const id = e.target.getAttribute('data-id');
+                await updateDoc(doc(db, "care_tasks", id), {
+                    assigneeId: null,
+                    assigneeName: null
+                });
+            });
+        });
+
+        // אירועי לחיצה: שכפול משימה
         document.querySelectorAll('.btn-duplicate').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const id = e.target.getAttribute('data-id');
                 const taskRef = snapshot.docs.find(d => d.id === id).data();
                 
-                // מילוי הטופס בנתוני המשימה המקורית
                 document.getElementById('task-title').value = taskRef.title + " (העתק)";
                 document.getElementById('task-desc').value = taskRef.desc;
                 document.getElementById('task-location').value = taskRef.location;
-                document.getElementById('task-date').value = ""; // משאירים ריק לבחירה מחדש
+                document.getElementById('task-date').value = "";
                 views.taskModal.classList.remove('hidden-view');
+            });
+        });
+
+        // אירועי לחיצה: מחיקה מוחלטת דרך Admin
+        document.querySelectorAll('.btn-admin-delete').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                if (confirm("האם אתה בטוח שברצונך למחוק משימה זו לחלוטין מכל האחים?")) {
+                    const id = e.target.getAttribute('data-id');
+                    await deleteDoc(doc(db, "care_tasks", id));
+                }
             });
         });
     });
 }
 
-// === לוגיקת הוצאות (Settle Up) ===
+// === לוגיקת הוצאות ===
 document.getElementById('btn-add-expense').addEventListener('click', async () => {
     const amount = prompt("הזן סכום (בשקלים):");
     if (!amount || isNaN(amount)) return;
@@ -195,13 +240,12 @@ document.getElementById('btn-add-expense').addEventListener('click', async () =>
 
 function loadExpenses() {
     const q = query(collection(db, "care_expenses"), orderBy("date", "desc"));
-    // שמירת פונקציית הביטול לתוך המשתנה
     unsubscribeExpenses = onSnapshot(q, (snapshot) => {
         const listContainer = document.getElementById('expenses-list');
         listContainer.innerHTML = '';
         
         let totalExpenses = 0;
-        const balances = {}; // { uid: { name, paid: amount } }
+        const balances = {};
 
         snapshot.forEach((docSnap) => {
             const exp = docSnap.data();
@@ -218,8 +262,7 @@ function loadExpenses() {
             `;
         });
 
-        // חישוב התחשבנות בין אחים (בהנחה של 3 אחים, אפשר לשנות דינמית לפי כמות היוזרים)
-        const activeBrothers = Object.keys(balances).length > 0 ? 3 : 1; // קבוע ל-3 לצורך הדוגמה
+        const activeBrothers = Object.keys(balances).length > 0 ? 3 : 1; 
         const targetPerPerson = totalExpenses / 3;
         
         let splitHtml = `<p>סה"כ הוצאות: ₪${totalExpenses.toFixed(2)} (יעד לכל אח: ₪${targetPerPerson.toFixed(2)})</p><hr class="my-2">`;
