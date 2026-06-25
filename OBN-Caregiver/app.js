@@ -18,7 +18,9 @@ const db = getFirestore(app);
 
 // === משתנים גלובליים ===
 let currentUser = null;
-const adminUid = "YOUR_ADMIN_UID_HERE"; // אל תשכח להחליף ב-UID של חשבון הגוגל שלך כדי לראות את כפתור הניהול
+const adminUid = "ofirbn@gmail.com"; // שים לב לטיפ למעלה: כדאי להחליף ב-UID האמיתי מ-Firebase
+let unsubscribeTasks = null;    // משתנה לשמירת ביטול ההאזנה למשימות
+let unsubscribeExpenses = null; // משתנה לשמירת ביטול ההאזנה להוצאות
 
 // === אלמנטים מה-DOM ===
 const views = {
@@ -51,6 +53,11 @@ onAuthStateChanged(auth, (user) => {
         loadExpenses();
     } else {
         currentUser = null;
+        
+        // ביטול ההאזנה לנתונים ברגע שמתנתקים כדי למנוע שגיאות הרשאה
+        if (unsubscribeTasks) unsubscribeTasks();
+        if (unsubscribeExpenses) unsubscribeExpenses();
+
         views.app.classList.add('hidden-view');
         views.login.classList.remove('hidden-view');
     }
@@ -92,16 +99,15 @@ document.getElementById('task-form').addEventListener('submit', async (e) => {
         createdAt: new Date().toISOString()
     };
     
-    // שים לב: שונה ל-care_tasks
     await addDoc(collection(db, "care_tasks"), taskData);
     e.target.reset();
     views.taskModal.classList.add('hidden-view');
 });
 
 function loadTasks() {
-    // שים לב: שונה ל-care_tasks
     const q = query(collection(db, "care_tasks"), orderBy("date", "asc"));
-    onSnapshot(q, (snapshot) => {
+    // שמירת פונקציית הביטול לתוך המשתנה
+    unsubscribeTasks = onSnapshot(q, (snapshot) => {
         const container = document.getElementById('tasks-container');
         container.innerHTML = '';
         
@@ -147,7 +153,6 @@ function loadTasks() {
         document.querySelectorAll('.btn-grab').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const id = e.target.getAttribute('data-id');
-                // שים לב: שונה ל-care_tasks
                 await updateDoc(doc(db, "care_tasks", id), {
                     assigneeId: currentUser.uid,
                     assigneeName: currentUser.displayName
@@ -179,7 +184,6 @@ document.getElementById('btn-add-expense').addEventListener('click', async () =>
     const desc = prompt("על מה ההוצאה? (למשל: סופרמרקט)");
     if (!desc) return;
 
-    // שים לב: שונה ל-care_expenses
     await addDoc(collection(db, "care_expenses"), {
         amount: parseFloat(amount),
         desc: desc,
@@ -190,9 +194,9 @@ document.getElementById('btn-add-expense').addEventListener('click', async () =>
 });
 
 function loadExpenses() {
-    // שים לב: שונה ל-care_expenses
     const q = query(collection(db, "care_expenses"), orderBy("date", "desc"));
-    onSnapshot(q, (snapshot) => {
+    // שמירת פונקציית הביטול לתוך המשתנה
+    unsubscribeExpenses = onSnapshot(q, (snapshot) => {
         const listContainer = document.getElementById('expenses-list');
         listContainer.innerHTML = '';
         
