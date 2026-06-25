@@ -2,6 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebas
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
+
 const firebaseConfig = {
 	apiKey: "AIzaSyDn9MNktFcHxzwxL5hhIYPIIN635_0pST8",
 	authDomain: "obn-photocontest.firebaseapp.com",
@@ -17,9 +18,39 @@ const auth = getAuth(app);
 
 const ADMIN_EMAIL = "ofirbn@gmail.com";
 let submissionsData = []; 
-let isLoggingOut = false; // הדגל שמונע את הלופ
+let isLoggingOut = false;
 
-// פונקציה חכמה שמקבלת גם גודל רצוי
+// ==========================================
+// 1. ניהול החלון הצף (Modal) - חשוף ל-HTML
+// ==========================================
+window.openModal = function(imageUrl) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImg');
+    modalImg.src = imageUrl;
+    modal.style.display = 'flex';
+};
+
+// סגירת החלון בלחיצה על הרקע הכהה
+window.onclick = function(event) {
+    const modal = document.getElementById('imageModal');
+    if (event.target === modal) {
+        modal.style.display = 'none';
+        document.getElementById('modalImg').src = '';
+    }
+};
+
+// סגירת החלון דרך כפתור ה-X (ברגע שהדף נטען)
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('closeModal').addEventListener('click', () => {
+        document.getElementById('imageModal').style.display = 'none';
+        document.getElementById('modalImg').src = '';
+    });
+});
+
+
+// ==========================================
+// 2. פונקציית קישורי תמונות
+// ==========================================
 function getDirectImageUrl(url, size = 1000) {
     if (!url) return "";
     let fileId = "";
@@ -31,7 +62,10 @@ function getDirectImageUrl(url, size = 1000) {
     return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w${size}` : url;
 }
 
-// 1. שכבת הגנה משופרת
+
+// ==========================================
+// 3. הגנת אבטחה ומשיכת נתונים
+// ==========================================
 onAuthStateChanged(auth, (user) => {
     if (!user) {
         if (!isLoggingOut) alert("עליך להתחבר כדי לגשת לעמוד זה.");
@@ -44,7 +78,6 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// 2. משיכת הנתונים מפיירבייס והצגתם
 async function fetchSubmissions() {
     const table = document.getElementById('submissionsTable');
     const tbody = document.getElementById('tableBody');
@@ -68,16 +101,13 @@ async function fetchSubmissions() {
             const statusClass = totalScore > 0 ? 'judged' : 'pending';
             const statusText = totalScore > 0 ? 'דורג' : 'ממתין';
 
-            // יצירת הקישור המוצג
-            const displayUrl = getDirectImageUrl(data.imageUrl);
-
-// יצירת קישור לתמונה ממוזערת (לטבלה) ולתמונה גדולה (למודל)
             const thumbUrl = getDirectImageUrl(data.imageUrl, 200);
             const largeUrl = getDirectImageUrl(data.imageUrl, 1920);
 
             const tr = document.createElement('tr');
+            // שים לב לשימוש ב- window.openModal כדי להבטיח זיהוי מוחלט
             tr.innerHTML = `
-                <td><img src="${thumbUrl}" class="thumbnail" alt="תמונה" title="לחץ להגדלה" onclick="openModal('${largeUrl}')"></td>
+                <td><img src="${thumbUrl}" class="thumbnail" alt="תמונה" title="לחץ להגדלה" onclick="window.openModal('${largeUrl}')"></td>
                 <td><strong>${data.photographerName}</strong></td>
                 <td>${data.title}</td>
                 <td>${relevance}</td>
@@ -99,7 +129,10 @@ async function fetchSubmissions() {
     }
 }
 
-// 3. ייצוא ל-CSV (נשאר ללא שינוי)
+
+// ==========================================
+// 4. פעולות כפתורים (ייצוא ויציאה)
+// ==========================================
 document.getElementById('exportCsvBtn').addEventListener('click', () => {
     if (submissionsData.length === 0) {
         alert("אין נתונים לייצוא.");
@@ -129,38 +162,9 @@ document.getElementById('exportCsvBtn').addEventListener('click', () => {
     document.body.removeChild(link);
 });
 
-// 4. התנתקות חלקה ללא שגיאות
 document.getElementById('logoutBtn').addEventListener('click', () => {
     isLoggingOut = true;
     signOut(auth).then(() => {
         window.location.href = "/OBN-Photocontest/index.html";
     });
-	
-	
-	// ניהול החלון הצף (Modal)
-const modal = document.getElementById('imageModal');
-const modalImg = document.getElementById('modalImg');
-const closeModalBtn = document.getElementById('closeModal');
-
-window.openModal = function(imageUrl) {
-    modalImg.src = imageUrl;
-    modal.style.display = 'flex';
-};
-
-// סגירת החלון בלחיצה על ה-X
-closeModalBtn.onclick = function() {
-    modal.style.display = 'none';
-    modalImg.src = ''; // ניקוי הזיכרון
-};
-
-// סגירת החלון גם בלחיצה על הרקע הכהה מסביב
-window.onclick = function(event) {
-    if (event.target === modal) {
-        modal.style.display = 'none';
-        modalImg.src = '';
-    }
-};
-	
-	
-	
 });
