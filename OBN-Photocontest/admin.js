@@ -3,12 +3,12 @@ import { getFirestore, collection, getDocs } from "https://www.gstatic.com/fireb
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 const firebaseConfig = {
-	  apiKey: "AIzaSyDn9MNktFcHxzwxL5hhIYPIIN635_0pST8",
-  authDomain: "obn-photocontest.firebaseapp.com",
-  projectId: "obn-photocontest",
-  storageBucket: "obn-photocontest.firebasestorage.app",
-  messagingSenderId: "833616633042",
-  appId: "1:833616633042:web:2422680ceaa37b9d16210b"
+	apiKey: "AIzaSyDn9MNktFcHxzwxL5hhIYPIIN635_0pST8",
+	authDomain: "obn-photocontest.firebaseapp.com",
+	projectId: "obn-photocontest",
+	storageBucket: "obn-photocontest.firebasestorage.app",
+	messagingSenderId: "833616633042",
+	appId: "1:833616633042:web:2422680ceaa37b9d16210b"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -16,20 +16,36 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 const ADMIN_EMAIL = "ofirbn@gmail.com";
-let submissionsData = []; // שמירת הנתונים בזיכרון לייצוא
+let submissionsData = []; 
+let isLoggingOut = false; // הדגל שמונע את הלופ
 
-// 1. שכבת הגנה - Auth Guard
-// בודק אם המשתמש מחובר ואם הוא המנהל המורשה
+// פונקציית עזר להמרת קישור מדרייב לתצוגה ישירה
+function getDirectImageUrl(url) {
+    if (!url) return "";
+    let fileId = "";
+    if (url.includes("id=")) {
+        fileId = url.split("id=")[1].split("&")[0];
+    } else if (url.includes("/d/")) {
+        fileId = url.split("/d/")[1].split("/")[0];
+    }
+    // החזרת קישור שמאלץ את גוגל להציג את התמונה ישירות
+    return fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : url;
+}
+
+// 1. שכבת הגנה משופרת
 onAuthStateChanged(auth, (user) => {
-    if (!user || user.email !== ADMIN_EMAIL) {
-        alert("אין לך הרשאת גישה לעמוד זה.");
-        window.location.href = "index.html"; // זורק חזרה לדף הבית
+    if (!user) {
+        if (!isLoggingOut) alert("עליך להתחבר כדי לגשת לעמוד זה.");
+        window.location.href = "/OBN-Photocontest/index.html";
+    } else if (user.email !== ADMIN_EMAIL) {
+        if (!isLoggingOut) alert("אין לך הרשאת גישה לעמוד זה.");
+        window.location.href = "/OBN-Photocontest/index.html";
     } else {
-        fetchSubmissions(); // אם תקין, טוען את הנתונים
+        fetchSubmissions(); 
     }
 });
 
-// 2. משיכת הנתונים מפיירבייס והצגתם בטבלה
+// 2. משיכת הנתונים מפיירבייס והצגתם
 async function fetchSubmissions() {
     const table = document.getElementById('submissionsTable');
     const tbody = document.getElementById('tableBody');
@@ -44,20 +60,21 @@ async function fetchSubmissions() {
             const data = doc.data();
             submissionsData.push(data);
 
-            // מכיוון שעוד לא בנינו את מסך השופטים, נשים 0 כברירת מחדל אם אין עדיין ציונים
             const relevance = data.scores?.relevance || 0;
             const artistry = data.scores?.artistry || 0;
             const quality = data.scores?.quality || 0;
             const authenticity = data.scores?.authenticity || 0;
             const totalScore = relevance + artistry + quality + authenticity;
             
-            // תצוגת סטטוס ויזואלית
             const statusClass = totalScore > 0 ? 'judged' : 'pending';
             const statusText = totalScore > 0 ? 'דורג' : 'ממתין';
 
+            // יצירת הקישור המוצג
+            const displayUrl = getDirectImageUrl(data.imageUrl);
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><a href="${data.imageUrl}" target="_blank"><img src="${data.imageUrl}" class="thumbnail" alt="תמונה"></a></td>
+                <td><a href="${data.imageUrl}" target="_blank" title="לחץ להורדה מקורית"><img src="${displayUrl}" class="thumbnail" alt="תמונה"></a></td>
                 <td><strong>${data.photographerName}</strong></td>
                 <td>${data.title}</td>
                 <td>${relevance}</td>
@@ -79,17 +96,15 @@ async function fetchSubmissions() {
     }
 }
 
-// 3. ייצוא ל-CSV (אקסל)
+// 3. ייצוא ל-CSV (נשאר ללא שינוי)
 document.getElementById('exportCsvBtn').addEventListener('click', () => {
     if (submissionsData.length === 0) {
         alert("אין נתונים לייצוא.");
         return;
     }
 
-    // יצירת כותרות
     let csvContent = "שם הצלם,כותרת,תיאור,זיקה לנושא,אמנותיות,איכות טכנית,אותנטיות,ציון סופי,סטטוס\n";
 
-    // הוספת השורות
     submissionsData.forEach(row => {
         const relevance = row.scores?.relevance || 0;
         const artistry = row.scores?.artistry || 0;
@@ -98,11 +113,9 @@ document.getElementById('exportCsvBtn').addEventListener('click', () => {
         const totalScore = relevance + artistry + quality + authenticity;
         const statusText = totalScore > 0 ? 'דורג' : 'ממתין';
         
-        // עטיפת הטקסטים במירכאות כדי למנוע שבירה של פסיקים בתוך התיאור
         csvContent += `"${row.photographerName}","${row.title}","${row.description || ''}",${relevance},${artistry},${quality},${authenticity},${totalScore},"${statusText}"\n`;
     });
 
-    // הוספת BOM כדי שהעברית תעבוד חלק באקסל
     const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -113,9 +126,10 @@ document.getElementById('exportCsvBtn').addEventListener('click', () => {
     document.body.removeChild(link);
 });
 
-// 4. התנתקות
+// 4. התנתקות חלקה ללא שגיאות
 document.getElementById('logoutBtn').addEventListener('click', () => {
+    isLoggingOut = true;
     signOut(auth).then(() => {
-        window.location.href = "index.html";
+        window.location.href = "/OBN-Photocontest/index.html";
     });
 });
