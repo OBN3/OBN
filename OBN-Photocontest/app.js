@@ -137,10 +137,10 @@ document.getElementById('googleLoginBtn').addEventListener('click', async () => 
         
         if (userEmail === ADMIN_EMAIL) {
             alert("זוהית כמנהל המערכת. מועבר לדשבורד האדמין...");
-            window.location.href = "admin.html"; // המעבר מופעל
+            window.location.href = "/OBN-Photocontest/admin.html"; // המעבר מופעל
         } else if (APPROVED_JUDGES.includes(userEmail)) {
             alert("זוהית כשופט מאושר. מועבר למסך השיפוט...");
-            window.location.href = "judge.html"; // המעבר מופעל (יוקם בהמשך)
+            window.location.href = "/OBN-Photocontest/judge.html"; // המעבר מופעל (יוקם בהמשך)
         } else {
             alert("האימייל אינו מורשה במערכת.");
             auth.signOut();
