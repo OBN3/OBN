@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>צ'קליסט ציוד למסע</title>
+  <title>צ'קליסט אריזה למחנה קיץ 2026</title>
   <style>
     :root{
       --bg-1:#0f172a;
@@ -91,7 +91,7 @@
 
     h1{
       margin: 0;
-      font-size: clamp(1.3rem, 4vw, 2rem);
+      font-size: clamp(1.2rem, 4vw, 1.8rem);
       line-height: 1.15;
       font-weight: 800;
       letter-spacing: -.02em;
@@ -133,12 +133,76 @@
       background: rgba(255,255,255,.3);
     }
 
+    /* עיצוב פאנל הזנת השם */
+    .name-zone {
+      position: relative;
+      z-index: 1;
+      margin: 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.12);
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .name-input {
+      background: transparent;
+      border: none;
+      color: white;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 700;
+      outline: none;
+      flex: 1;
+    }
+
+    .name-input::placeholder {
+      color: rgba(255,255,255,0.55);
+    }
+
+    .name-submit {
+      background: var(--accent-2);
+      border: none;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-weight: 800;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: opacity 0.2s;
+    }
+
+    .name-submit:hover { opacity: 0.9; }
+
+    .name-display {
+      font-weight: 700;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .edit-name-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      opacity: 0.7;
+      padding: 2px;
+      transition: opacity 0.2s;
+    }
+
+    .edit-name-btn:hover { opacity: 1; }
+
     .subtitle{
       position: relative;
       z-index: 1;
       margin: 8px 0 14px;
-      color: rgba(255,255,255,.9);
-      font-size: .98rem;
+      color: rgba(255,255,255,.85);
+      font-size: .92rem;
     }
 
     .progress-wrap{
@@ -427,12 +491,15 @@
   <div class="app">
     <section class="hero">
       <div class="title-row">
-        <h1>🎒 צ'קליסט למסע</h1>
+        <h1>🎒 צ'קליסט אריזה למחנה קיץ 2026</h1>
         <div class="actions-wrap">
           <button class="reset-btn" id="resetBtn" title="איפוס הרשימה">🔄</button>
           <div class="badge" id="counterBadge">0 / 0</div>
         </div>
       </div>
+
+      <div class="name-zone" id="nameZone"></div>
+
       <p class="subtitle">לוחצים על כל פריט כדי להעביר אותו בין הרשימות. הכל נשמר אוטומטית.</p>
 
       <div class="progress-wrap">
@@ -468,9 +535,8 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "packing-checklist-v3"; // שונה כדי לאפס גרסאות קודמות
+    const STORAGE_KEY = "packing-checklist-camp-2026";
 
-    // רשימת הציוד המעודכנת מסודרת לפי קטגוריות
     const items = [
       { category: "⛺ לינה, שטח וציוד כללי", name: "פנס ראש + סוללות" },
       { category: "⛺ לינה, שטח וציוד כללי", name: "שק שינה" },
@@ -544,20 +610,23 @@
     const doneCount = document.getElementById("doneCount");
     const counterBadge = document.getElementById("counterBadge");
     const resetBtn = document.getElementById("resetBtn");
+    const nameZone = document.getElementById("nameZone");
 
     function loadState(){
       try{
         const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        if(saved && Array.isArray(saved.doneIds)){
-          return { doneIds: new Set(saved.doneIds.filter(id => id >=0 && id < items.length)) };
-        }
+        return {
+          doneIds: new Set(saved && Array.isArray(saved.doneIds) ? saved.doneIds.filter(id => id >=0 && id < items.length) : []),
+          userName: saved && saved.userName ? saved.userName : ""
+        };
       }catch(e){}
-      return { doneIds: new Set() };
+      return { doneIds: new Set(), userName: "" };
     }
 
     function saveState(){
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        doneIds: [...state.doneIds]
+        doneIds: [...state.doneIds],
+        userName: state.userName
       }));
     }
 
@@ -570,12 +639,49 @@
     }
 
     function getProgressText(percent){
-      if(percent === 0) return "יאללה מתחילים 🚀";
-      if(percent < 25) return "כניסה טובה לעניינים 😎";
-      if(percent < 50) return "אתם על הגל 🌊";
-      if(percent < 75) return "מתקדמים יפה 🔥";
-      if(percent < 100) return "כמעט מוכנים! ✨";
-      return "סגורים למסע! 🏕️";
+      const nameSuf = state.userName ? `, ${state.userName}` : "";
+      if(percent === 0) return `יאללה מתחילים${nameSuf} 🚀`;
+      if(percent < 25) return `כניסה טובה לעניינים${nameSuf} 😎`;
+      if(percent < 50) return `אתם על הגל${nameSuf} 🌊`;
+      if(percent < 75) return `מתקדמים יפה${nameSuf} 🔥`;
+      if(percent < 100) return `כמעט מוכנים${nameSuf}! ✨`;
+      return `סגורים למחנה${nameSuf}! 🏕️`;
+    }
+
+    function renderNameZone() {
+      if (!state.userName) {
+        nameZone.innerHTML = `
+          <input type="text" id="nameInput" class="name-input" placeholder="מי אורז/ת איתנו היום? הכנס שם..." />
+          <button id="saveNameBtn" class="name-submit">אישור</button>
+        `;
+        document.getElementById("saveNameBtn").addEventListener("click", saveName);
+        document.getElementById("nameInput").addEventListener("keypress", (e) => {
+          if (e.key === "Enter") saveName();
+        });
+      } else {
+        nameZone.innerHTML = `
+          <div class="name-display">
+            <span>📝 רשימת האריזה של: <strong>${escapeHtml(state.userName)}</strong></span>
+            <button id="editNameBtn" class="edit-name-btn" title="ערוך שם">✏️</button>
+          </div>
+        `;
+        document.getElementById("editNameBtn").addEventListener("click", () => {
+          state.userName = "";
+          saveState();
+          renderNameZone();
+          updateProgress();
+        });
+      }
+    }
+
+    function saveName() {
+      const input = document.getElementById("nameInput");
+      if (input && input.value.trim()) {
+        state.userName = input.value.trim();
+        saveState();
+        renderNameZone();
+        updateProgress();
+      }
     }
 
     function renderListWithCategories(indices, container, isDone) {
@@ -589,7 +695,6 @@
         return;
       }
 
-      // קיבוץ לפי קטגוריות
       const grouped = {};
       indices.forEach(i => {
         const cat = items[i].category;
@@ -597,7 +702,6 @@
         grouped[cat].push(i);
       });
 
-      // רינדור קטגוריות ופריטים
       for (const [cat, catIndices] of Object.entries(grouped)) {
         const title = document.createElement("div");
         title.className = "category-title";
@@ -736,7 +840,6 @@
         .replaceAll("'", "&#039;");
     }
 
-    // מאזין לכפתור איפוס הרשימה
     resetBtn.addEventListener("click", () => {
       if(confirm("בטוח שרוצים לאפס את כל הרשימה ולהתחיל מחדש?")) {
         state.doneIds.clear();
@@ -745,6 +848,8 @@
       }
     });
 
+    // אתחול האפליקציה
+    renderNameZone();
     render();
   </script>
 </body>
