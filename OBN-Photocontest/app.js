@@ -20,7 +20,6 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-// פונקציית עזר להמרת קובץ לפורמט Base64
 function toBase64(fileOrBlob) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -30,7 +29,6 @@ function toBase64(fileOrBlob) {
     });
 }
 
-// הקטנת תמונות בדפדפן
 async function compressImage(file, maxWidth = 1920) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -52,7 +50,6 @@ async function compressImage(file, maxWidth = 1920) {
     });
 }
 
-// פונקציה חכמה לשליחה ל-Google Drive
 async function uploadToDrive(base64Data, fileName, mimeType, isOriginal) {
     const response = await fetch(GOOGLE_SCRIPT_URL, {
         method: "POST",
@@ -72,7 +69,6 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     
     const file = document.getElementById('photoFile').files[0];
 
-    // בדיקת מגבלת 5MB
     if (file && file.size > 5 * 1024 * 1024) {
         status.style.color = 'red';
         status.innerText = 'שגיאה: הקובץ חורג מ-5 מגה-בייט. אנא העלה תמונה קלה יותר.';
@@ -88,21 +84,24 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
         const title = document.getElementById('photoTitle').value;
         const desc = document.getElementById('photoDescription').value;
 
-        // חותמת זמן למניעת כפילויות
-        const timestamp = Date.now();
+        // === יצירת שם קובץ חכם וייחודי ===
+        // החלפת רווחים או תווים מיוחדים במקף, כדי שגוגל דרייב לא יעשה בעיות
+        const cleanTitle = title.replace(/[^a-zA-Zא-ת0-9]/g, '-');
+        const uniqueId = Math.floor(Math.random() * 100000); // מספר אקראי קצר
+        const baseFileName = `${name}_${cleanTitle}_${uniqueId}`;
 
-        // 1. שליחת התמונה המקורית 
+        // 1. שליחת התמונה המקורית
         status.innerText = 'שולח את תמונת המקור למנהל התחרות...';
         const base64Original = await toBase64(file);
-        await uploadToDrive(base64Original, `${name}_${timestamp}_${file.name}`, file.type, true);
+        await uploadToDrive(base64Original, `${baseFileName}_original_${file.name}`, file.type, true);
 
         // 2. דחיסה ושליחת עותק מוקטן למערכת השיפוט
         status.innerText = 'מעלה את התמונה למערכת השיפוט...';
         const compressedBlob = await compressImage(file);
         const base64Compressed = await toBase64(compressedBlob);
-        const compressedUrl = await uploadToDrive(base64Compressed, `${name}_${timestamp}_compressed.webp`, 'image/webp', false);
+        await uploadToDrive(base64Compressed, `${baseFileName}_compressed.webp`, 'image/webp', false);
 
-        // 3. שמירת הנתונים ב-Firestore של פיירבייס
+        // 3. שמירת הנתונים בפיירבייס
         await addDoc(collection(db, "submissions"), {
             photographerName: name,
             title: title,
@@ -125,7 +124,7 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     }
 });
 
-// טיפול בהתחברות צוות ושופטים 
+// טיפול בהתחברות צוות ושופטים
 document.getElementById('googleLoginBtn').addEventListener('click', async () => {
     try {
         const result = await signInWithPopup(auth, provider);
