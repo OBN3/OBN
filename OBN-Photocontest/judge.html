@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מסך שיפוט - תחרות צילום</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: #f3f4f6; color: #1f2937; margin: 0; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 30px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .header h1 { margin: 0; font-size: 24px; color: #111827; }
+        .btn-logout { background-color: #ef4444; color: white; padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        
+        .judging-container { display: flex; flex-direction: column; gap: 20px; max-width: 1000px; margin: 0 auto; }
+        @media(min-width: 768px) { .judging-container { flex-direction: row; } }
+        
+        .photo-section { flex: 2; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; }
+        .photo-section img { max-width: 100%; max-height: 60vh; border-radius: 8px; object-fit: contain; background-color: #e5e7eb; }
+        .photo-details { text-align: right; margin-top: 15px; }
+        .photo-title { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
+        .photo-desc { color: #4b5563; font-size: 15px; }
+        
+        .scoring-section { flex: 1; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .progress { text-align: center; font-size: 14px; color: #6b7280; margin-bottom: 20px; font-weight: bold; }
+        
+        .criteria-group { margin-bottom: 20px; }
+        .criteria-group label { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px; }
+        .criteria-group input[type="range"] { width: 100%; cursor: pointer; }
+        .score-display { font-weight: bold; color: #2563eb; }
+        
+        .btn-submit { width: 100%; padding: 15px; background-color: #2563eb; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-submit:hover { background-color: #1d4ed8; }
+        
+        #emptyState { text-align: center; padding: 50px; font-size: 20px; color: #10b981; font-weight: bold; display: none; background: white; border-radius: 12px; }
+        #loadingMsg { text-align: center; padding: 20px; font-size: 18px; color: #6b7280; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>⚖️ מסך שיפוט</h1>
+    <button id="logoutBtn" class="btn-logout">התנתק</button>
+</div>
+
+<div id="loadingMsg">טוען תמונות להערכה...</div>
+
+<div id="emptyState">
+    🎉 סיימת! דירגת את כל התמונות הממתינות לשיפוט.
+</div>
+
+<div class="judging-container" id="judgingWorkspace" style="display: none;">
+    <div class="photo-section">
+        <img id="currentImage" src="" alt="תמונה לשיפוט">
+        <div class="photo-details">
+            <div class="photo-title" id="currentTitle">כותרת התמונה</div>
+            <div class="photo-desc" id="currentDesc">תיאור התמונה יופיע כאן...</div>
+            </div>
+    </div>
+    
+    <div class="scoring-section">
+        <div class="progress" id="progressText">תמונה 1 מתוך X</div>
+        
+        <form id="scoringForm">
+            <div class="criteria-group">
+                <label>קשר וזיקה לנושא <span class="score-display" id="val-relevance">5</span></label>
+                <input type="range" id="score-relevance" min="1" max="10" value="5" oninput="document.getElementById('val-relevance').innerText = this.value">
+            </div>
+            
+            <div class="criteria-group">
+                <label>אמנותיות ומקוריות <span class="score-display" id="val-artistry">5</span></label>
+                <input type="range" id="score-artistry" min="1" max="10" value="5" oninput="document.getElementById('val-artistry').innerText = this.value">
+            </div>
+            
+            <div class="criteria-group">
+                <label>איכות טכנית של הצילום <span class="score-display" id="val-quality">5</span></label>
+                <input type="range" id="score-quality" min="1" max="10" value="5" oninput="document.getElementById('val-quality').innerText = this.value">
+            </div>
+            
+            <div class="criteria-group">
+                <label>אותנטיות <span class="score-display" id="val-authenticity">5</span></label>
+                <input type="range" id="score-authenticity" min="1" max="10" value="5" oninput="document.getElementById('val-authenticity').innerText = this.value">
+            </div>
+            
+            <button type="submit" class="btn-submit" id="submitScoreBtn">שמור דירוג והמשך ➡️</button>
+        </form>
+    </div>
+</div>
+
+<script type="module" src="judge.js"></script>
+</body>
+</html>
