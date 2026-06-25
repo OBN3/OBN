@@ -129,23 +129,40 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     }
 });
 
-// התחברות צוות
+// ייבוא פונקציית קריאת מסמך בודד מפיירבייס (הוסף אותה לשורת ה-import של ה-firestore למעלה אם היא חסרה)
+import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+// שים לב: המשתנים ADMIN_EMAIL ו- APPROVED_JUDGES נמחקו לחלוטין! אין מיילים חשופים בקוד.
+
+// טיפול בהתחברות צוות ושופטים דינמי ומאובטח
 document.getElementById('googleLoginBtn').addEventListener('click', async () => {
     try {
         const result = await signInWithPopup(auth, provider);
         const userEmail = result.user.email;
         
-        if (userEmail === ADMIN_EMAIL) {
-            alert("זוהית כמנהל המערכת. מועבר לדשבורד האדמין...");
-            window.location.href = "/OBN-Photocontest/admin.html"; // המעבר מופעל
-        } else if (APPROVED_JUDGES.includes(userEmail)) {
-            alert("זוהית כשופט מאושר. מועבר למסך השיפוט...");
-            window.location.href = "/OBN-Photocontest/judge.html"; // המעבר מופעל (יוקם בהמשך)
+        // בדיקת תפקיד המשתמש ישירות מול Firestore (לפי מזהה המסמך שהוא המייל שלו)
+        const userDocRef = doc(db, "users_roles", userEmail);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            
+            if (userData.role === "admin") {
+                alert("שלום אופיר, זוהית כמנהל המערכת. מועבר לדשבורד...");
+                window.location.href = "/OBN-Photocontest/admin.html";
+            } else if (userData.role === "judge") {
+                alert("שלום, זוהית כשופט מאושר בתחרות. מועבר למסך השיפוט...");
+                window.location.href = "/OBN-Photocontest/judge.html";
+            } else {
+                alert("משתמש רשום ללא תפקיד מוגדר במערכת.");
+                auth.signOut();
+            }
         } else {
-            alert("האימייל אינו מורשה במערכת.");
-            auth.signOut();
+            alert("כתובת אימייל זו אינה מורשית לגשת לאזור הצוות.");
+            auth.signOut(); // ניתוק אוטומטי של מי שאינו ברשימה
         }
     } catch (error) {
         console.error("Login failed:", error);
+        alert("אירעה שגיאה בתהליך ההתחברות.");
     }
 });

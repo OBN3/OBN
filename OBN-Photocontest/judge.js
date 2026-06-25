@@ -20,14 +20,28 @@ let currentUserEmail = "";
 let pendingPhotos = [];
 let currentIndex = 0;
 
-// 1. שכבת הגנה לשופטים
-onAuthStateChanged(auth, (user) => {
-    if (!user || !APPROVED_JUDGES.includes(user.email)) {
-        alert("אין לך הרשאת שופט במערכת זו.");
-        window.location.href = "index.html";
-    } else {
-        currentUserEmail = user.email;
-        loadPendingSubmissions();
+// שכבת הגנה דינמית ומאובטחת לשופטים בתוך judge.js
+onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+        alert("עליך להתחבר כדי לגשת לעמוד זה.");
+        window.location.href = "/OBN-Photocontest/index.html";
+        return;
+    }
+
+    try {
+        const userDocRef = doc(db, "users_roles", user.email);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists() && userDocSnap.data().role === "judge") {
+            currentUserEmail = user.email;
+            loadPendingSubmissions(); // הכל תקין - טוען את התמונות לשיפוט
+        } else {
+            alert("אין לך הרשאת שופט גישה לעמוד זה.");
+            window.location.href = "/OBN-Photocontest/index.html";
+        }
+    } catch (error) {
+        console.error("Security check failed:", error);
+        window.location.href = "/OBN-Photocontest/index.html";
     }
 });
 

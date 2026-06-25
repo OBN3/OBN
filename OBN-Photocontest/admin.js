@@ -66,15 +66,30 @@ function getDirectImageUrl(url, size = 1000) {
 // ==========================================
 // 3. הגנת אבטחה ומשיכת נתונים
 // ==========================================
-onAuthStateChanged(auth, (user) => {
+import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+// שכבת הגנה דינמית ומאובטחת לאדמין
+onAuthStateChanged(auth, async (user) => {
     if (!user) {
         if (!isLoggingOut) alert("עליך להתחבר כדי לגשת לעמוד זה.");
         window.location.href = "/OBN-Photocontest/index.html";
-    } else if (user.email !== ADMIN_EMAIL) {
-        if (!isLoggingOut) alert("אין לך הרשאת גישה לעמוד זה.");
+        return;
+    }
+
+    try {
+        // בדיקה בזמן אמת שהמשתמש הוא אכן אדמין
+        const userDocRef = doc(db, "users_roles", user.email);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists() && userDocSnap.data().role === "admin") {
+            fetchSubmissions(); // הכל תקין - טוען את הטבלה
+        } else {
+            alert("אין לך הרשאת מנהל גישה לעמוד זה.");
+            window.location.href = "/OBN-Photocontest/index.html";
+        }
+    } catch (error) {
+        console.error("Security check failed:", error);
         window.location.href = "/OBN-Photocontest/index.html";
-    } else {
-        fetchSubmissions(); 
     }
 });
 
