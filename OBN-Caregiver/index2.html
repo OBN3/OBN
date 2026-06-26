@@ -520,7 +520,7 @@ function initials(name){
   return name.split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
 }
 
-function colRef(col){ return db.collection("families").doc(FAMILY_ID).collection(col); }
+function colRef(col){ return db.collection("FamilyCareApp").doc("data").collection("families").doc(FAMILY_ID).collection(col); }
 
 // ============================================================
 //  AUTH
@@ -530,9 +530,19 @@ $("googleSignIn").addEventListener("click",()=>{
 });
 $("signOut").addEventListener("click",()=>auth.signOut());
 
-auth.onAuthStateChanged(user=>{
+// רשימת האימיילים המורשים (תואם בדיוק ל-Rules ב-Firebase)
+const ALLOWED_EMAILS = ["veredt9@gmail.com", "brother2@gmail.com", "ofirbn@gmail.com"];
+
+auth.onAuthStateChanged(user => {
   currentUser = user;
   if(user){
+    // בדיקת פרואקטיבית - האם המשתמש הוא אחד האחים?
+    if(!ALLOWED_EMAILS.includes(user.email?.toLowerCase())) {
+      toast("שגיאה: אין לך הרשאות גישה לאפליקציה זו.", "error");
+      setTimeout(() => { auth.signOut(); }, 2000); // ניתוק אוטומטי לאחר 2 שניות
+      return;
+    }
+
     $("loginScreen").style.display = "none";
     $("app").style.display         = "flex";
     const name = user.displayName || user.email;
