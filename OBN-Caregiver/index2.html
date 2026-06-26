@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>משפחה ביחד – ניהול טיפול</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+/*============================================================
+  CSS VARIABLES & RESET
+==============================================================*/
+:root{
+  --primary:#4f46e5;--primary-dark:#3730a3;--primary-light:#818cf8;
+  --success:#10b981;--warning:#f59e0b;--danger:#ef4444;--info:#3b82f6;
+  --bg:#f1f5f9;--surface:#ffffff;--surface2:#f8fafc;
+  --text:#1e293b;--text2:#64748b;--border:#e2e8f0;
+  --radius:14px;--radius-sm:8px;
+  --shadow:0 4px 24px rgba(0,0,0,.08);--shadow-sm:0 1px 4px rgba(0,0,0,.06);
+  --open:#6366f1;--claimed:#f59e0b;--done:#10b981;--cancelled:#94a3b8;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;}
+button{font-family:'Heebo',sans-serif;cursor:pointer;border:none;outline:none;}
+input,textarea,select{font-family:'Heebo',sans-serif;outline:none;direction:rtl;}
+a{text-decoration:none;color:inherit;}
+
+/*============================================================
+  LOGIN SCREEN
+==============================================================*/
+#loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);padding:24px;}
+.login-card{background:#fff;border-radius:24px;padding:48px 40px;text-align:center;
+  max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.18);}
+.login-card h1{font-size:2rem;font-weight:800;color:var(--primary);margin-bottom:8px;}
+.login-card p{color:var(--text2);margin-bottom:32px;font-size:1rem;}
+.login-icon{font-size:4rem;margin-bottom:16px;}
+#googleSignIn{display:flex;align-items:center;justify-content:center;gap:12px;
+  background:#fff;border:2px solid var(--border);border-radius:12px;padding:14px 28px;
+  font-size:1rem;font-weight:600;color:var(--text);width:100%;transition:.2s;
+  box-shadow:var(--shadow-sm);}
+#googleSignIn:hover{border-color:var(--primary);background:#f5f3ff;transform:translateY(-1px);}
+#googleSignIn img{width:24px;height:24px;}
+
+/*============================================================
+  MAIN LAYOUT
+==============================================================*/
+#app{display:none;flex-direction:column;min-height:100vh;}
+header{background:var(--primary);color:#fff;padding:0 24px;display:flex;
+  align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 12px rgba(79,70,229,.3);}
+header h1{font-size:1.2rem;font-weight:700;}
+.header-user{display:flex;align-items:center;gap:10px;}
+.avatar{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.5);object-fit:cover;}
+.avatar-initials{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.25);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;color:#fff;}
+#signOut{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;
+  border-radius:8px;padding:6px 14px;font-size:.85rem;font-weight:600;transition:.2s;}
+#signOut:hover{background:rgba(255,255,255,.25);}
+
+nav{background:var(--surface);border-bottom:1px solid var(--border);display:flex;
+  padding:0 16px;overflow-x:auto;gap:4px;}
+.nav-tab{padding:16px 20px;font-size:.95rem;font-weight:600;color:var(--text2);
+  border:none;background:none;border-bottom:3px solid transparent;white-space:nowrap;transition:.2s;}
+.nav-tab.active{color:var(--primary);border-bottom-color:var(--primary);}
+.nav-tab:hover:not(.active){color:var(--text);background:var(--bg);}
+
+main{flex:1;padding:24px;max-width:960px;width:100%;margin:0 auto;}
+
+/*============================================================
+  SECTIONS
+==============================================================*/
+.section{display:none;}
+.section.active{display:block;}
+
+/*============================================================
+  CARDS / STATS
+==============================================================*/
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px;}
+.stat-card{background:var(--surface);border-radius:var(--radius);padding:20px;
+  box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:6px;border-right:4px solid var(--primary);}
+.stat-card.warn{border-right-color:var(--warning);}
+.stat-card.success{border-right-color:var(--success);}
+.stat-card.info{border-right-color:var(--info);}
+.stat-num{font-size:2rem;font-weight:800;color:var(--text);}
+.stat-label{font-size:.85rem;color:var(--text2);font-weight:500;}
+
+/*============================================================
+  TASKS
+==============================================================*/
+.toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
+.filters{display:flex;gap:8px;flex-wrap:wrap;}
+.filter-btn{padding:7px 16px;border-radius:20px;font-size:.82rem;font-weight:600;
+  border:1.5px solid var(--border);background:#fff;color:var(--text2);transition:.2s;}
+.filter-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.filter-btn:hover:not(.active){border-color:var(--primary);color:var(--primary);}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:var(--radius-sm);
+  font-size:.9rem;font-weight:600;transition:.2s;}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px);}
+.btn-success{background:var(--success);color:#fff;}
+.btn-success:hover{background:#059669;}
+.btn-warning{background:var(--warning);color:#fff;}
+.btn-warning:hover{background:#d97706;}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-danger:hover{background:#dc2626;}
+.btn-outline{background:#fff;color:var(--primary);border:1.5px solid var(--primary);}
+.btn-outline:hover{background:#f5f3ff;}
+.btn-sm{padding:6px 12px;font-size:.8rem;}
+.btn-icon{padding:7px;border-radius:8px;background:var(--bg);color:var(--text2);font-size:1rem;}
+.btn-icon:hover{background:var(--border);}
+
+.task-list{display:flex;flex-direction:column;gap:14px;}
+.task-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);
+  padding:20px;border-right:5px solid var(--primary);transition:.2s;}
+.task-card:hover{box-shadow:var(--shadow);}
+.task-card.status-open{border-right-color:var(--open);}
+.task-card.status-claimed{border-right-color:var(--claimed);}
+.task-card.status-done{border-right-color:var(--done);}
+.task-card.status-cancelled{border-right-color:var(--cancelled);opacity:.7;}
+.task-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;}
+.task-title{font-size:1.05rem;font-weight:700;color:var(--text);flex:1;}
+.task-badges{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.badge{padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:700;}
+.badge-status-open{background:#ede9fe;color:var(--open);}
+.badge-status-claimed{background:#fef3c7;color:#92400e;}
+.badge-status-done{background:#d1fae5;color:#065f46;}
+.badge-status-cancelled{background:#f1f5f9;color:#64748b;}
+.badge-type{background:#f0f9ff;color:#0369a1;}
+.badge-recur{background:#fdf4ff;color:#7c3aed;}
+.task-meta{display:flex;flex-wrap:wrap;gap:12px;font-size:.82rem;color:var(--text2);margin-bottom:10px;}
+.task-meta span{display:flex;align-items:center;gap:4px;}
+.task-desc{font-size:.9rem;color:var(--text2);line-height:1.6;margin-bottom:12px;}
+.task-instructions{background:var(--bg);border-radius:var(--radius-sm);padding:10px 14px;
+  font-size:.85rem;color:var(--text2);margin-bottom:12px;border-right:3px solid var(--primary-light);}
+.task-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.comments-section{margin-top:14px;border-top:1px solid var(--border);padding-top:12px;}
+.comment{background:var(--bg);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:6px;font-size:.85rem;}
+.comment strong{color:var(--primary);}
+.comment-input-row{display:flex;gap:8px;margin-top:8px;}
+.comment-input-row input{flex:1;border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  padding:8px 12px;font-size:.85rem;background:var(--surface);}
+.comment-input-row input:focus{border-color:var(--primary);}
+
+/*============================================================
+  EXPENSES
+==============================================================*/
+.expenses-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:640px){.expenses-layout{grid-template-columns:1fr;}}
+.expense-list{display:flex;flex-direction:column;gap:10px;}
+.expense-card{background:var(--surface);border-radius:var(--radius);padding:16px;
+  box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:12px;}
+.expense-amount{font-size:1.2rem;font-weight:800;color:var(--primary);min-width:80px;}
+.expense-info{flex:1;}
+.expense-info .title{font-weight:600;font-size:.95rem;}
+.expense-info .meta{font-size:.8rem;color:var(--text2);}
+.balance-card{background:var(--surface);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-sm);}
+.balance-card h3{font-weight:700;font-size:1rem;margin-bottom:16px;color:var(--text);}
+.balance-row{display:flex;justify-content:space-between;align-items:center;
+  padding:10px 0;border-bottom:1px solid var(--border);font-size:.9rem;}
+.balance-row:last-child{border-bottom:none;}
+.balance-pos{color:var(--success);font-weight:700;}
+.balance-neg{color:var(--danger);font-weight:700;}
+.balance-neutral{color:var(--text2);}
+.settle-item{padding:8px 12px;background:#fef3c7;border-radius:var(--radius-sm);font-size:.85rem;margin-bottom:6px;color:#92400e;}
+
+/*============================================================
+  MODAL
+==============================================================*/
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+  z-index:1000;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border-radius:20px;padding:32px;max-width:580px;width:100%;
+  max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.2);position:relative;}
+.modal h2{font-size:1.3rem;font-weight:800;margin-bottom:24px;color:var(--text);}
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-size:.85rem;font-weight:600;color:var(--text2);margin-bottom:6px;}
+.form-group input,.form-group textarea,.form-group select{
+  width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  padding:10px 14px;font-size:.9rem;transition:.2s;background:var(--surface2);}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{
+  border-color:var(--primary);background:#fff;}
+.form-group textarea{resize:vertical;min-height:80px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap;}
+.close-modal{position:absolute;top:16px;left:16px;background:var(--bg);border:none;
+  border-radius:50%;width:32px;height:32px;font-size:1.1rem;cursor:pointer;color:var(--text2);}
+.close-modal:hover{background:var(--border);}
+
+/*============================================================
+  TOAST
+==============================================================*/
+#toastContainer{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+.toast{background:#1e293b;color:#fff;padding:12px 20px;border-radius:10px;font-size:.9rem;
+  font-weight:500;box-shadow:var(--shadow);animation:slideIn .3s ease;min-width:220px;}
+.toast.success{background:var(--success);}
+.toast.error{background:var(--danger);}
+@keyframes slideIn{from{transform:translateX(40px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+/*============================================================
+  EMPTY STATE
+==============================================================*/
+.empty{text-align:center;padding:60px 20px;color:var(--text2);}
+.empty .icon{font-size:3rem;margin-bottom:12px;}
+.empty p{font-size:1rem;}
+
+/*============================================================
+  RESPONSIVE
+==============================================================*/
+@media(max-width:600px){
+  main{padding:12px;}
+  .modal{padding:20px;}
+  .form-row{grid-template-columns:1fr;}
+  header h1{font-size:1rem;}
+}
+/*============================================================
+  SECTION HEADER
+==============================================================*/
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.section-header h2{font-size:1.25rem;font-weight:800;}
+</style>
+</head>
+<body>
+
+<!-- ==================== LOGIN ==================== -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-icon">👨‍👩‍👧‍👦</div>
+    <h1>משפחה ביחד</h1>
+    <p>ניהול משימות וטיפול משותף<br/>עבור האבא שלנו</p>
+    <button id="googleSignIn">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"/>
+      כניסה עם חשבון Google
+    </button>
+  </div>
+</div>
+
+<!-- ==================== APP ==================== -->
+<div id="app">
+  <header>
+    <h1>👨‍👩‍👧‍👦 משפחה ביחד</h1>
+    <div class="header-user">
+      <div id="headerUserName" style="font-size:.85rem;font-weight:600;"></div>
+      <div id="headerAvatar" class="avatar-initials"></div>
+      <button id="signOut">יציאה</button>
+    </div>
+  </header>
+
+  <nav>
+    <button class="nav-tab active" data-tab="dashboard">📊 לוח בקרה</button>
+    <button class="nav-tab" data-tab="tasks">✅ משימות</button>
+    <button class="nav-tab" data-tab="expenses">💰 הוצאות</button>
+  </nav>
+
+  <main>
+
+    <!-- ==================== DASHBOARD ==================== -->
+    <div id="tab-dashboard" class="section active">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-num" id="stat-open">—</div>
+          <div class="stat-label">משימות פתוחות</div>
+        </div>
+        <div class="stat-card warn">
+          <div class="stat-num" id="stat-claimed">—</div>
+          <div class="stat-label">משימות שנלקחו</div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-num" id="stat-done">—</div>
+          <div class="stat-label">הושלמו החודש</div>
+        </div>
+        <div class="stat-card info">
+          <div class="stat-num" id="stat-expenses">—</div>
+          <div class="stat-label">סה"כ הוצאות (₪)</div>
+        </div>
+      </div>
+      <div style="background:var(--surface);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow-sm);">
+        <h3 style="font-weight:700;margin-bottom:16px;">⚡ משימות אחרונות פתוחות</h3>
+        <div id="dashRecentTasks"></div>
+      </div>
+    </div>
+
+    <!-- ==================== TASKS ==================== -->
+    <div id="tab-tasks" class="section">
+      <div class="toolbar">
+        <div class="section-header" style="margin-bottom:0;">
+          <h2>משימות</h2>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <div class="filters" id="statusFilters">
+            <button class="filter-btn active" data-status="all">הכל</button>
+            <button class="filter-btn" data-status="open">פתוח</button>
+            <button class="filter-btn" data-status="claimed">נלקח</button>
+            <button class="filter-btn" data-status="done">הושלם</button>
+            <button class="filter-btn" data-status="cancelled">בוטל</button>
+          </div>
+          <button class="btn btn-primary" id="btnAddTask">+ משימה חדשה</button>
+        </div>
+      </div>
+      <div class="task-list" id="taskList"></div>
+    </div>
+
+    <!-- ==================== EXPENSES ==================== -->
+    <div id="tab-expenses" class="section">
+      <div class="section-header">
+        <h2>💰 הוצאות ומאזן</h2>
+        <button class="btn btn-primary" id="btnAddExpense">+ הוצאה חדשה</button>
+      </div>
+      <div class="expenses-layout">
+        <div>
+          <h3 style="font-weight:700;margin-bottom:12px;font-size:.95rem;">רשימת הוצאות</h3>
+          <div id="expenseList"></div>
+        </div>
+        <div>
+          <div class="balance-card">
+            <h3>📊 מאזן בין האחים</h3>
+            <div id="balanceSummary"></div>
+          </div>
+          <div class="balance-card" style="margin-top:16px;">
+            <h3>⚖️ מי חייב למי</h3>
+            <div id="settleList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div><!-- /app -->
+
+<!-- ==================== TASK MODAL ==================== -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal">
+    <button class="close-modal" id="closeTaskModal">✕</button>
+    <h2 id="taskModalTitle">משימה חדשה</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>כותרת המשימה *</label>
+        <input type="text" id="tTitle" placeholder="למשל: ביקור אצל הרופא"/>
+      </div>
+      <div class="form-group">
+        <label>סוג משימה</label>
+        <select id="tType">
+          <option value="visit">🏥 ביקור</option>
+          <option value="shopping">🛒 קניות</option>
+          <option value="errand">📋 סידור</option>
+          <option value="medical">💊 רפואי</option>
+          <option value="other">📌 אחר</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>תיאור</label>
+      <textarea id="tDesc" placeholder="תיאור קצר..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>הנחיות מפורטות</label>
+      <textarea id="tInstructions" rows="3" placeholder="הנחיות, הערות, מה צריך להביא..."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>תאריך ושעה</label>
+        <input type="datetime-local" id="tDate"/>
+      </div>
+      <div class="form-group">
+        <label>מיקום</label>
+        <input type="text" id="tLocation" placeholder="כתובת / שם מקום"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>חזרה</label>
+        <select id="tRecurring">
+          <option value="none">ללא חזרה</option>
+          <option value="daily">יומי</option>
+          <option value="weekly">שבועי</option>
+          <option value="biweekly">דו-שבועי</option>
+          <option value="monthly">חודשי</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>קישור למסמך / הפניה</label>
+        <input type="url" id="tDocLink" placeholder="https://..."/>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="cancelTaskModal">ביטול</button>
+      <button class="btn btn-primary" id="saveTaskBtn">💾 שמור משימה</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== EXPENSE MODAL ==================== -->
+<div class="modal-overlay" id="expenseModal">
+  <div class="modal">
+    <button class="close-modal" id="closeExpenseModal">✕</button>
+    <h2>הוספת הוצאה</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>סכום (₪) *</label>
+        <input type="number" id="eAmount" placeholder="100" min="0" step="0.01"/>
+      </div>
+      <div class="form-group">
+        <label>תאריך *</label>
+        <input type="date" id="eDate"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>תיאור *</label>
+      <input type="text" id="eDesc" placeholder="למשל: תרופות מבית המרקחת"/>
+    </div>
+    <div class="form-group">
+      <label>קישור למשימה (אופציונלי)</label>
+      <select id="eTaskLink">
+        <option value="">— ללא קישור —</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="cancelExpenseModal">ביטול</button>
+      <button class="btn btn-primary" id="saveExpenseBtn">💾 שמור הוצאה</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TOAST ==================== -->
+<div id="toastContainer"></div>
+
+<!-- ==================== FIREBASE SDK (compat) ==================== -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<script>
+/*
+====================================================================
+  🔧 הגדרות Firebase – יש למלא את הפרטים מה-Firebase Console שלך
+  Firebase Console > Project Settings > Your apps > Config
+====================================================================
+*/
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDn9MNktFcHxzwxL5hhIYPIIN635_0pST8",
+  authDomain: "obn-photocontest.firebaseapp.com",
+  projectId: "obn-photocontest",
+  storageBucket: "obn-photocontest.firebasestorage.app",
+  messagingSenderId: "833616633042",
+  appId: "1:833616633042:web:82339189ba55f3d916210b"
+};
+
+/*
+====================================================================
+  🔑 מזהה המשפחה – כל המשתמשים שנכנסים ישתפו אותו
+====================================================================
+*/
+const FAMILY_ID = "family_main";
+
+/*
+====================================================================
+  📋 Firestore Security Rules (העתק לקונסול Firestore → Rules):
+
+  rules_version = '2';
+  service cloud.firestore {
+    match /databases/{database}/documents {
+      match /families/{familyId}/{document=**} {
+        allow read, write: if request.auth != null;
+      }
+    }
+  }
+====================================================================
+*/
+
+// ============================================================
+//  INIT FIREBASE
+// ============================================================
+firebase.initializeApp(FIREBASE_CONFIG);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+const provider = new firebase.auth.GoogleAuthProvider();
+
+// ============================================================
+//  GLOBAL STATE
+// ============================================================
+let currentUser = null;
+let allTasks    = [];
+let allExpenses = [];
+let editingTaskId = null;
+let activeStatusFilter = "all";
+let unsubTasks    = null;
+let unsubExpenses = null;
+
+// ============================================================
+//  HELPERS
+// ============================================================
+const $ = id => document.getElementById(id);
+
+function toast(msg, type=""){
+  const t = document.createElement("div");
+  t.className = "toast " + type;
+  t.textContent = msg;
+  $("toastContainer").appendChild(t);
+  setTimeout(()=>t.remove(), 3000);
+}
+
+function formatDate(ts){
+  if(!ts) return "";
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString("he-IL",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+}
+function formatDateOnly(ts){
+  if(!ts) return "";
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString("he-IL",{day:"2-digit",month:"2-digit",year:"numeric"});
+}
+
+const STATUS_LABEL = {open:"פתוח",claimed:"נלקח",done:"הושלם",cancelled:"בוטל"};
+const TYPE_LABEL   = {visit:"ביקור",shopping:"קניות",errand:"סידור",medical:"רפואי",other:"אחר"};
+const TYPE_ICON    = {visit:"🏥",shopping:"🛒",errand:"📋",medical:"💊",other:"📌"};
+const RECUR_LABEL  = {none:"",daily:"יומי",weekly:"שבועי",biweekly:"דו-שבועי",monthly:"חודשי"};
+
+function initials(name){
+  if(!name) return "?";
+  return name.split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
+}
+
+function colRef(col){ return db.collection("families").doc(FAMILY_ID).collection(col); }
+
+// ============================================================
+//  AUTH
+// ============================================================
+$("googleSignIn").addEventListener("click",()=>{
+  auth.signInWithPopup(provider).catch(e=>toast("שגיאת כניסה: "+e.message,"error"));
+});
+$("signOut").addEventListener("click",()=>auth.signOut());
+
+auth.onAuthStateChanged(user=>{
+  currentUser = user;
+  if(user){
+    $("loginScreen").style.display = "none";
+    $("app").style.display         = "flex";
+    const name = user.displayName || user.email;
+    $("headerUserName").textContent = name;
+    const av = $("headerAvatar");
+    if(user.photoURL){
+      av.innerHTML = `<img src="${user.photoURL}" class="avatar" alt="avatar"/>`;
+    } else {
+      av.textContent = initials(name);
+    }
+    subscribeData();
+  } else {
+    $("loginScreen").style.display = "flex";
+    $("app").style.display         = "none";
+    if(unsubTasks)    { unsubTasks();    unsubTasks=null; }
+    if(unsubExpenses) { unsubExpenses(); unsubExpenses=null; }
+  }
+});
+
+// ============================================================
+//  REAL-TIME LISTENERS
+// ============================================================
+function subscribeData(){
+  unsubTasks = colRef("tasks")
+    .orderBy("createdAt","desc")
+    .onSnapshot(snap=>{
+      allTasks = snap.docs.map(d=>({id:d.id,...d.data()}));
+      renderTasks();
+      renderDashboard();
+    },e=>console.error("tasks",e));
+
+  unsubExpenses = colRef("expenses")
+    .orderBy("date","desc")
+    .onSnapshot(snap=>{
+      allExpenses = snap.docs.map(d=>({id:d.id,...d.data()}));
+      renderExpenses();
+      renderDashboard();
+    },e=>console.error("expenses",e));
+}
+
+// ============================================================
+//  TABS
+// ============================================================
+document.querySelectorAll(".nav-tab").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".nav-tab").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+    btn.classList.add("active");
+    $("tab-"+btn.dataset.tab).classList.add("active");
+  });
+});
+
+// ============================================================
+//  DASHBOARD
+// ============================================================
+function renderDashboard(){
+  const now   = new Date();
+  const month = now.getMonth();
+  const year  = now.getFullYear();
+
+  const open    = allTasks.filter(t=>t.status==="open").length;
+  const claimed = allTasks.filter(t=>t.status==="claimed").length;
+  const done    = allTasks.filter(t=>{
+    if(t.status!=="done") return false;
+    const d = t.completedAt?.toDate ? t.completedAt.toDate() : null;
+    return d && d.getMonth()===month && d.getFullYear()===year;
+  }).length;
+  const totalExp = allExpenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+
+  $("stat-open").textContent     = open;
+  $("stat-claimed").textContent  = claimed;
+  $("stat-done").textContent     = done;
+  $("stat-expenses").textContent = "₪" + totalExp.toFixed(0);
+
+  const recent = allTasks.filter(t=>t.status==="open").slice(0,5);
+  const el = $("dashRecentTasks");
+  if(!recent.length){ el.innerHTML=`<div class="empty"><div class="icon">🎉</div><p>אין משימות פתוחות!</p></div>`; return; }
+  el.innerHTML = recent.map(t=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:1.3rem;">${TYPE_ICON[t.type]||"📌"}</span>
+      <div style="flex:1;">
+        <div style="font-weight:600;">${esc(t.title)}</div>
+        <div style="font-size:.8rem;color:var(--text2);">${t.dueDate?formatDate(t.dueDate):""} ${t.location?'• 📍'+esc(t.location):""}</div>
+      </div>
+      <span class="badge badge-status-open">פתוח</span>
+    </div>`).join("");
+}
+
+// ============================================================
+//  TASKS
+// ============================================================
+$("statusFilters").addEventListener("click",e=>{
+  const btn = e.target.closest(".filter-btn");
+  if(!btn) return;
+  document.querySelectorAll("#statusFilters .filter-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  activeStatusFilter = btn.dataset.status;
+  renderTasks();
+});
+
+function esc(s){ return s ? String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") : ""; }
+
+function renderTasks(){
+  const list = $("taskList");
+  let tasks = [...allTasks];
+  if(activeStatusFilter !== "all") tasks = tasks.filter(t=>t.status===activeStatusFilter);
+
+  if(!tasks.length){
+    list.innerHTML = `<div class="empty"><div class="icon">📭</div><p>אין משימות להצגה</p></div>`;
+    return;
+  }
+
+  list.innerHTML = tasks.map(t=>renderTaskCard(t)).join("");
+
+  // attach events per card
+  tasks.forEach(t=>{
+    const claimBtn   = document.getElementById("claim-"+t.id);
+    const unclaimBtn = document.getElementById("unclaim-"+t.id);
+    const doneBtn    = document.getElementById("done-"+t.id);
+    const editBtn    = document.getElementById("edit-"+t.id);
+    const delBtn     = document.getElementById("del-"+t.id);
+    const commentBtn = document.getElementById("commentSend-"+t.id);
+    const cancelBtn  = document.getElementById("cancel-"+t.id);
+
+    if(claimBtn)   claimBtn.addEventListener("click",()=>claimTask(t.id));
+    if(unclaimBtn) unclaimBtn.addEventListener("click",()=>unclaimTask(t.id));
+    if(doneBtn)    doneBtn.addEventListener("click",()=>completeTask(t.id));
+    if(editBtn)    editBtn.addEventListener("click",()=>openEditTask(t));
+    if(delBtn)     delBtn.addEventListener("click",()=>deleteTask(t.id));
+    if(cancelBtn)  cancelBtn.addEventListener("click",()=>cancelTask(t.id));
+    if(commentBtn) commentBtn.addEventListener("click",()=>{
+      const inp = document.getElementById("commentInput-"+t.id);
+      addComment(t.id, inp.value); inp.value="";
+    });
+  });
+}
+
+function renderTaskCard(t){
+  const comments = (t.comments||[]);
+  const canClaim   = t.status==="open";
+  const canUnclaim = t.status==="claimed" && t.claimedBy===currentUser?.uid;
+  const canDone    = t.status==="claimed" && t.claimedBy===currentUser?.uid;
+  const canCancel  = (t.status==="open"||t.status==="claimed") && (t.createdBy===currentUser?.uid || t.claimedBy===currentUser?.uid);
+
+  return `
+  <div class="task-card status-${t.status}">
+    <div class="task-header">
+      <div class="task-title">${TYPE_ICON[t.type]||"📌"} ${esc(t.title)}</div>
+      <div class="task-badges">
+        <span class="badge badge-status-${t.status}">${STATUS_LABEL[t.status]||t.status}</span>
+        <span class="badge badge-type">${TYPE_LABEL[t.type]||t.type}</span>
+        ${t.recurring&&t.recurring!=="none"?`<span class="badge badge-recur">🔁 ${RECUR_LABEL[t.recurring]}</span>`:""}
+      </div>
+    </div>
+    <div class="task-meta">
+      ${t.dueDate?`<span>📅 ${formatDate(t.dueDate)}</span>`:""}
+      ${t.location?`<span>📍 ${esc(t.location)}</span>`:""}
+      ${t.status==="claimed"?`<span>👤 לקח: <strong>${esc(t.claimedByName||"")}</strong></span>`:""}
+      ${t.status==="done"?`<span>✅ הושלם ע"י <strong>${esc(t.claimedByName||"")}</strong></span>`:""}
+      <span>🕐 נוצר: ${formatDateOnly(t.createdAt)}</span>
+    </div>
+    ${t.description?`<div class="task-desc">${esc(t.description)}</div>`:""}
+    ${t.instructions?`<div class="task-instructions">📋 ${esc(t.instructions)}</div>`:""}
+    ${t.docLink?`<div style="margin-bottom:10px;font-size:.85rem;">🔗 <a href="${esc(t.docLink)}" target="_blank" style="color:var(--primary);">מסמך / הפניה</a></div>`:""}
+    <div class="task-actions">
+      ${canClaim  ?`<button class="btn btn-warning btn-sm" id="claim-${t.id}">✋ אני לוקח את זה</button>`:""}
+      ${canUnclaim?`<button class="btn btn-outline btn-sm" id="unclaim-${t.id}">↩️ ביטול לקיחה</button>`:""}
+      ${canDone   ?`<button class="btn btn-success btn-sm" id="done-${t.id}">✅ סמן כהושלם</button>`:""}
+      ${canCancel ?`<button class="btn btn-sm" style="background:#f1f5f9;color:var(--text2);" id="cancel-${t.id}">🚫 בטל משימה</button>`:""}
+      <button class="btn btn-icon btn-sm" title="עריכה" id="edit-${t.id}">✏️</button>
+      <button class="btn btn-icon btn-sm" title="מחיקה" id="del-${t.id}" style="color:var(--danger);">🗑️</button>
+    </div>
+    <div class="comments-section">
+      <strong style="font-size:.8rem;color:var(--text2);">💬 הערות (${comments.length})</strong>
+      ${comments.map(c=>`<div class="comment"><strong>${esc(c.name)}</strong>: ${esc(c.text)} <span style="color:var(--text2);font-size:.75rem;">· ${c.date||""}</span></div>`).join("")}
+      <div class="comment-input-row">
+        <input type="text" id="commentInput-${t.id}" placeholder="הוסף הערה..."/>
+        <button class="btn btn-outline btn-sm" id="commentSend-${t.id}">שלח</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+//  TASK ACTIONS
+// ============================================================
+async function claimTask(id){
+  try{
+    await colRef("tasks").doc(id).update({
+      status:"claimed",
+      claimedBy:currentUser.uid,
+      claimedByName:currentUser.displayName||currentUser.email,
+      claimedAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast("✅ לקחת את המשימה!","success");
+  } catch(e){ toast("שגיאה: "+e.message,"error"); }
+}
+
+async function unclaimTask(id){
+  if(!confirm("לבטל את לקיחת המשימה?")) return;
+  try{
+    await colRef("tasks").doc(id).update({
+      status:"open",
+      claimedBy:null,
+      claimedByName:null,
+      claimedAt:null
+    });
+    toast("↩️ ביטול לקיחה בוצע");
+  } catch(e){ toast("שגיאה: "+e.message,"error"); }
+}
+
+async function completeTask(id){
+  try{
+    await colRef("tasks").doc(id).update({
+      status:"done",
+      completedAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast("🎉 משימה הושלמה!","success");
+  } catch(e){ toast("שגיאה: "+e.message,"error"); }
+}
+
+async function cancelTask(id){
+  if(!confirm("לבטל את המשימה?")) return;
+  try{
+    await colRef("tasks").doc(id).update({status:"cancelled"});
+    toast("🚫 המשימה בוטלה");
+  } catch(e){ toast("שגיאה: "+e.message,"error"); }
+}
+
+async function deleteTask(id){
+  if(!confirm("למחוק את המשימה לצמיתות?")) return;
+  try{
+    await colRef("tasks").doc(id).delete();
+    toast("🗑️ המשימה נמחקה","success");
+  } catch(e){ toast("שגיאה: "+e.message,"error"); }
+}
+
+async function addComment(taskId, text){
+  if(!text.trim()) return;
+  const task = allTasks.find(t=>t.id===taskId);
+  if(!task) return;
+  const comments = [...(task.comments||[]), {
+    uid: currentUser.uid,
+    name: currentUser.displayName||currentUser.email,
+    text: text.trim(),
+    date: new Date().toLocaleDateString("he-IL")
+  }];
+  try{
+    await colRef("tasks").doc(taskId).update({comments});
+    toast("💬 הערה נוספה","success");
+  } catch(e){ toast("שגיאה: "+e.message,"error"); }
+}
+
+// ============================================================
+//  TASK MODAL
+// ============================================================
+function openTaskModal(task=null){
+  editingTaskId = task ? task.id : null;
+  $("taskModalTitle").textContent = task ? "עריכת משימה" : "משימה חדשה";
+  $("tTitle").value        = task?.title        || "";
+  $("tType").value         = task?.type         || "visit";
+  $("tDesc").value         = task?.description  || "";
+  $("tInstructions").value = task?.instructions || "";
+  $("tLocation").value     = task?.location     || "";
+  $("tRecurring").value    = task?.recurring    || "none";
+  $("tDocLink").value      = task?.docLink      || "";
+  if(task?.dueDate){
+    const d = task.dueDate.toDate ? task.dueDate.toDate() : new Date(task.dueDate);
+    $("tDate").value = d.toISOString().slice(0,16);
+  } else {
+    $("tDate").value = "";
+  }
+  $("taskModal").classList.add("open");
+}
+function closeTaskModal(){ $("taskModal").classList.remove("open"); editingTaskId=null; }
+$("btnAddTask").addEventListener("click",()=>openTaskModal());
+$("closeTaskModal").addEventListener("click",closeTaskModal);
+$("cancelTaskModal").addEventListener("click",closeTaskModal);
+
+function openEditTask(task){ openTaskModal(task); }
+
+$("saveTaskBtn").addEventListener("click", async ()=>{
+  const title = $("tTitle").value.trim();
+  if(!title){ toast("נא להזין כותרת","error"); return; }
+
+  const data = {
+    title,
+    type:         $("tType").value,
+    description:  $("tDesc").value.trim(),
+    instructions: $("tInstructions").value.trim(),
+    location:     $("tLocation").value.trim(),
+    recurring:    $("tRecurring").value,
+    docLink:      $("tDocLink").value.trim(),
+    dueDate:      $("tDate").value ? new Date($("tDate").value) : null,
+    updatedAt:    firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  try{
+    if(editingTaskId){
+      await colRef("tasks").doc(editingTaskId).update(data);
+      toast("✏️ המשימה עודכנה","success");
+    } else {
+      data.status    = "open";
+      data.createdBy = currentUser.uid;
+      data.createdByName = currentUser.displayName||currentUser.email;
+      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      data.comments  = [];
+      data.claimedBy = null;
+      data.claimedByName = null;
+      await colRef("tasks").add(data);
+      toast("✅ משימה חדשה נוצרה!","success");
+    }
+    closeTaskModal();
+  } catch(e){ toast("שגיאה: "+e.message,"error"); }
+});
+
+// ============================================================
+//  EXPENSES
+// ============================================================
+function renderExpenses(){
+  const list = $("expenseList");
+  if(!allExpenses.length){
+    list.innerHTML=`<div class="empty"><div class="icon">💸</div><p>אין הוצאות רשומות</p></div>`;
+  } else {
+    list.innerHTML = allExpenses.map(e=>`
+      <div class="expense-card">
+        <div class="expense-amount">₪${parseFloat(e.amount||0).toFixed(0)}</div>
+        <div class="expense-info">
+          <div class="title">${esc(e.description)}</div>
+          <div class="meta">שילם: <strong>${esc(e.paidByName)}</strong> · ${e.date?formatDateOnly(e.date):""}</div>
+          ${e.taskTitle?`<div class="meta">🔗 ${esc(e.taskTitle)}</div>`:""}
+        </div>
+        <button class="btn btn-icon btn-sm" onclick="deleteExpense('${e.id}')" style="color:var(--danger);">🗑️</button>
+      </div>`).join("");
+  }
+
+  // populate balance
+  const paid = {};
+  let total = 0;
+  allExpenses.forEach(e=>{
+    const name = e.paidByName || "לא ידוע";
+    paid[name] = (paid[name]||0) + (parseFloat(e.amount)||0);
+    total += parseFloat(e.amount)||0;
+  });
+  const members = Object.keys(paid);
+  const share   = members.length ? total / members.length : 0;
+
+  const balEl = $("balanceSummary");
+  if(!members.length){
+    balEl.innerHTML = `<div style="color:var(--text2);font-size:.85rem;">אין הוצאות</div>`;
+    $("settleList").innerHTML="";
+    return;
+  }
+
+  balEl.innerHTML = `
+    <div class="balance-row" style="font-weight:700;background:var(--bg);border-radius:6px;padding:8px 12px;margin-bottom:8px;">
+      <span>סה"כ</span><span>₪${total.toFixed(0)}</span>
+    </div>
+    <div class="balance-row" style="font-size:.8rem;">
+      <span>חלק לאדם (${members.length} אחים)</span><span>₪${share.toFixed(2)}</span>
+    </div>
+    ${members.map(name=>{
+      const diff = paid[name] - share;
+      const cls  = diff>0?"balance-pos":diff<0?"balance-neg":"balance-neutral";
+      const sign = diff>0?"+ ":"";
+      return `<div class="balance-row">
+        <span>${esc(name)}</span>
+        <div>
+          <span style="color:var(--text2);font-size:.8rem;">שילם ₪${paid[name].toFixed(0)} </span>
+          <span class="${cls}">${sign}₪${Math.abs(diff).toFixed(0)}</span>
+        </div>
+      </div>`;
+    }).join("")}`;
+
+  // who owes whom
+  const balances = {};
+  members.forEach(n=>{ balances[n]=(paid[n]||0)-share; });
+  const debtors   = members.filter(n=>balances[n]<0).map(n=>({name:n,amt:-balances[n]}));
+  const creditors = members.filter(n=>balances[n]>0).map(n=>({name:n,amt:balances[n]}));
+
+  const settlements = [];
+  let di=0,ci=0;
+  const d=[...debtors],c=[...creditors];
+  while(di<d.length && ci<c.length){
+    const pay = Math.min(d[di].amt,c[ci].amt);
+    if(pay>0.01) settlements.push(`${d[di].name} חייב ל-${c[ci].name}: ₪${pay.toFixed(0)}`);
+    d[di].amt -= pay; c[ci].amt -= pay;
+    if(d[di].amt<0.01) di++;
+    if(c[ci].amt<0.01) ci++;
+  }
+
+  const sEl = $("settleList");
+  sEl.innerHTML = settlements.length
+    ? settlements.map(s=>`<div class="settle-item">💸 ${esc(s)}</div>`).join("")
+    : `<div style="color:var(--success);font-size:.9rem;font-weight:600;">✅ הכל מאוזן!</div>`;
+}
+
+async function deleteExpense(id){
+  if(!confirm("למחוק הוצאה זו?")) return;
+  try{
+    await colRef("expenses").doc(id).delete();
+    toast("🗑️ ההוצאה נמחקה","success");
+  } catch(e){ toast("שגיאה: "+e.message,"error"); }
+}
+
+// EXPENSE MODAL
+$("btnAddExpense").addEventListener("click",()=>{
+  $("eAmount").value = "";
+  $("eDate").value   = new Date().toISOString().slice(0,10);
+  $("eDesc").value   = "";
+  // populate task dropdown
+  const sel = $("eTaskLink");
+  sel.innerHTML = `<option value="">— ללא קישור —</option>`
+    + allTasks.map(t=>`<option value="${t.id}">${esc(t.title)}</option>`).join("");
+  $("expenseModal").classList.add("open");
+});
+$("closeExpenseModal").addEventListener("click",()=>$("expenseModal").classList.remove("open"));
+$("cancelExpenseModal").addEventListener("click",()=>$("expenseModal").classList.remove("open"));
+
+$("saveExpenseBtn").addEventListener("click", async ()=>{
+  const amount = parseFloat($("eAmount").value);
+  const desc   = $("eDesc").value.trim();
+  const date   = $("eDate").value;
+  if(!amount||!desc||!date){ toast("נא למלא את כל השדות","error"); return; }
+  const taskId = $("eTaskLink").value;
+  const task   = taskId ? allTasks.find(t=>t.id===taskId) : null;
+
+  try{
+    await colRef("expenses").add({
+      amount,
+      description: desc,
+      date: new Date(date),
+      paidBy:     currentUser.uid,
+      paidByName: currentUser.displayName||currentUser.email,
+      taskId:     taskId||null,
+      taskTitle:  task?.title||null,
+      createdAt:  firebase.firestore.FieldValue.serverTimestamp()
+    });
+    $("expenseModal").classList.remove("open");
+    toast("💰 הוצאה נשמרה!","success");
+  } catch(e){ toast("שגיאה: "+e.message,"error"); }
+});
+
+// close modals on overlay click
+document.querySelectorAll(".modal-overlay").forEach(el=>{
+  el.addEventListener("click",e=>{ if(e.target===el) el.classList.remove("open"); });
+});
+</script>
+</body>
+</html>
