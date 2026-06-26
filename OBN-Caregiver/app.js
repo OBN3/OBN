@@ -1,6 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-// שים לב: הוספתי פה את setDoc
 import { getFirestore, collection, addDoc, updateDoc, doc, setDoc, query, orderBy, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // === הגדרות Firebase ===
@@ -17,14 +16,18 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// === משתנים גלובליים ===
+// === משתנים גלובליים ונתיבים ===
 let currentUser = null;
-const adminUid = "QjT2Hkd8LUVme4whqUV4wFQkXJG3"; // עודכן לפי בקשתך
+const adminUid = "QjT2Hkd8LUVme4whqUV4wFQkXJG3"; 
+
+// הגדרת נתיב הבסיס כך שיתאים בדיוק לחוקים החדשים ב-Firebase
+const familyId = "my_family"; // מזהה המשפחה שלך
+const basePath = `FamilyCareApp/data/families/${familyId}`;
+
 let unsubscribeTasks = null;
 let unsubscribeExpenses = null;
 let unsubscribeEmergency = null;
 
-// משתנים למעקב אחר מצב עריכה
 let editingTaskId = null;
 let editingExpenseId = null;
 
@@ -47,6 +50,14 @@ document.getElementById('btn-logout').addEventListener('click', () => signOut(au
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
+        // וידוא מורשים בצד הלקוח (הגנה נוספת מעבר ל-Rules)
+        const allowedEmails = ["veredt9@gmail.com", "brother2@gmail.com", "ofirbn@gmail.com"];
+        if (!allowedEmails.includes(user.email)) {
+            alert("אינך מורשה לגשת לאפליקציה זו.");
+            signOut(auth);
+            return;
+        }
+
         currentUser = user;
         views.login.classList.add('hidden-view');
         views.app.classList.remove('hidden-view');
@@ -90,10 +101,10 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 });
 
 // ==========================================
-// === לוגיקת תיק חירום (קריאה וכתיבה) ===
+// === לוגיקת תיק חירום ===
 // ==========================================
 document.getElementById('btn-edit-emergency').addEventListener('click', (e) => {
-    e.stopPropagation(); // מונע סגירה של החלונית בלחיצה
+    e.stopPropagation();
     views.emergencyModal.classList.remove('hidden-view');
 });
 document.getElementById('btn-close-emergency-modal').addEventListener('click', () => views.emergencyModal.classList.add('hidden-view'));
@@ -110,13 +121,14 @@ document.getElementById('emergency-form').addEventListener('submit', async (e) =
         updatedAt: new Date().toISOString()
     };
     
-    // משתמשים ב-setDoc כדי לדרוס/ליצור את המסמך היחיד 'info' תחת 'care_emergency'
-    await setDoc(doc(db, "care_emergency", "info"), emData);
+    // שימוש בנתיב המבודד
+    await setDoc(doc(db, `${basePath}/care_emergency`, "info"), emData);
     views.emergencyModal.classList.add('hidden-view');
 });
 
 function loadEmergencyInfo() {
-    unsubscribeEmergency = onSnapshot(doc(db, "care_emergency", "info"), (docSnap) => {
+    // שימוש בנתיב המבודד
+    unsubscribeEmergency = onSnapshot(doc(db, `${basePath}/care_emergency`, "info"), (docSnap) => {
         const display = document.getElementById('emergency-data-display');
         
         if (docSnap.exists()) {
@@ -130,14 +142,12 @@ function loadEmergencyInfo() {
                 <p class="text-[10px] text-gray-400 mt-2">עודכן לאחרונה ע"י: ${data.updatedBy}</p>
             `;
             
-            // מילוי הטופס לפעם הבאה שילחצו ערוך
             document.getElementById('em-doctor').value = data.doctor || '';
             document.getElementById('em-hmo').value = data.hmo || '';
             document.getElementById('em-blood').value = data.blood || '';
             document.getElementById('em-allergies').value = data.allergies || '';
             document.getElementById('em-meds').value = data.meds || '';
 
-            // התנהגות כפתור העתקה פרואקטיבי
             document.getElementById('btn-share-emergency').onclick = (e) => {
                 e.stopPropagation();
                 const textToShare = `🚨 *תיק רפואי דחוף:*\n👨‍⚕️ רופא: ${data.doctor || 'לא ידוע'}\n🏥 קופה: ${data.hmo || 'לא ידוע'}\n🩸 סוג דם: ${data.blood || 'לא ידוע'}\n⚠️ רגישויות: ${data.allergies || 'אין'}\n💊 תרופות קבועות: ${data.meds || 'אין'}`;
@@ -152,11 +162,11 @@ function loadEmergencyInfo() {
 }
 
 // ==========================================
-// === לוגיקת משימות (יצירה, עריכה, מחיקה) ===
+// === לוגיקת משימות ===
 // ==========================================
 
 document.getElementById('btn-add-task').addEventListener('click', () => {
-    editingTaskId = null; // מנקה מצב עריכה
+    editingTaskId = null;
     document.getElementById('task-form').reset();
     document.getElementById('task-modal-title').textContent = "משימה חדשה";
     views.taskModal.classList.remove('hidden-view');
@@ -173,13 +183,15 @@ document.getElementById('task-form').addEventListener('submit', async (e) => {
     };
     
     if (editingTaskId) {
-        await updateDoc(doc(db, "care_tasks", editingTaskId), updates);
+        // שימוש בנתיב המבודד
+        await updateDoc(doc(db, `${basePath}/care_tasks`, editingTaskId), updates);
     } else {
         updates.assigneeId = null;
         updates.assigneeName = null;
         updates.status = 'open';
         updates.createdAt = new Date().toISOString();
-        await addDoc(collection(db, "care_tasks"), updates);
+        // שימוש בנתיב המבודד
+        await addDoc(collection(db, `${basePath}/care_tasks`), updates);
     }
     
     e.target.reset();
@@ -187,7 +199,8 @@ document.getElementById('task-form').addEventListener('submit', async (e) => {
 });
 
 function loadTasks() {
-    const q = query(collection(db, "care_tasks"), orderBy("date", "asc"));
+    // שימוש בנתיב המבודד
+    const q = query(collection(db, `${basePath}/care_tasks`), orderBy("date", "asc"));
     unsubscribeTasks = onSnapshot(q, (snapshot) => {
         const container = document.getElementById('tasks-container');
         container.innerHTML = '';
@@ -248,7 +261,7 @@ function loadTasks() {
 
         document.querySelectorAll('.btn-grab').forEach(btn => {
             btn.addEventListener('click', async (e) => {
-                await updateDoc(doc(db, "care_tasks", e.target.getAttribute('data-id')), {
+                await updateDoc(doc(db, `${basePath}/care_tasks`, e.target.getAttribute('data-id')), {
                     assigneeId: currentUser.uid, assigneeName: currentUser.displayName
                 });
             });
@@ -256,7 +269,7 @@ function loadTasks() {
 
         document.querySelectorAll('.btn-release').forEach(btn => {
             btn.addEventListener('click', async (e) => {
-                await updateDoc(doc(db, "care_tasks", e.target.getAttribute('data-id')), {
+                await updateDoc(doc(db, `${basePath}/care_tasks`, e.target.getAttribute('data-id')), {
                     assigneeId: null, assigneeName: null
                 });
             });
@@ -281,7 +294,7 @@ function loadTasks() {
         document.querySelectorAll('.btn-delete-task').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 if(confirm("למחוק משימה זו לצמיתות?")) {
-                    await deleteDoc(doc(db, "care_tasks", e.target.getAttribute('data-id')));
+                    await deleteDoc(doc(db, `${basePath}/care_tasks`, e.target.getAttribute('data-id')));
                 }
             });
         });
@@ -305,7 +318,7 @@ function loadTasks() {
 }
 
 // ==========================================
-// === לוגיקת הוצאות (יצירה, עריכה, מחיקה) ===
+// === לוגיקת הוצאות ===
 // ==========================================
 
 document.getElementById('btn-add-expense-modal').addEventListener('click', () => {
@@ -322,9 +335,11 @@ document.getElementById('expense-form').addEventListener('submit', async (e) => 
     const desc = document.getElementById('expense-desc').value;
     
     if (editingExpenseId) {
-        await updateDoc(doc(db, "care_expenses", editingExpenseId), { amount, desc });
+        // שימוש בנתיב המבודד
+        await updateDoc(doc(db, `${basePath}/care_expenses`, editingExpenseId), { amount, desc });
     } else {
-        await addDoc(collection(db, "care_expenses"), {
+        // שימוש בנתיב המבודד
+        await addDoc(collection(db, `${basePath}/care_expenses`), {
             amount, desc,
             paidById: currentUser.uid,
             paidByName: currentUser.displayName,
@@ -337,7 +352,8 @@ document.getElementById('expense-form').addEventListener('submit', async (e) => 
 });
 
 function loadExpenses() {
-    const q = query(collection(db, "care_expenses"), orderBy("date", "desc"));
+    // שימוש בנתיב המבודד
+    const q = query(collection(db, `${basePath}/care_expenses`), orderBy("date", "desc"));
     unsubscribeExpenses = onSnapshot(q, (snapshot) => {
         const listContainer = document.getElementById('expenses-list');
         listContainer.innerHTML = '';
@@ -403,7 +419,7 @@ function loadExpenses() {
         document.querySelectorAll('.btn-delete-expense').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 if(confirm("למחוק הוצאה זו?")) {
-                    await deleteDoc(doc(db, "care_expenses", e.target.getAttribute('data-id')));
+                    await deleteDoc(doc(db, `${basePath}/care_expenses`, e.target.getAttribute('data-id')));
                 }
             });
         });
