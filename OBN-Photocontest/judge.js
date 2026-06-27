@@ -132,7 +132,20 @@ async function loadPendingSubmissions() {
 function showPhoto(index) {
     const photo = pendingPhotos[index];
     document.getElementById('currentImage').src = getDirectImageUrl(photo.imageUrl, 1000);
-    document.getElementById('currentTitle').innerText = photo.title;
+    
+    // שליפת שם התמונה האמיתי (ולא התואר של המשתמש)
+    let finalTitle = photo.photoTitle;
+    
+    // הגנה פרואקטיבית לתמונות ישנות: במידה ואין photoTitle, נשתמש ב-title הישן, 
+    // אך רק בתנאי שהוא לא מכיל תואר שמסגיר את המשתמש לשופטים
+    if (!finalTitle && photo.title) {
+        const userTitles = ["פרופ'", 'ד"ר', 'עו"ד', "אינג'", "מגר'", "גב'", "מר"];
+        if (!userTitles.includes(photo.title)) {
+            finalTitle = photo.title;
+        }
+    }
+    
+    document.getElementById('currentTitle').innerText = finalTitle || "ללא כותרת";
     document.getElementById('currentDesc').innerText = photo.description || "ללא תיאור.";
     document.getElementById('progressText').innerText = `תמונה ${index + 1} מתוך ${pendingPhotos.length}`;
     
