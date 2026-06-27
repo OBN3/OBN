@@ -499,7 +499,9 @@ function renderDashboard(){
     const d=tsToDate(t.completedAt); return d&&d.getMonth()===m&&d.getFullYear()===y;
   }).length;
   const totalExp=allExpenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
-  $("stat-expenses").textContent = "&#8362;"+totalExp.toFixed(0);
+  $("stat-expenses").innerHTML = "&#8362;" + totalExp.toFixed(0);
+	// או חלופה פשוטה יותר:
+	// $("stat-expenses").textContent = "₪" + totalExp.toFixed(0);
 
   const openTasks=allTasks.filter(t=>t.status==="open");
   const el=$("dashTaskList");
@@ -753,9 +755,21 @@ function renderExpenses(){
       '</div>'
     ).join("");
   }
-  const paid={}, members=new Set();
-  let total=0;
-  allExpenses.forEach(e=>{
+const paid={}, members=new Set();
+
+// אתחול רשימת האחים (הכנס כאן את השמות שבהם אתם משתמשים באפליקציה)
+const EXPECTED_MEMBERS = [currentUser.displayName || "אופיר", "שם אח 2", "שם אח 3"];
+EXPECTED_MEMBERS.forEach(m => members.add(m));
+
+let total=0;
+allExpenses.forEach(e=>{
+  const n=e.paidByName||"לא ידוע";
+  members.add(n); // כדי לתפוס גם מישהו ששילם ושמו לא ברשימה
+  paid[n]=(paid[n]||0)+(parseFloat(e.amount)||0);
+  total+=parseFloat(e.amount)||0;
+});
+
+
     const n=e.paidByName||"לא ידוע";
     members.add(n); paid[n]=(paid[n]||0)+(parseFloat(e.amount)||0);
     total+=parseFloat(e.amount)||0;
