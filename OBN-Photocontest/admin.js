@@ -74,7 +74,10 @@ onAuthStateChanged(auth, async (user) => {
 
 function calculateTotalScore(data) {
     const scores = data.scores || {};
-    return (scores.relevance || 0) + (scores.artistry || 0) + (scores.quality || 0) + (scores.authenticity || 0);
+    const total = (scores.relevance || 0) + (scores.artistry || 0) + (scores.quality || 0) + (scores.authenticity || 0);
+    
+    // עיגול התוצאה הסופית כדי למנוע את באג הנקודה הצפה של ג'אווה-סקריפט
+    return Number(total.toFixed(2));
 }
 
 async function fetchSubmissions() {
