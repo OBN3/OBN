@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDn9MNktFcHxzwxL5hhIYPIIN635_0pST8",
@@ -15,10 +15,15 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+// הגדרת שמירת החיבור באופן מפורש בדפדפן ליציבות מירבית
+setPersistence(auth, browserLocalPersistence).catch(console.error);
+
 let currentUserEmail = "";
 let pendingPhotos = [];
 let currentIndex = 0;
 let isLoggingOut = false;
+let authTimeout = null; 
+let hasLoadedSubmissions = false; // דגל המונע קריאות כפולות ואיפוס של ה-currentIndex
 
 // פונקציית קישורי תמונות (תיקון שגיאות CORB)
 function getDirectImageUrl(url, size = 1000) {
@@ -57,24 +62,36 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// שכבת הגנה דינמית לשופטים
+// שכבת הגנה דינמית לשופטים (כולל מנגנון הגנה מפני ניתוקים רגעיים)
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
-        if (!isLoggingOut) alert("עליך להתחבר כדי לגשת לעמוד זה.");
-        window.location.href = "/OBN-Photocontest/index.html";
+        // מחכים 1.5 שניות לפני שזורקים את המשתמש, למקרה שמדובר ברענון טוקן זמני ברקע
+        authTimeout = setTimeout(() => {
+            if (!isLoggingOut) {
+                alert("עליך להתחבר כדי לגשת לעמוד זה.");
+                window.location.href = "/OBN-Photocontest/index.html";
+            }
+        }, 1500);
         return;
     }
 
-    try {
-        const userDocRef = doc(db, "users_roles", user.email);
-        const userDocSnap = await getDoc(userDocRef);
+    // אם המשתמש חזר/נשאר מחובר בתוך חלון הזמן, נבטל את הניתוק מיד
+    if (authTimeout) clearTimeout(authTimeout);
 
-        if (userDocSnap.exists() && userDocSnap.data().role === "judge") {
-            currentUserEmail = user.email;
-            loadPendingSubmissions(); 
-        } else {
-            alert("אין לך הרשאת שופט במערכת זו.");
-            window.location.href = "/OBN-Photocontest/index.html";
+    try {
+        // מונע הרצה חוזרת של טעינת התמונות ואיפוס האינדקס אם הסטטוס התרענן בהצלחה ברקע
+        if (!hasLoadedSubmissions) {
+            const userDocRef = doc(db, "users_roles", user.email);
+            const userDocSnap = await getDoc(userDocRef);
+
+            if (userDocSnap.exists() && userDocSnap.data().role === "judge") {
+                currentUserEmail = user.email;
+                hasLoadedSubmissions = true;
+                loadPendingSubmissions(); 
+            } else {
+                alert("אין לך הרשאת שופט במערכת זו.");
+                window.location.href = "/OBN-Photocontest/index.html";
+            }
         }
     } catch (error) {
         console.error("Security check failed:", error);
@@ -100,6 +117,7 @@ async function loadPendingSubmissions() {
         
         if (pendingPhotos.length === 0) {
             document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('judgingWorkspace').style.display = 'none';
         } else {
             document.getElementById('judgingWorkspace').style.display = 'flex';
             showPhoto(currentIndex);
