@@ -131,6 +131,7 @@ if (uploadForm) {
         const btn = document.getElementById('submitBtn');
         const status = document.getElementById('statusMessage');
         const file = document.getElementById('photoFile').files[0];
+        const uploadOverlay = document.getElementById('uploadOverlay'); // שולף את מסך הטעינה
 
         const minSize = 2 * 1024 * 1024;
         const maxSize = 5 * 1024 * 1024;
@@ -146,6 +147,9 @@ if (uploadForm) {
         btn.disabled = true;
         status.style.color = '#2563eb';
         status.innerText = 'מתחיל בעיבוד ההגשה והעלאת קבצים...';
+
+        // הפעלת האנימציה המרחפת החוסמת את המסך
+        if (uploadOverlay) uploadOverlay.style.display = 'flex';
 
         try {
             const uTitle = document.getElementById('userTitle').value;
@@ -227,6 +231,8 @@ if (uploadForm) {
             status.innerText = 'אירעה שגיאה בתהליך השליחה. נסה שוב.';
         } finally {
             btn.disabled = false;
+            // סגירת האנימציה המרחפת (גם במקרה של הצלחה וגם בשגיאה)
+            if (uploadOverlay) uploadOverlay.style.display = 'none';
         }
     });
 }
