@@ -170,7 +170,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-icon">&#128106;</div>
@@ -183,7 +182,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </div>
 </div>
 
-<!-- APP -->
 <div id="app">
   <header>
     <h1>&#128106; משפחה ביחד</h1>
@@ -200,7 +198,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </nav>
   <main>
 
-    <!-- DASHBOARD -->
     <div id="tab-dashboard" class="section active">
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-num" id="stat-open">&#8212;</div><div class="stat-label">משימות פתוחות</div></div>
@@ -215,7 +212,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
       <div id="dashTaskList" class="task-list"></div>
     </div>
 
-    <!-- TASKS -->
     <div id="tab-tasks" class="section">
       <div class="toolbar">
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
@@ -240,7 +236,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
       <div class="task-list" id="taskList"></div>
     </div>
 
-    <!-- EXPENSES -->
     <div id="tab-expenses" class="section">
       <div class="section-header">
         <h2>&#128176; הוצאות ומאזן</h2>
@@ -264,7 +259,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </main>
 </div>
 
-<!-- TASK MODAL -->
 <div class="modal-overlay" id="taskModal">
   <div class="modal">
     <button class="close-modal" id="closeTaskModal">&#10005;</button>
@@ -319,7 +313,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </div>
 </div>
 
-<!-- EXPENSE MODAL -->
 <div class="modal-overlay" id="expenseModal">
   <div class="modal">
     <button class="close-modal" id="closeExpenseModal">&#10005;</button>
@@ -351,7 +344,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 
 <div id="toastContainer"></div>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -499,7 +491,7 @@ function renderDashboard(){
     const d=tsToDate(t.completedAt); return d&&d.getMonth()===m&&d.getFullYear()===y;
   }).length;
   const totalExp=allExpenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
-  $("stat-expenses").textContent = "&#8362;"+totalExp.toFixed(0);
+  $("stat-expenses").innerHTML = "&#8362;"+totalExp.toFixed(0);
 
   const openTasks=allTasks.filter(t=>t.status==="open");
   const el=$("dashTaskList");
@@ -753,13 +745,21 @@ function renderExpenses(){
       '</div>'
     ).join("");
   }
+  
   const paid={}, members=new Set();
+  
+  // אתחול רשימת האחים 
+  const EXPECTED_MEMBERS = [currentUser?.displayName || "אופיר", "שם אח 2", "שם אח 3"];
+  EXPECTED_MEMBERS.forEach(m => members.add(m));
+
   let total=0;
   allExpenses.forEach(e=>{
     const n=e.paidByName||"לא ידוע";
-    members.add(n); paid[n]=(paid[n]||0)+(parseFloat(e.amount)||0);
+    members.add(n); 
+    paid[n]=(paid[n]||0)+(parseFloat(e.amount)||0);
     total+=parseFloat(e.amount)||0;
   });
+  
   const mArr=[...members];
   const share=mArr.length?total/mArr.length:0;
   const balEl=$("balanceSummary");
@@ -964,7 +964,16 @@ $("importFile").addEventListener("change", async(ev)=>{
     try{
       const wb=XLSX.read(e.target.result,{type:"array",cellDates:true});
       const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{defval:""});
+      const rawRows = XLSX.utils.sheet_to_json(ws,{defval:""});
+
+      // 1. ניקוי רווחים משמות העמודות
+      const rows = rawRows.map(row => {
+        const cleanRow = {};
+        for (let key in row) {
+          cleanRow[key.trim()] = row[key];
+        }
+        return cleanRow;
+      });
 
       if(!rows.length){toast("הגיליון ריק","error"); ev.target.value=""; return;}
 
@@ -975,6 +984,10 @@ $("importFile").addEventListener("change", async(ev)=>{
       const batch=db.batch();
 
       rows.forEach(row=>{
+        // 2. דילוג על "שורות רפאים" ריקות
+        const isRowEmpty = Object.values(row).every(v => String(v).trim() === "");
+        if(isRowEmpty) return;
+
         const gc=getCol(row);
         // Try both column name variants for title
         const title=gc("כותרת","כותרת המשימה");
