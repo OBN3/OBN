@@ -170,6 +170,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 </head>
 <body>
 
+<!-- LOGIN -->
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-icon">&#128106;</div>
@@ -182,6 +183,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </div>
 </div>
 
+<!-- APP -->
 <div id="app">
   <header>
     <h1>&#128106; משפחה ביחד</h1>
@@ -198,6 +200,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </nav>
   <main>
 
+    <!-- DASHBOARD -->
     <div id="tab-dashboard" class="section active">
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-num" id="stat-open">&#8212;</div><div class="stat-label">משימות פתוחות</div></div>
@@ -212,6 +215,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
       <div id="dashTaskList" class="task-list"></div>
     </div>
 
+    <!-- TASKS -->
     <div id="tab-tasks" class="section">
       <div class="toolbar">
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
@@ -236,6 +240,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
       <div class="task-list" id="taskList"></div>
     </div>
 
+    <!-- EXPENSES -->
     <div id="tab-expenses" class="section">
       <div class="section-header">
         <h2>&#128176; הוצאות ומאזן</h2>
@@ -259,6 +264,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </main>
 </div>
 
+<!-- TASK MODAL -->
 <div class="modal-overlay" id="taskModal">
   <div class="modal">
     <button class="close-modal" id="closeTaskModal">&#10005;</button>
@@ -313,6 +319,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </div>
 </div>
 
+<!-- EXPENSE MODAL -->
 <div class="modal-overlay" id="expenseModal">
   <div class="modal">
     <button class="close-modal" id="closeExpenseModal">&#10005;</button>
@@ -344,6 +351,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 
 <div id="toastContainer"></div>
 
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -352,8 +360,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 <script>
 /*
 ====================================================================
-  FIREBASE CONFIG – מלא מה-Firebase Console:
-  Project Settings > Your apps > Web App > Config
+  FIREBASE CONFIG
 ====================================================================
 */
 const FIREBASE_CONFIG = {
@@ -365,27 +372,7 @@ const FIREBASE_CONFIG = {
   appId: "1:833616633042:web:82339189ba55f3d916210b"
 };
 
-/*
-====================================================================
-  FAMILY_ID – כל האחים חולקים אותו
-====================================================================
-*/
 const FAMILY_ID = "family_main";
-
-/*
-====================================================================
-  Firestore Security Rules (הדבק ב-Firestore Console -> Rules):
-
-  rules_version = '2';
-  service cloud.firestore {
-    match /databases/{database}/documents {
-      match /families/{familyId}/{document=**} {
-        allow read, write: if request.auth != null;
-      }
-    }
-  }
-====================================================================
-*/
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const auth = firebase.auth();
@@ -748,7 +735,6 @@ function renderExpenses(){
   
   const paid={}, members=new Set();
   
-  // אתחול רשימת האחים 
   const EXPECTED_MEMBERS = [currentUser?.displayName || "אופיר", "שם אח 2", "שם אח 3"];
   EXPECTED_MEMBERS.forEach(m => members.add(m));
 
@@ -890,14 +876,12 @@ const TYPE_MAP_HE = {
   "ביקור":"visit","קניות":"shopping","סידור":"errand","רפואי":"medical","אחר":"other"
 };
 
-// Returns true if value is a placeholder / instruction text
 function isPlaceholder(s){
   if(!s) return false;
   const str = String(s);
   return str.includes("הקש") || str.includes("לבחור תאריך") || str.includes("לחץ");
 }
 
-// Try multiple column name variants, return first non-empty, non-placeholder value
 function getCol(row){
   return function(){
     for(let i=0;i<arguments.length;i++){
@@ -911,7 +895,6 @@ function getCol(row){
   };
 }
 
-// Convert Excel date serial or Date object to "YYYY-MM-DD" string
 function excelDateToStr(val){
   if(val===undefined||val===null||val==="") return "";
   if(isPlaceholder(String(val))) return "";
@@ -923,7 +906,6 @@ function excelDateToStr(val){
     return y+"-"+m+"-"+d;
   }
   if(typeof val==="number" && val>1){
-    // Excel serial date (days since 1900-01-01, with Excel's leap-year bug)
     const d=new Date(Math.round((val-25569)*86400*1000));
     const y=d.getUTCFullYear();
     const mo=String(d.getUTCMonth()+1).padStart(2,"0");
@@ -932,15 +914,12 @@ function excelDateToStr(val){
   }
   const s=String(val).trim();
   if(isPlaceholder(s)) return "";
-  // Accept already-formatted strings
   return s;
 }
 
-// Convert Excel time fraction or Date object to "HH:MM" string
 function excelTimeToStr(val){
   if(val===undefined||val===null||val==="") return "";
   if(isPlaceholder(String(val))) return "";
-  // Excel time fraction (0-1 range)
   if(typeof val==="number" && val>=0 && val<1){
     const totalMins=Math.round(val*24*60);
     const h=Math.floor(totalMins/60);
@@ -964,35 +943,60 @@ $("importFile").addEventListener("change", async(ev)=>{
     try{
       const wb=XLSX.read(e.target.result,{type:"array",cellDates:true});
       const ws=wb.Sheets[wb.SheetNames[0]];
-      const rawRows = XLSX.utils.sheet_to_json(ws,{defval:""});
+      
+      // משתמשים במצב header:1 כדי לקבל מערך של מערכים, במקום להניח שהשורה הראשונה היא הכותרת
+      const allData = XLSX.utils.sheet_to_json(ws, {header: 1});
 
-      // 1. ניקוי רווחים משמות העמודות
-      const rows = rawRows.map(row => {
-        const cleanRow = {};
-        for (let key in row) {
-          cleanRow[key.trim()] = row[key];
+      if(!allData.length){toast("הגיליון ריק","error"); ev.target.value=""; return;}
+
+      // 1. סריקה חכמה כדי למצוא את שורת הכותרות האמיתית באקסל
+      let headerRowIndex = -1;
+      for (let i = 0; i < allData.length; i++) {
+        const rowStrings = allData[i].map(c => c ? String(c).trim() : "");
+        if (rowStrings.includes("כותרת המשימה") || rowStrings.includes("כותרת")) {
+          headerRowIndex = i;
+          break;
         }
-        return cleanRow;
-      });
+      }
 
-      if(!rows.length){toast("הגיליון ריק","error"); ev.target.value=""; return;}
+      if (headerRowIndex === -1) {
+        toast("לא נמצאה עמודה בשם 'כותרת המשימה' או 'כותרת'","error");
+        ev.target.value="";
+        return;
+      }
 
-      // Patterns that indicate a row is a note/header, not real data
+      // 2. חילוץ וניקוי שמות העמודות
+      const headers = allData[headerRowIndex].map(h => h ? String(h).trim() : "");
+
+      // 3. הפיכת השורות שמתחת לכותרות למערך אובייקטים (התעלמות מוחלטת מההערות למעלה)
+      const rows = [];
+      for (let i = headerRowIndex + 1; i < allData.length; i++) {
+        const rowArr = allData[i];
+        if (!rowArr || rowArr.length === 0 || rowArr.every(v => v === undefined || v === null || String(v).trim() === "")) {
+          continue; // דילוג על שורות ריקות לגמרי
+        }
+        
+        const rowObj = {};
+        for (let j = 0; j < headers.length; j++) {
+          if (headers[j]) {
+            rowObj[headers[j]] = rowArr[j] !== undefined ? rowArr[j] : "";
+          }
+        }
+        rows.push(rowObj);
+      }
+
       const SKIP_PATTERNS=["שימו לב","תאים בצהוב","כותרת המשימה","כותרת"];
 
       let added=0, skipped=0;
       const batch=db.batch();
 
       rows.forEach(row=>{
-        // 2. דילוג על "שורות רפאים" ריקות
         const isRowEmpty = Object.values(row).every(v => String(v).trim() === "");
         if(isRowEmpty) return;
 
         const gc=getCol(row);
-        // Try both column name variants for title
         const title=gc("כותרת","כותרת המשימה");
 
-        // Skip rows with no title or placeholder/header title
         if(!title || SKIP_PATTERNS.some(p=>title.includes(p))){
           skipped++;
           return;
@@ -1000,7 +1004,6 @@ $("importFile").addEventListener("change", async(ev)=>{
 
         const typeHe=gc("סוג","סוג משימה");
 
-        // For date/time: try both column name variants directly from row object
         function pickRaw(a,b){
           const va=row[a]; const vb=row[b];
           if(va!==undefined&&va!==null&&String(va).trim()!==""&&!isPlaceholder(String(va))) return va;
@@ -1012,7 +1015,6 @@ $("importFile").addEventListener("change", async(ev)=>{
         const rawTime  = pickRaw("שעת משימה","שעה");
         const rawAdded = pickRaw("תאריך הוספה","תאריך הוספת משימה");
 
-        // Build optional first comment from "הערות" column
         const noteText = gc("הערות");
         const initComments = [];
         if(noteText){
@@ -1024,7 +1026,6 @@ $("importFile").addEventListener("change", async(ev)=>{
           });
         }
 
-        // Append "אחראי" to statusNote if present
         const statusNoteBase = gc("סטטוס (הערה)","סטטוס");
         const achrai = gc("אחראי");
         const statusNote = achrai
