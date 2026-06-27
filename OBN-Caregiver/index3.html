@@ -755,6 +755,7 @@ function renderExpenses(){
       '</div>'
     ).join("");
   }
+
 const paid={}, members=new Set();
 
 // אתחול רשימת האחים (הכנס כאן את השמות שבהם אתם משתמשים באפליקציה)
@@ -770,10 +771,8 @@ allExpenses.forEach(e=>{
 });
 
 
-    const n=e.paidByName||"לא ידוע";
-    members.add(n); paid[n]=(paid[n]||0)+(parseFloat(e.amount)||0);
-    total+=parseFloat(e.amount)||0;
-  });
+
+
   const mArr=[...members];
   const share=mArr.length?total/mArr.length:0;
   const balEl=$("balanceSummary");
