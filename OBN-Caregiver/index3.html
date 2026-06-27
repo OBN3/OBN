@@ -977,16 +977,39 @@ $("importFile").addEventListener("change", async(ev)=>{
     try{
       const wb=XLSX.read(e.target.result,{type:"array",cellDates:true});
       const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{defval:""});
 
-      if(!rows.length){toast("הגיליון ריק","error"); ev.target.value=""; return;}
 
-      // Patterns that indicate a row is a note/header, not real data
-      const SKIP_PATTERNS=["שימו לב","תאים בצהוב","כותרת המשימה","כותרת"];
+const rawRows = XLSX.utils.sheet_to_json(ws,{defval:""});
 
-      let added=0, skipped=0;
-      const batch=db.batch();
+// 1. ניקוי רווחים משמות העמודות
+const rows = rawRows.map(row => {
+  const cleanRow = {};
+  for (let key in row) {
+    cleanRow[key.trim()] = row[key];
+  }
+  return cleanRow;
+});
 
+if(!rows.length){toast("הגיליון ריק","error"); ev.target.value=""; return;}
+
+const SKIP_PATTERNS=["שימו לב","תאים בצהוב","כותרת המשימה","כותרת"];
+
+let added=0, skipped=0;
+const batch=db.batch();
+
+rows.forEach(row=>{
+  // 2. דילוג על "שורות רפאים" ריקות (בלי להגדיל את מונה הדילוגים)
+  const isRowEmpty = Object.values(row).every(v => String(v).trim() === "");
+  if(isRowEmpty) return;
+
+  const gc=getCol(row);
+  const title=gc("כותרת","כותרת המשימה");
+
+  if(!title || SKIP_PATTERNS.some(p=>title.includes(p))){
+    skipped++;
+    return;
+  }
+  // ... המשך הקוד הקיים בדיוק כפי שהוא ...
       rows.forEach(row=>{
         const gc=getCol(row);
         // Try both column name variants for title
