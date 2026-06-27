@@ -75,8 +75,6 @@ onAuthStateChanged(auth, async (user) => {
 function calculateTotalScore(data) {
     const scores = data.scores || {};
     const total = (scores.relevance || 0) + (scores.artistry || 0) + (scores.quality || 0) + (scores.authenticity || 0);
-    
-    // עיגול התוצאה הסופית כדי למנוע את באג הנקודה הצפה של ג'אווה-סקריפט
     return Number(total.toFixed(2));
 }
 
@@ -102,25 +100,36 @@ async function fetchSubmissions() {
             
             const evaluationEmails = data.evaluations ? Object.keys(data.evaluations) : [];
             const judgeCount = evaluationEmails.length;
-            let statusHtml = judgeCount > 0 ? `<span class="status judged">דורג (${judgeCount})</span><br><small style="color:#6b7280; font-size:11px;">ع"י: ${evaluationEmails.join(', ')}</small>` : `<span class="status pending">ממתין</span>`;
+            let statusHtml = judgeCount > 0 ? `<span class="status judged">דורג (${judgeCount})</span><br><small style="color:#6b7280; font-size:11px;">ע"י: ${evaluationEmails.join(', ')}</small>` : `<span class="status pending">ממתין</span>`;
 
-            // הצגת כפתור קישור ל-PDF של המטופלים במידה והועלה
             let pdfHtml = data.consentPdfUrl ? `<a href="${data.consentPdfUrl}" target="_blank" style="color:#2563eb; font-weight:bold; font-size:12px;">📄 אישור PDF</a>` : `<span style="color:#94a3b8; font-size:12px;">אין</span>`;
 
             const thumbUrl = getDirectImageUrl(data.imageUrl, 200);
             const largeUrl = getDirectImageUrl(data.imageUrl, 1920);
 
-            // בניית שם מלא מורכב מכל השדות החדשים
             const pTitle = data.title || "";
             const fName = data.firstName || "";
             const lName = data.lastName || data.photographerName || "";
             const fullDisplayName = `${pTitle} ${fName} ${lName}`.trim();
 
+            // פיצול חכם של מקום העבודה הראשי מול התת-סעיף
+            let wpParts = (data.workplace || "").split(" - ");
+            let baseWorkplace = wpParts[0] || "";
+            let subWorkplace = wpParts.length > 1 ? wpParts[1] : "-";
+
+            // תרגום סטטוס המצולמים
+            let personReadable = "ללא זיהוי";
+            if(data.identifiablePerson === 'staff') personReadable = "עובדי מוסד";
+            if(data.identifiablePerson === 'patients') personReadable = "מטופלים";
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><img src="${thumbUrl}" class="thumbnail" alt="תמונה" title="לחץ להגדלה" onclick="window.openModal('${largeUrl}')"></td>
-                <td><strong>${fullDisplayName}</strong><br><small style="color:#6b7280;">${data.workplace || ''}</small></td>
+                <td><strong>${fullDisplayName}</strong></td>
+                <td>${baseWorkplace}</td>
+                <td><span style="color:#6b7280; font-size:13px;">${subWorkplace}</span></td>
                 <td>${data.photoTitle || data.title || ''}</td>
+                <td><span style="background-color:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:12px;">${personReadable}</span></td>
                 <td>${scores.relevance || 0}</td>
                 <td>${scores.artistry || 0}</td>
                 <td>${scores.quality || 0}</td>
@@ -148,7 +157,8 @@ document.getElementById('exportCsvBtn').addEventListener('click', () => {
         return;
     }
 
-    let csvContent = "תואר,שם פרטי,שם משפחה,טלפון נייד,דוא\"ל,מקום עבודה,מחלקה,תפקיד,מאשר דיוור,שם הצילום,הסיפור מאחורי התמונה,זיהוי אדם,לינק ל-PDF אישורים,זיקה לנושא,אמנותיות,איכות טכנית,אותנטיות,ציון סופי,סטטוס (כמות),שופטים שדירגו\n";
+    // הוספת העמודות החדשות לכותרות ה-CSV
+    let csvContent = "תואר,שם פרטי,שם משפחה,טלפון נייד,דוא\"ל,מקום עבודה ראשי,פירוט מקום עבודה,מחלקה,תפקיד,מאשר דיוור,שם הצילום,הסיפור מאחורי התמונה,זיהוי אדם,לינק ל-PDF אישורים,זיקה לנושא,אמנותיות,איכות טכנית,אותנטיות,ציון סופי,סטטוס (כמות),שופטים שדירגו\n";
 
     submissionsData.forEach(row => {
         const scores = row.scores || {};
@@ -161,7 +171,12 @@ document.getElementById('exportCsvBtn').addEventListener('click', () => {
         if(row.identifiablePerson === 'staff') personType = "עובדי מוסד";
         if(row.identifiablePerson === 'patients') personType = "מטופלים (מצורף PDF)";
 
-        csvContent += `"${row.title || ''}","${row.firstName || ''}","${row.lastName || ''}","${row.phone || ''}","${row.email || ''}","${row.workplace || ''}","${row.department || ''}","${row.role || ''}","${row.allowEmails ? 'כן' : 'לא'}","${row.photoTitle || ''}","${(row.description || '').replace(/"/g, '""')}","${personType}","${row.consentPdfUrl || ''}",${scores.relevance || 0},${scores.artistry || 0},${scores.quality || 0},${scores.authenticity || 0},${totalScore},"${statusText} (${judgeCount})","${evaluationEmails.join(', ')}"\n`;
+        // פיצול מקום העבודה גם עבור קובץ האקסל
+        let wpParts = (row.workplace || "").split(" - ");
+        let baseWorkplace = wpParts[0] || "";
+        let subWorkplace = wpParts.length > 1 ? wpParts[1] : "";
+
+        csvContent += `"${row.title || ''}","${row.firstName || ''}","${row.lastName || ''}","${row.phone || ''}","${row.email || ''}","${baseWorkplace}","${subWorkplace}","${row.department || ''}","${row.role || ''}","${row.allowEmails ? 'כן' : 'לא'}","${row.photoTitle || ''}","${(row.description || '').replace(/"/g, '""')}","${personType}","${row.consentPdfUrl || ''}",${scores.relevance || 0},${scores.artistry || 0},${scores.quality || 0},${scores.authenticity || 0},${totalScore},"${statusText} (${judgeCount})","${evaluationEmails.join(', ')}"\n`;
     });
 
     const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
