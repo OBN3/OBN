@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>משפחה ביחד – ניהול טיפול</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#4f46e5;--primary-dark:#3730a3;--primary-light:#818cf8;
+  --success:#10b981;--warning:#f59e0b;--danger:#ef4444;--info:#3b82f6;
+  --deleted:#6b7280;
+  --bg:#f1f5f9;--surface:#fff;--surface2:#f8fafc;
+  --text:#1e293b;--text2:#64748b;--border:#e2e8f0;
+  --radius:14px;--radius-sm:8px;
+  --shadow:0 4px 24px rgba(0,0,0,.08);--shadow-sm:0 1px 4px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;}
+button{font-family:'Heebo',sans-serif;cursor:pointer;border:none;outline:none;}
+input,textarea,select{font-family:'Heebo',sans-serif;outline:none;direction:rtl;}
+
+/* LOGIN */
+#loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);padding:24px;}
+.login-card{background:#fff;border-radius:24px;padding:48px 40px;text-align:center;
+  max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.18);}
+.login-card h1{font-size:2rem;font-weight:800;color:var(--primary);margin-bottom:8px;}
+.login-card p{color:var(--text2);margin-bottom:32px;}
+.login-icon{font-size:4rem;margin-bottom:16px;}
+#googleSignIn{display:flex;align-items:center;justify-content:center;gap:12px;
+  background:#fff;border:2px solid var(--border);border-radius:12px;padding:14px 28px;
+  font-size:1rem;font-weight:600;color:var(--text);width:100%;transition:.2s;box-shadow:var(--shadow-sm);}
+#googleSignIn:hover{border-color:var(--primary);background:#f5f3ff;transform:translateY(-1px);}
+#googleSignIn img{width:24px;height:24px;}
+
+/* APP */
+#app{display:none;flex-direction:column;min-height:100vh;}
+header{background:var(--primary);color:#fff;padding:0 24px;display:flex;align-items:center;
+  justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 12px rgba(79,70,229,.3);}
+header h1{font-size:1.2rem;font-weight:700;}
+.header-user{display:flex;align-items:center;gap:10px;}
+.avatar-initials{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.25);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;color:#fff;}
+#signOut{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;
+  border-radius:8px;padding:6px 14px;font-size:.85rem;font-weight:600;transition:.2s;}
+#signOut:hover{background:rgba(255,255,255,.25);}
+
+nav{background:var(--surface);border-bottom:1px solid var(--border);display:flex;
+  padding:0 16px;overflow-x:auto;gap:4px;}
+.nav-tab{padding:16px 20px;font-size:.95rem;font-weight:600;color:var(--text2);
+  border:none;background:none;border-bottom:3px solid transparent;white-space:nowrap;transition:.2s;}
+.nav-tab.active{color:var(--primary);border-bottom-color:var(--primary);}
+.nav-tab:hover:not(.active){color:var(--text);background:var(--bg);}
+
+main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
+.section{display:none;} .section.active{display:block;}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin-bottom:28px;}
+.stat-card{background:var(--surface);border-radius:var(--radius);padding:20px;
+  box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:6px;border-right:4px solid var(--primary);}
+.stat-card.warn{border-right-color:var(--warning);} .stat-card.success{border-right-color:var(--success);}
+.stat-card.info{border-right-color:var(--info);}
+.stat-num{font-size:2rem;font-weight:800;} .stat-label{font-size:.85rem;color:var(--text2);font-weight:500;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--radius-sm);
+  font-size:.88rem;font-weight:600;transition:.2s;border:none;cursor:pointer;}
+.btn-primary{background:var(--primary);color:#fff;} .btn-primary:hover{background:var(--primary-dark);}
+.btn-success{background:var(--success);color:#fff;} .btn-success:hover{background:#059669;}
+.btn-warning{background:var(--warning);color:#fff;} .btn-warning:hover{background:#d97706;}
+.btn-danger{background:var(--danger);color:#fff;} .btn-danger:hover{background:#dc2626;}
+.btn-outline{background:#fff;color:var(--primary);border:1.5px solid var(--primary);}
+.btn-outline:hover{background:#f5f3ff;}
+.btn-gray{background:#e2e8f0;color:var(--text2);}  .btn-gray:hover{background:#cbd5e1;}
+.btn-restore{background:#f0fdf4;color:var(--success);border:1.5px solid var(--success);}
+.btn-restore:hover{background:#dcfce7;}
+.btn-sm{padding:5px 11px;font-size:.78rem;}
+.btn-icon{padding:6px;border-radius:8px;background:var(--bg);color:var(--text2);font-size:.95rem;}
+.btn-icon:hover{background:var(--border);}
+.btn-export-wrap{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
+.filters{display:flex;gap:6px;flex-wrap:wrap;}
+.filter-btn{padding:6px 14px;border-radius:20px;font-size:.8rem;font-weight:600;
+  border:1.5px solid var(--border);background:#fff;color:var(--text2);transition:.2s;}
+.filter-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.filter-btn.filter-deleted.active{background:var(--deleted);border-color:var(--deleted);}
+.filter-btn:hover:not(.active){border-color:var(--primary);color:var(--primary);}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.section-header h2{font-size:1.25rem;font-weight:800;}
+
+/* TASK CARDS */
+.task-list{display:flex;flex-direction:column;gap:14px;}
+.task-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);
+  padding:20px;border-right:5px solid var(--primary);transition:.2s;}
+.task-card:hover{box-shadow:var(--shadow);}
+.task-card.status-open{border-right-color:#6366f1;}
+.task-card.status-claimed{border-right-color:var(--warning);}
+.task-card.status-done{border-right-color:var(--success);}
+.task-card.status-cancelled{border-right-color:#94a3b8;opacity:.75;}
+.task-card.status-deleted{border-right-color:var(--deleted);opacity:.65;background:#f9fafb;}
+.task-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;}
+.task-title{font-size:1.05rem;font-weight:700;flex:1;}
+.task-badges{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.badge{padding:3px 10px;border-radius:20px;font-size:.73rem;font-weight:700;}
+.badge-status-open{background:#ede9fe;color:#5b21b6;}
+.badge-status-claimed{background:#fef3c7;color:#92400e;}
+.badge-status-done{background:#d1fae5;color:#065f46;}
+.badge-status-cancelled{background:#f1f5f9;color:#64748b;}
+.badge-status-deleted{background:#e5e7eb;color:#374151;}
+.badge-type{background:#f0f9ff;color:#0369a1;}
+.task-meta{display:flex;flex-wrap:wrap;gap:12px;font-size:.82rem;color:var(--text2);margin-bottom:8px;}
+.task-meta span{display:flex;align-items:center;gap:4px;}
+.task-note{font-size:.88rem;color:var(--text2);line-height:1.55;margin-bottom:8px;}
+.task-followup{background:#fefce8;border-radius:var(--radius-sm);padding:8px 12px;
+  font-size:.85rem;color:#713f12;margin-bottom:10px;border-right:3px solid var(--warning);}
+.task-actions{display:flex;gap:7px;flex-wrap:wrap;}
+.comments-section{margin-top:12px;border-top:1px solid var(--border);padding-top:10px;}
+.comment{background:var(--bg);border-radius:var(--radius-sm);padding:7px 11px;margin-bottom:5px;font-size:.84rem;}
+.comment strong{color:var(--primary);}
+.comment-input-row{display:flex;gap:7px;margin-top:7px;}
+.comment-input-row input{flex:1;border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  padding:7px 11px;font-size:.84rem;background:var(--surface);}
+.comment-input-row input:focus{border-color:var(--primary);}
+
+/* EXPENSES */
+.expenses-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:640px){.expenses-layout{grid-template-columns:1fr;}}
+.expense-card{background:var(--surface);border-radius:var(--radius);padding:14px 16px;
+  box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.expense-amount{font-size:1.15rem;font-weight:800;color:var(--primary);min-width:75px;}
+.expense-info{flex:1;} .expense-info .title{font-weight:600;font-size:.93rem;}
+.expense-info .meta{font-size:.79rem;color:var(--text2);}
+.balance-card{background:var(--surface);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow-sm);margin-bottom:14px;}
+.balance-card h3{font-weight:700;font-size:.95rem;margin-bottom:14px;}
+.balance-row{display:flex;justify-content:space-between;align-items:center;
+  padding:9px 0;border-bottom:1px solid var(--border);font-size:.89rem;}
+.balance-row:last-child{border-bottom:none;}
+.balance-pos{color:var(--success);font-weight:700;} .balance-neg{color:var(--danger);font-weight:700;}
+.settle-item{padding:8px 12px;background:#fef3c7;border-radius:var(--radius-sm);font-size:.84rem;margin-bottom:6px;color:#92400e;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+  z-index:1000;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border-radius:20px;padding:28px 32px;max-width:580px;width:100%;
+  max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.2);position:relative;}
+.modal h2{font-size:1.25rem;font-weight:800;margin-bottom:20px;}
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:.83rem;font-weight:600;color:var(--text2);margin-bottom:5px;}
+.form-group input,.form-group textarea,.form-group select{
+  width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  padding:9px 13px;font-size:.9rem;transition:.2s;background:var(--surface2);}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{
+  border-color:var(--primary);background:#fff;}
+.form-group textarea{resize:vertical;min-height:72px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap;}
+.close-modal{position:absolute;top:14px;left:14px;background:var(--bg);border:none;
+  border-radius:50%;width:30px;height:30px;font-size:1rem;cursor:pointer;color:var(--text2);}
+.close-modal:hover{background:var(--border);}
+
+/* TOAST */
+#toastContainer{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+.toast{background:#1e293b;color:#fff;padding:11px 18px;border-radius:10px;font-size:.88rem;
+  font-weight:500;box-shadow:var(--shadow);animation:slideIn .3s ease;min-width:200px;}
+.toast.success{background:var(--success);} .toast.error{background:var(--danger);}
+@keyframes slideIn{from{transform:translateX(40px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+.empty{text-align:center;padding:50px 20px;color:var(--text2);}
+.empty .icon{font-size:2.8rem;margin-bottom:10px;}
+.import-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.import-label{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--radius-sm);
+  font-size:.88rem;font-weight:600;background:var(--info);color:#fff;cursor:pointer;transition:.2s;}
+.import-label:hover{background:#2563eb;}
+#importFile{display:none;}
+.db-section-title{font-size:1rem;font-weight:700;margin-bottom:12px;color:var(--text);}
+@media(max-width:600px){main{padding:10px;}.modal{padding:18px;}.form-row{grid-template-columns:1fr;}header h1{font-size:.95rem;}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-icon">👨‍👩‍👧‍👦</div>
+    <h1>משפחה ביחד</h1>
+    <p>ניהול משימות וטיפול משותף עבור האבא שלנו</p>
+    <button id="googleSignIn">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"/>
+      כניסה עם חשבון Google
+    </button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <h1>👨‍👩‍👧‍👦 משפחה ביחד</h1>
+    <div class="header-user">
+      <div id="headerUserName" style="font-size:.85rem;font-weight:600;"></div>
+      <div id="headerAvatar" class="avatar-initials"></div>
+      <button id="signOut">יציאה</button>
+    </div>
+  </header>
+
+  <nav>
+    <button class="nav-tab active" data-tab="dashboard">📊 לוח בקרה</button>
+    <button class="nav-tab" data-tab="tasks">✅ משימות</button>
+    <button class="nav-tab" data-tab="expenses">💰 הוצאות</button>
+  </nav>
+
+  <main>
+
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard" class="section active">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-num" id="stat-open">—</div><div class="stat-label">משימות פתוחות</div></div>
+        <div class="stat-card warn"><div class="stat-num" id="stat-claimed">—</div><div class="stat-label">משימות שנלקחו</div></div>
+        <div class="stat-card success"><div class="stat-num" id="stat-done">—</div><div class="stat-label">הושלמו החודש</div></div>
+        <div class="stat-card info"><div class="stat-num" id="stat-expenses">—</div><div class="stat-label">סה"כ הוצאות (₪)</div></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+        <div class="db-section-title">⚡ משימות פתוחות</div>
+        <button class="btn btn-primary btn-sm" id="btnAddTaskDash">+ משימה חדשה</button>
+      </div>
+      <div id="dashTaskList" class="task-list"></div>
+    </div>
+
+    <!-- TASKS -->
+    <div id="tab-tasks" class="section">
+      <div class="toolbar">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <span style="font-size:1.2rem;font-weight:800;">משימות</span>
+          <div class="filters" id="statusFilters">
+            <button class="filter-btn active" data-status="all">הכל</button>
+            <button class="filter-btn" data-status="open">פתוח</button>
+            <button class="filter-btn" data-status="claimed">נלקח</button>
+            <button class="filter-btn" data-status="done">הושלם</button>
+            <button class="filter-btn" data-status="cancelled">בוטל</button>
+            <button class="filter-btn filter-deleted" data-status="deleted">🗑️ מחוקות</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <div class="import-row">
+            <label class="import-label" for="importFile">📥 ייבוא Excel</label>
+            <input type="file" id="importFile" accept=".xlsx,.xls,.csv"/>
+            <button class="btn btn-gray btn-sm" id="btnTemplate">📋 תבנית</button>
+            <button class="btn btn-success btn-sm" id="btnExport">📤 ייצוא Excel</button>
+          </div>
+          <button class="btn btn-primary" id="btnAddTask">+ משימה חדשה</button>
+        </div>
+      </div>
+      <div class="task-list" id="taskList"></div>
+    </div>
+
+    <!-- EXPENSES -->
+    <div id="tab-expenses" class="section">
+      <div class="section-header">
+        <h2>💰 הוצאות ומאזן</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-success btn-sm" id="btnExportExpenses">📤 ייצוא Excel</button>
+          <button class="btn btn-primary" id="btnAddExpense">+ הוצאה חדשה</button>
+        </div>
+      </div>
+      <div class="expenses-layout">
+        <div>
+          <div class="db-section-title">רשימת הוצאות</div>
+          <div id="expenseList"></div>
+        </div>
+        <div>
+          <div class="balance-card"><h3>📊 מאזן בין האחים</h3><div id="balanceSummary"></div></div>
+          <div class="balance-card"><h3>⚖️ מי חייב למי</h3><div id="settleList"></div></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- TASK MODAL -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal">
+    <button class="close-modal" id="closeTaskModal">✕</button>
+    <h2 id="taskModalTitle">משימה חדשה</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>כותרת המשימה *</label>
+        <input type="text" id="tTitle" placeholder="למשל: ביקור אצל הרופא"/>
+      </div>
+      <div class="form-group">
+        <label>סוג משימה</label>
+        <select id="tType">
+          <option value="visit">🏥 ביקור</option>
+          <option value="shopping">🛒 קניות</option>
+          <option value="errand">📋 סידור</option>
+          <option value="medical">💊 רפואי</option>
+          <option value="other">📌 אחר</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>סטטוס (הערת מצב)</label>
+      <textarea id="tStatusNote" placeholder="תיאור מצב נוכחי..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>המשך הטיפול</label>
+      <textarea id="tFollowUp" placeholder="מה צריך לעשות בהמשך..."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>תאריך הוספת משימה</label>
+        <input type="date" id="tAddedDate"/>
+      </div>
+      <div class="form-group">
+        <label>סוג משימה (קטגוריה)</label>
+        <!-- placeholder to keep grid balanced -->
+        <div style="height:1px;"></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>תאריך משימה</label>
+        <input type="date" id="tDueDate"/>
+      </div>
+      <div class="form-group">
+        <label>שעת משימה</label>
+        <input type="time" id="tDueTime"/>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-gray" id="cancelTaskModal">ביטול</button>
+      <button class="btn btn-primary" id="saveTaskBtn">💾 שמור משימה</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPENSE MODAL -->
+<div class="modal-overlay" id="expenseModal">
+  <div class="modal">
+    <button class="close-modal" id="closeExpenseModal">✕</button>
+    <h2>הוספת הוצאה</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>סכום (₪) *</label>
+        <input type="number" id="eAmount" placeholder="100" min="0" step="0.01"/>
+      </div>
+      <div class="form-group">
+        <label>תאריך *</label>
+        <input type="date" id="eDate"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>תיאור *</label>
+      <input type="text" id="eDesc" placeholder="למשל: תרופות מבית המרקחת"/>
+    </div>
+    <div class="form-group">
+      <label>קישור למשימה (אופציונלי)</label>
+      <select id="eTaskLink"><option value="">— ללא קישור —</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-gray" id="cancelExpenseModal">ביטול</button>
+      <button class="btn btn-primary" id="saveExpenseBtn">💾 שמור הוצאה</button>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<!-- SHEETJS -->
+<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<script>
+/*
+====================================================================
+  🔧 הגדרות Firebase – יש למלא מה-Firebase Console:
+  Firebase Console > Project Settings > Your apps > Config
+====================================================================
+*/
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDn9MNktFcHxzwxL5hhIYPIIN635_0pST8",
+  authDomain: "obn-photocontest.firebaseapp.com",
+  projectId: "obn-photocontest",
+  storageBucket: "obn-photocontest.firebasestorage.app",
+  messagingSenderId: "833616633042",
+  appId: "1:833616633042:web:82339189ba55f3d916210b"
+};
+
+/*
+====================================================================
+  🔑 מזהה משפחה – כל האחים חולקים אותו
+====================================================================
+*/
+const FAMILY_ID = "family_main";
+
+/*
+====================================================================
+  📋 Firestore Security Rules (הדבק ב-Firestore Console → Rules):
+
+  rules_version = '2';
+  service cloud.firestore {
+    match /databases/{database}/documents {
+      match /families/{familyId}/{document=**} {
+        allow read, write: if request.auth != null;
+      }
+    }
+  }
+====================================================================
+*/
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+// ─── STATE ───────────────────────────────────────────────────────
+let currentUser   = null;
+let allTasks      = [];
+let allExpenses   = [];
+let editingTaskId = null;
+let activeStatusFilter = "all";
+let unsubTasks = null, unsubExpenses = null;
+
+// ─── UTILS ───────────────────────────────────────────────────────
+const $  = id => document.getElementById(id);
+const colRef = col => db.collection("families").doc(FAMILY_ID).collection(col);
+
+function toast(msg, type=""){
+  const t = document.createElement("div");
+  t.className = "toast " + type;
+  t.textContent = msg;
+  $("toastContainer").appendChild(t);
+  setTimeout(()=>t.remove(), 3200);
+}
+
+function esc(s){ return s ? String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") : ""; }
+function initials(n){ return n ? n.split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2) : "?"; }
+
+function tsToDate(ts){
+  if(!ts) return null;
+  if(ts.toDate) return ts.toDate();
+  return new Date(ts);
+}
+function fmtDate(ts){
+  const d = tsToDate(ts);
+  if(!d) return "";
+  return d.toLocaleDateString("he-IL",{day:"2-digit",month:"2-digit",year:"numeric"});
+}
+function fmtDateTime(ts){
+  const d = tsToDate(ts);
+  if(!d) return "";
+  return d.toLocaleDateString("he-IL",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+}
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+const STATUS_LABEL = {open:"פתוח",claimed:"נלקח",done:"הושלם",cancelled:"בוטל",deleted:"מחוקה"};
+const TYPE_LABEL   = {visit:"ביקור",shopping:"קניות",errand:"סידור",medical:"רפואי",other:"אחר"};
+const TYPE_ICON    = {visit:"🏥",shopping:"🛒",errand:"📋",medical:"💊",other:"📌"};
+
+// ─── AUTH ─────────────────────────────────────────────────────────
+$("googleSignIn").addEventListener("click",()=>{
+  auth.signInWithPopup(googleProvider).catch(e=>toast("שגיאת כניסה: "+e.message,"error"));
+});
+$("signOut").addEventListener("click",()=>auth.signOut());
+
+auth.onAuthStateChanged(user=>{
+  currentUser = user;
+  if(user){
+    $("loginScreen").style.display="none";
+    $("app").style.display="flex";
+    const name = user.displayName||user.email;
+    $("headerUserName").textContent = name;
+    const av = $("headerAvatar");
+    if(user.photoURL){
+      av.innerHTML=`<img src="${user.photoURL}" style="width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.5);" alt="avatar"/>`;
+    } else {
+      av.textContent = initials(name);
+    }
+    subscribeData();
+  } else {
+    $("loginScreen").style.display="flex";
+    $("app").style.display="none";
+    if(unsubTasks){unsubTasks();unsubTasks=null;}
+    if(unsubExpenses){unsubExpenses();unsubExpenses=null;}
+  }
+});
+
+// ─── REALTIME LISTENERS ───────────────────────────────────────────
+function subscribeData(){
+  unsubTasks = colRef("tasks").orderBy("createdAt","desc").onSnapshot(snap=>{
+    allTasks = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderTasks(); renderDashboard();
+  },e=>console.error("tasks",e));
+
+  unsubExpenses = colRef("expenses").orderBy("date","desc").onSnapshot(snap=>{
+    allExpenses = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderExpenses(); renderDashboard();
+  },e=>console.error("expenses",e));
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────
+document.querySelectorAll(".nav-tab").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".nav-tab").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+    btn.classList.add("active");
+    $("tab-"+btn.dataset.tab).classList.add("active");
+  });
+});
+
+// ─── DASHBOARD ────────────────────────────────────────────────────
+function renderDashboard(){
+  const now=new Date(), m=now.getMonth(), y=now.getFullYear();
+  const visibleTasks = allTasks.filter(t=>t.status!=="deleted");
+  $("stat-open").textContent    = visibleTasks.filter(t=>t.status==="open").length;
+  $("stat-claimed").textContent = visibleTasks.filter(t=>t.status==="claimed").length;
+  $("stat-done").textContent    = visibleTasks.filter(t=>{
+    if(t.status!=="done") return false;
+    const d=tsToDate(t.completedAt); return d&&d.getMonth()===m&&d.getFullYear()===y;
+  }).length;
+  const totalExp = allExpenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  $("stat-expenses").textContent = "₪"+totalExp.toFixed(0);
+
+  const openTasks = allTasks.filter(t=>t.status==="open");
+  const el=$("dashTaskList");
+  if(!openTasks.length){
+    el.innerHTML=`<div class="empty"><div class="icon">🎉</div><p>אין משימות פתוחות!</p></div>`;
+    return;
+  }
+  el.innerHTML = openTasks.map(t=>renderTaskCardHTML(t,true)).join("");
+  openTasks.forEach(t=>attachTaskCardEvents(t,true));
+}
+
+$("btnAddTaskDash").addEventListener("click",()=>openTaskModal());
+
+// ─── TASKS ────────────────────────────────────────────────────────
+$("statusFilters").addEventListener("click",e=>{
+  const btn=e.target.closest(".filter-btn"); if(!btn) return;
+  document.querySelectorAll("#statusFilters .filter-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  activeStatusFilter = btn.dataset.status;
+  renderTasks();
+});
+
+function renderTasks(){
+  const list=$("taskList");
+  let tasks=[...allTasks];
+  if(activeStatusFilter==="all") tasks=tasks.filter(t=>t.status!=="deleted");
+  else tasks=tasks.filter(t=>t.status===activeStatusFilter);
+
+  if(!tasks.length){
+    list.innerHTML=`<div class="empty"><div class="icon">📭</div><p>אין משימות להצגה</p></div>`;
+    return;
+  }
+  list.innerHTML=tasks.map(t=>renderTaskCardHTML(t,false)).join("");
+  tasks.forEach(t=>attachTaskCardEvents(t,false));
+}
+
+function renderTaskCardHTML(t, dashMode){
+  const isDeleted  = t.status==="deleted";
+  const isCancelled= t.status==="cancelled";
+  const isDone     = t.status==="done";
+  const isClaimed  = t.status==="claimed";
+  const isOpen     = t.status==="open";
+
+  const canClaim   = isOpen;
+  const canUnclaim = isClaimed && t.claimedBy===currentUser?.uid;
+  const canDone    = isClaimed && t.claimedBy===currentUser?.uid;
+  const canUndone  = isDone;
+  const canCancel  = (isOpen||isClaimed)&&(t.createdBy===currentUser?.uid||t.claimedBy===currentUser?.uid);
+  const canRestore = isCancelled;
+  const canUndelete= isDeleted;
+
+  const comments   = t.comments||[];
+  const prefix     = dashMode?"d":"t";
+  const uid        = prefix+"-"+t.id;
+
+  let dueLine="";
+  if(t.dueDateStr){
+    dueLine=`<span>📅 ${esc(t.dueDateStr)}${t.dueTimeStr?" ⏰"+esc(t.dueTimeStr):""}</span>`;
+  }
+
+  return `
+  <div class="task-card status-${t.status}" id="card-${uid}">
+    <div class="task-header">
+      <div class="task-title">${TYPE_ICON[t.type]||"📌"} ${esc(t.title)}</div>
+      <div class="task-badges">
+        <span class="badge badge-status-${t.status}">${STATUS_LABEL[t.status]||t.status}</span>
+        <span class="badge badge-type">${TYPE_LABEL[t.type]||t.type}</span>
+      </div>
+    </div>
+    <div class="task-meta">
+      ${dueLine}
+      ${t.addedDateStr?`<span>🗓️ נוסף: ${esc(t.addedDateStr)}</span>`:""}
+      ${isClaimed?`<span>👤 לקח: <strong>${esc(t.claimedByName||"")}</strong></span>`:""}
+      ${isDone?`<span>✅ הושלם ע"י <strong>${esc(t.claimedByName||"")}</strong></span>`:""}
+      ${isDeleted&&t.deletedByName?`<span>🗑️ נמחק ע"י ${esc(t.deletedByName)}</span>`:""}
+    </div>
+    ${t.statusNote?`<div class="task-note">${esc(t.statusNote)}</div>`:""}
+    ${t.followUp?`<div class="task-followup">🔄 המשך הטיפול: ${esc(t.followUp)}</div>`:""}
+    <div class="task-actions">
+      ${canClaim   ?`<button class="btn btn-warning btn-sm" id="claim-${uid}">✋ אני לוקח</button>`:""}
+      ${canUnclaim ?`<button class="btn btn-outline btn-sm" id="unclaim-${uid}">↩️ בטל לקיחה</button>`:""}
+      ${canDone    ?`<button class="btn btn-success btn-sm" id="done-${uid}">✅ סמן הושלם</button>`:""}
+      ${canUndone  ?`<button class="btn btn-gray btn-sm" id="undone-${uid}">↩️ בטל הושלם</button>`:""}
+      ${canCancel  ?`<button class="btn btn-gray btn-sm" id="cancel-${uid}">🚫 בטל משימה</button>`:""}
+      ${canRestore ?`<button class="btn btn-restore btn-sm" id="restore-${uid}">♻️ החזר לפעיל</button>`:""}
+      ${canUndelete?`<button class="btn btn-restore btn-sm" id="undelete-${uid}">♻️ שחזר משימה</button>`:""}
+      ${!isDeleted ?`<button class="btn btn-icon btn-sm" title="עריכה" id="edit-${uid}">✏️</button>`:""}
+      ${!isDeleted ?`<button class="btn btn-icon btn-sm" title="מחיקה" id="del-${uid}" style="color:var(--danger);">🗑️</button>`:""}
+    </div>
+    ${!dashMode&&!isDeleted?`
+    <div class="comments-section">
+      <strong style="font-size:.78rem;color:var(--text2);">💬 הערות (${comments.length})</strong>
+      ${comments.map(c=>`<div class="comment"><strong>${esc(c.name)}</strong>: ${esc(c.text)} <span style="color:var(--text2);font-size:.73rem;">· ${c.date||""}</span></div>`).join("")}
+      <div class="comment-input-row">
+        <input type="text" id="ci-${uid}" placeholder="הוסף הערה..."/>
+        <button class="btn btn-outline btn-sm" id="cs-${uid}">שלח</button>
+      </div>
+    </div>`:""}
+  </div>`;
+}
+
+function attachTaskCardEvents(t, dashMode){
+  const prefix = dashMode?"d":"t";
+  const uid    = prefix+"-"+t.id;
+  const get    = id=>document.getElementById(id);
+  if(get("claim-"+uid))    get("claim-"+uid).onclick    = ()=>claimTask(t.id);
+  if(get("unclaim-"+uid))  get("unclaim-"+uid).onclick  = ()=>unclaimTask(t.id);
+  if(get("done-"+uid))     get("done-"+uid).onclick     = ()=>completeTask(t.id);
+  if(get("undone-"+uid))   get("undone-"+uid).onclick   = ()=>undoneTask(t.id);
+  if(get("cancel-"+uid))   get("cancel-"+uid).onclick   = ()=>cancelTask(t.id);
+  if(get("restore-"+uid))  get("restore-"+uid).onclick  = ()=>restoreTask(t.id);
+  if(get("undelete-"+uid)) get("undelete-"+uid).onclick = ()=>undeleteTask(t.id);
+  if(get("edit-"+uid))     get("edit-"+uid).onclick     = ()=>openTaskModal(t);
+  if(get("del-"+uid))      get("del-"+uid).onclick      = ()=>deleteTask(t.id);
+  if(get("cs-"+uid))       get("cs-"+uid).onclick       = ()=>{
+    const inp=get("ci-"+uid); addComment(t.id,inp.value); inp.value="";
+  };
+}
+
+// ─── TASK ACTIONS ─────────────────────────────────────────────────
+async function claimTask(id){
+  try{
+    await colRef("tasks").doc(id).update({
+      status:"claimed",
+      claimedBy:currentUser.uid,
+      claimedByName:currentUser.displayName||currentUser.email,
+      claimedAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast("✅ לקחת את המשימה!","success");
+  }catch(e){toast("שגיאה: "+e.message,"error");}
+}
+
+async function unclaimTask(id){
+  if(!confirm("לבטל את לקיחת המשימה?")) return;
+  try{
+    await colRef("tasks").doc(id).update({
+      status:"open",claimedBy:null,claimedByName:null,claimedAt:null
+    });
+    toast("↩️ ביטול לקיחה בוצע");
+  }catch(e){toast("שגיאה: "+e.message,"error");}
+}
+
+async function completeTask(id){
+  try{
+    await colRef("tasks").doc(id).update({
+      status:"done",completedAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast("🎉 משימה הושלמה!","success");
+  }catch(e){toast("שגיאה: "+e.message,"error");}
+}
+
+async function undoneTask(id){
+  if(!confirm("לבטל את סימון ההשלמה ולהחזיר למצב פעיל?")) return;
+  try{
+    const t=allTasks.find(x=>x.id===id);
+    const newStatus = (t&&t.claimedBy) ? "claimed" : "open";
+    await colRef("tasks").doc(id).update({status:newStatus,completedAt:null});
+    toast("↩️ המשימה הוחזרה למצב פעיל");
+  }catch(e){toast("שגיאה: "+e.message,"error");}
+}
+
+async function cancelTask(id){
+  if(!confirm("לבטל את המשימה?")) return;
+  try{
+    await colRef("tasks").doc(id).update({status:"cancelled",claimedBy:null,claimedByName:null,claimedAt:null});
+    toast("🚫 המשימה בוטלה");
+  }catch(e){toast("שגיאה: "+e.message,"error");}
+}
+
+async function restoreTask(id){
+  try{
+    await colRef("tasks").doc(id).update({status:"open"});
+    toast("♻️ המשימה הוחזרה לפעיל","success");
+  }catch(e){toast("שגיאה: "+e.message,"error");}
+}
+
+async function deleteTask(id){
+  if(!confirm("המשימה תועבר לפח המיחזור. להמשיך?")) return;
+  try{
+    await colRef("tasks").doc(id).update({
+      status:"deleted",
+      deletedAt:firebase.firestore.FieldValue.serverTimestamp(),
+      deletedBy:currentUser.uid,
+      deletedByName:currentUser.displayName||currentUser.email
+    });
+    toast("🗑️ המשימה הועברה לפח המיחזור");
+  }catch(e){toast("שגיאה: "+e.message,"error");}
+}
+
+async function undeleteTask(id){
+  try{
+    await colRef("tasks").doc(id).update({status:"open",deletedAt:null,deletedBy:null,deletedByName:null});
+    toast("♻️ המשימה שוחזרה!","success");
+  }catch(e){toast("שגיאה: "+e.message,"error");}
+}
+
+async function addComment(taskId, text){
+  if(!text.trim()) return;
+  const task=allTasks.find(t=>t.id===taskId); if(!task) return;
+  const comments=[...(task.comments||[]),{
+    uid:currentUser.uid,
+    name:currentUser.displayName||currentUser.email,
+    text:text.trim(),
+    date:new Date().toLocaleDateString("he-IL")
+  }];
+  try{
+    await colRef("tasks").doc(taskId).update({comments});
+    toast("💬 הערה נוספה","success");
+  }catch(e){toast("שגיאה: "+e.message,"error");}
+}
+
+// ─── TASK MODAL ───────────────────────────────────────────────────
+function openTaskModal(task=null){
+  editingTaskId = task?task.id:null;
+  $("taskModalTitle").textContent = task?"עריכת משימה":"משימה חדשה";
+  $("tTitle").value       = task?.title      ||"";
+  $("tType").value        = task?.type       ||"visit";
+  $("tStatusNote").value  = task?.statusNote ||"";
+  $("tFollowUp").value    = task?.followUp   ||"";
+  $("tAddedDate").value   = task?.addedDateStr||todayStr();
+  $("tDueDate").value     = task?.dueDateStr ||"";
+  $("tDueTime").value     = task?.dueTimeStr ||"";
+  $("taskModal").classList.add("open");
+}
+function closeTaskModal(){ $("taskModal").classList.remove("open"); editingTaskId=null; }
+
+$("btnAddTask").addEventListener("click",()=>openTaskModal());
+$("closeTaskModal").addEventListener("click",closeTaskModal);
+$("cancelTaskModal").addEventListener("click",closeTaskModal);
+
+$("saveTaskBtn").addEventListener("click",async()=>{
+  const title=$("tTitle").value.trim();
+  if(!title){toast("נא להזין כותרת","error");return;}
+  const data={
+    title,
+    type:        $("tType").value,
+    statusNote:  $("tStatusNote").value.trim(),
+    followUp:    $("tFollowUp").value.trim(),
+    addedDateStr:$("tAddedDate").value||todayStr(),
+    dueDateStr:  $("tDueDate").value||"",
+    dueTimeStr:  $("tDueTime").value||"",
+    updatedAt:   firebase.firestore.FieldValue.serverTimestamp()
+  };
+  try{
+    if(editingTaskId){
+      await colRef("tasks").doc(editingTaskId).update(data);
+      toast("✏️ המשימה עודכנה","success");
+    } else {
+      data.status       ="open";
+      data.createdBy    =currentUser.uid;
+      data.createdByName=currentUser.displayName||currentUser.email;
+      data.createdAt    =firebase.firestore.FieldValue.serverTimestamp();
+      data.comments     =[];
+      data.claimedBy    =null;
+      data.claimedByName=null;
+      await colRef("tasks").add(data);
+      toast("✅ משימה חדשה נוצרה!","success");
+    }
+    closeTaskModal();
+  }catch(e){toast("שגיאה: "+e.message,"error");}
+});
+
+// ─── EXPENSES ─────────────────────────────────────────────────────
+function renderExpenses(){
+  const list=$("expenseList");
+  if(!allExpenses.length){
+    list.innerHTML=`<div class="empty"><div class="icon">💸</div><p>אין הוצאות רשומות</p></div>`;
+  } else {
+    list.innerHTML=allExpenses.map(e=>`
+      <div class="expense-card">
+        <div class="expense-amount">₪${parseFloat(e.amount||0).toFixed(0)}</div>
+        <div class="expense-info">
+          <div class="title">${esc(e.description)}</div>
+          <div class="meta">שילם: <strong>${esc(e.paidByName)}</strong> · ${e.date?fmtDate(e.date):""}</div>
+          ${e.taskTitle?`<div class="meta">🔗 ${esc(e.taskTitle)}</div>`:""}
+        </div>
+        <button class="btn btn-icon btn-sm" onclick="deleteExpense('${e.id}')" style="color:var(--danger);">🗑️</button>
+      </div>`).join("");
+  }
+
+  const paid={}, members=new Set();
+  let total=0;
+  allExpenses.forEach(e=>{
+    const n=e.paidByName||"לא ידוע";
+    members.add(n);
+    paid[n]=(paid[n]||0)+(parseFloat(e.amount)||0);
+    total+=parseFloat(e.amount)||0;
+  });
+  const mArr=[...members];
+  const share=mArr.length?total/mArr.length:0;
+
+  const balEl=$("balanceSummary");
+  if(!mArr.length){balEl.innerHTML=`<div style="color:var(--text2);font-size:.85rem;">אין הוצאות</div>`;$("settleList").innerHTML="";return;}
+  balEl.innerHTML=`
+    <div class="balance-row" style="font-weight:700;background:var(--bg);border-radius:6px;padding:8px 12px;margin-bottom:8px;">
+      <span>סה"כ</span><span>₪${total.toFixed(0)}</span>
+    </div>
+    <div class="balance-row" style="font-size:.8rem;">
+      <span>חלק לאדם (${mArr.length})</span><span>₪${share.toFixed(2)}</span>
+    </div>
+    ${mArr.map(n=>{
+      const diff=paid[n]-share;
+      const cls=diff>0?"balance-pos":diff<0?"balance-neg":"";
+      return `<div class="balance-row"><span>${esc(n)}</span>
+        <div><span style="color:var(--text2);font-size:.8rem;">שילם ₪${(paid[n]||0).toFixed(0)} </span>
+        <span class="${cls}">${diff>=0?"+ ":""}₪${Math.abs(diff).toFixed(0)}</span></div></div>`;
+    }).join("")}`;
+
+  const balances={};
+  mArr.forEach(n=>{balances[n]=(paid[n]||0)-share;});
+  const debtors  =mArr.filter(n=>balances[n]<-0.01).map(n=>({name:n,amt:-balances[n]}));
+  const creditors=mArr.filter(n=>balances[n]> 0.01).map(n=>({name:n,amt: balances[n]}));
+  const d=[...debtors],c=[...creditors];
+  const settlements=[]; let di=0,ci=0;
+  while(di<d.length&&ci<c.length){
+    const pay=Math.min(d[di].amt,c[ci].amt);
+    if(pay>0.01) settlements.push(`${d[di].name} חייב ל-${c[ci].name}: ₪${pay.toFixed(0)}`);
+    d[di].amt-=pay; c[ci].amt-=pay;
+    if(d[di].amt<0.01)di++; if(c[ci].amt<0.01)ci++;
+  }
+  $("settleList").innerHTML=settlements.length
+    ?settlements.map(s=>`<div class="settle-item">💸 ${esc(s)}</div>`).join("")
+    :`<div style="color:var(--success);font-weight:600;">✅ הכל מאוזן!</div>`;
+}
+
+async function deleteExpense(id){
+  if(!confirm("למחוק הוצאה זו?")) return;
+  try{await colRef("expenses").doc(id).delete();toast("🗑️ ההוצאה נמחקה","success");}
+  catch(e){toast("שגיאה: "+e.message,"error");}
+}
+
+$("btnAddExpense").addEventListener("click",()=>{
+  $("eAmount").value=""; $("eDate").value=todayStr(); $("eDesc").value="";
+  const sel=$("eTaskLink");
+  sel.innerHTML=`<option value="">— ללא קישור —</option>`
+    +allTasks.filter(t=>t.status!=="deleted").map(t=>`<option value="${t.id}">${esc(t.title)}</option>`).join("");
+  $("expenseModal").classList.add("open");
+});
+$("closeExpenseModal").addEventListener("click",()=>$("expenseModal").classList.remove("open"));
+$("cancelExpenseModal").addEventListener("click",()=>$("expenseModal").classList.remove("open"));
+
+$("saveExpenseBtn").addEventListener("click",async()=>{
+  const amount=parseFloat($("eAmount").value), desc=$("eDesc").value.trim(), date=$("eDate").value;
+  if(!amount||!desc||!date){toast("נא למלא את כל השדות","error");return;}
+  const taskId=$("eTaskLink").value;
+  const task=taskId?allTasks.find(t=>t.id===taskId):null;
+  try{
+    await colRef("expenses").add({
+      amount,description:desc,date:new Date(date),
+      paidBy:currentUser.uid,paidByName:currentUser.displayName||currentUser.email,
+      taskId:taskId||null,taskTitle:task?.title||null,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    $("expenseModal").classList.remove("open");
+    toast("💰 הוצאה נשמרה!","success");
+  }catch(e){toast("שגיאה: "+e.message,"error");}
+});
+
+// ─── EXCEL EXPORT ─────────────────────────────────────────────────
+function buildExcelBlob(){
+  const wb=XLSX.utils.book_new();
+
+  // Tasks sheet
+  const taskRows=allTasks.filter(t=>t.status!=="deleted").map(t=>({
+    "כותרת":t.title||"",
+    "סוג":TYPE_LABEL[t.type]||t.type||"",
+    "סטטוס (הערה)":t.statusNote||"",
+    "המשך הטיפול":t.followUp||"",
+    "תאריך הוספה":t.addedDateStr||"",
+    "תאריך משימה":t.dueDateStr||"",
+    "שעת משימה":t.dueTimeStr||"",
+    "מצב":STATUS_LABEL[t.status]||t.status||"",
+    "נלקח ע\"י":t.claimedByName||"",
+    "הועלה ע\"י":t.createdByName||""
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(taskRows.length?taskRows:[{"כותרת":""}]), "משימות");
+
+  // Expenses sheet
+  const expRows=allExpenses.map(e=>({
+    "תיאור":e.description||"",
+    "סכום (₪)":parseFloat(e.amount)||0,
+    "תאריך":e.date?fmtDate(e.date):"",
+    "שילם":e.paidByName||"",
+    "משימה קשורה":e.taskTitle||""
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(expRows.length?expRows:[{"תיאור":""}]), "הוצאות");
+
+  return XLSX.write(wb,{bookType:"xlsx",type:"array"});
+}
+
+function downloadExcel(arr, filename){
+  const blob=new Blob([arr],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download=filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+$("btnExport").addEventListener("click",()=>{
+  try{ downloadExcel(buildExcelBlob(),"meshpaha_beyachad.xlsx"); toast("📤 הייצוא הצליח!","success"); }
+  catch(e){ toast("שגיאת ייצוא: "+e.message,"error"); }
+});
+$("btnExportExpenses").addEventListener("click",()=>{
+  try{ downloadExcel(buildExcelBlob(),"meshpaha_beyachad.xlsx"); toast("📤 הייצוא הצליח!","success"); }
+  catch(e){ toast("שגיאת ייצוא: "+e.message,"error"); }
+});
+
+// ─── EXCEL TEMPLATE ───────────────────────────────────────────────
+$("btnTemplate").addEventListener("click",()=>{
+  const wb=XLSX.utils.book_new();
+  const sample=[{
+    "כותרת":"ביקור אצל הרופא",
+    "סוג":"ביקור",
+    "סטטוס (הערה)":"תור נקבע",
+    "המשך הטיפול":"לבדוק תוצאות בדיקות",
+    "תאריך הוספה":"2026-06-26",
+    "תאריך משימה":"2026-07-01",
+    "שעת משימה":"10:00"
+  }];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(sample),"משימות");
+  downloadExcel(XLSX.write(wb,{bookType:"xlsx",type:"array"}),"template_mishimot.xlsx");
+  toast("📋 תבנית הורדה","success");
+});
+
+// ─── EXCEL IMPORT ─────────────────────────────────────────────────
+const TYPE_MAP_HE={"ביקור":"visit","קניות":"shopping","סידור":"errand","רפואי":"medical","אחר":"other"};
+
+function excelDateToStr(val){
+  if(!val) return "";
+  if(val instanceof Date){
+    const y=val.getFullYear(), m=String(val.getMonth()+1).padStart(2,"0"), d=String(val.getDate()).padStart(2,"0");
+    return `${y}-${m}-${d}`;
+  }
+  if(typeof val==="number"){
+    const d=new Date(Math.round((val-25569)*86400*1000));
+    const y=d.getUTCFullYear(), mo=String(d.getUTCMonth()+1).padStart(2,"0"), day=String(d.getUTCDate()).padStart(2,"0");
+    return `${y}-${mo}-${day}`;
+  }
+  return String(val).trim();
+}
+
+$("importFile").addEventListener("change",async(ev)=>{
+  const file=ev.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=async(e)=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:"array",cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:""});
+      if(!rows.length){toast("הגיליון ריק","error");return;}
+      let added=0;
+      const batch=db.batch();
+      rows.forEach(row=>{
+        const title=String(row["כותרת"]||"").trim(); if(!title) return;
+        const typeHe=String(row["סוג"]||"").trim();
+        const ref=colRef("tasks").doc();
+        batch.set(ref,{
+          title,
+          type:TYPE_MAP_HE[typeHe]||"other",
+          statusNote:String(row["סטטוס (הערה)"]||"").trim(),
+          followUp:String(row["המשך הטיפול"]||"").trim(),
+          addedDateStr:excelDateToStr(row["תאריך הוספה"])||todayStr(),
+          dueDateStr:excelDateToStr(row["תאריך משימה"]),
+          dueTimeStr:String(row["שעת משימה"]||"").trim(),
+          status:"open",
+          createdBy:currentUser.uid,
+          createdByName:currentUser.displayName||currentUser.email,
+          createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+          comments:[],claimedBy:null,claimedByName:null
+        });
+        added++;
+      });
+      await batch.commit();
+      toast(`📥 יובאו ${added} משימות!`,"success");
+    }catch(err){toast("שגיאת ייבוא: "+err.message,"error");}
+    ev.target.value="";
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+// ─── CLOSE MODALS ON OVERLAY CLICK ───────────────────────────────
+document.querySelectorAll(".modal-overlay").forEach(el=>{
+  el.addEventListener("click",e=>{ if(e.target===el) el.classList.remove("open"); });
+});
+</script>
+</body>
+</html>
