@@ -1510,32 +1510,38 @@
                     pVat += vat;
                     pTotal += totalGross;
                     
-                    wsData.push([
-                        client ? client.name : '-',
-                        project ? project.name : '-',
-                        entry.description || '',
-                        new Date(entry.startDate).toLocaleDateString('he-IL'),
-                        entry.startTime,
-                        new Date(entry.endDate).toLocaleDateString('he-IL'),
-                        entry.endTime,
-                        formatSeconds(entry.durationSeconds, true),
-                        entry.durationDec.toFixed(2),
-                        rate,
-                        billNet.toFixed(2),
-                        vat.toFixed(2),
-                        totalGross.toFixed(2),
-                        entry.invoiceReqNum || '',
-                        entry.invoiceReceiptNum || ''
-                    ]);
+					wsData.push([
+						client ? client.name : '-',
+						project ? project.name : '-',
+						entry.description || '',
+						new Date(entry.startDate).toLocaleDateString('he-IL'),
+						entry.startTime,
+						new Date(entry.endDate).toLocaleDateString('he-IL'),
+						entry.endTime,
+						formatSeconds(entry.durationSeconds, true), // נשאר טקסט לתצוגה בלבד
+						Number(entry.durationDec.toFixed(2)),       // תוקן למספר
+						rate,
+						Number(billNet.toFixed(2)),                 // תוקן למספר
+						Number(vat.toFixed(2)),                     // תוקן למספר
+						Number(totalGross.toFixed(2)),              // תוקן למספר
+						entry.invoiceReqNum || '',
+						entry.invoiceReceiptNum || ''
+					]);
                 });
                 
                 grandDec += pDec; grandBill += pBill; grandVat += pVat; grandTotal += pTotal;
                 
-                wsData.push(["", "סה\"כ לפרויקט:", "", "", "", "", "", "", pDec.toFixed(2), "", pBill.toFixed(2), pVat.toFixed(2), pTotal.toFixed(2), "", ""]);
+                // wsData.push(["", "סה\"כ לפרויקט:", "", "", "", "", "", "", pDec.toFixed(2), "", pBill.toFixed(2), pVat.toFixed(2), pTotal.toFixed(2), "", ""]);
+				
+				wsData.push(["", "סה\"כ לפרויקט:", "", "", "", "", "", "", Number(pDec.toFixed(2)), "", Number(pBill.toFixed(2)), Number(pVat.toFixed(2)), Number(pTotal.toFixed(2)), "", ""]);
+				
             }
             
             wsData.push([]);
-            wsData.push(["סה\"כ עבודה כולל:", "", "", "", "", "", "", "", grandDec.toFixed(2), "", grandBill.toFixed(2), grandVat.toFixed(2), grandTotal.toFixed(2), "", ""]);
+//            wsData.push(["סה\"כ עבודה כולל:", "", "", "", "", "", "", "", grandDec.toFixed(2), "", grandBill.toFixed(2), grandVat.toFixed(2), grandTotal.toFixed(2), "", ""]);
+			
+			wsData.push(["סה\"כ עבודה כולל:", "", "", "", "", "", "", "", Number(grandDec.toFixed(2)), "", Number(grandBill.toFixed(2)), Number(grandVat.toFixed(2)), Number(grandTotal.toFixed(2)), "", ""]);
+			
             wsData.push([]);
             wsData.push([]);
 
@@ -1564,11 +1570,12 @@
                         entry.startTime,
                         entry.travelKm,
                         kmRate,
-                        net.toFixed(2),
-                        gross.toFixed(2)
+						Number(net.toFixed(2)),    // תוקן
+                        Number(gross.toFixed(2))   // תוקן
                     ]);
                 });
-                wsData.push(["סה\"כ נסיעות:", "", "", "", "", "", "", tGrandNet.toFixed(2), tGrandGross.toFixed(2)]);
+ //               wsData.push(["סה\"כ נסיעות:", "", "", "", "", "", "", tGrandNet.toFixed(2), tGrandGross.toFixed(2)]);
+					wsData.push(["סה\"כ נסיעות:", "", "", "", "", "", "", Number(tGrandNet.toFixed(2)), Number(tGrandGross.toFixed(2))]);
             }
 
             const ws = XLSX.utils.aoa_to_sheet(wsData);
