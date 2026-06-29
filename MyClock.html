@@ -1597,53 +1597,7 @@
         }
 
 
-// ... (שורות אחרונות של פונקציית exportToExcel הקיימת שלך)
-            XLSX.writeFile(wb, `TimeTracker_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
-            showToast("דוח מקצועי הופק בהצלחה!");
- 
 
-
-        window.saveBulkInvoiceEdit = async (selectedEntryIds, invoiceReqNum, invoiceReceiptNum) => {
-            if (!selectedEntryIds || selectedEntryIds.length === 0) {
-                showToast("לא נבחרו רשומות לעריכה");
-                return;
-            }
-
-            const updateData = {};
-            if (invoiceReqNum.trim() !== "") updateData.invoiceReqNum = invoiceReqNum.trim();
-            if (invoiceReceiptNum.trim() !== "") updateData.invoiceReceiptNum = invoiceReceiptNum.trim();
-
-            if (Object.keys(updateData).length === 0) {
-                showToast("לא הוכנסו נתונים לעדכון");
-                return;
-            }
-
-            try {
-                const chunkSize = 500;
-                for (let i = 0; i < selectedEntryIds.length; i += chunkSize) {
-                    const chunk = selectedEntryIds.slice(i, i + chunkSize);
-                    const batch = writeBatch(db);
-                    
-                    chunk.forEach(id => {
-                        const docRef = doc(db, 'artifacts', appId, 'users', userId, 'entries', id);
-                        batch.update(docRef, updateData);
-                    });
-                    
-                    await batch.commit();
-                }
-                showToast(`עודכנו בהצלחה ${selectedEntryIds.length} רשומות עבודה`);
-            } catch (error) {
-                console.error("Error in bulk update:", error);
-                showToast("שגיאה בעדכון מרוכז של הרשומות.");
-            }
-        };
-
-        // ==========================================
-        // זו פונקציית formatSeconds הקיימת שלך (אל תיגע בה, היא רק נקודת ציון)
-        // ==========================================
-        function formatSeconds(sec, hideSeconds = false) {
-            const h = String(Math.floor(sec / 3600)).padStart(2, '0');
-            // ... המשך הקוד שלך
 
 
 
