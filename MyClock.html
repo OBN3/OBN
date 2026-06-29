@@ -1589,17 +1589,68 @@
             showToast("דוח מקצועי הופק בהצלחה!");
         };
 
+
+
+// ... (שורות אחרונות של פונקציית exportToExcel הקיימת שלך)
+            XLSX.writeFile(wb, `TimeTracker_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+            showToast("דוח מקצועי הופק בהצלחה!");
+        }; // <--- כאן נסגרת פונקציית האקסל הקיימת שלך
+
+        // ==========================================
+        // כאן בדיוק תדביק את הפונקציה החדשה של ה-Bulk Edit:
+        // ==========================================
+        window.saveBulkInvoiceEdit = async (selectedEntryIds, invoiceReqNum, invoiceReceiptNum) => {
+            if (!selectedEntryIds || selectedEntryIds.length === 0) {
+                showToast("לא נבחרו רשומות לעריכה");
+                return;
+            }
+
+            const updateData = {};
+            if (invoiceReqNum.trim() !== "") updateData.invoiceReqNum = invoiceReqNum.trim();
+            if (invoiceReceiptNum.trim() !== "") updateData.invoiceReceiptNum = invoiceReceiptNum.trim();
+
+            if (Object.keys(updateData).length === 0) {
+                showToast("לא הוכנסו נתונים לעדכון");
+                return;
+            }
+
+            try {
+                const chunkSize = 500;
+                for (let i = 0; i < selectedEntryIds.length; i += chunkSize) {
+                    const chunk = selectedEntryIds.slice(i, i + chunkSize);
+                    const batch = writeBatch(db);
+                    
+                    chunk.forEach(id => {
+                        const docRef = doc(db, 'artifacts', appId, 'users', userId, 'entries', id);
+                        batch.update(docRef, updateData);
+                    });
+                    
+                    await batch.commit();
+                }
+                showToast(`עודכנו בהצלחה ${selectedEntryIds.length} רשומות עבודה`);
+            } catch (error) {
+                console.error("Error in bulk update:", error);
+                showToast("שגיאה בעדכון מרוכז של הרשומות.");
+            }
+        };
+
+        // ==========================================
+        // זו פונקציית formatSeconds הקיימת שלך (אל תיגע בה, היא רק נקודת ציון)
+        // ==========================================
+        function formatSeconds(sec, hideSeconds = false) {
+            const h = String(Math.floor(sec / 3600)).padStart(2, '0');
+            // ... המשך הקוד שלך
+
+
+
+
+
         function formatSeconds(sec, hideSeconds = false) {
             const h = String(Math.floor(sec / 3600)).padStart(2, '0');
             const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
             const s = String(sec % 60).padStart(2, '0');
             return hideSeconds ? `${h}:${m}` : `${h}:${m}:${s}`;
         }
-
-
-
-
-
 
 
         window.switchTab = (tabId) => {
