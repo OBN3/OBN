@@ -1600,11 +1600,9 @@
 // ... (שורות אחרונות של פונקציית exportToExcel הקיימת שלך)
             XLSX.writeFile(wb, `TimeTracker_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
             showToast("דוח מקצועי הופק בהצלחה!");
-        }; // <--- כאן נסגרת פונקציית האקסל הקיימת שלך
+        }; 
 
-        // ==========================================
-        // כאן בדיוק תדביק את הפונקציה החדשה של ה-Bulk Edit:
-        // ==========================================
+
         window.saveBulkInvoiceEdit = async (selectedEntryIds, invoiceReqNum, invoiceReceiptNum) => {
             if (!selectedEntryIds || selectedEntryIds.length === 0) {
                 showToast("לא נבחרו רשומות לעריכה");
