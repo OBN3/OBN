@@ -63,7 +63,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 .stat-card.info{border-right-color:var(--info);}
 .stat-num{font-size:2rem;font-weight:800;}.stat-label{font-size:.85rem;color:var(--text2);font-weight:500;}
 
-/* PATIENT INFO CARD (NEW) */
+/* PATIENT INFO CARD */
 .patient-card{background:var(--surface);border-radius:var(--radius);padding:20px;
   box-shadow:var(--shadow-sm);margin-bottom:28px;border-top:4px solid var(--info);}
 .patient-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:16px;}
@@ -73,11 +73,12 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 .info-item{font-size:.85rem;margin-bottom:8px;display:flex;flex-direction:column;gap:2px;}
 .info-item:last-child{margin-bottom:0;}
 .info-label{color:var(--text2);font-weight:600;font-size:.75rem;}
-.info-val{color:var(--text);font-weight:500;min-height:20px;cursor:pointer;transition:color .2s;}
+.info-val{color:var(--text);font-weight:500;min-height:20px;cursor:pointer;transition:color .2s; white-space:pre-wrap; word-break:break-word;}
 .info-val:hover{color:var(--primary);}
 .blur-reveal{filter:blur(5px);transition:.2s;user-select:none;}
 .blur-reveal:hover{filter:blur(0);}
 .empty-val{color:#94a3b8;font-style:italic;}
+.patient-card-header-hover:hover{opacity:0.8;}
 
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--radius-sm);
@@ -197,6 +198,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 </head>
 <body>
 
+<!-- LOGIN -->
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-icon">&#128106;</div>
@@ -209,6 +211,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </div>
 </div>
 
+<!-- APP -->
 <div id="app">
   <header>
     <h1>&#128106; משפחה ביחד</h1>
@@ -225,6 +228,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </nav>
   <main>
 
+    <!-- DASHBOARD -->
     <div id="tab-dashboard" class="section active">
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-num" id="stat-open">&#8212;</div><div class="stat-label">משימות פתוחות</div></div>
@@ -233,16 +237,26 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
         <div class="stat-card info"><div class="stat-num" id="stat-expenses">&#8212;</div><div class="stat-label">סה"כ הוצאות (&#8362;)</div></div>
       </div>
       
+      <!-- PATIENT INFO CARD -->
       <div class="patient-card" id="patientCard">
-        <div class="section-header">
-          <h2>&#128100; פרטי המטופל ומידע חיוני</h2>
-          <button class="btn btn-outline btn-sm" id="btnEditPatient">&#9999;&#65039; ערוך פרטים</button>
+        <div class="section-header patient-card-header-hover" id="patientCardHeader" style="cursor:pointer; user-select:none; margin-bottom:0;" title="לחץ לפתיחה וסגירה">
+          <h2>
+            &#128100; פרטי המטופל ומידע חיוני
+            <span class="toggle-icon" id="patientToggleIcon" style="font-size:.9rem; margin-right:8px; display:inline-block; transition:transform 0.3s;">&#9660;</span>
+            <span style="font-size:0.75rem; font-weight:normal; color:var(--text2); margin-right:5px;">(לחץ לפתיחה וסגירה)</span>
+          </h2>
+          <button class="btn btn-outline btn-sm" id="btnEditPatient" onclick="event.stopPropagation()">&#9999;&#65039; ערוך פרטים</button>
         </div>
-        <div style="font-size:0.75rem; color:var(--text2); margin-top:-5px; margin-bottom:10px;">
-          טיפ: לחץ על כל נתון כדי להעתיק אותו ללוח. סיסמאות מוסתרות – רחף מעליהן כדי לראות.
-        </div>
-        <div class="patient-grid" id="patientInfoGrid">
+        
+        <!-- CONTENT (COLLAPSIBLE) -->
+        <div class="patient-content" id="patientCardContent" style="display:none; margin-top:14px;">
+          <div style="font-size:0.75rem; color:var(--text2); margin-top:-5px; margin-bottom:10px;">
+            טיפ: לחץ על כל נתון כדי להעתיק אותו ללוח. סיסמאות מוסתרות – רחף מעליהן כדי לראות.
           </div>
+          <div class="patient-grid" id="patientInfoGrid">
+            <!-- Populated by JS -->
+          </div>
+        </div>
       </div>
 
       <div class="section-header">
@@ -252,6 +266,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
       <div id="dashTaskList" class="task-list"></div>
     </div>
 
+    <!-- TASKS -->
     <div id="tab-tasks" class="section">
       <div class="toolbar">
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
@@ -276,6 +291,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
       <div class="task-list" id="taskList"></div>
     </div>
 
+    <!-- EXPENSES -->
     <div id="tab-expenses" class="section">
       <div class="section-header">
         <h2>&#128176; הוצאות ומאזן</h2>
@@ -299,6 +315,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </main>
 </div>
 
+<!-- PATIENT INFO MODAL -->
 <div class="modal-overlay" id="patientModal">
   <div class="modal large">
     <button class="close-modal" id="closePatientModal">&#10005;</button>
@@ -351,6 +368,30 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
       <div class="form-group"><label>סיסמה באתר הבנק</label><input type="text" id="pBnkPass"/></div>
     </div>
 
+    <div class="modal-section-title">&#128221; מידע חופשי</div>
+    <p style="font-size:0.8rem; color:var(--text2); margin-bottom:10px;">ניתן להגדיר כותרת מותאמת אישית לכל תיבה (למשל: "אלרגיות", "קוד כניסה לבניין")</p>
+    
+    <div class="form-group" style="background:var(--surface2); padding:10px; border-radius:8px; border:1px solid var(--border);">
+      <input type="text" id="pGenTitle1" placeholder="כותרת מידע 1 (ברירת מחדל: מידע חופשי 1)" style="font-weight:bold; margin-bottom:6px; background:#fff; border:1px solid var(--border);"/>
+      <textarea id="pGen1" placeholder="תוכן..."></textarea>
+    </div>
+    <div class="form-group" style="background:var(--surface2); padding:10px; border-radius:8px; border:1px solid var(--border);">
+      <input type="text" id="pGenTitle2" placeholder="כותרת מידע 2 (ברירת מחדל: מידע חופשי 2)" style="font-weight:bold; margin-bottom:6px; background:#fff; border:1px solid var(--border);"/>
+      <textarea id="pGen2" placeholder="תוכן..."></textarea>
+    </div>
+    <div class="form-group" style="background:var(--surface2); padding:10px; border-radius:8px; border:1px solid var(--border);">
+      <input type="text" id="pGenTitle3" placeholder="כותרת מידע 3 (ברירת מחדל: מידע חופשי 3)" style="font-weight:bold; margin-bottom:6px; background:#fff; border:1px solid var(--border);"/>
+      <textarea id="pGen3" placeholder="תוכן..."></textarea>
+    </div>
+    <div class="form-group" style="background:var(--surface2); padding:10px; border-radius:8px; border:1px solid var(--border);">
+      <input type="text" id="pGenTitle4" placeholder="כותרת מידע 4 (ברירת מחדל: מידע חופשי 4)" style="font-weight:bold; margin-bottom:6px; background:#fff; border:1px solid var(--border);"/>
+      <textarea id="pGen4" placeholder="תוכן..."></textarea>
+    </div>
+    <div class="form-group" style="background:var(--surface2); padding:10px; border-radius:8px; border:1px solid var(--border);">
+      <input type="text" id="pGenTitle5" placeholder="כותרת מידע 5 (ברירת מחדל: מידע חופשי 5)" style="font-weight:bold; margin-bottom:6px; background:#fff; border:1px solid var(--border);"/>
+      <textarea id="pGen5" placeholder="תוכן..."></textarea>
+    </div>
+
     <div class="modal-actions">
       <button class="btn btn-gray" id="cancelPatientModal">ביטול</button>
       <button class="btn btn-primary" id="savePatientBtn">&#128190; שמור פרטים</button>
@@ -358,6 +399,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </div>
 </div>
 
+<!-- TASK MODAL -->
 <div class="modal-overlay" id="taskModal">
   <div class="modal">
     <button class="close-modal" id="closeTaskModal">&#10005;</button>
@@ -412,6 +454,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </div>
 </div>
 
+<!-- EXPENSE MODAL -->
 <div class="modal-overlay" id="expenseModal">
   <div class="modal">
     <button class="close-modal" id="closeExpenseModal">&#10005;</button>
@@ -443,6 +486,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 
 <div id="toastContainer"></div>
 
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -499,7 +543,7 @@ function copyToClip(text) {
     toast("שגיאה בהעתקה", "error");
   });
 }
-window.copyToClip = copyToClip; // לחשיפה לפונקציות גלובליות
+window.copyToClip = copyToClip;
 
 function esc(s){ return s ? String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") : ""; }
 function initials(n){ return n ? n.split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2) : "?"; }
@@ -576,6 +620,19 @@ document.querySelectorAll(".nav-tab").forEach(btn=>{
   });
 });
 
+// PATIENT COLLAPSE TOGGLE
+$("patientCardHeader").addEventListener("click", () => {
+  const content = $("patientCardContent");
+  const icon = $("patientToggleIcon");
+  if (content.style.display === "none") {
+    content.style.display = "block";
+    icon.style.transform = "rotate(180deg)";
+  } else {
+    content.style.display = "none";
+    icon.style.transform = "rotate(0deg)";
+  }
+});
+
 // PATIENT DATA
 function renderPatientCard() {
   const grid = $("patientInfoGrid");
@@ -584,17 +641,15 @@ function renderPatientCard() {
     const valClass = val ? "info-val" : "info-val empty-val";
     const displayVal = val ? esc(val) : "לא הוזן";
     const extraClass = isSecret && val ? " blur-reveal" : "";
-    
-    // מוסיף אירוע העתקה במידה ויש ערך
     const clickEvt = val ? `onclick="copyToClip('${esc(val).replace(/'/g,"\\'").replace(/"/g,"&quot;")}')"` : "";
 
     return `<div class="info-item">
               <span class="info-label">${label}</span>
-              <span class="${valClass}${extraClass}" ${clickEvt} title="לחץ להעתקה">${displayVal}</span>
+              <span class="${valClass}${extraClass}" ${clickEvt} title="${val?'לחץ להעתקה':''}">${displayVal}</span>
             </div>`;
   }
 
-  const html = `
+  let html = `
     <div class="info-group">
       <h4>&#128100; פרטים אישיים</h4>
       ${renderItem("שם ומשפחה", patientData.pName)}
@@ -632,6 +687,21 @@ function renderPatientCard() {
       ${renderItem("סיסמה", patientData.pBnkPass, true)}
     </div>
   `;
+
+  // הוספת אזור המידע החופשי בגריד התחתון אם מילאו לפחות אחד או שהכל ריק (תמיד מוצג)
+  html += `
+    <div class="info-group" style="grid-column: 1 / -1;">
+      <h4>&#128221; מידע חופשי</h4>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px;">
+        ${renderItem(patientData.pGenTitle1 || "מידע חופשי 1", patientData.pGen1)}
+        ${renderItem(patientData.pGenTitle2 || "מידע חופשי 2", patientData.pGen2)}
+        ${renderItem(patientData.pGenTitle3 || "מידע חופשי 3", patientData.pGen3)}
+        ${renderItem(patientData.pGenTitle4 || "מידע חופשי 4", patientData.pGen4)}
+        ${renderItem(patientData.pGenTitle5 || "מידע חופשי 5", patientData.pGen5)}
+      </div>
+    </div>
+  `;
+
   grid.innerHTML = html;
 }
 
@@ -639,7 +709,9 @@ $("btnEditPatient").addEventListener("click", () => {
   const fields = ["pName","pId","pYear","pPhone","pCity","pStreet","pEmail","pEmail2",
                   "pBtuUser","pBtuPass","pBtuCode",
                   "pKupName","pKupBranch","pKupPhone","pKupUser","pKupPass",
-                  "pBnkName","pBnkBranch","pBnkAcc","pBnkUser","pBnkPass"];
+                  "pBnkName","pBnkBranch","pBnkAcc","pBnkUser","pBnkPass",
+                  "pGenTitle1","pGen1","pGenTitle2","pGen2","pGenTitle3","pGen3",
+                  "pGenTitle4","pGen4","pGenTitle5","pGen5"];
                   
   fields.forEach(f => {
     $(f).value = patientData[f] || "";
@@ -654,7 +726,9 @@ $("savePatientBtn").addEventListener("click", async () => {
   const fields = ["pName","pId","pYear","pPhone","pCity","pStreet","pEmail","pEmail2",
                   "pBtuUser","pBtuPass","pBtuCode",
                   "pKupName","pKupBranch","pKupPhone","pKupUser","pKupPass",
-                  "pBnkName","pBnkBranch","pBnkAcc","pBnkUser","pBnkPass"];
+                  "pBnkName","pBnkBranch","pBnkAcc","pBnkUser","pBnkPass",
+                  "pGenTitle1","pGen1","pGenTitle2","pGen2","pGenTitle3","pGen3",
+                  "pGenTitle4","pGen4","pGenTitle5","pGen5"];
                   
   const newData = {};
   fields.forEach(f => {
