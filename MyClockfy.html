@@ -82,10 +82,8 @@
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <h2 id="dash-main-title" class="text-2xl font-bold text-slate-700">סיכום נתונים</h2>
                     
-                    <!-- Dashboard Filters -->
                     <div class="flex flex-wrap items-center gap-3 bg-white p-2 rounded-lg shadow-sm border border-slate-100">
                         <select id="dashFilterSelect" onchange="window.handleDashFilterChange()" class="border border-slate-200 p-2 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-sm font-medium text-slate-700 cursor-pointer">
-                            <!-- ימולא אוטומטית מקוד ה-JS -->
                         </select>
                         <div id="dashCustomDates" class="hidden items-center gap-2">
                             <input type="date" id="dashStartDate" onchange="window.updateDashboardStats()" class="border border-slate-200 p-1.5 rounded text-sm bg-slate-50 outline-none focus:border-indigo-500 text-slate-700 cursor-pointer">
@@ -125,7 +123,6 @@
             <section id="tracker" class="tab-content flex-1">
                 <h2 class="text-2xl font-bold text-slate-700 mb-6">רישום זמנים ונסיעות</h2>
                 
-                <!-- Auto Timer -->
                 <div class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-100 mb-8 relative overflow-hidden transition-all duration-300">
                     <div class="absolute top-0 right-0 w-full h-2 bg-indigo-500 opacity-20"></div>
                     
@@ -138,7 +135,6 @@
 
                     <div class="text-7xl sm:text-8xl font-light text-slate-800 mb-8 font-mono tracking-wider text-center" id="timerDisplay" dir="ltr">00:00:00</div>
                     
-                    <!-- Timer Inputs -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 text-right">
                         <select id="timerClientSelect" class="border border-slate-200 p-3 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-full transition cursor-pointer">
                             <option value="">-- בחר לקוח (חובה) --</option>
@@ -158,7 +154,6 @@
                         </button>
                     </div>
 
-                    <!-- Post-Stop Details (Hidden until timer stops) -->
                     <div id="timer-finalize-section" class="hidden border-t border-slate-100 pt-6 mt-6 animate-fadeIn">
                         <h4 class="font-bold text-slate-600 mb-4 text-center">אשר פרטי ביצוע לפני שמירה</h4>
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end mb-4 bg-indigo-50 p-4 rounded-lg">
@@ -196,7 +191,6 @@
                     </div>
                 </div>
 
-                <!-- Manual Entry -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
                     <h3 class="text-lg font-bold text-slate-700 mb-6 flex items-center gap-2"><i class="fas fa-keyboard text-indigo-500"></i> הזנה ידנית (מדויקת)</h3>
                     
@@ -239,7 +233,7 @@
                                     <input type="time" id="manualEndTime" onchange="calcManualDuration()" class="border border-slate-200 p-2 rounded w-full bg-slate-50 cursor-pointer" dir="ltr">
                                 </div>
                             </div>
-                            <div class="bg-indigo-50 p-2 rounded text-center text-sm font-mono text-indigo-700" id="manualDurationDisplay">
+                            <div class="dash-total bg-indigo-50 p-2 rounded text-center text-sm font-mono text-indigo-700" id="manualDurationDisplay">
                                 סה"כ זמן: 00:00 (0.00 שעות)
                             </div>
                         </div>
@@ -268,9 +262,14 @@
             <section id="reports" class="tab-content flex-1">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                     <h2 class="text-2xl font-bold text-slate-700">הפקת דוחות מתקדמים</h2>
-                    <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow transition flex items-center gap-2 font-bold w-full sm:w-auto justify-center">
-                        <i class="fas fa-file-excel"></i> ייצוא מלא לאקסל
-                    </button>
+                    <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                        <button id="bulkEditBtn" onclick="window.openBulkEditModal()" class="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2 rounded-lg shadow transition flex items-center gap-2 font-bold justify-center opacity-50 cursor-not-allowed w-full sm:w-auto" disabled>
+                            <i class="fas fa-layer-group"></i> עריכה מרוכזת (<span id="selectedCountBadge">0</span>)
+                        </button>
+                        <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow transition flex items-center gap-2 font-bold w-full sm:w-auto justify-center">
+                            <i class="fas fa-file-excel"></i> ייצוא מלא לאקסל
+                        </button>
+                    </div>
                 </div>
 
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 mb-6">
@@ -316,7 +315,6 @@
                     </div>
                 </div>
 
-                <!-- סיכום הדוח המפולטר -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100 shadow-sm">
                         <span class="text-indigo-600 text-xs sm:text-sm font-bold">סה"כ שעות בסינון:</span>
@@ -338,9 +336,10 @@
 
                 <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
                     <div class="overflow-x-auto">
-                        <table class="w-full text-right border-collapse report-table min-w-[1000px]">
+                        <table class="w-full text-right border-collapse report-table min-w-[1050px]">
                             <thead>
                                 <tr>
+                                    <th class="w-10 text-center"><input type="checkbox" id="selectAllEntries" onclick="window.toggleSelectAll(this)" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"></th>
                                     <th>תאריך התחלה</th>
                                     <th>לקוח</th>
                                     <th>פרויקט</th>
@@ -373,7 +372,6 @@
                 </div>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-                    <!-- Clients -->
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col h-full max-h-[600px]">
                         <h3 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2">הוספת לקוח חדש</h3>
                         <div class="grid grid-cols-2 gap-3 mb-4 shrink-0">
@@ -386,7 +384,6 @@
                         <ul id="clients-list" class="space-y-2 text-sm flex-1 overflow-y-auto pr-2 custom-scrollbar"></ul>
                     </div>
 
-                    <!-- Projects -->
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col h-full max-h-[600px]">
                         <h3 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2">הוספת פרויקט חדש</h3>
                         <div class="grid grid-cols-2 gap-3 mb-4 shrink-0">
@@ -439,6 +436,31 @@
             </footer>
         </div>
     </main>
+
+    <!-- Modal: Bulk Edit Time Entries -->
+    <div id="bulk-edit-modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-50 hidden flex justify-center items-center px-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-700 text-md"><i class="fas fa-layer-group text-indigo-500 mr-2"></i> עריכה מרוכזת (<span id="bulkEditCount">0</span> רשומות)</h3>
+                <button onclick="window.closeBulkEditModal()" class="text-slate-400 hover:text-slate-600 transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-xs text-slate-500">הערכים שתוסיף כאן יתעדכנו בכל המסמכים שסומנו. שדות שיושארו ריקים לא ישתנו ב-DB.</p>
+                <div>
+                    <label class="block text-xs mb-1 text-slate-600">מס' חשבונית עסקה</label>
+                    <input type="text" id="bulkInvoiceReqNum" class="border border-slate-200 p-2 rounded w-full bg-slate-50 focus:border-indigo-500 outline-none" placeholder="השאר ריק כדי לא לשנות">
+                </div>
+                <div>
+                    <label class="block text-xs mb-1 text-slate-600">מס' חשבונית מס קבלה</label>
+                    <input type="text" id="bulkInvoiceReceiptNum" class="border border-slate-200 p-2 rounded w-full bg-slate-50 focus:border-indigo-500 outline-none" placeholder="השאר ריק כדי לא לשנות">
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <button onclick="window.closeBulkEditModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg transition">ביטול</button>
+                <button onclick="window.executeBulkEdit()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-sm font-bold">שמור לכולם</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal: Edit Client -->
     <div id="edit-client-modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-50 hidden flex justify-center items-center px-4">
@@ -517,7 +539,6 @@
                         <input type="text" id="editEntryDesc" class="border border-slate-200 p-2 rounded w-full bg-slate-50">
                     </div>
                     
-                    <!-- Times -->
                     <div>
                         <label class="block text-xs mb-1 text-slate-600">תאריך התחלה</label>
                         <input type="date" id="editStartDate" class="border border-slate-200 p-2 rounded w-full cursor-pointer">
@@ -535,7 +556,6 @@
                         <input type="time" id="editEndTime" class="border border-slate-200 p-2 rounded w-full cursor-pointer" dir="ltr">
                     </div>
                     
-                    <!-- Travel -->
                     <div class="col-span-2 bg-amber-50 p-3 rounded border border-amber-100 grid grid-cols-2 gap-4">
                         <div class="col-span-2 sm:col-span-1">
                             <label class="block text-xs mb-1 text-amber-700">תיאור נסיעה</label>
@@ -547,7 +567,6 @@
                         </div>
                     </div>
                     
-                    <!-- Billing Info -->
                     <div class="col-span-2 bg-indigo-50 p-3 rounded border border-indigo-100 grid grid-cols-2 gap-4">
                         <div class="col-span-2 sm:col-span-1">
                             <label class="block text-xs mb-1 text-indigo-700">מס' חשבונית עסקה</label>
@@ -575,9 +594,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, onSnapshot, deleteDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, onSnapshot, deleteDoc, serverTimestamp, setLogLevel, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // השתקת אזהרות WebChannel פנימיות
         setLogLevel('error');
 
         const firebaseConfig = {
@@ -634,7 +652,7 @@
                         document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/150';
                         
                         initDateFields();
-                        window.initDashboardFilters(); // אתחול מסנני דאשבורד בזמן טעינה
+                        window.initDashboardFilters();
                         window.setReportDates('all', null); 
                         setupListeners();
                         restoreActiveTimer(); 
@@ -649,7 +667,6 @@
                 });
             }
             
-            // האזנה למצב אינטרנט - חיווי וסנכרון מחדש אם האינטרנט מתנתק וחוזר
             window.addEventListener('online', () => {
                 showToast("החיבור לאינטרנט חזר. מסנכרן נתונים...");
                 if (userId) setupListeners();
@@ -685,7 +702,6 @@
             if (!userId) return;
             cleanupData();
 
-            // פונקציית התאוששות למקרה של נפילת WebChannel שקטה (Timeout)
             const handleSnapshotError = (e) => {
                 console.error("Firebase network reconnecting...", e.message);
                 setTimeout(() => { if (userId) setupListeners(); }, 4000);
@@ -734,7 +750,6 @@
             }, handleSnapshotError));
         }
 
-        // --- Core Time Calculations ---
         function getDurationDecimal(startD, startT, endD, endT) {
             if(!startD || !startT || !endD || !endT) return { sec: 0, dec: 0 };
             const start = new Date(`${startD}T${startT}`);
@@ -773,7 +788,6 @@
             }
         };
 
-        // --- Dashboard Filters Initialization ---
         window.initDashboardFilters = () => {
             const select = document.getElementById('dashFilterSelect');
             const now = new Date();
@@ -781,7 +795,6 @@
             const currMonth = now.getMonth();
             
             const hebrewMonths = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
-            
             const prevMonthDate = new Date(currYear, currMonth - 1, 1);
             
             select.innerHTML = `
@@ -845,8 +858,6 @@
             if (triggerUpdate) window.updateDashboardStats();
         };
 
-        // --- UI UPDATES ---
-        
         function updateClientsUI() {
             const selects = ['timerClientSelect', 'manualClientSelect', 'newProjectClient', 'filterClientSelect', 'editEntryClient'];
             selects.forEach(id => {
@@ -916,7 +927,6 @@
             entriesData.forEach(entry => {
                 const dTime = new Date(entry.startDate).getTime();
                 
-                // בדיקת מסננים
                 if (startDate && dTime < startDate) return;
                 if (endDate && dTime > endDate) return;
 
@@ -1077,8 +1087,12 @@
             let totalBilledEarnings = 0;
             let totalUnbilledEarnings = 0;
 
+            const masterCheckbox = document.getElementById('selectAllEntries');
+            if(masterCheckbox) masterCheckbox.checked = false;
+            window.toggleBulkEditBtn();
+
             if(filteredReportData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="12" class="p-8 text-center text-slate-400">לא נמצאו רשומות</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="13" class="p-8 text-center text-slate-400">לא נמצאו רשומות</td></tr>';
             } else {
                 filteredReportData.forEach(entry => {
                     const client = clientsData.find(c => c.id === entry.clientId);
@@ -1105,6 +1119,7 @@
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50 transition";
                     tr.innerHTML = `
+                        <td class="text-center"><input type="checkbox" class="entry-checkbox w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" value="${entry.id}" onchange="window.toggleBulkEditBtn()"></td>
                         <td>
                             <div>${new Date(entry.startDate).toLocaleDateString('he-IL')}</div>
                             <div class="text-xs text-slate-400">${entry.startTime}</div>
@@ -1119,9 +1134,9 @@
                         <td class="font-bold text-green-700">₪${totalGross.toFixed(2)}</td>
                         <td class="text-center">${travelIcon}</td>
                         <td class="text-center">${billedIcon}</td>
-                        <td class="text-center flex justify-center gap-2">
-                            <button onclick="openEditModal('${entry.id}')" class="text-indigo-400 hover:text-indigo-700"><i class="fas fa-edit"></i></button>
-                            <button onclick="deleteDocById('entries', '${entry.id}')" class="text-red-400 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                        <td class="text-center flex justify-center gap-4 sm:gap-6">
+                            <button onclick="openEditModal('${entry.id}')" class="text-indigo-500 hover:text-indigo-700 hover:bg-indigo-100 p-2 rounded-full transition-colors" title="ערוך דיווח"><i class="fas fa-edit text-lg"></i></button>
+                            <button onclick="deleteDocById('entries', '${entry.id}')" class="text-red-500 hover:text-red-700 hover:bg-red-100 p-2 rounded-full transition-colors" title="מחק דיווח"><i class="fas fa-trash text-lg"></i></button>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -1139,8 +1154,6 @@
             if (unbilledEl) unbilledEl.innerText = '₪' + Math.round(totalUnbilledEarnings).toLocaleString();
         };
 
-        // --- Database Actions ---
-        
         window.addClient = async () => {
             const name = document.getElementById('newClientName').value.trim();
             const rate = document.getElementById('newClientRate').value;
@@ -1273,7 +1286,6 @@
             showToast("רשומה נשמרה בהצלחה");
         };
 
-        // --- Edit Entry Modal ---
         window.openEditModal = (entryId) => {
             const entry = entriesData.find(e => e.id === entryId);
             if(!entry) return;
@@ -1348,7 +1360,6 @@
         document.getElementById('timerClientSelect')?.addEventListener('change', () => window.filterProjectsByClient('timerClientSelect', 'timerProjectSelect'));
         document.getElementById('manualClientSelect')?.addEventListener('change', () => window.filterProjectsByClient('manualClientSelect', 'manualProjectSelect'));
 
-        // --- Persistent Auto Timer ---
         let timerInterval;
         
         function restoreActiveTimer() {
@@ -1474,14 +1485,12 @@
             document.getElementById('global-timer').classList.add('hidden');
         }
 
-        // --- Excel Export ---
         window.exportToExcel = () => {
             if(filteredReportData.length === 0) return showToast("אין נתונים בסינון הנוכחי לייצוא");
 
             const wb = XLSX.utils.book_new();
             const wsData = [];
             
-            // --- TABLE 1: HOURS ---
             wsData.push(["Customer", "Project", "Description", "Start Date", "Start Time", "End Date", "End Time", "Duration (h)", "Duration (decimal)", "Billable Rate (NIS)", "Billable Amount (NIS)", "מעמ", "חיוב כולל מעמ", "חשבונית עסקה", "חשבונית מס קבלה"]);
             
             let grandDec = 0, grandBill = 0, grandVat = 0, grandTotal = 0;
@@ -1519,11 +1528,11 @@
                         new Date(entry.endDate).toLocaleDateString('he-IL'),
                         entry.endTime,
                         formatSeconds(entry.durationSeconds, true),
-                        entry.durationDec.toFixed(2),
+                        Number(entry.durationDec.toFixed(2)),
                         rate,
-                        billNet.toFixed(2),
-                        vat.toFixed(2),
-                        totalGross.toFixed(2),
+                        Number(billNet.toFixed(2)),
+                        Number(vat.toFixed(2)),
+                        Number(totalGross.toFixed(2)),
                         entry.invoiceReqNum || '',
                         entry.invoiceReceiptNum || ''
                     ]);
@@ -1531,15 +1540,14 @@
                 
                 grandDec += pDec; grandBill += pBill; grandVat += pVat; grandTotal += pTotal;
                 
-                wsData.push(["", "סה\"כ לפרויקט:", "", "", "", "", "", "", pDec.toFixed(2), "", pBill.toFixed(2), pVat.toFixed(2), pTotal.toFixed(2), "", ""]);
+                wsData.push(["", "סה\"כ לפרויקט:", "", "", "", "", "", "", Number(pDec.toFixed(2)), "", Number(pBill.toFixed(2)), Number(pVat.toFixed(2)), Number(pTotal.toFixed(2)), "", ""]);
             }
             
             wsData.push([]);
-            wsData.push(["סה\"כ עבודה כולל:", "", "", "", "", "", "", "", grandDec.toFixed(2), "", grandBill.toFixed(2), grandVat.toFixed(2), grandTotal.toFixed(2), "", ""]);
+            wsData.push(["סה\"כ עבודה כולל:", "", "", "", "", "", "", "", Number(grandDec.toFixed(2)), "", Number(grandBill.toFixed(2)), Number(grandVat.toFixed(2)), Number(grandTotal.toFixed(2)), "", ""]);
             wsData.push([]);
             wsData.push([]);
 
-            // --- TABLE 2: TRAVEL ---
             const travelEntries = filteredReportData.filter(e => e.travelKm > 0);
             if(travelEntries.length > 0) {
                 wsData.push(["לקוח", "פרויקט", "תיאור הנסיעה", "תאריך", "שעה", "ק\"מ", "תעריף לק\"מ", "סה\"כ לפני מעמ", "סה\"כ כולל מעמ"]);
@@ -1564,11 +1572,11 @@
                         entry.startTime,
                         entry.travelKm,
                         kmRate,
-                        net.toFixed(2),
-                        gross.toFixed(2)
+                        Number(net.toFixed(2)),
+                        Number(gross.toFixed(2))
                     ]);
                 });
-                wsData.push(["סה\"כ נסיעות:", "", "", "", "", "", "", tGrandNet.toFixed(2), tGrandGross.toFixed(2)]);
+                wsData.push(["סה\"כ נסיעות:", "", "", "", "", "", "", Number(tGrandNet.toFixed(2)), Number(tGrandGross.toFixed(2))]);
             }
 
             const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -1577,6 +1585,86 @@
             
             XLSX.writeFile(wb, `TimeTracker_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
             showToast("דוח מקצועי הופק בהצלחה!");
+        };
+
+        window.saveBulkInvoiceEdit = async (selectedEntryIds, invoiceReqNum, invoiceReceiptNum) => {
+            if (!selectedEntryIds || selectedEntryIds.length === 0) {
+                showToast("לא נבחרו רשומות לעריכה");
+                return;
+            }
+
+            const updateData = {};
+            if (invoiceReqNum.trim() !== "") updateData.invoiceReqNum = invoiceReqNum.trim();
+            if (invoiceReceiptNum.trim() !== "") updateData.invoiceReceiptNum = invoiceReceiptNum.trim();
+
+            if (Object.keys(updateData).length === 0) {
+                showToast("לא הוכנסו נתונים לעדכון מרוכז");
+                return;
+            }
+
+            try {
+                const chunkSize = 500;
+                for (let i = 0; i < selectedEntryIds.length; i += chunkSize) {
+                    const chunk = selectedEntryIds.slice(i, i + chunkSize);
+                    const batch = writeBatch(db);
+                    
+                    chunk.forEach(id => {
+                        const docRef = doc(db, 'artifacts', appId, 'users', userId, 'entries', id);
+                        batch.update(docRef, updateData);
+                    });
+                    
+                    await batch.commit();
+                }
+                showToast(`עודכנו בהצלחה ${selectedEntryIds.length} רשומות עבודה`);
+            } catch (error) {
+                console.error("Error in bulk update:", error);
+                showToast("שגיאה בעדכון מרוכז של הרשומות.");
+            }
+        };
+
+        window.toggleSelectAll = (masterCheckbox) => {
+            const checkboxes = document.querySelectorAll('.entry-checkbox');
+            checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+            window.toggleBulkEditBtn();
+        };
+
+        window.toggleBulkEditBtn = () => {
+            const selected = document.querySelectorAll('.entry-checkbox:checked');
+            const btn = document.getElementById('bulkEditBtn');
+            const badge = document.getElementById('selectedCountBadge');
+            
+            if (badge) badge.innerText = selected.length;
+            
+            if (selected.length > 0) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                const master = document.getElementById('selectAllEntries');
+                if(master) master.checked = false;
+            }
+        };
+
+        window.openBulkEditModal = () => {
+            const selected = document.querySelectorAll('.entry-checkbox:checked');
+            document.getElementById('bulkEditCount').innerText = selected.length;
+            document.getElementById('bulkInvoiceReqNum').value = '';
+            document.getElementById('bulkInvoiceReceiptNum').value = '';
+            document.getElementById('bulk-edit-modal').classList.remove('hidden');
+        };
+
+        window.closeBulkEditModal = () => {
+            document.getElementById('bulk-edit-modal').classList.add('hidden');
+        };
+
+        window.executeBulkEdit = async () => {
+            const selectedIds = Array.from(document.querySelectorAll('.entry-checkbox:checked')).map(cb => cb.value);
+            const reqNum = document.getElementById('bulkInvoiceReqNum').value;
+            const receiptNum = document.getElementById('bulkInvoiceReceiptNum').value;
+            
+            await window.saveBulkInvoiceEdit(selectedIds, reqNum, receiptNum);
+            window.closeBulkEditModal();
         };
 
         function formatSeconds(sec, hideSeconds = false) {
