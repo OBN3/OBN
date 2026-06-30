@@ -19,6 +19,7 @@
 body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;}
 button{font-family:'Heebo',sans-serif;cursor:pointer;border:none;outline:none;}
 input,textarea,select{font-family:'Heebo',sans-serif;outline:none;direction:rtl;}
+
 /* LOGIN */
 #loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;
   min-height:100vh;background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);padding:24px;}
@@ -32,6 +33,7 @@ input,textarea,select{font-family:'Heebo',sans-serif;outline:none;direction:rtl;
   font-size:1rem;font-weight:600;color:var(--text);width:100%;transition:.2s;box-shadow:var(--shadow-sm);}
 #googleSignIn:hover{border-color:var(--primary);background:#f5f3ff;transform:translateY(-1px);}
 #googleSignIn img{width:24px;height:24px;}
+
 /* APP */
 #app{display:none;flex-direction:column;min-height:100vh;}
 header{background:var(--primary);color:#fff;padding:0 24px;display:flex;align-items:center;
@@ -52,13 +54,31 @@ nav{background:var(--surface);border-bottom:1px solid var(--border);display:flex
 .nav-tab:hover:not(.active){color:var(--text);background:var(--bg);}
 main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 .section{display:none;} .section.active{display:block;}
+
 /* STATS */
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin-bottom:28px;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin-bottom:24px;}
 .stat-card{background:var(--surface);border-radius:var(--radius);padding:20px;
   box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:6px;border-right:4px solid var(--primary);}
 .stat-card.warn{border-right-color:var(--warning);}.stat-card.success{border-right-color:var(--success);}
 .stat-card.info{border-right-color:var(--info);}
 .stat-num{font-size:2rem;font-weight:800;}.stat-label{font-size:.85rem;color:var(--text2);font-weight:500;}
+
+/* PATIENT INFO CARD (NEW) */
+.patient-card{background:var(--surface);border-radius:var(--radius);padding:20px;
+  box-shadow:var(--shadow-sm);margin-bottom:28px;border-top:4px solid var(--info);}
+.patient-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:16px;}
+.info-group{background:var(--bg);padding:14px;border-radius:var(--radius-sm);}
+.info-group h4{font-size:.9rem;font-weight:700;margin-bottom:12px;color:var(--primary-dark);
+  border-bottom:1px solid var(--border);padding-bottom:6px;display:flex;align-items:center;gap:6px;}
+.info-item{font-size:.85rem;margin-bottom:8px;display:flex;flex-direction:column;gap:2px;}
+.info-item:last-child{margin-bottom:0;}
+.info-label{color:var(--text2);font-weight:600;font-size:.75rem;}
+.info-val{color:var(--text);font-weight:500;min-height:20px;cursor:pointer;transition:color .2s;}
+.info-val:hover{color:var(--primary);}
+.blur-reveal{filter:blur(5px);transition:.2s;user-select:none;}
+.blur-reveal:hover{filter:blur(0);}
+.empty-val{color:#94a3b8;font-style:italic;}
+
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--radius-sm);
   font-size:.88rem;font-weight:600;transition:.2s;border:none;cursor:pointer;}
@@ -74,6 +94,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 .btn-sm{padding:5px 11px;font-size:.78rem;}
 .btn-icon{padding:6px;border-radius:8px;background:var(--bg);color:var(--text2);font-size:.95rem;}
 .btn-icon:hover{background:var(--border);}
+
 /* TOOLBAR */
 .toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
 .filters{display:flex;gap:6px;flex-wrap:wrap;}
@@ -82,8 +103,9 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 .filter-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
 .filter-btn.filter-deleted.active{background:var(--deleted);border-color:var(--deleted);}
 .filter-btn:hover:not(.active){border-color:var(--primary);color:var(--primary);}
-.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
-.section-header h2{font-size:1.25rem;font-weight:800;}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.section-header h2{font-size:1.25rem;font-weight:800;display:flex;align-items:center;gap:8px;}
+
 /* TASK CARDS */
 .task-list{display:flex;flex-direction:column;gap:14px;}
 .task-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);
@@ -117,6 +139,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 .comment-input-row input{flex:1;border:1.5px solid var(--border);border-radius:var(--radius-sm);
   padding:7px 11px;font-size:.84rem;background:var(--surface);}
 .comment-input-row input:focus{border-color:var(--primary);}
+
 /* EXPENSES */
 .expenses-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
 @media(max-width:640px){.expenses-layout{grid-template-columns:1fr;}}
@@ -132,12 +155,14 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 .balance-row:last-child{border-bottom:none;}
 .balance-pos{color:var(--success);font-weight:700;}.balance-neg{color:var(--danger);font-weight:700;}
 .settle-item{padding:8px 12px;background:#fef3c7;border-radius:var(--radius-sm);font-size:.84rem;margin-bottom:6px;color:#92400e;}
+
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
   z-index:1000;align-items:center;justify-content:center;padding:16px;}
 .modal-overlay.open{display:flex;}
 .modal{background:#fff;border-radius:20px;padding:28px 32px;max-width:580px;width:100%;
   max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.2);position:relative;}
+.modal.large{max-width:700px;}
 .modal h2{font-size:1.25rem;font-weight:800;margin-bottom:20px;}
 .form-group{margin-bottom:14px;}
 .form-group label{display:block;font-size:.83rem;font-weight:600;color:var(--text2);margin-bottom:5px;}
@@ -148,10 +173,12 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   border-color:var(--primary);background:#fff;}
 .form-group textarea{resize:vertical;min-height:72px;}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-section-title{font-size:1rem;font-weight:700;color:var(--primary-dark);margin:20px 0 10px;border-bottom:1.5px solid var(--border);padding-bottom:5px;}
 .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap;}
 .close-modal{position:absolute;top:14px;left:14px;background:var(--bg);border:none;
   border-radius:50%;width:30px;height:30px;font-size:1rem;cursor:pointer;color:var(--text2);}
 .close-modal:hover{background:var(--border);}
+
 /* TOAST */
 #toastContainer{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
 .toast{background:#1e293b;color:#fff;padding:11px 18px;border-radius:10px;font-size:.88rem;
@@ -170,7 +197,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-icon">&#128106;</div>
@@ -183,7 +209,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </div>
 </div>
 
-<!-- APP -->
 <div id="app">
   <header>
     <h1>&#128106; משפחה ביחד</h1>
@@ -200,7 +225,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </nav>
   <main>
 
-    <!-- DASHBOARD -->
     <div id="tab-dashboard" class="section active">
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-num" id="stat-open">&#8212;</div><div class="stat-label">משימות פתוחות</div></div>
@@ -208,14 +232,26 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
         <div class="stat-card success"><div class="stat-num" id="stat-done">&#8212;</div><div class="stat-label">הושלמו החודש</div></div>
         <div class="stat-card info"><div class="stat-num" id="stat-expenses">&#8212;</div><div class="stat-label">סה"כ הוצאות (&#8362;)</div></div>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
-        <div class="db-section-title">&#9889; משימות פתוחות</div>
+      
+      <div class="patient-card" id="patientCard">
+        <div class="section-header">
+          <h2>&#128100; פרטי המטופל ומידע חיוני</h2>
+          <button class="btn btn-outline btn-sm" id="btnEditPatient">&#9999;&#65039; ערוך פרטים</button>
+        </div>
+        <div style="font-size:0.75rem; color:var(--text2); margin-top:-5px; margin-bottom:10px;">
+          טיפ: לחץ על כל נתון כדי להעתיק אותו ללוח. סיסמאות מוסתרות – רחף מעליהן כדי לראות.
+        </div>
+        <div class="patient-grid" id="patientInfoGrid">
+          </div>
+      </div>
+
+      <div class="section-header">
+        <div class="db-section-title" style="margin-bottom:0;">&#9889; משימות פתוחות</div>
         <button class="btn btn-primary btn-sm" id="btnAddTaskDash">+ משימה חדשה</button>
       </div>
       <div id="dashTaskList" class="task-list"></div>
     </div>
 
-    <!-- TASKS -->
     <div id="tab-tasks" class="section">
       <div class="toolbar">
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
@@ -240,7 +276,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
       <div class="task-list" id="taskList"></div>
     </div>
 
-    <!-- EXPENSES -->
     <div id="tab-expenses" class="section">
       <div class="section-header">
         <h2>&#128176; הוצאות ומאזן</h2>
@@ -264,7 +299,65 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </main>
 </div>
 
-<!-- TASK MODAL -->
+<div class="modal-overlay" id="patientModal">
+  <div class="modal large">
+    <button class="close-modal" id="closePatientModal">&#10005;</button>
+    <h2>&#9999;&#65039; עריכת פרטי המטופל</h2>
+    
+    <div class="modal-section-title">&#128100; פרטים אישיים</div>
+    <div class="form-row">
+      <div class="form-group"><label>שם ומשפחה</label><input type="text" id="pName"/></div>
+      <div class="form-group"><label>תעודת זהות</label><input type="text" id="pId"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>שנת לידה</label><input type="text" id="pYear" placeholder="למשל: 1940"/></div>
+      <div class="form-group"><label>טלפון נייד</label><input type="text" id="pPhone"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>עיר</label><input type="text" id="pCity" placeholder="למשל: אשקלון"/></div>
+      <div class="form-group"><label>רחוב ומספר</label><input type="text" id="pStreet"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>אימייל ראשי</label><input type="email" id="pEmail"/></div>
+      <div class="form-group"><label>אימייל נוסף</label><input type="email" id="pEmail2"/></div>
+    </div>
+
+    <div class="modal-section-title">&#127970; ביטוח לאומי</div>
+    <div class="form-row">
+      <div class="form-group"><label>שם משתמש</label><input type="text" id="pBtuUser"/></div>
+      <div class="form-group"><label>סיסמה</label><input type="text" id="pBtuPass"/></div>
+    </div>
+    <div class="form-group"><label>קוד טלפוני אישי (סודי)</label><input type="text" id="pBtuCode"/></div>
+
+    <div class="modal-section-title">&#127973; קופת חולים</div>
+    <div class="form-row">
+      <div class="form-group"><label>שם הקופה</label><input type="text" id="pKupName"/></div>
+      <div class="form-group"><label>שם סניף / מרפאה</label><input type="text" id="pKupBranch"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>טלפון מרפאה</label><input type="text" id="pKupPhone"/></div>
+      <div class="form-group"><label>שם משתמש באתר</label><input type="text" id="pKupUser"/></div>
+    </div>
+    <div class="form-group"><label>סיסמה באתר</label><input type="text" id="pKupPass"/></div>
+
+    <div class="modal-section-title">&#127976; פרטי בנק</div>
+    <div class="form-row">
+      <div class="form-group"><label>שם הבנק</label><input type="text" id="pBnkName"/></div>
+      <div class="form-group"><label>סניף הבנק</label><input type="text" id="pBnkBranch"/></div>
+    </div>
+    <div class="form-group"><label>מספר חשבון</label><input type="text" id="pBnkAcc"/></div>
+    <div class="form-row">
+      <div class="form-group"><label>שם משתמש באתר הבנק</label><input type="text" id="pBnkUser"/></div>
+      <div class="form-group"><label>סיסמה באתר הבנק</label><input type="text" id="pBnkPass"/></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-gray" id="cancelPatientModal">ביטול</button>
+      <button class="btn btn-primary" id="savePatientBtn">&#128190; שמור פרטים</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="taskModal">
   <div class="modal">
     <button class="close-modal" id="closeTaskModal">&#10005;</button>
@@ -319,7 +412,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </div>
 </div>
 
-<!-- EXPENSE MODAL -->
 <div class="modal-overlay" id="expenseModal">
   <div class="modal">
     <button class="close-modal" id="closeExpenseModal">&#10005;</button>
@@ -351,7 +443,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 
 <div id="toastContainer"></div>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -383,9 +474,10 @@ const googleProvider = new firebase.auth.GoogleAuthProvider();
 let currentUser   = null;
 let allTasks      = [];
 let allExpenses   = [];
+let patientData   = {};
 let editingTaskId = null;
 let activeStatusFilter = "all";
-let unsubTasks = null, unsubExpenses = null;
+let unsubTasks = null, unsubExpenses = null, unsubPatient = null;
 
 // UTILS
 const $ = id => document.getElementById(id);
@@ -398,6 +490,16 @@ function toast(msg, type){
   $("toastContainer").appendChild(t);
   setTimeout(()=>t.remove(), 4000);
 }
+
+function copyToClip(text) {
+  if(!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    toast("הועתק ללוח!", "success");
+  }).catch(() => {
+    toast("שגיאה בהעתקה", "error");
+  });
+}
+window.copyToClip = copyToClip; // לחשיפה לפונקציות גלובליות
 
 function esc(s){ return s ? String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") : ""; }
 function initials(n){ return n ? n.split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2) : "?"; }
@@ -442,6 +544,7 @@ auth.onAuthStateChanged(user=>{
     $("app").style.display="none";
     if(unsubTasks){unsubTasks();unsubTasks=null;}
     if(unsubExpenses){unsubExpenses();unsubExpenses=null;}
+    if(unsubPatient){unsubPatient();unsubPatient=null;}
   }
 });
 
@@ -451,10 +554,16 @@ function subscribeData(){
     allTasks = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderTasks(); renderDashboard();
   },e=>console.error("tasks",e));
+  
   unsubExpenses = colRef("expenses").orderBy("date","desc").onSnapshot(snap=>{
     allExpenses = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderExpenses(); renderDashboard();
   },e=>console.error("expenses",e));
+
+  unsubPatient = colRef("settings").doc("patient").onSnapshot(snap=>{
+    patientData = snap.exists ? snap.data() : {};
+    renderPatientCard();
+  },e=>console.error("patient",e));
 }
 
 // TABS
@@ -465,6 +574,100 @@ document.querySelectorAll(".nav-tab").forEach(btn=>{
     btn.classList.add("active");
     $("tab-"+btn.dataset.tab).classList.add("active");
   });
+});
+
+// PATIENT DATA
+function renderPatientCard() {
+  const grid = $("patientInfoGrid");
+  
+  function renderItem(label, val, isSecret=false) {
+    const valClass = val ? "info-val" : "info-val empty-val";
+    const displayVal = val ? esc(val) : "לא הוזן";
+    const extraClass = isSecret && val ? " blur-reveal" : "";
+    
+    // מוסיף אירוע העתקה במידה ויש ערך
+    const clickEvt = val ? `onclick="copyToClip('${esc(val).replace(/'/g,"\\'").replace(/"/g,"&quot;")}')"` : "";
+
+    return `<div class="info-item">
+              <span class="info-label">${label}</span>
+              <span class="${valClass}${extraClass}" ${clickEvt} title="לחץ להעתקה">${displayVal}</span>
+            </div>`;
+  }
+
+  const html = `
+    <div class="info-group">
+      <h4>&#128100; פרטים אישיים</h4>
+      ${renderItem("שם ומשפחה", patientData.pName)}
+      ${renderItem("תעודת זהות", patientData.pId)}
+      ${renderItem("שנת לידה", patientData.pYear)}
+      ${renderItem("עיר", patientData.pCity)}
+      ${renderItem("רחוב ומספר", patientData.pStreet)}
+      ${renderItem("טלפון", patientData.pPhone)}
+      ${renderItem("אימייל ראשי", patientData.pEmail)}
+      ${renderItem("אימייל נוסף", patientData.pEmail2)}
+    </div>
+    
+    <div class="info-group">
+      <h4>&#127970; ביטוח לאומי</h4>
+      ${renderItem("שם משתמש", patientData.pBtuUser)}
+      ${renderItem("סיסמה", patientData.pBtuPass, true)}
+      ${renderItem("קוד טלפוני (סודי)", patientData.pBtuCode, true)}
+    </div>
+
+    <div class="info-group">
+      <h4>&#127973; קופת חולים</h4>
+      ${renderItem("שם הקופה", patientData.pKupName)}
+      ${renderItem("סניף / מרפאה", patientData.pKupBranch)}
+      ${renderItem("טלפון", patientData.pKupPhone)}
+      ${renderItem("שם משתמש באתר", patientData.pKupUser)}
+      ${renderItem("סיסמה", patientData.pKupPass, true)}
+    </div>
+
+    <div class="info-group">
+      <h4>&#127976; פרטי בנק</h4>
+      ${renderItem("שם הבנק", patientData.pBnkName)}
+      ${renderItem("סניף הבנק", patientData.pBnkBranch)}
+      ${renderItem("מספר חשבון", patientData.pBnkAcc)}
+      ${renderItem("שם משתמש באתר", patientData.pBnkUser)}
+      ${renderItem("סיסמה", patientData.pBnkPass, true)}
+    </div>
+  `;
+  grid.innerHTML = html;
+}
+
+$("btnEditPatient").addEventListener("click", () => {
+  const fields = ["pName","pId","pYear","pPhone","pCity","pStreet","pEmail","pEmail2",
+                  "pBtuUser","pBtuPass","pBtuCode",
+                  "pKupName","pKupBranch","pKupPhone","pKupUser","pKupPass",
+                  "pBnkName","pBnkBranch","pBnkAcc","pBnkUser","pBnkPass"];
+                  
+  fields.forEach(f => {
+    $(f).value = patientData[f] || "";
+  });
+  
+  $("patientModal").classList.add("open");
+});
+
+$("closePatientModal").addEventListener("click", () => $("patientModal").classList.remove("open"));
+$("cancelPatientModal").addEventListener("click", () => $("patientModal").classList.remove("open"));
+$("savePatientBtn").addEventListener("click", async () => {
+  const fields = ["pName","pId","pYear","pPhone","pCity","pStreet","pEmail","pEmail2",
+                  "pBtuUser","pBtuPass","pBtuCode",
+                  "pKupName","pKupBranch","pKupPhone","pKupUser","pKupPass",
+                  "pBnkName","pBnkBranch","pBnkAcc","pBnkUser","pBnkPass"];
+                  
+  const newData = {};
+  fields.forEach(f => {
+    newData[f] = $(f).value.trim();
+  });
+  
+  try {
+    await colRef("settings").doc("patient").set(newData, {merge:true});
+    toast("&#128190; פרטי המטופל נשמרו בהצלחה!", "success");
+    $("patientModal").classList.remove("open");
+  } catch (e) {
+    toast("שגיאה בשמירה: " + e.message, "error");
+  }
 });
 
 // DASHBOARD
@@ -944,12 +1147,10 @@ $("importFile").addEventListener("change", async(ev)=>{
       const wb=XLSX.read(e.target.result,{type:"array",cellDates:true});
       const ws=wb.Sheets[wb.SheetNames[0]];
       
-      // משתמשים במצב header:1 כדי לקבל מערך של מערכים, במקום להניח שהשורה הראשונה היא הכותרת
       const allData = XLSX.utils.sheet_to_json(ws, {header: 1});
 
       if(!allData.length){toast("הגיליון ריק","error"); ev.target.value=""; return;}
 
-      // 1. סריקה חכמה כדי למצוא את שורת הכותרות האמיתית באקסל
       let headerRowIndex = -1;
       for (let i = 0; i < allData.length; i++) {
         const rowStrings = allData[i].map(c => c ? String(c).trim() : "");
@@ -965,15 +1166,13 @@ $("importFile").addEventListener("change", async(ev)=>{
         return;
       }
 
-      // 2. חילוץ וניקוי שמות העמודות
       const headers = allData[headerRowIndex].map(h => h ? String(h).trim() : "");
 
-      // 3. הפיכת השורות שמתחת לכותרות למערך אובייקטים (התעלמות מוחלטת מההערות למעלה)
       const rows = [];
       for (let i = headerRowIndex + 1; i < allData.length; i++) {
         const rowArr = allData[i];
         if (!rowArr || rowArr.length === 0 || rowArr.every(v => v === undefined || v === null || String(v).trim() === "")) {
-          continue; // דילוג על שורות ריקות לגמרי
+          continue; 
         }
         
         const rowObj = {};
