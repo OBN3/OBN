@@ -17,7 +17,7 @@ const auth = getAuth(app);
 
 let submissionsData = []; 
 let isLoggingOut = false;
-let showingDeleted = false; // משתנה גלובלי לניהול מצב התצוגה הנוכחי
+let showingDeleted = false; 
 
 window.openModal = function(imageUrl) {
     const modal = document.getElementById('imageModal');
@@ -40,7 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('modalImg').src = '';
     });
 
-    // כפתור מעבר בין תצוגת רשומות פעילות למחוקות
     document.getElementById('toggleDeletedBtn').addEventListener('click', () => {
         showingDeleted = !showingDeleted;
         const btn = document.getElementById('toggleDeletedBtn');
@@ -108,7 +107,6 @@ async function fetchSubmissions() {
         submissionsData = [];
         
         querySnapshot.forEach((docSnap) => {
-            // הוספת מזהה המסמך כדי שנוכל לעדכן אותו בהמשך
             submissionsData.push({ id: docSnap.id, ...docSnap.data() });
         });
 
@@ -124,12 +122,37 @@ async function fetchSubmissions() {
     }
 }
 
-// פונקציה חדשה לרינדור הטבלה בהתאם למצב התצוגה (פעילים/מחוקים)
+// פונקציה חדשה לחישוב ועדכון הסטטיסטיקות מעל הטבלה
+function updateStatistics() {
+    const total = submissionsData.length;
+    const deleted = submissionsData.filter(d => d.isDeleted === true).length;
+    
+    // צילומים שדורגו לפחות על ידי שופט אחד
+    const judged = submissionsData.filter(d => d.evaluations && Object.keys(d.evaluations).length > 0).length;
+    
+    // ספירת כמות שופטים ייחודיים שביצעו דירוג כלשהו
+    const uniqueJudges = new Set();
+    submissionsData.forEach(d => {
+        if (d.evaluations) {
+            Object.keys(d.evaluations).forEach(email => uniqueJudges.add(email));
+        }
+    });
+    
+    document.getElementById('stat-total').innerText = total;
+    document.getElementById('stat-deleted').innerText = deleted;
+    document.getElementById('stat-judged').innerText = judged;
+    document.getElementById('stat-judges-count').innerText = uniqueJudges.size;
+    
+    document.getElementById('statsContainer').style.display = 'flex';
+}
+
 function renderTable() {
+    // עדכון הסטטיסטיקות בכל רינדור מחדש
+    updateStatistics();
+
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = '';
 
-    // סינון הנתונים לפי המצב הנוכחי
     const filteredData = submissionsData.filter(data => {
         return showingDeleted ? data.isDeleted === true : !data.isDeleted;
     });
@@ -165,7 +188,6 @@ function renderTable() {
         if(data.identifiablePerson === 'staff') personReadable = "עובדי מוסד";
         if(data.identifiablePerson === 'patients') personReadable = "מטופלים";
 
-        // יצירת כפתור הפעולה (מחק / שחזר)
         let actionBtnHtml = showingDeleted 
             ? `<button class="action-btn btn-restore-row" onclick="toggleDeleteStatus('${data.id}', false)">שחזר ⟲</button>`
             : `<button class="action-btn btn-delete-row" onclick="toggleDeleteStatus('${data.id}', true)">מחק 🗑️</button>`;
@@ -191,10 +213,9 @@ function renderTable() {
     });
 }
 
-// פונקציה גלובלית לעדכון סטטוס מחיקה במסד הנתונים
 window.toggleDeleteStatus = async function(id, isDeleted) {
     if (isDeleted) {
-        if (!confirm("האם אתה בטוח שברצונך למחוק רשומה זו? היא לא תוצג יותר לשופטים ותעבור לארכיון מחוקים.")) return;
+        if (!confirm("האם אתה בטוח שברצונך למחוק רשומה זו? היא לא תוצג יותר לשופטים ותעבור לארכיון המחוקים.")) return;
     } else {
         if (!confirm("האם לשחזר רשומה זו למאגר הפעיל?")) return;
     }
@@ -205,7 +226,6 @@ window.toggleDeleteStatus = async function(id, isDeleted) {
             isDeleted: isDeleted
         });
         
-        // עדכון מקומי מהיר כדי לחסוך קריאה מחדש לשרת
         const record = submissionsData.find(d => d.id === id);
         if (record) {
             record.isDeleted = isDeleted;
@@ -219,7 +239,6 @@ window.toggleDeleteStatus = async function(id, isDeleted) {
 };
 
 document.getElementById('exportCsvBtn').addEventListener('click', () => {
-    // מייצא רק את הנתונים שמוצגים כרגע על המסך
     const dataToExport = submissionsData.filter(data => showingDeleted ? data.isDeleted === true : !data.isDeleted);
 
     if (dataToExport.length === 0) {

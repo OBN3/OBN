@@ -16,6 +16,12 @@
         .btn-logout { background-color: #ef4444; color: white; }
         .btn-logout:hover { background-color: #dc2626; }
         
+        /* עיצוב כרטיסיות הסטטיסטיקה החדשות */
+        .stats-container { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .stat-card { background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); flex: 1; min-width: 180px; text-align: center; font-size: 14px; color: #4b5563; border: 1px solid #e5e7eb; }
+        .stat-card strong { color: #1f2937; }
+        .stat-card span { display: block; font-size: 24px; font-weight: bold; color: #2563eb; margin-top: 5px; }
+
         .table-container { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; text-align: right; white-space: nowrap; }
         th, td { padding: 12px; border-bottom: 1px solid #e5e7eb; }
@@ -52,6 +58,13 @@
     </div>
 </div>
 
+<div class="stats-container" id="statsContainer" style="display: none;">
+    <div class="stat-card"><strong>📸 סך הכל הוגשו</strong><span id="stat-total">0</span></div>
+    <div class="stat-card"><strong>🗑️ צילומים שנמחקו</strong><span id="stat-deleted">0</span></div>
+    <div class="stat-card"><strong>⚖️ צילומים שדורגו</strong><span id="stat-judged">0</span></div>
+    <div class="stat-card"><strong>👨‍⚖️ שופטים שדירגו</strong><span id="stat-judges-count">0</span></div>
+</div>
+
 <div class="table-container">
     <div id="loadingMsg">טוען נתונים מפיירבייס...</div>
     <table id="submissionsTable" style="display: none;">
@@ -83,6 +96,6 @@
     <img class="modal-content" id="modalImg" src="">
 </div>
 
-<script type="module" src="/OBN-Photocontest/admin.js?v=4"></script>
+<script type="module" src="/OBN-Photocontest/admin.js?v=5"></script>
 </body>
 </html>
