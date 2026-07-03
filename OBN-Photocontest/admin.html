@@ -16,7 +16,16 @@
         .btn-logout { background-color: #ef4444; color: white; }
         .btn-logout:hover { background-color: #dc2626; }
         
-        /* עיצוב כרטיסיות הסטטיסטיקה החדשות */
+        /* עיצוב סרגל סינון תאריכים */
+        .filter-container { background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .filter-container label { font-weight: bold; color: #4b5563; }
+        .filter-select, .filter-date { padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; background-color: #f9fafb; cursor: pointer; outline: none; }
+        .filter-select:focus, .filter-date:focus { border-color: #3b82f6; }
+        .btn-apply { background-color: #3b82f6; color: white; padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-apply:hover { background-color: #2563eb; }
+        .custom-date { display: flex; align-items: center; gap: 10px; }
+
+        /* עיצוב כרטיסיות הסטטיסטיקה */
         .stats-container { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
         .stat-card { background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); flex: 1; min-width: 180px; text-align: center; font-size: 14px; color: #4b5563; border: 1px solid #e5e7eb; }
         .stat-card strong { color: #1f2937; }
@@ -58,6 +67,23 @@
     </div>
 </div>
 
+<div class="filter-container">
+    <label for="dateFilter">📅 סינון לפי תאריך הגשה:</label>
+    <select id="dateFilter" class="filter-select">
+        <option value="all">כלל ההגשות</option>
+        <option value="last_month">בחודש האחרון</option>
+        <option value="last_year">בשנה האחרונה</option>
+        <option value="custom">בין תאריכים...</option>
+    </select>
+    
+    <div id="customDateRange" class="custom-date" style="display: none;">
+        <input type="date" id="startDate" class="filter-date">
+        <span>עד</span>
+        <input type="date" id="endDate" class="filter-date">
+        <button id="applyDateFilterBtn" class="btn-apply">סנן</button>
+    </div>
+</div>
+
 <div class="stats-container" id="statsContainer" style="display: none;">
     <div class="stat-card"><strong>📸 סך הכל הוגשו</strong><span id="stat-total">0</span></div>
     <div class="stat-card"><strong>🗑️ צילומים שנמחקו</strong><span id="stat-deleted">0</span></div>
@@ -70,6 +96,7 @@
     <table id="submissionsTable" style="display: none;">
         <thead>
             <tr>
+                <th>תאריך הגשה</th>
                 <th>תמונה</th>
                 <th>שם הצלם</th>
                 <th>מקום עבודה</th>
@@ -96,6 +123,6 @@
     <img class="modal-content" id="modalImg" src="">
 </div>
 
-<script type="module" src="/OBN-Photocontest/admin.js?v=5"></script>
+<script type="module" src="/OBN-Photocontest/admin.js?v=6"></script>
 </body>
 </html>

@@ -16,8 +16,10 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 let submissionsData = []; 
+let currentTableData = []; // הנתונים המסוננים שמוצגים כעת
 let isLoggingOut = false;
 let showingDeleted = false; 
+let currentDateFilter = { type: 'all', start: null, end: null };
 
 window.openModal = function(imageUrl) {
     const modal = document.getElementById('imageModal');
@@ -40,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('modalImg').src = '';
     });
 
+    // כפתור מעבר בין מחוקים לפעילים
     document.getElementById('toggleDeletedBtn').addEventListener('click', () => {
         showingDeleted = !showingDeleted;
         const btn = document.getElementById('toggleDeletedBtn');
@@ -54,7 +57,26 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.style.backgroundColor = "#6b7280";
             title.innerHTML = "🏆 מערכת ניהול התחרות";
         }
-        renderTable();
+        applyFiltersAndRender();
+    });
+
+    // מאזינים לשינויים בסינון תאריכים
+    document.getElementById('dateFilter').addEventListener('change', (e) => {
+        currentDateFilter.type = e.target.value;
+        if (currentDateFilter.type === 'custom') {
+            document.getElementById('customDateRange').style.display = 'flex';
+        } else {
+            document.getElementById('customDateRange').style.display = 'none';
+            applyFiltersAndRender();
+        }
+    });
+
+    document.getElementById('applyDateFilterBtn').addEventListener('click', () => {
+        const startVal = document.getElementById('startDate').value;
+        const endVal = document.getElementById('endDate').value;
+        currentDateFilter.start = startVal ? new Date(startVal) : null;
+        currentDateFilter.end = endVal ? new Date(endVal) : null;
+        applyFiltersAndRender();
     });
 });
 
@@ -96,6 +118,13 @@ function calculateTotalScore(data) {
     return Number(total.toFixed(2));
 }
 
+// פונקציית המרת Timestamp לתאריך קריא
+function formatDate(timestamp) {
+    if (!timestamp) return "לא ידוע";
+    let date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString('he-IL');
+}
+
 async function fetchSubmissions() {
     const loadingMsg = document.getElementById('loadingMsg');
     const table = document.getElementById('submissionsTable');
@@ -111,7 +140,9 @@ async function fetchSubmissions() {
         });
 
         submissionsData.sort((a, b) => calculateTotalScore(b) - calculateTotalScore(a));
-        renderTable();
+        
+        // מפעיל את הרינדור הראשוני עם הסינונים (ברירת מחדל: "הכל")
+        applyFiltersAndRender();
 
         loadingMsg.style.display = 'none';
         table.style.display = 'table';
@@ -122,17 +153,52 @@ async function fetchSubmissions() {
     }
 }
 
-// פונקציה חדשה לחישוב ועדכון הסטטיסטיקות מעל הטבלה
-function updateStatistics() {
-    const total = submissionsData.length;
-    const deleted = submissionsData.filter(d => d.isDeleted === true).length;
+// מפעיל את כל מערך הסינונים לפי הסדר
+function applyFiltersAndRender() {
+    // 1. סינון תאריכים
+    let dateFilteredData = submissionsData.filter(data => {
+        if (!data.timestamp) return true; // הגנה במקרה של רשומות ישנות ללא תאריך
+        
+        let date = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+        let now = new Date();
+
+        if (currentDateFilter.type === 'last_month') {
+            let monthAgo = new Date();
+            monthAgo.setMonth(now.getMonth() - 1);
+            return date >= monthAgo;
+        } else if (currentDateFilter.type === 'last_year') {
+            let yearAgo = new Date();
+            yearAgo.setFullYear(now.getFullYear() - 1);
+            return date >= yearAgo;
+        } else if (currentDateFilter.type === 'custom') {
+            if (currentDateFilter.start && date < currentDateFilter.start) return false;
+            if (currentDateFilter.end) {
+                let endOfDay = new Date(currentDateFilter.end);
+                endOfDay.setHours(23, 59, 59, 999);
+                if (date > endOfDay) return false;
+            }
+            return true;
+        }
+        return true; // 'all'
+    });
+
+    // 2. עדכון הסטטיסטיקות לפי טווח התאריכים (חשוב! סטטיסטיקה מושפעת רק מהתאריך ולא ממצב המחיקה)
+    updateStatistics(dateFilteredData);
+
+    // 3. סינון למחיקה רכה (עבור הטבלה בלבד)
+    currentTableData = dateFilteredData.filter(data => showingDeleted ? data.isDeleted === true : !data.isDeleted);
+
+    // 4. רינדור טבלה
+    renderTableRows(currentTableData);
+}
+
+function updateStatistics(dataArray) {
+    const total = dataArray.length;
+    const deleted = dataArray.filter(d => d.isDeleted === true).length;
+    const judged = dataArray.filter(d => d.evaluations && Object.keys(d.evaluations).length > 0).length;
     
-    // צילומים שדורגו לפחות על ידי שופט אחד
-    const judged = submissionsData.filter(d => d.evaluations && Object.keys(d.evaluations).length > 0).length;
-    
-    // ספירת כמות שופטים ייחודיים שביצעו דירוג כלשהו
     const uniqueJudges = new Set();
-    submissionsData.forEach(d => {
+    dataArray.forEach(d => {
         if (d.evaluations) {
             Object.keys(d.evaluations).forEach(email => uniqueJudges.add(email));
         }
@@ -146,25 +212,19 @@ function updateStatistics() {
     document.getElementById('statsContainer').style.display = 'flex';
 }
 
-function renderTable() {
-    // עדכון הסטטיסטיקות בכל רינדור מחדש
-    updateStatistics();
-
+function renderTableRows(tableData) {
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = '';
 
-    const filteredData = submissionsData.filter(data => {
-        return showingDeleted ? data.isDeleted === true : !data.isDeleted;
-    });
-
-    if (filteredData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="14" style="text-align: center; padding: 20px;">אין נתונים להצגה</td></tr>`;
+    if (tableData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="15" style="text-align: center; padding: 20px;">אין נתונים להצגה בחתך התאריכים הנבחר</td></tr>`;
         return;
     }
 
-    filteredData.forEach((data) => {
+    tableData.forEach((data) => {
         const scores = data.scores || {};
         const totalScore = calculateTotalScore(data);
+        const submitDate = formatDate(data.timestamp);
         
         const evaluationEmails = data.evaluations ? Object.keys(data.evaluations) : [];
         const judgeCount = evaluationEmails.length;
@@ -194,6 +254,7 @@ function renderTable() {
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
+            <td><span style="color:#6b7280; font-size:13px;">${submitDate}</span></td>
             <td><img src="${thumbUrl}" class="thumbnail" alt="תמונה" title="לחץ להגדלה" onclick="window.openModal('${largeUrl}')"></td>
             <td><strong>${fullDisplayName}</strong></td>
             <td>${baseWorkplace}</td>
@@ -230,7 +291,9 @@ window.toggleDeleteStatus = async function(id, isDeleted) {
         if (record) {
             record.isDeleted = isDeleted;
         }
-        renderTable();
+        
+        // קריאה מחדש לרינדור כדי להחיל את העדכון מיד במסך
+        applyFiltersAndRender();
 
     } catch (error) {
         console.error("Error updating delete status:", error);
@@ -239,21 +302,21 @@ window.toggleDeleteStatus = async function(id, isDeleted) {
 };
 
 document.getElementById('exportCsvBtn').addEventListener('click', () => {
-    const dataToExport = submissionsData.filter(data => showingDeleted ? data.isDeleted === true : !data.isDeleted);
-
-    if (dataToExport.length === 0) {
-        alert("אין נתונים לייצוא.");
+    // הייצוא כעת מבוסס על currentTableData, מה שאומר שהוא מייצא בדיוק את מה שרואים!
+    if (currentTableData.length === 0) {
+        alert("אין נתונים לייצוא בחתך הנבחר.");
         return;
     }
 
-    let csvContent = "תואר,שם פרטי,שם משפחה,טלפון נייד,דוא\"ל,מקום עבודה ראשי,פירוט מקום עבודה,מחלקה,תפקיד,מאשר דיוור,שם הצילום,הסיפור מאחורי התמונה,זיהוי אדם,לינק ל-PDF אישורים,זיקה לנושא,אמנותיות,איכות טכנית,אותנטיות,ציון סופי,סטטוס (כמות),שופטים שדירגו\n";
+    let csvContent = "תאריך הגשה,תואר,שם פרטי,שם משפחה,טלפון נייד,דוא\"ל,מקום עבודה ראשי,פירוט מקום עבודה,מחלקה,תפקיד,מאשר דיוור,שם הצילום,הסיפור מאחורי התמונה,זיהוי אדם,לינק ל-PDF אישורים,זיקה לנושא,אמנותיות,איכות טכנית,אותנטיות,ציון סופי,סטטוס (כמות),שופטים שדירגו\n";
 
-    dataToExport.forEach(row => {
+    currentTableData.forEach(row => {
         const scores = row.scores || {};
         const totalScore = calculateTotalScore(row);
         const evaluationEmails = row.evaluations ? Object.keys(row.evaluations) : [];
         const judgeCount = evaluationEmails.length;
         const statusText = judgeCount > 0 ? 'דורג' : 'ממתין';
+        const submitDate = formatDate(row.timestamp);
         
         let personType = "לא";
         if(row.identifiablePerson === 'staff') personType = "עובדי מוסד";
@@ -263,14 +326,18 @@ document.getElementById('exportCsvBtn').addEventListener('click', () => {
         let baseWorkplace = wpParts[0] || "";
         let subWorkplace = wpParts.length > 1 ? wpParts[1] : "";
 
-        csvContent += `"${row.title || ''}","${row.firstName || ''}","${row.lastName || ''}","${row.phone || ''}","${row.email || ''}","${baseWorkplace}","${subWorkplace}","${row.department || ''}","${row.role || ''}","${row.allowEmails ? 'כן' : 'לא'}","${row.photoTitle || ''}","${(row.description || '').replace(/"/g, '""')}","${personType}","${row.consentPdfUrl || ''}",${scores.relevance || 0},${scores.artistry || 0},${scores.quality || 0},${scores.authenticity || 0},${totalScore},"${statusText} (${judgeCount})","${evaluationEmails.join(', ')}"\n`;
+        csvContent += `"${submitDate}","${row.title || ''}","${row.firstName || ''}","${row.lastName || ''}","${row.phone || ''}","${row.email || ''}","${baseWorkplace}","${subWorkplace}","${row.department || ''}","${row.role || ''}","${row.allowEmails ? 'כן' : 'לא'}","${row.photoTitle || ''}","${(row.description || '').replace(/"/g, '""')}","${personType}","${row.consentPdfUrl || ''}",${scores.relevance || 0},${scores.artistry || 0},${scores.quality || 0},${scores.authenticity || 0},${totalScore},"${statusText} (${judgeCount})","${evaluationEmails.join(', ')}"\n`;
     });
 
     const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", showingDeleted ? "נתוני_תחרות_מחוקים.csv" : "נתוני_התחרות_המלאים.csv");
+    
+    // התאמת שם הקובץ בהתאם למצב
+    let fileName = showingDeleted ? "נתוני_תחרות_מחוקים.csv" : "נתוני_התחרות_פעילים.csv";
+    link.setAttribute("download", fileName);
+    
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
