@@ -18,9 +18,39 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
+// פונקציה חכמה להצגת הודעות מערכת קופצות למשתמש
+window.showMessageModal = function(type, title, message) {
+    const modal = document.getElementById('messageModal');
+    const icon = document.getElementById('msgIcon');
+    const titleEl = document.getElementById('msgTitle');
+    const textEl = document.getElementById('msgText');
+    const btn = document.getElementById('msgBtn');
+
+    titleEl.innerText = title;
+    textEl.innerText = message;
+
+    if (type === 'success') {
+        icon.innerText = '🎉';
+        btn.className = 'msg-btn success';
+        btn.innerText = 'מעולה, תודה!';
+    } else if (type === 'error') {
+        icon.innerText = '⚠️';
+        btn.className = 'msg-btn error';
+        btn.innerText = 'הבנתי, אחזור לתקן';
+    }
+
+    modal.style.display = 'flex';
+};
+
+// סגירת חלון ההודעות
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('msgBtn').addEventListener('click', () => {
+        document.getElementById('messageModal').style.display = 'none';
+    });
+});
+
 // מנגנוני טופס דינמיים
 document.addEventListener('DOMContentLoaded', () => {
-    // מנגנון ספירת מילים
     const textarea = document.getElementById('photoDescription');
     const counter = document.getElementById('wordCounter');
     if (textarea) {
@@ -34,7 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // העלאת PDF מותנית
     const pdfContainer = document.getElementById('pdfUploadContainer');
     const consentFileInput = document.getElementById('consentFile');
     const radioButtons = document.querySelectorAll('input[name="identifiablePerson"]');
@@ -51,7 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // תפריטי בחירה דינמיים למקומות עבודה
     const wpSelect = document.getElementById('userWorkplace');
     const subElements = {
         'בית חולים': document.getElementById('subHospital'),
@@ -63,7 +91,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (wpSelect) {
         wpSelect.addEventListener('change', (e) => {
-            // מסתיר את כל השדות ומבטל חובת מילוי
             Object.values(subElements).forEach(el => {
                 if (el) {
                     el.style.display = 'none';
@@ -72,7 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // מציג רק את השדה הרלוונטי והופך אותו לחובה (צה"ל פשוט לא יפתח כלום)
             const selected = e.target.value;
             if (subElements[selected]) {
                 subElements[selected].style.display = 'block';
@@ -129,28 +155,26 @@ if (uploadForm) {
     uploadForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('submitBtn');
-        const status = document.getElementById('statusMessage');
+        const uploadProgressText = document.getElementById('uploadProgressText');
         const file = document.getElementById('photoFile').files[0];
         const uploadOverlay = document.getElementById('uploadOverlay');
 
-        // שינוי הגדרות טווח המשקל בפועל (1.5 עד 8 מ"ב) להגמשת המערכת
         const minSize = 1.5 * 1024 * 1024;
         const maxSize = 8 * 1024 * 1024;
         
         if (file) {
             if (file.size < minSize || file.size > maxSize) {
-                status.style.color = 'red';
-                // הודעת השגיאה ממשיכה להציג את ההנחיות הרשמיות כפי שביקשת
-                status.innerText = 'שגיאה: קובץ הצילום חייב להיות בגודל של בין 2 מ"ב ל-6 מ"ב בלבד.';
+                showMessageModal('error', 'גודל קובץ לא תקין', 'שגיאה: קובץ הצילום שהעלית אינו עומד בדרישות. אנא ודא שהקובץ הוא בגודל של בין 2 מ"ב ל-6 מ"ב בלבד, ונסה שוב.');
                 return; 
             }
         }
 
         btn.disabled = true;
-        status.style.color = '#2563eb';
-        status.innerText = 'מתחיל בעיבוד ההגשה והעלאת קבצים...';
-
-        if (uploadOverlay) uploadOverlay.style.display = 'flex';
+        
+        if (uploadOverlay) {
+            uploadProgressText.innerText = 'מתחיל בעיבוד ההגשה... ⏳';
+            uploadOverlay.style.display = 'flex';
+        }
 
         try {
             const uTitle = document.getElementById('userTitle').value;
@@ -162,14 +186,10 @@ if (uploadForm) {
             const role = document.getElementById('userRole').value;
             const allowEmails = document.getElementById('allowEmails').checked;
             
-            // עיבוד מקום העבודה (חיבור הקטגוריה + הפירוט)
             const baseWorkplace = document.getElementById('userWorkplace').value;
             let specificWorkplace = "";
-            
             const activeSub = document.querySelector('.sub-workplace[style*="display: block"]');
-            if (activeSub) {
-                specificWorkplace = activeSub.value;
-            }
+            if (activeSub) specificWorkplace = activeSub.value;
             const finalWorkplace = specificWorkplace ? `${baseWorkplace} - ${specificWorkplace}` : baseWorkplace;
             
             const photoTitle = document.getElementById('photoTitle').value;
@@ -184,21 +204,21 @@ if (uploadForm) {
 
             let pdfDriveUrl = "";
             if (personOption === 'patients' && consentFile) {
-                status.innerText = 'מעלה אישור מצולמים (קובץ PDF)...';
+                uploadProgressText.innerText = 'מעלה את אישורי המצולמים... 📄';
                 const base64Pdf = await toBase64(consentFile);
                 pdfDriveUrl = await uploadToDrive(base64Pdf, `${fullName}_${timestamp}_consent.pdf`, consentFile.type, true);
             }
 
-            status.innerText = 'שולח את תמונת המקור למנהל התחרות...';
+            uploadProgressText.innerText = 'מגבה את תמונת המקור באיכות מלאה... 📷';
             const base64Original = await toBase64(file);
             await uploadToDrive(base64Original, `${baseFileName}_original_${file.name}`, file.type, true);
 
-            status.innerText = 'מעלה את התמונה למערכת השיפוט...';
+            uploadProgressText.innerText = 'מעלה את התמונה למערכת השיפוט... ⚖️';
             const compressedBlob = await compressImage(file);
             const base64Compressed = await toBase64(compressedBlob);
             const compressedUrl = await uploadToDrive(base64Compressed, `${baseFileName}_compressed.webp`, 'image/webp', false);
 
-            // שמירה ב-Firestore
+            uploadProgressText.innerText = 'שומר את הפרטים במאגר... 💾';
             await addDoc(collection(db, "submissions"), {
                 title: uTitle,
                 firstName: fName,
@@ -219,8 +239,10 @@ if (uploadForm) {
                 timestamp: serverTimestamp()
             });
 
-            status.style.color = 'green';
-            status.innerText = 'הצילום והפרטים האישיים הוגשו בהצלחה לתחרות!';
+            // השלמה מוצלחת
+            if (uploadOverlay) uploadOverlay.style.display = 'none';
+            showMessageModal('success', 'ההגשה הושלמה בהצלחה!', 'הצילום והפרטים האישיים שלך הוגשו בהצלחה למערכת.\nתודה רבה על השתתפותך, ובהצלחה בתחרות!');
+            
             document.getElementById('uploadForm').reset();
             document.getElementById('pdfUploadContainer').style.display = 'none';
             document.querySelectorAll('.sub-workplace').forEach(el => el.style.display = 'none');
@@ -228,11 +250,10 @@ if (uploadForm) {
             
         } catch (error) {
             console.error("Upload Error: ", error);
-            status.style.color = 'red';
-            status.innerText = 'אירעה שגיאה בתהליך השליחה. נסה שוב.';
+            if (uploadOverlay) uploadOverlay.style.display = 'none';
+            showMessageModal('error', 'אירעה שגיאה', 'לצערנו חלה שגיאה בתהליך השליחה והנתונים לא נשמרו. אנא נסה שוב בעוד מספר רגעים או בדוק את חיבור האינטרנט שלך.');
         } finally {
             btn.disabled = false;
-            if (uploadOverlay) uploadOverlay.style.display = 'none';
         }
     });
 }

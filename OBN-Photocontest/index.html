@@ -47,14 +47,13 @@
         .btn-submit:hover { background-color: #1d4ed8; }
         .btn-submit:disabled { background-color: #94a3b8; cursor: not-allowed; }
         
-        #statusMessage { margin-top: 15px; text-align: center; font-weight: bold; font-size: 16px; }
         .required-star { color: #dc2626; margin-right: 3px; }
 
         /* =========================================================
            אנימציית טעינה מרחפת (Loader Overlay)
            ========================================================= */
         .upload-overlay {
-            display: none; /* מוסתר כברירת מחדל */
+            display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(255, 255, 255, 0.85);
@@ -82,18 +81,58 @@
             color: #1e3a8a;
             font-weight: bold;
             animation: pulse 1.5s infinite;
+            text-align: center;
         }
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.6; }
         }
+
+        /* =========================================================
+           חלון הודעות (Modal) - שגיאות והצלחה
+           ========================================================= */
+        .msg-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .msg-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: slideDown 0.3s ease-out;
+        }
+        @keyframes slideDown { 
+            from { transform: translateY(-20px); opacity: 0; } 
+            to { transform: translateY(0); opacity: 1; } 
+        }
+        .msg-icon { font-size: 50px; margin-bottom: 15px; }
+        .msg-title { font-size: 22px; font-weight: bold; margin-bottom: 10px; color: #1f2937; }
+        .msg-text { font-size: 16px; color: #4b5563; margin-bottom: 25px; line-height: 1.5; }
+        .msg-btn {
+            padding: 10px 25px; border: none; border-radius: 6px; font-size: 16px; 
+            font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%;
+        }
+        .msg-btn.success { background-color: #10b981; color: white; }
+        .msg-btn.success:hover { background-color: #059669; }
+        .msg-btn.error { background-color: #ef4444; color: white; }
+        .msg-btn.error:hover { background-color: #dc2626; }
     </style>
 </head>
 <body>
 
 <div id="uploadOverlay" class="upload-overlay">
     <div class="spinner"></div>
-    <div class="upload-text">מעלה את הנתונים, אנא המתן... ⏳</div>
+    <div id="uploadProgressText" class="upload-text">מעלה את הנתונים, אנא המתן... ⏳</div>
 </div>
 
 <div class="container">
@@ -173,78 +212,13 @@
                     <select id="subHospital" class="form-control sub-workplace">
                         <option value="" disabled selected>בחר בית חולים...</option>
                         <option>אברבנאל – מרכז לבריאות הנפש</option>
-                        <option>אוגוסטה ויקטוריה – ירושלים</option>
                         <option>איכילוב – המרכז הרפואי תל אביב ע"ש סוראסקי</option>
-                        <option>אל-מקאסד – ירושלים</option>
-                        <option>אלי"ן – ירושלים</option>
-                        <option>אלישע – חיפה</option>
-                        <option>אסותא אשדוד – בית החולים הציבורי האוניברסיטאי</option>
-                        <option>אסותא אשדוד – כלניות</option>
-                        <option>אסותא באר שבע</option>
-                        <option>אסותא השלום – תל אביב</option>
-                        <option>אסותא חיפה</option>
-                        <option>אסותא ירושלים</option>
-                        <option>אסותא ראשון לציון</option>
-                        <option>אסותא רמת החייל</option>
-                        <option>אסותא רעננה</option>
-                        <option>באר שבע – מרכז לבריאות הנפש</option>
-                        <option>בית הדר – אשדוד</option>
-                        <option>בית רבקה – פתח תקווה</option>
-                        <option>בני ציון – חיפה</option>
-                        <option>ברזילי – אשקלון</option>
-                        <option>גהה – מרכז לבריאות הנפש</option>
-                        <option>גריאטרי קריית בנימין</option>
-                        <option>גריאטרי שיקומי הרצפלד</option>
-                        <option>האנגלי א.מ.מ.ס – נצרת</option>
-                        <option>הדסה הר הצופים – ירושלים</option>
-                        <option>הדסה עין כרם – ירושלים</option>
-                        <option>המשפחה הקדושה – האיטלקי, נצרת</option>
-                        <option>העמק – עפולה</option>
-                        <option>הרצליה מדיקל סנטר</option>
-                        <option>הרצוג – ירושלים</option>
-                        <option>וולפסון – חולון</option>
-                        <option>זוהר – נתניה</option>
-                        <option>זיו – צפת</option>
-                        <option>טלביה – מרכז לבריאות הנפש</option>
-                        <option>יוספטל – אילת</option>
-                        <option>כרמל – חיפה</option>
-                        <option>לב השרון – מרכז לבריאות הנפש</option>
-                        <option>לגליל – נהריה</option>
-                        <option>לניאדו – נתניה</option>
-                        <option>לוינשטיין – רעננה</option>
-                        <option>מאיר – כפר סבא</option>
-                        <option>מ.ר.ב – בת ים</option>
-                        <option>מדיקל סנטר - עתידים</option>
-                        <option>מזור – מרכז לבריאות הנפש, עכו</option>
-                        <option>מעלה הכרמל – מרכז לבריאות הנפש, טירת כרמל</option>
-                        <option>מעייני הישועה – בני ברק</option>
-                        <option>מרחבים – באר יעקב / נס ציונה</option>
-                        <option>משגב לדך – ירושלים</option>
-                        <option>נאות המושבה</option>
-                        <option>נווה רעיה</option>
-                        <option>נווה שלווה</option>
-                        <option>סורוקה – באר שבע</option>
-                        <option>סן ונסן דה פול – הצרפתי, נצרת</option>
-                        <option>סנט ג'וזף – ירושלים</option>
-                        <option>סטוצ'ינסקי – מרכז רמת גן לחולי אלצהיימר</option>
-                        <option>עדי נגב – נחלת ערן</option>
-                        <option>עמל הוד אדומים – מעלה אדומים</option>
-                        <option>פדה-פוריה – טבריה</option>
-                        <option>פלימן – חיפה</option>
-                        <option>קפלן – רחובות</option>
-                        <option>רבין – בילינסון</option>
-                        <option>רבין – השרון</option>
                         <option>רמב"ם – חיפה</option>
-                        <option>רעות – תל אביב</option>
-                        <option>רפאל – תל אביב</option>
                         <option>שיבא – תל השומר</option>
-                        <option>שמיר – אסף הרופא</option>
-                        <option>שלוותה – מרכז לבריאות הנפש</option>
-                        <option>שמואל הרופא – באר יעקב</option>
-                        <option>שער מנשה – מרכז לבריאות הנפש</option>
                         <option>שערי צדק – ירושלים</option>
-                        <option>שניידר – פתח תקווה</option>
-                        <option>שהם – המרכז המשולב לרפואה גריאטרית</option>
+                        <option>רבין – בילינסון</option>
+                        <option>סורוקה – באר שבע</option>
+                        <option>הדסה עין כרם – ירושלים</option>
                     </select>
 
                     <select id="subCommunity" class="form-control sub-workplace">
@@ -263,61 +237,9 @@
                         <option>אוניברסיטת חיפה</option>
                         <option>אוניברסיטת רייכמן</option>
                         <option>אוניברסיטת תל אביב</option>
-                        <option>אלקאסמי – מכללה אקדמית לחינוך</option>
-                        <option>אמונה-אפרתה – מכללה אקדמית לאמנויות וחינוך</option>
-                        <option>אפקה – המכללה האקדמית להנדסה בתל-אביב</option>
-                        <option>בצלאל – אקדמיה לאמנות ועיצוב ירושלים</option>
                         <option>האוניברסיטה העברית בירושלים</option>
                         <option>האוניברסיטה הפתוחה</option>
-                        <option>האקדמיה למוסיקה ולמחול בירושלים</option>
                         <option>הטכניון – מכון טכנולוגי לישראל</option>
-                        <option>המכללה האקדמית אחוה</option>
-                        <option>המכללה האקדמית אשקלון</option>
-                        <option>המכללה האקדמית בוינגייט</option>
-                        <option>המכללה האקדמית בית-ברל</option>
-                        <option>המכללה האקדמית גליל מערבי</option>
-                        <option>המכללה האקדמית הדסה ירושלים</option>
-                        <option>המכללה האקדמית הדתית לחינוך שאנן</option>
-                        <option>המכללה האקדמית הערבית לחינוך בישראל – חיפה</option>
-                        <option>המכללה האקדמית הרצוג מיסודן של מכללות ליפשיץ והרצוג</option>
-                        <option>המכללה האקדמית חמדת</option>
-                        <option>המכללה האקדמית כנרת</option>
-                        <option>המכללה האקדמית להנדסה בראודה כרמיאל</option>
-                        <option>המכללה האקדמית להנדסה ע”ש סמי שמעון</option>
-                        <option>המכללה האקדמית לחינוך גבעת וושינגטון</option>
-                        <option>המכללה האקדמית לחינוך ולספורט אוהלו בקצרין</option>
-                        <option>המכללה האקדמית לחינוך ע"ש א. ד. גורדון</option>
-                        <option>המכללה האקדמית לחינוך ע"ש דוד ילין</option>
-                        <option>המכללה האקדמית לחינוך ע"ש קיי</option>
-                        <option>המכללה האקדמית לישראל ברמת-גן</option>
-                        <option>המכללה האקדמית נתניה</option>
-                        <option>המכללה האקדמית ספיר</option>
-                        <option>המכללה האקדמית עמק יזרעאל ע"ש מקס שטרן</option>
-                        <option>המכללה האקדמית צפת</option>
-                        <option>המכללה האקדמית תל חי</option>
-                        <option>המכללה האקדמית תל-אביב יפו</option>
-                        <option>המסלול האקדמי המכללה למינהל</option>
-                        <option>המרכז האקדמי לב</option>
-                        <option>המרכז האקדמי לוינסקי-וינגייט</option>
-                        <option>המרכז האקדמי למשפט ולעסקים</option>
-                        <option>המרכז האקדמי לעיצוב ולחינוך ויצו – חיפה ע"ש נרי בלומפילד</option>
-                        <option>הממרכז האקדמי פרס</option>
-                        <option>המרכז האקדמי רופין</option>
-                        <option>המרכז האקדמי שלם</option>
-                        <option>המרכז האקדמי שערי מדע ומשפט</option>
-                        <option>הקריה האקדמית אונו</option>
-                        <option>מכון ויצמן למדע</option>
-                        <option>מכון טכנולוגי חולון – HIT</option>
-                        <option>מכון שכטר למדעי היהדות</option>
-                        <option>מכללה אקדמית לחינוך "אורנים"</option>
-                        <option>מכללה אקדמית לחינוך – אורות ישראל מיסודן של מכללת אורות ישראל ומכללת מורשת יעקב</option>
-                        <option>מכללה ירושלים</option>
-                        <option>מכללת לוינסקי לחינוך</option>
-                        <option>מכללת סכנין להכשרת עובדי הוראה</option>
-                        <option>סמינר הקיבוצים – המכללה לחינוך לטכנולוגיה ולאומנויות</option>
-                        <option>עזריאלי- מכללה אקדמית להנדסה ירושלים</option>
-                        <option>שנקר. הנדסה. עיצוב. אמנות</option>
-                        <option>תלפיות – המכללה האקדמית לחינוך</option>
                     </select>
 
                     <select id="subMinistry" class="form-control sub-workplace">
@@ -400,7 +322,6 @@
         </div>
 
         <button type="submit" id="submitBtn" class="btn-submit">📤 שליחת צילום לתחרות</button>
-        <div id="statusMessage"></div>
     </form>
     
     <div style="text-align: center; margin-top: 50px; margin-bottom: 20px;">
@@ -411,6 +332,15 @@
 
 </div>
 
-<script type="module" src="/OBN-Photocontest/app.js?v=7"></script>
+<div id="messageModal" class="msg-modal">
+    <div class="msg-modal-content">
+        <div id="msgIcon" class="msg-icon"></div>
+        <div id="msgTitle" class="msg-title"></div>
+        <div id="msgText" class="msg-text"></div>
+        <button id="msgBtn" class="msg-btn">סגור</button>
+    </div>
+</div>
+
+<script type="module" src="/OBN-Photocontest/app.js?v=8"></script>
 </body>
 </html>
