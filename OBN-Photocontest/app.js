@@ -131,15 +131,17 @@ if (uploadForm) {
         const btn = document.getElementById('submitBtn');
         const status = document.getElementById('statusMessage');
         const file = document.getElementById('photoFile').files[0];
-        const uploadOverlay = document.getElementById('uploadOverlay'); // שולף את מסך הטעינה
+        const uploadOverlay = document.getElementById('uploadOverlay');
 
-        const minSize = 2 * 1024 * 1024;
-        const maxSize = 5 * 1024 * 1024;
+        // שינוי הגדרות טווח המשקל בפועל (1.5 עד 8 מ"ב) להגמשת המערכת
+        const minSize = 1.5 * 1024 * 1024;
+        const maxSize = 8 * 1024 * 1024;
         
         if (file) {
             if (file.size < minSize || file.size > maxSize) {
                 status.style.color = 'red';
-                status.innerText = 'שגיאה: קובץ הצילום חייב להיות בגודל של בין 2 מ"ב ל-5 מ"ב בלבד.';
+                // הודעת השגיאה ממשיכה להציג את ההנחיות הרשמיות כפי שביקשת
+                status.innerText = 'שגיאה: קובץ הצילום חייב להיות בגודל של בין 2 מ"ב ל-6 מ"ב בלבד.';
                 return; 
             }
         }
@@ -148,7 +150,6 @@ if (uploadForm) {
         status.style.color = '#2563eb';
         status.innerText = 'מתחיל בעיבוד ההגשה והעלאת קבצים...';
 
-        // הפעלת האנימציה המרחפת החוסמת את המסך
         if (uploadOverlay) uploadOverlay.style.display = 'flex';
 
         try {
@@ -205,7 +206,7 @@ if (uploadForm) {
                 photographerName: `${uTitle} ${fName} ${lName}`,
                 phone: phone,
                 email: email,
-                workplace: finalWorkplace, // השדה המלא והמאוחד
+                workplace: finalWorkplace,
                 department: dept,
                 role: role,
                 allowEmails: allowEmails,
@@ -231,7 +232,6 @@ if (uploadForm) {
             status.innerText = 'אירעה שגיאה בתהליך השליחה. נסה שוב.';
         } finally {
             btn.disabled = false;
-            // סגירת האנימציה המרחפת (גם במקרה של הצלחה וגם בשגיאה)
             if (uploadOverlay) uploadOverlay.style.display = 'none';
         }
     });
