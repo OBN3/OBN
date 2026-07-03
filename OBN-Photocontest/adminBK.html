@@ -11,13 +11,11 @@
         .actions button { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; margin-right: 10px; }
         .btn-export { background-color: #10b981; color: white; }
         .btn-export:hover { background-color: #059669; }
-        .btn-deleted { background-color: #6b7280; color: white; }
-        .btn-deleted:hover { background-color: #4b5563; }
         .btn-logout { background-color: #ef4444; color: white; }
         .btn-logout:hover { background-color: #dc2626; }
         
         .table-container { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; text-align: right; white-space: nowrap; }
+        table { width: 100%; border-collapse: collapse; text-align: right; white-space: nowrap; /* שומר על שורות אחידות ולא שבורות */ }
         th, td { padding: 12px; border-bottom: 1px solid #e5e7eb; }
         th { background-color: #f9fafb; font-weight: 600; color: #4b5563; }
         tr:hover { background-color: #f9fafb; }
@@ -26,12 +24,6 @@
         .status.pending { background-color: #fef3c7; color: #d97706; }
         .status.judged { background-color: #d1fae5; color: #059669; }
         
-        .action-btn { padding: 6px 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
-        .btn-delete-row { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
-        .btn-delete-row:hover { background-color: #fca5a5; }
-        .btn-restore-row { background-color: #d1fae5; color: #047857; border: 1px solid #6ee7b7; }
-        .btn-restore-row:hover { background-color: #6ee7b7; }
-
         #loadingMsg { text-align: center; padding: 20px; font-size: 18px; color: #6b7280; }
         
         /* עיצוב החלון הצף (Modal) */
@@ -39,14 +31,14 @@
         .modal-content { max-width: 90%; max-height: 90vh; border-radius: 8px; box-shadow: 0 4px 25px rgba(0,0,0,0.5); object-fit: contain; }
         .close-btn { position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .close-btn:hover { color: #ef4444; }        
+        
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1 id="pageTitle">🏆 מערכת ניהול התחרות</h1>
+    <h1>🏆 מערכת ניהול התחרות</h1>
     <div class="actions">
-        <button id="toggleDeletedBtn" class="btn-deleted">🗑️ רשומות מחוקות</button>
         <button id="exportCsvBtn" class="btn-export">⬇️ ייצוא ל-CSV</button>
         <button id="logoutBtn" class="btn-logout">התנתק</button>
     </div>
@@ -70,11 +62,10 @@
                 <th>ציון סופי</th>
                 <th>אישור PDF</th>
                 <th>סטטוס</th>
-                <th>פעולות</th>
             </tr>
         </thead>
         <tbody id="tableBody">
-        </tbody>
+            </tbody>
     </table>
 </div>
 
@@ -83,6 +74,6 @@
     <img class="modal-content" id="modalImg" src="">
 </div>
 
-<script type="module" src="/OBN-Photocontest/admin.js?v=4"></script>
+<script type="module" src="/OBN-Photocontest/admin.js?v=3"></script>
 </body>
 </html>

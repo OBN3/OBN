@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -17,6 +17,7 @@ const auth = getAuth(app);
 
 let submissionsData = []; 
 let isLoggingOut = false;
+let showingDeleted = false; // משתנה גלובלי לניהול מצב התצוגה הנוכחי
 
 window.openModal = function(imageUrl) {
     const modal = document.getElementById('imageModal');
@@ -37,6 +38,24 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('closeModal').addEventListener('click', () => {
         document.getElementById('imageModal').style.display = 'none';
         document.getElementById('modalImg').src = '';
+    });
+
+    // כפתור מעבר בין תצוגת רשומות פעילות למחוקות
+    document.getElementById('toggleDeletedBtn').addEventListener('click', () => {
+        showingDeleted = !showingDeleted;
+        const btn = document.getElementById('toggleDeletedBtn');
+        const title = document.getElementById('pageTitle');
+        
+        if (showingDeleted) {
+            btn.innerHTML = "🔙 חזור לרשומות פעילות";
+            btn.style.backgroundColor = "#3b82f6";
+            title.innerHTML = "🗑️ רשומות מחוקות";
+        } else {
+            btn.innerHTML = "🗑️ רשומות מחוקות";
+            btn.style.backgroundColor = "#6b7280";
+            title.innerHTML = "🏆 מערכת ניהול התחרות";
+        }
+        renderTable();
     });
 });
 
@@ -79,67 +98,22 @@ function calculateTotalScore(data) {
 }
 
 async function fetchSubmissions() {
-    const table = document.getElementById('submissionsTable');
-    const tbody = document.getElementById('tableBody');
     const loadingMsg = document.getElementById('loadingMsg');
+    const table = document.getElementById('submissionsTable');
+    loadingMsg.style.display = 'block';
+    table.style.display = 'none';
 
     try {
         const querySnapshot = await getDocs(collection(db, "submissions"));
         submissionsData = [];
         
-        querySnapshot.forEach((doc) => {
-            submissionsData.push(doc.data());
+        querySnapshot.forEach((docSnap) => {
+            // הוספת מזהה המסמך כדי שנוכל לעדכן אותו בהמשך
+            submissionsData.push({ id: docSnap.id, ...docSnap.data() });
         });
 
         submissionsData.sort((a, b) => calculateTotalScore(b) - calculateTotalScore(a));
-        tbody.innerHTML = '';
-
-        submissionsData.forEach((data) => {
-            const scores = data.scores || {};
-            const totalScore = calculateTotalScore(data);
-            
-            const evaluationEmails = data.evaluations ? Object.keys(data.evaluations) : [];
-            const judgeCount = evaluationEmails.length;
-            let statusHtml = judgeCount > 0 ? `<span class="status judged">דורג (${judgeCount})</span><br><small style="color:#6b7280; font-size:11px;">ע"י: ${evaluationEmails.join(', ')}</small>` : `<span class="status pending">ממתין</span>`;
-
-            let pdfHtml = data.consentPdfUrl ? `<a href="${data.consentPdfUrl}" target="_blank" style="color:#2563eb; font-weight:bold; font-size:12px;">📄 אישור PDF</a>` : `<span style="color:#94a3b8; font-size:12px;">אין</span>`;
-
-            const thumbUrl = getDirectImageUrl(data.imageUrl, 200);
-            const largeUrl = getDirectImageUrl(data.imageUrl, 1920);
-
-            const pTitle = data.title || "";
-            const fName = data.firstName || "";
-            const lName = data.lastName || data.photographerName || "";
-            const fullDisplayName = `${pTitle} ${fName} ${lName}`.trim();
-
-            // פיצול חכם של מקום העבודה הראשי מול התת-סעיף
-            let wpParts = (data.workplace || "").split(" - ");
-            let baseWorkplace = wpParts[0] || "";
-            let subWorkplace = wpParts.length > 1 ? wpParts[1] : "-";
-
-            // תרגום סטטוס המצולמים
-            let personReadable = "ללא זיהוי";
-            if(data.identifiablePerson === 'staff') personReadable = "עובדי מוסד";
-            if(data.identifiablePerson === 'patients') personReadable = "מטופלים";
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><img src="${thumbUrl}" class="thumbnail" alt="תמונה" title="לחץ להגדלה" onclick="window.openModal('${largeUrl}')"></td>
-                <td><strong>${fullDisplayName}</strong></td>
-                <td>${baseWorkplace}</td>
-                <td><span style="color:#6b7280; font-size:13px;">${subWorkplace}</span></td>
-                <td>${data.photoTitle || data.title || ''}</td>
-                <td><span style="background-color:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:12px;">${personReadable}</span></td>
-                <td>${scores.relevance || 0}</td>
-                <td>${scores.artistry || 0}</td>
-                <td>${scores.quality || 0}</td>
-                <td>${scores.authenticity || 0}</td>
-                <td><strong>${totalScore}</strong></td>
-                <td>${pdfHtml}</td>
-                <td>${statusHtml}</td>
-            `;
-            tbody.appendChild(tr);
-        });
+        renderTable();
 
         loadingMsg.style.display = 'none';
         table.style.display = 'table';
@@ -150,17 +124,112 @@ async function fetchSubmissions() {
     }
 }
 
-// ייצוא מורחב לאקסל/CSV עם כל השדות החדשים
+// פונקציה חדשה לרינדור הטבלה בהתאם למצב התצוגה (פעילים/מחוקים)
+function renderTable() {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+
+    // סינון הנתונים לפי המצב הנוכחי
+    const filteredData = submissionsData.filter(data => {
+        return showingDeleted ? data.isDeleted === true : !data.isDeleted;
+    });
+
+    if (filteredData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="14" style="text-align: center; padding: 20px;">אין נתונים להצגה</td></tr>`;
+        return;
+    }
+
+    filteredData.forEach((data) => {
+        const scores = data.scores || {};
+        const totalScore = calculateTotalScore(data);
+        
+        const evaluationEmails = data.evaluations ? Object.keys(data.evaluations) : [];
+        const judgeCount = evaluationEmails.length;
+        let statusHtml = judgeCount > 0 ? `<span class="status judged">דורג (${judgeCount})</span><br><small style="color:#6b7280; font-size:11px;">ע"י: ${evaluationEmails.join(', ')}</small>` : `<span class="status pending">ממתין</span>`;
+
+        let pdfHtml = data.consentPdfUrl ? `<a href="${data.consentPdfUrl}" target="_blank" style="color:#2563eb; font-weight:bold; font-size:12px;">📄 אישור PDF</a>` : `<span style="color:#94a3b8; font-size:12px;">אין</span>`;
+
+        const thumbUrl = getDirectImageUrl(data.imageUrl, 200);
+        const largeUrl = getDirectImageUrl(data.imageUrl, 1920);
+
+        const pTitle = data.title || "";
+        const fName = data.firstName || "";
+        const lName = data.lastName || data.photographerName || "";
+        const fullDisplayName = `${pTitle} ${fName} ${lName}`.trim();
+
+        let wpParts = (data.workplace || "").split(" - ");
+        let baseWorkplace = wpParts[0] || "";
+        let subWorkplace = wpParts.length > 1 ? wpParts[1] : "-";
+
+        let personReadable = "ללא זיהוי";
+        if(data.identifiablePerson === 'staff') personReadable = "עובדי מוסד";
+        if(data.identifiablePerson === 'patients') personReadable = "מטופלים";
+
+        // יצירת כפתור הפעולה (מחק / שחזר)
+        let actionBtnHtml = showingDeleted 
+            ? `<button class="action-btn btn-restore-row" onclick="toggleDeleteStatus('${data.id}', false)">שחזר ⟲</button>`
+            : `<button class="action-btn btn-delete-row" onclick="toggleDeleteStatus('${data.id}', true)">מחק 🗑️</button>`;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><img src="${thumbUrl}" class="thumbnail" alt="תמונה" title="לחץ להגדלה" onclick="window.openModal('${largeUrl}')"></td>
+            <td><strong>${fullDisplayName}</strong></td>
+            <td>${baseWorkplace}</td>
+            <td><span style="color:#6b7280; font-size:13px;">${subWorkplace}</span></td>
+            <td>${data.photoTitle || data.title || ''}</td>
+            <td><span style="background-color:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:12px;">${personReadable}</span></td>
+            <td>${scores.relevance || 0}</td>
+            <td>${scores.artistry || 0}</td>
+            <td>${scores.quality || 0}</td>
+            <td>${scores.authenticity || 0}</td>
+            <td><strong>${totalScore}</strong></td>
+            <td>${pdfHtml}</td>
+            <td>${statusHtml}</td>
+            <td>${actionBtnHtml}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// פונקציה גלובלית לעדכון סטטוס מחיקה במסד הנתונים
+window.toggleDeleteStatus = async function(id, isDeleted) {
+    if (isDeleted) {
+        if (!confirm("האם אתה בטוח שברצונך למחוק רשומה זו? היא לא תוצג יותר לשופטים ותעבור לארכיון المحוקים.")) return;
+    } else {
+        if (!confirm("האם לשחזר רשומה זו למאגר הפעיל?")) return;
+    }
+
+    try {
+        const docRef = doc(db, "submissions", id);
+        await updateDoc(docRef, {
+            isDeleted: isDeleted
+        });
+        
+        // עדכון מקומי מהיר כדי לחסוך קריאה מחדש לשרת
+        const record = submissionsData.find(d => d.id === id);
+        if (record) {
+            record.isDeleted = isDeleted;
+        }
+        renderTable();
+
+    } catch (error) {
+        console.error("Error updating delete status:", error);
+        alert("אירעה שגיאה בעדכון מצב הרשומה.");
+    }
+};
+
 document.getElementById('exportCsvBtn').addEventListener('click', () => {
-    if (submissionsData.length === 0) {
+    // מייצא רק את הנתונים שמוצגים כרגע על המסך
+    const dataToExport = submissionsData.filter(data => showingDeleted ? data.isDeleted === true : !data.isDeleted);
+
+    if (dataToExport.length === 0) {
         alert("אין נתונים לייצוא.");
         return;
     }
 
-    // הוספת העמודות החדשות לכותרות ה-CSV
     let csvContent = "תואר,שם פרטי,שם משפחה,טלפון נייד,דוא\"ל,מקום עבודה ראשי,פירוט מקום עבודה,מחלקה,תפקיד,מאשר דיוור,שם הצילום,הסיפור מאחורי התמונה,זיהוי אדם,לינק ל-PDF אישורים,זיקה לנושא,אמנותיות,איכות טכנית,אותנטיות,ציון סופי,סטטוס (כמות),שופטים שדירגו\n";
 
-    submissionsData.forEach(row => {
+    dataToExport.forEach(row => {
         const scores = row.scores || {};
         const totalScore = calculateTotalScore(row);
         const evaluationEmails = row.evaluations ? Object.keys(row.evaluations) : [];
@@ -171,7 +240,6 @@ document.getElementById('exportCsvBtn').addEventListener('click', () => {
         if(row.identifiablePerson === 'staff') personType = "עובדי מוסד";
         if(row.identifiablePerson === 'patients') personType = "מטופלים (מצורף PDF)";
 
-        // פיצול מקום העבודה גם עבור קובץ האקסל
         let wpParts = (row.workplace || "").split(" - ");
         let baseWorkplace = wpParts[0] || "";
         let subWorkplace = wpParts.length > 1 ? wpParts[1] : "";
@@ -183,7 +251,7 @@ document.getElementById('exportCsvBtn').addEventListener('click', () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", "נתוני_התחרות_המלאים.csv");
+    link.setAttribute("download", showingDeleted ? "נתוני_תחרות_מחוקים.csv" : "נתוני_התחרות_המלאים.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

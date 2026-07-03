@@ -107,10 +107,6 @@ async function loadPendingSubmissions() {
         
         querySnapshot.forEach((doc) => {
             const data = doc.data();
-            
-            // סינון רשומות שנמחקו במחיקה רכה - לא יוצגו לשופטים
-            if (data.isDeleted) return;
-
             const hasJudged = data.evaluations && data.evaluations[currentUserEmail];
             if (!hasJudged) {
                 pendingPhotos.push({ id: doc.id, ...data });
@@ -181,13 +177,6 @@ document.getElementById('scoringForm').addEventListener('submit', async (e) => {
         const docSnap = await getDoc(docRef);
         const data = docSnap.data();
         
-        // הגנה למקרה שמנהל מחק את התמונה בזמן שהשופט צפה בה והתעכב עם הדירוג
-        if (data.isDeleted) {
-            alert("תמונה זו נמחקה על ידי מנהל המערכת ולא ניתן לדרג אותה. מעביר לתמונה הבאה.");
-            moveToNextPhoto();
-            return;
-        }
-
         let evaluations = data.evaluations || {};
         evaluations[currentUserEmail] = judgeScore;
         
@@ -212,8 +201,14 @@ document.getElementById('scoringForm').addEventListener('submit', async (e) => {
             status: "judged"
         });
 
-        moveToNextPhoto();
-        
+        // מעבר לתמונה הבאה
+        currentIndex++;
+        if (currentIndex < pendingPhotos.length) {
+            showPhoto(currentIndex);
+        } else {
+            document.getElementById('judgingWorkspace').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+        }
     } catch (error) {
         console.error("Error saving score:", error);
         alert("שגיאה בשמירת הציון. נסה שוב.");
@@ -222,17 +217,6 @@ document.getElementById('scoringForm').addEventListener('submit', async (e) => {
         btn.innerText = "שמור דירוג והמשך ➡️";
     }
 });
-
-// פונקציית עזר למעבר לתמונה הבאה (מיועדת גם להצלחה וגם למקרה של מחיקה ברקע)
-function moveToNextPhoto() {
-    currentIndex++;
-    if (currentIndex < pendingPhotos.length) {
-        showPhoto(currentIndex);
-    } else {
-        document.getElementById('judgingWorkspace').style.display = 'none';
-        document.getElementById('emptyState').style.display = 'block';
-    }
-}
 
 // התנתקות חלקה
 document.getElementById('logoutBtn').addEventListener('click', () => {
