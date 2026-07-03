@@ -194,7 +194,7 @@ function renderTable() {
 // פונקציה גלובלית לעדכון סטטוס מחיקה במסד הנתונים
 window.toggleDeleteStatus = async function(id, isDeleted) {
     if (isDeleted) {
-        if (!confirm("האם אתה בטוח שברצונך למחוק רשומה זו? היא לא תוצג יותר לשופטים ותעבור לארכיון المحוקים.")) return;
+        if (!confirm("האם אתה בטוח שברצונך למחוק רשומה זו? היא לא תוצג יותר לשופטים ותעבור לארכיון מחוקים.")) return;
     } else {
         if (!confirm("האם לשחזר רשומה זו למאגר הפעיל?")) return;
     }
