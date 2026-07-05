@@ -71,13 +71,11 @@
     loadNext(0, function () {
         var src = document.getElementById('app-jsx').textContent;
 
-
         // ✅ התיקון הקריטי: sourceType:'script' מונע מ-Babel לפלוט import/export
         var compiled = Babel.transform(src, {
             presets: ['react'],
             sourceType: 'script'
         }).code;
-
 
         var s = document.createElement('script');
         s.textContent = compiled;
@@ -102,50 +100,38 @@ function App() {
     var s_configInput  = useState('');
     var configInput    = s_configInput[0],  setConfigInput  = s_configInput[1];
 
-
     var s_email        = useState('');
     var email          = s_email[0],        setEmail        = s_email[1];
-
 
     var s_password     = useState('');
     var password       = s_password[0],     setPassword     = s_password[1];
 
-
     var s_showPass     = useState(false);
     var showPass       = s_showPass[0],     setShowPass     = s_showPass[1];
-
 
     var s_jsonContent  = useState('');
     var jsonContent    = s_jsonContent[0],  setJsonContent  = s_jsonContent[1];
 
-
     var s_saveStatus   = useState(false);
     var saveStatus     = s_saveStatus[0],   setSaveStatus   = s_saveStatus[1];
-
 
     var s_manualNotes  = useState([{ id: Date.now(), title: '', content: '', date: new Date().toLocaleDateString('he-IL') }]);
     var manualNotes    = s_manualNotes[0],  setManualNotes  = s_manualNotes[1];
 
-
     var s_status       = useState('Ready');
     var status         = s_status[0],       setStatus       = s_status[1];
-
 
     var s_progress     = useState(0);
     var progress       = s_progress[0],     setProgress     = s_progress[1];
 
-
     var s_isRunning    = useState(false);
     var isRunning      = s_isRunning[0],    setIsRunning    = s_isRunning[1];
-
 
     var s_stats        = useState({ total: 0, added: 0, skipped: 0 });
     var stats          = s_stats[0],        setStats        = s_stats[1];
 
-
     var s_diagInfo     = useState(null);
     var diagInfo       = s_diagInfo[0],     setDiagInfo     = s_diagInfo[1];
-
 
     // --- טעינת הגדרות שמורות ---
     useEffect(function () {
@@ -390,11 +376,7 @@ function App() {
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Firebase Config Object</label>
                             <textarea
                                 className="flex-1 min-h-[220px] p-5 bg-slate-50 border border-slate-200 rounded-[1.5rem] font-mono text-[10px] outline-none focus:ring-4 focus:ring-blue-100 transition-all shadow-inner"
-                                dir="ltr" placeholder={'{
-  apiKey: "...",
-  authDomain: "...",
-  projectId: "..."
-}'}
+                                dir="ltr" placeholder='{ apiKey: "...", authDomain: "...", projectId: "..." }'
                                 value={configInput} onChange={function(e){ setConfigInput(e.target.value); }} />
                         </div>
                     </div>
