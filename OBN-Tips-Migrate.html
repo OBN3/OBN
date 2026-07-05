@@ -5,19 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OBN Data Migrator - Smart Sync</title>
     
-    <!-- Scripts & Frameworks -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        window.fb = { initializeApp, getApps, getAuth, signInWithEmailAndPassword, getFirestore, collection, doc, setDoc, getDocs };
+        // הוספנו את writeBatch לאובייקט החשוף
+        window.fb = { initializeApp, getApps, getAuth, signInWithEmailAndPassword, getFirestore, collection, doc, setDoc, getDocs, writeBatch };
     </script>
 
     <style>
@@ -156,7 +155,8 @@
                 }
 
                 const cleanEmail = email.trim();
-                const cleanPassword = password.trim();
+                // הוסר ה-trim() מהסיסמה למקרה שזה גרם לבעיית ההתחברות
+                const cleanPassword = password; 
                 const firebaseConfig = parseFirebaseConfig(configInput);
 
                 if (!firebaseConfig || !cleanEmail || !cleanPassword) {
@@ -192,7 +192,11 @@
                         await window.fb.signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
                     } catch (authErr) {
                         console.error("Firebase Auth Error Detail:", authErr);
-                        throw new Error(`אימות נכשל (${authErr.code}). בדוק אימייל/סיסמה ו-Enable ב-Console.`);
+                        let errorMsg = `אימות נכשל (${authErr.code}).`;
+                        if (authErr.code === 'auth/invalid-credential') {
+                            errorMsg = "אימייל או סיסמה שגויים, או ששיטת התחברות (Email/Password) חסומה.";
+                        }
+                        throw new Error(errorMsg);
                     }
 
                     setStatus('סורק דלתא (השוואת נתונים)...');
@@ -203,27 +207,48 @@
 
                     let added = 0;
                     let skipped = 0;
+                    let processedCount = 0;
 
-                    for (let i = 0; i < dataToUpload.length; i++) {
-                        const item = dataToUpload[i];
-                        const docId = generateStableId(item);
-                        const existing = existingDocs[docId];
+                    // מנגנון חלוקה למנות (Chunks) - Firebase מגביל עד 500 פעולות לאצווה
+                    const CHUNK_SIZE = 450; 
+                    const chunks = [];
+                    for (let i = 0; i < dataToUpload.length; i += CHUNK_SIZE) {
+                        chunks.push(dataToUpload.slice(i, i + CHUNK_SIZE));
+                    }
 
-                        if (existing && existing.title === item.title && existing.content === item.content) {
-                            skipped++;
-                        } else {
-                            await window.fb.setDoc(window.fb.doc(db, 'artifacts', appId, 'public', 'data', 'techtips', docId), {
-                                title: item.title || 'Untitled',
-                                content: item.content || '',
-                                labels: item.labels || ['טיפ'],
-                                date: item.date || new Date().toLocaleDateString('he-IL'),
-                                rawDate: item.rawDate || Date.now()
-                            });
-                            added++;
+                    for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+                        const currentChunk = chunks[chunkIndex];
+                        const batch = window.fb.writeBatch(db);
+
+                        for (let i = 0; i < currentChunk.length; i++) {
+                            const item = currentChunk[i];
+                            const docId = generateStableId(item);
+                            const existing = existingDocs[docId];
+
+                            if (existing && existing.title === item.title && existing.content === item.content) {
+                                skipped++;
+                            } else {
+                                const docRef = window.fb.doc(db, 'artifacts', appId, 'public', 'data', 'techtips', docId);
+                                batch.set(docRef, {
+                                    title: item.title || 'Untitled',
+                                    content: item.content || '',
+                                    labels: item.labels || ['טיפ'],
+                                    date: item.date || new Date().toLocaleDateString('he-IL'),
+                                    rawDate: item.rawDate || Date.now()
+                                });
+                                added++;
+                            }
+                            
+                            processedCount++;
+                            setProgress(Math.round((processedCount / dataToUpload.length) * 100));
+                            setStats({ total: dataToUpload.length, added, skipped });
                         }
-                        setProgress(Math.round(((i + 1) / dataToUpload.length) * 100));
-                        setStats({ total: dataToUpload.length, added, skipped });
-                        setStatus(`מעבד ${i + 1}/${dataToUpload.length}...`);
+
+                        // שמירת האצווה הנוכחית לפני המעבר לאצווה הבאה
+                        if (added > 0) {
+                            setStatus(`כותב לשרת - חלק ${chunkIndex + 1} מתוך ${chunks.length}...`);
+                            await batch.commit();
+                        }
                     }
 
                     setStatus(`סנכרון הושלם! ${added} נכתבו, ${skipped} דולגו.`);
