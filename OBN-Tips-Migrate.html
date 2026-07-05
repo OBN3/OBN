@@ -17,7 +17,7 @@
         import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        window.fb = { initializeApp, getApps, getAuth, signInWithEmailAndPassword, getFirestore, collection, doc, setDoc, getDocs };
+        window.fb = { initializeApp, getApps, deleteApp, getAuth, signInWithEmailAndPassword, getFirestore, collection, doc, setDoc, getDocs };
     </script>
 
     <style>
@@ -178,9 +178,12 @@
                 setProgress(0);
                 
                 try {
-                    let app;
-                    const apps = window.fb.getApps();
-                    app = apps.length === 0 ? window.fb.initializeApp(firebaseConfig) : apps[0];
+                // מחק את כל האפליקציות הקיימות לפני אתחול מחדש עם config נוכחי
+                const existingApps = window.fb.getApps();
+                for (const existingApp of existingApps) {
+                    await window.fb.deleteApp(existingApp);
+                }
+                const app = window.fb.initializeApp(firebaseConfig);
 
                     const auth = window.fb.getAuth(app);
                     const db = window.fb.getFirestore(app);
@@ -191,8 +194,16 @@
                     try {
                         await window.fb.signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
                     } catch (authErr) {
-                        console.error("Firebase Auth Error Detail:", authErr);
-                        throw new Error(`אימות נכשל (${authErr.code}). בדוק אימייל/סיסמה ו-Enable ב-Console.`);
+                        const messages = {
+                            'auth/invalid-credential': 'אימייל או סיסמה שגויים',
+                            'auth/user-not-found': 'משתמש לא קיים ב-Firebase Auth',
+                            'auth/wrong-password': 'סיסמה שגויה',
+                            'auth/invalid-email': 'פורמט אימייל לא תקין',
+                            'auth/too-many-requests': 'יותר מדי ניסיונות – נסה שוב מאוחר יותר',
+                            'auth/operation-not-allowed': 'Email/Password לא מופעל ב-Console'
+                        };
+                        const msg = messages[authErr.code] || `שגיאה לא ידועה: ${authErr.code}`;
+                        throw new Error(`אימות נכשל – ${msg}`);
                     }
 
                     setStatus('סורק דלתא (השוואת נתונים)...');
