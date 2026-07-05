@@ -46,12 +46,6 @@
     </div>
 </div>
 
-<!--
-    DYNAMIC LOADER – V4.0
-    טוען React / ReactDOM / Babel / Tailwind דינמית (createElement)
-    כדי לעקוף חסימת תגיות script src= בסביבות Canvas.
-    כל ספרייה נטענת ברצף – רק אחרי שהקודמת הסתיימה.
--->
 <script>
 (function () {
     var libs = [
@@ -75,10 +69,17 @@
     }
 
     loadNext(0, function () {
-        // כל הספריות נטענו – מתרגמים JSX ומריצים
-        var src      = document.getElementById('app-jsx').textContent;
-        var compiled = Babel.transform(src, { presets: ['react'] }).code;
-        var s        = document.createElement('script');
+        var src = document.getElementById('app-jsx').textContent;
+
+
+        // ✅ התיקון הקריטי: sourceType:'script' מונע מ-Babel לפלוט import/export
+        var compiled = Babel.transform(src, {
+            presets: ['react'],
+            sourceType: 'script'
+        }).code;
+
+
+        var s = document.createElement('script');
         s.textContent = compiled;
         document.body.appendChild(s);
     });
@@ -87,45 +88,78 @@
 
 <!-- קוד JSX – שמור כ-text/plain כדי שהדפדפן לא יריץ אותו ישירות -->
 <script id="app-jsx" type="text/plain">
-const { useState, useEffect } = React;
-
-const STORAGE_KEYS = {
+var useState   = React.useState;
+var useEffect  = React.useEffect;
+var STORAGE_KEYS = {
     CONFIG: 'obn_migrator_config',
     EMAIL:  'obn_migrator_email',
     PASS:   'obn_migrator_pass'
 };
 
-const App = () => {
-    const [activeTab,   setActiveTab]   = useState('json');
-    const [configInput, setConfigInput] = useState('');
-    const [email,       setEmail]       = useState('');
-    const [password,    setPassword]    = useState('');
-    const [showPass,    setShowPass]    = useState(false);
-    const [jsonContent, setJsonContent] = useState('');
-    const [saveStatus,  setSaveStatus]  = useState(false);
-    const [manualNotes, setManualNotes] = useState([
-        { id: Date.now(), title: '', content: '', date: new Date().toLocaleDateString('he-IL') }
-    ]);
-    const [status,    setStatus]    = useState('Ready');
-    const [progress,  setProgress]  = useState(0);
-    const [isRunning, setIsRunning] = useState(false);
-    const [stats,     setStats]     = useState({ total: 0, added: 0, skipped: 0 });
-    const [diagInfo,  setDiagInfo]  = useState(null);
+function App() {
+    var s_activeTab    = useState('json');
+    var activeTab      = s_activeTab[0], setActiveTab    = s_activeTab[1];
+    var s_configInput  = useState('');
+    var configInput    = s_configInput[0],  setConfigInput  = s_configInput[1];
+
+
+    var s_email        = useState('');
+    var email          = s_email[0],        setEmail        = s_email[1];
+
+
+    var s_password     = useState('');
+    var password       = s_password[0],     setPassword     = s_password[1];
+
+
+    var s_showPass     = useState(false);
+    var showPass       = s_showPass[0],     setShowPass     = s_showPass[1];
+
+
+    var s_jsonContent  = useState('');
+    var jsonContent    = s_jsonContent[0],  setJsonContent  = s_jsonContent[1];
+
+
+    var s_saveStatus   = useState(false);
+    var saveStatus     = s_saveStatus[0],   setSaveStatus   = s_saveStatus[1];
+
+
+    var s_manualNotes  = useState([{ id: Date.now(), title: '', content: '', date: new Date().toLocaleDateString('he-IL') }]);
+    var manualNotes    = s_manualNotes[0],  setManualNotes  = s_manualNotes[1];
+
+
+    var s_status       = useState('Ready');
+    var status         = s_status[0],       setStatus       = s_status[1];
+
+
+    var s_progress     = useState(0);
+    var progress       = s_progress[0],     setProgress     = s_progress[1];
+
+
+    var s_isRunning    = useState(false);
+    var isRunning      = s_isRunning[0],    setIsRunning    = s_isRunning[1];
+
+
+    var s_stats        = useState({ total: 0, added: 0, skipped: 0 });
+    var stats          = s_stats[0],        setStats        = s_stats[1];
+
+
+    var s_diagInfo     = useState(null);
+    var diagInfo       = s_diagInfo[0],     setDiagInfo     = s_diagInfo[1];
+
 
     // --- טעינת הגדרות שמורות ---
-    useEffect(() => {
-        const savedConfig = localStorage.getItem(STORAGE_KEYS.CONFIG);
-        const savedEmail  = localStorage.getItem(STORAGE_KEYS.EMAIL);
-        const savedPass   = localStorage.getItem(STORAGE_KEYS.PASS);
+    useEffect(function () {
+        var savedConfig = localStorage.getItem(STORAGE_KEYS.CONFIG);
+        var savedEmail  = localStorage.getItem(STORAGE_KEYS.EMAIL);
+        var savedPass   = localStorage.getItem(STORAGE_KEYS.PASS);
         if (savedConfig) setConfigInput(savedConfig);
         if (savedEmail)  setEmail(savedEmail);
         if (savedPass)   setPassword(savedPass);
     }, []);
 
-    useEffect(() => { if (configInput) runDiagnostics(); }, [configInput]);
-
+    useEffect(function () { if (configInput) runDiagnostics(); }, [configInput]);
     // --- שמירת הגדרות ---
-    const saveSettingsOnly = () => {
+    function saveSettingsOnly() {
         if (!configInput || !email || !password) {
             setStatus('שגיאה: נא למלא את כל פרטי ההתחברות');
             return;
@@ -134,21 +168,19 @@ const App = () => {
         localStorage.setItem(STORAGE_KEYS.EMAIL,  email);
         localStorage.setItem(STORAGE_KEYS.PASS,   password);
         setSaveStatus(true);
-        setTimeout(() => setSaveStatus(false), 2000);
-    };
-
+        setTimeout(function () { setSaveStatus(false); }, 2000);
+    }
     // --- פירוש Firebase Config ---
-    const parseFirebaseConfig = (input) => {
+    function parseFirebaseConfig(input) {
         try {
-            const clean = input.replace(/const\s+\w+\s*=\s*/g, '').replace(/;/g, '').trim();
+            var clean = input.replace(/const\s+\w+\s*=\s*/g, '').replace(/;/g, '').trim();
             if (clean.startsWith('{')) return new Function('return ' + clean)();
             return JSON.parse(input);
         } catch (e) { return null; }
-    };
-
+    }
     // --- דיאגנוסטיקה ---
-    const runDiagnostics = () => {
-        const cfg = parseFirebaseConfig(configInput);
+    function runDiagnostics() {
+        var cfg = parseFirebaseConfig(configInput);
         if (cfg) {
             setDiagInfo({
                 projectId:  cfg.projectId  || 'חסר',
@@ -158,58 +190,61 @@ const App = () => {
         } else {
             setDiagInfo({ error: 'Config לא תקין' });
         }
-    };
-
+    }
     // --- יצירת ID יציב לפריט ---
-    const generateStableId = (item) => {
-        const str = (item.title || '') + (item.content || '');
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
+    function generateStableId(item) {
+        var str  = (item.title || '') + (item.content || '');
+        var hash = 0;
+        for (var i = 0; i < str.length; i++) {
             hash = ((hash << 5) - hash) + str.charCodeAt(i);
             hash |= 0;
         }
         return 'gen_' + Math.abs(hash);
-    };
-
+    }
     // --- ניהול שדות Manual ---
-    const addManualField = () =>
-        setManualNotes(prev => [...prev, {
-            id: Date.now(), title: '', content: '',
-            date: new Date().toLocaleDateString('he-IL')
-        }]);
-
-    const removeManualField = (id) =>
-        setManualNotes(prev =>
-            prev.length === 1
-                ? [{ id: Date.now(), title: '', content: '', date: new Date().toLocaleDateString('he-IL') }]
-                : prev.filter(n => n.id !== id)
-        );
-
-    const updateManualField = (id, field, value) =>
-        setManualNotes(prev => prev.map(n => n.id === id ? { ...n, [field]: value } : n));
-
+    function addManualField() {
+        setManualNotes(function (prev) {
+            return prev.concat([{ id: Date.now(), title: '', content: '', date: new Date().toLocaleDateString('he-IL') }]);
+        });
+    }
+    function removeManualField(id) {
+        setManualNotes(function (prev) {
+            if (prev.length === 1)
+                return [{ id: Date.now(), title: '', content: '', date: new Date().toLocaleDateString('he-IL') }];
+            return prev.filter(function (n) { return n.id !== id; });
+        });
+    }
+    function updateManualField(id, field, value) {
+        setManualNotes(function (prev) {
+            return prev.map(function (n) {
+                if (n.id !== id) return n;
+                var updated = Object.assign({}, n);
+                updated[field] = value;
+                return updated;
+            });
+        });
+    }
     // --- לוגיקת סנכרון ראשית ---
-    const startSync = async () => {
+    async function startSync() {
         if (!window.fb) {
             setStatus('שגיאה: ספריות Firebase לא נטענו – רענן את הדף');
             return;
         }
 
-        const cleanEmail     = email.trim();
-        const cleanPassword  = password.trim();
-        const firebaseConfig = parseFirebaseConfig(configInput);
-
+        var cleanEmail     = email.trim();
+        var cleanPassword  = password.trim();
+        var firebaseConfig = parseFirebaseConfig(configInput);
         if (!firebaseConfig || !cleanEmail || !cleanPassword) {
             setStatus('שגיאה: וודא שכל השדות מלאים וה-Config תקין');
             return;
         }
 
-        let dataToUpload = [];
+        var dataToUpload = [];
         if (activeTab === 'json') {
             try { dataToUpload = JSON.parse(jsonContent); }
             catch (e) { setStatus('שגיאה: מבנה JSON לא תקין'); return; }
         } else {
-            dataToUpload = manualNotes.filter(n => n.title.trim() || n.content.trim());
+            dataToUpload = manualNotes.filter(function (n) { return n.title.trim() || n.content.trim(); });
             if (!dataToUpload.length) { setStatus('שגיאה: אין נתונים להעלאה'); return; }
         }
 
@@ -219,47 +254,42 @@ const App = () => {
 
         try {
             // ✅ מחק אפליקציות ישנות ואתחל מחדש עם ה-config הנוכחי
-            const existingApps = window.fb.getApps();
-            for (const ea of existingApps) {
-                await window.fb.deleteApp(ea);
+            var existingApps = window.fb.getApps();
+            for (var ei = 0; ei < existingApps.length; ei++) {
+                await window.fb.deleteApp(existingApps[ei]);
             }
-            const app = window.fb.initializeApp(firebaseConfig);
-
-            const auth  = window.fb.getAuth(app);
-            const db    = window.fb.getFirestore(app);
-            const appId = 'obn-tips-v1';
-
+            var app = window.fb.initializeApp(firebaseConfig);
+            var auth  = window.fb.getAuth(app);
+            var db    = window.fb.getFirestore(app);
+            var appId = 'obn-tips-v1';
             setStatus('מתחבר לפרויקט: ' + firebaseConfig.projectId + '...');
 
             // ✅ אימות עם הודעות שגיאה מפורטות
             try {
                 await window.fb.signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
             } catch (authErr) {
-                const msgs = {
-                    'auth/invalid-credential':    'אימייל או סיסמה שגויים',
-                    'auth/user-not-found':         'משתמש לא קיים ב-Firebase Auth',
-                    'auth/wrong-password':         'סיסמה שגויה',
-                    'auth/invalid-email':          'פורמט אימייל לא תקין',
-                    'auth/too-many-requests':      'יותר מדי ניסיונות – נסה שוב מאוחר יותר',
-                    'auth/operation-not-allowed':  'Email/Password לא מופעל ב-Firebase Console'
+                var msgs = {
+                    'auth/invalid-credential':   'אימייל או סיסמה שגויים',
+                    'auth/user-not-found':        'משתמש לא קיים ב-Firebase Auth',
+                    'auth/wrong-password':        'סיסמה שגויה',
+                    'auth/invalid-email':         'פורמט אימייל לא תקין',
+                    'auth/too-many-requests':     'יותר מדי ניסיונות – נסה שוב מאוחר יותר',
+                    'auth/operation-not-allowed': 'Email/Password לא מופעל ב-Firebase Console'
                 };
-                const msg = msgs[authErr.code] || ('שגיאה לא ידועה: ' + authErr.code);
+                var msg = msgs[authErr.code] || ('שגיאה לא ידועה: ' + authErr.code);
                 throw new Error('אימות נכשל – ' + msg);
             }
 
             setStatus('סורק דלתא (השוואת נתונים קיימים)...');
-            const colRef   = window.fb.collection(db, 'artifacts', appId, 'public', 'data', 'techtips');
-            const snapshot = await window.fb.getDocs(colRef);
-            const existingDocs = {};
-            snapshot.forEach(d => { existingDocs[d.id] = d.data(); });
-
-            let added = 0, skipped = 0;
-
-            for (let i = 0; i < dataToUpload.length; i++) {
-                const item     = dataToUpload[i];
-                const docId    = generateStableId(item);
-                const existing = existingDocs[docId];
-
+            var colRef   = window.fb.collection(db, 'artifacts', appId, 'public', 'data', 'techtips');
+            var snapshot = await window.fb.getDocs(colRef);
+            var existingDocs = {};
+            snapshot.forEach(function (d) { existingDocs[d.id] = d.data(); });
+            var added = 0, skipped = 0;
+            for (var i = 0; i < dataToUpload.length; i++) {
+                var item     = dataToUpload[i];
+                var docId    = generateStableId(item);
+                var existing = existingDocs[docId];
                 if (existing && existing.title === item.title && existing.content === item.content) {
                     skipped++;
                 } else {
@@ -277,7 +307,7 @@ const App = () => {
                 }
 
                 setProgress(Math.round(((i + 1) / dataToUpload.length) * 100));
-                setStats({ total: dataToUpload.length, added, skipped });
+                setStats({ total: dataToUpload.length, added: added, skipped: skipped });
                 setStatus('מעבד ' + (i + 1) + '/' + dataToUpload.length + '...');
             }
 
@@ -289,24 +319,22 @@ const App = () => {
         } finally {
             setIsRunning(false);
         }
-    };
-
+    }
     return (
         <div className="max-w-5xl mx-auto p-6 md:p-12 pb-24 space-y-10 text-right">
             <div className="bg-white rounded-[3rem] shadow-2xl p-8 md:p-12 border border-slate-200">
 
-                {/* כותרת + טאבים */}
                 <header className="mb-10 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div>
                         <h1 className="text-4xl font-black text-slate-800 mb-2 italic">OBN Smart Sync</h1>
-                        <p className="text-slate-500 font-medium">Smart Delta Migration V4.0</p>
+                        <p className="text-slate-500 font-medium">Smart Delta Migration V4.1</p>
                     </div>
                     <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shadow-inner">
-                        <button onClick={() => setActiveTab('json')}
+                        <button onClick={function(){ setActiveTab('json'); }}
                             className={"px-8 py-3 rounded-xl text-sm font-bold tab-transition " + (activeTab === 'json' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-slate-600')}>
                             JSON Migration
                         </button>
-                        <button onClick={() => setActiveTab('manual')}
+                        <button onClick={function(){ setActiveTab('manual'); }}
                             className={"px-8 py-3 rounded-xl text-sm font-bold tab-transition " + (activeTab === 'manual' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-slate-600')}>
                             Manual Batch
                         </button>
@@ -315,10 +343,7 @@ const App = () => {
 
                 <div className="grid grid-cols-1 gap-8">
 
-                    {/* Credentials + Firebase Config */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-                        {/* כרטיס Credentials */}
                         <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-xl space-y-6">
                             <div className="flex justify-between items-center">
                                 <h3 className="text-yellow-400 font-bold text-xs uppercase tracking-[0.2em]">Credentials</h3>
@@ -332,15 +357,15 @@ const App = () => {
                                     <label className="text-[10px] font-bold text-slate-500 uppercase mr-1">Admin Email</label>
                                     <input type="email" autoComplete="username"
                                         className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-yellow-400 transition-all font-mono text-sm text-right"
-                                        value={email} onChange={e => setEmail(e.target.value)} />
+                                        value={email} onChange={function(e){ setEmail(e.target.value); }} />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-slate-500 uppercase mr-1">Password</label>
                                     <div className="relative">
                                         <input type={showPass ? 'text' : 'password'} autoComplete="current-password"
                                             className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-yellow-400 transition-all font-mono text-sm text-right pr-16"
-                                            value={password} onChange={e => setPassword(e.target.value)} />
-                                        <button onClick={() => setShowPass(!showPass)}
+                                            value={password} onChange={function(e){ setPassword(e.target.value); }} />
+                                        <button onClick={function(){ setShowPass(!showPass); }}
                                             className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors text-xs font-bold">
                                             {showPass ? 'הסתר' : 'הצג'}
                                         </button>
@@ -361,25 +386,27 @@ const App = () => {
                             )}
                         </div>
 
-                        {/* Firebase Config textarea */}
                         <div className="space-y-2 flex flex-col">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Firebase Config Object</label>
                             <textarea
                                 className="flex-1 min-h-[220px] p-5 bg-slate-50 border border-slate-200 rounded-[1.5rem] font-mono text-[10px] outline-none focus:ring-4 focus:ring-blue-100 transition-all shadow-inner"
-                                dir="ltr" placeholder={'{\n  apiKey: "...",\n  authDomain: "...",\n  projectId: "..."\n}'}
-                                value={configInput} onChange={e => setConfigInput(e.target.value)} />
+                                dir="ltr" placeholder={'{
+  apiKey: "...",
+  authDomain: "...",
+  projectId: "..."
+}'}
+                                value={configInput} onChange={function(e){ setConfigInput(e.target.value); }} />
                         </div>
                     </div>
 
-                    {/* אזור הכנסת נתונים */}
                     <div className="border-t border-slate-100 pt-8">
                         {activeTab === 'json' ? (
                             <div className="space-y-3">
                                 <label className="text-sm font-bold text-slate-700 mr-2">JSON Migration Content</label>
                                 <textarea
                                     className="w-full h-80 p-6 bg-slate-50 border border-slate-200 rounded-[2.5rem] font-mono text-xs outline-none focus:ring-4 focus:ring-blue-50 shadow-inner"
-                                    dir="ltr" placeholder={'[ { "title": "...", "content": "..." } ]'}
-                                    value={jsonContent} onChange={e => setJsonContent(e.target.value)} />
+                                    dir="ltr" placeholder='[ { "title": "...", "content": "..." } ]'
+                                    value={jsonContent} onChange={function(e){ setJsonContent(e.target.value); }} />
                             </div>
                         ) : (
                             <div className="space-y-6">
@@ -391,47 +418,48 @@ const App = () => {
                                     </button>
                                 </div>
                                 <div className="space-y-6 max-h-[400px] overflow-y-auto p-4 custom-scrollbar bg-slate-50/30 rounded-[2.5rem] border border-dashed border-slate-200">
-                                    {manualNotes.map((note, index) => (
-                                        <div key={note.id} className="bg-white border border-slate-200 p-8 rounded-[2rem] relative group shadow-sm hover:shadow-xl transition-all border-r-8 border-r-blue-500">
-                                            <button onClick={() => removeManualField(note.id)}
-                                                className="absolute top-6 left-6 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all text-xs font-bold">
-                                                הסר
-                                            </button>
-                                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-right">
-                                                <div className="md:col-span-3 space-y-4">
-                                                    <div className="space-y-1">
-                                                        <label className="text-[10px] font-black text-slate-400 uppercase">כותרת</label>
-                                                        <input type="text"
-                                                            className="w-full p-4 bg-slate-50 border-none rounded-xl font-bold text-lg outline-none focus:ring-2 focus:ring-blue-200 text-right"
-                                                            value={note.title} onChange={e => updateManualField(note.id, 'title', e.target.value)} />
+                                    {manualNotes.map(function(note, index) {
+                                        return (
+                                            <div key={note.id} className="bg-white border border-slate-200 p-8 rounded-[2rem] relative group shadow-sm hover:shadow-xl transition-all border-r-8 border-r-blue-500">
+                                                <button onClick={function(){ removeManualField(note.id); }}
+                                                    className="absolute top-6 left-6 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all text-xs font-bold">
+                                                    הסר
+                                                </button>
+                                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-right">
+                                                    <div className="md:col-span-3 space-y-4">
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-slate-400 uppercase">כותרת</label>
+                                                            <input type="text"
+                                                                className="w-full p-4 bg-slate-50 border-none rounded-xl font-bold text-lg outline-none focus:ring-2 focus:ring-blue-200 text-right"
+                                                                value={note.title} onChange={function(e){ updateManualField(note.id, 'title', e.target.value); }} />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-slate-400 uppercase">תוכן</label>
+                                                            <textarea
+                                                                className="w-full h-32 p-4 bg-slate-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-blue-200 text-base leading-relaxed text-right"
+                                                                value={note.content} onChange={function(e){ updateManualField(note.id, 'content', e.target.value); }} />
+                                                        </div>
                                                     </div>
-                                                    <div className="space-y-1">
-                                                        <label className="text-[10px] font-black text-slate-400 uppercase">תוכן</label>
-                                                        <textarea
-                                                            className="w-full h-32 p-4 bg-slate-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-blue-200 text-base leading-relaxed text-right"
-                                                            value={note.content} onChange={e => updateManualField(note.id, 'content', e.target.value)} />
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-col justify-start gap-4">
-                                                    <div className="space-y-1">
-                                                        <label className="text-[10px] font-black text-slate-400 uppercase text-center block">תאריך</label>
-                                                        <input type="text"
-                                                            className="w-full p-3 bg-slate-50 border-none rounded-xl text-center font-mono text-xs outline-none"
-                                                            value={note.date} onChange={e => updateManualField(note.id, 'date', e.target.value)} />
-                                                    </div>
-                                                    <div className="mt-auto pt-4 text-center border-t border-slate-100">
-                                                        <div className="text-[10px] text-slate-300 font-black italic">ITEM #{index + 1}</div>
+                                                    <div className="flex flex-col justify-start gap-4">
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-slate-400 uppercase text-center block">תאריך</label>
+                                                            <input type="text"
+                                                                className="w-full p-3 bg-slate-50 border-none rounded-xl text-center font-mono text-xs outline-none"
+                                                                value={note.date} onChange={function(e){ updateManualField(note.id, 'date', e.target.value); }} />
+                                                        </div>
+                                                        <div className="mt-auto pt-4 text-center border-t border-slate-100">
+                                                            <div className="text-[10px] text-slate-300 font-black italic">ITEM #{index + 1}</div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    {/* Progress + Stats */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center border-t border-slate-100 pt-10">
                         <div className="lg:col-span-2 space-y-4 text-right">
                             <div className="flex justify-between items-center text-sm font-black text-slate-800 px-2">
@@ -456,7 +484,6 @@ const App = () => {
                         </div>
                     </div>
 
-                    {/* כפתור סנכרון */}
                     <button onClick={startSync} disabled={isRunning}
                         className={"w-full py-8 rounded-[2.5rem] font-black text-3xl shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-6 " + (isRunning ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-black')}>
                         {isRunning ? '⏳ מעבד נתונים...' : '🚀 הפעל סנכרון חכם לענן'}
@@ -466,14 +493,14 @@ const App = () => {
             </div>
 
             <footer className="mt-12 text-center text-slate-400 text-[10px] font-black uppercase tracking-[0.5em] opacity-40">
-                OBN TECH ECOSYSTEM &bull; V4.0 STABLE
+                OBN TECH ECOSYSTEM &bull; V4.1 STABLE
             </footer>
         </div>
     );
-};
+}
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
+var root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(App, null));
 </script>
 
 </body>
