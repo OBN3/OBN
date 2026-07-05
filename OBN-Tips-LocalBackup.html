@@ -1,8 +1,32 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מגבה טיפים ל-JSON</title>
+    <style>
+        body { font-family: system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #f4f4f9; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 100%; }
+        button { background-color: #0288d1; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 6px; cursor: pointer; transition: background 0.2s; width: 100%; margin-top: 20px; }
+        button:hover { background-color: #01579b; }
+        button:disabled { background-color: #b0bec5; cursor: not-allowed; }
+        #status { margin-top: 15px; font-weight: bold; color: #555; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>גיבוי טיפים מ-Firestore</h2>
+    <p>לחץ על הכפתור כדי למשוך את הנתונים ולהוריד קובץ JSON.</p>
+    <button id="backupBtn">הורד גיבוי JSON</button>
+    <div id="status">מוכן לעבודה</div>
+</div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // 1. פרטי ה-Config של ה-Firebase שלך (השאר כפי שהיה)
+    // 1. החלף כאן בפרטי ה-Config של ה-Firebase שלך
 const firebaseConfig = {
   apiKey: "AIzaSyA3XNbFY9hKq3r7rxGNWtHxCyouX7AQp2U",
   authDomain: "obn-tips.firebaseapp.com",
@@ -24,10 +48,10 @@ const firebaseConfig = {
     button.addEventListener('click', async () => {
         try {
             button.disabled = true;
-            statusDiv.innerText = "מושך נתונים מתת-האוסף techtips... ⏳";
+            statusDiv.innerText = "מושך נתונים מתת-האוסף... ⏳";
             statusDiv.style.color = "#555";
 
-            // 2. פנייה ישירה לנתיב המלא של תת-האוסף שבו נמצאים הטיפים שלך
+            // 2. פנייה ישירה לנתיב המלא והנכון
             const tipsCollectionRef = collection(db, "artifacts", "obn-tips-v1", "public", "data", "techtips");
             
             const querySnapshot = await getDocs(tipsCollectionRef);
@@ -38,13 +62,13 @@ const firebaseConfig = {
             });
 
             if (data.length === 0) {
-                statusDiv.innerText = "הנתיב נמצא, אך לא נמצאו רשומות בתוך techtips. ודא שהאיות מדוייק בקונסול.";
+                statusDiv.innerText = "הנתיב תקין, אך עדיין לא נמצאו רשומות בתוכו.";
                 statusDiv.style.color = "#e65100";
                 button.disabled = false;
                 return;
             }
 
-            statusDiv.innerText = `ההורדה הצליחה! נמצאו ${data.length} רשומות. מייצר קובץ...`;
+            statusDiv.innerText = `מעולה! נמצאו ${data.length} רשומות. מייצר קובץ...`;
 
             // יצירת קובץ ה-JSON והורדתו
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
@@ -66,3 +90,6 @@ const firebaseConfig = {
         }
     });
 </script>
+
+</body>
+</html>
