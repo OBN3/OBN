@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -6,18 +7,22 @@
     <title>OBN Data Migrator - Smart Sync</title>
     
     <!-- Scripts & Frameworks -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    https://unpkg.com/react@18/umd/react.production.min.js
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Firebase SDKs -->
     <script type="module">
-        import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { initializeApp, getApps, deleteApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        window.fb = { initializeApp, getApps, deleteApp, getAuth, signInWithEmailAndPassword, getFirestore, collection, doc, setDoc, getDocs };
+        window.fb = {
+            initializeApp, getApps, deleteApp,
+            getAuth, signInWithEmailAndPassword,
+            getFirestore, collection, doc, setDoc, getDocs
+        };
     </script>
 
     <style>
@@ -127,7 +132,7 @@
                 return `gen_${Math.abs(hash)}`;
             };
 
-            // --- Manual Batch Functions (Fixed Scope) ---
+            // --- Manual Batch Functions ---
             const addManualField = () => {
                 setManualNotes(prev => [...prev, { 
                     id: Date.now(), 
@@ -178,12 +183,12 @@
                 setProgress(0);
                 
                 try {
-                // מחק את כל האפליקציות הקיימות לפני אתחול מחדש עם config נוכחי
-                const existingApps = window.fb.getApps();
-                for (const existingApp of existingApps) {
-                    await window.fb.deleteApp(existingApp);
-                }
-                const app = window.fb.initializeApp(firebaseConfig);
+                    // ✅ תיקון: מחק אפליקציות קיימות לפני אתחול מחדש
+                    const existingApps = window.fb.getApps();
+                    for (const existingApp of existingApps) {
+                        await window.fb.deleteApp(existingApp);
+                    }
+                    const app = window.fb.initializeApp(firebaseConfig);
 
                     const auth = window.fb.getAuth(app);
                     const db = window.fb.getFirestore(app);
@@ -191,10 +196,12 @@
 
                     setStatus(`מתחבר לפרויקט: ${firebaseConfig.projectId}...`);
                     
+                    // ✅ תיקון: טיפול מפורט בשגיאות אימות
                     try {
                         await window.fb.signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
                     } catch (authErr) {
-                        const messages = {
+                        console.error("Firebase Auth Error Detail:", authErr);
+                        const authMessages = {
                             'auth/invalid-credential': 'אימייל או סיסמה שגויים',
                             'auth/user-not-found': 'משתמש לא קיים ב-Firebase Auth',
                             'auth/wrong-password': 'סיסמה שגויה',
@@ -202,7 +209,7 @@
                             'auth/too-many-requests': 'יותר מדי ניסיונות – נסה שוב מאוחר יותר',
                             'auth/operation-not-allowed': 'Email/Password לא מופעל ב-Console'
                         };
-                        const msg = messages[authErr.code] || `שגיאה לא ידועה: ${authErr.code}`;
+                        const msg = authMessages[authErr.code] || `שגיאה לא ידועה: ${authErr.code}`;
                         throw new Error(`אימות נכשל – ${msg}`);
                     }
 
@@ -252,7 +259,7 @@
                         <header className="mb-10 flex flex-col md:flex-row justify-between items-center gap-6">
                             <div>
                                 <h1 className="text-4xl font-black text-slate-800 mb-2 italic">OBN Smart Sync</h1>
-                                <p className="text-slate-500 font-medium">Smart Delta Migration V3.8</p>
+                                <p className="text-slate-500 font-medium">Smart Delta Migration V3.9</p>
                             </div>
                             <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shadow-inner">
                                 <button onClick={() => setActiveTab('json')} className={`px-8 py-3 rounded-xl text-sm font-bold tab-transition ${activeTab === 'json' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}>JSON Migration</button>
@@ -290,6 +297,11 @@
                                         <div className="bg-white/5 p-4 rounded-2xl border border-white/10 mt-4 text-[10px] font-mono text-slate-400 leading-relaxed">
                                             <div className="text-yellow-400 font-bold mb-1">TARGET: {diagInfo.projectId}</div>
                                             <div>KEY: {diagInfo.apiKey}</div>
+                                        </div>
+                                    )}
+                                    {diagInfo && diagInfo.error && (
+                                        <div className="bg-red-500/10 p-4 rounded-2xl border border-red-500/30 mt-4 text-[10px] font-mono text-red-400">
+                                            ⚠️ {diagInfo.error}
                                         </div>
                                     )}
                                 </div>
@@ -356,7 +368,7 @@
                     </div>
 
                     <footer className="mt-12 text-center text-slate-400 text-[10px] font-black uppercase tracking-[0.5em] opacity-40">
-                        OBN TECH ECOSYSTEM &bull; V3.8 STABLE
+                        OBN TECH ECOSYSTEM &bull; V3.9 STABLE
                     </footer>
                 </div>
             );
