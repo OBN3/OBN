@@ -6,7 +6,7 @@
     <title>OBN Data Migrator - Smart Sync</title>
 
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-     <script src="https://unpkg.com/react@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -49,7 +49,6 @@
     const FIRESTORE_PATH = ['artifacts', 'obn-tips-v1', 'public', 'data', 'techtips'];
     const CHUNK_SIZE = 450;
 
-
     // ─── Safe config parser ───────────────────────────────────────────────────────
     const parseFirebaseConfig = (input) => {
         if (!input || !input.trim()) return null;
@@ -67,8 +66,7 @@
         } catch { return null; }
     };
 
-
-    // ─── Shared Firebase init helper (reuse app if same projectId) ───────────────
+    // ─── Shared Firebase init helper ─────────────────────────────────────────────
     const getFirebaseInstances = (firebaseConfig) => {
         const apps     = window.fb.getApps();
         const existing = apps.find(a => a.options.projectId === firebaseConfig.projectId);
@@ -79,7 +77,6 @@
             db:   window.fb.getFirestore(app)
         };
     };
-
 
     // ─── Shared auth helper ───────────────────────────────────────────────────────
     const authenticate = async (auth, email, password) => {
@@ -93,7 +90,6 @@
             );
         }
     };
-
 
     // ─── Eye SVG Icon ─────────────────────────────────────────────────────────────
     const EyeIcon = ({ open }) => (
@@ -114,7 +110,6 @@
             )}
         </svg>
     );
-
 
     // ─── Confirmation Modal ───────────────────────────────────────────────────────
     const ConfirmModal = ({ count, projectId, onConfirm, onCancel }) => (
@@ -142,7 +137,6 @@
         </div>
     );
 
-
     // ─── Color maps ───────────────────────────────────────────────────────────────
     const STATUS_COLORS = {
         idle:    'text-slate-400',
@@ -155,7 +149,6 @@
         success: 'text-green-400',
         error:   'text-red-400'
     };
-
 
     // ─── App ──────────────────────────────────────────────────────────────────────
     const App = () => {
@@ -181,7 +174,6 @@
         const debounceRef = useRef(null);
         const isBusy = isRunning || isBackingUp;
 
-
         // ── Load saved settings ──────────────────────────────────────────────────
         useEffect(() => {
             const c = localStorage.getItem(STORAGE_KEYS.CONFIG);
@@ -191,7 +183,6 @@
             if (e) setEmail(e);
             if (p) setPassword(p);
         }, []);
-
 
         // ── Log helper ───────────────────────────────────────────────────────────
         const addLog = useCallback((message, type = 'info') => {
@@ -203,7 +194,6 @@
             setStatusMsg({ text, type });
             if (type !== 'idle') addLog(text, type);
         }, [addLog]);
-
 
         // ── Diagnostics (debounced) ──────────────────────────────────────────────
         const runDiagnostics = useCallback(() => {
@@ -225,7 +215,6 @@
             return () => clearTimeout(debounceRef.current);
         }, [runDiagnostics]);
 
-
         // ── Save settings ────────────────────────────────────────────────────────
         const saveSettingsOnly = useCallback((showFeedback = true) => {
             if (!configInput || !email || !password) {
@@ -242,7 +231,6 @@
             return true;
         }, [configInput, email, password, setMsg]);
 
-
         // ── Stable ID ────────────────────────────────────────────────────────────
         const generateStableId = (item) => {
             const str = (item.title || '') + (item.content || '');
@@ -253,7 +241,6 @@
             }
             return `gen_${Math.abs(hash)}`;
         };
-
 
         // ── Manual Batch helpers ─────────────────────────────────────────────────
         const addManualField = () =>
@@ -280,7 +267,6 @@
             setMsg('טופס נוקה', 'info');
         };
 
-
         // ── Pre-sync validation → confirm modal ───────────────────────────────────
         const requestSync = () => {
             if (!window.fb) { setMsg('שגיאה: ספריות Firebase לא נטענו', 'error'); return; }
@@ -301,7 +287,6 @@
             }
             setConfirmData({ count, projectId: cfg.projectId });
         };
-
 
         // ── Core Sync ─────────────────────────────────────────────────────────────
         const startSync = async () => {
@@ -395,7 +380,6 @@
             }
         };
 
-
         // ── Download Backup ───────────────────────────────────────────────────────
         const downloadBackup = async () => {
             if (!window.fb) { setMsg('שגיאה: ספריות Firebase לא נטענו', 'error'); return; }
@@ -438,7 +422,6 @@
                 setIsBackingUp(false);
             }
         };
-
 
         // ── Render ────────────────────────────────────────────────────────────────
         return (
