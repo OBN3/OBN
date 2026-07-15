@@ -6,9 +6,12 @@
     <title>דשבורד מנהל - תחרות צילום</title>
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; background-color: #f3f4f6; color: #1f2937; margin: 0; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 30px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        
+        /* התאמה פרואקטיבית: flex-wrap כדי שהחיפוש והכפתורים החדשים לא יעלו אחד על השני */
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 30px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
         .header h1 { margin: 0; font-size: 24px; color: #111827; }
-        .actions button { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; margin-right: 10px; }
+        .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .actions button { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .btn-export { background-color: #10b981; color: white; }
         .btn-export:hover { background-color: #059669; }
         .btn-deleted { background-color: #6b7280; color: white; }
@@ -61,6 +64,8 @@
 <div class="header">
     <h1 id="pageTitle">🏆 מערכת ניהול התחרות</h1>
     <div class="actions">
+        <input type="text" id="searchInput" placeholder="🔍 חיפוש חופשי (כותרת, צלם, סטטוס)..." style="padding: 10px; border-radius: 6px; border: 1px solid #d1d5db; width: 250px; max-width: 100%;">
+        
         <button id="toggleDeletedBtn" class="btn-deleted">🗑️ רשומות מחוקות</button>
         <button id="exportCsvBtn" class="btn-export">⬇️ ייצוא ל-CSV</button>
         <button id="logoutBtn" class="btn-logout">התנתק</button>

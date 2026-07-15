@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -78,6 +78,24 @@ document.addEventListener('DOMContentLoaded', () => {
         currentDateFilter.end = endVal ? new Date(endVal) : null;
         applyFiltersAndRender();
     });
+
+    // מנגנון חיפוש חי בטבלה (Client-side filtering)
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('#tableBody tr');
+            
+            rows.forEach(row => {
+                const rowText = row.textContent.toLowerCase();
+                if (rowText.includes(searchTerm)) {
+                    row.style.display = ''; 
+                } else {
+                    row.style.display = 'none'; 
+                }
+            });
+        });
+    }
 });
 
 function getDirectImageUrl(url, size = 1000) {
@@ -248,9 +266,15 @@ function renderTableRows(tableData) {
         if(data.identifiablePerson === 'staff') personReadable = "עובדי מוסד";
         if(data.identifiablePerson === 'patients') personReadable = "מטופלים";
 
+        // הוספת כפתור האיפוס לצד כפתור המחיקה בעמודת הפעולות
         let actionBtnHtml = showingDeleted 
             ? `<button class="action-btn btn-restore-row" onclick="toggleDeleteStatus('${data.id}', false)">שחזר ⟲</button>`
             : `<button class="action-btn btn-delete-row" onclick="toggleDeleteStatus('${data.id}', true)">מחק 🗑️</button>`;
+            
+        // כפתור איפוס דירוגים פעיל רק אם התמונה דורגה
+        if (judgeCount > 0 && !showingDeleted) {
+            actionBtnHtml += ` <button class="action-btn" onclick="resetSubmissionScores('${data.id}')" style="background-color: #f59e0b; color: white; margin-right: 5px;">🔄 איפוס</button>`;
+        }
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -298,6 +322,35 @@ window.toggleDeleteStatus = async function(id, isDeleted) {
     } catch (error) {
         console.error("Error updating delete status:", error);
         alert("אירעה שגיאה בעדכון מצב הרשומה.");
+    }
+};
+
+window.resetSubmissionScores = async function(docId) {
+    if (!confirm("האם אתה בטוח שברצונך למחוק את כל הדירוגים של תמונה זו? התמונה תחזור למצב 'ממתין' עבור כל השופטים.")) return;
+    
+    try {
+        const docRef = doc(db, "submissions", docId);
+        
+        await updateDoc(docRef, {
+            evaluations: deleteField(),
+            scores: deleteField(),
+            status: "pending"
+        });
+        
+        // עדכון מקומי של הנתונים כדי למנוע קריאה מיותרת למסד הנתונים
+        const record = submissionsData.find(d => d.id === docId);
+        if (record) {
+            delete record.evaluations;
+            delete record.scores;
+            record.status = "pending";
+        }
+        
+        applyFiltersAndRender();
+        alert("הדירוגים אופסו בהצלחה!");
+        
+    } catch (error) {
+        console.error("Error resetting scores:", error);
+        alert("שגיאה באיפוס הדירוג.");
     }
 };
 
