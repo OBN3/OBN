@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OBN Data Migrator - Smart Sync & Backup</title>
+    <title>OBN Data Migrator - Smart Sync</title>
   
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -46,10 +46,11 @@
         PASS:   'obn_migrator_pass'
     };
 
+    // FIX #8 — no more magic strings scattered through the code
     const FIRESTORE_PATH = ['artifacts', 'obn-tips-v1', 'public', 'data', 'techtips'];
     const CHUNK_SIZE = 450;
 
-    // ─── Safe config parser: zero eval / new Function ──────────────────────────────
+    // ─── FIX #2 — Safe config parser: zero eval / new Function ───────────────────
     const parseFirebaseConfig = (input) => {
         if (!input || !input.trim()) return null;
         try {
@@ -70,7 +71,7 @@
         } catch { return null; }
     };
 
-    // ─── Eye SVG Icon ─────────────────────────────────────────────────────────────
+    // ─── Eye SVG Icon (replaces "הצג/הסתר" text) ─────────────────────────────────
     const EyeIcon = ({ open }) => (
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
              viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -131,26 +132,25 @@
 
     // ─── App ──────────────────────────────────────────────────────────────────────
     const App = () => {
-        const [activeTab,    setActiveTab]   = useState('json');
+        const [activeTab,   setActiveTab]   = useState('json');
         const [configInput, setConfigInput] = useState('');
-        const [email,        setEmail]       = useState('');
-        const [password,     setPassword]    = useState('');
-        const [showPass,     setShowPass]    = useState(false);
+        const [email,       setEmail]       = useState('');
+        const [password,    setPassword]    = useState('');
+        const [showPass,    setShowPass]    = useState(false);
         const [jsonContent, setJsonContent] = useState('');
         const [saveStatus,  setSaveStatus]  = useState(false);
         const [manualNotes, setManualNotes] = useState([
             { id: Date.now(), title: '', content: '', date: new Date().toLocaleDateString('he-IL') }
         ]);
-        const [statusMsg,    setStatusMsg]   = useState({ text: 'Ready', type: 'idle' });
-        const [progress,     setProgress]    = useState(0);
-        const [isRunning,    setIsRunning]   = useState(false);
-        const [isBackingUp,  setIsBackingUp] = useState(false);
-        const [stats,        setStats]       = useState({ total: 0, added: 0, skipped: 0 });
-        const [diagInfo,     setDiagInfo]    = useState(null);
-        const [logs,         setLogs]        = useState([]);
+        const [statusMsg,   setStatusMsg]   = useState({ text: 'Ready', type: 'idle' });
+        const [progress,    setProgress]    = useState(0);
+        const [isRunning,   setIsRunning]   = useState(false);
+        const [stats,       setStats]       = useState({ total: 0, added: 0, skipped: 0 });
+        const [diagInfo,    setDiagInfo]    = useState(null);
+        const [logs,        setLogs]        = useState([]);
         const [confirmData, setConfirmData] = useState(null);
 
-        const debounceRef = useRef(null);
+        const debounceRef = useRef(null);   // FIX #6
 
         // ── Load saved settings ──────────────────────────────────────────────────
         useEffect(() => {
@@ -174,7 +174,7 @@
             if (type !== 'idle') addLog(text, type);
         }, [addLog]);
 
-        // ── Diagnostics: debounced & stable useCallback ──────────────────────────
+        // ── FIX #6 + #7 — Diagnostics: debounced & stable useCallback ────────────
         const runDiagnostics = useCallback(() => {
             const cfg = parseFirebaseConfig(configInput);
             if (cfg) {
@@ -194,7 +194,8 @@
             return () => clearTimeout(debounceRef.current);
         }, [runDiagnostics]);
 
-        // ── saveSettingsOnly: accepts showFeedback flag ──────────────────────────
+        // ── FIX #10 — saveSettingsOnly: accepts showFeedback flag ────────────────
+        // Pass false from startSync so it never overwrites the success message
         const saveSettingsOnly = useCallback((showFeedback = true) => {
             if (!configInput || !email || !password) {
                 if (showFeedback) setMsg('שגיאה: נא למלא את כל פרטי ההתחברות', 'error');
@@ -235,6 +236,7 @@
                     : prev.filter(n => n.id !== id)
             );
 
+        // BONUS FIX — was `{ ...n, value }` (always set key "value"), now correct
         const updateManualField = (id, field, value) =>
             setManualNotes(prev => prev.map(n => n.id === id ? { ...n, [field]: value } : n));
 
@@ -257,6 +259,7 @@
             if (activeTab === 'json') {
                 try {
                     const parsed = JSON.parse(jsonContent);
+                    // FIX #9 — validate it's actually an array
                     if (!Array.isArray(parsed)) { setMsg('שגיאה: ה-JSON חייב להיות מערך [ ]', 'error'); return; }
                     count = parsed.length;
                 } catch { setMsg('שגיאה: מבנה JSON לא תקין', 'error'); return; }
@@ -274,7 +277,7 @@
             if (!window.fb) { setMsg('שגיאה: ספריות Firebase לא נטענו', 'error'); return; }
 
             const cleanEmail     = email.trim();
-            const cleanPassword  = password;
+            const cleanPassword  = password;          // intentionally no trim
             const firebaseConfig = parseFirebaseConfig(configInput);
 
             if (!firebaseConfig || !cleanEmail || !cleanPassword) {
@@ -299,6 +302,7 @@
             setProgress(0);
 
             try {
+                // FIX #4 — reuse existing app only if same projectId, else init new
                 const apps        = window.fb.getApps();
                 const existingApp = apps.find(a => a.options.projectId === firebaseConfig.projectId);
                 const app         = existingApp ?? window.fb.initializeApp(firebaseConfig);
@@ -311,6 +315,7 @@
                     await window.fb.signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
                     addLog('אימות הצליח ✓', 'success');
                 } catch (authErr) {
+                    console.error('Auth Error:', authErr);
                     throw new Error(
                         authErr.code === 'auth/invalid-credential'
                             ? 'אימייל או סיסמה שגויים, או ששיטת Email/Password חסומה.'
@@ -320,6 +325,7 @@
 
                 setMsg('סורק דלתא (השוואת נתונים)...', 'info');
 
+                // FIX #8 — use FIRESTORE_PATH constant
                 const colRef       = window.fb.collection(db, ...FIRESTORE_PATH);
                 const snapshot     = await window.fb.getDocs(colRef);
                 const existingDocs = {};
@@ -336,7 +342,7 @@
                 for (let ci = 0; ci < chunks.length; ci++) {
                     const chunk        = chunks[ci];
                     const batch        = window.fb.writeBatch(db);
-                    let   addedInChunk = 0;
+                    let   addedInChunk = 0;   // FIX #3 — per-chunk counter
 
                     for (let i = 0; i < chunk.length; i++) {
                         const item     = chunk[i];
@@ -363,6 +369,7 @@
                         setStats({ total: dataToUpload.length, added, skipped });
                     }
 
+                    // FIX #3 — commit only when this chunk actually has writes
                     if (addedInChunk > 0) {
                         setMsg(`כותב לשרת — חלק ${ci + 1} מתוך ${chunks.length} (${addedInChunk} פריטים)...`, 'info');
                         await batch.commit();
@@ -373,81 +380,11 @@
                 }
 
                 setMsg(`סנכרון הושלם! ${added} נכתבו, ${skipped} דולגו.`, 'success');
-                saveSettingsOnly(false);
+                saveSettingsOnly(false);   // FIX #10 — silent save, no status overwrite
             } catch (err) {
                 setMsg(`שגיאה: ${err.message}`, 'error');
             } finally {
                 setIsRunning(false);
-            }
-        };
-
-        // ── Backup / Export Function ──────────────────────────────────────────────
-        const exportBackup = async () => {
-            if (!window.fb) { setMsg('שגיאה: ספריות Firebase לא נטענו', 'error'); return; }
-            
-            const cleanEmail     = email.trim();
-            const cleanPassword  = password;
-            const firebaseConfig = parseFirebaseConfig(configInput);
-
-            if (!firebaseConfig || !cleanEmail || !cleanPassword) {
-                setMsg('שגיאה: וודא שכל השדות מלאים וה-Config תקין כדי לבצע גיבוי', 'error');
-                return;
-            }
-
-            setIsBackingUp(true);
-            try {
-                const apps        = window.fb.getApps();
-                const existingApp = apps.find(a => a.options.projectId === firebaseConfig.projectId);
-                const app         = existingApp ?? window.fb.initializeApp(firebaseConfig);
-                const auth        = window.fb.getAuth(app);
-                const db          = window.fb.getFirestore(app);
-
-                setMsg(`מתחבר לפרויקט עבור גיבוי: ${firebaseConfig.projectId}...`, 'info');
-                
-                try {
-                    await window.fb.signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
-                    addLog('אימות לגיבוי הצליח ✓', 'success');
-                } catch (authErr) {
-                    throw new Error(
-                        authErr.code === 'auth/invalid-credential'
-                            ? 'אימייל או סיסמה שגויים.'
-                            : `אימות נכשל (${authErr.code})`
-                    );
-                }
-
-                setMsg('מושך נתונים מתת-האוסף בענן... ⏳', 'info');
-                
-                const colRef   = window.fb.collection(db, ...FIRESTORE_PATH);
-                const snapshot = await window.fb.getDocs(colRef);
-                const data     = [];
-
-                snapshot.forEach(doc => {
-                    data.push({ id: doc.id, ...doc.data() });
-                });
-
-                if (data.length === 0) {
-                    setMsg('הנתיב נמצא, אך לא נמצאו בו רשומות לגיבוי.', 'error');
-                    setIsBackingUp(false);
-                    return;
-                }
-
-                setMsg(`ההורדה הצליחה! מכין קובץ מתוך ${data.length} רשומות...`, 'success');
-
-                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-                const downloadAnchor = document.createElement('a');
-                downloadAnchor.setAttribute("href", dataStr);
-                downloadAnchor.setAttribute("download", `techtips_backup_${new Date().toISOString().split('T')[0]}.json`);
-                document.body.appendChild(downloadAnchor);
-                downloadAnchor.click();
-                downloadAnchor.remove();
-
-                setMsg("קובץ הגיבוי הורד בהצלחה למחשב! 🎉", 'success');
-                addLog(`גיבוי הושלם: נשמרו ${data.length} רשומות ✓`, 'success');
-            } catch (err) {
-                console.error("שגיאה בגיבוי:", err);
-                setMsg(`שגיאה בגיבוי: ${err.message}`, 'error');
-            } finally {
-                setIsBackingUp(false);
             }
         };
 
@@ -511,6 +448,7 @@
                                                 <input type={showPass ? "text" : "password"} autoComplete="current-password"
                                                     className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-yellow-400 transition-all font-mono text-sm text-right pr-12"
                                                     value={password} onChange={e => setPassword(e.target.value)} />
+                                                {/* FIX — SVG eye icon instead of "הצג/הסתר" text */}
                                                 <button onClick={() => setShowPass(!showPass)}
                                                     className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
                                                     <EyeIcon open={showPass} />
@@ -627,19 +565,15 @@
                                 </div>
                             </div>
 
-                            {/* Action buttons - UPDATED WITH BACKUP BUTTON */}
-                            <div className="flex flex-col md:flex-row gap-4">
-                                <button onClick={requestSync} disabled={isRunning || isBackingUp}
-                                    className={`flex-1 py-6 rounded-[2rem] font-black text-xl md:text-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-4 ${isRunning || isBackingUp ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-black'}`}>
-                                    {isRunning ? "מעבד נתונים..." : "הפעל סנכרון חכם"}
+                            {/* Action buttons */}
+                            <div className="flex gap-4">
+                                <button onClick={requestSync} disabled={isRunning}
+                                    className={`flex-1 py-8 rounded-[2.5rem] font-black text-3xl shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-6 ${isRunning ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-black'}`}>
+                                    {isRunning ? "מעבד נתונים..." : "הפעל סנכרון חכם לענן"}
                                 </button>
-                                <button onClick={exportBackup} disabled={isRunning || isBackingUp}
-                                    className={`flex-1 py-6 rounded-[2rem] font-black text-xl md:text-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-4 ${isRunning || isBackingUp ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
-                                    {isBackingUp ? "מייצר גיבוי..." : "הורד גיבוי (JSON)"}
-                                </button>
-                                {!isRunning && !isBackingUp && (
+                                {!isRunning && (
                                     <button onClick={clearForm}
-                                        className="px-6 py-6 rounded-[2rem] font-bold text-sm shadow-md bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all active:scale-95 whitespace-nowrap">
+                                        className="px-8 py-8 rounded-[2.5rem] font-bold text-sm shadow-md bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all active:scale-95 whitespace-nowrap">
                                         נקה טופס
                                     </button>
                                 )}

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OBN Data Migrator - Smart Sync & Backup</title>
-  
+    <title>OBN Data Migrator - Smart Sync</title>
+
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -49,25 +49,46 @@
     const FIRESTORE_PATH = ['artifacts', 'obn-tips-v1', 'public', 'data', 'techtips'];
     const CHUNK_SIZE = 450;
 
-    // ─── Safe config parser: zero eval / new Function ──────────────────────────────
+    // ─── Safe config parser ───────────────────────────────────────────────────────
     const parseFirebaseConfig = (input) => {
         if (!input || !input.trim()) return null;
         try {
             const clean = input
-                .replace(/^const\s+\w+\s*=\s*/, '')   // strip "const x = "
-                .replace(/;\s*$/, '')                   // strip trailing ";"
+                .replace(/^const\s+\w+\s*=\s*/, '')
+                .replace(/;\s*$/, '')
                 .trim();
-
-            // Try strict JSON first
             try { return JSON.parse(clean); } catch (_) {}
-
-            // Convert unquoted JS object keys → quoted JSON keys, then parse
             const jsonified = clean.replace(
                 /([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g,
                 '$1"$2":'
             );
             return JSON.parse(jsonified);
         } catch { return null; }
+    };
+
+    // ─── Shared Firebase init helper ─────────────────────────────────────────────
+    const getFirebaseInstances = (firebaseConfig) => {
+        const apps     = window.fb.getApps();
+        const existing = apps.find(a => a.options.projectId === firebaseConfig.projectId);
+        const app      = existing ?? window.fb.initializeApp(firebaseConfig);
+        return {
+            app,
+            auth: window.fb.getAuth(app),
+            db:   window.fb.getFirestore(app)
+        };
+    };
+
+    // ─── Shared auth helper ───────────────────────────────────────────────────────
+    const authenticate = async (auth, email, password) => {
+        try {
+            await window.fb.signInWithEmailAndPassword(auth, email, password);
+        } catch (authErr) {
+            throw new Error(
+                authErr.code === 'auth/invalid-credential'
+                    ? 'אימייל או סיסמה שגויים, או ששיטת Email/Password חסומה.'
+                    : `אימות נכשל (${authErr.code})`
+            );
+        }
     };
 
     // ─── Eye SVG Icon ─────────────────────────────────────────────────────────────
@@ -116,7 +137,7 @@
         </div>
     );
 
-    // ─── Status / log color maps ──────────────────────────────────────────────────
+    // ─── Color maps ───────────────────────────────────────────────────────────────
     const STATUS_COLORS = {
         idle:    'text-slate-400',
         info:    'text-blue-400',
@@ -131,26 +152,27 @@
 
     // ─── App ──────────────────────────────────────────────────────────────────────
     const App = () => {
-        const [activeTab,    setActiveTab]   = useState('json');
+        const [activeTab,   setActiveTab]   = useState('json');
         const [configInput, setConfigInput] = useState('');
-        const [email,        setEmail]       = useState('');
-        const [password,     setPassword]    = useState('');
-        const [showPass,     setShowPass]    = useState(false);
+        const [email,       setEmail]       = useState('');
+        const [password,    setPassword]    = useState('');
+        const [showPass,    setShowPass]    = useState(false);
         const [jsonContent, setJsonContent] = useState('');
         const [saveStatus,  setSaveStatus]  = useState(false);
         const [manualNotes, setManualNotes] = useState([
             { id: Date.now(), title: '', content: '', date: new Date().toLocaleDateString('he-IL') }
         ]);
-        const [statusMsg,    setStatusMsg]   = useState({ text: 'Ready', type: 'idle' });
-        const [progress,     setProgress]    = useState(0);
-        const [isRunning,    setIsRunning]   = useState(false);
-        const [isBackingUp,  setIsBackingUp] = useState(false);
-        const [stats,        setStats]       = useState({ total: 0, added: 0, skipped: 0 });
-        const [diagInfo,     setDiagInfo]    = useState(null);
-        const [logs,         setLogs]        = useState([]);
+        const [statusMsg,   setStatusMsg]   = useState({ text: 'Ready', type: 'idle' });
+        const [progress,    setProgress]    = useState(0);
+        const [isRunning,   setIsRunning]   = useState(false);
+        const [isBackingUp, setIsBackingUp] = useState(false);
+        const [stats,       setStats]       = useState({ total: 0, added: 0, skipped: 0 });
+        const [diagInfo,    setDiagInfo]    = useState(null);
+        const [logs,        setLogs]        = useState([]);
         const [confirmData, setConfirmData] = useState(null);
 
         const debounceRef = useRef(null);
+        const isBusy = isRunning || isBackingUp;
 
         // ── Load saved settings ──────────────────────────────────────────────────
         useEffect(() => {
@@ -168,13 +190,12 @@
             setLogs(prev => [{ time, message, type }, ...prev].slice(0, 50));
         }, []);
 
-        // ── Colored status + auto-log ────────────────────────────────────────────
         const setMsg = useCallback((text, type = 'idle') => {
             setStatusMsg({ text, type });
             if (type !== 'idle') addLog(text, type);
         }, [addLog]);
 
-        // ── Diagnostics: debounced & stable useCallback ──────────────────────────
+        // ── Diagnostics (debounced) ──────────────────────────────────────────────
         const runDiagnostics = useCallback(() => {
             const cfg = parseFirebaseConfig(configInput);
             if (cfg) {
@@ -194,7 +215,7 @@
             return () => clearTimeout(debounceRef.current);
         }, [runDiagnostics]);
 
-        // ── saveSettingsOnly: accepts showFeedback flag ──────────────────────────
+        // ── Save settings ────────────────────────────────────────────────────────
         const saveSettingsOnly = useCallback((showFeedback = true) => {
             if (!configInput || !email || !password) {
                 if (showFeedback) setMsg('שגיאה: נא למלא את כל פרטי ההתחברות', 'error');
@@ -236,7 +257,7 @@
             );
 
         const updateManualField = (id, field, value) =>
-            setManualNotes(prev => prev.map(n => n.id === id ? { ...n, [field]: value } : n));
+            setManualNotes(prev => prev.map(n => n.id === id ? { ...n, value } : n));
 
         const clearForm = () => {
             setJsonContent('');
@@ -246,11 +267,11 @@
             setMsg('טופס נוקה', 'info');
         };
 
-        // ── Pre-sync validation → open confirm modal ──────────────────────────────
+        // ── Pre-sync validation → confirm modal ───────────────────────────────────
         const requestSync = () => {
             if (!window.fb) { setMsg('שגיאה: ספריות Firebase לא נטענו', 'error'); return; }
             const cfg = parseFirebaseConfig(configInput);
-            if (!cfg)              { setMsg('שגיאה: Firebase Config לא תקין', 'error'); return; }
+            if (!cfg) { setMsg('שגיאה: Firebase Config לא תקין', 'error'); return; }
             if (!email.trim() || !password) { setMsg('שגיאה: מלא אימייל וסיסמה', 'error'); return; }
 
             let count = 0;
@@ -264,7 +285,6 @@
                 count = manualNotes.filter(n => n.title.trim() || n.content.trim()).length;
                 if (count === 0) { setMsg('שגיאה: אין נתונים להעלאה', 'error'); return; }
             }
-
             setConfirmData({ count, projectId: cfg.projectId });
         };
 
@@ -273,22 +293,19 @@
             setConfirmData(null);
             if (!window.fb) { setMsg('שגיאה: ספריות Firebase לא נטענו', 'error'); return; }
 
+            const firebaseConfig = parseFirebaseConfig(configInput);
             const cleanEmail     = email.trim();
             const cleanPassword  = password;
-            const firebaseConfig = parseFirebaseConfig(configInput);
 
             if (!firebaseConfig || !cleanEmail || !cleanPassword) {
-                setMsg('שגיאה: וודא שכל השדות מלאים וה-Config תקין', 'error');
-                return;
+                setMsg('שגיאה: וודא שכל השדות מלאים וה-Config תקין', 'error'); return;
             }
 
             let dataToUpload = [];
             if (activeTab === 'json') {
                 try {
                     dataToUpload = JSON.parse(jsonContent);
-                    if (!Array.isArray(dataToUpload)) {
-                        setMsg('שגיאה: ה-JSON חייב להיות מערך [ ]', 'error'); return;
-                    }
+                    if (!Array.isArray(dataToUpload)) { setMsg('שגיאה: ה-JSON חייב להיות מערך [ ]', 'error'); return; }
                 } catch { setMsg('שגיאה: מבנה JSON לא תקין', 'error'); return; }
             } else {
                 dataToUpload = manualNotes.filter(n => n.title.trim() || n.content.trim());
@@ -299,27 +316,12 @@
             setProgress(0);
 
             try {
-                const apps        = window.fb.getApps();
-                const existingApp = apps.find(a => a.options.projectId === firebaseConfig.projectId);
-                const app         = existingApp ?? window.fb.initializeApp(firebaseConfig);
-                const auth        = window.fb.getAuth(app);
-                const db          = window.fb.getFirestore(app);
-
+                const { auth, db } = getFirebaseInstances(firebaseConfig);
                 setMsg(`מתחבר לפרויקט: ${firebaseConfig.projectId}...`, 'info');
-
-                try {
-                    await window.fb.signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
-                    addLog('אימות הצליח ✓', 'success');
-                } catch (authErr) {
-                    throw new Error(
-                        authErr.code === 'auth/invalid-credential'
-                            ? 'אימייל או סיסמה שגויים, או ששיטת Email/Password חסומה.'
-                            : `אימות נכשל (${authErr.code})`
-                    );
-                }
+                await authenticate(auth, cleanEmail, cleanPassword);
+                addLog('אימות הצליח ✓', 'success');
 
                 setMsg('סורק דלתא (השוואת נתונים)...', 'info');
-
                 const colRef       = window.fb.collection(db, ...FIRESTORE_PATH);
                 const snapshot     = await window.fb.getDocs(colRef);
                 const existingDocs = {};
@@ -327,11 +329,9 @@
                 addLog(`${snapshot.size} מסמכים קיימים בענן`, 'info');
 
                 let added = 0, skipped = 0, processedCount = 0;
-
                 const chunks = [];
-                for (let i = 0; i < dataToUpload.length; i += CHUNK_SIZE) {
+                for (let i = 0; i < dataToUpload.length; i += CHUNK_SIZE)
                     chunks.push(dataToUpload.slice(i, i + CHUNK_SIZE));
-                }
 
                 for (let ci = 0; ci < chunks.length; ci++) {
                     const chunk        = chunks[ci];
@@ -357,7 +357,6 @@
                             addedInChunk++;
                             added++;
                         }
-
                         processedCount++;
                         setProgress(Math.round((processedCount / dataToUpload.length) * 100));
                         setStats({ total: dataToUpload.length, added, skipped });
@@ -381,70 +380,43 @@
             }
         };
 
-        // ── Backup / Export Function ──────────────────────────────────────────────
-        const exportBackup = async () => {
+        // ── Download Backup ───────────────────────────────────────────────────────
+        const downloadBackup = async () => {
             if (!window.fb) { setMsg('שגיאה: ספריות Firebase לא נטענו', 'error'); return; }
-            
-            const cleanEmail     = email.trim();
-            const cleanPassword  = password;
             const firebaseConfig = parseFirebaseConfig(configInput);
-
-            if (!firebaseConfig || !cleanEmail || !cleanPassword) {
-                setMsg('שגיאה: וודא שכל השדות מלאים וה-Config תקין כדי לבצע גיבוי', 'error');
-                return;
-            }
+            if (!firebaseConfig) { setMsg('שגיאה: Firebase Config לא תקין', 'error'); return; }
+            if (!email.trim() || !password) { setMsg('שגיאה: מלא אימייל וסיסמה לפני גיבוי', 'error'); return; }
 
             setIsBackingUp(true);
+            setMsg('מתחיל גיבוי...', 'info');
+
             try {
-                const apps        = window.fb.getApps();
-                const existingApp = apps.find(a => a.options.projectId === firebaseConfig.projectId);
-                const app         = existingApp ?? window.fb.initializeApp(firebaseConfig);
-                const auth        = window.fb.getAuth(app);
-                const db          = window.fb.getFirestore(app);
+                const { auth, db } = getFirebaseInstances(firebaseConfig);
+                await authenticate(auth, email.trim(), password);
+                addLog('אימות לגיבוי הצליח ✓', 'success');
 
-                setMsg(`מתחבר לפרויקט עבור גיבוי: ${firebaseConfig.projectId}...`, 'info');
-                
-                try {
-                    await window.fb.signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
-                    addLog('אימות לגיבוי הצליח ✓', 'success');
-                } catch (authErr) {
-                    throw new Error(
-                        authErr.code === 'auth/invalid-credential'
-                            ? 'אימייל או סיסמה שגויים.'
-                            : `אימות נכשל (${authErr.code})`
-                    );
-                }
-
-                setMsg('מושך נתונים מתת-האוסף בענן... ⏳', 'info');
-                
+                setMsg('מושך נתונים מ-Firestore...', 'info');
                 const colRef   = window.fb.collection(db, ...FIRESTORE_PATH);
                 const snapshot = await window.fb.getDocs(colRef);
-                const data     = [];
 
-                snapshot.forEach(doc => {
-                    data.push({ id: doc.id, ...doc.data() });
-                });
-
-                if (data.length === 0) {
-                    setMsg('הנתיב נמצא, אך לא נמצאו בו רשומות לגיבוי.', 'error');
-                    setIsBackingUp(false);
-                    return;
+                if (snapshot.empty) {
+                    setMsg('לא נמצאו רשומות לגיבוי', 'info'); return;
                 }
 
-                setMsg(`ההורדה הצליחה! מכין קובץ מתוך ${data.length} רשומות...`, 'success');
+                const data = [];
+                snapshot.forEach(d => data.push({ id: d.id, ...d.data() }));
+                addLog(`${data.length} רשומות נמשכו לגיבוי`, 'success');
 
-                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-                const downloadAnchor = document.createElement('a');
-                downloadAnchor.setAttribute("href", dataStr);
-                downloadAnchor.setAttribute("download", `techtips_backup_${new Date().toISOString().split('T')[0]}.json`);
-                document.body.appendChild(downloadAnchor);
-                downloadAnchor.click();
-                downloadAnchor.remove();
+                const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(data, null, 2));
+                const anchor  = document.createElement('a');
+                anchor.setAttribute('href', dataStr);
+                anchor.setAttribute('download', `techtips_backup_${new Date().toISOString().split('T')[0]}.json`);
+                document.body.appendChild(anchor);
+                anchor.click();
+                anchor.remove();
 
-                setMsg("קובץ הגיבוי הורד בהצלחה למחשב! 🎉", 'success');
-                addLog(`גיבוי הושלם: נשמרו ${data.length} רשומות ✓`, 'success');
+                setMsg(`גיבוי הורד בהצלחה! (${data.length} רשומות) 🎉`, 'success');
             } catch (err) {
-                console.error("שגיאה בגיבוי:", err);
                 setMsg(`שגיאה בגיבוי: ${err.message}`, 'error');
             } finally {
                 setIsBackingUp(false);
@@ -627,22 +599,39 @@
                                 </div>
                             </div>
 
-                            {/* Action buttons - UPDATED WITH BACKUP BUTTON */}
-                            <div className="flex flex-col md:flex-row gap-4">
-                                <button onClick={requestSync} disabled={isRunning || isBackingUp}
-                                    className={`flex-1 py-6 rounded-[2rem] font-black text-xl md:text-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-4 ${isRunning || isBackingUp ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-black'}`}>
-                                    {isRunning ? "מעבד נתונים..." : "הפעל סנכרון חכם"}
-                                </button>
-                                <button onClick={exportBackup} disabled={isRunning || isBackingUp}
-                                    className={`flex-1 py-6 rounded-[2rem] font-black text-xl md:text-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-4 ${isRunning || isBackingUp ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
-                                    {isBackingUp ? "מייצר גיבוי..." : "הורד גיבוי (JSON)"}
-                                </button>
-                                {!isRunning && !isBackingUp && (
-                                    <button onClick={clearForm}
-                                        className="px-6 py-6 rounded-[2rem] font-bold text-sm shadow-md bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all active:scale-95 whitespace-nowrap">
-                                        נקה טופס
+                            {/* Action Buttons */}
+                            <div className="flex flex-col gap-4">
+
+                                {/* Primary: Sync + Clear */}
+                                <div className="flex gap-4">
+                                    <button onClick={requestSync} disabled={isBusy}
+                                        className={`flex-1 py-8 rounded-[2.5rem] font-black text-3xl shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-6 ${isBusy ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-black'}`}>
+                                        {isRunning ? "מעבד נתונים..." : "הפעל סנכרון חכם לענן"}
                                     </button>
-                                )}
+                                    {!isBusy && (
+                                        <button onClick={clearForm}
+                                            className="px-8 py-8 rounded-[2.5rem] font-bold text-sm shadow-md bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all active:scale-95 whitespace-nowrap">
+                                            נקה טופס
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Secondary: Backup */}
+                                <button onClick={downloadBackup} disabled={isBusy}
+                                    className={`w-full py-5 rounded-[2rem] font-black text-lg shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3 border-2 ${isBusy ? 'bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed' : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-400'}`}>
+                                    {isBackingUp ? "מגבה נתונים..." : (
+                                        <>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
+                                                 fill="none" stroke="currentColor" strokeWidth="2.5"
+                                                 strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                                <polyline points="7 10 12 15 17 10"/>
+                                                <line x1="12" y1="15" x2="12" y2="3"/>
+                                            </svg>
+                                            הורד גיבוי JSON
+                                        </>
+                                    )}
+                                </button>
                             </div>
 
                             {/* Log history panel */}
