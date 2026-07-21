@@ -198,7 +198,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-icon">&#128106;</div>
@@ -211,7 +210,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </div>
 </div>
 
-<!-- APP -->
 <div id="app">
   <header>
     <h1>&#128106; משפחה ביחד</h1>
@@ -228,7 +226,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </nav>
   <main>
 
-    <!-- DASHBOARD -->
     <div id="tab-dashboard" class="section active">
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-num" id="stat-open">&#8212;</div><div class="stat-label">משימות פתוחות</div></div>
@@ -237,7 +234,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
         <div class="stat-card info"><div class="stat-num" id="stat-expenses">&#8212;</div><div class="stat-label">סה"כ הוצאות (&#8362;)</div></div>
       </div>
       
-      <!-- PATIENT INFO CARD -->
       <div class="patient-card" id="patientCard">
         <div class="section-header patient-card-header-hover" id="patientCardHeader" style="cursor:pointer; user-select:none; margin-bottom:0;" title="לחץ לפתיחה וסגירה">
           <h2>
@@ -248,14 +244,12 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
           <button class="btn btn-outline btn-sm" id="btnEditPatient" onclick="event.stopPropagation()">&#9999;&#65039; ערוך פרטים</button>
         </div>
         
-        <!-- CONTENT (COLLAPSIBLE) -->
         <div class="patient-content" id="patientCardContent" style="display:none; margin-top:14px;">
           <div style="font-size:0.75rem; color:var(--text2); margin-top:-5px; margin-bottom:10px;">
             טיפ: לחץ על כל נתון כדי להעתיק אותו ללוח. סיסמאות מוסתרות – רחף מעליהן כדי לראות.
           </div>
           <div class="patient-grid" id="patientInfoGrid">
-            <!-- Populated by JS -->
-          </div>
+            </div>
         </div>
       </div>
 
@@ -266,7 +260,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
       <div id="dashTaskList" class="task-list"></div>
     </div>
 
-    <!-- TASKS -->
     <div id="tab-tasks" class="section">
       <div class="toolbar">
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
@@ -291,7 +284,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
       <div class="task-list" id="taskList"></div>
     </div>
 
-    <!-- EXPENSES -->
     <div id="tab-expenses" class="section">
       <div class="section-header">
         <h2>&#128176; הוצאות ומאזן</h2>
@@ -315,7 +307,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </main>
 </div>
 
-<!-- PATIENT INFO MODAL -->
 <div class="modal-overlay" id="patientModal">
   <div class="modal large">
     <button class="close-modal" id="closePatientModal">&#10005;</button>
@@ -391,6 +382,18 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
       <input type="text" id="pGenTitle5" placeholder="כותרת מידע 5 (ברירת מחדל: מידע חופשי 5)" style="font-weight:bold; margin-bottom:6px; background:#fff; border:1px solid var(--border);"/>
       <textarea id="pGen5" placeholder="תוכן..."></textarea>
     </div>
+    <div class="form-group" style="background:var(--surface2); padding:10px; border-radius:8px; border:1px solid var(--border);">
+      <input type="text" id="pGenTitle6" placeholder="כותרת מידע 6 (ברירת מחדל: מידע חופשי 6)" style="font-weight:bold; margin-bottom:6px; background:#fff; border:1px solid var(--border);"/>
+      <textarea id="pGen6" placeholder="תוכן..."></textarea>
+    </div>
+    <div class="form-group" style="background:var(--surface2); padding:10px; border-radius:8px; border:1px solid var(--border);">
+      <input type="text" id="pGenTitle7" placeholder="כותרת מידע 7 (ברירת מחדל: מידע חופשי 7)" style="font-weight:bold; margin-bottom:6px; background:#fff; border:1px solid var(--border);"/>
+      <textarea id="pGen7" placeholder="תוכן..."></textarea>
+    </div>
+    <div class="form-group" style="background:var(--surface2); padding:10px; border-radius:8px; border:1px solid var(--border);">
+      <input type="text" id="pGenTitle8" placeholder="כותרת מידע 8 (ברירת מחדל: מידע חופשי 8)" style="font-weight:bold; margin-bottom:6px; background:#fff; border:1px solid var(--border);"/>
+      <textarea id="pGen8" placeholder="תוכן..."></textarea>
+    </div>
 
     <div class="modal-actions">
       <button class="btn btn-gray" id="cancelPatientModal">ביטול</button>
@@ -399,7 +402,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </div>
 </div>
 
-<!-- TASK MODAL -->
 <div class="modal-overlay" id="taskModal">
   <div class="modal">
     <button class="close-modal" id="closeTaskModal">&#10005;</button>
@@ -454,7 +456,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </div>
 </div>
 
-<!-- EXPENSE MODAL -->
 <div class="modal-overlay" id="expenseModal">
   <div class="modal">
     <button class="close-modal" id="closeExpenseModal">&#10005;</button>
@@ -477,6 +478,10 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
       <label>קישור למשימה (אופציונלי)</label>
       <select id="eTaskLink"><option value="">— ללא קישור —</option></select>
     </div>
+    <div class="form-group">
+      <label>מי שילם? (השאר ריק אם זה אתה)</label>
+      <input type="text" id="ePaidByManually" placeholder="למשל: אימא, אחי הגדול..."/>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-gray" id="cancelExpenseModal">ביטול</button>
       <button class="btn btn-primary" id="saveExpenseBtn">&#128190; שמור הוצאה</button>
@@ -486,7 +491,6 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 
 <div id="toastContainer"></div>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -698,6 +702,9 @@ function renderPatientCard() {
         ${renderItem(patientData.pGenTitle3 || "מידע חופשי 3", patientData.pGen3)}
         ${renderItem(patientData.pGenTitle4 || "מידע חופשי 4", patientData.pGen4)}
         ${renderItem(patientData.pGenTitle5 || "מידע חופשי 5", patientData.pGen5)}
+        ${renderItem(patientData.pGenTitle6 || "מידע חופשי 6", patientData.pGen6)}
+        ${renderItem(patientData.pGenTitle7 || "מידע חופשי 7", patientData.pGen7)}
+        ${renderItem(patientData.pGenTitle8 || "מידע חופשי 8", patientData.pGen8)}
       </div>
     </div>
   `;
@@ -711,7 +718,8 @@ $("btnEditPatient").addEventListener("click", () => {
                   "pKupName","pKupBranch","pKupPhone","pKupUser","pKupPass",
                   "pBnkName","pBnkBranch","pBnkAcc","pBnkUser","pBnkPass",
                   "pGenTitle1","pGen1","pGenTitle2","pGen2","pGenTitle3","pGen3",
-                  "pGenTitle4","pGen4","pGenTitle5","pGen5"];
+                  "pGenTitle4","pGen4","pGenTitle5","pGen5",
+                  "pGenTitle6","pGen6","pGenTitle7","pGen7","pGenTitle8","pGen8"];
                   
   fields.forEach(f => {
     $(f).value = patientData[f] || "";
@@ -728,7 +736,8 @@ $("savePatientBtn").addEventListener("click", async () => {
                   "pKupName","pKupBranch","pKupPhone","pKupUser","pKupPass",
                   "pBnkName","pBnkBranch","pBnkAcc","pBnkUser","pBnkPass",
                   "pGenTitle1","pGen1","pGenTitle2","pGen2","pGenTitle3","pGen3",
-                  "pGenTitle4","pGen4","pGenTitle5","pGen5"];
+                  "pGenTitle4","pGen4","pGenTitle5","pGen5",
+                  "pGenTitle6","pGen6","pGenTitle7","pGen7","pGenTitle8","pGen8"];
                   
   const newData = {};
   fields.forEach(f => {
@@ -1062,7 +1071,7 @@ async function deleteExpense(id){
 }
 
 $("btnAddExpense").addEventListener("click",()=>{
-  $("eAmount").value=""; $("eDate").value=todayStr(); $("eDesc").value="";
+  $("eAmount").value=""; $("eDate").value=todayStr(); $("eDesc").value=""; $("ePaidByManually").value="";
   const sel=$("eTaskLink");
   sel.innerHTML='<option value="">— ללא קישור —</option>'+
     allTasks.filter(t=>t.status!=="deleted").map(t=>'<option value="'+t.id+'">'+esc(t.title)+'</option>').join("");
@@ -1075,10 +1084,14 @@ $("saveExpenseBtn").addEventListener("click",async()=>{
   if(!amount||!desc||!date){toast("נא למלא את כל השדות","error");return;}
   const taskId=$("eTaskLink").value;
   const task=taskId?allTasks.find(t=>t.id===taskId):null;
+  
+  const manualPayer = $("ePaidByManually").value.trim();
+  const payerName = manualPayer || currentUser.displayName || currentUser.email;
+
   try{
     await colRef("expenses").add({
       amount,description:desc,date:new Date(date),
-      paidBy:currentUser.uid,paidByName:currentUser.displayName||currentUser.email,
+      paidBy:currentUser.uid,paidByName:payerName,
       taskId:taskId||null,taskTitle:task&&task.title||null,
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -1103,14 +1116,36 @@ function buildExcelBlob(){
     "הועלה ע\"י":t.createdByName||""
   }));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(taskRows.length?taskRows:[{"כותרת":""}]),"משימות");
+  
   const expRows=allExpenses.map(e=>({
     "תיאור":e.description||"",
-    "סכום (&#8362;)":parseFloat(e.amount)||0,
+    "סכום (₪)":parseFloat(e.amount)||0,
     "תאריך":e.date?fmtDate(e.date):"",
     "שילם":e.paidByName||"",
     "משימה קשורה":e.taskTitle||""
   }));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(expRows.length?expRows:[{"תיאור":""}]),"הוצאות");
+  
+  // Patient Details sheet
+  const patientRows = [{
+    "שם המטופל": patientData.pName || "",
+    "תעודת זהות": patientData.pId || "",
+    "שנת לידה": patientData.pYear || "",
+    "טלפון": patientData.pPhone || "",
+    "עיר": patientData.pCity || "",
+    "רחוב ומספר": patientData.pStreet || "",
+    "קופת חולים": patientData.pKupName || "",
+    [patientData.pGenTitle1 || "מידע חופשי 1"]: patientData.pGen1 || "",
+    [patientData.pGenTitle2 || "מידע חופשי 2"]: patientData.pGen2 || "",
+    [patientData.pGenTitle3 || "מידע חופשי 3"]: patientData.pGen3 || "",
+    [patientData.pGenTitle4 || "מידע חופשי 4"]: patientData.pGen4 || "",
+    [patientData.pGenTitle5 || "מידע חופשי 5"]: patientData.pGen5 || "",
+    [patientData.pGenTitle6 || "מידע חופשי 6"]: patientData.pGen6 || "",
+    [patientData.pGenTitle7 || "מידע חופשי 7"]: patientData.pGen7 || "",
+    [patientData.pGenTitle8 || "מידע חופשי 8"]: patientData.pGen8 || ""
+  }];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(patientRows), "פרטי המטופל");
+
   return XLSX.write(wb,{bookType:"xlsx",type:"array"});
 }
 function downloadExcel(arr,filename){
