@@ -6,8 +6,6 @@
     <title>דשבורד מנהל - תחרות צילום</title>
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; background-color: #f3f4f6; color: #1f2937; margin: 0; padding: 20px; }
-        
-        /* התאמה פרואקטיבית: flex-wrap כדי שהחיפוש והכפתורים החדשים לא יעלו אחד על השני */
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 30px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
         .header h1 { margin: 0; font-size: 24px; color: #111827; }
         .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
@@ -18,8 +16,8 @@
         .btn-deleted:hover { background-color: #4b5563; }
         .btn-logout { background-color: #ef4444; color: white; }
         .btn-logout:hover { background-color: #dc2626; }
-        
-        /* עיצוב סרגל סינון תאריכים */
+
+        /* עיצוב סרגל סינון ומיון */
         .filter-container { background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
         .filter-container label { font-weight: bold; color: #4b5563; }
         .filter-select, .filter-date { padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; background-color: #f9fafb; cursor: pointer; outline: none; }
@@ -28,44 +26,50 @@
         .btn-apply:hover { background-color: #2563eb; }
         .custom-date { display: flex; align-items: center; gap: 10px; }
 
+        /* מפריד בין סינון למיון */
+        .filter-divider { width: 1px; height: 30px; background-color: #d1d5db; margin: 0 5px; }
+
         /* עיצוב כרטיסיות הסטטיסטיקה */
         .stats-container { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
         .stat-card { background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); flex: 1; min-width: 180px; text-align: center; font-size: 14px; color: #4b5563; border: 1px solid #e5e7eb; }
         .stat-card strong { color: #1f2937; }
         .stat-card span { display: block; font-size: 24px; font-weight: bold; color: #2563eb; margin-top: 5px; }
-
         .table-container { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; text-align: right; white-space: nowrap; }
         th, td { padding: 12px; border-bottom: 1px solid #e5e7eb; }
         th { background-color: #f9fafb; font-weight: 600; color: #4b5563; }
+
+        /* עמודות הניתנות למיון */
+        th.sortable { cursor: pointer; user-select: none; }
+        th.sortable:hover { background-color: #e5e7eb; color: #1f2937; }
+        th.sortable .sort-indicator { display: inline-block; margin-right: 4px; font-size: 11px; opacity: 0.4; }
+        th.sortable.active-sort { color: #2563eb; background-color: #eff6ff; }
+        th.sortable.active-sort .sort-indicator { opacity: 1; }
+
         tr:hover { background-color: #f9fafb; }
         .thumbnail { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 1px solid #d1d5db; }
         .status { padding: 4px 8px; border-radius: 999px; font-size: 12px; font-weight: bold; }
         .status.pending { background-color: #fef3c7; color: #d97706; }
         .status.judged { background-color: #d1fae5; color: #059669; }
-        
         .action-btn { padding: 6px 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
         .btn-delete-row { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
         .btn-delete-row:hover { background-color: #fca5a5; }
         .btn-restore-row { background-color: #d1fae5; color: #047857; border: 1px solid #6ee7b7; }
         .btn-restore-row:hover { background-color: #6ee7b7; }
-
         #loadingMsg { text-align: center; padding: 20px; font-size: 18px; color: #6b7280; }
-        
+
         /* עיצוב החלון הצף (Modal) */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .modal-content { max-width: 90%; max-height: 90vh; border-radius: 8px; box-shadow: 0 4px 25px rgba(0,0,0,0.5); object-fit: contain; }
         .close-btn { position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .close-btn:hover { color: #ef4444; }        
+        .close-btn:hover { color: #ef4444; }
     </style>
 </head>
 <body>
-
 <div class="header">
     <h1 id="pageTitle">🏆 מערכת ניהול התחרות</h1>
     <div class="actions">
         <input type="text" id="searchInput" placeholder="🔍 חיפוש חופשי (כותרת, צלם, סטטוס)..." style="padding: 10px; border-radius: 6px; border: 1px solid #d1d5db; width: 250px; max-width: 100%;">
-        
         <button id="toggleDeletedBtn" class="btn-deleted">🗑️ רשומות מחוקות</button>
         <button id="exportCsvBtn" class="btn-export">⬇️ ייצוא ל-CSV</button>
         <button id="logoutBtn" class="btn-logout">התנתק</button>
@@ -73,20 +77,32 @@
 </div>
 
 <div class="filter-container">
-    <label for="dateFilter">📅 סינון לפי תאריך הגשה:</label>
+    <label for="dateFilter">📅 סינון לפי תאריך:</label>
     <select id="dateFilter" class="filter-select">
         <option value="all">כלל ההגשות</option>
         <option value="last_month">בחודש האחרון</option>
         <option value="last_year">בשנה האחרונה</option>
         <option value="custom">בין תאריכים...</option>
     </select>
-    
+
     <div id="customDateRange" class="custom-date" style="display: none;">
         <input type="date" id="startDate" class="filter-date">
         <span>עד</span>
         <input type="date" id="endDate" class="filter-date">
         <button id="applyDateFilterBtn" class="btn-apply">סנן</button>
     </div>
+
+    <div class="filter-divider"></div>
+
+    <label for="sortSelect">📊 מיון:</label>
+    <select id="sortSelect" class="filter-select">
+        <option value="score_desc">ניקוד: גבוה → נמוך</option>
+        <option value="score_asc">ניקוד: נמוך → גבוה</option>
+        <option value="date_desc">תאריך: חדש → ישן</option>
+        <option value="date_asc">תאריך: ישן → חדש</option>
+        <option value="judges_desc">שופטים: רבים → מעטים</option>
+        <option value="judges_asc">שופטים: מעטים → רבים</option>
+    </select>
 </div>
 
 <div class="stats-container" id="statsContainer" style="display: none;">
@@ -101,7 +117,9 @@
     <table id="submissionsTable" style="display: none;">
         <thead>
             <tr>
-                <th>תאריך הגשה</th>
+                <th class="sortable" data-sort="date" id="th-date">
+                    תאריך הגשה <span class="sort-indicator" id="si-date">↕</span>
+                </th>
                 <th>תמונה</th>
                 <th>שם הצלם</th>
                 <th>מקום עבודה</th>
@@ -112,9 +130,13 @@
                 <th>אמנותיות</th>
                 <th>איכות טכנית</th>
                 <th>אותנטיות</th>
-                <th>ציון סופי</th>
+                <th class="sortable" data-sort="score" id="th-score">
+                    ציון סופי <span class="sort-indicator" id="si-score">↕</span>
+                </th>
                 <th>אישור PDF</th>
-                <th>סטטוס</th>
+                <th class="sortable" data-sort="judges" id="th-judges">
+                    סטטוס <span class="sort-indicator" id="si-judges">↕</span>
+                </th>
                 <th>פעולות</th>
             </tr>
         </thead>
@@ -128,6 +150,6 @@
     <img class="modal-content" id="modalImg" src="">
 </div>
 
-<script type="module" src="/OBN-Photocontest/admin.js?v=6"></script>
+<script type="module" src="/OBN-Photocontest/admin.js?v=7"></script>
 </body>
 </html>
