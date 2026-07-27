@@ -1107,7 +1107,7 @@ document.addEventListener("click",e=>{
 /* ── EXCEL EXPORT ── */
 function buildExcelBlob(){
   const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(allTasks.filter(t=>t.status!=="deleted").map(t=>({"כותרת":t.title||"","סוג":TYPE_LABEL[t.type]||t.type||"","סטטוס":t.statusNote||"","המשך טיפול":t.followUp||"","תאריך הוספה":t.addedDateStr||"","תאריך":t.dueDateStr||"","שעה":t.dueTimeStr||"","מצב":STATUS_LABEL[t.status]||"","נלקח ע\"י":t.claimedByName||"","הועלה ע\"י":t.createdByName||""})))||[{"כותרת":""}]),"משימות");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(allTasks.filter(t=>t.status!=="deleted").map(t=>({"כותרת":t.title||"","סוג":TYPE_LABEL[t.type]||t.type||"","סטטוס":t.statusNote||"","המשך טיפול":t.followUp||"","תאריך הוספה":t.addedDateStr||"","תאריך":t.dueDateStr||"","שעה":t.dueTimeStr||"","מצב":STATUS_LABEL[t.status]||"","נלקח ע\"י":t.claimedByName||"","הועלה ע\"י":t.createdByName||""})))||[{"כותרת":""}]),"משימות";
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(allExpenses.length?allExpenses.map(e=>({"תיאור":e.description||"","סכום":parseFloat(e.amount)||0,"תאריך":e.date?fmtDate(e.date):"","שילם":e.paidByName||""})): [{"תיאור":""}]),"הוצאות");
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(allMedications.length?allMedications.map(m=>({"שם":m.name||"","מינון":m.dosage||"","שעות":(m.times||[]).join(", "),"רופא":m.prescribedBy||"","פעיל":m.isActive!==false?"כן":"לא"})):[{"שם":""}]),"תרופות");
   return XLSX.write(wb,{bookType:"xlsx",type:"array"});
