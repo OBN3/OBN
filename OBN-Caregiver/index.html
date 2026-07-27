@@ -109,14 +109,35 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 .btn-sm{padding:5px 11px;font-size:.78rem;}
 .btn-icon{padding:6px;border-radius:8px;background:var(--bg);color:var(--text2);font-size:.95rem;}.btn-icon:hover{background:var(--border);}
 
-/* ── TOOLBAR ── */
+/* ── TOOLBAR / FILTERS ── */
 .toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
 .filters{display:flex;gap:5px;flex-wrap:wrap;}
-.filter-btn{padding:6px 13px;border-radius:20px;font-size:.79rem;font-weight:600;
-  border:1.5px solid var(--border);background:#fff;color:var(--text2);transition:.2s;}
+
+/* filter buttons — count inside */
+.filter-btn{
+  padding:6px 12px;border-radius:20px;font-size:.79rem;font-weight:600;
+  border:1.5px solid var(--border);background:#fff;color:var(--text2);transition:.2s;
+  display:inline-flex;align-items:center;gap:5px;
+}
+.filter-btn .f-count{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:19px;height:19px;padding:0 4px;
+  border-radius:99px;background:rgba(0,0,0,.08);
+  font-size:.7rem;font-weight:800;line-height:1;
+}
 .filter-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.filter-btn.active .f-count{background:rgba(255,255,255,.3);color:#fff;}
 .filter-btn.filter-deleted.active{background:var(--deleted);border-color:var(--deleted);}
 .filter-btn:hover:not(.active){border-color:var(--primary);color:var(--primary);}
+
+/* task counter badge */
+.count-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:3px 10px;border-radius:999px;
+  background:#ede9fe;color:#5b21b6;
+  font-size:.78rem;font-weight:800;white-space:nowrap;
+}
+
 .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .section-header h2{font-size:1.25rem;font-weight:800;display:flex;align-items:center;gap:8px;}
 .db-section-title{font-size:1rem;font-weight:700;margin-bottom:12px;color:var(--text);}
@@ -190,7 +211,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 .med-schedule-info{flex:1;}
 .med-schedule-name{font-weight:600;font-size:.92rem;}
 .med-schedule-dosage{font-size:.79rem;color:var(--text2);}
-.med-schedule-action{min-width:120px;text-align:left;}
+.med-schedule-action{min-width:130px;text-align:left;}
 .med-time-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
 .med-time-row input{flex:1;border:1.5px solid var(--border);border-radius:var(--radius-sm);
   padding:7px 11px;font-size:.9rem;font-family:'Heebo',sans-serif;outline:none;}
@@ -201,13 +222,10 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   background:var(--surface2);padding:14px 16px;border-radius:var(--radius-sm);
   border:1px solid var(--border);margin-bottom:16px;}
 .med-log-filters label{font-size:.82rem;font-weight:600;color:var(--text2);}
-.med-log-filters select,
-.med-log-filters input[type="date"]{
+.med-log-filters select,.med-log-filters input[type="date"]{
   border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;
-  font-size:.83rem;font-family:'Heebo',sans-serif;outline:none;background:var(--surface);
-  color:var(--text);cursor:pointer;}
-.med-log-filters select:focus,
-.med-log-filters input[type="date"]:focus{border-color:var(--med-color);}
+  font-size:.83rem;font-family:'Heebo',sans-serif;outline:none;background:var(--surface);color:var(--text);}
+.med-log-filters select:focus,.med-log-filters input[type="date"]:focus{border-color:var(--med-color);}
 .med-log-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px;}
 .med-log-stat{background:var(--surface);border-radius:var(--radius-sm);padding:12px 14px;
   box-shadow:var(--shadow-sm);border-right:3px solid var(--med-color);text-align:center;}
@@ -315,7 +333,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 
   <main>
 
-    <!-- DASHBOARD -->
+    <!-- ═══ DASHBOARD ═══ -->
     <div id="tab-dashboard" class="section active">
       <div class="stats-grid">
         <div class="stat-card">        <div class="stat-num" id="stat-open">—</div>    <div class="stat-label">משימות פתוחות</div></div>
@@ -324,6 +342,8 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
         <div class="stat-card info">   <div class="stat-num" id="stat-expenses">—</div><div class="stat-label">סה"כ הוצאות (₪)</div></div>
         <div class="stat-card meds">   <div class="stat-num" id="stat-meds">—</div>    <div class="stat-label">💊 מנות היום</div></div>
       </div>
+
+      <!-- Patient Card -->
       <div class="patient-card" id="patientCard">
         <div class="section-header" id="patientCardHeader" style="cursor:pointer;user-select:none;margin-bottom:0;">
           <h2>👤 פרטי המטופל ומידע חיוני
@@ -339,25 +359,35 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
           <div class="patient-grid" id="patientInfoGrid"></div>
         </div>
       </div>
+
+      <!-- ★ FIX: Dashboard shows ALL active tasks (open + claimed), not just 5 -->
       <div class="section-header">
-        <div class="db-section-title" style="margin-bottom:0;">⚡ משימות פתוחות</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="db-section-title" style="margin-bottom:0;">⚡ משימות פעילות</div>
+          <span id="dashTaskCount" class="count-badge" style="display:none;"></span>
+        </div>
         <button class="btn btn-primary btn-sm" id="btnAddTaskDash">+ משימה חדשה</button>
       </div>
       <div id="dashTaskList" class="task-list"></div>
     </div>
 
-    <!-- TASKS -->
+    <!-- ═══ TASKS ═══ -->
     <div id="tab-tasks" class="section">
       <div class="toolbar">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span style="font-size:1.15rem;font-weight:800;">משימות</span>
+          <!-- ★ Counter badge next to title -->
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:1.15rem;font-weight:800;">משימות</span>
+            <span id="taskCounter" class="count-badge">—</span>
+          </div>
+          <!-- ★ Filter buttons — counts injected dynamically via JS -->
           <div class="filters" id="statusFilters">
-            <button class="filter-btn active" data-status="all">הכל</button>
-            <button class="filter-btn" data-status="open">פתוח</button>
-            <button class="filter-btn" data-status="claimed">נלקח</button>
-            <button class="filter-btn" data-status="done">הושלם</button>
-            <button class="filter-btn" data-status="cancelled">בוטל</button>
-            <button class="filter-btn filter-deleted" data-status="deleted">🗑️ מחוקות</button>
+            <button class="filter-btn active" data-status="all">הכל <span class="f-count" id="fc-all">—</span></button>
+            <button class="filter-btn" data-status="open">פתוח <span class="f-count" id="fc-open">—</span></button>
+            <button class="filter-btn" data-status="claimed">נלקח <span class="f-count" id="fc-claimed">—</span></button>
+            <button class="filter-btn" data-status="done">הושלם <span class="f-count" id="fc-done">—</span></button>
+            <button class="filter-btn" data-status="cancelled">בוטל <span class="f-count" id="fc-cancelled">—</span></button>
+            <button class="filter-btn filter-deleted" data-status="deleted">🗑️ מחוקות <span class="f-count" id="fc-deleted">—</span></button>
           </div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
@@ -377,7 +407,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
       <div class="task-list" id="taskList"></div>
     </div>
 
-    <!-- EXPENSES -->
+    <!-- ═══ EXPENSES ═══ -->
     <div id="tab-expenses" class="section">
       <div class="section-header">
         <h2>💰 הוצאות ומאזן</h2>
@@ -398,85 +428,64 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
       </div>
     </div>
 
-    <!-- MEDICATIONS -->
+    <!-- ═══ MEDICATIONS ═══ -->
     <div id="tab-medications" class="section">
       <div class="section-header">
         <h2>💊 מעקב תרופות</h2>
         <button class="btn btn-primary" id="btnAddMed">+ תרופה חדשה</button>
       </div>
-
-      <!-- Today's schedule -->
       <div class="balance-card" style="margin-bottom:20px;">
         <h3>📅 מתן תרופות היום – <span id="todayDateDisplay"></span></h3>
-        <p style="font-size:.8rem;color:var(--text2);margin:5px 0 14px;">סמן כל מנה לאחר מתנה. הסימון נשמר ומוצג לכלל המשפחה בזמן אמת.</p>
+        <p style="font-size:.8rem;color:var(--text2);margin:5px 0 14px;">סמן כל מנה לאחר מתנה. הסימון מתעדכן לכל המשפחה בזמן אמת.</p>
         <div id="medSchedule"></div>
       </div>
-
-      <!-- Medication list -->
       <div class="section-header">
         <div class="db-section-title" style="margin-bottom:0;">📋 תרופות קבועות</div>
       </div>
       <div id="medList" class="task-list"></div>
 
-      <!-- ═══ MED LOG ═══ -->
+      <!-- Med Log -->
       <div class="collapsible-section" id="medLogSection">
         <div class="collapsible-header" id="medLogHeader">
           <h3>📔 יומן נטילות תרופות</h3>
           <span class="collapsible-arrow" id="medLogArrow">▼</span>
         </div>
         <div class="collapsible-body" id="medLogBody">
-
-          <!-- Filters -->
           <div class="med-log-filters">
             <div style="display:flex;align-items:center;gap:6px;">
               <label>💊 תרופה:</label>
-              <select id="logFilterMed">
-                <option value="all">כל התרופות</option>
-              </select>
+              <select id="logFilterMed"><option value="all">כל התרופות</option></select>
             </div>
             <div style="display:flex;align-items:center;gap:6px;">
-              <label>📅 מ:</label>
-              <input type="date" id="logFilterFrom"/>
+              <label>📅 מ:</label><input type="date" id="logFilterFrom"/>
             </div>
             <div style="display:flex;align-items:center;gap:6px;">
-              <label>עד:</label>
-              <input type="date" id="logFilterTo"/>
+              <label>עד:</label><input type="date" id="logFilterTo"/>
             </div>
             <button class="btn btn-gray btn-sm" id="btnClearLogFilters">נקה סינון</button>
             <button class="btn btn-success btn-sm" id="btnExportLog">📤 ייצוא</button>
           </div>
-
-          <!-- Stats -->
           <div class="med-log-stats" id="medLogStats"></div>
-
-          <!-- Table -->
           <div class="med-log-table-wrap">
             <table class="med-log-table">
-              <thead>
-                <tr>
-                  <th>💊 תרופה</th>
-                  <th>📅 תאריך</th>
-                  <th>⏰ שעה מתוכננת</th>
-                  <th>🕐 שעת אישור</th>
-                  <th>👤 אישר/ה</th>
-                  <th></th>
-                </tr>
-              </thead>
+              <thead><tr>
+                <th>💊 תרופה</th><th>📅 תאריך</th>
+                <th>⏰ שעה מתוכננת</th><th>🕐 שעת אישור</th>
+                <th>👤 אישר/ה</th><th></th>
+              </tr></thead>
               <tbody id="medLogTableBody"></tbody>
             </table>
           </div>
           <div id="medLogEmpty" class="empty" style="display:none;">
-            <div class="icon">📔</div>
-            <p>אין רשומות נטילה בתקופה הנבחרת</p>
+            <div class="icon">📔</div><p>אין רשומות בתקופה הנבחרת</p>
           </div>
           <div id="medLogCount" style="font-size:.78rem;color:var(--text2);margin-top:10px;text-align:center;"></div>
-
         </div>
       </div>
     </div>
 
   </main>
-</div>
+</div><!-- /app -->
 
 <!-- PATIENT MODAL -->
 <div class="modal-overlay" id="patientModal">
@@ -513,7 +522,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
         <div class="form-group"><label>שם משתמש</label><input type="text" id="pBtuUser"/></div>
         <div class="form-group"><label>סיסמה</label><input type="text" id="pBtuPass"/></div>
       </div>
-      <div class="form-group"><label>קוד טלפוני אישי (סודי)</label><input type="text" id="pBtuCode"/></div>
+      <div class="form-group"><label>קוד טלפוני אישי</label><input type="text" id="pBtuCode"/></div>
     </div>
     <div class="patient-tab-content" id="ptab-kup">
       <div class="form-row">
@@ -524,7 +533,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
         <div class="form-group"><label>טלפון מרפאה</label><input type="text" id="pKupPhone"/></div>
         <div class="form-group"><label>שם משתמש באתר</label><input type="text" id="pKupUser"/></div>
       </div>
-      <div class="form-group"><label>סיסמה (🔒 מוסתרת בתצוגה)</label><input type="text" id="pKupPass"/></div>
+      <div class="form-group"><label>סיסמה (🔒 מוסתרת)</label><input type="text" id="pKupPass"/></div>
     </div>
     <div class="patient-tab-content" id="ptab-bank">
       <div class="form-row">
@@ -661,8 +670,8 @@ let currentUser        = null;
 let allTasks           = [];
 let allExpenses        = [];
 let allMedications     = [];
-let todayMedLogs       = [];   // today only — for schedule display
-let allMedLogs         = [];   // all historical — for the log view
+let todayMedLogs       = [];
+let allMedLogs         = [];
 let patientData        = {};
 let editingTaskId      = null;
 let editingMedId       = null;
@@ -671,10 +680,9 @@ let taskSearchQuery    = "";
 let taskSortField      = "dueDateStr";
 let currentMedTimes    = ["08:00"];
 let loadedCount        = 0;
-// Log filter state
-let logFilterMed  = "all";
-let logFilterFrom = "";
-let logFilterTo   = "";
+let logFilterMed       = "all";
+let logFilterFrom      = "";
+let logFilterTo        = "";
 let unsubTasks, unsubExpenses, unsubPatient, unsubMeds, unsubTodayLogs, unsubAllLogs;
 
 /* ── UTILS ── */
@@ -713,6 +721,7 @@ function fmtTime(ts) {
 function todayStr() { return new Date().toISOString().slice(0,10); }
 function showLoading() { $("loadingOverlay").classList.remove("hidden"); }
 function hideLoading() { $("loadingOverlay").classList.add("hidden"); }
+
 const STATUS_LABEL = {open:"פתוח",claimed:"נלקח",done:"הושלם",cancelled:"בוטל",deleted:"מחוקה"};
 const TYPE_LABEL   = {visit:"ביקור",shopping:"קניות",errand:"סידור",medical:"רפואי",other:"אחר"};
 const TYPE_ICON    = {visit:"🏥",shopping:"🛒",errand:"📋",medical:"💊",other:"📌"};
@@ -750,7 +759,9 @@ function subscribeData() {
 
   unsubTasks = colRef("tasks").orderBy("createdAt","desc").onSnapshot(snap => {
     allTasks = snap.docs.map(d=>({id:d.id,...d.data()}));
-    renderTasks(); renderDashboard(); checkLoaded();
+    renderTasks();
+    renderDashboard();
+    checkLoaded();
   }, err => {
     if (err.code === "permission-denied") {
       toast("❌ אינך מורשה לגשת לנתונים.", "error");
@@ -770,17 +781,14 @@ function subscribeData() {
 
   unsubMeds = colRef("medications").orderBy("name").onSnapshot(snap => {
     allMedications = snap.docs.map(d=>({id:d.id,...d.data()}));
-    renderMedications(); renderDashboard();
-    updateLogMedFilter();   // refresh medication dropdown in log filter
+    renderMedications(); renderDashboard(); updateLogMedFilter();
   }, err => console.error("meds",err));
 
-  // Today's logs — for schedule
   unsubTodayLogs = colRef("med_logs").where("date","==",todayStr()).onSnapshot(snap => {
     todayMedLogs = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderMedSchedule(); renderDashboard();
   }, err => console.error("today logs",err));
 
-  // All historical logs — for the log view (latest 300)
   unsubAllLogs = colRef("med_logs").orderBy("takenAt","desc").limit(300).onSnapshot(snap => {
     allMedLogs = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderMedLog();
@@ -834,7 +842,7 @@ function renderPatientCard() {
       ${renderItem("סיסמה",patientData.pBnkPass,true)}</div>`;
   const freeItems = [];
   for (let i=1;i<=8;i++) {
-    const t = patientData[`pGenTitle${i}`]||`מידע חופשי ${i}`, v = patientData[`pGen${i}`];
+    const t=patientData[`pGenTitle${i}`]||`מידע חופשי ${i}`, v=patientData[`pGen${i}`];
     if (v && v.trim()) freeItems.push(renderItem(t,v));
   }
   if (freeItems.length) html += `<div class="info-group" style="grid-column:1/-1;"><h4>📝 מידע חופשי</h4>
@@ -847,7 +855,7 @@ $("btnShareEmergency").addEventListener("click", () => {
   const d = patientData;
   if (!d.pName && !d.pKupName) { toast("אין נתונים. מלא פרטי המטופל קודם.","error"); return; }
   const text = `🆘 *מידע חירום – ${d.pName||"המטופל"}*\n👤 ת.ז.: ${d.pId||"—"}\n📅 שנת לידה: ${d.pYear||"—"}\n📞 טלפון: ${d.pPhone||"—"}\n🏥 קופה: ${d.pKupName||"—"} – ${d.pKupBranch||""}\n📍 כתובת: ${d.pCity||""} ${d.pStreet||""}`;
-  navigator.clipboard.writeText(text).then(()=>toast("✅ מידע חירום הועתק לוואטסאפ","success")).catch(()=>toast("שגיאה","error"));
+  navigator.clipboard.writeText(text).then(()=>toast("✅ מידע חירום הועתק!","success")).catch(()=>toast("שגיאה","error"));
 });
 
 document.querySelectorAll(".patient-tab").forEach(tab => {
@@ -884,7 +892,7 @@ $("btnEditPatient").addEventListener("click", () => {
 });
 $("closePatientModal").addEventListener("click",  ()=>$("patientModal").classList.remove("open"));
 $("cancelPatientModal").addEventListener("click", ()=>$("patientModal").classList.remove("open"));
-$("savePatientBtn").addEventListener("click", async ()=>{
+$("savePatientBtn").addEventListener("click", async () => {
   const nd={};
   PATIENT_FIELDS.forEach(f=>{ const el=$(f); if(el) nd[f]=el.value.trim(); });
   try {
@@ -894,71 +902,143 @@ $("savePatientBtn").addEventListener("click", async ()=>{
   } catch(e){ toast("שגיאה: "+e.message,"error"); }
 });
 
-/* ── DASHBOARD ── */
+/* ================================================================
+   DASHBOARD
+   ★ FIX: Shows ALL active tasks (open + claimed), no slice(0,5) limit
+   ================================================================ */
 function renderDashboard() {
-  const now=new Date(),m=now.getMonth(),y=now.getFullYear();
-  const visible=allTasks.filter(t=>t.status!=="deleted");
-  $("stat-open").textContent    = visible.filter(t=>t.status==="open").length;
-  $("stat-claimed").textContent = visible.filter(t=>t.status==="claimed").length;
-  $("stat-done").textContent    = visible.filter(t=>{
-    if(t.status!=="done") return false;
-    const d=tsToDate(t.completedAt); return d&&d.getMonth()===m&&d.getFullYear()===y;
+  const now=new Date(), m=now.getMonth(), y=now.getFullYear();
+  const visible = allTasks.filter(t => t.status !== "deleted");
+  $("stat-open").textContent    = visible.filter(t => t.status === "open").length;
+  $("stat-claimed").textContent = visible.filter(t => t.status === "claimed").length;
+  $("stat-done").textContent    = visible.filter(t => {
+    if (t.status !== "done") return false;
+    const d = tsToDate(t.completedAt); return d && d.getMonth()===m && d.getFullYear()===y;
   }).length;
-  const totalExp=allExpenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
-  $("stat-expenses").textContent="₪"+totalExp.toFixed(0);
-  const activeMeds=allMedications.filter(m=>m.isActive!==false);
-  const totalSched=activeMeds.reduce((s,m)=>s+(m.times?.length||0),0);
-  $("stat-meds").textContent = totalSched>0 ? `${todayMedLogs.length}/${totalSched}` : "—";
-  const openTasks=allTasks.filter(t=>t.status==="open").slice(0,5);
-  const el=$("dashTaskList");
-  if(!openTasks.length){ el.innerHTML='<div class="empty"><div class="icon">🎉</div><p>אין משימות פתוחות!</p></div>'; return; }
-  el.innerHTML=openTasks.map(t=>renderTaskCardHTML(t,true)).join("");
-  openTasks.forEach(t=>attachTaskCardEvents(t,true));
-}
-$("btnAddTaskDash").addEventListener("click",()=>openTaskModal());
+  const totalExp = allExpenses.reduce((s,e) => s+(parseFloat(e.amount)||0), 0);
+  $("stat-expenses").textContent = "₪"+totalExp.toFixed(0);
+  const activeMeds = allMedications.filter(m => m.isActive !== false);
+  const totalSched = activeMeds.reduce((s,m) => s+(m.times?.length||0), 0);
+  $("stat-meds").textContent = totalSched > 0 ? `${todayMedLogs.length}/${totalSched}` : "—";
 
-/* ── TASKS ── */
-function isOrphanTask(t) {
-  if (t.status!=="open"||t.claimedBy||!t.dueDateStr) return false;
-  const due=new Date(t.dueDateStr+"T"+(t.dueTimeStr||"23:59"));
-  const diff=(due-new Date())/3600000;
-  return diff>=0&&diff<=48;
+  // ★ Show ALL open + claimed tasks (no artificial limit)
+  const activeTasks = allTasks.filter(t =>
+    t.status !== "deleted" && t.status !== "done" && t.status !== "cancelled"
+  );
+
+  const dashCount = $("dashTaskCount");
+  if (activeTasks.length > 0) {
+    dashCount.style.display = "inline-flex";
+    dashCount.textContent = `${activeTasks.length} משימות פעילות`;
+  } else {
+    dashCount.style.display = "none";
+  }
+
+  const el = $("dashTaskList");
+  if (!activeTasks.length) {
+    el.innerHTML = '<div class="empty"><div class="icon">🎉</div><p>אין משימות פעילות!</p></div>';
+    return;
+  }
+  el.innerHTML = activeTasks.map(t => renderTaskCardHTML(t, true)).join("");
+  activeTasks.forEach(t => attachTaskCardEvents(t, true));
 }
-$("statusFilters").addEventListener("click",e=>{
-  const btn=e.target.closest(".filter-btn"); if(!btn) return;
-  document.querySelectorAll("#statusFilters .filter-btn").forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active"); activeStatusFilter=btn.dataset.status; renderTasks();
-});
-$("taskSearch").addEventListener("input",e=>{ taskSearchQuery=e.target.value.trim().toLowerCase(); renderTasks(); });
-$("taskSort").addEventListener("change",e=>{ taskSortField=e.target.value; renderTasks(); });
+$("btnAddTaskDash").addEventListener("click", () => openTaskModal());
+
+/* ================================================================
+   TASKS — filter count badges + main counter
+   ================================================================ */
+
+/* ★ Update count badges inside each filter button */
+function updateFilterCounts() {
+  const counts = {
+    all:       allTasks.filter(t => t.status !== "deleted").length,
+    open:      allTasks.filter(t => t.status === "open").length,
+    claimed:   allTasks.filter(t => t.status === "claimed").length,
+    done:      allTasks.filter(t => t.status === "done").length,
+    cancelled: allTasks.filter(t => t.status === "cancelled").length,
+    deleted:   allTasks.filter(t => t.status === "deleted").length,
+  };
+  ["all","open","claimed","done","cancelled","deleted"].forEach(s => {
+    const el = $("fc-"+s);
+    if (el) el.textContent = counts[s] ?? 0;
+  });
+}
 
 function renderTasks() {
-  const list=$("taskList");
-  let tasks=[...allTasks];
-  if(activeStatusFilter==="all") tasks=tasks.filter(t=>t.status!=="deleted");
-  else tasks=tasks.filter(t=>t.status===activeStatusFilter);
-  if(taskSearchQuery) tasks=tasks.filter(t=>
-    (t.title||"").toLowerCase().includes(taskSearchQuery)||(t.statusNote||"").toLowerCase().includes(taskSearchQuery)||
-    (t.followUp||"").toLowerCase().includes(taskSearchQuery)||(t.claimedByName||"").toLowerCase().includes(taskSearchQuery));
-  tasks.sort((a,b)=>{
-    if(taskSortField==="dueDateStr") return (a.dueDateStr||"9999").localeCompare(b.dueDateStr||"9999");
-    if(taskSortField==="title") return (a.title||"").localeCompare(b.title||"");
-    if(taskSortField==="status") return (a.status||"").localeCompare(b.status||"");
+  // ★ Always update counts first (independent of filter/search)
+  updateFilterCounts();
+
+  const list = $("taskList");
+  let tasks = [...allTasks];
+
+  // Status filter
+  if (activeStatusFilter === "all") tasks = tasks.filter(t => t.status !== "deleted");
+  else tasks = tasks.filter(t => t.status === activeStatusFilter);
+
+  // ★ Count after status filter, before search (for "X מתוך Y" display)
+  const countAfterFilter = tasks.length;
+
+  // Search filter
+  if (taskSearchQuery) {
+    tasks = tasks.filter(t =>
+      (t.title||"").toLowerCase().includes(taskSearchQuery) ||
+      (t.statusNote||"").toLowerCase().includes(taskSearchQuery) ||
+      (t.followUp||"").toLowerCase().includes(taskSearchQuery) ||
+      (t.claimedByName||"").toLowerCase().includes(taskSearchQuery)
+    );
+  }
+
+  // Sort
+  tasks.sort((a, b) => {
+    if (taskSortField === "dueDateStr") return (a.dueDateStr||"9999").localeCompare(b.dueDateStr||"9999");
+    if (taskSortField === "title")  return (a.title||"").localeCompare(b.title||"");
+    if (taskSortField === "status") return (a.status||"").localeCompare(b.status||"");
     return 0;
   });
-  if(!tasks.length){ list.innerHTML='<div class="empty"><div class="icon">📭</div><p>אין משימות להצגה</p></div>'; return; }
-  list.innerHTML=tasks.map(t=>renderTaskCardHTML(t,false)).join("");
-  tasks.forEach(t=>attachTaskCardEvents(t,false));
+
+  // ★ Update main counter badge
+  const counter = $("taskCounter");
+  if (counter) {
+    if (taskSearchQuery && tasks.length !== countAfterFilter) {
+      counter.textContent = `${tasks.length} מתוך ${countAfterFilter} משימות`;
+    } else {
+      counter.textContent = `${tasks.length} משימות`;
+    }
+  }
+
+  if (!tasks.length) {
+    list.innerHTML = '<div class="empty"><div class="icon">📭</div><p>אין משימות להצגה</p></div>';
+    return;
+  }
+  list.innerHTML = tasks.map(t => renderTaskCardHTML(t, false)).join("");
+  tasks.forEach(t => attachTaskCardEvents(t, false));
 }
 
-function renderTaskCardHTML(t,dashMode){
-  const isDel=t.status==="deleted",isDone=t.status==="done",isClaim=t.status==="claimed",isOpen=t.status==="open";
-  const isOrph=isOrphanTask(t);
-  const uid=(dashMode?"d":"t")+"-"+t.id;
-  const canClaim=isOpen,canUnclaim=isClaim&&t.claimedBy===currentUser?.uid;
-  const canDone=isClaim&&t.claimedBy===currentUser?.uid,canUndone=isDone;
+$("statusFilters").addEventListener("click", e => {
+  const btn = e.target.closest(".filter-btn"); if (!btn) return;
+  document.querySelectorAll("#statusFilters .filter-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  activeStatusFilter = btn.dataset.status;
+  renderTasks();
+});
+$("taskSearch").addEventListener("input", e => { taskSearchQuery = e.target.value.trim().toLowerCase(); renderTasks(); });
+$("taskSort").addEventListener("change",  e => { taskSortField  = e.target.value; renderTasks(); });
+
+function isOrphanTask(t) {
+  if (t.status!=="open" || t.claimedBy || !t.dueDateStr) return false;
+  const due = new Date(t.dueDateStr+"T"+(t.dueTimeStr||"23:59"));
+  return (due-new Date())/3600000 >= 0 && (due-new Date())/3600000 <= 48;
+}
+
+function renderTaskCardHTML(t, dashMode) {
+  const isDel=t.status==="deleted", isDone=t.status==="done";
+  const isClaim=t.status==="claimed", isOpen=t.status==="open";
+  const isOrph = isOrphanTask(t);
+  const uid = (dashMode?"d":"t")+"-"+t.id;
+  const canClaim=isOpen, canUnclaim=isClaim&&t.claimedBy===currentUser?.uid;
+  const canDone=isClaim&&t.claimedBy===currentUser?.uid, canUndone=isDone;
   const canCancel=(isOpen||isClaim)&&(t.createdBy===currentUser?.uid||t.claimedBy===currentUser?.uid);
-  const canRestore=t.status==="cancelled",canUndel=isDel;
+  const canRestore=t.status==="cancelled", canUndel=isDel;
   const comments=t.comments||[];
   let dueLine=t.dueDateStr?`<span>📅 ${esc(t.dueDateStr)}${t.dueTimeStr?" ⏰"+esc(t.dueTimeStr):""}</span>`:"";
   return `<div class="task-card status-${t.status}${isOrph?" orphan-alert":""}" id="card-${uid}">
@@ -1001,7 +1081,7 @@ function renderTaskCardHTML(t,dashMode){
   </div>`;
 }
 
-function attachTaskCardEvents(t,dashMode){
+function attachTaskCardEvents(t, dashMode) {
   const uid=(dashMode?"d":"t")+"-"+t.id, g=id=>document.getElementById(id);
   if(g(`claim-${uid}`))   g(`claim-${uid}`).onclick   =()=>claimTask(t.id);
   if(g(`unclaim-${uid}`)) g(`unclaim-${uid}`).onclick =()=>unclaimTask(t.id);
@@ -1016,6 +1096,7 @@ function attachTaskCardEvents(t,dashMode){
   if(g(`cs-${uid}`)) g(`cs-${uid}`).onclick=()=>{ const inp=g(`ci-${uid}`); addComment(t.id,inp.value); inp.value=""; };
 }
 
+/* ── TASK ACTIONS ── */
 async function claimTask(id){ try{ await colRef("tasks").doc(id).update({status:"claimed",claimedBy:currentUser.uid,claimedByName:currentUser.displayName||currentUser.email,claimedAt:firebase.firestore.FieldValue.serverTimestamp()}); toast("✅ לקחת את המשימה!","success");}catch(e){toast("שגיאה: "+e.message,"error");}}
 async function unclaimTask(id){ if(!confirm("לבטל לקיחה?")) return; try{ await colRef("tasks").doc(id).update({status:"open",claimedBy:null,claimedByName:null,claimedAt:null}); toast("↩️ ביטול לקיחה");}catch(e){toast("שגיאה: "+e.message,"error");}}
 async function completeTask(id){ try{ await colRef("tasks").doc(id).update({status:"done",completedAt:firebase.firestore.FieldValue.serverTimestamp()}); toast("🎉 משימה הושלמה!","success");}catch(e){toast("שגיאה: "+e.message,"error");}}
@@ -1024,43 +1105,47 @@ async function cancelTask(id){ if(!confirm("לבטל משימה?")) return; try{
 async function restoreTask(id){ try{ await colRef("tasks").doc(id).update({status:"open"}); toast("♻️ הוחזר לפעיל","success");}catch(e){toast("שגיאה: "+e.message,"error");}}
 async function deleteTask(id){ if(!confirm("להעביר לפח?")) return; try{ await colRef("tasks").doc(id).update({status:"deleted",deletedAt:firebase.firestore.FieldValue.serverTimestamp(),deletedBy:currentUser.uid,deletedByName:currentUser.displayName||currentUser.email}); toast("🗑️ הועבר לפח");}catch(e){toast("שגיאה: "+e.message,"error");}}
 async function undeleteTask(id){ try{ await colRef("tasks").doc(id).update({status:"open",deletedAt:null,deletedBy:null,deletedByName:null}); toast("♻️ שוחזר!","success");}catch(e){toast("שגיאה: "+e.message,"error");}}
-async function addComment(taskId,text){ if(!text.trim()) return; const task=allTasks.find(t=>t.id===taskId); if(!task) return; const comments=[...(task.comments||[]),{uid:currentUser.uid,name:currentUser.displayName||currentUser.email,text:text.trim(),date:new Date().toLocaleDateString("he-IL")}]; try{ await colRef("tasks").doc(taskId).update({comments}); toast("💬 הערה נוספה","success");}catch(e){toast("שגיאה: "+e.message,"error");}}
+async function addComment(taskId,text){ if(!text.trim()) return; const task=allTasks.find(t=>t.id===taskId); if(!task) return;
+  const comments=[...(task.comments||[]),{uid:currentUser.uid,name:currentUser.displayName||currentUser.email,text:text.trim(),date:new Date().toLocaleDateString("he-IL")}];
+  try{ await colRef("tasks").doc(taskId).update({comments}); toast("💬 הערה נוספה","success");}catch(e){toast("שגיאה: "+e.message,"error");}}
 
-function openTaskModal(task,isDuplicate=false){
-  editingTaskId=(task&&!isDuplicate)?task.id:null;
-  $("taskModalTitle").textContent=editingTaskId?"עריכת משימה":isDuplicate?"שכפול משימה":"משימה חדשה";
-  $("tTitle").value     =task?(isDuplicate?task.title+" (העתק)":task.title):"";
-  $("tType").value      =task?.type||"visit";
-  $("tStatusNote").value=task?.statusNote||"";
-  $("tFollowUp").value  =task?.followUp||"";
-  $("tAddedDate").value =isDuplicate?todayStr():(task?.addedDateStr||todayStr());
-  $("tDueDate").value   =isDuplicate?"":(task?.dueDateStr||"");
-  $("tDueTime").value   =isDuplicate?"":(task?.dueTimeStr||"");
+/* ── TASK MODAL ── */
+function openTaskModal(task, isDuplicate=false) {
+  editingTaskId = (task && !isDuplicate) ? task.id : null;
+  $("taskModalTitle").textContent = editingTaskId ? "עריכת משימה" : isDuplicate ? "שכפול משימה" : "משימה חדשה";
+  $("tTitle").value      = task ? (isDuplicate ? task.title+" (העתק)" : task.title) : "";
+  $("tType").value       = task?.type || "visit";
+  $("tStatusNote").value = task?.statusNote || "";
+  $("tFollowUp").value   = task?.followUp   || "";
+  $("tAddedDate").value  = isDuplicate ? todayStr() : (task?.addedDateStr || todayStr());
+  $("tDueDate").value    = isDuplicate ? "" : (task?.dueDateStr || "");
+  $("tDueTime").value    = isDuplicate ? "" : (task?.dueTimeStr || "");
   $("taskModal").classList.add("open");
 }
-function closeTaskModal(){ $("taskModal").classList.remove("open"); editingTaskId=null; }
-$("btnAddTask").addEventListener("click",()=>openTaskModal());
-$("closeTaskModal").addEventListener("click",closeTaskModal);
-$("cancelTaskModal").addEventListener("click",closeTaskModal);
-$("saveTaskBtn").addEventListener("click",async()=>{
-  const title=$("tTitle").value.trim(); if(!title){toast("נא להזין כותרת","error");return;}
-  const data={title,type:$("tType").value,statusNote:$("tStatusNote").value.trim(),followUp:$("tFollowUp").value.trim(),
-    addedDateStr:$("tAddedDate").value||todayStr(),dueDateStr:$("tDueDate").value||"",dueTimeStr:$("tDueTime").value||"",
+function closeTaskModal() { $("taskModal").classList.remove("open"); editingTaskId=null; }
+$("btnAddTask").addEventListener("click",  () => openTaskModal());
+$("closeTaskModal").addEventListener("click",  closeTaskModal);
+$("cancelTaskModal").addEventListener("click", closeTaskModal);
+$("saveTaskBtn").addEventListener("click", async () => {
+  const title = $("tTitle").value.trim(); if (!title) { toast("נא להזין כותרת","error"); return; }
+  const data = {title, type:$("tType").value, statusNote:$("tStatusNote").value.trim(),
+    followUp:$("tFollowUp").value.trim(), addedDateStr:$("tAddedDate").value||todayStr(),
+    dueDateStr:$("tDueDate").value||"", dueTimeStr:$("tDueTime").value||"",
     updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
-  try{
-    if(editingTaskId){ await colRef("tasks").doc(editingTaskId).update(data); toast("✏️ עודכן","success"); }
-    else{ data.status="open";data.createdBy=currentUser.uid;data.createdByName=currentUser.displayName||currentUser.email;
-      data.createdAt=firebase.firestore.FieldValue.serverTimestamp();data.comments=[];data.claimedBy=null;data.claimedByName=null;
+  try {
+    if (editingTaskId) { await colRef("tasks").doc(editingTaskId).update(data); toast("✏️ עודכן","success"); }
+    else { data.status="open"; data.createdBy=currentUser.uid; data.createdByName=currentUser.displayName||currentUser.email;
+      data.createdAt=firebase.firestore.FieldValue.serverTimestamp(); data.comments=[]; data.claimedBy=null; data.claimedByName=null;
       await colRef("tasks").add(data); toast("✅ משימה חדשה!","success"); }
     closeTaskModal();
-  }catch(e){toast("שגיאה: "+e.message,"error");}
+  } catch(e) { toast("שגיאה: "+e.message,"error"); }
 });
 
 /* ── EXPENSES ── */
-function renderExpenses(){
-  const list=$("expenseList");
-  if(!allExpenses.length){ list.innerHTML='<div class="empty"><div class="icon">💸</div><p>אין הוצאות</p></div>'; }
-  else { list.innerHTML=allExpenses.map(e=>`
+function renderExpenses() {
+  const list = $("expenseList");
+  if (!allExpenses.length) { list.innerHTML='<div class="empty"><div class="icon">💸</div><p>אין הוצאות</p></div>'; }
+  else { list.innerHTML = allExpenses.map(e=>`
     <div class="expense-card">
       <div class="expense-amount">₪${parseFloat(e.amount||0).toFixed(0)}</div>
       <div class="expense-info">
@@ -1070,11 +1155,11 @@ function renderExpenses(){
       </div>
       <button class="btn btn-icon btn-sm" data-action="del-expense" data-expid="${esc(e.id)}" style="color:var(--danger);">🗑️</button>
     </div>`).join(""); }
-  const paid={},members=new Set(); let total=0;
+  const paid={}, members=new Set(); let total=0;
   allExpenses.forEach(e=>{ const n=e.paidByName||"לא ידוע"; members.add(n); paid[n]=(paid[n]||0)+(parseFloat(e.amount)||0); total+=parseFloat(e.amount)||0; });
   const mArr=[...members]; const share=mArr.length?total/mArr.length:0;
   const balEl=$("balanceSummary");
-  if(!mArr.length){balEl.innerHTML='<div style="color:var(--text2);">אין הוצאות</div>';$("settleList").innerHTML="";return;}
+  if (!mArr.length) { balEl.innerHTML='<div style="color:var(--text2);">אין הוצאות</div>'; $("settleList").innerHTML=""; return; }
   balEl.innerHTML=`<div class="balance-row" style="font-weight:700;"><span>סה"כ</span><span>₪${total.toFixed(0)}</span></div>
     <div class="balance-row" style="font-size:.8rem;"><span>חלק לאדם (${mArr.length})</span><span>₪${share.toFixed(2)}</span></div>
     ${mArr.map(n=>{ const diff=(paid[n]||0)-share; const cls=diff>0?"balance-pos":diff<0?"balance-neg":"";
@@ -1087,42 +1172,44 @@ function renderExpenses(){
   const d=[...debtors],c=[...creditors],setts=[]; let di=0,ci=0;
   while(di<d.length&&ci<c.length){ const pay=Math.min(d[di].amt,c[ci].amt);
     if(pay>0.01) setts.push(`${esc(d[di].name)} חייב ל-${esc(c[ci].name)}: ₪${pay.toFixed(0)}`);
-    d[di].amt-=pay;c[ci].amt-=pay; if(d[di].amt<0.01)di++;if(c[ci].amt<0.01)ci++; }
-  $("settleList").innerHTML=setts.length?setts.map(s=>`<div class="settle-item">💸 ${s}</div>`).join(""):'<div style="color:var(--success);font-weight:600;">✅ הכל מאוזן!</div>';
+    d[di].amt-=pay; c[ci].amt-=pay; if(d[di].amt<0.01)di++; if(c[ci].amt<0.01)ci++; }
+  $("settleList").innerHTML=setts.length?setts.map(s=>`<div class="settle-item">💸 ${s}</div>`).join("")
+    :'<div style="color:var(--success);font-weight:600;">✅ הכל מאוזן!</div>';
 }
 async function deleteExpense(id){ if(!confirm("למחוק הוצאה?")) return; try{await colRef("expenses").doc(id).delete();toast("🗑️ נמחקה","success");}catch(e){toast("שגיאה: "+e.message,"error");}}
 
 $("btnAddExpense").addEventListener("click",()=>{
-  $("eAmount").value="";$("eDate").value=todayStr();$("eDesc").value="";$("ePaidByManually").value="";
+  $("eAmount").value=""; $("eDate").value=todayStr(); $("eDesc").value=""; $("ePaidByManually").value="";
   const sel=$("eTaskLink");
   sel.innerHTML='<option value="">— ללא קישור —</option>'+allTasks.filter(t=>t.status!=="deleted").map(t=>`<option value="${esc(t.id)}">${esc(t.title)}</option>`).join("");
   $("expenseModal").classList.add("open");
 });
 $("closeExpenseModal").addEventListener("click",()=>$("expenseModal").classList.remove("open"));
 $("cancelExpenseModal").addEventListener("click",()=>$("expenseModal").classList.remove("open"));
-$("saveExpenseBtn").addEventListener("click",async()=>{
-  const amount=parseFloat($("eAmount").value),desc=$("eDesc").value.trim(),date=$("eDate").value;
-  if(!amount||!desc||!date){toast("נא למלא את כל השדות","error");return;}
-  const taskId=$("eTaskLink").value,task=taskId?allTasks.find(t=>t.id===taskId):null;
+$("saveExpenseBtn").addEventListener("click", async () => {
+  const amount=parseFloat($("eAmount").value), desc=$("eDesc").value.trim(), date=$("eDate").value;
+  if (!amount||!desc||!date) { toast("נא למלא את כל השדות","error"); return; }
+  const taskId=$("eTaskLink").value, task=taskId?allTasks.find(t=>t.id===taskId):null;
   const payerName=$("ePaidByManually").value.trim()||currentUser.displayName||currentUser.email;
-  try{
+  try {
     await colRef("expenses").add({amount,description:desc,date:new Date(date),paidBy:currentUser.uid,paidByName:payerName,taskId:taskId||null,taskTitle:task?.title||null,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     $("expenseModal").classList.remove("open"); toast("💰 הוצאה נשמרה!","success");
-  }catch(e){toast("שגיאה: "+e.message,"error");}
+  } catch(e) { toast("שגיאה: "+e.message,"error"); }
 });
 
 /* ── MEDICATIONS ── */
-$("todayDateDisplay").textContent = new Date().toLocaleDateString("he-IL",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+$("todayDateDisplay").textContent = new Date().toLocaleDateString("he-IL",
+  {weekday:"long",day:"2-digit",month:"long",year:"numeric"});
 
-function renderMedications(){
+function renderMedications() {
   const listEl=$("medList");
   const active=allMedications.filter(m=>m.isActive!==false);
   const inactive=allMedications.filter(m=>m.isActive===false);
-  if(!allMedications.length){
-    listEl.innerHTML='<div class="empty"><div class="icon">💊</div><p>אין תרופות קבועות. לחץ "+ תרופה חדשה" כדי להתחיל.</p></div>';
+  if (!allMedications.length) {
+    listEl.innerHTML='<div class="empty"><div class="icon">💊</div><p>אין תרופות קבועות. לחץ "+ תרופה חדשה".</p></div>';
   } else {
-    const renderCard=med=>{
-      const isAct=med.isActive!==false,times=(med.times||[]).join(", ")||"ללא שעה";
+    const renderCard = med => {
+      const isAct=med.isActive!==false, times=(med.times||[]).join(", ")||"ללא שעה";
       return `<div class="med-card${!isAct?" med-inactive":""}">
         <div class="med-header">
           <div><span class="med-name">💊 ${esc(med.name)}</span>
@@ -1135,19 +1222,19 @@ function renderMedications(){
         </div>
         ${med.dosage?`<div class="med-dosage">${esc(med.dosage)}</div>`:""}
         <div class="med-times">⏰ ${esc(times)}</div>
-        ${med.prescribedBy?`<div class="med-meta-line">👨‍⚕️ ${esc(med.prescribedBy)}</div>`:""}
+        ${med.prescribedBy?`<div style="font-size:.8rem;color:var(--text2);">👨‍⚕️ ${esc(med.prescribedBy)}</div>`:""}
         ${med.notes?`<div class="med-note-box">📝 ${esc(med.notes)}</div>`:""}
       </div>`;
     };
-    listEl.innerHTML=[...active,...inactive].map(renderCard).join("");
+    listEl.innerHTML = [...active,...inactive].map(renderCard).join("");
   }
   renderMedSchedule();
 }
 
-function renderMedSchedule(){
+function renderMedSchedule() {
   const activeMeds=allMedications.filter(m=>m.isActive!==false);
   const schedEl=$("medSchedule");
-  if(!activeMeds.length){
+  if (!activeMeds.length) {
     schedEl.innerHTML='<div class="empty" style="padding:20px 0;"><div class="icon">💊</div><p>הוסף תרופות כדי לעקוב.</p></div>';
     return;
   }
@@ -1155,15 +1242,15 @@ function renderMedSchedule(){
   todayMedLogs.forEach(log=>{ logMap[log.medId+"_"+log.scheduledTime]=log; });
   const items=[];
   activeMeds.forEach(med=>{
-    if(med.times&&med.times.length) med.times.forEach(time=>items.push({med,time}));
+    if (med.times&&med.times.length) med.times.forEach(time=>items.push({med,time}));
     else items.push({med,time:"—"});
   });
   items.sort((a,b)=>(a.time==="—"?"99:99":a.time).localeCompare(b.time==="—"?"99:99":b.time));
   const nowMin=new Date().getHours()*60+new Date().getMinutes();
-  const parts=items.map(({med,time})=>{
+  schedEl.innerHTML=items.map(({med,time})=>{
     const log=logMap[med.id+"_"+time]; const isTaken=!!log;
     let isOverdue=false;
-    if(!isTaken&&time!=="—"){ const [h,mi]=time.split(":").map(Number); isOverdue=(h*60+mi)<nowMin; }
+    if (!isTaken&&time!=="—") { const [h,mi]=time.split(":").map(Number); isOverdue=(h*60+mi)<nowMin; }
     return `<div class="med-schedule-item${isTaken?" med-taken":isOverdue?" med-overdue":""}">
       <div class="med-schedule-time">${time==="—"?"פ/י":esc(time)}</div>
       <div class="med-schedule-info">
@@ -1171,20 +1258,20 @@ function renderMedSchedule(){
         <div class="med-schedule-dosage">${esc(med.dosage||"")}</div>
       </div>
       <div class="med-schedule-action">
-        ${isTaken?`<div>
-            <span class="badge badge-status-done" style="white-space:nowrap;">✓ ניתנה</span>
-            <div style="font-size:.73rem;color:var(--text2);margin-top:2px;">ע"י ${esc(log.takenByName||"")}</div>
-            <button class="btn btn-gray btn-sm" style="margin-top:4px;font-size:.72rem;"
-              data-action="unmark-med" data-logid="${esc(log.id)}">ביטול</button>
-          </div>`
+        ${isTaken
+          ?`<div>
+              <span class="badge badge-status-done" style="white-space:nowrap;">✓ ניתנה</span>
+              <div style="font-size:.73rem;color:var(--text2);margin-top:2px;">ע"י ${esc(log.takenByName||"")}</div>
+              <button class="btn btn-gray btn-sm" style="margin-top:4px;font-size:.72rem;"
+                data-action="unmark-med" data-logid="${esc(log.id)}">ביטול</button>
+            </div>`
           :`<button class="btn btn-success btn-sm${isOverdue?" btn-warning":""}"
-              data-action="mark-med" data-medid="${esc(med.id)}"
-              data-medname="${esc(med.name)}" data-dosage="${esc(med.dosage||"")}"
-              data-time="${esc(time)}">${isOverdue?"⚠️ ניתנה (באיחור)":"✓ ניתנה"}</button>`}
+               data-action="mark-med" data-medid="${esc(med.id)}"
+               data-medname="${esc(med.name)}" data-dosage="${esc(med.dosage||"")}"
+               data-time="${esc(time)}">${isOverdue?"⚠️ ניתנה (באיחור)":"✓ ניתנה"}</button>`}
       </div>
     </div>`;
-  });
-  schedEl.innerHTML=parts.join("");
+  }).join("");
 }
 
 async function markMedTaken(medId,medName,dosage,scheduledTime){
@@ -1193,7 +1280,7 @@ async function markMedTaken(medId,medName,dosage,scheduledTime){
       takenAt:firebase.firestore.FieldValue.serverTimestamp(),
       takenBy:currentUser.uid,takenByName:currentUser.displayName||currentUser.email});
     toast("✅ תרופה סומנה כניתנה!","success");
-  }catch(e){toast("שגיאה: "+e.message,"error");}
+  } catch(e) { toast("שגיאה: "+e.message,"error"); }
 }
 async function unmarkMed(logId){ if(!confirm("לבטל סימון?")) return; try{await colRef("med_logs").doc(logId).delete();toast("↩️ סימון בוטל");}catch(e){toast("שגיאה: "+e.message,"error");}}
 async function toggleMedActive(medId,isAct){ try{await colRef("medications").doc(medId).update({isActive:!isAct});toast(isAct?"⏸ הושבת":"▶️ הופעל","success");}catch(e){toast("שגיאה: "+e.message,"error");}}
@@ -1216,50 +1303,31 @@ function updateLogMedFilter(){
 
 function renderMedLog(){
   let logs=[...allMedLogs];
-  // Apply medication filter
   if(logFilterMed&&logFilterMed!=="all") logs=logs.filter(l=>l.medId===logFilterMed);
-  // Apply date filters
   if(logFilterFrom) logs=logs.filter(l=>l.date>=logFilterFrom);
   if(logFilterTo)   logs=logs.filter(l=>l.date<=logFilterTo);
-
-  // Stats
   const today=todayStr();
   const weekAgo=new Date(); weekAgo.setDate(weekAgo.getDate()-7);
   const weekStr=weekAgo.toISOString().slice(0,10);
   const monthAgo=new Date(); monthAgo.setDate(monthAgo.getDate()-30);
   const monthStr=monthAgo.toISOString().slice(0,10);
-  const todayCount=allMedLogs.filter(l=>l.date===today).length;
-  const weekCount =allMedLogs.filter(l=>l.date>=weekStr).length;
-  const monthCount=allMedLogs.filter(l=>l.date>=monthStr).length;
-  // Unique days in filtered set
   const uniqueDays=new Set(logs.map(l=>l.date)).size;
-
   $("medLogStats").innerHTML=`
-    <div class="med-log-stat"><div class="num">${todayCount}</div><div class="lbl">מנות היום</div></div>
-    <div class="med-log-stat"><div class="num">${weekCount}</div><div class="lbl">ב-7 ימים אחרונים</div></div>
-    <div class="med-log-stat"><div class="num">${monthCount}</div><div class="lbl">ב-30 ימים אחרונים</div></div>
+    <div class="med-log-stat"><div class="num">${allMedLogs.filter(l=>l.date===today).length}</div><div class="lbl">מנות היום</div></div>
+    <div class="med-log-stat"><div class="num">${allMedLogs.filter(l=>l.date>=weekStr).length}</div><div class="lbl">ב-7 ימים אחרונים</div></div>
+    <div class="med-log-stat"><div class="num">${allMedLogs.filter(l=>l.date>=monthStr).length}</div><div class="lbl">ב-30 ימים אחרונים</div></div>
     <div class="med-log-stat"><div class="num">${uniqueDays}</div><div class="lbl">ימים בסינון הנוכחי</div></div>`;
-
-  const tbody=$("medLogTableBody");
-  const emptyEl=$("medLogEmpty");
-  const countEl=$("medLogCount");
-
-  if(!logs.length){
-    tbody.innerHTML="";
-    emptyEl.style.display="block";
-    countEl.textContent="";
-    return;
-  }
+  const tbody=$("medLogTableBody"),emptyEl=$("medLogEmpty"),countEl=$("medLogCount");
+  if(!logs.length){ tbody.innerHTML=""; emptyEl.style.display="block"; countEl.textContent=""; return; }
   emptyEl.style.display="none";
   countEl.textContent=`מציג ${logs.length} רשומות`;
-
   tbody.innerHTML=logs.map(log=>{
     const takenAtDate=tsToDate(log.takenAt);
     const takenTimeStr=takenAtDate?fmtTime(log.takenAt):"—";
     const dateStr=log.date?new Date(log.date+"T12:00:00").toLocaleDateString("he-IL",{day:"2-digit",month:"2-digit",year:"numeric"}):"—";
     return `<tr>
       <td><span class="log-med-pill">💊 ${esc(log.medName||"—")}</span>
-          ${log.dosage?`<span style="font-size:.75rem;color:var(--text2);margin-right:5px;">${esc(log.dosage)}</span>`:""}</td>
+        ${log.dosage?`<span style="font-size:.75rem;color:var(--text2);margin-right:5px;">${esc(log.dosage)}</span>`:""}</td>
       <td class="log-date-cell">${dateStr}</td>
       <td><span class="log-time-pill">${esc(log.scheduledTime||"—")}</span></td>
       <td class="log-date-cell">${takenTimeStr}</td>
@@ -1270,7 +1338,6 @@ function renderMedLog(){
   }).join("");
 }
 
-// Log filter events
 $("logFilterMed").addEventListener("change",e=>{logFilterMed=e.target.value;renderMedLog();});
 $("logFilterFrom").addEventListener("change",e=>{logFilterFrom=e.target.value;renderMedLog();});
 $("logFilterTo").addEventListener("change",e=>{logFilterTo=e.target.value;renderMedLog();});
@@ -1287,15 +1354,15 @@ $("btnExportLog").addEventListener("click",()=>{
   if(!logs.length){toast("אין נתונים לייצוא","error");return;}
   const rows=logs.map(l=>{
     const d=tsToDate(l.takenAt);
-    return {"תרופה":l.medName||"","מינון":l.dosage||"","תאריך":l.date||"","שעה מתוכננת":l.scheduledTime||"","שעת אישור":d?fmtTime(l.takenAt):"","אישר/ה":l.takenByName||""};
+    return {"תרופה":l.medName||"","מינון":l.dosage||"","תאריך":l.date||"",
+      "שעה מתוכננת":l.scheduledTime||"","שעת אישור":d?fmtTime(l.takenAt):"","אישר/ה":l.takenByName||""};
   });
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),"יומן תרופות");
   const arr=XLSX.write(wb,{bookType:"xlsx",type:"array"});
   const blob=new Blob([arr],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");a.href=url;a.download="yoman_trufot.xlsx";a.click();
-  URL.revokeObjectURL(url);
+  const url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url;a.download="yoman_trufot.xlsx";a.click();URL.revokeObjectURL(url);
   toast("📤 יומן יוצא!","success");
 });
 
@@ -1304,8 +1371,7 @@ function renderMedTimes(times){
   currentMedTimes=[...times];
   $("mTimesContainer").innerHTML=currentMedTimes.map((t,i)=>`
     <div class="med-time-row">
-      <input type="time" value="${esc(t)}" data-idx="${i}"
-        oninput="currentMedTimes[${i}]=this.value"
+      <input type="time" value="${esc(t)}" data-idx="${i}" oninput="currentMedTimes[${i}]=this.value"
         style="flex:1;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:7px 11px;font-size:.9rem;font-family:'Heebo',sans-serif;"/>
       <button type="button" class="btn btn-icon" onclick="removeMedTime(${i})"
         ${currentMedTimes.length<=1?'disabled style="opacity:.35;"':''}>✕</button>
@@ -1326,8 +1392,8 @@ function openMedModal(medId){
   editingMedId=medId||null;
   const med=medId?allMedications.find(m=>m.id===medId):null;
   $("medModalTitle").textContent=med?"עריכת תרופה":"תרופה חדשה";
-  $("mName").value=$("mDosage").value=$("mPrescribedBy").value=$("mNotes").value="";
-  if(med){$("mName").value=med.name||"";$("mDosage").value=med.dosage||"";$("mPrescribedBy").value=med.prescribedBy||"";$("mNotes").value=med.notes||"";}
+  $("mName").value=med?.name||""; $("mDosage").value=med?.dosage||"";
+  $("mPrescribedBy").value=med?.prescribedBy||""; $("mNotes").value=med?.notes||"";
   $("mIsActive").checked=med?med.isActive!==false:true;
   renderMedTimes(med?.times?.length?med.times:["08:00"]);
   $("medModal").classList.add("open");
@@ -1341,9 +1407,9 @@ $("saveMedBtn").addEventListener("click",async()=>{
   const data={name,dosage:$("mDosage").value.trim(),times,prescribedBy:$("mPrescribedBy").value.trim(),
     notes:$("mNotes").value.trim(),isActive:$("mIsActive").checked,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
   try{
-    if(editingMedId){ await colRef("medications").doc(editingMedId).update(data); toast("✏️ עודכן","success"); }
-    else{ data.createdAt=firebase.firestore.FieldValue.serverTimestamp();data.createdByName=currentUser.displayName||currentUser.email;
-      await colRef("medications").add(data); toast("💊 תרופה חדשה!","success"); }
+    if(editingMedId){await colRef("medications").doc(editingMedId).update(data);toast("✏️ עודכן","success");}
+    else{data.createdAt=firebase.firestore.FieldValue.serverTimestamp();data.createdByName=currentUser.displayName||currentUser.email;
+      await colRef("medications").add(data);toast("💊 תרופה חדשה!","success");}
     $("medModal").classList.remove("open");
   }catch(e){toast("שגיאה: "+e.message,"error");}
 });
@@ -1365,23 +1431,22 @@ document.addEventListener("click",e=>{
 /* ── EXCEL EXPORT ── */
 function buildExcelBlob(){
   const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(allTasks.filter(t=>t.status!=="deleted").map(t=>({
-    "כותרת":t.title||"","סוג":TYPE_LABEL[t.type]||t.type||"","סטטוס":t.statusNote||"","המשך טיפול":t.followUp||"",
-    "תאריך הוספה":t.addedDateStr||"","תאריך":t.dueDateStr||"","שעה":t.dueTimeStr||"",
-    "מצב":STATUS_LABEL[t.status]||"","נלקח ע\"י":t.claimedByName||"","הועלה ע\"י":t.createdByName||""
-  }))||[{"כותרת":""}]),"משימות");
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(allExpenses.length?allExpenses.map(e=>({
-    "תיאור":e.description||"","סכום":parseFloat(e.amount)||0,"תאריך":e.date?fmtDate(e.date):"","שילם":e.paidByName||""
-  })):[{"תיאור":""}]),"הוצאות");
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(allMedications.length?allMedications.map(m=>({
-    "שם תרופה":m.name||"","מינון":m.dosage||"","שעות":(m.times||[]).join(", "),"רופא":m.prescribedBy||"","פעיל":m.isActive!==false?"כן":"לא"
-  })):[{"שם תרופה":""}]),"תרופות");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(
+    allTasks.filter(t=>t.status!=="deleted").map(t=>({
+      "כותרת":t.title||"","סוג":TYPE_LABEL[t.type]||t.type||"","סטטוס":t.statusNote||"",
+      "המשך טיפול":t.followUp||"","תאריך הוספה":t.addedDateStr||"","תאריך":t.dueDateStr||"",
+      "שעה":t.dueTimeStr||"","מצב":STATUS_LABEL[t.status]||"",
+      "נלקח ע\"י":t.claimedByName||"","הועלה ע\"י":t.createdByName||""
+    }))||[{"כותרת":""}]),"משימות");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(
+    allExpenses.length?allExpenses.map(e=>({"תיאור":e.description||"","סכום":parseFloat(e.amount)||0,"תאריך":e.date?fmtDate(e.date):"","שילם":e.paidByName||""})):[{"תיאור":""}]),"הוצאות");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(
+    allMedications.length?allMedications.map(m=>({"שם":m.name||"","מינון":m.dosage||"","שעות":(m.times||[]).join(", "),"רופא":m.prescribedBy||"","פעיל":m.isActive!==false?"כן":"לא"})):[{"שם":""}]),"תרופות");
   return XLSX.write(wb,{bookType:"xlsx",type:"array"});
 }
-function downloadExcel(arr,filename){
+function downloadExcel(arr,fn){
   const blob=new Blob([arr],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
-  const url=URL.createObjectURL(blob),a=document.createElement("a");
-  a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);
+  const url=URL.createObjectURL(blob),a=document.createElement("a"); a.href=url;a.download=fn;a.click();URL.revokeObjectURL(url);
 }
 $("btnExport").addEventListener("click",()=>{try{downloadExcel(buildExcelBlob(),"mishpaha_beyachad.xlsx");toast("📤 ייצוא הצליח!","success");}catch(e){toast("שגיאה: "+e.message,"error");}});
 $("btnExportExpenses").addEventListener("click",()=>{try{downloadExcel(buildExcelBlob(),"mishpaha_beyachad.xlsx");toast("📤 ייצוא הצליח!","success");}catch(e){toast("שגיאה: "+e.message,"error");}});
@@ -1389,13 +1454,15 @@ $("btnExportExpenses").addEventListener("click",()=>{try{downloadExcel(buildExce
 /* ── EXCEL TEMPLATE & IMPORT ── */
 $("btnTemplate").addEventListener("click",()=>{
   const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([{"כותרת המשימה":"ביקור אצל הרופא","סוג משימה":"ביקור","סטטוס":"תור נקבע","המשך הטיפול":"לבדוק תוצאות","תאריך":"2026-07-01","שעה":"10:00","אחראי":"שם האח","הערות":"להביא תעודת זהות"}]),"משימות");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([{
+    "כותרת המשימה":"ביקור אצל הרופא","סוג משימה":"ביקור","סטטוס":"תור נקבע",
+    "המשך הטיפול":"לבדוק תוצאות","תאריך":"2026-07-01","שעה":"10:00","אחראי":"שם האח","הערות":"להביא ת.ז."}]),"משימות");
   downloadExcel(XLSX.write(wb,{bookType:"xlsx",type:"array"}),"template_mishimot.xlsx");
   toast("📋 תבנית הורדה","success");
 });
 
 const TYPE_MAP_HE={"ביקור":"visit","קניות":"shopping","סידור":"errand","רפואי":"medical","אחר":"other"};
-function isPlaceholder(s){if(!s) return false;const st=String(s);return st.includes("הקש")||st.includes("לבחור תאריך")||st.includes("לחץ");}
+function isPlaceholder(s){if(!s)return false;const st=String(s);return st.includes("הקש")||st.includes("לבחור תאריך")||st.includes("לחץ");}
 function getCol(row){return function(){for(let i=0;i<arguments.length;i++){const v=row[arguments[i]];if(v!==undefined&&v!==null){const s=String(v).trim();if(s!==""&&!isPlaceholder(s))return s;}}return "";};}
 function excelDateToStr(val){if(!val&&val!==0)return "";if(isPlaceholder(String(val)))return "";if(val instanceof Date){if(isNaN(val.getTime()))return "";return val.getFullYear()+"-"+String(val.getMonth()+1).padStart(2,"0")+"-"+String(val.getDate()).padStart(2,"0");}if(typeof val==="number"&&val>1){const d=new Date(Math.round((val-25569)*86400*1000));return d.getUTCFullYear()+"-"+String(d.getUTCMonth()+1).padStart(2,"0")+"-"+String(d.getUTCDate()).padStart(2,"0");}return String(val).trim();}
 function excelTimeToStr(val){if(!val&&val!==0)return "";if(isPlaceholder(String(val)))return "";if(typeof val==="number"&&val>=0&&val<1){const t=Math.round(val*24*60);return String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0");}if(val instanceof Date){if(isNaN(val.getTime()))return "";return String(val.getHours()).padStart(2,"0")+":"+String(val.getMinutes()).padStart(2,"0");}return String(val).trim();}
@@ -1442,7 +1509,7 @@ $("importFile").addEventListener("change",async ev=>{
 
 /* ── CLOSE MODALS ON OVERLAY CLICK ── */
 document.querySelectorAll(".modal-overlay").forEach(el=>{
-  el.addEventListener("click",e=>{if(e.target===el)el.classList.remove("open");});
+  el.addEventListener("click",e=>{ if(e.target===el) el.classList.remove("open"); });
 });
 </script>
 </body>
