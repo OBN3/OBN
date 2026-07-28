@@ -178,6 +178,8 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 .task-card.status-cancelled{border-right-color:#94a3b8;opacity:.78;}
 .task-card.status-deleted{border-right-color:var(--deleted);opacity:.65;background:#f9fafb;}
 .task-card.orphan-alert{box-shadow:0 0 0 2.5px var(--danger),var(--shadow);}
+.task-card.open-overdue{border-right-color:var(--danger) !important;box-shadow:0 0 0 2.5px rgba(239,68,68,.25),var(--shadow-sm);}
+.overdue-badge{background:#fef2f2;color:var(--danger);font-size:.72rem;padding:3px 9px;border-radius:20px;font-weight:700;border:1px solid rgba(239,68,68,.3);white-space:nowrap;display:inline-flex;align-items:center;gap:4px;}
 .task-header{display:flex;align-items:flex-start;justify-content:space-between;
   gap:12px;margin-bottom:10px;}
 .task-title{font-size:1.03rem;font-weight:700;flex:1;}
@@ -453,8 +455,8 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
             <span id="taskCounter" class="count-badge">—</span>
           </div>
           <div class="filters" id="statusFilters">
-            <button class="filter-btn active" data-status="all">הכל <span class="f-count" id="fc-all">—</span></button>
-            <button class="filter-btn" data-status="open">פתוח <span class="f-count" id="fc-open">—</span></button>
+            <button class="filter-btn" data-status="all">הכל <span class="f-count" id="fc-all">—</span></button>
+            <button class="filter-btn active" data-status="open">פתוח <span class="f-count" id="fc-open">—</span></button>
             <button class="filter-btn" data-status="claimed">נלקח <span class="f-count" id="fc-claimed">—</span></button>
             <button class="filter-btn" data-status="done">הושלם <span class="f-count" id="fc-done">—</span></button>
             <button class="filter-btn" data-status="cancelled">בוטל <span class="f-count" id="fc-cancelled">—</span></button>
@@ -464,7 +466,9 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
         <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;">
           <input type="text" id="taskSearch" class="search-input" placeholder="🔍 חיפוש..."/>
           <select id="taskSort" class="sort-select">
-            <option value="dueDateStr">לפי תאריך</option>
+            <option value="dateOldNew" selected>תאריך: מישן לחדש</option>
+            <option value="dateNewOld">תאריך: מחדש לישן</option>
+            <option value="dueDateStr">לפי תאריך יעד</option>
             <option value="title">לפי שם</option>
             <option value="status">לפי סטטוס</option>
           </select>
@@ -829,9 +833,9 @@ let allMedLogs         = [];
 let patientData        = {};
 let editingTaskId      = null;
 let editingMedId       = null;
-let activeStatusFilter = "all";
+let activeStatusFilter = "open";
 let taskSearchQuery    = "";
-let taskSortField      = "dueDateStr";
+let taskSortField      = "dateOldNew";
 let currentMedTimes    = ["08:00"];
 let loadedCount        = 0;
 let logFilterMed       = "all";
@@ -1246,6 +1250,16 @@ function renderTasks() {
   /* Sort */
   tasks.sort((a, b) => {
     switch (taskSortField) {
+      case "dateOldNew": {
+        const da = a.addedDateStr || a.dueDateStr || "9999";
+        const db = b.addedDateStr || b.dueDateStr || "9999";
+        return da.localeCompare(db);
+      }
+      case "dateNewOld": {
+        const da = a.addedDateStr || a.dueDateStr || "0000";
+        const db = b.addedDateStr || b.dueDateStr || "0000";
+        return db.localeCompare(da);
+      }
       case "dueDateStr": return (a.dueDateStr || "9999").localeCompare(b.dueDateStr || "9999");
       case "title":      return (a.title      || "").localeCompare(b.title      || "");
       case "status":     return (a.status     || "").localeCompare(b.status     || "");
@@ -1304,6 +1318,14 @@ function renderTaskCardHTML(t) {
   const isOpen    = t.status === "open";
   const isOrph    = isOrphanTask(t);
   const uid       = "t-" + t.id;
+  /* Detect open tasks not handled for over 7 days */
+  const isOpenOverdue = isOpen && (() => {
+    const ds = t.addedDateStr;
+    if (!ds) return false;
+    const added = new Date(ds + "T00:00:00");
+    if (isNaN(added.getTime())) return false;
+    return (new Date() - added) / 86400000 > 7;
+  })();
   const comments  = t.comments || [];
 
   const canClaim   = isOpen;
@@ -1319,12 +1341,13 @@ function renderTaskCardHTML(t) {
     ? `<span>📅 ${esc(t.dueDateStr)}${t.dueTimeStr ? " ⏰" + esc(t.dueTimeStr) : ""}</span>`
     : "";
 
-  return `<div class="task-card status-${t.status}${isOrph ? " orphan-alert" : ""}"
+  return `<div class="task-card status-${t.status}${isOrph ? " orphan-alert" : ""}${isOpenOverdue ? " open-overdue" : ""}"
                id="card-${uid}">
     <div class="task-header">
       <div class="task-title">${TYPE_ICON[t.type] || "📌"} ${esc(t.title)}</div>
       <div class="task-badges">
         ${isOrph ? '<span class="orphan-badge">⚠️ דחוף – אין אחראי!</span>' : ""}
+        ${isOpenOverdue ? `<span class="overdue-badge">🔴 לא נלקחה מאז ${esc(t.addedDateStr)}</span>` : ""}
         <span class="badge badge-status-${t.status}">${STATUS_LABEL[t.status] || t.status}</span>
         <span class="badge badge-type">${TYPE_LABEL[t.type] || t.type}</span>
       </div>
@@ -2059,16 +2082,16 @@ function buildExcelBlob() {
   const taskRows = allTasks
     .filter(t => t.status !== "deleted")
     .map(t => ({
-      "כותרת":       t.title             || "",
-      "סוג":         TYPE_LABEL[t.type]  || t.type || "",
-      "סטטוס":       t.statusNote        || "",
-      "המשך טיפול":  t.followUp          || "",
-      "תאריך הוספה": t.addedDateStr      || "",
-      "תאריך":       t.dueDateStr        || "",
-      "שעה":         t.dueTimeStr        || "",
-      "מצב":         STATUS_LABEL[t.status] || "",
-      "נלקח ע\"י":   t.claimedByName     || "",
-      "הועלה ע\"י":  t.createdByName     || ""
+      "כותרת":         t.title             || "",
+      "סוג":           TYPE_LABEL[t.type]  || t.type || "",
+      "סטטוס":         t.statusNote        || "",
+      "המשך הטיפול":   t.followUp          || "",
+      "תאריך הוספה":   t.addedDateStr      || "",
+      "תאריך":         t.dueDateStr        || "",
+      "שעה":           t.dueTimeStr        || "",
+      "מצב":           STATUS_LABEL[t.status] || "",
+      "נלקח ע\"י":     t.claimedByName     || "",
+      "הועלה ע\"י":    t.createdByName     || ""
     }));
   XLSX.utils.book_append_sheet(
     wb,
@@ -2127,18 +2150,33 @@ $("btnExportExpenses").addEventListener("click", () => {
    EXCEL TEMPLATE & IMPORT
    ================================================================ */
 $("btnTemplate").addEventListener("click", () => {
+  /* Template uses IDENTICAL columns to Export so import round-trip works */
   const wb = XLSX.utils.book_new();
-  const sample = [{
-    "כותרת המשימה":     "ביקור אצל הרופא",
-    "סוג משימה":        "ביקור",
-    "סטטוס":            "תור נקבע",
-    "המשך הטיפול":      "לבדוק תוצאות בדיקות",
-    "תאריך":            "2026-07-01",
-    "שעה":              "10:00",
-    "אחראי":            "שם האח",
-    "הערות":            "להביא תעודת זהות"
-  }];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sample), "משימות");
+  const instrRow = {
+    "כותרת":         "⚠️ שורת הסבר – תמחק לפני ייבוא",
+    "סוג":           "ביקור / קניות / סידור / רפואי / אחר",
+    "סטטוס":         "תיאור מצב חופשי",
+    "המשך הטיפול":   "מה נדרש בהמשך",
+    "תאריך הוספה":   "YYYY-MM-DD (ריק = היום)",
+    "תאריך":         "YYYY-MM-DD",
+    "שעה":           "HH:MM",
+    "מצב":           "(נוצר אוטומטית – אל תשנה)",
+    "נלקח ע\"י":     "(נוצר אוטומטית – אל תשנה)",
+    "הועלה ע\"י":    "(נוצר אוטומטית – אל תשנה)"
+  };
+  const sampleRow = {
+    "כותרת":         "ביקור אצל הרופא",
+    "סוג":           "ביקור",
+    "סטטוס":         "תור נקבע",
+    "המשך הטיפול":   "לבדוק תוצאות בדיקות",
+    "תאריך הוספה":   todayStr(),
+    "תאריך":         "",
+    "שעה":           "10:00",
+    "מצב":           "",
+    "נלקח ע\"י":     "",
+    "הועלה ע\"י":    ""
+  };
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([instrRow, sampleRow]), "משימות");
   downloadExcel(XLSX.write(wb, { bookType: "xlsx", type: "array" }), "template_mishimot.xlsx");
   toast("📋 תבנית הורדה", "success");
 });
