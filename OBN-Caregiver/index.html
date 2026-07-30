@@ -161,10 +161,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
 .sort-select{border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:7px 11px;
   font-size:.82rem;font-family:'Heebo',sans-serif;outline:none;cursor:pointer;
   background:var(--surface);color:var(--text);}
-.import-label{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;
-  border-radius:var(--radius-sm);font-size:.88rem;font-weight:600;
-  background:var(--info);color:#fff;cursor:pointer;transition:.2s;}
-.import-label:hover{background:#2563eb;}
+
 #importFile{display:none;}
 
 /* TASK CARDS */
@@ -472,9 +469,10 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
             <option value="title">לפי שם</option>
             <option value="status">לפי סטטוס</option>
           </select>
-          <label class="import-label" for="importFile">📥 ייבוא Excel</label>
-          <input type="file" id="importFile" accept=".xlsx,.xls,.csv"/>
-          <button class="btn btn-gray btn-sm" id="btnTemplate">📋 תבנית</button>
+
+		   <label class="btn btn-sm" style="background:var(--info);color:#fff;cursor:pointer;margin:0;" for="importFile">📥 ייבוא</label>
+           <input type="file" id="importFile" accept=".xlsx,.xls,.csv"/>
+
           <button class="btn btn-success btn-sm" id="btnExport">📤 ייצוא</button>
           <button class="btn btn-primary" id="btnAddTask">+ משימה חדשה</button>
         </div>
@@ -2146,40 +2144,7 @@ $("btnExportExpenses").addEventListener("click", () => {
   catch (e) { toast("שגיאת ייצוא: " + e.message, "error"); }
 });
 
-/* ================================================================
-   EXCEL TEMPLATE & IMPORT
-   ================================================================ */
-$("btnTemplate").addEventListener("click", () => {
-  /* Template uses IDENTICAL columns to Export so import round-trip works */
-  const wb = XLSX.utils.book_new();
-  const instrRow = {
-    "כותרת":         "⚠️ שורת הסבר – תמחק לפני ייבוא",
-    "סוג":           "ביקור / קניות / סידור / רפואי / אחר",
-    "סטטוס":         "תיאור מצב חופשי",
-    "המשך הטיפול":   "מה נדרש בהמשך",
-    "תאריך הוספה":   "YYYY-MM-DD (ריק = היום)",
-    "תאריך":         "YYYY-MM-DD",
-    "שעה":           "HH:MM",
-    "מצב":           "(נוצר אוטומטית – אל תשנה)",
-    "נלקח ע\"י":     "(נוצר אוטומטית – אל תשנה)",
-    "הועלה ע\"י":    "(נוצר אוטומטית – אל תשנה)"
-  };
-  const sampleRow = {
-    "כותרת":         "ביקור אצל הרופא",
-    "סוג":           "ביקור",
-    "סטטוס":         "תור נקבע",
-    "המשך הטיפול":   "לבדוק תוצאות בדיקות",
-    "תאריך הוספה":   todayStr(),
-    "תאריך":         "",
-    "שעה":           "10:00",
-    "מצב":           "",
-    "נלקח ע\"י":     "",
-    "הועלה ע\"י":    ""
-  };
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([instrRow, sampleRow]), "משימות");
-  downloadExcel(XLSX.write(wb, { bookType: "xlsx", type: "array" }), "template_mishimot.xlsx");
-  toast("📋 תבנית הורדה", "success");
-});
+
 
 const TYPE_MAP_HE = {
   "ביקור": "visit", "קניות": "shopping",
