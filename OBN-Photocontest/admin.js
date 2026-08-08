@@ -1,6 +1,27 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import {
+    initializeApp
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+
+import {
+    getFirestore,
+    collection,
+    getDocs,
+    doc,
+    getDoc,
+    updateDoc,
+    deleteField
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+import {
+    getAuth,
+    onAuthStateChanged,
+    signOut
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+
+// ===================================================
+// Firebase
+// ===================================================
 
 const firebaseConfig = {
     apiKey: "AIzaSyDn9MNktFcHxzwxL5hhIYPIIN635_0pST8",
@@ -15,15 +36,25 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+
+// ===================================================
+// משתנים
+// ===================================================
+
 let submissionsData = [];
 let currentTableData = [];
+
 let isLoggingOut = false;
 let showingDeleted = false;
-let currentDateFilter = { type: 'all', start: null, end: null };
 
-// ===== מיון =====
-// ערכים אפשריים: score_desc, score_asc, date_desc, date_asc, judges_desc, judges_asc
-let currentSort = 'score_desc';
+let currentDateFilter = {
+    type: "all",
+    start: null,
+    end: null
+};
+
+// מיון
+let currentSort = "score_desc";
 
 
 // ===================================================
@@ -31,176 +62,315 @@ let currentSort = 'score_desc';
 // ===================================================
 
 window.openModal = function(imageUrl) {
-    const modal = document.getElementById('imageModal');
-    const modalImg = document.getElementById('modalImg');
+
+    const modal = document.getElementById("imageModal");
+    const modalImg = document.getElementById("modalImg");
 
     modalImg.src = imageUrl;
-    modal.style.display = 'flex';
+
+    modal.style.display = "flex";
 };
 
 
 window.onclick = function(event) {
-    const modal = document.getElementById('imageModal');
+
+    const modal = document.getElementById("imageModal");
 
     if (event.target === modal) {
-        modal.style.display = 'none';
-        document.getElementById('modalImg').src = '';
+
+        modal.style.display = "none";
+
+        document.getElementById("modalImg").src = "";
     }
 };
 
 
 // ===================================================
-// DOMContentLoaded - רישום כל המאזינים
+// DOMContentLoaded
 // ===================================================
 
-document.addEventListener('DOMContentLoaded', () => {
-
-    // סגירת מודל
-    document.getElementById('closeModal').addEventListener('click', () => {
-        document.getElementById('imageModal').style.display = 'none';
-        document.getElementById('modalImg').src = '';
-    });
+document.addEventListener("DOMContentLoaded", () => {
 
 
-    // כפתור מעבר בין מחוקים לפעילים
-    document.getElementById('toggleDeletedBtn').addEventListener('click', () => {
+    // -----------------------------------------------
+    // סגירת Modal
+    // -----------------------------------------------
 
-        showingDeleted = !showingDeleted;
+    const closeModal =
+        document.getElementById("closeModal");
 
-        const btn = document.getElementById('toggleDeletedBtn');
-        const title = document.getElementById('pageTitle');
+    if (closeModal) {
 
-        if (showingDeleted) {
-            btn.innerHTML = "🔙 חזור לרשומות פעילות";
-            btn.style.backgroundColor = "#3b82f6";
-            title.innerHTML = "🗑️ רשומות מחוקות";
-        } else {
-            btn.innerHTML = "🗑️ רשומות מחוקות";
-            btn.style.backgroundColor = "#6b7280";
-            title.innerHTML = "🏆 מערכת ניהול התחרות";
-        }
+        closeModal.addEventListener("click", () => {
 
-        applyFiltersAndRender();
-    });
+            document.getElementById("imageModal")
+                .style.display = "none";
 
-
-    // סינון תאריכים
-    document.getElementById('dateFilter').addEventListener('change', (e) => {
-
-        currentDateFilter.type = e.target.value;
-
-        if (currentDateFilter.type === 'custom') {
-
-            document.getElementById('customDateRange').style.display = 'flex';
-
-        } else {
-
-            document.getElementById('customDateRange').style.display = 'none';
-            applyFiltersAndRender();
-        }
-    });
-
-
-    document.getElementById('applyDateFilterBtn').addEventListener('click', () => {
-
-        const startVal = document.getElementById('startDate').value;
-        const endVal = document.getElementById('endDate').value;
-
-        currentDateFilter.start = startVal ? new Date(startVal) : null;
-        currentDateFilter.end = endVal ? new Date(endVal) : null;
-
-        applyFiltersAndRender();
-    });
-
-
-    // ===== מאזין לתפריט המיון =====
-
-    document.getElementById('sortSelect').addEventListener('change', (e) => {
-
-        currentSort = e.target.value;
-
-        updateSortIndicators();
-        applyFiltersAndRender();
-    });
-
-
-    // ===== קליק על כותרות עמודות הניתנות למיון =====
-
-    document.querySelectorAll('th.sortable').forEach(th => {
-
-        th.addEventListener('click', () => {
-
-            const sortKey = th.dataset.sort;
-
-            toggleSortByKey(sortKey);
-        });
-    });
-
-
-    // חיפוש חי
-
-    const searchInput = document.getElementById('searchInput');
-
-    if (searchInput) {
-
-        searchInput.addEventListener('input', function(e) {
-
-            const searchTerm = e.target.value.toLowerCase();
-
-            const rows = document.querySelectorAll('#tableBody tr');
-
-            rows.forEach(row => {
-
-                const rowText = row.textContent.toLowerCase();
-
-                row.style.display =
-                    rowText.includes(searchTerm) ? '' : 'none';
-            });
+            document.getElementById("modalImg").src = "";
         });
     }
 
 
-    // אתחול אינדיקטורי מיון
-    updateSortIndicators();
+    // -----------------------------------------------
+    // מעבר בין רשומות פעילות / מחוקות
+    // -----------------------------------------------
 
+    const toggleDeletedBtn =
+        document.getElementById("toggleDeletedBtn");
+
+    if (toggleDeletedBtn) {
+
+        toggleDeletedBtn.addEventListener("click", () => {
+
+            showingDeleted = !showingDeleted;
+
+            const title =
+                document.getElementById("pageTitle");
+
+
+            if (showingDeleted) {
+
+                toggleDeletedBtn.innerHTML =
+                    "🔙 חזור לרשומות פעילות";
+
+                toggleDeletedBtn.style.backgroundColor =
+                    "#3b82f6";
+
+                if (title) {
+                    title.innerHTML =
+                        "🗑️ רשומות מחוקות";
+                }
+
+            } else {
+
+                toggleDeletedBtn.innerHTML =
+                    "🗑️ רשומות מחוקות";
+
+                toggleDeletedBtn.style.backgroundColor =
+                    "#6b7280";
+
+                if (title) {
+                    title.innerHTML =
+                        "🏆 מערכת ניהול התחרות";
+                }
+            }
+
+
+            applyFiltersAndRender();
+        });
+    }
+
+
+    // -----------------------------------------------
+    // סינון תאריכים
+    // -----------------------------------------------
+
+    const dateFilter =
+        document.getElementById("dateFilter");
+
+    if (dateFilter) {
+
+        dateFilter.addEventListener("change", (e) => {
+
+            currentDateFilter.type =
+                e.target.value;
+
+
+            if (
+                currentDateFilter.type ===
+                "custom"
+            ) {
+
+                const customRange =
+                    document.getElementById(
+                        "customDateRange"
+                    );
+
+                if (customRange) {
+                    customRange.style.display = "flex";
+                }
+
+            } else {
+
+                const customRange =
+                    document.getElementById(
+                        "customDateRange"
+                    );
+
+                if (customRange) {
+                    customRange.style.display = "none";
+                }
+
+                applyFiltersAndRender();
+            }
+        });
+    }
+
+
+    // -----------------------------------------------
+    // תאריכים מותאמים אישית
+    // -----------------------------------------------
+
+    const applyDateFilterBtn =
+        document.getElementById(
+            "applyDateFilterBtn"
+        );
+
+    if (applyDateFilterBtn) {
+
+        applyDateFilterBtn.addEventListener(
+            "click",
+            () => {
+
+                const startVal =
+                    document.getElementById(
+                        "startDate"
+                    ).value;
+
+                const endVal =
+                    document.getElementById(
+                        "endDate"
+                    ).value;
+
+
+                currentDateFilter.start =
+                    startVal
+                        ? new Date(startVal)
+                        : null;
+
+
+                currentDateFilter.end =
+                    endVal
+                        ? new Date(endVal)
+                        : null;
+
+
+                applyFiltersAndRender();
+            }
+        );
+    }
+
+
+    // -----------------------------------------------
+    // תפריט מיון
+    // -----------------------------------------------
+
+    const sortSelect =
+        document.getElementById("sortSelect");
+
+    if (sortSelect) {
+
+        sortSelect.addEventListener(
+            "change",
+            (e) => {
+
+                currentSort =
+                    e.target.value;
+
+                updateSortIndicators();
+
+                applyFiltersAndRender();
+            }
+        );
+    }
+
+
+    // -----------------------------------------------
+    // מיון לפי כותרות
+    // -----------------------------------------------
+
+    document
+        .querySelectorAll("th.sortable")
+        .forEach(th => {
+
+            th.addEventListener("click", () => {
+
+                const sortKey =
+                    th.dataset.sort;
+
+                toggleSortByKey(sortKey);
+            });
+        });
+
+
+    // -----------------------------------------------
+    // חיפוש
+    // -----------------------------------------------
+
+    const searchInput =
+        document.getElementById("searchInput");
+
+    if (searchInput) {
+
+        searchInput.addEventListener(
+            "input",
+            function(e) {
+
+                const searchTerm =
+                    e.target.value.toLowerCase();
+
+                const rows =
+                    document.querySelectorAll(
+                        "#tableBody tr"
+                    );
+
+
+                rows.forEach(row => {
+
+                    const rowText =
+                        row.textContent.toLowerCase();
+
+
+                    row.style.display =
+                        rowText.includes(searchTerm)
+                            ? ""
+                            : "none";
+                });
+            }
+        );
+    }
+
+
+    updateSortIndicators();
 });
 
 
 // ===================================================
-// לוגיקת מיון
+// מיון
 // ===================================================
-
-/**
- * מחליף כיוון מיון לפי מפתח שנבחר
- */
 
 function toggleSortByKey(key) {
 
     const keyMap = {
 
         score: {
-            desc: 'score_desc',
-            asc: 'score_asc'
+            desc: "score_desc",
+            asc: "score_asc"
         },
 
         date: {
-            desc: 'date_desc',
-            asc: 'date_asc'
+            desc: "date_desc",
+            asc: "date_asc"
         },
 
         judges: {
-            desc: 'judges_desc',
-            asc: 'judges_asc'
+            desc: "judges_desc",
+            asc: "judges_asc"
         }
     };
 
 
-    const currentDesc = keyMap[key].desc;
-    const currentAsc = keyMap[key].asc;
+    if (!keyMap[key]) {
+        return;
+    }
 
 
-    // אם כבר ממוין על פי מפתח זה - הפוך כיוון
-    // אחרת - התחל מ-desc
+    const currentDesc =
+        keyMap[key].desc;
+
+    const currentAsc =
+        keyMap[key].asc;
+
 
     if (currentSort === currentDesc) {
 
@@ -212,142 +382,195 @@ function toggleSortByKey(key) {
     }
 
 
-    // עדכון תפריט הבחירה
+    const sortSelect =
+        document.getElementById("sortSelect");
 
-    document.getElementById('sortSelect').value = currentSort;
+    if (sortSelect) {
+        sortSelect.value = currentSort;
+    }
+
 
     updateSortIndicators();
+
     applyFiltersAndRender();
 }
 
 
-/**
- * מעדכן את חיצי המיון בכותרות הטבלה
- */
+// ===================================================
+// אינדיקטורים למיון
+// ===================================================
 
 function updateSortIndicators() {
 
     const map = {
 
         score_desc: {
-            col: 'score',
-            arrow: '↓'
+            col: "score",
+            arrow: "↓"
         },
 
         score_asc: {
-            col: 'score',
-            arrow: '↑'
+            col: "score",
+            arrow: "↑"
         },
 
         date_desc: {
-            col: 'date',
-            arrow: '↓'
+            col: "date",
+            arrow: "↓"
         },
 
         date_asc: {
-            col: 'date',
-            arrow: '↑'
+            col: "date",
+            arrow: "↑"
         },
 
         judges_desc: {
-            col: 'judges',
-            arrow: '↓'
+            col: "judges",
+            arrow: "↓"
         },
 
         judges_asc: {
-            col: 'judges',
-            arrow: '↑'
+            col: "judges",
+            arrow: "↑"
         }
     };
 
 
-    // אפס את כולם
+    [
+        "date",
+        "score",
+        "judges"
+    ].forEach(col => {
 
-    ['date', 'score', 'judges'].forEach(col => {
+        const th =
+            document.getElementById(
+                `th-${col}`
+            );
 
-        const th = document.getElementById(`th-${col}`);
-        const si = document.getElementById(`si-${col}`);
+        const si =
+            document.getElementById(
+                `si-${col}`
+            );
 
-        if (th) th.classList.remove('active-sort');
-        if (si) si.textContent = '↕';
+
+        if (th) {
+            th.classList.remove(
+                "active-sort"
+            );
+        }
+
+
+        if (si) {
+            si.textContent = "↕";
+        }
     });
 
 
-    // הדגש את העמודה הפעילה
+    const active =
+        map[currentSort];
 
-    const active = map[currentSort];
 
     if (active) {
 
-        const th = document.getElementById(`th-${active.col}`);
-        const si = document.getElementById(`si-${active.col}`);
+        const th =
+            document.getElementById(
+                `th-${active.col}`
+            );
 
-        if (th) th.classList.add('active-sort');
-        if (si) si.textContent = active.arrow;
+        const si =
+            document.getElementById(
+                `si-${active.col}`
+            );
+
+
+        if (th) {
+            th.classList.add(
+                "active-sort"
+            );
+        }
+
+
+        if (si) {
+            si.textContent =
+                active.arrow;
+        }
     }
 }
 
 
-/**
- * ממיין מערך נתונים לפי currentSort
- */
+// ===================================================
+// מיון הנתונים
+// ===================================================
 
 function sortData(data) {
 
     return [...data].sort((a, b) => {
 
-        const scoreA = calculateTotalScore(a);
-        const scoreB = calculateTotalScore(b);
+        const scoreA =
+            calculateTotalScore(a);
+
+        const scoreB =
+            calculateTotalScore(b);
 
 
-        const dateA = a.timestamp
-            ? (
-                a.timestamp.toDate
-                    ? a.timestamp.toDate().getTime()
-                    : new Date(a.timestamp).getTime()
-              )
-            : 0;
+        const dateA =
+            a.timestamp
+                ? (
+                    a.timestamp.toDate
+                        ? a.timestamp.toDate().getTime()
+                        : new Date(
+                            a.timestamp
+                        ).getTime()
+                )
+                : 0;
 
 
-        const dateB = b.timestamp
-            ? (
-                b.timestamp.toDate
-                    ? b.timestamp.toDate().getTime()
-                    : new Date(b.timestamp).getTime()
-              )
-            : 0;
+        const dateB =
+            b.timestamp
+                ? (
+                    b.timestamp.toDate
+                        ? b.timestamp.toDate().getTime()
+                        : new Date(
+                            b.timestamp
+                        ).getTime()
+                )
+                : 0;
 
 
         const judgesA =
             a.evaluations
-                ? Object.keys(a.evaluations).length
+                ? Object.keys(
+                    a.evaluations
+                ).length
                 : 0;
 
 
         const judgesB =
             b.evaluations
-                ? Object.keys(b.evaluations).length
+                ? Object.keys(
+                    b.evaluations
+                ).length
                 : 0;
 
 
         switch (currentSort) {
 
-            case 'score_desc':
+            case "score_desc":
                 return scoreB - scoreA;
 
-            case 'score_asc':
+            case "score_asc":
                 return scoreA - scoreB;
 
-            case 'date_desc':
+            case "date_desc":
                 return dateB - dateA;
 
-            case 'date_asc':
+            case "date_asc":
                 return dateA - dateB;
 
-            case 'judges_desc':
+            case "judges_desc":
                 return judgesB - judgesA;
 
-            case 'judges_asc':
+            case "judges_asc":
                 return judgesA - judgesB;
 
             default:
@@ -358,27 +581,37 @@ function sortData(data) {
 
 
 // ===================================================
-// עזר - URL תמונות
+// URL ישיר לתמונה
 // ===================================================
 
-function getDirectImageUrl(url, size = 1000) {
+function getDirectImageUrl(
+    url,
+    size = 1000
+) {
 
-    if (!url) return "";
+    if (!url) {
+        return "";
+    }
+
 
     let fileId = "";
 
+
     if (url.includes("id=")) {
 
-        fileId = url
-            .split("id=")[1]
-            .split("&")[0];
+        fileId =
+            url
+                .split("id=")[1]
+                .split("&")[0];
 
     } else if (url.includes("/d/")) {
 
-        fileId = url
-            .split("/d/")[1]
-            .split("/")[0];
+        fileId =
+            url
+                .split("/d/")[1]
+                .split("/")[0];
     }
+
 
     return fileId
         ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w${size}`
@@ -387,68 +620,88 @@ function getDirectImageUrl(url, size = 1000) {
 
 
 // ===================================================
-// Auth
+// Authentication
 // ===================================================
 
-onAuthStateChanged(auth, async (user) => {
+onAuthStateChanged(
+    auth,
+    async (user) => {
 
-    if (!user) {
+        if (!user) {
 
-        if (!isLoggingOut) {
-            alert("עליך להתחבר כדי לגשת לעמוד זה.");
+            if (!isLoggingOut) {
+
+                alert(
+                    "עליך להתחבר כדי לגשת לעמוד זה."
+                );
+            }
+
+
+            window.location.href =
+                "/OBN-Photocontest/index.html";
+
+            return;
         }
 
-        window.location.href =
-            "/OBN-Photocontest/index.html";
 
-        return;
-    }
+        try {
 
-
-    try {
-
-        const userDocRef =
-            doc(db, "users_roles", user.email);
-
-        const userDocSnap =
-            await getDoc(userDocRef);
+            const userDocRef =
+                doc(
+                    db,
+                    "users_roles",
+                    user.email
+                );
 
 
-        if (
-            userDocSnap.exists() &&
-            userDocSnap.data().role === "admin"
-        ) {
+            const userDocSnap =
+                await getDoc(
+                    userDocRef
+                );
 
-            fetchSubmissions();
 
-        } else {
+            if (
+                userDocSnap.exists() &&
+                userDocSnap.data().role === "admin"
+            ) {
 
-            alert("אין לך הרשאת מנהל גישה לעמוד זה.");
+                fetchSubmissions();
+
+            } else {
+
+                alert(
+                    "אין לך הרשאת מנהל גישה לעמוד זה."
+                );
+
+
+                window.location.href =
+                    "/OBN-Photocontest/index.html";
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Security check failed:",
+                error
+            );
+
 
             window.location.href =
                 "/OBN-Photocontest/index.html";
         }
-
-    } catch (error) {
-
-        console.error(
-            "Security check failed:",
-            error
-        );
-
-        window.location.href =
-            "/OBN-Photocontest/index.html";
     }
-});
+);
 
 
 // ===================================================
-// חישוב ציון
+// חישוב ציון כולל
 // ===================================================
 
 function calculateTotalScore(data) {
 
-    const scores = data.scores || {};
+    const scores =
+        data.scores || {};
+
 
     const total =
         (scores.relevance || 0) +
@@ -456,7 +709,10 @@ function calculateTotalScore(data) {
         (scores.quality || 0) +
         (scores.authenticity || 0);
 
-    return Number(total.toFixed(2));
+
+    return Number(
+        total.toFixed(2)
+    );
 }
 
 
@@ -470,58 +726,85 @@ function formatDate(timestamp) {
         return "לא ידוע";
     }
 
-    let date =
+
+    const date =
         timestamp.toDate
             ? timestamp.toDate()
             : new Date(timestamp);
 
-    return date.toLocaleDateString('he-IL');
+
+    return date.toLocaleDateString(
+        "he-IL"
+    );
 }
 
 
 // ===================================================
-// טעינת נתונים מ-Firestore
+// טעינת submissions
 // ===================================================
 
 async function fetchSubmissions() {
 
     const loadingMsg =
-        document.getElementById('loadingMsg');
+        document.getElementById(
+            "loadingMsg"
+        );
+
 
     const table =
-        document.getElementById('submissionsTable');
+        document.getElementById(
+            "submissionsTable"
+        );
 
-    loadingMsg.style.display = 'block';
-    table.style.display = 'none';
+
+    if (loadingMsg) {
+        loadingMsg.style.display = "block";
+    }
+
+
+    if (table) {
+        table.style.display = "none";
+    }
 
 
     try {
 
         const querySnapshot =
-            await getDocs(collection(db, "submissions"));
+            await getDocs(
+                collection(
+                    db,
+                    "submissions"
+                )
+            );
 
 
         submissionsData = [];
 
 
-        querySnapshot.forEach((docSnap) => {
+        querySnapshot.forEach(
+            (docSnap) => {
 
-            submissionsData.push({
-                id: docSnap.id,
-                ...docSnap.data()
-            });
+                submissionsData.push({
 
-        });
+                    id: docSnap.id,
 
+                    ...docSnap.data()
+                });
+            }
+        );
 
-        // אין מיון קבוע כאן
-        // הכל מנוהל דינמית דרך sortData()
 
         applyFiltersAndRender();
 
 
-        loadingMsg.style.display = 'none';
-        table.style.display = 'table';
+        if (loadingMsg) {
+            loadingMsg.style.display = "none";
+        }
+
+
+        if (table) {
+            table.style.display = "table";
+        }
 
 
     } catch (error) {
@@ -531,8 +814,12 @@ async function fetchSubmissions() {
             error
         );
 
-        loadingMsg.innerText =
-            "שגיאה בטעינת הנתונים.";
+
+        if (loadingMsg) {
+
+            loadingMsg.innerText =
+                "שגיאה בטעינת הנתונים.";
+        }
     }
 }
 
@@ -543,120 +830,132 @@ async function fetchSubmissions() {
 
 function applyFiltersAndRender() {
 
-    // 1. סינון תאריכים
-
     let dateFilteredData =
-        submissionsData.filter(data => {
+        submissionsData.filter(
+            data => {
 
-            if (!data.timestamp) {
-                return true;
-            }
-
-
-            let date =
-                data.timestamp.toDate
-                    ? data.timestamp.toDate()
-                    : new Date(data.timestamp);
-
-
-            let now = new Date();
-
-
-            if (
-                currentDateFilter.type ===
-                'last_month'
-            ) {
-
-                let monthAgo = new Date();
-
-                monthAgo.setMonth(
-                    now.getMonth() - 1
-                );
-
-                return date >= monthAgo;
-
-
-            } else if (
-                currentDateFilter.type ===
-                'last_year'
-            ) {
-
-                let yearAgo = new Date();
-
-                yearAgo.setFullYear(
-                    now.getFullYear() - 1
-                );
-
-                return date >= yearAgo;
-
-
-            } else if (
-                currentDateFilter.type ===
-                'custom'
-            ) {
-
-                if (
-                    currentDateFilter.start &&
-                    date < currentDateFilter.start
-                ) {
-                    return false;
+                if (!data.timestamp) {
+                    return true;
                 }
 
 
-                if (currentDateFilter.end) {
-
-                    let endOfDay =
-                        new Date(
-                            currentDateFilter.end
+                const date =
+                    data.timestamp.toDate
+                        ? data.timestamp.toDate()
+                        : new Date(
+                            data.timestamp
                         );
 
-                    endOfDay.setHours(
-                        23,
-                        59,
-                        59,
-                        999
+
+                const now =
+                    new Date();
+
+
+                if (
+                    currentDateFilter.type ===
+                    "last_month"
+                ) {
+
+                    const monthAgo =
+                        new Date();
+
+                    monthAgo.setMonth(
+                        now.getMonth() - 1
                     );
 
 
-                    if (date > endOfDay) {
+                    return date >= monthAgo;
+                }
+
+
+                if (
+                    currentDateFilter.type ===
+                    "last_year"
+                ) {
+
+                    const yearAgo =
+                        new Date();
+
+                    yearAgo.setFullYear(
+                        now.getFullYear() - 1
+                    );
+
+
+                    return date >= yearAgo;
+                }
+
+
+                if (
+                    currentDateFilter.type ===
+                    "custom"
+                ) {
+
+                    if (
+                        currentDateFilter.start &&
+                        date <
+                        currentDateFilter.start
+                    ) {
                         return false;
                     }
+
+
+                    if (
+                        currentDateFilter.end
+                    ) {
+
+                        const endOfDay =
+                            new Date(
+                                currentDateFilter.end
+                            );
+
+
+                        endOfDay.setHours(
+                            23,
+                            59,
+                            59,
+                            999
+                        );
+
+
+                        if (
+                            date >
+                            endOfDay
+                        ) {
+                            return false;
+                        }
+                    }
+
+
+                    return true;
                 }
 
 
                 return true;
             }
-
-
-            return true;
-        });
-
-
-    // 2. עדכון סטטיסטיקות
-    // לפי תאריך בלבד, לא לפי מחיקה
-
-    updateStatistics(dateFilteredData);
-
-
-    // 3. סינון מחוקים / פעילים
-
-    let filtered =
-        dateFilteredData.filter(data =>
-            showingDeleted
-                ? data.isDeleted === true
-                : !data.isDeleted
         );
 
 
-    // 4. מיון דינמי
+    updateStatistics(
+        dateFilteredData
+    );
+
+
+    let filtered =
+        dateFilteredData.filter(
+            data =>
+                showingDeleted
+                    ? data.isDeleted === true
+                    : !data.isDeleted
+        );
+
 
     currentTableData =
         sortData(filtered);
 
 
-    // 5. רינדור
-
-    renderTableRows(currentTableData);
+    renderTableRows(
+        currentTableData
+    );
 }
 
 
@@ -664,7 +963,9 @@ function applyFiltersAndRender() {
 // סטטיסטיקות
 // ===================================================
 
-function updateStatistics(dataArray) {
+function updateStatistics(
+    dataArray
+) {
 
     const total =
         dataArray.length;
@@ -672,7 +973,8 @@ function updateStatistics(dataArray) {
 
     const deleted =
         dataArray.filter(
-            d => d.isDeleted === true
+            d =>
+                d.isDeleted === true
         ).length;
 
 
@@ -680,7 +982,9 @@ function updateStatistics(dataArray) {
         dataArray.filter(
             d =>
                 d.evaluations &&
-                Object.keys(d.evaluations).length > 0
+                Object.keys(
+                    d.evaluations
+                ).length > 0
         ).length;
 
 
@@ -688,346 +992,502 @@ function updateStatistics(dataArray) {
         new Set();
 
 
-    dataArray.forEach(d => {
+    dataArray.forEach(
+        d => {
 
-        if (d.evaluations) {
+            if (d.evaluations) {
 
-            Object.keys(d.evaluations)
-                .forEach(email =>
-                    uniqueJudges.add(email)
+                Object.keys(
+                    d.evaluations
+                ).forEach(
+                    email =>
+                        uniqueJudges.add(
+                            email
+                        )
                 );
+            }
         }
-    });
+    );
 
 
-    document.getElementById('stat-total')
-        .innerText = total;
+    const statTotal =
+        document.getElementById(
+            "stat-total"
+        );
 
-    document.getElementById('stat-deleted')
-        .innerText = deleted;
+    const statDeleted =
+        document.getElementById(
+            "stat-deleted"
+        );
 
-    document.getElementById('stat-judged')
-        .innerText = judged;
+    const statJudged =
+        document.getElementById(
+            "stat-judged"
+        );
 
-    document.getElementById('stat-judges-count')
-        .innerText = uniqueJudges.size;
+    const statJudges =
+        document.getElementById(
+            "stat-judges-count"
+        );
 
-    document.getElementById('statsContainer')
-        .style.display = 'flex';
+    const statsContainer =
+        document.getElementById(
+            "statsContainer"
+        );
+
+
+    if (statTotal) {
+        statTotal.innerText =
+            total;
+    }
+
+
+    if (statDeleted) {
+        statDeleted.innerText =
+            deleted;
+    }
+
+
+    if (statJudged) {
+        statJudged.innerText =
+            judged;
+    }
+
+
+    if (statJudges) {
+        statJudges.innerText =
+            uniqueJudges.size;
+    }
+
+
+    if (statsContainer) {
+        statsContainer.style.display =
+            "flex";
+    }
 }
 
 
 // ===================================================
-// רינדור שורות הטבלה
+// רינדור טבלת Admin
 // ===================================================
 
-function renderTableRows(tableData) {
+function renderTableRows(
+    tableData
+) {
 
     const tbody =
-        document.getElementById('tableBody');
+        document.getElementById(
+            "tableBody"
+        );
 
-    tbody.innerHTML = '';
+
+    if (!tbody) {
+        return;
+    }
+
+
+    tbody.innerHTML = "";
 
 
     if (tableData.length === 0) {
 
         tbody.innerHTML = `
+
             <tr>
-                <td colspan="15"
-                    style="text-align:center; padding:20px;">
-                    אין נתונים להצגה בחתך התאריכים הנבחר
+
+                <td
+                    colspan="15"
+                    style="
+                        text-align:center;
+                        padding:20px;
+                    "
+                >
+                    אין נתונים להצגה
+                    בחתך התאריכים הנבחר
                 </td>
+
             </tr>
+
         `;
 
         return;
     }
 
 
-    tableData.forEach((data) => {
+    tableData.forEach(
+        data => {
 
-        const scores =
-            data.scores || {};
-
-
-        const totalScore =
-            calculateTotalScore(data);
+            const scores =
+                data.scores || {};
 
 
-        const submitDate =
-            formatDate(data.timestamp);
+            const totalScore =
+                calculateTotalScore(
+                    data
+                );
 
 
-        const evaluationEmails =
-            data.evaluations
-                ? Object.keys(data.evaluations)
-                : [];
+            const submitDate =
+                formatDate(
+                    data.timestamp
+                );
 
 
-        const judgeCount =
-            evaluationEmails.length;
+            const evaluationEmails =
+                data.evaluations
+                    ? Object.keys(
+                        data.evaluations
+                    )
+                    : [];
 
 
-        let statusHtml =
-            judgeCount > 0
-
-                ? `
-                    <span class="status judged">
-                        דורג (${judgeCount})
-                    </span>
-                    <br>
-                    <small style="
-                        color:#6b7280;
-                        font-size:11px;">
-                        ע"י:
-                        ${evaluationEmails.join(', ')}
-                    </small>
-                  `
-
-                : `
-                    <span class="status pending">
-                        ממתין
-                    </span>
-                  `;
+            const judgeCount =
+                evaluationEmails.length;
 
 
-        let pdfHtml =
-            data.consentPdfUrl
+            let statusHtml =
+                judgeCount > 0
 
-                ? `
-                    <a href="${data.consentPdfUrl}"
-                       target="_blank"
-                       style="
-                           color:#2563eb;
-                           font-weight:bold;
-                           font-size:12px;">
-                        📄 אישור PDF
-                    </a>
-                  `
+                    ? `
 
-                : `
-                    <span style="
-                        color:#94a3b8;
-                        font-size:12px;">
-                        אין
-                    </span>
-                  `;
+                        <span
+                            class="status judged"
+                        >
+                            דורג (${judgeCount})
+                        </span>
 
+                        <br>
 
-        const thumbUrl =
-            getDirectImageUrl(
-                data.imageUrl,
-                200
-            );
+                        <small
+                            style="
+                                color:#6b7280;
+                                font-size:11px;
+                            "
+                        >
+                            ע"י:
+                            ${evaluationEmails.join(", ")}
+                        </small>
 
+                    `
 
-        const largeUrl =
-            getDirectImageUrl(
-                data.imageUrl,
-                1920
-            );
+                    : `
 
+                        <span
+                            class="status pending"
+                        >
+                            ממתין
+                        </span>
 
-        const pTitle =
-            data.title || "";
+                    `;
 
 
-        const fName =
-            data.firstName || "";
+            let pdfHtml =
+                data.consentPdfUrl
+
+                    ? `
+
+                        <a
+                            href="${data.consentPdfUrl}"
+                            target="_blank"
+                            style="
+                                color:#2563eb;
+                                font-weight:bold;
+                                font-size:12px;
+                            "
+                        >
+                            📄 אישור PDF
+                        </a>
+
+                    `
+
+                    : `
+
+                        <span
+                            style="
+                                color:#94a3b8;
+                                font-size:12px;
+                            "
+                        >
+                            אין
+                        </span>
+
+                    `;
 
 
-        const lName =
-            data.lastName ||
-            data.photographerName ||
-            "";
+            const thumbUrl =
+                getDirectImageUrl(
+                    data.imageUrl,
+                    200
+                );
 
 
-        const fullDisplayName =
-            `${pTitle} ${fName} ${lName}`.trim();
+            const largeUrl =
+                getDirectImageUrl(
+                    data.imageUrl,
+                    1920
+                );
 
 
-        let wpParts =
-            (data.workplace || "")
-                .split(" - ");
+            const pTitle =
+                data.title || "";
 
 
-        let baseWorkplace =
-            wpParts[0] || "";
+            const fName =
+                data.firstName || "";
 
 
-        let subWorkplace =
-            wpParts.length > 1
-                ? wpParts[1]
-                : "-";
+            const lName =
+                data.lastName ||
+                data.photographerName ||
+                "";
 
 
-        let personReadable =
-            "ללא זיהוי";
+            const fullDisplayName =
+                `${pTitle} ${fName} ${lName}`
+                    .trim();
 
 
-        if (
-            data.identifiablePerson ===
-            'staff'
-        ) {
-            personReadable =
-                "עובדי מוסד";
-        }
+            const wpParts =
+                (data.workplace || "")
+                    .split(" - ");
 
 
-        if (
-            data.identifiablePerson ===
-            'patients'
-        ) {
-            personReadable =
-                "מטופלים";
-        }
+            const baseWorkplace =
+                wpParts[0] || "";
 
 
-        let actionBtnHtml =
-            showingDeleted
+            const subWorkplace =
+                wpParts.length > 1
+                    ? wpParts[1]
+                    : "-";
 
-                ? `
+
+            let personReadable =
+                "ללא זיהוי";
+
+
+            if (
+                data.identifiablePerson ===
+                "staff"
+            ) {
+
+                personReadable =
+                    "עובדי מוסד";
+            }
+
+
+            if (
+                data.identifiablePerson ===
+                "patients"
+            ) {
+
+                personReadable =
+                    "מטופלים";
+            }
+
+
+            let actionBtnHtml =
+                showingDeleted
+
+                    ? `
+
+                        <button
+                            class="action-btn btn-restore-row"
+                            onclick="
+                                toggleDeleteStatus(
+                                    '${data.id}',
+                                    false
+                                )
+                            "
+                        >
+                            שחזר ⟲
+                        </button>
+
+                    `
+
+                    : `
+
+                        <button
+                            class="action-btn btn-delete-row"
+                            onclick="
+                                toggleDeleteStatus(
+                                    '${data.id}',
+                                    true
+                                )
+                            "
+                        >
+                            מחק 🗑️
+                        </button>
+
+                    `;
+
+
+            if (
+                judgeCount > 0 &&
+                !showingDeleted
+            ) {
+
+                actionBtnHtml += `
+
                     <button
-                        class="action-btn btn-restore-row"
-                        onclick="toggleDeleteStatus(
-                            '${data.id}',
-                            false
-                        )">
-                        שחזר ⟲
+                        class="action-btn"
+                        onclick="
+                            resetSubmissionScores(
+                                '${data.id}'
+                            )
+                        "
+                        style="
+                            background-color:#f59e0b;
+                            color:white;
+                            margin-right:5px;
+                        "
+                    >
+                        🔄 איפוס
                     </button>
-                  `
 
-                : `
-                    <button
-                        class="action-btn btn-delete-row"
-                        onclick="toggleDeleteStatus(
-                            '${data.id}',
-                            true
-                        )">
-                        מחק 🗑️
-                    </button>
-                  `;
+                `;
+            }
 
 
-        if (
-            judgeCount > 0 &&
-            !showingDeleted
-        ) {
+            const tr =
+                document.createElement(
+                    "tr"
+                );
 
-            actionBtnHtml += `
-                <button
-                    class="action-btn"
-                    onclick="resetSubmissionScores(
-                        '${data.id}'
-                    )"
-                    style="
-                        background-color:#f59e0b;
-                        color:white;
-                        margin-right:5px;">
-                    🔄 איפוס
-                </button>
+
+            tr.innerHTML = `
+
+                <td>
+                    <span
+                        style="
+                            color:#6b7280;
+                            font-size:13px;
+                        "
+                    >
+                        ${submitDate}
+                    </span>
+                </td>
+
+
+                <td>
+
+                    <img
+                        src="${thumbUrl}"
+                        class="thumbnail"
+                        alt="תמונה"
+                        title="לחץ להגדלה"
+                        onclick="
+                            window.openModal(
+                                '${largeUrl}'
+                            )
+                        "
+                    >
+
+                </td>
+
+
+                <td>
+
+                    <strong>
+                        ${fullDisplayName}
+                    </strong>
+
+                </td>
+
+
+                <td>
+                    ${baseWorkplace}
+                </td>
+
+
+                <td>
+
+                    <span
+                        style="
+                            color:#6b7280;
+                            font-size:13px;
+                        "
+                    >
+                        ${subWorkplace}
+                    </span>
+
+                </td>
+
+
+                <td>
+                    ${
+                        data.photoTitle ||
+                        data.title ||
+                        ""
+                    }
+                </td>
+
+
+                <td>
+
+                    <span
+                        style="
+                            background-color:#f1f5f9;
+                            padding:2px 6px;
+                            border-radius:4px;
+                            font-size:12px;
+                        "
+                    >
+                        ${personReadable}
+                    </span>
+
+                </td>
+
+
+                <td>
+                    ${scores.relevance || 0}
+                </td>
+
+
+                <td>
+                    ${scores.artistry || 0}
+                </td>
+
+
+                <td>
+                    ${scores.quality || 0}
+                </td>
+
+
+                <td>
+                    ${scores.authenticity || 0}
+                </td>
+
+
+                <td>
+
+                    <strong>
+                        ${totalScore}
+                    </strong>
+
+                </td>
+
+
+                <td>
+                    ${pdfHtml}
+                </td>
+
+
+                <td>
+                    ${statusHtml}
+                </td>
+
+
+                <td>
+                    ${actionBtnHtml}
+                </td>
+
             `;
+
+
+            tbody.appendChild(tr);
         }
-
-
-        const tr =
-            document.createElement('tr');
-
-
-        tr.innerHTML = `
-
-            <td>
-                <span style="
-                    color:#6b7280;
-                    font-size:13px;">
-                    ${submitDate}
-                </span>
-            </td>
-
-            <td>
-                <img
-                    src="${thumbUrl}"
-                    class="thumbnail"
-                    alt="תמונה"
-                    title="לחץ להגדלה"
-                    onclick="
-                        window.openModal(
-                            '${largeUrl}'
-                        )">
-            </td>
-
-            <td>
-                <strong>
-                    ${fullDisplayName}
-                </strong>
-            </td>
-
-            <td>
-                ${baseWorkplace}
-            </td>
-
-            <td>
-                <span style="
-                    color:#6b7280;
-                    font-size:13px;">
-                    ${subWorkplace}
-                </span>
-            </td>
-
-            <td>
-                ${data.photoTitle ||
-                  data.title ||
-                  ''}
-            </td>
-
-            <td>
-                <span style="
-                    background-color:#f1f5f9;
-                    padding:2px 6px;
-                    border-radius:4px;
-                    font-size:12px;">
-                    ${personReadable}
-                </span>
-            </td>
-
-            <td>
-                ${scores.relevance || 0}
-            </td>
-
-            <td>
-                ${scores.artistry || 0}
-            </td>
-
-            <td>
-                ${scores.quality || 0}
-            </td>
-
-            <td>
-                ${scores.authenticity || 0}
-            </td>
-
-            <td>
-                <strong>
-                    ${totalScore}
-                </strong>
-            </td>
-
-            <td>
-                ${pdfHtml}
-            </td>
-
-            <td>
-                ${statusHtml}
-            </td>
-
-            <td>
-                ${actionBtnHtml}
-            </td>
-        `;
-
-
-        tbody.appendChild(tr);
-    });
+    );
 }
 
 
@@ -1036,7 +1496,10 @@ function renderTableRows(tableData) {
 // ===================================================
 
 window.toggleDeleteStatus =
-    async function(id, isDeleted) {
+    async function(
+        id,
+        isDeleted
+    ) {
 
         if (isDeleted) {
 
@@ -1074,7 +1537,9 @@ window.toggleDeleteStatus =
 
             await updateDoc(
                 docRef,
-                { isDeleted }
+                {
+                    isDeleted
+                }
             );
 
 
@@ -1100,6 +1565,7 @@ window.toggleDeleteStatus =
                 error
             );
 
+
             alert(
                 "אירעה שגיאה בעדכון מצב הרשומה."
             );
@@ -1112,7 +1578,9 @@ window.toggleDeleteStatus =
 // ===================================================
 
 window.resetSubmissionScores =
-    async function(docId) {
+    async function(
+        docId
+    ) {
 
         if (
             !confirm(
@@ -1138,9 +1606,14 @@ window.resetSubmissionScores =
             await updateDoc(
                 docRef,
                 {
-                    evaluations: deleteField(),
-                    scores: deleteField(),
-                    status: "pending"
+                    evaluations:
+                        deleteField(),
+
+                    scores:
+                        deleteField(),
+
+                    status:
+                        "pending"
                 }
             );
 
@@ -1154,6 +1627,7 @@ window.resetSubmissionScores =
             if (record) {
 
                 delete record.evaluations;
+
                 delete record.scores;
 
                 record.status =
@@ -1176,6 +1650,7 @@ window.resetSubmissionScores =
                 error
             );
 
+
             alert(
                 "שגיאה באיפוס הדירוג."
             );
@@ -1187,76 +1662,212 @@ window.resetSubmissionScores =
 // ייצוא לאקסל
 // ===================================================
 
-document.getElementById('exportExcelBtn')
-    .addEventListener('click', () => {
-
-        if (currentTableData.length === 0) {
-
-            alert(
-                "אין נתונים לייצוא בחתך הנבחר."
-            );
-
-            return;
-        }
+const exportExcelBtn =
+    document.getElementById(
+        "exportExcelBtn"
+    );
 
 
-        // בדיקה שספריית SheetJS נטענה
+if (exportExcelBtn) {
 
-        if (typeof XLSX === 'undefined') {
-
-            alert(
-                "ספריית ייצוא האקסל לא נטענה. " +
-                "בדוק את חיבור האינטרנט ונסה שוב."
-            );
-
-            return;
-        }
+    exportExcelBtn.addEventListener(
+        "click",
+        exportToExcel
+    );
+}
 
 
-        // ===================================================
-        // עזר: נתוני בסיס של צילום
-        // ===================================================
+function exportToExcel() {
 
-        function getSubmissionBase(row) {
+    // -----------------------------------------------
+    // בדיקות
+    // -----------------------------------------------
 
-            const scores =
-                row.scores || {};
+    if (
+        currentTableData.length === 0
+    ) {
+
+        alert(
+            "אין נתונים לייצוא בחתך הנבחר."
+        );
+
+        return;
+    }
 
 
-            const totalScore =
-                calculateTotalScore(row);
+    if (
+        typeof XLSX === "undefined"
+    ) {
+
+        alert(
+            "ספריית ייצוא האקסל לא נטענה. " +
+            "בדוק את חיבור האינטרנט ונסה שוב."
+        );
+
+        return;
+    }
+
+
+    // ===================================================
+    // גיליון 1 - תוצאות
+    // ===================================================
+
+    const resultsData =
+        currentTableData.map(
+            row => {
+
+                const scores =
+                    row.scores || {};
+
+
+                const evaluationEmails =
+                    row.evaluations
+                        ? Object.keys(
+                            row.evaluations
+                        )
+                        : [];
+
+
+                const wpParts =
+                    (row.workplace || "")
+                        .split(" - ");
+
+
+                const baseWorkplace =
+                    wpParts[0] || "";
+
+
+                const subWorkplace =
+                    wpParts.length > 1
+                        ? wpParts[1]
+                        : "";
+
+
+                let personType =
+                    "לא";
+
+
+                if (
+                    row.identifiablePerson ===
+                    "staff"
+                ) {
+
+                    personType =
+                        "עובדי מוסד";
+                }
+
+
+                if (
+                    row.identifiablePerson ===
+                    "patients"
+                ) {
+
+                    personType =
+                        "מטופלים (מצורף PDF)";
+                }
+
+
+                return {
+
+                    "מזהה רשומה":
+                        row.id || "",
+
+                    "תאריך הגשה":
+                        formatDate(
+                            row.timestamp
+                        ),
+
+                    "תואר":
+                        row.title || "",
+
+                    "שם פרטי":
+                        row.firstName || "",
+
+                    "שם משפחה":
+                        row.lastName || "",
+
+                    "טלפון נייד":
+                        row.phone || "",
+
+                    "דוא\"ל":
+                        row.email || "",
+
+                    "מקום עבודה ראשי":
+                        baseWorkplace,
+
+                    "פירוט מקום עבודה":
+                        subWorkplace,
+
+                    "מחלקה":
+                        row.department || "",
+
+                    "תפקיד":
+                        row.role || "",
+
+                    "מאשר דיוור":
+                        row.allowEmails
+                            ? "כן"
+                            : "לא",
+
+                    "שם הצילום":
+                        row.photoTitle || "",
+
+                    "הסיפור מאחורי התמונה":
+                        row.description || "",
+
+                    "זיהוי אדם":
+                        personType,
+
+                    "לינק ל-PDF אישורים":
+                        row.consentPdfUrl || "",
+
+                    "זיקה לנושא - ממוצע":
+                        scores.relevance || 0,
+
+                    "אמנותיות - ממוצע":
+                        scores.artistry || 0,
+
+                    "איכות טכנית - ממוצע":
+                        scores.quality || 0,
+
+                    "אותנטיות - ממוצע":
+                        scores.authenticity || 0,
+
+                    "ציון סופי":
+                        calculateTotalScore(
+                            row
+                        ),
+
+                    "מספר שופטים":
+                        evaluationEmails.length,
+
+                    "שופטים שדירגו":
+                        evaluationEmails.join(
+                            ", "
+                        )
+                };
+            }
+        );
+
+
+    // ===================================================
+    // גיליון 2 + 3 - דירוגי שופטים
+    // ===================================================
+
+    const judgesData = [];
+
+
+    currentTableData.forEach(
+        row => {
+
+            const evaluations =
+                row.evaluations || {};
 
 
             const evaluationEmails =
-                row.evaluations
-                    ? Object.keys(row.evaluations)
-                    : [];
-
-
-            const judgeCount =
-                evaluationEmails.length;
-
-
-            let personType =
-                "לא";
-
-
-            if (
-                row.identifiablePerson ===
-                'staff'
-            ) {
-                personType =
-                    "עובדי מוסד";
-            }
-
-
-            if (
-                row.identifiablePerson ===
-                'patients'
-            ) {
-                personType =
-                    "מטופלים (מצורף PDF)";
-            }
+                Object.keys(
+                    evaluations
+                );
 
 
             const wpParts =
@@ -1274,112 +1885,17 @@ document.getElementById('exportExcelBtn')
                     : "";
 
 
-            return {
-
-                "מזהה רשומה":
-                    row.id || "",
-
-                "תאריך הגשה":
-                    formatDate(row.timestamp),
-
-                "תואר":
-                    row.title || "",
-
-                "שם פרטי":
-                    row.firstName || "",
-
-                "שם משפחה":
-                    row.lastName || "",
-
-                "טלפון נייד":
-                    row.phone || "",
-
-                "דוא\"ל":
-                    row.email || "",
-
-                "מקום עבודה ראשי":
-                    baseWorkplace,
-
-                "פירוט מקום עבודה":
-                    subWorkplace,
-
-                "מחלקה":
-                    row.department || "",
-
-                "תפקיד":
-                    row.role || "",
-
-                "מאשר דיוור":
-                    row.allowEmails
-                        ? "כן"
-                        : "לא",
-
-                "שם הצילום":
-                    row.photoTitle || "",
-
-                "הסיפור מאחורי התמונה":
-                    row.description || "",
-
-                "זיהוי אדם":
-                    personType,
-
-                "לינק ל-PDF אישורים":
-                    row.consentPdfUrl || "",
-
-                "זיקה לנושא - ממוצע":
-                    scores.relevance || 0,
-
-                "אמנותיות - ממוצע":
-                    scores.artistry || 0,
-
-                "איכות טכנית - ממוצע":
-                    scores.quality || 0,
-
-                "אותנטיות - ממוצע":
-                    scores.authenticity || 0,
-
-                "ציון סופי":
-                    totalScore,
-
-                "מספר שופטים":
-                    judgeCount,
-
-                "שופטים שדירגו":
-                    evaluationEmails.join(", ")
-            };
-        }
+            const photographerName =
+                `${row.title || ""} ${
+                    row.firstName || ""
+                } ${
+                    row.lastName || ""
+                }`.trim();
 
 
-        // ===================================================
-        // גיליון 1 - תוצאות
-        // ===================================================
-
-        const resultsData =
-            currentTableData.map(
-                getSubmissionBase
-            );
-
-
-        // ===================================================
-        // גיליון 2 - דירוגי שופטים
-        //
-        // כל שורה = צילום אחד + שופט אחד
-        // ===================================================
-
-        const judgesData = [];
-
-
-        currentTableData.forEach(row => {
-
-            const evaluations =
-                row.evaluations || {};
-
-
-            const evaluationEmails =
-                Object.keys(evaluations);
-
-
-            // אם אין עדיין דירוגים
+            // -------------------------------------------
+            // תמונה ללא דירוגים
+            // -------------------------------------------
 
             if (
                 evaluationEmails.length === 0
@@ -1401,9 +1917,13 @@ document.getElementById('exportExcelBtn')
                         "",
 
                     "שם הצלם":
-                        `${row.firstName || ""} ${
-                            row.lastName || ""
-                        }`.trim(),
+                        photographerName,
+
+                    "מקום עבודה ראשי":
+                        baseWorkplace,
+
+                    "פירוט מקום עבודה":
+                        subWorkplace,
 
                     "שופט":
                         "",
@@ -1427,226 +1947,388 @@ document.getElementById('exportExcelBtn')
                         "טרם דורג"
                 });
 
+
                 return;
             }
 
 
-            // מעבר על כל השופטים
+            // -------------------------------------------
+            // כל שופט בנפרד
+            // -------------------------------------------
 
-            evaluationEmails.forEach(email => {
+            evaluationEmails.forEach(
+                email => {
 
-                const evaluation =
-                    evaluations[email] || {};
-
-
-                const relevance =
-                    Number(
-                        evaluation.relevance || 0
-                    );
+                    const evaluation =
+                        evaluations[email] ||
+                        {};
 
 
-                const artistry =
-                    Number(
-                        evaluation.artistry || 0
-                    );
+                    const relevance =
+                        Number(
+                            evaluation.relevance || 0
+                        );
 
 
-                const quality =
-                    Number(
-                        evaluation.quality || 0
-                    );
+                    const artistry =
+                        Number(
+                            evaluation.artistry || 0
+                        );
 
 
-                const authenticity =
-                    Number(
-                        evaluation.authenticity || 0
-                    );
+                    const quality =
+                        Number(
+                            evaluation.quality || 0
+                        );
 
 
-                const judgeTotal =
-                    relevance +
-                    artistry +
-                    quality +
-                    authenticity;
+                    const authenticity =
+                        Number(
+                            evaluation.authenticity || 0
+                        );
 
 
-                judgesData.push({
-
-                    "מזהה רשומה":
-                        row.id || "",
-
-                    "תאריך הגשה":
-                        formatDate(
-                            row.timestamp
-                        ),
-
-                    "שם הצילום":
-                        row.photoTitle ||
-                        row.title ||
-                        "",
-
-                    "שם הצלם":
-                        `${row.firstName || ""} ${
-                            row.lastName || ""
-                        }`.trim(),
-
-                    "שופט":
-                        email,
-
-                    "זיקה לנושא":
-                        relevance,
-
-                    "אמנותיות":
-                        artistry,
-
-                    "איכות טכנית":
-                        quality,
-
-                    "אותנטיות":
-                        authenticity,
-
-                    "סה\"כ שופט":
-                        judgeTotal,
-
-                    "סטטוס":
-                        "דורג"
-                });
-            });
-        });
+                    const judgeTotal =
+                        relevance +
+                        artistry +
+                        quality +
+                        authenticity;
 
 
-        // ===================================================
-        // יצירת קובץ Excel
-        // ===================================================
+                    judgesData.push({
 
-        const workbook =
-            XLSX.utils.book_new();
+                        "מזהה רשומה":
+                            row.id || "",
+
+                        "תאריך הגשה":
+                            formatDate(
+                                row.timestamp
+                            ),
+
+                        "שם הצילום":
+                            row.photoTitle ||
+                            row.title ||
+                            "",
+
+                        "שם הצלם":
+                            photographerName,
+
+                        "מקום עבודה ראשי":
+                            baseWorkplace,
+
+                        "פירוט מקום עבודה":
+                            subWorkplace,
+
+                        "שופט":
+                            email,
+
+                        "זיקה לנושא":
+                            relevance,
+
+                        "אמנותיות":
+                            artistry,
+
+                        "איכות טכנית":
+                            quality,
+
+                        "אותנטיות":
+                            authenticity,
+
+                        "סה\"כ שופט":
+                            judgeTotal,
+
+                        "סטטוס":
+                            "דורג"
+                    });
+                }
+            );
+        }
+    );
 
 
-        const resultsSheet =
-            XLSX.utils.json_to_sheet(
-                resultsData
+    // ===================================================
+    // יצירת Workbook
+    // ===================================================
+
+    const workbook =
+        XLSX.utils.book_new();
+
+
+    // ===================================================
+    // גיליון תוצאות
+    // ===================================================
+
+    const resultsSheet =
+        XLSX.utils.json_to_sheet(
+            resultsData
+        );
+
+
+    resultsSheet["!cols"] = [
+
+        { wch: 22 },
+        { wch: 14 },
+        { wch: 12 },
+        { wch: 16 },
+        { wch: 18 },
+        { wch: 16 },
+        { wch: 28 },
+        { wch: 22 },
+        { wch: 22 },
+        { wch: 18 },
+        { wch: 14 },
+        { wch: 25 },
+        { wch: 45 },
+        { wch: 22 },
+        { wch: 35 },
+        { wch: 18 },
+        { wch: 18 },
+        { wch: 20 },
+        { wch: 16 },
+        { wch: 14 },
+        { wch: 14 },
+        { wch: 45 }
+    ];
+
+
+    resultsSheet["!sheetViews"] = [
+        {
+            rightToLeft: true
+        }
+    ];
+
+
+    // ===================================================
+    // גיליון דירוגי שופטים
+    // ===================================================
+
+    const judgesSheet =
+        XLSX.utils.json_to_sheet(
+            judgesData
+        );
+
+
+    judgesSheet["!cols"] = [
+
+        { wch: 22 }, // מזהה
+        { wch: 14 }, // תאריך
+        { wch: 30 }, // צילום
+        { wch: 25 }, // צלם
+        { wch: 25 }, // מקום עבודה
+        { wch: 28 }, // פירוט מקום עבודה
+        { wch: 35 }, // שופט
+        { wch: 14 }, // זיקה
+        { wch: 14 }, // אמנותיות
+        { wch: 16 }, // איכות
+        { wch: 14 }, // אותנטיות
+        { wch: 16 }, // סה"כ
+        { wch: 14 }  // סטטוס
+    ];
+
+
+    // AutoFilter
+    if (judgesData.length > 0) {
+
+        const lastRow =
+            judgesData.length + 1;
+
+
+        const lastColumn =
+            XLSX.utils.encode_col(
+                Object.keys(
+                    judgesData[0]
+                ).length - 1
             );
 
 
-        const judgesSheet =
-            XLSX.utils.json_to_sheet(
-                judgesData
+        judgesSheet["!autofilter"] = {
+            ref:
+                `A1:${lastColumn}${lastRow}`
+        };
+    }
+
+
+    judgesSheet["!sheetViews"] = [
+        {
+            rightToLeft: true
+        }
+    ];
+
+
+    // ===================================================
+    // גיליון 3 - סינון שופטים
+    // ===================================================
+
+    const filterData =
+        judgesData.map(row => ({
+            "שופט":
+                row["שופט"],
+
+            "מקום עבודה ראשי":
+                row["מקום עבודה ראשי"],
+
+            "פירוט מקום עבודה":
+                row["פירוט מקום עבודה"],
+
+            "שם הצילום":
+                row["שם הצילום"],
+
+            "שם הצלם":
+                row["שם הצלם"],
+
+            "זיקה לנושא":
+                row["זיקה לנושא"],
+
+            "אמנותיות":
+                row["אמנותיות"],
+
+            "איכות טכנית":
+                row["איכות טכנית"],
+
+            "אותנטיות":
+                row["אותנטיות"],
+
+            "סה\"כ שופט":
+                row["סה\"כ שופט"],
+
+            "סטטוס":
+                row["סטטוס"],
+
+            "מזהה רשומה":
+                row["מזהה רשומה"],
+
+            "תאריך הגשה":
+                row["תאריך הגשה"]
+        }));
+
+
+    const filterSheet =
+        XLSX.utils.json_to_sheet(
+            filterData
+        );
+
+
+    filterSheet["!cols"] = [
+
+        { wch: 35 }, // שופט
+        { wch: 25 }, // מקום עבודה
+        { wch: 30 }, // פירוט
+        { wch: 30 }, // צילום
+        { wch: 25 }, // צלם
+        { wch: 14 }, // זיקה
+        { wch: 14 }, // אמנותיות
+        { wch: 16 }, // איכות
+        { wch: 14 }, // אותנטיות
+        { wch: 16 }, // סה"כ
+        { wch: 14 }, // סטטוס
+        { wch: 22 }, // מזהה
+        { wch: 14 }  // תאריך
+    ];
+
+
+    // -----------------------------------------------
+    // AutoFilter בגיליון הסינון
+    // -----------------------------------------------
+
+    if (filterData.length > 0) {
+
+        const lastRow =
+            filterData.length + 1;
+
+
+        const lastColumn =
+            XLSX.utils.encode_col(
+                Object.keys(
+                    filterData[0]
+                ).length - 1
             );
 
 
-        // ===================================================
-        // רוחבי עמודות - גיליון תוצאות
-        // ===================================================
-
-        resultsSheet["!cols"] = [
-
-            { wch: 22 },
-            { wch: 14 },
-            { wch: 12 },
-            { wch: 16 },
-            { wch: 18 },
-            { wch: 16 },
-            { wch: 28 },
-            { wch: 22 },
-            { wch: 22 },
-            { wch: 18 },
-            { wch: 14 },
-            { wch: 25 },
-            { wch: 45 },
-            { wch: 22 },
-            { wch: 35 },
-            { wch: 18 },
-            { wch: 18 },
-            { wch: 20 },
-            { wch: 16 },
-            { wch: 14 },
-            { wch: 14 },
-            { wch: 45 }
-        ];
+        filterSheet["!autofilter"] = {
+            ref:
+                `A1:${lastColumn}${lastRow}`
+        };
+    }
 
 
-        // ===================================================
-        // רוחבי עמודות - גיליון דירוגי שופטים
-        // ===================================================
-
-        judgesSheet["!cols"] = [
-
-            { wch: 22 },
-            { wch: 14 },
-            { wch: 30 },
-            { wch: 25 },
-            { wch: 35 },
-            { wch: 14 },
-            { wch: 14 },
-            { wch: 16 },
-            { wch: 14 },
-            { wch: 16 },
-            { wch: 14 }
-        ];
+    filterSheet["!sheetViews"] = [
+        {
+            rightToLeft: true
+        }
+    ];
 
 
-        // ניסיון להציג את הגיליונות מימין לשמאל
+    // ===================================================
+    // הוספת הגיליונות
+    // ===================================================
 
-        resultsSheet["!sheetViews"] = [
-            {
-                rightToLeft: true
-            }
-        ];
-
-
-        judgesSheet["!sheetViews"] = [
-            {
-                rightToLeft: true
-            }
-        ];
+    XLSX.utils.book_append_sheet(
+        workbook,
+        resultsSheet,
+        "תוצאות"
+    );
 
 
-        // הוספת הגיליונות לקובץ
-
-        XLSX.utils.book_append_sheet(
-            workbook,
-            resultsSheet,
-            "תוצאות"
-        );
+    XLSX.utils.book_append_sheet(
+        workbook,
+        judgesSheet,
+        "דירוגי שופטים"
+    );
 
 
-        XLSX.utils.book_append_sheet(
-            workbook,
-            judgesSheet,
-            "דירוגי שופטים"
-        );
+    XLSX.utils.book_append_sheet(
+        workbook,
+        filterSheet,
+        "סינון שופטים"
+    );
 
 
-        // שם הקובץ
+    // ===================================================
+    // שם הקובץ
+    // ===================================================
 
-        const fileName =
-            showingDeleted
-                ? "נתוני_תחרות_מחוקים.xlsx"
-                : "נתוני_התחרות.xlsx";
+    const fileName =
+        showingDeleted
+            ? "נתוני_תחרות_מחוקים.xlsx"
+            : "נתוני_התחרות.xlsx";
 
 
-        // הורדת הקובץ
+    // ===================================================
+    // יצירת הקובץ
+    // ===================================================
 
-        XLSX.writeFile(
-            workbook,
-            fileName
-        );
-    });
+    XLSX.writeFile(
+        workbook,
+        fileName
+    );
+}
 
 
 // ===================================================
 // התנתקות
 // ===================================================
 
-document.getElementById('logoutBtn')
-    .addEventListener('click', () => {
+const logoutBtn =
+    document.getElementById(
+        "logoutBtn"
+    );
 
-        isLoggingOut = true;
 
-        signOut(auth).then(() => {
+if (logoutBtn) {
 
-            window.location.href =
-                "/OBN-Photocontest/index.html";
-        });
-    });
+    logoutBtn.addEventListener(
+        "click",
+        () => {
+
+            isLoggingOut = true;
+
+
+            signOut(auth)
+                .then(() => {
+
+                    window.location.href =
+                        "/OBN-Photocontest/index.html";
+                });
+        }
+    );
+}
