@@ -952,6 +952,7 @@ auth.onAuthStateChanged(user => {
     loadedCount = 0;
     subscribeData();
   } else {
+	hideLoading(); // <-- זו השורה שחסרה!
     $("loginScreen").style.display = "flex";
     $("app").style.display = "none";
     [unsubTasks, unsubExpenses, unsubPatient, unsubMeds, unsubTodayLogs, unsubAllLogs]
