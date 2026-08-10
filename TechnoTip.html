@@ -5,27 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OBN-Tips - מאגר הטכנוטיפים של אופיר בן נתן</title>
 
-    <!-- React & Babel -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, onSnapshot, query, addDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, onSnapshot, query, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         let firebaseConfig;
-        try {
-            firebaseConfig = JSON.parse(__firebase_config);
-        } catch (e) {
+        try { firebaseConfig = JSON.parse(__firebase_config); } catch (e) {
             firebaseConfig = {
                 apiKey: "AIzaSyA3XNbFY9hKq3r7rxGNWtHxCyouX7AQp2U",
                 authDomain: "obn-tips.firebaseapp.com",
@@ -36,867 +28,785 @@
                 measurementId: "G-R1WVQ75PJS"
             };
         }
-
         const appId = 'obn-tips-v1';
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
         window.firebaseUtils = {
             auth, db, appId,
             onSnapshot, collection, doc, query,
-            addDoc, updateDoc, deleteDoc, serverTimestamp,
+            addDoc, updateDoc, deleteDoc,
             signInAnonymously, signInWithEmailAndPassword, signOut, onAuthStateChanged
         };
     </script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap');
-
-        body {
-            font-family: 'Assistant', sans-serif;
-            direction: rtl;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        /* ✅ תוקן: line-clamp-6 במקום 8 לעקביות */
-        .line-clamp-6 {
-            display: -webkit-box;
-            -webkit-line-clamp: 6;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
+        body { font-family: 'Assistant', sans-serif; direction: rtl; transition: background-color 0.3s ease, color 0.3s ease; }
+        .line-clamp-6 { display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
         .theme-dark ::-webkit-scrollbar-track { background: #1a1a1a; }
         .theme-dark ::-webkit-scrollbar-thumb { background: #333; }
         .theme-light ::-webkit-scrollbar-track { background: #f1f1f1; }
         .theme-light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-thumb { border-radius: 10px; }
-
-        .modal-enter {
-            animation: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        }
-        .drawer-enter {
-            animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.96); }
-            to   { opacity: 1; transform: scale(1); }
-        }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(60px); }
-            to   { opacity: 1; transform: translateX(0); }
-        }
-
+        .modal-enter { animation: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        .drawer-enter { animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: translateX(0); } }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
         .tech-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .tech-card:hover { transform: translateY(-4px); }
-
-        /* מצב בהיר */
         .theme-light .forced-black { color: #000000 !important; opacity: 1 !important; }
-        .theme-light input::placeholder, .theme-light textarea::placeholder {
-            color: #6b7280 !important; opacity: 1 !important;
-        }
-
-        /* קטגוריות - גלילה אופקית במובייל */
-        .cats-scroll {
-            display: flex;
-            gap: 0.5rem;
-            overflow-x: auto;
-            padding-bottom: 4px;
-            scrollbar-width: none;
-        }
+        .cats-scroll { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
         .cats-scroll::-webkit-scrollbar { display: none; }
         .cats-scroll button { flex-shrink: 0; }
-
-        /* אנימציית skeleton */
-        .skeleton {
-            animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50%       { opacity: 0.4; }
-        }
-
-        /* Admin badge */
-        .admin-badge {
-            background: linear-gradient(135deg, #f59e0b, #ef4444);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        .skeleton { animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .admin-badge { background: linear-gradient(135deg, #f59e0b, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col">
-    <div id="root" class="flex-1 flex flex-col"></div>
+<div id="root" class="flex-1 flex flex-col"></div>
 
-    <script type="text/babel">
-        const { useState, useMemo, useEffect, useRef, useCallback } = React;
+<script type="text/babel">
+    const { useState, useMemo, useEffect, useRef, useCallback } = React;
 
-        /* ─────────────── קבועים ─────────────── */
-        const CATEGORY_MAP = {
-            "ווטסאפ":       ["ווטסאפ","whatsapp","ווצאפ","הודעות","קבוצה","סטטוס"],
-            "סמארטפון":     ["סמארטפון","טלפון","נייד","אפליקציה","אנדרואיד","אייפון","מכשיר","הגדרות"],
-            "צילום":         ["צילום","תמונה","מצלמה","וידאו","עריכה","גלריה","פילטר"],
-            "בינה מלאכותית":["ai","בינה","chatgpt","claude","gemini","בינה מלאכותית","gpt","deepseek","תומך"],
-            "וורד":          ["וורד","word","מסמך","כתיבה","office","עיצוב טקסט"],
-            "פאורפוינט":    ["פאורפוינט","powerpoint","מצגת","slides","ppt","הצגה"],
-            "אקסל":          ["אקסל","excel","טבלה","נוסחה","גיליון","data","גרף"]
-        };
-        const CATEGORIES = Object.keys(CATEGORY_MAP);
+    const CATEGORY_MAP = {
+        "ווטסאפ":        ["ווטסאפ","whatsapp","ווצאפ","הודעות","קבוצה","סטטוס"],
+        "סמארטפון":      ["סמארטפון","טלפון","נייד","אפליקציה","אנדרואיד","אייפון","מכשיר","הגדרות"],
+        "צילום":          ["צילום","תמונה","מצלמה","וידאו","עריכה","גלריה","פילטר"],
+        "בינה מלאכותית": ["ai","בינה","chatgpt","claude","gemini","בינה מלאכותית","gpt","deepseek","תומך"],
+        "וורד":           ["וורד","word","מסמך","כתיבה","office","עיצוב טקסט"],
+        "פאורפוינט":     ["פאורפוינט","powerpoint","מצגת","slides","ppt","הצגה"],
+        "אקסל":           ["אקסל","excel","טבלה","נוסחה","גיליון","data","גרף"]
+    };
+    const CATEGORIES = Object.keys(CATEGORY_MAP);
 
-        /* ─────────────── פונקציות עזר (מחוץ ל-App) ─────────────── */
-        const parseDateForSorting = (dateStr) => {
-            if (!dateStr || typeof dateStr !== 'string') return 0;
-            const parts = dateStr.trim().split(/[./-]/);
-            if (parts.length === 3) {
-                const [d, m, y] = parts.map(Number);
-                return new Date(y < 100 ? y + 2000 : y, m - 1, d).getTime();
+    const parseDateForSorting = (dateStr) => {
+        if (!dateStr || typeof dateStr !== 'string') return 0;
+        const parts = dateStr.trim().split(/[./-]/);
+        if (parts.length === 3) {
+            const [d, m, y] = parts.map(Number);
+            return new Date(y < 100 ? y + 2000 : y, m - 1, d).getTime();
+        }
+        return 0;
+    };
+
+    const todayString = () => {
+        const n = new Date();
+        return `${String(n.getDate()).padStart(2,'0')}.${String(n.getMonth()+1).padStart(2,'0')}.${n.getFullYear()}`;
+    };
+
+    /* ── Icon ── */
+    const Icon = ({ name, size = 18, className = "" }) => {
+        const ref = useRef(null);
+        useEffect(() => {
+            if (window.lucide && ref.current) {
+                ref.current.setAttribute('data-lucide', name);
+                window.lucide.createIcons({ attrs: { class: className, 'stroke-width': 2, width: size, height: size } });
             }
-            return 0;
-        };
+        }, [name, size, className]);
+        return <span className="inline-flex items-center justify-center"><i ref={ref} data-lucide={name}></i></span>;
+    };
 
-        const todayString = () => {
-            const n = new Date();
-            return `${String(n.getDate()).padStart(2,'0')}.${String(n.getMonth()+1).padStart(2,'0')}.${n.getFullYear()}`;
-        };
+    /* ── LabelBadge ── */
+    const LabelBadge = ({ text, theme }) => {
+        const lower = text.toLowerCase();
+        const dk = theme === 'dark';
+        let s = dk ? "bg-gray-800 text-gray-400 border-gray-700" : "bg-slate-100 text-black border-slate-300 font-bold";
+        if (lower.includes('chatgpt')||lower.includes('gpt')) s = dk ? "bg-[#10a37f]/10 text-[#10a37f] border-[#10a37f]/20" : "bg-[#10a37f]/10 text-[#0d8567] border-[#10a37f]/40 font-bold";
+        else if (lower.includes('claude'))  s = dk ? "bg-[#d97757]/10 text-[#d97757] border-[#d97757]/20" : "bg-[#d97757]/10 text-[#b65e43] border-[#d97757]/40 font-bold";
+        else if (lower.includes('gemini'))  s = dk ? "bg-[#4285f4]/10 text-[#4285f4] border-[#4285f4]/20" : "bg-[#4285f4]/10 text-[#3367d6] border-[#4285f4]/40 font-bold";
+        else if (lower.includes('ai')||lower.includes('בינה')) s = dk ? "bg-purple-500/10 text-purple-400 border-purple-500/20" : "bg-purple-500/10 text-purple-700 border-purple-500/40 font-bold";
+        else if (lower.includes('טיפ'))     s = dk ? "bg-amber-500/10 text-amber-400 border-amber-500/20" : "bg-amber-500/10 text-amber-700 border-amber-500/40 font-bold";
+        return <span className={`px-2.5 py-1 rounded-md text-[10px] border ${s} uppercase tracking-wider`}>{text}</span>;
+    };
 
-        /* ─────────────── Icon component ─────────────── */
-        const Icon = ({ name, size = 18, className = "" }) => {
-            const ref = useRef(null);
-            useEffect(() => {
-                if (window.lucide && ref.current) {
-                    ref.current.setAttribute('data-lucide', name);
-                    window.lucide.createIcons({ attrs: { class: className, 'stroke-width': 2, width: size, height: size } });
-                }
-            }, [name, size, className]);
-            return (
-                <span className="inline-flex items-center justify-center">
-                    <i ref={ref} data-lucide={name}></i>
-                </span>
-            );
-        };
+    /* ── SkeletonCard ── */
+    const SkeletonCard = ({ isDark }) => (
+        <div className={`rounded-[2.5rem] p-8 border skeleton ${isDark ? 'bg-[#1e1e1e] border-[#2a2a2a]' : 'bg-white border-slate-200'}`}>
+            <div className={`h-4 w-20 rounded-full mb-6 ${isDark ? 'bg-[#2a2a2a]' : 'bg-slate-200'}`}/>
+            <div className={`h-6 w-3/4 rounded-full mb-3 ${isDark ? 'bg-[#2a2a2a]' : 'bg-slate-200'}`}/>
+            <div className={`h-4 w-full rounded-full mb-2 ${isDark ? 'bg-[#252525]' : 'bg-slate-100'}`}/>
+            <div className={`h-4 w-5/6 rounded-full mb-2 ${isDark ? 'bg-[#252525]' : 'bg-slate-100'}`}/>
+            <div className={`h-4 w-2/3 rounded-full ${isDark ? 'bg-[#252525]' : 'bg-slate-100'}`}/>
+        </div>
+    );
 
-        /* ─────────────── LabelBadge ─────────────── */
-        const LabelBadge = ({ text, theme }) => {
-            const lower = text.toLowerCase();
-            const dk = theme === 'dark';
-            let s = dk ? "bg-gray-800 text-gray-400 border-gray-700" : "bg-slate-100 text-black border-slate-300 font-bold";
-            if (lower.includes('chatgpt')||lower.includes('gpt')) s = dk ? "bg-[#10a37f]/10 text-[#10a37f] border-[#10a37f]/20" : "bg-[#10a37f]/10 text-[#0d8567] border-[#10a37f]/40 font-bold";
-            else if (lower.includes('claude'))  s = dk ? "bg-[#d97757]/10 text-[#d97757] border-[#d97757]/20" : "bg-[#d97757]/10 text-[#b65e43] border-[#d97757]/40 font-bold";
-            else if (lower.includes('gemini'))  s = dk ? "bg-[#4285f4]/10 text-[#4285f4] border-[#4285f4]/20" : "bg-[#4285f4]/10 text-[#3367d6] border-[#4285f4]/40 font-bold";
-            else if (lower.includes('ai')||lower.includes('בינה')) s = dk ? "bg-purple-500/10 text-purple-400 border-purple-500/20" : "bg-purple-500/10 text-purple-700 border-purple-500/40 font-bold";
-            else if (lower.includes('טיפ'))     s = dk ? "bg-amber-500/10 text-amber-400 border-amber-500/20" : "bg-amber-500/10 text-amber-700 border-amber-500/40 font-bold";
-            return <span className={`px-2.5 py-1 rounded-md text-[10px] border ${s} uppercase tracking-wider`}>{text}</span>;
-        };
-
-        /* ─────────────── SkeletonCard ─────────────── */
-        const SkeletonCard = ({ isDark }) => (
-            <div className={`rounded-[2.5rem] p-8 border skeleton ${isDark ? 'bg-[#1e1e1e] border-[#2a2a2a]' : 'bg-white border-slate-200'}`}>
-                <div className={`h-4 w-20 rounded-full mb-6 ${isDark ? 'bg-[#2a2a2a]' : 'bg-slate-200'}`}/>
-                <div className={`h-6 w-3/4 rounded-full mb-3 ${isDark ? 'bg-[#2a2a2a]' : 'bg-slate-200'}`}/>
-                <div className={`h-4 w-full rounded-full mb-2 ${isDark ? 'bg-[#252525]' : 'bg-slate-100'}`}/>
-                <div className={`h-4 w-5/6 rounded-full mb-2 ${isDark ? 'bg-[#252525]' : 'bg-slate-100'}`}/>
-                <div className={`h-4 w-2/3 rounded-full ${isDark ? 'bg-[#252525]' : 'bg-slate-100'}`}/>
-            </div>
-        );
-
-        /* ─────────────── PaginationControls (מחוץ ל-App!) ─────────────── */
-        const PaginationControls = ({ currentPage, totalPages, pageSize, setCurrentPage, setPageSize, isDark, isTop }) => (
-            <div className={`flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-[2rem] border shadow-sm transition-colors
-                ${isDark ? 'bg-[#1e1e1e] border-[#2a2a2a]' : 'bg-white border-slate-300'}
-                ${isTop ? 'mb-6' : 'mt-12 mb-8'}`}>
-                <div className="flex items-center gap-4">
-                    <button disabled={currentPage === 1}
-                        onClick={() => { setCurrentPage(p => p - 1); window.scrollTo({top:0,behavior:'smooth'}); }}
-                        className={`p-3 disabled:opacity-20 rounded-full transition-all border
-                            ${isDark ? 'hover:bg-[#2a2a2a] text-white border-white/5' : 'hover:bg-slate-100 text-black border-slate-900'}`}>
-                        <Icon name="chevron-right" size={24}/>
-                    </button>
-                    <div className="flex items-center gap-2">
-                        <span className={isDark ? 'text-gray-500' : 'text-black font-bold'}>עמוד</span>
-                        <span className={`font-black text-2xl ${isDark ? 'text-white' : 'text-slate-900'}`}>{currentPage}</span>
-                        <span className={isDark ? 'text-gray-500' : 'text-black font-bold'}>מתוך {totalPages||1}</span>
-                    </div>
-                    <button disabled={currentPage === totalPages || totalPages === 0}
-                        onClick={() => { setCurrentPage(p => p + 1); window.scrollTo({top:0,behavior:'smooth'}); }}
-                        className={`p-3 disabled:opacity-20 rounded-full transition-all border
-                            ${isDark ? 'hover:bg-[#2a2a2a] text-white border-white/5' : 'hover:bg-slate-100 text-black border-slate-900'}`}>
-                        <Icon name="chevron-left" size={24}/>
-                    </button>
+    /* ── PaginationControls (מחוץ ל-App) ── */
+    const PaginationControls = ({ currentPage, totalPages, pageSize, setCurrentPage, setPageSize, isDark, isTop }) => (
+        <div className={`flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-[2rem] border shadow-sm transition-colors
+            ${isDark ? 'bg-[#1e1e1e] border-[#2a2a2a]' : 'bg-white border-slate-300'} ${isTop ? 'mb-6' : 'mt-12 mb-8'}`}>
+            <div className="flex items-center gap-4">
+                <button disabled={currentPage === 1}
+                    onClick={() => { setCurrentPage(p => p - 1); window.scrollTo({top:0,behavior:'smooth'}); }}
+                    className={`p-3 disabled:opacity-20 rounded-full transition-all border ${isDark ? 'hover:bg-[#2a2a2a] text-white border-white/5' : 'hover:bg-slate-100 text-black border-slate-900'}`}>
+                    <Icon name="chevron-right" size={24}/>
+                </button>
+                <div className="flex items-center gap-2">
+                    <span className={isDark ? 'text-gray-500' : 'text-black font-bold'}>עמוד</span>
+                    <span className={`font-black text-2xl ${isDark ? 'text-white' : 'text-slate-900'}`}>{currentPage}</span>
+                    <span className={isDark ? 'text-gray-500' : 'text-black font-bold'}>מתוך {totalPages||1}</span>
                 </div>
-                <div className="flex items-center gap-4">
-                    <span className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-gray-600' : 'text-black font-bold'}`}>להציג:</span>
-                    <div className={`flex p-1 rounded-xl border ${isDark ? 'bg-[#121212] border-white/5' : 'bg-slate-50 border-slate-300'}`}>
-                        {[12, 24, 48].map(s => (
-                            <button key={s} onClick={() => { setPageSize(s); setCurrentPage(1); }}
-                                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all
-                                    ${pageSize === s
-                                        ? (isDark ? 'bg-[#2a2a2a] text-white shadow-lg' : 'bg-white text-slate-900 shadow-md border border-slate-300')
-                                        : (isDark ? 'text-gray-600 hover:text-gray-400' : 'text-slate-500 hover:text-black')}`}>
-                                {s}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                <button disabled={currentPage === totalPages || totalPages === 0}
+                    onClick={() => { setCurrentPage(p => p + 1); window.scrollTo({top:0,behavior:'smooth'}); }}
+                    className={`p-3 disabled:opacity-20 rounded-full transition-all border ${isDark ? 'hover:bg-[#2a2a2a] text-white border-white/5' : 'hover:bg-slate-100 text-black border-slate-900'}`}>
+                    <Icon name="chevron-left" size={24}/>
+                </button>
             </div>
-        );
-
-        /* ─────────────── AdminTipForm ─────────────── */
-        const AdminTipForm = ({ editingNote, onSave, onCancel, isDark }) => {
-            const [title, setTitle]   = useState(editingNote?.title   || '');
-            const [content, setContent] = useState(editingNote?.content || '');
-            const [date, setDate]     = useState(editingNote?.date    || todayString());
-            const [labelsStr, setLabelsStr] = useState((editingNote?.labels || []).join(', '));
-            const [saving, setSaving] = useState(false);
-            const [error, setError]   = useState('');
-
-            const handleSave = async () => {
-                if (!title.trim() || !content.trim()) { setError('כותרת ותוכן הם שדות חובה'); return; }
-                setSaving(true); setError('');
-                const labels = labelsStr.split(',').map(s => s.trim()).filter(Boolean);
-                await onSave({ title: title.trim(), content: content.trim(), date: date.trim(), labels });
-                setSaving(false);
-            };
-
-            const inp = `w-full px-4 py-3 rounded-2xl border outline-none transition-all text-base
-                ${isDark ? 'bg-[#121212] border-[#2a2a2a] text-white focus:border-yellow-500' : 'bg-slate-50 border-slate-300 text-black focus:border-blue-500 focus:ring-2 focus:ring-blue-100'}`;
-
-            return (
-                <div className="space-y-4">
-                    <div>
-                        <label className={`block text-xs font-bold mb-1 ${isDark?'text-gray-400':'text-slate-600'}`}>כותרת *</label>
-                        <input className={inp} placeholder="כותרת הטיפ" value={title} onChange={e=>setTitle(e.target.value)}/>
-                    </div>
-                    <div>
-                        <label className={`block text-xs font-bold mb-1 ${isDark?'text-gray-400':'text-slate-600'}`}>תוכן *</label>
-                        <textarea className={`${inp} resize-none`} rows={8} placeholder="תוכן הטיפ..." value={content} onChange={e=>setContent(e.target.value)}/>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className={`block text-xs font-bold mb-1 ${isDark?'text-gray-400':'text-slate-600'}`}>תאריך</label>
-                            <input className={inp} placeholder="DD.MM.YYYY" value={date} onChange={e=>setDate(e.target.value)}/>
-                        </div>
-                        <div>
-                            <label className={`block text-xs font-bold mb-1 ${isDark?'text-gray-400':'text-slate-600'}`}>תגיות (מופרדות בפסיק)</label>
-                            <input className={inp} placeholder='טיפ, AI, ווטסאפ' value={labelsStr} onChange={e=>setLabelsStr(e.target.value)}/>
-                        </div>
-                    </div>
-                    {error && <p className="text-red-500 text-sm font-bold">{error}</p>}
-                    <div className="flex gap-3 pt-2">
-                        <button onClick={handleSave} disabled={saving}
-                            className={`flex-1 py-3 rounded-2xl font-bold transition-all active:scale-95
-                                ${isDark ? 'bg-yellow-500 text-black hover:bg-yellow-400' : 'bg-slate-900 text-white hover:bg-slate-700'}
-                                disabled:opacity-50`}>
-                            {saving ? '...שומר' : (editingNote ? 'עדכן טיפ' : '+ הוסף טיפ')}
+            <div className="flex items-center gap-4">
+                <span className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-gray-600' : 'text-black font-bold'}`}>להציג:</span>
+                <div className={`flex p-1 rounded-xl border ${isDark ? 'bg-[#121212] border-white/5' : 'bg-slate-50 border-slate-300'}`}>
+                    {[12, 24, 48].map(s => (
+                        <button key={s} onClick={() => { setPageSize(s); setCurrentPage(1); }}
+                            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all
+                                ${pageSize === s
+                                    ? (isDark ? 'bg-[#2a2a2a] text-white shadow-lg' : 'bg-white text-slate-900 shadow-md border border-slate-300')
+                                    : (isDark ? 'text-gray-600 hover:text-gray-400' : 'text-slate-500 hover:text-black')}`}>
+                            {s}
                         </button>
-                        <button onClick={onCancel}
-                            className={`px-6 py-3 rounded-2xl font-bold border transition-all
-                                ${isDark ? 'border-[#2a2a2a] text-gray-400 hover:text-white' : 'border-slate-300 text-slate-600 hover:text-black'}`}>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+
+    /* ── AdminTipForm ── */
+    const AdminTipForm = ({ editingNote, onSave, onCancel, isDark }) => {
+        const [title, setTitle]       = useState(editingNote?.title   || '');
+        const [content, setContent]   = useState(editingNote?.content || '');
+        const [date, setDate]         = useState(editingNote?.date    || todayString());
+        const [labelsStr, setLabels]  = useState((editingNote?.labels || []).join(', '));
+        const [saving, setSaving]     = useState(false);
+        const [error, setError]       = useState('');
+
+        const handleSave = async () => {
+            if (!title.trim() || !content.trim()) { setError('כותרת ותוכן הם שדות חובה'); return; }
+            setSaving(true); setError('');
+            const labels = labelsStr.split(',').map(s => s.trim()).filter(Boolean);
+            await onSave({ title: title.trim(), content: content.trim(), date: date.trim(), labels });
+            setSaving(false);
+        };
+
+        const inp = `w-full px-4 py-3 rounded-2xl border outline-none transition-all text-base
+            ${isDark ? 'bg-[#121212] border-[#2a2a2a] text-white focus:border-yellow-500' : 'bg-slate-50 border-slate-300 text-black focus:border-blue-500 focus:ring-2 focus:ring-blue-100'}`;
+
+        return (
+            <div className="space-y-4">
+                <div>
+                    <label className={`block text-xs font-bold mb-1 ${isDark?'text-gray-400':'text-slate-600'}`}>כותרת *</label>
+                    <input className={inp} placeholder="כותרת הטיפ" value={title} onChange={e=>setTitle(e.target.value)} autoComplete="off"/>
+                </div>
+                <div>
+                    <label className={`block text-xs font-bold mb-1 ${isDark?'text-gray-400':'text-slate-600'}`}>תוכן *</label>
+                    <textarea className={`${inp} resize-none`} rows={8} placeholder="תוכן הטיפ..." value={content} onChange={e=>setContent(e.target.value)}/>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className={`block text-xs font-bold mb-1 ${isDark?'text-gray-400':'text-slate-600'}`}>תאריך</label>
+                        <input className={inp} placeholder="DD.MM.YYYY" value={date} onChange={e=>setDate(e.target.value)} autoComplete="off"/>
+                    </div>
+                    <div>
+                        <label className={`block text-xs font-bold mb-1 ${isDark?'text-gray-400':'text-slate-600'}`}>תגיות (פסיק)</label>
+                        <input className={inp} placeholder='טיפ, AI' value={labelsStr} onChange={e=>setLabels(e.target.value)} autoComplete="off"/>
+                    </div>
+                </div>
+                {error && <p className="text-red-500 text-sm font-bold">{error}</p>}
+                <div className="flex gap-3 pt-2">
+                    <button onClick={handleSave} disabled={saving}
+                        className={`flex-1 py-3 rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50
+                            ${isDark ? 'bg-yellow-500 text-black hover:bg-yellow-400' : 'bg-slate-900 text-white hover:bg-slate-700'}`}>
+                        {saving ? '...שומר' : (editingNote ? 'עדכן טיפ' : '+ הוסף טיפ')}
+                    </button>
+                    <button onClick={onCancel}
+                        className={`px-6 py-3 rounded-2xl font-bold border transition-all
+                            ${isDark ? 'border-[#2a2a2a] text-gray-400 hover:text-white' : 'border-slate-300 text-slate-600 hover:text-black'}`}>
+                        ביטול
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
+    /* ──────────────────────────────────────────────────────
+       AdminLoginModal — מתחבר ל-Firebase Authentication
+       ✅ תיקון 1: Firebase auth במקום סיסמה קשיחה
+       ✅ תיקון 2: שדה אימייל מפורש → מנהל הסיסמאות לא מבלבל
+       ✅ תיקון 3: focus עם setTimeout לוידוא שה-modal כבר ב-DOM
+    ────────────────────────────────────────────────────── */
+    const AdminLoginModal = ({ onSuccess, onClose, isDark }) => {
+        const [email, setEmail]   = useState('');
+        const [pw, setPw]         = useState('');
+        const [err, setErr]       = useState('');
+        const [loading, setLoading] = useState(false);
+        const emailRef            = useRef(null);
+
+        // ✅ setTimeout מבטיח שה-DOM הופיע לפני הפוקוס
+        useEffect(() => {
+            const t = setTimeout(() => emailRef.current?.focus(), 80);
+            return () => clearTimeout(t);
+        }, []);
+
+        const tryLogin = async () => {
+            if (!email.trim() || !pw) { setErr('נא למלא אימייל וסיסמה'); return; }
+            setLoading(true); setErr('');
+            try {
+                // ✅ שימוש ב-Firebase Authentication האמיתי
+                const { auth, signInWithEmailAndPassword } = window.firebaseUtils;
+                await signInWithEmailAndPassword(auth, email.trim(), pw);
+                sessionStorage.setItem('obn-admin', '1');
+                onSuccess();
+            } catch (e) {
+                const msg =
+                    e.code === 'auth/invalid-credential'  ? 'אימייל או סיסמה שגויים' :
+                    e.code === 'auth/wrong-password'      ? 'סיסמה שגויה' :
+                    e.code === 'auth/user-not-found'      ? 'משתמש לא קיים' :
+                    e.code === 'auth/too-many-requests'   ? 'יותר מדי ניסיונות. נסה שוב מאוחר יותר.' :
+                    e.code === 'auth/network-request-failed' ? 'בעיית רשת. בדוק חיבור לאינטרנט.' :
+                    `שגיאה: ${e.code}`;
+                setErr(msg);
+            }
+            setLoading(false);
+        };
+
+        const inp = `w-full px-4 py-3 rounded-2xl border outline-none transition-all text-sm
+            ${isDark ? 'bg-[#0a0a0a] border-[#333] text-white focus:border-yellow-500' : 'bg-slate-50 border-slate-300 text-black focus:border-blue-500'}`;
+
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
+                style={{background:'rgba(0,0,0,0.85)', backdropFilter:'blur(10px)'}}
+                onClick={onClose}>
+                {/* ✅ role="dialog" עוזר למנהל הסיסמאות להבין שזה טופס כניסה */}
+                <div role="dialog" aria-modal="true" aria-label="כניסת מנהל"
+                    className={`w-full max-w-sm rounded-[2rem] p-8 shadow-2xl border modal-enter ${isDark?'bg-[#1a1a1a] border-[#2a2a2a]':'bg-white border-slate-200'}`}
+                    onClick={e=>e.stopPropagation()}>
+
+                    <h2 className={`text-xl font-black mb-6 text-center ${isDark?'text-white':'text-black'}`}>🔑 כניסת מנהל</h2>
+
+                    {/* ✅ שדה אימייל מפורש עם autocomplete תקין */}
+                    <div className="space-y-3">
+                        <div>
+                            <label className={`block text-xs font-bold mb-1 ${isDark?'text-gray-500':'text-slate-500'}`}>אימייל</label>
+                            <input
+                                ref={emailRef}
+                                type="email"
+                                autoComplete="email"
+                                className={inp}
+                                value={email}
+                                onChange={e=>setEmail(e.target.value)}
+                                onKeyDown={e=>{ if(e.key==='Enter') document.getElementById('admin-pw-input')?.focus(); if(e.key==='Escape') onClose(); }}
+                                placeholder="ofirbn@gmail.com"
+                            />
+                        </div>
+                        <div>
+                            <label className={`block text-xs font-bold mb-1 ${isDark?'text-gray-500':'text-slate-500'}`}>סיסמה</label>
+                            <input
+                                id="admin-pw-input"
+                                type="password"
+                                autoComplete="current-password"
+                                className={inp}
+                                value={pw}
+                                onChange={e=>setPw(e.target.value)}
+                                onKeyDown={e=>{ if(e.key==='Enter') tryLogin(); if(e.key==='Escape') onClose(); }}
+                                placeholder="••••••••"
+                            />
+                        </div>
+                    </div>
+
+                    {err && <p className="text-red-500 text-sm mt-3 font-bold text-center">{err}</p>}
+
+                    <div className="flex gap-3 mt-6">
+                        <button onClick={tryLogin} disabled={loading}
+                            className={`flex-1 py-3 rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-60
+                                ${isDark?'bg-yellow-500 text-black hover:bg-yellow-400':'bg-slate-900 text-white hover:bg-slate-700'}`}>
+                            {loading ? '...מתחבר' : 'כניסה'}
+                        </button>
+                        <button onClick={onClose}
+                            className={`px-5 py-3 rounded-2xl font-bold border ${isDark?'border-[#2a2a2a] text-gray-400':'border-slate-300 text-slate-600'}`}>
                             ביטול
                         </button>
                     </div>
                 </div>
-            );
-        };
+            </div>
+        );
+    };
 
-        /* ─────────────── AdminLoginModal ─────────────── */
-        const ADMIN_PASSWORD_HASH = "obn2026"; // ← שנה לסיסמה שלך
-        const AdminLoginModal = ({ onSuccess, onClose, isDark }) => {
-            const [pw, setPw]     = useState('');
-            const [err, setErr]   = useState('');
-            const inputRef        = useRef(null);
-            useEffect(() => { inputRef.current?.focus(); }, []);
+    /* ── App ── */
+    const getInitialTheme = () => {
+        const s = localStorage.getItem('obn-tips-theme');
+        if (s) return s;
+        return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    };
 
-            const tryLogin = () => {
-                if (pw === ADMIN_PASSWORD_HASH) {
-                    sessionStorage.setItem('obn-admin', '1');
-                    onSuccess();
-                } else {
-                    setErr('סיסמה שגויה. נסה שוב.');
-                    setPw('');
-                }
-            };
+    const App = () => {
+        const [theme, setTheme]               = useState(getInitialTheme);
+        const [notes, setNotes]               = useState([]);
+        const [isLoading, setIsLoading]       = useState(true);
+        const [user, setUser]                 = useState(null);
+        const [searchTerm, setSearchTerm]     = useState('');
+        const [debouncedSearch, setDebSearch] = useState('');
+        const [activeCategory, setActiveCat]  = useState(null);
+        const [activeNote, setActiveNote]     = useState(null);
+        const [copySuccess, setCopySuccess]   = useState(null);
+        const [currentPage, setCurrentPage]   = useState(1);
+        const [pageSize, setPageSize]         = useState(24);
+        const [isAdmin, setIsAdmin]           = useState(() => sessionStorage.getItem('obn-admin') === '1');
+        const [showLogin, setShowLogin]       = useState(false);
+        const [showAdminPanel, setAdminPanel] = useState(false);
+        const [editingNote, setEditingNote]   = useState(null);
+        const [addingNew, setAddingNew]       = useState(false);
+        const [deleteTarget, setDeleteTarget] = useState(null);
+        const [adminMsg, setAdminMsg]         = useState('');
 
-            return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{background:'rgba(0,0,0,0.85)',backdropFilter:'blur(10px)'}} onClick={onClose}>
-                    <div className={`w-full max-w-sm rounded-[2rem] p-8 shadow-2xl border modal-enter ${isDark?'bg-[#1a1a1a] border-[#2a2a2a]':'bg-white border-slate-200'}`} onClick={e=>e.stopPropagation()}>
-                        <h2 className={`text-xl font-black mb-6 text-center ${isDark?'text-white':'text-black'}`}>🔑 כניסת מנהל</h2>
-                        <input ref={inputRef} type="password" placeholder="סיסמה" value={pw}
-                            onChange={e=>setPw(e.target.value)}
-                            onKeyDown={e=>{ if(e.key==='Enter') tryLogin(); if(e.key==='Escape') onClose(); }}
-                            className={`w-full px-4 py-3 rounded-2xl border outline-none text-base mb-3
-                                ${isDark?'bg-[#121212] border-[#2a2a2a] text-white focus:border-yellow-500':'bg-slate-50 border-slate-300 text-black focus:border-blue-500'}`}/>
-                        {err && <p className="text-red-500 text-sm mb-3 font-bold text-center">{err}</p>}
-                        <div className="flex gap-3">
-                            <button onClick={tryLogin} className={`flex-1 py-3 rounded-2xl font-bold transition-all ${isDark?'bg-yellow-500 text-black hover:bg-yellow-400':'bg-slate-900 text-white hover:bg-slate-700'}`}>כניסה</button>
-                            <button onClick={onClose}  className={`px-5 py-3 rounded-2xl font-bold border ${isDark?'border-[#2a2a2a] text-gray-400':'border-slate-300 text-slate-600'}`}>ביטול</button>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
+        const isDark = theme === 'dark';
 
-        /* ─────────────── App ─────────────── */
-        const getInitialTheme = () => {
-            const s = localStorage.getItem('obn-tips-theme');
-            if (s) return s;
-            return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-        };
+        useEffect(() => {
+            document.body.className = isDark ? 'theme-dark bg-[#121212] text-gray-100' : 'theme-light bg-slate-50 text-slate-900';
+            localStorage.setItem('obn-tips-theme', theme);
+        }, [theme]);
 
-        const App = () => {
-            const [theme, setTheme]               = useState(getInitialTheme);
-            const [notes, setNotes]               = useState([]);
-            const [isLoading, setIsLoading]       = useState(true);
-            const [user, setUser]                 = useState(null);
-            const [searchTerm, setSearchTerm]     = useState('');
-            const [debouncedSearch, setDebSearch] = useState('');
-            const [activeCategory, setActiveCat]  = useState(null);
-            const [activeNote, setActiveNote]     = useState(null);
-            const [copySuccess, setCopySuccess]   = useState(null);
-            const [currentPage, setCurrentPage]   = useState(1);
-            const [pageSize, setPageSize]         = useState(24);
+        useEffect(() => {
+            if (!window.firebaseUtils) return;
+            const { auth, signInAnonymously, onAuthStateChanged } = window.firebaseUtils;
+            signInAnonymously(auth).catch(console.error);
+            return onAuthStateChanged(auth, setUser);
+        }, []);
 
-            // Admin state
-            const [isAdmin, setIsAdmin]           = useState(() => sessionStorage.getItem('obn-admin') === '1');
-            const [showLogin, setShowLogin]       = useState(false);
-            const [showAdminPanel, setAdminPanel] = useState(false);
-            const [editingNote, setEditingNote]   = useState(null);
-            const [addingNew, setAddingNew]       = useState(false);
-            const [deleteTarget, setDeleteTarget] = useState(null);
-            const [adminMsg, setAdminMsg]         = useState('');
-
-            const isDark = theme === 'dark';
-
-            /* theme */
-            useEffect(() => {
-                document.body.className = isDark
-                    ? 'theme-dark bg-[#121212] text-gray-100'
-                    : 'theme-light bg-slate-50 text-slate-900';
-                localStorage.setItem('obn-tips-theme', theme);
-            }, [theme]);
-
-            /* auth */
-            useEffect(() => {
-                if (!window.firebaseUtils) return;
-                const { auth, signInAnonymously, onAuthStateChanged } = window.firebaseUtils;
-                signInAnonymously(auth).catch(console.error);
-                return onAuthStateChanged(auth, setUser);
-            }, []);
-
-            /* data */
-            useEffect(() => {
-                if (!user || !window.firebaseUtils) return;
-                const { db, appId, collection, onSnapshot, query } = window.firebaseUtils;
-                const col = collection(db, 'artifacts', appId, 'public', 'data', 'techtips');
-                return onSnapshot(query(col), snap => {
-                    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    data.sort((a, b) => {
-                        const diff = parseDateForSorting(b.date) - parseDateForSorting(a.date);
-                        return diff !== 0 ? diff : (b.rawDate || 0) - (a.rawDate || 0);
-                    });
-                    setNotes(data);
-                    setIsLoading(false);
-                }, err => { console.error(err); setIsLoading(false); });
-            }, [user]);
-
-            /* debounce search */
-            useEffect(() => {
-                const t = setTimeout(() => { setDebSearch(searchTerm); setCurrentPage(1); }, 300);
-                return () => clearTimeout(t);
-            }, [searchTerm]);
-
-            useEffect(() => { setCurrentPage(1); }, [activeCategory]);
-
-            /* Escape key - סגור modal */
-            useEffect(() => {
-                const handler = (e) => {
-                    if (e.key === 'Escape') {
-                        if (activeNote)     setActiveNote(null);
-                        if (showAdminPanel) setAdminPanel(false);
-                        if (showLogin)      setShowLogin(false);
-                    }
-                };
-                document.addEventListener('keydown', handler);
-                return () => document.removeEventListener('keydown', handler);
-            }, [activeNote, showAdminPanel, showLogin]);
-
-            /* filtered + paged */
-            const filteredNotes = useMemo(() =>
-                notes.filter(note => {
-                    const text = ((note.title||'') + ' ' + (note.content||'')).toLowerCase();
-                    const matchSearch = text.includes(debouncedSearch.toLowerCase());
-                    const matchCat    = !activeCategory || (CATEGORY_MAP[activeCategory]||[]).some(kw => text.includes(kw.toLowerCase()));
-                    return matchSearch && matchCat;
-                }),
-            [notes, debouncedSearch, activeCategory]);
-
-            const totalPages     = Math.max(1, Math.ceil(filteredNotes.length / pageSize));
-            const safePage       = currentPage > totalPages ? 1 : currentPage;
-            const pagedNotes     = useMemo(() => filteredNotes.slice((safePage-1)*pageSize, safePage*pageSize), [filteredNotes, safePage, pageSize]);
-
-            /* ✅ clipboard מודרני */
-            const copyToClipboard = useCallback(async (e, text, id) => {
-                if (e) e.stopPropagation();
-                try {
-                    await navigator.clipboard.writeText(text);
-                } catch {
-                    const el = document.createElement('textarea');
-                    el.value = text; document.body.appendChild(el); el.select();
-                    document.execCommand('copy'); document.body.removeChild(el);
-                }
-                setCopySuccess(id);
-                setTimeout(() => setCopySuccess(null), 2000);
-            }, []);
-
-            const shareToWhatsApp = useCallback((e, note) => {
-                if (e) e.stopPropagation();
-                const text = `*${note.title}*\n\n${note.content}\n\n_נשלח ממאגר הטכנוטיפים של אופיר בן נתן_`;
-                window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-            }, []);
-
-            /* ─── Admin CRUD ─── */
-            const flash = (msg) => { setAdminMsg(msg); setTimeout(() => setAdminMsg(''), 3000); };
-
-            const handleAddTip = async (data) => {
-                if (!window.firebaseUtils) return;
-                const { db, appId, collection, addDoc } = window.firebaseUtils;
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'techtips'), {
-                    ...data, rawDate: Date.now()
+        useEffect(() => {
+            if (!user || !window.firebaseUtils) return;
+            const { db, appId, collection, onSnapshot, query } = window.firebaseUtils;
+            const col = collection(db, 'artifacts', appId, 'public', 'data', 'techtips');
+            return onSnapshot(query(col), snap => {
+                const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                data.sort((a, b) => {
+                    const diff = parseDateForSorting(b.date) - parseDateForSorting(a.date);
+                    return diff !== 0 ? diff : (b.rawDate || 0) - (a.rawDate || 0);
                 });
-                setAddingNew(false);
-                flash('✅ טיפ חדש נוסף בהצלחה!');
-            };
+                setNotes(data);
+                setIsLoading(false);
+            }, err => { console.error(err); setIsLoading(false); });
+        }, [user]);
 
-            const handleUpdateTip = async (data) => {
-                if (!window.firebaseUtils || !editingNote) return;
-                const { db, appId, doc, updateDoc } = window.firebaseUtils;
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'techtips', editingNote.id), data);
-                setEditingNote(null);
-                setActiveNote(null);
-                flash('✅ הטיפ עודכן בהצלחה!');
-            };
+        useEffect(() => {
+            const t = setTimeout(() => { setDebSearch(searchTerm); setCurrentPage(1); }, 300);
+            return () => clearTimeout(t);
+        }, [searchTerm]);
 
-            const handleDeleteTip = async (id) => {
-                if (!window.firebaseUtils) return;
-                const { db, appId, doc, deleteDoc } = window.firebaseUtils;
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'techtips', id));
-                setDeleteTarget(null);
-                setActiveNote(null);
-                flash('🗑️ הטיפ נמחק.');
-            };
+        useEffect(() => { setCurrentPage(1); }, [activeCategory]);
 
-            const handleAdminLogout = () => {
-                sessionStorage.removeItem('obn-admin');
-                setIsAdmin(false);
-                setAdminPanel(false);
+        useEffect(() => {
+            const handler = (e) => {
+                if (e.key === 'Escape') {
+                    if (activeNote)     setActiveNote(null);
+                    if (showAdminPanel) setAdminPanel(false);
+                    if (showLogin)      setShowLogin(false);
+                }
             };
+            document.addEventListener('keydown', handler);
+            return () => document.removeEventListener('keydown', handler);
+        }, [activeNote, showAdminPanel, showLogin]);
 
-            /* ─── Render ─── */
-            if (isLoading) return (
-                <div className={`min-h-screen flex flex-col ${isDark?'bg-[#121212]':'bg-slate-50'}`}>
-                    <div className={`h-20 border-b ${isDark?'bg-[#1a1a1a] border-[#2a2a2a]':'bg-white border-slate-200'}`}/>
-                    <div className="max-w-7xl mx-auto px-6 py-10 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {[...Array(6)].map((_,i) => <SkeletonCard key={i} isDark={isDark}/>)}
-                    </div>
+        const filteredNotes = useMemo(() =>
+            notes.filter(note => {
+                const text = ((note.title||'') + ' ' + (note.content||'')).toLowerCase();
+                const matchSearch = text.includes(debouncedSearch.toLowerCase());
+                const matchCat    = !activeCategory || (CATEGORY_MAP[activeCategory]||[]).some(kw => text.includes(kw.toLowerCase()));
+                return matchSearch && matchCat;
+            }),
+        [notes, debouncedSearch, activeCategory]);
+
+        const totalPages = Math.max(1, Math.ceil(filteredNotes.length / pageSize));
+        const safePage   = currentPage > totalPages ? 1 : currentPage;
+        const pagedNotes = useMemo(() => filteredNotes.slice((safePage-1)*pageSize, safePage*pageSize), [filteredNotes, safePage, pageSize]);
+
+        const copyToClipboard = useCallback(async (e, text, id) => {
+            if (e) e.stopPropagation();
+            try { await navigator.clipboard.writeText(text); } catch {
+                const el = document.createElement('textarea');
+                el.value = text; document.body.appendChild(el); el.select();
+                document.execCommand('copy'); document.body.removeChild(el);
+            }
+            setCopySuccess(id);
+            setTimeout(() => setCopySuccess(null), 2000);
+        }, []);
+
+        const shareToWhatsApp = useCallback((e, note) => {
+            if (e) e.stopPropagation();
+            const text = `*${note.title}*\n\n${note.content}\n\n_נשלח ממאגר הטכנוטיפים של אופיר בן נתן_`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+        }, []);
+
+        const flash = (msg) => { setAdminMsg(msg); setTimeout(() => setAdminMsg(''), 3000); };
+
+        const handleAddTip = async (data) => {
+            if (!window.firebaseUtils) return;
+            const { db, appId, collection, addDoc } = window.firebaseUtils;
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'techtips'), { ...data, rawDate: Date.now() });
+            setAddingNew(false);
+            flash('✅ טיפ חדש נוסף בהצלחה!');
+        };
+
+        const handleUpdateTip = async (data) => {
+            if (!window.firebaseUtils || !editingNote) return;
+            const { db, appId, doc, updateDoc } = window.firebaseUtils;
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'techtips', editingNote.id), data);
+            setEditingNote(null); setActiveNote(null);
+            flash('✅ הטיפ עודכן בהצלחה!');
+        };
+
+        const handleDeleteTip = async (id) => {
+            if (!window.firebaseUtils) return;
+            const { db, appId, doc, deleteDoc } = window.firebaseUtils;
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'techtips', id));
+            setDeleteTarget(null); setActiveNote(null);
+            flash('🗑️ הטיפ נמחק.');
+        };
+
+        // ✅ יציאה מאדמין: sign out מ-Firebase + חזרה ל-anonymous
+        const handleAdminLogout = async () => {
+            if (window.firebaseUtils) {
+                const { auth, signOut, signInAnonymously } = window.firebaseUtils;
+                await signOut(auth);
+                await signInAnonymously(auth);
+            }
+            sessionStorage.removeItem('obn-admin');
+            setIsAdmin(false);
+            setAdminPanel(false);
+        };
+
+        if (isLoading) return (
+            <div className={`min-h-screen flex flex-col ${isDark?'bg-[#121212]':'bg-slate-50'}`}>
+                <div className={`h-20 border-b ${isDark?'bg-[#1a1a1a] border-[#2a2a2a]':'bg-white border-slate-200'}`}/>
+                <div className="max-w-7xl mx-auto px-6 py-10 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {[...Array(6)].map((_,i) => <SkeletonCard key={i} isDark={isDark}/>)}
                 </div>
-            );
+            </div>
+        );
 
-            return (
-                <div className="flex-1 flex flex-col">
-                    {/* ═══ HEADER ═══ */}
-                    <header className={`backdrop-blur-md border-b sticky top-0 z-20 shadow-2xl transition-colors ${isDark?'bg-[#1a1a1a]/90 border-[#2a2a2a]':'bg-white/95 border-slate-300'}`}>
-                        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                            <div className="flex flex-col text-right">
-                                <h1 className={`text-xl md:text-2xl font-black leading-none tracking-tight ${isDark?'text-white':'text-black'}`}>
-                                    OBN-Tips - המאגר הדינמי
-                                    {isAdmin && <span className="mr-2 text-sm admin-badge font-black">⚡ ADMIN</span>}
-                                </h1>
-                                <p className={`text-[10px] font-bold uppercase tracking-[0.2em] mt-1 italic ${isDark?'text-gray-500 opacity-60':'text-black'}`}>
-                                    Quality Knowledge Hub &bull; V6.0 Unified
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                {/* כפתור Admin */}
-                                {isAdmin ? (
-                                    <>
-                                        <button onClick={() => setAdminPanel(true)}
-                                            className={`p-2.5 rounded-xl border transition-all active:scale-90 ${isDark?'bg-yellow-500/10 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/20':'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'}`}
-                                            title="פאנל ניהול">
-                                            <Icon name="settings" size={20}/>
-                                        </button>
-                                        <button onClick={handleAdminLogout}
-                                            className={`p-2.5 rounded-xl border transition-all active:scale-90 ${isDark?'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20':'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'}`}
-                                            title="יציאה ממצב אדמין">
-                                            <Icon name="log-out" size={18}/>
-                                        </button>
-                                    </>
-                                ) : (
-                                    <button onClick={() => setShowLogin(true)}
-                                        className={`p-2.5 rounded-xl border transition-all active:scale-90 opacity-30 hover:opacity-80 ${isDark?'bg-white/5 border-white/10 text-gray-400':'bg-slate-100 border-slate-300 text-slate-500'}`}
-                                        title="כניסת מנהל">
-                                        <Icon name="lock" size={18}/>
+        return (
+            <div className="flex-1 flex flex-col">
+
+                {/* HEADER */}
+                <header className={`backdrop-blur-md border-b sticky top-0 z-20 shadow-2xl transition-colors ${isDark?'bg-[#1a1a1a]/90 border-[#2a2a2a]':'bg-white/95 border-slate-300'}`}>
+                    <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+                        <div className="flex flex-col text-right">
+                            <h1 className={`text-xl md:text-2xl font-black leading-none tracking-tight ${isDark?'text-white':'text-black'}`}>
+                                OBN-Tips - המאגר הדינמי
+                                {isAdmin && <span className="mr-2 text-sm admin-badge font-black">⚡ ADMIN</span>}
+                            </h1>
+                            <p className={`text-[10px] font-bold uppercase tracking-[0.2em] mt-1 italic ${isDark?'text-gray-500 opacity-60':'text-black'}`}>
+                                Quality Knowledge Hub &bull; V6.0 Unified
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            {isAdmin ? (
+                                <>
+                                    <button onClick={() => setAdminPanel(true)}
+                                        className={`p-2.5 rounded-xl border transition-all active:scale-90 ${isDark?'bg-yellow-500/10 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/20':'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'}`}
+                                        title="פאנל ניהול">
+                                        <Icon name="settings" size={20}/>
                                     </button>
-                                )}
-                                <button onClick={() => setTheme(p => p==='dark'?'light':'dark')}
-                                    className={`p-2.5 rounded-xl border transition-all active:scale-90 ${isDark?'bg-white/5 border-white/10 text-yellow-400 hover:bg-white/10':'bg-slate-100 border-slate-900 text-black hover:bg-slate-200'}`}
-                                    title={isDark?"מצב בהיר":"מצב כהה"}>
-                                    <Icon name={isDark?"sun":"moon"} size={20}/>
+                                    <button onClick={handleAdminLogout}
+                                        className={`p-2.5 rounded-xl border transition-all active:scale-90 ${isDark?'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20':'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'}`}
+                                        title="יציאה ממצב אדמין">
+                                        <Icon name="log-out" size={18}/>
+                                    </button>
+                                </>
+                            ) : (
+                                <button onClick={() => setShowLogin(true)}
+                                    className={`p-2.5 rounded-xl border transition-all active:scale-90 opacity-25 hover:opacity-70 ${isDark?'bg-white/5 border-white/10 text-gray-400':'bg-slate-100 border-slate-300 text-slate-500'}`}
+                                    title="כניסת מנהל">
+                                    <Icon name="lock" size={18}/>
                                 </button>
-                                <div className={`px-5 py-2 rounded-full border text-xs font-bold hidden md:block italic ${isDark?'bg-white/5 border-white/10 text-gray-300':'bg-slate-50 border-slate-900 text-black'}`}>
-                                    {notes.length} טכנוטיפים &amp; counting...
-                                </div>
+                            )}
+                            <button onClick={() => setTheme(p => p==='dark'?'light':'dark')}
+                                className={`p-2.5 rounded-xl border transition-all active:scale-90 ${isDark?'bg-white/5 border-white/10 text-yellow-400 hover:bg-white/10':'bg-slate-100 border-slate-900 text-black hover:bg-slate-200'}`}
+                                title={isDark?"מצב בהיר":"מצב כהה"}>
+                                <Icon name={isDark?"sun":"moon"} size={20}/>
+                            </button>
+                            <div className={`px-5 py-2 rounded-full border text-xs font-bold hidden md:block italic ${isDark?'bg-white/5 border-white/10 text-gray-300':'bg-slate-50 border-slate-900 text-black'}`}>
+                                {notes.length} טכנוטיפים &amp; counting...
                             </div>
                         </div>
-                    </header>
+                    </div>
+                </header>
 
-                    {/* admin flash message */}
-                    {adminMsg && (
-                        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-2xl bg-green-600 text-white font-bold shadow-2xl text-sm modal-enter">
-                            {adminMsg}
-                        </div>
-                    )}
+                {adminMsg && (
+                    <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-2xl bg-green-600 text-white font-bold shadow-2xl text-sm modal-enter">
+                        {adminMsg}
+                    </div>
+                )}
 
-                    {/* ═══ MAIN ═══ */}
-                    <main className="max-w-7xl mx-auto px-6 py-10 flex-1 w-full text-right">
-                        <div className="space-y-8">
-                            {/* כרטיס חיפוש + סינון */}
-                            <div className={`p-8 rounded-[2.5rem] border shadow-2xl space-y-6 transition-colors ${isDark?'bg-[#1a1a1a] border-[#2a2a2a]':'bg-white border-slate-300'}`}>
-                                {/* שדה חיפוש */}
-                                <div className="relative group">
-                                    <div className={`absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${isDark?'text-gray-600 group-focus-within:text-yellow-500':'text-black group-focus-within:text-blue-600'}`}>
-                                        <Icon name="search" size={26}/>
-                                    </div>
-                                    <input type="text" placeholder="מה תרצו לחפש?"
-                                        className={`w-full pr-16 pl-14 py-5 border rounded-[1.5rem] focus:ring-4 outline-none transition-all text-xl shadow-inner
-                                            ${isDark?'bg-[#121212] border-[#2a2a2a] focus:ring-white/5 focus:border-white/20 text-white':'bg-slate-50 border-slate-900 focus:ring-blue-100 focus:border-blue-500 text-black font-semibold'}`}
-                                        value={searchTerm} onChange={e => setSearchTerm(e.target.value)}/>
-                                    {searchTerm && (
-                                        <button onClick={() => setSearchTerm('')}
-                                            className={`absolute left-6 top-1/2 -translate-y-1/2 transition-colors ${isDark?'text-gray-600 hover:text-white':'text-black hover:text-red-500'}`}>
-                                            <Icon name="x" size={20}/>
-                                        </button>
-                                    )}
+                {/* MAIN */}
+                <main className="max-w-7xl mx-auto px-6 py-10 flex-1 w-full text-right">
+                    <div className="space-y-8">
+
+                        {/* חיפוש + סינון */}
+                        <div className={`p-8 rounded-[2.5rem] border shadow-2xl space-y-6 transition-colors ${isDark?'bg-[#1a1a1a] border-[#2a2a2a]':'bg-white border-slate-300'}`}>
+                            <div className="relative group">
+                                <div className={`absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${isDark?'text-gray-600 group-focus-within:text-yellow-500':'text-black group-focus-within:text-blue-600'}`}>
+                                    <Icon name="search" size={26}/>
                                 </div>
-
-                                {/* קטגוריות - גלילה אופקית במובייל */}
-                                <div className={`border-t pt-5 ${isDark?'border-white/5':'border-slate-200'}`}>
-                                    <div className="cats-scroll">
-                                        <button onClick={() => setActiveCat(null)}
-                                            className={`px-5 py-2 rounded-xl text-sm font-bold border transition-all
-                                                ${!activeCategory
-                                                    ? (isDark?'bg-white text-black border-white shadow-xl':'bg-slate-900 text-white border-slate-900 shadow-xl')
-                                                    : (isDark?'bg-[#121212] text-gray-500 border-[#2a2a2a] hover:text-gray-300':'bg-slate-50 text-black border-slate-400 hover:bg-slate-100')}`}>
-                                            הכל
-                                        </button>
-                                        {CATEGORIES.map(cat => (
-                                            <button key={cat} onClick={() => setActiveCat(cat === activeCategory ? null : cat)}
-                                                className={`px-5 py-2 rounded-xl text-sm font-bold border transition-all
-                                                    ${activeCategory === cat
-                                                        ? (isDark?'bg-yellow-500 text-black border-yellow-500 shadow-xl':'bg-yellow-400 text-slate-900 border-yellow-400 shadow-xl')
-                                                        : (isDark?'bg-[#121212] text-gray-500 border-[#2a2a2a] hover:text-gray-300':'bg-slate-50 text-black border-slate-400 hover:bg-slate-100')}`}>
-                                                {cat}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* שורת תוצאות */}
-                            <div className="flex items-center justify-between px-2">
-                                <h2 className={`text-base italic font-medium ${isDark?'text-gray-500':'text-black font-bold'}`}>
-                                    {(debouncedSearch || activeCategory) ? (
-                                        <span>
-                                            נמצאו <span className={`font-black not-italic ${isDark?'text-white':'text-blue-600'}`}>{filteredNotes.length}</span> טיפים
-                                            {debouncedSearch && <> לחיפוש: <span className="text-yellow-600 font-bold not-italic">"{debouncedSearch}"</span></>}
-                                            {activeCategory && <> בקטגוריה: <span className="text-purple-600 font-bold not-italic">{activeCategory}</span></>}
-                                        </span>
-                                    ) : (
-                                        <span>מציג את כל המאגר ({notes.length} טיפים)</span>
-                                    )}
-                                </h2>
-                                {isAdmin && (
-                                    <button onClick={() => setAddingNew(true)}
-                                        className={`flex items-center gap-2 px-5 py-2 rounded-xl font-bold text-sm border transition-all active:scale-95
-                                            ${isDark?'bg-yellow-500 text-black border-yellow-500 hover:bg-yellow-400':'bg-slate-900 text-white border-slate-900 hover:bg-slate-700'}`}>
-                                        <Icon name="plus" size={16}/> טיפ חדש
+                                {/* ✅ autoComplete="off" מונע ממנהל הסיסמאות למלא את תיבת החיפוש */}
+                                <input type="text"
+                                    autoComplete="off"
+                                    name="tip-search"
+                                    placeholder="מה תרצו לחפש?"
+                                    className={`w-full pr-16 pl-14 py-5 border rounded-[1.5rem] focus:ring-4 outline-none transition-all text-xl shadow-inner
+                                        ${isDark?'bg-[#121212] border-[#2a2a2a] focus:ring-white/5 focus:border-white/20 text-white':'bg-slate-50 border-slate-900 focus:ring-blue-100 focus:border-blue-500 text-black font-semibold'}`}
+                                    value={searchTerm}
+                                    onChange={e => setSearchTerm(e.target.value)}/>
+                                {searchTerm && (
+                                    <button onClick={() => setSearchTerm('')}
+                                        className={`absolute left-6 top-1/2 -translate-y-1/2 transition-colors ${isDark?'text-gray-600 hover:text-white':'text-black hover:text-red-500'}`}>
+                                        <Icon name="x" size={20}/>
                                     </button>
                                 )}
                             </div>
 
-                            {totalPages > 1 && (
-                                <PaginationControls isTop currentPage={safePage} totalPages={totalPages}
-                                    pageSize={pageSize} setCurrentPage={setCurrentPage} setPageSize={setPageSize} isDark={isDark}/>
+                            <div className={`border-t pt-5 ${isDark?'border-white/5':'border-slate-200'}`}>
+                                <div className="cats-scroll">
+                                    <button onClick={() => setActiveCat(null)}
+                                        className={`px-5 py-2 rounded-xl text-sm font-bold border transition-all
+                                            ${!activeCategory ? (isDark?'bg-white text-black border-white shadow-xl':'bg-slate-900 text-white border-slate-900 shadow-xl') : (isDark?'bg-[#121212] text-gray-500 border-[#2a2a2a] hover:text-gray-300':'bg-slate-50 text-black border-slate-400 hover:bg-slate-100')}`}>
+                                        הכל
+                                    </button>
+                                    {CATEGORIES.map(cat => (
+                                        <button key={cat} onClick={() => setActiveCat(cat === activeCategory ? null : cat)}
+                                            className={`px-5 py-2 rounded-xl text-sm font-bold border transition-all
+                                                ${activeCategory === cat ? (isDark?'bg-yellow-500 text-black border-yellow-500 shadow-xl':'bg-yellow-400 text-slate-900 border-yellow-400 shadow-xl') : (isDark?'bg-[#121212] text-gray-500 border-[#2a2a2a] hover:text-gray-300':'bg-slate-50 text-black border-slate-400 hover:bg-slate-100')}`}>
+                                            {cat}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* שורת תוצאות */}
+                        <div className="flex items-center justify-between px-2">
+                            <h2 className={`text-base italic font-medium ${isDark?'text-gray-500':'text-black font-bold'}`}>
+                                {(debouncedSearch || activeCategory) ? (
+                                    <span>
+                                        נמצאו <span className={`font-black not-italic ${isDark?'text-white':'text-blue-600'}`}>{filteredNotes.length}</span> טיפים
+                                        {debouncedSearch && <> לחיפוש: <span className="text-yellow-600 font-bold not-italic">"{debouncedSearch}"</span></>}
+                                        {activeCategory && <> בקטגוריה: <span className="text-purple-600 font-bold not-italic">{activeCategory}</span></>}
+                                    </span>
+                                ) : <span>מציג את כל המאגר ({notes.length} טיפים)</span>}
+                            </h2>
+                            {isAdmin && (
+                                <button onClick={() => setAddingNew(true)}
+                                    className={`flex items-center gap-2 px-5 py-2 rounded-xl font-bold text-sm border transition-all active:scale-95
+                                        ${isDark?'bg-yellow-500 text-black border-yellow-500 hover:bg-yellow-400':'bg-slate-900 text-white border-slate-900 hover:bg-slate-700'}`}>
+                                    <Icon name="plus" size={16}/> טיפ חדש
+                                </button>
                             )}
+                        </div>
 
-                            {/* גריד כרטיסים */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {pagedNotes.map(note => {
-                                    const noteTime = parseDateForSorting(note.date);
-                                    const isNew = noteTime && (Date.now() - noteTime < 172800000);
-                                    return (
-                                        <div key={note.id} onClick={() => setActiveNote(note)}
-                                            className={`tech-card relative rounded-[2.5rem] p-8 flex flex-col cursor-pointer border
-                                                ${isDark?'bg-[#1e1e1e] border-[#2a2a2a] hover:border-[#444] hover:bg-[#252525] shadow-2xl shadow-black/20':'bg-white border-slate-300 hover:border-slate-400 hover:bg-slate-50 shadow-sm'}`}>
+                        {totalPages > 1 && <PaginationControls isTop currentPage={safePage} totalPages={totalPages} pageSize={pageSize} setCurrentPage={setCurrentPage} setPageSize={setPageSize} isDark={isDark}/>}
 
-                                            <div className="flex justify-between items-start mb-4">
-                                                <div className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider shadow-xl ${isDark?'bg-white text-black':'bg-slate-900 text-white'}`}>
-                                                    {note.date}
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    {isNew && <div className="bg-blue-600 text-white text-[9px] font-black px-2 py-1 rounded-full animate-bounce">NEW!</div>}
-                                                    {/* כפתורי admin על הכרטיס */}
-                                                    {isAdmin && (
-                                                        <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                                                            <button onClick={() => { setEditingNote(note); setActiveNote(null); }}
-                                                                className={`p-1.5 rounded-lg transition-all ${isDark?'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20':'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'}`}
-                                                                title="ערוך"><Icon name="pencil" size={14}/></button>
-                                                            <button onClick={() => setDeleteTarget(note.id)}
-                                                                className={`p-1.5 rounded-lg transition-all ${isDark?'bg-red-500/10 text-red-400 hover:bg-red-500/20':'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'}`}
-                                                                title="מחק"><Icon name="trash-2" size={14}/></button>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="mt-2 mb-5">
-                                                <h3 className={`font-bold text-xl leading-tight flex items-start gap-3 ${isDark?'text-white/90':'text-black'}`}>
-                                                    <span className="shrink-0 text-2xl">💡</span>{note.title}
-                                                </h3>
-                                            </div>
-
-                                            <div className={`text-base whitespace-pre-wrap flex-1 mb-6 line-clamp-6 leading-relaxed font-normal ${isDark?'text-gray-400':'text-slate-700'}`}>
-                                                {note.content}
-                                            </div>
-
-                                            <div className="flex items-center justify-between pt-5 border-t border-current border-opacity-5">
-                                                <div className="flex flex-wrap gap-2">
-                                                    {(note.labels||[]).map(l => <LabelBadge key={l} text={l} theme={theme}/>)}
-                                                </div>
-                                                <button onClick={e => shareToWhatsApp(e, note)}
-                                                    className={`p-2.5 rounded-xl transition-all active:scale-90 ${isDark?'bg-green-600/10 text-green-400 hover:bg-green-600/20':'bg-green-50 text-green-800 hover:bg-green-100 border border-green-200'}`}
-                                                    title="שתף בוואטסאפ">
-                                                    <Icon name="share-2" size={18}/>
-                                                </button>
+                        {/* גריד */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {pagedNotes.map(note => {
+                                const noteTime = parseDateForSorting(note.date);
+                                const isNew = noteTime && (Date.now() - noteTime < 172800000);
+                                return (
+                                    <div key={note.id} onClick={() => setActiveNote(note)}
+                                        className={`tech-card relative rounded-[2.5rem] p-8 flex flex-col cursor-pointer border
+                                            ${isDark?'bg-[#1e1e1e] border-[#2a2a2a] hover:border-[#444] hover:bg-[#252525] shadow-2xl shadow-black/20':'bg-white border-slate-300 hover:border-slate-400 hover:bg-slate-50 shadow-sm'}`}>
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider shadow-xl ${isDark?'bg-white text-black':'bg-slate-900 text-white'}`}>{note.date}</div>
+                                            <div className="flex items-center gap-2">
+                                                {isNew && <div className="bg-blue-600 text-white text-[9px] font-black px-2 py-1 rounded-full animate-bounce">NEW!</div>}
+                                                {isAdmin && (
+                                                    <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                                                        <button onClick={() => { setEditingNote(note); setActiveNote(null); }}
+                                                            className={`p-1.5 rounded-lg transition-all ${isDark?'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20':'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'}`}>
+                                                            <Icon name="pencil" size={14}/>
+                                                        </button>
+                                                        <button onClick={() => setDeleteTarget(note.id)}
+                                                            className={`p-1.5 rounded-lg transition-all ${isDark?'bg-red-500/10 text-red-400 hover:bg-red-500/20':'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'}`}>
+                                                            <Icon name="trash-2" size={14}/>
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                    );
-                                })}
-                            </div>
-
-                            {totalPages > 1 && (
-                                <PaginationControls currentPage={safePage} totalPages={totalPages}
-                                    pageSize={pageSize} setCurrentPage={setCurrentPage} setPageSize={setPageSize} isDark={isDark}/>
-                            )}
-
-                            {filteredNotes.length === 0 && (
-                                <div className={`py-40 text-center rounded-[4rem] border shadow-inner ${isDark?'bg-[#1a1a1a] border-[#2a2a2a]':'bg-slate-50 border-slate-300'}`}>
-                                    <Icon name="search-x" size={80} className={isDark?'text-gray-800':'text-slate-300'}/>
-                                    <h3 className={`text-3xl font-bold uppercase tracking-widest mt-6 ${isDark?'text-white/20':'text-black'}`}>No Results Found</h3>
-                                    <p className={`mt-4 text-xl ${isDark?'text-gray-600':'text-slate-500 font-bold'}`}>נסו חיפוש אחר או ניקוי קטגוריה.</p>
-                                </div>
-                            )}
+                                        <div className="mt-2 mb-5">
+                                            <h3 className={`font-bold text-xl leading-tight flex items-start gap-3 ${isDark?'text-white/90':'text-black'}`}>
+                                                <span className="shrink-0 text-2xl">💡</span>{note.title}
+                                            </h3>
+                                        </div>
+                                        <div className={`text-base whitespace-pre-wrap flex-1 mb-6 line-clamp-6 leading-relaxed font-normal ${isDark?'text-gray-400':'text-slate-700'}`}>
+                                            {note.content}
+                                        </div>
+                                        <div className="flex items-center justify-between pt-5 border-t border-current border-opacity-5">
+                                            <div className="flex flex-wrap gap-2">{(note.labels||[]).map(l => <LabelBadge key={l} text={l} theme={theme}/>)}</div>
+                                            <button onClick={e => shareToWhatsApp(e, note)}
+                                                className={`p-2.5 rounded-xl transition-all active:scale-90 ${isDark?'bg-green-600/10 text-green-400 hover:bg-green-600/20':'bg-green-50 text-green-800 hover:bg-green-100 border border-green-200'}`}
+                                                title="שתף בוואטסאפ">
+                                                <Icon name="share-2" size={18}/>
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
-                    </main>
 
-                    {/* ═══ FOOTER ═══ */}
-                    <footer className={`py-14 px-6 border-t mt-20 transition-colors ${isDark?'bg-[#0a0a0a] text-gray-600 border-white/5':'bg-slate-900 text-white border-slate-800'}`}>
-                        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-                            <div className="text-sm font-bold tracking-[0.15em] uppercase text-center md:text-right leading-loose">
-                                © אוסף טכנוטיפים - כל הזכויות שמורות{' '}
-                                <a href="mailto:ofirbn@post.com"
-                                    className={`underline underline-offset-8 transition-all ${isDark?'text-gray-400 hover:text-white':'text-slate-100 hover:text-yellow-400'}`}>
-                                    Ofir Ben Natan
-                                </a> 2026
+                        {totalPages > 1 && <PaginationControls currentPage={safePage} totalPages={totalPages} pageSize={pageSize} setCurrentPage={setCurrentPage} setPageSize={setPageSize} isDark={isDark}/>}
+
+                        {filteredNotes.length === 0 && (
+                            <div className={`py-40 text-center rounded-[4rem] border shadow-inner ${isDark?'bg-[#1a1a1a] border-[#2a2a2a]':'bg-slate-50 border-slate-300'}`}>
+                                <Icon name="search-x" size={80} className={isDark?'text-gray-800':'text-slate-300'}/>
+                                <h3 className={`text-3xl font-bold uppercase tracking-widest mt-6 ${isDark?'text-white/20':'text-black'}`}>No Results Found</h3>
+                                <p className={`mt-4 text-xl ${isDark?'text-gray-600':'text-slate-500'}`}>נסו חיפוש אחר או ניקוי קטגוריה.</p>
                             </div>
-                            <div className="flex flex-col items-center gap-1 opacity-30">
-                                <span className="text-[10px] font-mono tracking-widest uppercase">OBN-TECH-SYSTEM-V6.0-UNIFIED</span>
-                                <div className={`h-px w-20 ${isDark?'bg-gray-800':'bg-slate-700'}`}/>
-                                <span className="text-[8px] italic uppercase tracking-tighter">Unified Admin + Public</span>
-                            </div>
+                        )}
+                    </div>
+                </main>
+
+                {/* FOOTER */}
+                <footer className={`py-14 px-6 border-t mt-20 transition-colors ${isDark?'bg-[#0a0a0a] text-gray-600 border-white/5':'bg-slate-900 text-white border-slate-800'}`}>
+                    <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+                        <div className="text-sm font-bold tracking-[0.15em] uppercase text-center md:text-right leading-loose">
+                            © אוסף טכנוטיפים - כל הזכויות שמורות{' '}
+                            <a href="mailto:ofirbn@post.com" className={`underline underline-offset-8 transition-all ${isDark?'text-gray-400 hover:text-white':'text-slate-100 hover:text-yellow-400'}`}>Ofir Ben Natan</a> 2026
                         </div>
-                    </footer>
+                        <div className="flex flex-col items-center gap-1 opacity-30">
+                            <span className="text-[10px] font-mono tracking-widest uppercase">OBN-TECH-SYSTEM-V6.1-UNIFIED</span>
+                            <div className={`h-px w-20 ${isDark?'bg-gray-800':'bg-slate-700'}`}/>
+                        </div>
+                    </div>
+                </footer>
 
-                    {/* ═══ MODAL - צפייה בטיפ ═══ */}
-                    {activeNote && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-10 md:p-20"
-                            style={{background: isDark?'rgba(0,0,0,0.95)':'rgba(15,23,42,0.9)', backdropFilter:'blur(15px)'}}
-                            onClick={() => setActiveNote(null)}>
-                            <div className={`w-full max-w-5xl max-h-full rounded-[2rem] md:rounded-[3.5rem] shadow-2xl flex flex-col overflow-hidden modal-enter border
-                                ${isDark?'bg-[#161616] border-white/10':'bg-white border-slate-300'}`}
-                                onClick={e => e.stopPropagation()}>
-
-                                <div className={`px-6 py-5 md:px-10 md:py-8 border-b flex items-start justify-between shrink-0 ${isDark?'bg-[#1c1c1c] border-white/5':'bg-slate-50 border-slate-200'}`}>
-                                    <h3 className={`text-xl md:text-3xl font-black leading-tight flex items-start gap-3 flex-1 pr-2 ${isDark?'text-white':'text-black'}`}>
-                                        <span className="text-2xl md:text-4xl shrink-0">💎</span> {activeNote.title}
-                                    </h3>
-                                    <div className="flex items-center gap-2 md:gap-3 shrink-0">
-                                        {isAdmin && (
-                                            <button onClick={() => { setEditingNote(activeNote); setActiveNote(null); }}
-                                                className={`p-2 rounded-xl transition-all ${isDark?'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20':'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'}`}
-                                                title="ערוך טיפ"><Icon name="pencil" size={18}/></button>
-                                        )}
-                                        <button onClick={e => copyToClipboard(e, activeNote.content, 'modal')}
-                                            className={`hidden sm:block px-5 py-2 rounded-2xl font-bold text-sm shadow-xl transition-all active:scale-95 ${isDark?'bg-white/10 text-white hover:bg-white/20':'bg-slate-900 text-white hover:bg-slate-800'}`}>
-                                            {copySuccess==='modal' ? 'הועתק!' : 'העתק'}
+                {/* MODAL - צפייה */}
+                {activeNote && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-10 md:p-20"
+                        style={{background: isDark?'rgba(0,0,0,0.95)':'rgba(15,23,42,0.9)', backdropFilter:'blur(15px)'}}
+                        onClick={() => setActiveNote(null)}>
+                        <div className={`w-full max-w-5xl max-h-full rounded-[2rem] md:rounded-[3.5rem] shadow-2xl flex flex-col overflow-hidden modal-enter border
+                            ${isDark?'bg-[#161616] border-white/10':'bg-white border-slate-300'}`}
+                            onClick={e => e.stopPropagation()}>
+                            <div className={`px-6 py-5 md:px-10 md:py-8 border-b flex items-start justify-between shrink-0 ${isDark?'bg-[#1c1c1c] border-white/5':'bg-slate-50 border-slate-200'}`}>
+                                <h3 className={`text-xl md:text-3xl font-black leading-tight flex items-start gap-3 flex-1 pr-2 ${isDark?'text-white':'text-black'}`}>
+                                    <span className="text-2xl md:text-4xl shrink-0">💎</span> {activeNote.title}
+                                </h3>
+                                <div className="flex items-center gap-2 md:gap-3 shrink-0">
+                                    {isAdmin && (
+                                        <button onClick={() => { setEditingNote(activeNote); setActiveNote(null); }}
+                                            className={`p-2 rounded-xl transition-all ${isDark?'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20':'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'}`}>
+                                            <Icon name="pencil" size={18}/>
                                         </button>
-                                        <button onClick={e => shareToWhatsApp(e, activeNote)} className="p-2.5 rounded-full bg-green-500 text-white hover:bg-green-600 shadow-lg" title="שתף בוואטסאפ">
-                                            <Icon name="message-circle" size={22}/>
-                                        </button>
-                                        <button onClick={() => setActiveNote(null)} className={`p-2 rounded-full transition-colors ${isDark?'text-gray-400 hover:text-white hover:bg-white/5':'text-black hover:bg-slate-100'}`}>
-                                            <Icon name="x" size={28}/>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="p-6 md:p-14 overflow-y-auto flex-1">
-                                    <div className={`text-lg md:text-2xl leading-[1.7] whitespace-pre-wrap text-right font-normal ${isDark?'text-gray-300':'text-black'}`}>
-                                        {activeNote.content}
-                                    </div>
-                                </div>
-
-                                <div className={`px-6 py-4 md:px-12 md:py-6 border-t flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0 ${isDark?'bg-[#161616] border-white/5':'bg-slate-50 border-slate-200'}`}>
-                                    <div className="flex items-center gap-2">
-                                        <Icon name="calendar" size={14} className={isDark?'text-gray-600':'text-black'}/>
-                                        <span className={`text-xs font-bold uppercase tracking-widest font-mono ${isDark?'text-gray-600':'text-black'}`}>עודכן: {activeNote.date}</span>
-                                    </div>
-                                    <div className="flex gap-2 flex-wrap">{(activeNote.labels||[]).map(l => <LabelBadge key={l} text={l} theme={theme}/>)}</div>
+                                    )}
                                     <button onClick={e => copyToClipboard(e, activeNote.content, 'modal')}
-                                        className={`sm:hidden w-full py-3 rounded-xl font-bold text-sm transition-all active:scale-95 ${copySuccess==='modal'?'bg-green-600 text-white':(isDark?'bg-white text-black':'bg-slate-900 text-white')}`}>
-                                        {copySuccess==='modal' ? 'הועתק!' : 'העתק תוכן'}
+                                        className={`hidden sm:block px-5 py-2 rounded-2xl font-bold text-sm shadow-xl transition-all active:scale-95 ${isDark?'bg-white/10 text-white hover:bg-white/20':'bg-slate-900 text-white hover:bg-slate-800'}`}>
+                                        {copySuccess==='modal' ? 'הועתק!' : 'העתק'}
+                                    </button>
+                                    <button onClick={e => shareToWhatsApp(e, activeNote)} className="p-2.5 rounded-full bg-green-500 text-white hover:bg-green-600 shadow-lg">
+                                        <Icon name="message-circle" size={22}/>
+                                    </button>
+                                    <button onClick={() => setActiveNote(null)} className={`p-2 rounded-full ${isDark?'text-gray-400 hover:text-white hover:bg-white/5':'text-black hover:bg-slate-100'}`}>
+                                        <Icon name="x" size={28}/>
                                     </button>
                                 </div>
                             </div>
-                        </div>
-                    )}
-
-                    {/* ═══ ADMIN PANEL (drawer) ═══ */}
-                    {showAdminPanel && (
-                        <div className="fixed inset-0 z-50 flex justify-start"
-                            style={{background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)'}}
-                            onClick={() => setAdminPanel(false)}>
-                            <div className={`w-full max-w-xl h-full overflow-y-auto shadow-2xl border-l drawer-enter
-                                ${isDark?'bg-[#161616] border-[#2a2a2a]':'bg-white border-slate-200'}`}
-                                onClick={e => e.stopPropagation()}>
-
-                                <div className={`sticky top-0 px-8 py-6 border-b flex items-center justify-between z-10 ${isDark?'bg-[#1c1c1c] border-[#2a2a2a]':'bg-slate-50 border-slate-200'}`}>
-                                    <h2 className={`text-2xl font-black ${isDark?'text-white':'text-black'}`}>⚙️ ניהול טיפים</h2>
-                                    <button onClick={() => setAdminPanel(false)} className={`p-2 rounded-full ${isDark?'hover:bg-white/5 text-gray-400':'hover:bg-slate-100 text-black'}`}>
-                                        <Icon name="x" size={24}/>
-                                    </button>
+                            <div className="p-6 md:p-14 overflow-y-auto flex-1">
+                                <div className={`text-lg md:text-2xl leading-[1.7] whitespace-pre-wrap text-right font-normal ${isDark?'text-gray-300':'text-black'}`}>{activeNote.content}</div>
+                            </div>
+                            <div className={`px-6 py-4 md:px-12 md:py-6 border-t flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0 ${isDark?'bg-[#161616] border-white/5':'bg-slate-50 border-slate-200'}`}>
+                                <div className="flex items-center gap-2">
+                                    <Icon name="calendar" size={14}/> <span className={`text-xs font-bold uppercase tracking-widest font-mono ${isDark?'text-gray-600':'text-black'}`}>עודכן: {activeNote.date}</span>
                                 </div>
+                                <div className="flex gap-2 flex-wrap">{(activeNote.labels||[]).map(l => <LabelBadge key={l} text={l} theme={theme}/>)}</div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
-                                <div className="p-8 space-y-6">
-                                    <button onClick={() => { setAddingNew(true); setAdminPanel(false); }}
-                                        className={`w-full py-4 rounded-2xl font-black text-lg border-2 border-dashed transition-all
-                                            ${isDark?'border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/10':'border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
-                                        + הוסף טיפ חדש
-                                    </button>
-
-                                    <div className={`text-xs font-bold uppercase tracking-widest ${isDark?'text-gray-600':'text-slate-400'}`}>
-                                        {notes.length} טיפים במאגר
+                {/* ADMIN PANEL */}
+                {showAdminPanel && (
+                    <div className="fixed inset-0 z-50 flex justify-start" style={{background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)'}} onClick={() => setAdminPanel(false)}>
+                        <div className={`w-full max-w-xl h-full overflow-y-auto shadow-2xl border-l drawer-enter ${isDark?'bg-[#161616] border-[#2a2a2a]':'bg-white border-slate-200'}`} onClick={e => e.stopPropagation()}>
+                            <div className={`sticky top-0 px-8 py-6 border-b flex items-center justify-between z-10 ${isDark?'bg-[#1c1c1c] border-[#2a2a2a]':'bg-slate-50 border-slate-200'}`}>
+                                <h2 className={`text-2xl font-black ${isDark?'text-white':'text-black'}`}>⚙️ ניהול טיפים</h2>
+                                <button onClick={() => setAdminPanel(false)} className={`p-2 rounded-full ${isDark?'hover:bg-white/5 text-gray-400':'hover:bg-slate-100 text-black'}`}><Icon name="x" size={24}/></button>
+                            </div>
+                            <div className="p-8 space-y-4">
+                                <button onClick={() => { setAddingNew(true); setAdminPanel(false); }}
+                                    className={`w-full py-4 rounded-2xl font-black text-lg border-2 border-dashed transition-all ${isDark?'border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/10':'border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
+                                    + הוסף טיפ חדש
+                                </button>
+                                <div className={`text-xs font-bold uppercase tracking-widest ${isDark?'text-gray-600':'text-slate-400'}`}>{notes.length} טיפים במאגר</div>
+                                {notes.map(note => (
+                                    <div key={note.id} className={`p-4 rounded-2xl border flex items-start justify-between gap-4 ${isDark?'bg-[#1e1e1e] border-[#2a2a2a]':'bg-white border-slate-200'}`}>
+                                        <div className="flex-1 min-w-0">
+                                            <p className={`font-bold text-sm truncate ${isDark?'text-white':'text-black'}`}>{note.title}</p>
+                                            <p className={`text-xs mt-0.5 ${isDark?'text-gray-600':'text-slate-400'}`}>{note.date}</p>
+                                        </div>
+                                        <div className="flex gap-2 shrink-0">
+                                            <button onClick={() => { setEditingNote(note); setAdminPanel(false); }} className={`p-2 rounded-xl ${isDark?'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20':'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'}`}><Icon name="pencil" size={14}/></button>
+                                            <button onClick={() => { setDeleteTarget(note.id); setAdminPanel(false); }} className={`p-2 rounded-xl ${isDark?'bg-red-500/10 text-red-400 hover:bg-red-500/20':'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'}`}><Icon name="trash-2" size={14}/></button>
+                                        </div>
                                     </div>
-
-                                    <div className="space-y-3">
-                                        {notes.map(note => (
-                                            <div key={note.id} className={`p-4 rounded-2xl border flex items-start justify-between gap-4 ${isDark?'bg-[#1e1e1e] border-[#2a2a2a]':'bg-white border-slate-200'}`}>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className={`font-bold text-sm truncate ${isDark?'text-white':'text-black'}`}>{note.title}</p>
-                                                    <p className={`text-xs mt-0.5 ${isDark?'text-gray-600':'text-slate-400'}`}>{note.date}</p>
-                                                </div>
-                                                <div className="flex gap-2 shrink-0">
-                                                    <button onClick={() => { setEditingNote(note); setAdminPanel(false); }}
-                                                        className={`p-2 rounded-xl ${isDark?'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20':'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'}`}>
-                                                        <Icon name="pencil" size={14}/>
-                                                    </button>
-                                                    <button onClick={() => { setDeleteTarget(note.id); setAdminPanel(false); }}
-                                                        className={`p-2 rounded-xl ${isDark?'bg-red-500/10 text-red-400 hover:bg-red-500/20':'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'}`}>
-                                                        <Icon name="trash-2" size={14}/>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
+                                ))}
                             </div>
                         </div>
-                    )}
+                    </div>
+                )}
 
-                    {/* ═══ MODAL - הוספת טיפ ═══ */}
-                    {addingNew && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-16"
-                            style={{background:'rgba(0,0,0,0.85)', backdropFilter:'blur(10px)'}}
-                            onClick={() => setAddingNew(false)}>
-                            <div className={`w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden modal-enter border ${isDark?'bg-[#161616] border-white/10':'bg-white border-slate-200'}`}
-                                onClick={e => e.stopPropagation()}>
-                                <div className={`px-8 py-6 border-b flex items-center justify-between ${isDark?'bg-[#1c1c1c] border-white/5':'bg-slate-50 border-slate-200'}`}>
-                                    <h3 className={`text-2xl font-black ${isDark?'text-white':'text-black'}`}>+ טיפ חדש</h3>
-                                    <button onClick={() => setAddingNew(false)} className={`p-2 rounded-full ${isDark?'hover:bg-white/5 text-gray-400':'hover:bg-slate-100 text-black'}`}>
-                                        <Icon name="x" size={24}/>
-                                    </button>
-                                </div>
-                                <div className="p-8">
-                                    <AdminTipForm onSave={handleAddTip} onCancel={() => setAddingNew(false)} isDark={isDark}/>
-                                </div>
+                {/* MODAL - הוספה */}
+                {addingNew && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-16" style={{background:'rgba(0,0,0,0.85)', backdropFilter:'blur(10px)'}} onClick={() => setAddingNew(false)}>
+                        <div className={`w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden modal-enter border ${isDark?'bg-[#161616] border-white/10':'bg-white border-slate-200'}`} onClick={e => e.stopPropagation()}>
+                            <div className={`px-8 py-6 border-b flex items-center justify-between ${isDark?'bg-[#1c1c1c] border-white/5':'bg-slate-50 border-slate-200'}`}>
+                                <h3 className={`text-2xl font-black ${isDark?'text-white':'text-black'}`}>+ טיפ חדש</h3>
+                                <button onClick={() => setAddingNew(false)} className={`p-2 rounded-full ${isDark?'hover:bg-white/5 text-gray-400':'hover:bg-slate-100 text-black'}`}><Icon name="x" size={24}/></button>
+                            </div>
+                            <div className="p-8"><AdminTipForm onSave={handleAddTip} onCancel={() => setAddingNew(false)} isDark={isDark}/></div>
+                        </div>
+                    </div>
+                )}
+
+                {/* MODAL - עריכה */}
+                {editingNote && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-16" style={{background:'rgba(0,0,0,0.85)', backdropFilter:'blur(10px)'}} onClick={() => setEditingNote(null)}>
+                        <div className={`w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden modal-enter border ${isDark?'bg-[#161616] border-white/10':'bg-white border-slate-200'}`} onClick={e => e.stopPropagation()}>
+                            <div className={`px-8 py-6 border-b flex items-center justify-between ${isDark?'bg-[#1c1c1c] border-white/5':'bg-slate-50 border-slate-200'}`}>
+                                <h3 className={`text-2xl font-black ${isDark?'text-white':'text-black'}`}>✏️ עריכת טיפ</h3>
+                                <button onClick={() => setEditingNote(null)} className={`p-2 rounded-full ${isDark?'hover:bg-white/5 text-gray-400':'hover:bg-slate-100 text-black'}`}><Icon name="x" size={24}/></button>
+                            </div>
+                            <div className="p-8"><AdminTipForm editingNote={editingNote} onSave={handleUpdateTip} onCancel={() => setEditingNote(null)} isDark={isDark}/></div>
+                        </div>
+                    </div>
+                )}
+
+                {/* MODAL - אישור מחיקה */}
+                {deleteTarget && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{background:'rgba(0,0,0,0.85)', backdropFilter:'blur(10px)'}} onClick={() => setDeleteTarget(null)}>
+                        <div className={`w-full max-w-sm rounded-[2rem] p-8 shadow-2xl border modal-enter ${isDark?'bg-[#1a1a1a] border-[#2a2a2a]':'bg-white border-slate-200'}`} onClick={e => e.stopPropagation()}>
+                            <h3 className={`text-xl font-black mb-3 text-center ${isDark?'text-white':'text-black'}`}>🗑️ מחיקת טיפ</h3>
+                            <p className={`text-sm text-center mb-6 ${isDark?'text-gray-400':'text-slate-600'}`}>האם אתה בטוח? פעולה זו אינה הפיכה.</p>
+                            <div className="flex gap-3">
+                                <button onClick={() => handleDeleteTip(deleteTarget)} className="flex-1 py-3 rounded-2xl bg-red-600 text-white font-bold hover:bg-red-700 transition-all active:scale-95">כן, מחק</button>
+                                <button onClick={() => setDeleteTarget(null)} className={`px-6 py-3 rounded-2xl font-bold border ${isDark?'border-[#2a2a2a] text-gray-400':'border-slate-300 text-slate-600'}`}>ביטול</button>
                             </div>
                         </div>
-                    )}
+                    </div>
+                )}
 
-                    {/* ═══ MODAL - עריכת טיפ ═══ */}
-                    {editingNote && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-16"
-                            style={{background:'rgba(0,0,0,0.85)', backdropFilter:'blur(10px)'}}
-                            onClick={() => setEditingNote(null)}>
-                            <div className={`w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden modal-enter border ${isDark?'bg-[#161616] border-white/10':'bg-white border-slate-200'}`}
-                                onClick={e => e.stopPropagation()}>
-                                <div className={`px-8 py-6 border-b flex items-center justify-between ${isDark?'bg-[#1c1c1c] border-white/5':'bg-slate-50 border-slate-200'}`}>
-                                    <h3 className={`text-2xl font-black ${isDark?'text-white':'text-black'}`}>✏️ עריכת טיפ</h3>
-                                    <button onClick={() => setEditingNote(null)} className={`p-2 rounded-full ${isDark?'hover:bg-white/5 text-gray-400':'hover:bg-slate-100 text-black'}`}>
-                                        <Icon name="x" size={24}/>
-                                    </button>
-                                </div>
-                                <div className="p-8">
-                                    <AdminTipForm editingNote={editingNote} onSave={handleUpdateTip} onCancel={() => setEditingNote(null)} isDark={isDark}/>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                {/* MODAL - כניסת מנהל */}
+                {showLogin && (
+                    <AdminLoginModal
+                        onSuccess={() => { setIsAdmin(true); setShowLogin(false); }}
+                        onClose={() => setShowLogin(false)}
+                        isDark={isDark}/>
+                )}
+            </div>
+        );
+    };
 
-                    {/* ═══ MODAL - אישור מחיקה ═══ */}
-                    {deleteTarget && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
-                            style={{background:'rgba(0,0,0,0.85)', backdropFilter:'blur(10px)'}}
-                            onClick={() => setDeleteTarget(null)}>
-                            <div className={`w-full max-w-sm rounded-[2rem] p-8 shadow-2xl border modal-enter ${isDark?'bg-[#1a1a1a] border-[#2a2a2a]':'bg-white border-slate-200'}`}
-                                onClick={e => e.stopPropagation()}>
-                                <h3 className={`text-xl font-black mb-3 text-center ${isDark?'text-white':'text-black'}`}>🗑️ מחיקת טיפ</h3>
-                                <p className={`text-sm text-center mb-6 ${isDark?'text-gray-400':'text-slate-600'}`}>האם אתה בטוח? פעולה זו אינה הפיכה.</p>
-                                <div className="flex gap-3">
-                                    <button onClick={() => handleDeleteTip(deleteTarget)}
-                                        className="flex-1 py-3 rounded-2xl bg-red-600 text-white font-bold hover:bg-red-700 transition-all active:scale-95">
-                                        כן, מחק
-                                    </button>
-                                    <button onClick={() => setDeleteTarget(null)}
-                                        className={`px-6 py-3 rounded-2xl font-bold border ${isDark?'border-[#2a2a2a] text-gray-400 hover:text-white':'border-slate-300 text-slate-600 hover:text-black'}`}>
-                                        ביטול
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* ═══ MODAL - כניסת מנהל ═══ */}
-                    {showLogin && (
-                        <AdminLoginModal onSuccess={() => { setIsAdmin(true); setShowLogin(false); }} onClose={() => setShowLogin(false)} isDark={isDark}/>
-                    )}
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
 </body>
 </html>
