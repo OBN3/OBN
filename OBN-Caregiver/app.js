@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, updateDoc, doc, setDoc, query, orderBy, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, updateDoc, doc, setDoc, query, orderBy, onSnapshot, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // === הגדרות Firebase ===
 const firebaseConfig = {
@@ -48,12 +48,29 @@ document.getElementById('btn-login').addEventListener('click', () => {
 
 document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
     if (user) {
-        // וידוא מורשים בצד הלקוח (הגנה נוספת מעבר ל-Rules)
-        const allowedEmails = ["veredt9@gmail.com", "brother2@gmail.com", "ofirbn@gmail.com"];
-        if (!allowedEmails.includes(user.email)) {
-            alert("אינך מורשה לגשת לאפליקציה זו.");
+        // וידוא מורשים בצד הלקוח - קריאה ישירה מ-Firestore
+        try {
+            const docRef = doc(db, `${basePath}/settings`, "permissions");
+            const docSnap = await getDoc(docRef);
+            let allowedEmails = [];
+
+            if (docSnap.exists()) {
+                allowedEmails = docSnap.data().emails || [];
+            } else {
+                // גיבוי זמני למקרה שהמסמך ב-Firestore טרם נוצר
+                allowedEmails = ["veredt9@gmail.com", "brother2@gmail.com", "ofirbn@gmail.com"];
+            }
+
+            if (!allowedEmails.includes(user.email)) {
+                alert("אינך מורשה לגשת לאפליקציה זו.");
+                signOut(auth);
+                return;
+            }
+        } catch (error) {
+            console.error("Error fetching permissions:", error);
+            alert("שגיאה בבדיקת הרשאות גישה. אנא נסה שוב.");
             signOut(auth);
             return;
         }
