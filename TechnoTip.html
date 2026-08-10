@@ -354,7 +354,7 @@
         const [pageSize, setPageSize]         = useState(24);
         const [isAdmin, setIsAdmin]           = useState(() => sessionStorage.getItem('obn-admin') === '1');
         const [showLogin, setShowLogin]       = useState(false);
-        const [showAdminPanel, setAdminPanel] = useState(false);
+
         const [editingNote, setEditingNote]   = useState(null);
         const [addingNew, setAddingNew]       = useState(false);
         const [deleteTarget, setDeleteTarget] = useState(null);
@@ -400,13 +400,12 @@
             const handler = (e) => {
                 if (e.key === 'Escape') {
                     if (activeNote)     setActiveNote(null);
-                    if (showAdminPanel) setAdminPanel(false);
                     if (showLogin)      setShowLogin(false);
                 }
             };
             document.addEventListener('keydown', handler);
             return () => document.removeEventListener('keydown', handler);
-        }, [activeNote, showAdminPanel, showLogin]);
+        }, [activeNote, showLogin]);
 
         const filteredNotes = useMemo(() =>
             notes.filter(note => {
@@ -473,7 +472,6 @@
             }
             sessionStorage.removeItem('obn-admin');
             setIsAdmin(false);
-            setAdminPanel(false);
         };
 
         if (isLoading) return (
@@ -503,15 +501,10 @@
                         <div className="flex items-center gap-3">
                             {isAdmin ? (
                                 <>
-                                    <button onClick={() => setAdminPanel(true)}
-                                        className={`p-2.5 rounded-xl border transition-all active:scale-90 ${isDark?'bg-yellow-500/10 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/20':'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'}`}
-                                        title="פאנל ניהול">
-                                        <Icon name="settings" size={20}/>
-                                    </button>
                                     <button onClick={handleAdminLogout}
-                                        className={`p-2.5 rounded-xl border transition-all active:scale-90 ${isDark?'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20':'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'}`}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all active:scale-90 text-xs font-bold ${isDark?'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20':'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'}`}
                                         title="יציאה ממצב אדמין">
-                                        <Icon name="log-out" size={18}/>
+                                        <Icon name="log-out" size={16}/> יציאה
                                     </button>
                                 </>
                             ) : (
@@ -724,38 +717,8 @@
                     </div>
                 )}
 
-                {/* ADMIN PANEL */}
-                {showAdminPanel && (
-                    <div className="fixed inset-0 z-50 flex justify-start" style={{background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)'}} onClick={() => setAdminPanel(false)}>
-                        <div className={`w-full max-w-xl h-full overflow-y-auto shadow-2xl border-l drawer-enter ${isDark?'bg-[#161616] border-[#2a2a2a]':'bg-white border-slate-200'}`} onClick={e => e.stopPropagation()}>
-                            <div className={`sticky top-0 px-8 py-6 border-b flex items-center justify-between z-10 ${isDark?'bg-[#1c1c1c] border-[#2a2a2a]':'bg-slate-50 border-slate-200'}`}>
-                                <h2 className={`text-2xl font-black ${isDark?'text-white':'text-black'}`}>⚙️ ניהול טיפים</h2>
-                                <button onClick={() => setAdminPanel(false)} className={`p-2 rounded-full ${isDark?'hover:bg-white/5 text-gray-400':'hover:bg-slate-100 text-black'}`}><Icon name="x" size={24}/></button>
-                            </div>
-                            <div className="p-8 space-y-4">
-                                <button onClick={() => { setAddingNew(true); setAdminPanel(false); }}
-                                    className={`w-full py-4 rounded-2xl font-black text-lg border-2 border-dashed transition-all ${isDark?'border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/10':'border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
-                                    + הוסף טיפ חדש
-                                </button>
-                                <div className={`text-xs font-bold uppercase tracking-widest ${isDark?'text-gray-600':'text-slate-400'}`}>{notes.length} טיפים במאגר</div>
-                                {notes.map(note => (
-                                    <div key={note.id} className={`p-4 rounded-2xl border flex items-start justify-between gap-4 ${isDark?'bg-[#1e1e1e] border-[#2a2a2a]':'bg-white border-slate-200'}`}>
-                                        <div className="flex-1 min-w-0">
-                                            <p className={`font-bold text-sm truncate ${isDark?'text-white':'text-black'}`}>{note.title}</p>
-                                            <p className={`text-xs mt-0.5 ${isDark?'text-gray-600':'text-slate-400'}`}>{note.date}</p>
-                                        </div>
-                                        <div className="flex gap-2 shrink-0">
-                                            <button onClick={() => { setEditingNote(note); setAdminPanel(false); }} className={`p-2 rounded-xl ${isDark?'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20':'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'}`}><Icon name="pencil" size={14}/></button>
-                                            <button onClick={() => { setDeleteTarget(note.id); setAdminPanel(false); }} className={`p-2 rounded-xl ${isDark?'bg-red-500/10 text-red-400 hover:bg-red-500/20':'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'}`}><Icon name="trash-2" size={14}/></button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                )}
 
-                {/* MODAL - הוספה */}
+                                {/* MODAL - הוספה */}
                 {addingNew && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-16" style={{background:'rgba(0,0,0,0.85)', backdropFilter:'blur(10px)'}} onClick={() => setAddingNew(false)}>
                         <div className={`w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden modal-enter border ${isDark?'bg-[#161616] border-white/10':'bg-white border-slate-200'}`} onClick={e => e.stopPropagation()}>
