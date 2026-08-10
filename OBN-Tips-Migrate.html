@@ -43,7 +43,7 @@
     const STORAGE_KEYS = {
         CONFIG: 'obn_migrator_config',
         EMAIL:  'obn_migrator_email',
-        PASS:   'obn_migrator_pass'
+        // PASS removed — never store passwords in localStorage
     };
 
     const FIRESTORE_PATH = ['artifacts', 'obn-tips-v1', 'public', 'data', 'techtips'];
@@ -156,10 +156,10 @@
         useEffect(() => {
             const c = localStorage.getItem(STORAGE_KEYS.CONFIG);
             const e = localStorage.getItem(STORAGE_KEYS.EMAIL);
-            const p = localStorage.getItem(STORAGE_KEYS.PASS);
+            // const p = localStorage.getItem(STORAGE_KEYS.PASS); // removed for security
             if (c) setConfigInput(c);
             if (e) setEmail(e);
-            if (p) setPassword(p);
+            // Password intentionally NOT loaded from storage (security)
         }, []);
 
         // ── Log helper ───────────────────────────────────────────────────────────
@@ -202,7 +202,7 @@
             }
             localStorage.setItem(STORAGE_KEYS.CONFIG, configInput);
             localStorage.setItem(STORAGE_KEYS.EMAIL,  email);
-            localStorage.setItem(STORAGE_KEYS.PASS,   password);
+            // ⚠️ Password NOT saved to localStorage for security
             if (showFeedback) {
                 setSaveStatus(true);
                 setTimeout(() => setSaveStatus(false), 2000);
