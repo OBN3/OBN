@@ -5,11 +5,11 @@ import {
 import {
     getFirestore,
     collection,
-    getDocs,
     doc,
     getDoc,
     updateDoc,
-    deleteField
+    deleteField,
+    onSnapshot          // ✅ תיקון 1: החלפת getDocs ב-onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 import {
@@ -46,6 +46,9 @@ let currentTableData = [];
 
 let isLoggingOut = false;
 let showingDeleted = false;
+
+// ✅ תיקון 2: שמירת ה-unsubscribe כדי לנקות מאזין בעת הצורך
+let submissionsUnsubscribe = null;
 
 let currentDateFilter = {
     type: "all",
@@ -740,87 +743,102 @@ function formatDate(timestamp) {
 
 
 // ===================================================
-// טעינת submissions
+// ✅ תיקון 3: טעינת submissions עם onSnapshot
+//    במקום getDocs — מאזין בזמן אמת,
+//    מתאושש אוטומטית מנפילות רשת,
+//    ומציג כפתור "נסה שוב" בעת שגיאה
 // ===================================================
 
-async function fetchSubmissions() {
+function fetchSubmissions() {
 
     const loadingMsg =
-        document.getElementById(
-            "loadingMsg"
-        );
-
+        document.getElementById("loadingMsg");
 
     const table =
-        document.getElementById(
-            "submissionsTable"
-        );
+        document.getElementById("submissionsTable");
 
 
     if (loadingMsg) {
         loadingMsg.style.display = "block";
+        loadingMsg.innerHTML = "⏳ טוען נתונים מ-Firebase...";
     }
-
 
     if (table) {
         table.style.display = "none";
     }
 
+    // ביטול מאזין קודם אם קיים (מניעת כפילויות)
+    if (submissionsUnsubscribe) {
+        submissionsUnsubscribe();
+        submissionsUnsubscribe = null;
+    }
 
-    try {
+    submissionsUnsubscribe = onSnapshot(
+        collection(db, "submissions"),
 
-        const querySnapshot =
-            await getDocs(
-                collection(
-                    db,
-                    "submissions"
-                )
-            );
+        // ✅ קולבק הצלחה: מופעל מיד בטעינה ובכל שינוי בנתונים
+        (querySnapshot) => {
 
+            submissionsData = [];
 
-        submissionsData = [];
-
-
-        querySnapshot.forEach(
-            (docSnap) => {
-
+            querySnapshot.forEach((docSnap) => {
                 submissionsData.push({
-
                     id: docSnap.id,
-
                     ...docSnap.data()
                 });
+            });
+
+            applyFiltersAndRender();
+
+            if (loadingMsg) {
+                loadingMsg.style.display = "none";
             }
-        );
 
+            if (table) {
+                table.style.display = "table";
+            }
+        },
 
-        applyFiltersAndRender();
+        // ✅ קולבק שגיאה: מציג הודעה + כפתור רענון
+        (error) => {
 
+            console.error(
+                "Error fetching submissions:",
+                error
+            );
 
-        if (loadingMsg) {
-            loadingMsg.style.display = "none";
+            if (loadingMsg) {
+                loadingMsg.style.display = "block";
+                loadingMsg.innerHTML = `
+                    <div style="color:#b91c1c; font-size:16px; margin-bottom:12px;">
+                        ❌ שגיאה בטעינת הנתונים
+                    </div>
+                    <div style="color:#6b7280; font-size:13px; margin-bottom:16px;">
+                        ${error.message || "בדוק את חיבור האינטרנט ונסה שוב."}
+                    </div>
+                    <button
+                        onclick="location.reload()"
+                        style="
+                            padding: 10px 20px;
+                            background: #3b82f6;
+                            color: white;
+                            border: none;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            font-size: 15px;
+                            font-weight: bold;
+                        "
+                    >
+                        🔄 נסה שוב
+                    </button>
+                `;
+            }
+
+            if (table) {
+                table.style.display = "none";
+            }
         }
-
-
-        if (table) {
-            table.style.display = "table";
-        }
-
-
-    } catch (error) {
-
-        console.error(
-            "Error fetching submissions:",
-            error
-        );
-
-
-        if (loadingMsg) {
-
-            loadingMsg.innerText =
-                "שגיאה בטעינת הנתונים.";
-        }
-    }
+    );
 }
 
 
@@ -1041,24 +1059,20 @@ function updateStatistics(
             total;
     }
 
-
     if (statDeleted) {
         statDeleted.innerText =
             deleted;
     }
-
 
     if (statJudged) {
         statJudged.innerText =
             judged;
     }
 
-
     if (statJudges) {
         statJudges.innerText =
             uniqueJudges.size;
     }
-
 
     if (statsContainer) {
         statsContainer.style.display =
@@ -1080,11 +1094,9 @@ function renderTableRows(
             "tableBody"
         );
 
-
     if (!tbody) {
         return;
     }
-
 
     tbody.innerHTML = "";
 
@@ -1092,9 +1104,7 @@ function renderTableRows(
     if (tableData.length === 0) {
 
         tbody.innerHTML = `
-
             <tr>
-
                 <td
                     colspan="15"
                     style="
@@ -1105,9 +1115,7 @@ function renderTableRows(
                     אין נתונים להצגה
                     בחתך התאריכים הנבחר
                 </td>
-
             </tr>
-
         `;
 
         return;
@@ -1120,18 +1128,15 @@ function renderTableRows(
             const scores =
                 data.scores || {};
 
-
             const totalScore =
                 calculateTotalScore(
                     data
                 );
 
-
             const submitDate =
                 formatDate(
                     data.timestamp
                 );
-
 
             const evaluationEmails =
                 data.evaluations
@@ -1140,24 +1145,19 @@ function renderTableRows(
                     )
                     : [];
 
-
             const judgeCount =
                 evaluationEmails.length;
 
 
             let statusHtml =
                 judgeCount > 0
-
                     ? `
-
                         <span
                             class="status judged"
                         >
                             דורג (${judgeCount})
                         </span>
-
                         <br>
-
                         <small
                             style="
                                 color:#6b7280;
@@ -1167,25 +1167,19 @@ function renderTableRows(
                             ע"י:
                             ${evaluationEmails.join(", ")}
                         </small>
-
                     `
-
                     : `
-
                         <span
                             class="status pending"
                         >
                             ממתין
                         </span>
-
                     `;
 
 
             let pdfHtml =
                 data.consentPdfUrl
-
                     ? `
-
                         <a
                             href="${data.consentPdfUrl}"
                             target="_blank"
@@ -1197,11 +1191,8 @@ function renderTableRows(
                         >
                             📄 אישור PDF
                         </a>
-
                     `
-
                     : `
-
                         <span
                             style="
                                 color:#94a3b8;
@@ -1210,7 +1201,6 @@ function renderTableRows(
                         >
                             אין
                         </span>
-
                     `;
 
 
@@ -1220,41 +1210,33 @@ function renderTableRows(
                     200
                 );
 
-
             const largeUrl =
                 getDirectImageUrl(
                     data.imageUrl,
                     1920
                 );
 
-
             const pTitle =
                 data.title || "";
 
-
             const fName =
                 data.firstName || "";
-
 
             const lName =
                 data.lastName ||
                 data.photographerName ||
                 "";
 
-
             const fullDisplayName =
                 `${pTitle} ${fName} ${lName}`
                     .trim();
-
 
             const wpParts =
                 (data.workplace || "")
                     .split(" - ");
 
-
             const baseWorkplace =
                 wpParts[0] || "";
-
 
             const subWorkplace =
                 wpParts.length > 1
@@ -1265,22 +1247,18 @@ function renderTableRows(
             let personReadable =
                 "ללא זיהוי";
 
-
             if (
                 data.identifiablePerson ===
                 "staff"
             ) {
-
                 personReadable =
                     "עובדי מוסד";
             }
-
 
             if (
                 data.identifiablePerson ===
                 "patients"
             ) {
-
                 personReadable =
                     "מטופלים";
             }
@@ -1288,9 +1266,7 @@ function renderTableRows(
 
             let actionBtnHtml =
                 showingDeleted
-
                     ? `
-
                         <button
                             class="action-btn btn-restore-row"
                             onclick="
@@ -1302,11 +1278,8 @@ function renderTableRows(
                         >
                             שחזר ⟲
                         </button>
-
                     `
-
                     : `
-
                         <button
                             class="action-btn btn-delete-row"
                             onclick="
@@ -1318,7 +1291,6 @@ function renderTableRows(
                         >
                             מחק 🗑️
                         </button>
-
                     `;
 
 
@@ -1328,7 +1300,6 @@ function renderTableRows(
             ) {
 
                 actionBtnHtml += `
-
                     <button
                         class="action-btn"
                         onclick="
@@ -1344,7 +1315,6 @@ function renderTableRows(
                     >
                         🔄 איפוס
                     </button>
-
                 `;
             }
 
@@ -1354,9 +1324,7 @@ function renderTableRows(
                     "tr"
                 );
 
-
             tr.innerHTML = `
-
                 <td>
                     <span
                         style="
@@ -1368,40 +1336,32 @@ function renderTableRows(
                     </span>
                 </td>
 
-
                 <td>
-
                     <img
                         src="${thumbUrl}"
                         class="thumbnail"
                         alt="תמונה"
                         title="לחץ להגדלה"
+                        loading="lazy"
                         onclick="
                             window.openModal(
                                 '${largeUrl}'
                             )
                         "
                     >
-
                 </td>
 
-
                 <td>
-
                     <strong>
                         ${fullDisplayName}
                     </strong>
-
                 </td>
-
 
                 <td>
                     ${baseWorkplace}
                 </td>
 
-
                 <td>
-
                     <span
                         style="
                             color:#6b7280;
@@ -1410,9 +1370,7 @@ function renderTableRows(
                     >
                         ${subWorkplace}
                     </span>
-
                 </td>
-
 
                 <td>
                     ${
@@ -1422,9 +1380,7 @@ function renderTableRows(
                     }
                 </td>
 
-
                 <td>
-
                     <span
                         style="
                             background-color:#f1f5f9;
@@ -1435,53 +1391,41 @@ function renderTableRows(
                     >
                         ${personReadable}
                     </span>
-
                 </td>
-
 
                 <td>
                     ${scores.relevance || 0}
                 </td>
 
-
                 <td>
                     ${scores.artistry || 0}
                 </td>
-
 
                 <td>
                     ${scores.quality || 0}
                 </td>
 
-
                 <td>
                     ${scores.authenticity || 0}
                 </td>
 
-
                 <td>
-
                     <strong>
                         ${totalScore}
                     </strong>
-
                 </td>
-
 
                 <td>
                     ${pdfHtml}
                 </td>
 
-
                 <td>
                     ${statusHtml}
                 </td>
 
-
                 <td>
                     ${actionBtnHtml}
                 </td>
-
             `;
 
 
@@ -1542,18 +1486,17 @@ window.toggleDeleteStatus =
                 }
             );
 
-
+            // ✅ onSnapshot יעדכן את submissionsData אוטומטית —
+            //    אין צורך לעדכן ידנית, אבל נשמר כגיבוי מיידי ל-UI
             const record =
                 submissionsData.find(
                     d => d.id === id
                 );
 
-
             if (record) {
                 record.isDeleted =
                     isDeleted;
             }
-
 
             applyFiltersAndRender();
 
@@ -1617,12 +1560,11 @@ window.resetSubmissionScores =
                 }
             );
 
-
+            // ✅ onSnapshot יעדכן אוטומטית, אך מעדכנים גם מקומית למיידיות
             const record =
                 submissionsData.find(
                     d => d.id === docId
                 );
-
 
             if (record) {
 
@@ -1634,9 +1576,7 @@ window.resetSubmissionScores =
                     "pending";
             }
 
-
             applyFiltersAndRender();
-
 
             alert(
                 "הדירוגים אופסו בהצלחה!"
@@ -2161,6 +2101,7 @@ function exportToExcel() {
 
     const filterData =
         judgesData.map(row => ({
+
             "שופט":
                 row["שופט"],
 
@@ -2322,6 +2263,11 @@ if (logoutBtn) {
 
             isLoggingOut = true;
 
+            // ✅ ניקוי מאזין ה-onSnapshot לפני התנתקות
+            if (submissionsUnsubscribe) {
+                submissionsUnsubscribe();
+                submissionsUnsubscribe = null;
+            }
 
             signOut(auth)
                 .then(() => {

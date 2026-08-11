@@ -16,7 +16,7 @@
   --shadow:0 4px 24px rgba(0,0,0,.08); --shadow-sm:0 1px 4px rgba(0,0,0,.06);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;}
+body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;overflow-x:hidden;}
 button{font-family:'Heebo',sans-serif;cursor:pointer;border:none;outline:none;}
 input,textarea,select{font-family:'Heebo',sans-serif;outline:none;direction:rtl;}
 
@@ -192,14 +192,17 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   font-size:.72rem;padding:2px 8px;border-radius:10px;white-space:nowrap;}
 .task-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:.81rem;color:var(--text2);margin-bottom:8px;}
 .task-meta span{display:flex;align-items:center;gap:4px;}
-.task-note{font-size:.88rem;color:var(--text2);line-height:1.55;margin-bottom:8px;}
+.task-note{font-size:.88rem;color:var(--text2);line-height:1.55;margin-bottom:8px;overflow-wrap:break-word;word-break:break-word;}
 .task-followup{background:#fefce8;border-radius:var(--radius-sm);padding:7px 11px;
-  font-size:.85rem;color:#713f12;margin-bottom:10px;border-right:3px solid var(--warning);}
+  font-size:.85rem;color:#713f12;margin-bottom:10px;border-right:3px solid var(--warning);overflow-wrap:break-word;word-break:break-word;}
 .task-actions{display:flex;gap:6px;flex-wrap:wrap;
   padding-top:10px;border-top:1px solid var(--border);margin-top:4px;}
 .comments-section{margin-top:12px;border-top:1px solid var(--border);padding-top:10px;}
 .comment{background:var(--bg);border-radius:var(--radius-sm);
-  padding:7px 11px;margin-bottom:5px;font-size:.84rem;}
+  padding:7px 11px;margin-bottom:5px;font-size:.84rem;overflow-wrap:break-word;word-break:break-word;}
+/* קישורים אוטומטיים */
+.auto-link{color:var(--primary);text-decoration:underline;font-weight:600;}
+.auto-link:hover{color:var(--primary-dark);}
 .comment strong{color:var(--primary);}
 .comment-input-row{display:flex;gap:7px;margin-top:7px;}
 .comment-input-row input{flex:1;border:1.5px solid var(--border);border-radius:var(--radius-sm);
@@ -855,6 +858,28 @@ function esc(s) {
     .replace(/'/g, "&#39;");
 }
 
+/* linkify – ממיר URL-ים בטקסט לקישורים לחיצים (15 תווים + "...") */
+function linkify(text) {
+  if (!text) return "";
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const result = [];
+  let lastIndex = 0;
+  let match;
+  while ((match = urlRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      result.push(esc(text.slice(lastIndex, match.index)));
+    }
+    const url = match[0];
+    const display = url.length > 25 ? url.slice(0, 25) + "…" : url;
+    result.push(`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" class="auto-link">${esc(display)}</a>`);
+    lastIndex = match.index + url.length;
+  }
+  if (lastIndex < text.length) {
+    result.push(esc(text.slice(lastIndex)));
+  }
+  return result.join("");
+}
+
 function toast(msg, type) {
   const t = document.createElement("div");
   t.className = "toast " + (type || "");
@@ -1074,7 +1099,7 @@ function renderPatientCard() {
 
   function renderItem(label, val, isSecret = false) {
     const hasVal     = val && String(val).trim();
-    const displayVal = hasVal ? esc(val) : "לא הוזן";
+    const displayVal = hasVal ? linkify(val) : "לא הוזן";
     const cls = "info-val" +
       (hasVal ? "" : " empty-val") +
       (isSecret && hasVal ? " blur-reveal" : "");
@@ -1392,8 +1417,8 @@ function renderTaskCardHTML(t) {
       ${isDone  ? `<span>✅ הושלם ע"י <strong>${esc(t.claimedByName || "")}</strong></span>` : ""}
       ${isDel && t.deletedByName ? `<span>🗑️ נמחק ע"י ${esc(t.deletedByName)}</span>` : ""}
     </div>
-    ${t.statusNote ? `<div class="task-note">${esc(t.statusNote)}</div>` : ""}
-    ${t.followUp   ? `<div class="task-followup">🔄 המשך הטיפול: ${esc(t.followUp)}</div>` : ""}
+    ${t.statusNote ? `<div class="task-note">${linkify(t.statusNote)}</div>` : ""}
+    ${t.followUp   ? `<div class="task-followup">🔄 המשך הטיפול: ${linkify(t.followUp)}</div>` : ""}
     <div class="task-actions">
       ${canClaim   ? `<button class="btn btn-warning btn-sm" id="claim-${uid}">🖐 אני לוקח</button>` : ""}
       ${canUnclaim ? `<button class="btn btn-outline btn-sm" id="unclaim-${uid}">↩️ בטל לקיחה</button>` : ""}
@@ -1410,7 +1435,7 @@ function renderTaskCardHTML(t) {
     ${!isDel ? `<div class="comments-section">
       <strong style="font-size:.78rem;color:var(--text2);">💬 הערות (${comments.length})</strong>
       ${comments.map(c => `<div class="comment">
-        <strong>${esc(c.name)}</strong>: ${esc(c.text)}
+        <strong>${esc(c.name)}</strong>: ${linkify(c.text)}
         <span style="color:var(--text2);font-size:.73rem;"> · ${esc(c.date || "")}</span>
       </div>`).join("")}
       <div class="comment-input-row">
@@ -1611,7 +1636,7 @@ function renderExpenses() {
       <div class="expense-card">
         <div class="expense-amount">₪${parseFloat(e.amount || 0).toFixed(0)}</div>
         <div class="expense-info">
-          <div class="title">${esc(e.description)}</div>
+          <div class="title" style="overflow-wrap:break-word;word-break:break-word;">${linkify(e.description)}</div>
           <div class="meta">שילם: <strong>${esc(e.paidByName)}</strong> · ${e.date ? fmtDate(e.date) : ""}</div>
           ${e.taskTitle ? `<div class="meta">🔗 ${esc(e.taskTitle)}</div>` : ""}
         </div>
