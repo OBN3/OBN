@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- פתרון לשגיאת ה-CSP: מתן הרשאה ל-Tailwind CDN לרוץ בצורה תקינה -->
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob:; frame-src *; style-src * 'unsafe-inline';">
     <title>Pika Studio Pro - Vercel Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -91,12 +93,10 @@
     </div>
 
     <script>
-        // שיפור זיהוי הסביבה המקומית
         const isLocal = window.location.hostname === 'localhost' || 
                         window.location.hostname === '127.0.0.1' || 
                         window.location.protocol === 'file:';
         
-        // שינוי נתיב הגישור כדי למנוע התנגשות עם פונקציות השרת של Vercel
         const API_BASE = isLocal ? 'https://api.dev.pika.art' : '/proxy/pika';
 
         let modelsDB = { 'image-to-video': [], 'text-to-video': [], 'text-to-image': [], 'image-to-image': [] };
@@ -108,6 +108,10 @@
             try {
                 const response = await fetch(`${API_BASE}/catalog/apis`, { signal: controller.signal });
                 clearTimeout(timeoutId);
+                
+                if (response.status === 404 && !isLocal) {
+                    throw new Error('VERCEL_404');
+                }
                 
                 if (!response.ok) throw new Error(`שגיאת שרת: ${response.status}`);
                 
@@ -135,7 +139,9 @@
                 const alertBox = document.getElementById('systemAlert');
                 const alertText = document.getElementById('systemAlertText');
                 
-                if (isLocal) {
+                if (error.message === 'VERCEL_404') {
+                    alertText.innerHTML = '<strong>שגיאת הגדרות (404):</strong> Vercel לא מצא את הנתיב /proxy/pika. זה קורה אם הקובץ <code>vercel.json</code> לא נמצא בתיקיית השורש (Root) של הפרויקט, או ש-Vercel לא קרא אותו. ודא ששני הקבצים מונחים יחד באותה תיקייה בדיוק בעת ההעלאה.';
+                } else if (isLocal) {
                     alertText.innerHTML = '<strong>שגיאת CORS/תקשורת מקומית:</strong> הדפדפן חסם את משיכת הקטלוג בגלל שהקובץ רץ על המחשב שלך.<br><strong>כדי שהכל יעבוד, העלה את התיקייה ל-Vercel בדיוק כפי שהוסבר.</strong>';
                 } else {
                     alertText.innerText = `שגיאה בתקשורת (${error.message}). נטענה רשימת גיבוי מצומצמת.`;
@@ -360,3 +366,27 @@
     </script>
 </body>
 </html>
+"""
+
+with open("index.html", "w", encoding="utf-8") as f:
+    f.write(html_code)
+
+vercel_json = """{
+  "rewrites": [
+    {
+      "source": "/proxy/pika/:match*",
+      "destination": "https://api.dev.pika.art/:match*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob:; frame-src *; style-src * 'unsafe-inline';"
+        }
+      ]
+    }
+  ]
+}
