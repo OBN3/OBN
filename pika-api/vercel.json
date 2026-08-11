@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/api/pika/:match*",
+      "source": "/proxy/pika/:match*",
       "destination": "https://api.dev.pika.art/:match*"
     }
   ]

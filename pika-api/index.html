@@ -91,18 +91,19 @@
     </div>
 
     <script>
-        // ב-Vercel, נשתמש בניתוב יחסי שיוגדר ב-vercel.json 
-        // אם רץ מקומית בלי שרת, זה ינסה לפנות ישירות ל-Pika
-        const API_BASE = window.location.hostname === 'localhost' || window.location.protocol === 'file:' 
-            ? 'https://api.dev.pika.art' 
-            : '/api/pika';
+        // שיפור זיהוי הסביבה המקומית
+        const isLocal = window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1' || 
+                        window.location.protocol === 'file:';
+        
+        // שינוי נתיב הגישור כדי למנוע התנגשות עם פונקציות השרת של Vercel
+        const API_BASE = isLocal ? 'https://api.dev.pika.art' : '/proxy/pika';
 
         let modelsDB = { 'image-to-video': [], 'text-to-video': [], 'text-to-image': [], 'image-to-image': [] };
 
         async function fetchLiveCatalog() {
-            // הוספת timeout למקרה שהבקשה נתקעת (כמו שקרה עם allorigins)
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 שניות
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
 
             try {
                 const response = await fetch(`${API_BASE}/catalog/apis`, { signal: controller.signal });
@@ -131,14 +132,11 @@
             } catch (error) {
                 console.warn('שגיאה במשיכת הקטלוג:', error);
                 
-                // הצגת הודעת שגיאה ברורה למשתמש ב-UI
                 const alertBox = document.getElementById('systemAlert');
                 const alertText = document.getElementById('systemAlertText');
                 
-                if (error.name === 'AbortError') {
-                    alertText.innerText = 'הבקשה לקטלוג לקחה יותר מדי זמן (Timeout). נטענה רשימת גיבוי מצומצמת.';
-                } else if (window.location.protocol === 'file:') {
-                    alertText.innerHTML = '<strong>שגיאת CORS:</strong> הדפדפן חסם את הגישה לשרתי Pika כי הקובץ רץ מקומית (file://). נטענה רשימת גיבוי.<br><strong>כדי לראות את כל 117 המודלים, עליך להעלות את הקובץ ל-Vercel עם ההגדרות שסופקו.</strong>';
+                if (isLocal) {
+                    alertText.innerHTML = '<strong>שגיאת CORS/תקשורת מקומית:</strong> הדפדפן חסם את משיכת הקטלוג בגלל שהקובץ רץ על המחשב שלך.<br><strong>כדי שהכל יעבוד, העלה את התיקייה ל-Vercel בדיוק כפי שהוסבר.</strong>';
                 } else {
                     alertText.innerText = `שגיאה בתקשורת (${error.message}). נטענה רשימת גיבוי מצומצמת.`;
                 }
@@ -317,7 +315,7 @@
                             headers: { 'X-API-Key': apiKey }
                         });
                         
-                        if (!contentRes.ok) throw new Error('שגיאה במשיכת התוכן السופי.');
+                        if (!contentRes.ok) throw new Error('שגיאה במשיכת התוכן הסופי.');
                         const contentData = await contentRes.json();
                         const mediaUrl = contentData.url;
                         
