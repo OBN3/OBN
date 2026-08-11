@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/pika/:match*",
+      "destination": "https://api.dev.pika.art/:match*"
+    }
+  ]
+}

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pika Studio Pro - Vercel Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f9fafb; }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="p-4 md:p-8 text-gray-800">
+    <div class="max-w-2xl mx-auto bg-white p-6 md:p-8 rounded-2xl shadow-xl border border-gray-100">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-2">
+                Pika Studio Pro
+            </h1>
+            <p class="text-gray-500 text-sm">מוכן לפריסה ב-Vercel</p>
+        </div>
+        
+        <!-- התראות מערכת -->
+        <div id="systemAlert" class="mb-6 p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm hidden font-medium flex items-start gap-3">
+            <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            <span id="systemAlertText"></span>
+        </div>
+
+        <div class="mb-6 bg-gray-50 p-5 rounded-xl border border-gray-200">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">1. מה תרצה ליצור?</label>
+            <div class="grid grid-cols-2 gap-3">
+                <button type="button" class="task-btn w-full py-2 px-4 border-2 border-blue-500 bg-blue-50 text-blue-700 rounded-lg font-medium transition-all" data-task="image-to-video">תמונה לוידאו <span id="count-i2v" class="text-xs font-bold text-gray-400"></span></button>
+                <button type="button" class="task-btn w-full py-2 px-4 border-2 border-transparent bg-white text-gray-600 rounded-lg font-medium hover:bg-gray-100 transition-all shadow-sm" data-task="text-to-video">טקסט לוידאו <span id="count-t2v" class="text-xs font-bold text-gray-400"></span></button>
+                <button type="button" class="task-btn w-full py-2 px-4 border-2 border-transparent bg-white text-gray-600 rounded-lg font-medium hover:bg-gray-100 transition-all shadow-sm" data-task="text-to-image">טקסט לתמונה <span id="count-t2i" class="text-xs font-bold text-gray-400"></span></button>
+                <button type="button" class="task-btn w-full py-2 px-4 border-2 border-transparent bg-white text-gray-600 rounded-lg font-medium hover:bg-gray-100 transition-all shadow-sm" data-task="image-to-image">תמונה לתמונה <span id="count-i2i" class="text-xs font-bold text-gray-400"></span></button>
+            </div>
+            <input type="hidden" id="currentTask" value="image-to-video">
+        </div>
+
+        <div class="mb-6 bg-purple-50/50 p-5 rounded-xl border border-purple-100 relative">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">2. בחר מודל</label>
+            <div id="catalogLoader" class="absolute top-5 left-5 text-purple-500 text-sm font-semibold flex items-center gap-2">
+                מושך קטלוג... <div class="loader !border-purple-200 !border-t-purple-600 !w-4 !h-4" style="display:block"></div>
+            </div>
+            <select id="modelSelect" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all bg-white cursor-pointer" disabled>
+                <option>טוען נתונים...</option>
+            </select>
+        </div>
+
+        <div class="mb-6 bg-blue-50/50 p-5 rounded-xl border border-blue-100">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">3. מפתח API (מ- Pika)</label>
+            <input type="password" id="apiKey" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all" placeholder="sk-...">
+        </div>
+
+        <div id="imageUploadSection" class="mb-6 transition-all duration-300">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">4. העלאת תמונת מקור</label>
+            <div class="flex items-center justify-center w-full">
+                <label for="imageInput" class="flex flex-col items-center justify-center w-full h-40 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-all">
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg class="w-8 h-8 mb-3 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                        </svg>
+                        <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">לחץ כאן</span> או גרור תמונה</p>
+                    </div>
+                    <input id="imageInput" type="file" class="hidden" accept="image/*" />
+                </label>
+            </div>
+            <div id="imagePreviewContainer" class="mt-4 hidden relative">
+                <img id="imagePreview" class="w-full max-h-64 object-contain rounded-lg border shadow-sm" alt="תצוגה מקדימה">
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <label id="promptLabel" class="block text-sm font-semibold text-gray-700 mb-2">5. תיאור היצירה (Prompt)</label>
+            <textarea id="promptInput" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all resize-none" placeholder="הכנס תיאור באנגלית..."></textarea>
+        </div>
+
+        <button id="generateBtn" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3.5 px-4 rounded-xl flex justify-center items-center gap-3 transition-all transform shadow-md" disabled>
+            <span id="btnText">אנא המתן לטעינת מודלים...</span>
+            <div id="loadingSpinner" class="loader"></div>
+        </button>
+
+        <div id="statusMessage" class="mt-4 text-center text-sm font-medium text-gray-600 min-h-[20px]"></div>
+
+        <div id="resultContainer" class="mt-8 hidden flex-col items-center border-t border-gray-200 pt-6">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">היצירה שלך מוכנה! 🎉</h2>
+            <video id="outputVideo" controls autoplay loop class="w-full rounded-xl shadow-lg border border-gray-200 hidden"></video>
+            <img id="outputImage" class="w-full rounded-xl shadow-lg border border-gray-200 hidden" alt="תוצאה מוכנה">
+            <a id="downloadBtn" target="_blank" class="mt-4 text-blue-600 font-semibold underline text-sm">פתח/הורד את הקובץ</a>
+        </div>
+    </div>
+
+    <script>
+        // ב-Vercel, נשתמש בניתוב יחסי שיוגדר ב-vercel.json 
+        // אם רץ מקומית בלי שרת, זה ינסה לפנות ישירות ל-Pika
+        const API_BASE = window.location.hostname === 'localhost' || window.location.protocol === 'file:' 
+            ? 'https://api.dev.pika.art' 
+            : '/api/pika';
+
+        let modelsDB = { 'image-to-video': [], 'text-to-video': [], 'text-to-image': [], 'image-to-image': [] };
+
+        async function fetchLiveCatalog() {
+            // הוספת timeout למקרה שהבקשה נתקעת (כמו שקרה עם allorigins)
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 שניות
+
+            try {
+                const response = await fetch(`${API_BASE}/catalog/apis`, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) throw new Error(`שגיאת שרת: ${response.status}`);
+                
+                const data = await response.json();
+                modelsDB = { 'image-to-video': [], 'text-to-video': [], 'text-to-image': [], 'image-to-image': [] };
+                
+                const apiList = Array.isArray(data) ? data : (data.apis || data.data || []);
+                apiList.forEach(api => {
+                    const id = api.api_id || api.id;
+                    const name = api.display_name || id;
+                    if (id.endsWith('image-to-video')) modelsDB['image-to-video'].push({path: id, name: name});
+                    else if (id.endsWith('text-to-video')) modelsDB['text-to-video'].push({path: id, name: name});
+                    else if (id.endsWith('text-to-image')) modelsDB['text-to-image'].push({path: id, name: name});
+                    else if (id.endsWith('image-to-image')) modelsDB['image-to-image'].push({path: id, name: name});
+                });
+                
+                document.getElementById('count-i2v').innerText = `(${modelsDB['image-to-video'].length})`;
+                document.getElementById('count-t2v').innerText = `(${modelsDB['text-to-video'].length})`;
+                document.getElementById('count-t2i').innerText = `(${modelsDB['text-to-image'].length})`;
+                document.getElementById('count-i2i').innerText = `(${modelsDB['image-to-image'].length})`;
+
+            } catch (error) {
+                console.warn('שגיאה במשיכת הקטלוג:', error);
+                
+                // הצגת הודעת שגיאה ברורה למשתמש ב-UI
+                const alertBox = document.getElementById('systemAlert');
+                const alertText = document.getElementById('systemAlertText');
+                
+                if (error.name === 'AbortError') {
+                    alertText.innerText = 'הבקשה לקטלוג לקחה יותר מדי זמן (Timeout). נטענה רשימת גיבוי מצומצמת.';
+                } else if (window.location.protocol === 'file:') {
+                    alertText.innerHTML = '<strong>שגיאת CORS:</strong> הדפדפן חסם את הגישה לשרתי Pika כי הקובץ רץ מקומית (file://). נטענה רשימת גיבוי.<br><strong>כדי לראות את כל 117 המודלים, עליך להעלות את הקובץ ל-Vercel עם ההגדרות שסופקו.</strong>';
+                } else {
+                    alertText.innerText = `שגיאה בתקשורת (${error.message}). נטענה רשימת גיבוי מצומצמת.`;
+                }
+                
+                alertBox.classList.remove('hidden');
+
+                // טעינת רשימת הגיבוי
+                modelsDB = {
+                    'image-to-video': [{ path: 'pika/pika-2.5/image-to-video', name: 'Pika 2.5 (גיבוי)' }, { path: 'kling/kling-3.0/image-to-video', name: 'Kling 3.0 (גיבוי)' }],
+                    'text-to-video': [{ path: 'pika/pika-2.5/text-to-video', name: 'Pika 2.5 (גיבוי)' }, { path: 'kling/kling-3.0/text-to-video', name: 'Kling 3.0 (גיבוי)' }],
+                    'text-to-image': [{ path: 'openai/gpt-image-2/text-to-image', name: 'GPT Image 2 (גיבוי)' }],
+                    'image-to-image': [{ path: 'openai/gpt-image-2/image-to-image', name: 'GPT Image 2 (גיבוי)' }]
+                };
+            } finally {
+                document.getElementById('catalogLoader').style.display = 'none';
+                document.getElementById('modelSelect').disabled = false;
+                document.getElementById('generateBtn').disabled = false;
+                updateUIForTask(document.getElementById('currentTask').value);
+            }
+        }
+
+        const savedKey = localStorage.getItem('pikaApiKey');
+        if (savedKey) document.getElementById('apiKey').value = savedKey;
+        let selectedFile = null;
+
+        function updateUIForTask(taskType) {
+            const isImageRequired = taskType.startsWith('image-');
+            const isVideoOutput = taskType.endsWith('-video');
+            
+            const uploadSection = document.getElementById('imageUploadSection');
+            if (isImageRequired) {
+                uploadSection.classList.remove('hidden');
+                document.getElementById('promptLabel').innerText = '5. תיאור היצירה (Prompt)';
+            } else {
+                uploadSection.classList.add('hidden');
+                document.getElementById('promptLabel').innerText = '4. תיאור היצירה (Prompt)';
+            }
+
+            const modelSelect = document.getElementById('modelSelect');
+            modelSelect.innerHTML = '';
+            
+            if (modelsDB[taskType].length === 0) {
+                const option = document.createElement('option');
+                option.innerText = 'אין מודלים זמינים';
+                modelSelect.appendChild(option);
+                document.getElementById('generateBtn').disabled = true;
+            } else {
+                modelsDB[taskType].forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model.path;
+                    option.innerText = model.name;
+                    modelSelect.appendChild(option);
+                });
+                document.getElementById('generateBtn').disabled = false;
+            }
+
+            document.getElementById('btnText').innerText = isVideoOutput ? 'צור וידאו' : 'צור תמונה';
+        }
+
+        document.querySelectorAll('.task-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.task-btn').forEach(b => {
+                    b.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-700');
+                    b.classList.add('border-transparent', 'bg-white', 'text-gray-600');
+                });
+                const targetBtn = e.target.closest('.task-btn');
+                targetBtn.classList.remove('border-transparent', 'bg-white', 'text-gray-600');
+                targetBtn.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-700');
+                
+                const task = targetBtn.getAttribute('data-task');
+                document.getElementById('currentTask').value = task;
+                updateUIForTask(task);
+            });
+        });
+
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            selectedFile = e.target.files[0];
+            if (!selectedFile) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                document.getElementById('imagePreview').src = event.target.result;
+                document.getElementById('imagePreviewContainer').classList.remove('hidden');
+            };
+            reader.readAsDataURL(selectedFile);
+        });
+
+        document.getElementById('generateBtn').addEventListener('click', async () => {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const prompt = document.getElementById('promptInput').value.trim();
+            const taskType = document.getElementById('currentTask').value;
+            const modelPath = document.getElementById('modelSelect').value;
+            const statusMessage = document.getElementById('statusMessage');
+            const btn = document.getElementById('generateBtn');
+            const spinner = document.getElementById('loadingSpinner');
+            const resultContainer = document.getElementById('resultContainer');
+            
+            const isImageRequired = taskType.startsWith('image-');
+            const isVideoOutput = taskType.endsWith('-video');
+
+            if (!apiKey) { alert('נא להזין מפתח API.'); return; }
+            if (isImageRequired && !selectedFile) { alert('נא להעלות תמונת מקור.'); return; }
+            if (!prompt) { alert('נא להזין תיאור (Prompt).'); return; }
+            
+            localStorage.setItem('pikaApiKey', apiKey);
+
+            btn.disabled = true;
+            spinner.style.display = 'block';
+            resultContainer.classList.add('hidden');
+            document.getElementById('outputVideo').classList.add('hidden');
+            document.getElementById('outputImage').classList.add('hidden');
+            statusMessage.style.color = '#4b5563';
+            let uploadedImageUrl = null;
+
+            try {
+                if (isImageRequired) {
+                    statusMessage.innerText = 'שלב 1/3: מבקש אישור העלאה...';
+                    const uploadReqRes = await fetch(`${API_BASE}/v1/media/uploads`, {
+                        method: 'POST',
+                        headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content_type: selectedFile.type, size_bytes: selectedFile.size })
+                    });
+                    if (!uploadReqRes.ok) throw new Error('שגיאה ביצירת קישור העלאה (CORS או הרשאות).');
+                    const uploadUrls = await uploadReqRes.json();
+                    
+                    statusMessage.innerText = 'שלב 2/3: מעלה את התמונה לשרת...';
+                    const putRes = await fetch(uploadUrls.upload_url, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': selectedFile.type },
+                        body: selectedFile
+                    });
+                    if (!putRes.ok) throw new Error('שגיאה בהעלאת התמונה.');
+                    
+                    uploadedImageUrl = uploadUrls.url;
+                }
+
+                const requestBody = { prompt: prompt };
+                if (isImageRequired) requestBody.image = uploadedImageUrl;
+
+                statusMessage.innerText = `שולח בקשה ליצירה...`;
+                const response = await fetch(`${API_BASE}/v1/media/${modelPath}`, {
+                    method: 'POST',
+                    headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(`שגיאה מהשרת: ${errorData.message || response.status}`);
+                }
+                
+                const data = await response.json();
+                const jobId = data.id || data.request_id || data.job_id; 
+                if (!jobId) throw new Error('חסר מזהה משימה.');
+
+                statusMessage.innerText = 'מעבד את הבקשה. זה עשוי לקחת מספר דקות...';
+                let isComplete = false;
+                let attempts = 0;
+                
+                while (!isComplete && attempts < 90) {
+                    attempts++;
+                    await new Promise(r => setTimeout(r, 4000));
+                    
+                    const pollRes = await fetch(`${API_BASE}/v1/media/jobs/${jobId}`, {
+                        headers: { 'X-API-Key': apiKey }
+                    });
+                    
+                    if (!pollRes.ok) throw new Error('שגיאה בבדיקת הסטטוס.');
+                    const pollData = await pollRes.json();
+                    const status = (pollData.status || '').toLowerCase();
+                    
+                    if (status === 'completed' || status === 'success' || status === 'finished') {
+                        isComplete = true;
+                        statusMessage.innerText = 'שולף את הקובץ המוכן...';
+                        
+                        const contentRes = await fetch(`${API_BASE}/v1/media/jobs/${jobId}/content`, {
+                            headers: { 'X-API-Key': apiKey }
+                        });
+                        
+                        if (!contentRes.ok) throw new Error('שגיאה במשיכת התוכן السופי.');
+                        const contentData = await contentRes.json();
+                        const mediaUrl = contentData.url;
+                        
+                        if (mediaUrl) {
+                            const outputVideo = document.getElementById('outputVideo');
+                            const outputImage = document.getElementById('outputImage');
+                            
+                            if (isVideoOutput || mediaUrl.endsWith('.mp4')) {
+                                outputVideo.src = mediaUrl;
+                                outputVideo.classList.remove('hidden');
+                            } else {
+                                outputImage.src = mediaUrl;
+                                outputImage.classList.remove('hidden');
+                            }
+                            
+                            document.getElementById('downloadBtn').href = mediaUrl;
+                            resultContainer.classList.remove('hidden');
+                            resultContainer.classList.add('flex');
+                            statusMessage.style.color = '#10b981';
+                            statusMessage.innerText = 'התהליך הושלם בהצלחה!';
+                        } else {
+                            throw new Error('הושלם אך התוכן חסר.');
+                        }
+                    } else if (status === 'failed' || status === 'error' || status === 'cancelled') {
+                        throw new Error(`נכשל: ${pollData.error || pollData.message || 'סיבה לא ידועה'}`);
+                    } else {
+                        statusMessage.innerText = `מעבד נתונים (סטטוס: ${status})${'.'.repeat(attempts % 4)}`;
+                    }
+                }
+                if (!isComplete) throw new Error('Timeout: התהליך לקח זמן רב מדי.');
+
+            } catch (error) {
+                statusMessage.style.color = '#ef4444';
+                statusMessage.innerText = `שגיאה: ${error.message}`;
+            } finally {
+                btn.disabled = false;
+                spinner.style.display = 'none';
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', fetchLiveCatalog);
+    </script>
+</body>
+</html>
