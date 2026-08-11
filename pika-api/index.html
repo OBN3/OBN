@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- פתרון לשגיאת ה-CSP: מתן הרשאה ל-Tailwind CDN לרוץ בצורה תקינה -->
     <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob:; frame-src *; style-src * 'unsafe-inline';">
     <title>Pika Studio Pro - Vercel Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -19,10 +18,9 @@
             <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-2">
                 Pika Studio Pro
             </h1>
-            <p class="text-gray-500 text-sm">מוכן לפריסה ב-Vercel</p>
+            <p class="text-gray-500 text-sm">עם תצוגת מחירים חיה</p>
         </div>
         
-        <!-- התראות מערכת -->
         <div id="systemAlert" class="mb-6 p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm hidden font-medium flex items-start gap-3">
             <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
             <span id="systemAlertText"></span>
@@ -40,7 +38,7 @@
         </div>
 
         <div class="mb-6 bg-purple-50/50 p-5 rounded-xl border border-purple-100 relative">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">2. בחר מודל</label>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">2. בחר מודל (ותעריף)</label>
             <div id="catalogLoader" class="absolute top-5 left-5 text-purple-500 text-sm font-semibold flex items-center gap-2">
                 מושך קטלוג... <div class="loader !border-purple-200 !border-t-purple-600 !w-4 !h-4" style="display:block"></div>
             </div>
@@ -109,10 +107,7 @@
                 const response = await fetch(`${API_BASE}/catalog/apis`, { signal: controller.signal });
                 clearTimeout(timeoutId);
                 
-                if (response.status === 404 && !isLocal) {
-                    throw new Error('VERCEL_404');
-                }
-                
+                if (response.status === 404 && !isLocal) throw new Error('VERCEL_404');
                 if (!response.ok) throw new Error(`שגיאת שרת: ${response.status}`);
                 
                 const data = await response.json();
@@ -121,7 +116,15 @@
                 const apiList = Array.isArray(data) ? data : (data.apis || data.data || []);
                 apiList.forEach(api => {
                     const id = api.api_id || api.id;
-                    const name = api.display_name || id;
+                    let name = api.display_name || id;
+                    
+                    // חילוץ דינמי של המחיר מהשרת אם קיים
+                    if (api.pricing && api.pricing.summary) {
+                        name = `${name} [${api.pricing.summary}]`;
+                    } else if (api.pricing && api.pricing.price) {
+                        name = `${name} [${api.pricing.price}]`;
+                    }
+
                     if (id.endsWith('image-to-video')) modelsDB['image-to-video'].push({path: id, name: name});
                     else if (id.endsWith('text-to-video')) modelsDB['text-to-video'].push({path: id, name: name});
                     else if (id.endsWith('text-to-image')) modelsDB['text-to-image'].push({path: id, name: name});
@@ -140,21 +143,36 @@
                 const alertText = document.getElementById('systemAlertText');
                 
                 if (error.message === 'VERCEL_404') {
-                    alertText.innerHTML = '<strong>שגיאת הגדרות (404):</strong> Vercel לא מצא את הנתיב /proxy/pika. זה קורה אם הקובץ <code>vercel.json</code> לא נמצא בתיקיית השורש (Root) של הפרויקט, או ש-Vercel לא קרא אותו. ודא ששני הקבצים מונחים יחד באותה תיקייה בדיוק בעת ההעלאה.';
+                    alertText.innerHTML = '<strong>שגיאת 404:</strong> Vercel לא מקשר את ה-vercel.json. הראה לי את הפתרון שלמטה.';
                 } else if (isLocal) {
-                    alertText.innerHTML = '<strong>שגיאת CORS/תקשורת מקומית:</strong> הדפדפן חסם את משיכת הקטלוג בגלל שהקובץ רץ על המחשב שלך.<br><strong>כדי שהכל יעבוד, העלה את התיקייה ל-Vercel בדיוק כפי שהוסבר.</strong>';
+                    alertText.innerHTML = '<strong>שים לב:</strong> הדפדפן חסם את משיכת הקטלוג כי הקובץ רץ מקומית. נטענה רשימת הגיבוי הכוללת מחירים.';
                 } else {
-                    alertText.innerText = `שגיאה בתקשורת (${error.message}). נטענה רשימת גיבוי מצומצמת.`;
+                    alertText.innerText = `שגיאה בתקשורת (${error.message}). נטענה רשימת גיבוי.`;
                 }
-                
                 alertBox.classList.remove('hidden');
 
-                // טעינת רשימת הגיבוי
+                // רשימת הגיבוי החדשה הכוללת תמחור רשמי
                 modelsDB = {
-                    'image-to-video': [{ path: 'pika/pika-2.5/image-to-video', name: 'Pika 2.5 (גיבוי)' }, { path: 'kling/kling-3.0/image-to-video', name: 'Kling 3.0 (גיבוי)' }],
-                    'text-to-video': [{ path: 'pika/pika-2.5/text-to-video', name: 'Pika 2.5 (גיבוי)' }, { path: 'kling/kling-3.0/text-to-video', name: 'Kling 3.0 (גיבוי)' }],
-                    'text-to-image': [{ path: 'openai/gpt-image-2/text-to-image', name: 'GPT Image 2 (גיבוי)' }],
-                    'image-to-image': [{ path: 'openai/gpt-image-2/image-to-image', name: 'GPT Image 2 (גיבוי)' }]
+                    'image-to-video': [
+                        { path: 'pika/pika-2.5/image-to-video', name: 'Pika 2.5 (החל מ-$0.04 לשנייה)' }, 
+                        { path: 'bytedance/seedance-2.5/image-to-video', name: 'Seedance 2.5 (החל מ-$6.72 למיליון טוקנים)' },
+                        { path: 'minimax/h3/image-to-video', name: 'MiniMax H3 (החל מ-$0.08 לשנייה)' },
+                        { path: 'kling/kling-3.0/image-to-video', name: 'Kling 3.0 (החל מ-$0.09 לשנייה)' },
+                        { path: 'google/veo-3.1-lite/image-to-video', name: 'Veo 3.1 Lite (החל מ-$0.03 לשנייה)' }
+                    ],
+                    'text-to-video': [
+                        { path: 'pika/pika-2.5/text-to-video', name: 'Pika 2.5 (החל מ-$0.04 לשנייה)' }, 
+                        { path: 'kling/kling-3.0/text-to-video', name: 'Kling 3.0 (החל מ-$0.09 לשנייה)' },
+                        { path: 'bytedance/seedance-2.5/text-to-video', name: 'Seedance 2.5 ($11.235 למיליון טוקנים)' }
+                    ],
+                    'text-to-image': [
+                        { path: 'openai/gpt-image-2/text-to-image', name: 'GPT Image 2 ($22.5 למיליון טוקנים)' },
+                        { path: 'bytedance/seedream-5.0-pro/text-to-image', name: 'Seedream 5.0 Pro (החל מ-$0.045 לתמונה)' }
+                    ],
+                    'image-to-image': [
+                        { path: 'openai/gpt-image-2/image-to-image', name: 'GPT Image 2 ($30 למיליון טוקנים)' },
+                        { path: 'bytedance/seedream-5.0-pro/image-to-image', name: 'Seedream 5.0 Pro (החל מ-$0.045 לתמונה)' }
+                    ]
                 };
             } finally {
                 document.getElementById('catalogLoader').style.display = 'none';
