@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>CareSync - ניהול טיפול חכם / Smart Care Management</title>
   
-  <!-- Precompiled Static CSS (100% CSP Compliant, Zero Eval) -->
+  <!-- Precompiled Static Base CSS (100% CSP Compliant, Zero Eval) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" />
 
   <!-- Google Fonts: Heebo (Hebrew), Inter (English), Noto Sans Devanagari (Hindi) -->
@@ -42,12 +42,12 @@
       color: #0f172a;
     }
     
-    /* Core App Light Background Container (Guaranteed Crisp Light Theme) */
+    /* Core App Light Background Container */
     #appContainer {
       background-color: #f8fafc !important;
       color: #0f172a !important;
       min-height: 100vh;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     }
 
     .custom-scrollbar::-webkit-scrollbar {
@@ -80,7 +80,47 @@
       50% { transform: translateY(-2px); }
     }
 
-    /* Reliable Teal Color Palette */
+    /* Robust Explicit Color Classes */
+    .hero-progress-banner {
+      background: linear-gradient(135deg, #0f766e 0%, #115e59 45%, #0f172a 100%) !important;
+      color: #ffffff !important;
+    }
+    .hero-sos-banner {
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #7f1d1d 100%) !important;
+      color: #ffffff !important;
+    }
+
+    /* Button Colors */
+    .btn-call {
+      background-color: #059669 !important;
+      color: #ffffff !important;
+    }
+    .btn-call:hover {
+      background-color: #047857 !important;
+    }
+    .btn-whatsapp {
+      background-color: #0d9488 !important;
+      color: #ffffff !important;
+    }
+    .btn-whatsapp:hover {
+      background-color: #0f766e !important;
+    }
+
+    /* Explicit Palette Definitions */
+    .bg-slate-50 { background-color: #f8fafc !important; }
+    .bg-slate-100 { background-color: #f1f5f9 !important; }
+    .bg-slate-200 { background-color: #e2e8f0 !important; }
+    .bg-slate-300 { background-color: #cbd5e1 !important; }
+    .bg-slate-800 { background-color: #1e293b !important; }
+    .bg-slate-900 { background-color: #0f172a !important; }
+
+    .text-slate-400 { color: #94a3b8 !important; }
+    .text-slate-500 { color: #64748b !important; }
+    .text-slate-600 { color: #475569 !important; }
+    .text-slate-700 { color: #334155 !important; }
+    .text-slate-800 { color: #1e293b !important; }
+    .text-slate-900 { color: #0f172a !important; }
+
     .bg-teal-50 { background-color: #f0fdfa !important; }
     .bg-teal-100 { background-color: #ccfbf1 !important; }
     .bg-teal-600 { background-color: #0d9488 !important; }
@@ -92,8 +132,35 @@
     .text-teal-900 { color: #134e4a !important; }
     .border-teal-200 { border-color: #99f6e4 !important; }
     .border-teal-300 { border-color: #5eead4 !important; }
+    .border-teal-400 { border-color: #2dd4bf !important; }
     .border-teal-500 { border-color: #14b8a6 !important; }
-    
+
+    .bg-emerald-50 { background-color: #ecfdf5 !important; }
+    .bg-emerald-100 { background-color: #d1fae5 !important; }
+    .bg-emerald-400 { background-color: #34d399 !important; }
+    .bg-emerald-500 { background-color: #10b981 !important; }
+    .bg-emerald-600 { background-color: #059669 !important; }
+    .bg-emerald-700 { background-color: #047857 !important; }
+    .bg-emerald-800 { background-color: #065f46 !important; }
+    .text-emerald-700 { color: #047857 !important; }
+    .text-emerald-800 { color: #065f46 !important; }
+    .text-emerald-900 { color: #064e3b !important; }
+    .border-emerald-200 { border-color: #a7f3d0 !important; }
+    .border-emerald-300 { border-color: #6ee7b7 !important; }
+    .border-emerald-400 { border-color: #34d399 !important; }
+
+    .bg-red-50 { background-color: #fef2f2 !important; }
+    .bg-red-100 { background-color: #fee2e2 !important; }
+    .bg-red-600 { background-color: #dc2626 !important; }
+    .bg-red-700 { background-color: #b91c1c !important; }
+    .text-red-600 { color: #dc2626 !important; }
+    .text-red-700 { color: #b91c1c !important; }
+    .text-red-800 { color: #991b1b !important; }
+    .text-red-950 { color: #450a0a !important; }
+    .border-red-200 { border-color: #fecaca !important; }
+    .border-red-300 { border-color: #fca5a5 !important; }
+    .border-red-500 { border-color: #ef4444 !important; }
+
     .rounded-2xl { border-radius: 1rem !important; }
     .rounded-3xl { border-radius: 1.5rem !important; }
   </style>
@@ -111,7 +178,7 @@
         
         <!-- App Brand Logo & Patient Name -->
         <div class="flex items-center gap-2.5">
-          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-teal-600 to-emerald-400 flex items-center justify-center text-white shadow-md">
+          <div class="w-10 h-10 rounded-2xl bg-teal-600 flex items-center justify-center text-white shadow-md">
             <i class="fa-solid fa-heart-pulse text-lg"></i>
           </div>
           <div>
@@ -226,20 +293,20 @@
       <!-- ======================================================== -->
       <section id="tab-routine" class="tab-content space-y-4">
         
-        <!-- Summary Progress Card -->
-        <div class="bg-gradient-to-br from-teal-700 via-teal-800 to-slate-900 rounded-3xl p-5 text-white shadow-xl relative overflow-hidden">
+        <!-- Summary Progress Card (Guaranteed High Contrast Gradient) -->
+        <div class="hero-progress-banner rounded-3xl p-5 shadow-xl relative overflow-hidden">
           <div class="flex justify-between items-start mb-3 relative z-10">
             <div>
               <span class="text-xs font-bold text-teal-200 uppercase tracking-wider" data-i18n="dailyProgress">התקדמות טיפול יומית</span>
-              <h2 class="text-2xl font-black mt-0.5"><span id="completedTasksCount">0</span> / <span id="totalTasksCount">0</span> <span class="text-sm font-medium text-teal-200" data-i18n="tasksDone">משימות ותרופות הושלמו</span></h2>
+              <h2 class="text-2xl font-black mt-0.5 text-white"><span id="completedTasksCount">0</span> / <span id="totalTasksCount">0</span> <span class="text-sm font-medium text-teal-200" data-i18n="tasksDone">משימות ותרופות הושלמו</span></h2>
             </div>
-            <div class="w-12 h-12 rounded-2xl bg-white bg-opacity-10 border border-white border-opacity-20 flex items-center justify-center font-black text-lg text-emerald-300">
+            <div class="w-12 h-12 rounded-2xl bg-white bg-opacity-20 border border-white border-opacity-30 flex items-center justify-center font-black text-lg text-white">
               <span id="completionPercentage">0%</span>
             </div>
           </div>
 
           <!-- Progress Bar -->
-          <div class="w-full bg-white bg-opacity-20 h-2.5 rounded-full overflow-hidden relative z-10">
+          <div class="w-full bg-slate-900 bg-opacity-40 h-2.5 rounded-full overflow-hidden relative z-10">
             <div id="progressBar" class="bg-emerald-400 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
           </div>
 
@@ -531,12 +598,12 @@
       <!-- ======================================================== -->
       <section id="tab-emergency" class="tab-content hidden space-y-4">
         
-        <!-- Big SOS Action Card -->
-        <div class="bg-gradient-to-br from-red-600 via-red-700 to-red-900 rounded-3xl p-5 text-white shadow-xl relative overflow-hidden">
+        <!-- Big SOS Action Card (Guaranteed High Contrast Gradient) -->
+        <div class="hero-sos-banner rounded-3xl p-5 shadow-xl relative overflow-hidden">
           <div class="flex items-center justify-between">
             <div>
               <span class="text-xs font-bold text-red-200 uppercase tracking-wider" data-i18n="sosCenter">מוקד מצבי חירום</span>
-              <h2 class="text-xl font-black mt-0.5" data-i18n="emergencyReporting">דיווח אירוע חריג / נפילה</h2>
+              <h2 class="text-xl font-black mt-0.5 text-white" data-i18n="emergencyReporting">דיווח אירוע חריג / נפילה</h2>
               <p class="text-xs text-red-100 font-medium mt-1" data-i18n="sosDescription">שליחת התראה דחופה מיידית לכל בני המשפחה המחוברים</p>
             </div>
             <button onclick="openIncidentModal()" class="w-14 h-14 rounded-2xl bg-white text-red-700 font-black text-xl flex items-center justify-center shadow-lg active:scale-90 transition pulsing-alert flex-shrink-0">
@@ -627,7 +694,7 @@
     <!-- MODALS & DIALOGS -->
     <!-- ======================================================== -->
 
-    <!-- 0. Authentication Modal (Google Auth Only - No Direct Settings Access for Unauthenticated Users) -->
+    <!-- 0. Authentication Modal (Google Auth Only) -->
     <div id="authModal" class="hidden fixed inset-0 z-50 bg-slate-900 bg-opacity-70 flex items-center justify-center p-4">
       <div class="bg-white w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl border border-slate-200">
         <div class="text-center">
@@ -653,7 +720,7 @@
             <i class="fa-solid fa-arrow-left text-slate-400 group-hover:text-teal-600 transition text-sm"></i>
           </button>
 
-          <!-- Current Logged In Info & Logout (Only shown when an authorized user is logged in) -->
+          <!-- Current Logged In Info & Logout -->
           <div id="activeUserSection" class="p-3.5 rounded-2xl bg-teal-50 border border-teal-200 text-xs flex items-center justify-between" style="display:none;">
             <div class="flex items-center gap-2">
               <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -1105,6 +1172,54 @@
           <div class="pt-2 flex gap-2">
             <button type="button" onclick="closeModal('addContactModal')" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs" data-i18n="cancel">ביטול</button>
             <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md" data-i18n="save">שמור איש קשר</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 6.1 EDIT EMERGENCY CONTACT MODAL -->
+    <div id="editContactModal" class="hidden fixed inset-0 z-50 bg-slate-900 bg-opacity-60 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center font-bold">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </div>
+            <h3 class="font-black text-slate-900 text-lg">עריכת איש קשר לשעת חירום</h3>
+          </div>
+          <button onclick="closeModal('editContactModal')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form onsubmit="handleUpdateContact(event)" class="space-y-3">
+          <input type="hidden" id="editContactId" />
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1">שם איש הקשר / מוקד</label>
+            <input type="text" id="editContactNameInput" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800" required />
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1">תפקיד / קרבה</label>
+            <input type="text" id="editContactRoleInput" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800" required />
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1">מספר טלפון (לחיוג מהיר)</label>
+            <input type="tel" id="editContactPhoneInput" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-teal-800" required />
+          </div>
+
+          <label class="flex items-center gap-2 text-xs text-slate-700 font-semibold cursor-pointer pt-1">
+            <input type="checkbox" id="editContactUrgentInput" class="rounded text-red-600 w-4 h-4" />
+            <span>הדגש כאיש קשר בעדיפות עליונה / חירום דחוף</span>
+          </label>
+
+          <div class="pt-2 flex gap-2">
+            <button type="button" onclick="handleDeleteContactFromModal()" class="px-3 py-2.5 rounded-xl bg-red-50 text-red-700 hover:bg-red-100 font-bold text-xs flex items-center gap-1">
+              <i class="fa-solid fa-trash"></i> מחק
+            </button>
+            <button type="button" onclick="closeModal('editContactModal')" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs" data-i18n="cancel">ביטול</button>
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md" data-i18n="save">שמור שינויים</button>
           </div>
         </form>
       </div>
@@ -1576,7 +1691,7 @@
         btnPendingTake: "👉 यहाँ दबाएं: दवा दी गई",
         btnLateTake: "🚨 देरी से दवा दी गई",
         takenStamp: "✅ दवा ले ली गई",
-        undoBtn: "रद्द करें",
+        undoBtn: "רद्द करें",
         statusPending: "⏳ अभी देना बाकी है",
         statusOverdue: "⚠️ 1 घंटे से ज्यादा देरी!",
         authModalTitle: "CareSync में लॉगिन करें",
@@ -1798,11 +1913,11 @@
     };
 
     // --- 4. STATE & PERSISTENCE ---
-    let state = JSON.parse(localStorage.getItem('careSync_v9_clean')) || cleanInitialState;
+    let state = JSON.parse(localStorage.getItem('careSync_v10_clean')) || cleanInitialState;
     if (!state.settings.firebaseConfig) state.settings.firebaseConfig = defaultFirebaseConfig;
 
     function saveState() {
-      localStorage.setItem('careSync_v9_clean', JSON.stringify(state));
+      localStorage.setItem('careSync_v10_clean', JSON.stringify(state));
       renderApp();
       
       if (window.careSyncFirestoreDoc && state.currentUser && state.currentUser.role !== 'guest') {
@@ -1877,7 +1992,7 @@
               state = cloudData;
               state.settings.lang = currentLang;
               state.currentUser = currentUser;
-              localStorage.setItem('careSync_v9_clean', JSON.stringify(state));
+              localStorage.setItem('careSync_v10_clean', JSON.stringify(state));
               renderApp();
             }
           }
@@ -2362,11 +2477,11 @@
         } else if (isCaregiver) {
           userRoleSlot.innerText = currentLang === 'hi' ? 'राहुल (सहायक)' : (currentLang === 'en' ? 'Rahul (Caregiver)' : 'מטפל (Caregiver)');
           authBadge.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-bold shadow-sm active:scale-95 transition";
-          if (avatarSlot) avatarSlot.innerHTML = `<i class="fa-solid fa-user-nurse"></i>`;
+          if (avatarSlot) avatarSlot.innerHTML = `<i class="fa-solid fa-user-nurse text-emerald-700"></i>`;
         } else if (isFamily) {
           userRoleSlot.innerText = currentLang === 'hi' ? 'परिवार (Admin)' : (currentLang === 'en' ? 'Family (Admin)' : 'בן משפחה (Admin)');
           authBadge.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-teal-50 text-teal-800 border border-teal-300 text-xs font-bold shadow-sm active:scale-95 transition";
-          if (avatarSlot) avatarSlot.innerHTML = `<i class="fa-solid fa-users"></i>`;
+          if (avatarSlot) avatarSlot.innerHTML = `<i class="fa-solid fa-users text-teal-700"></i>`;
         } else {
           userRoleSlot.innerText = currentLang === 'hi' ? 'लॉगिन करें' : (currentLang === 'en' ? 'Sign In' : 'התחבר למערכת');
           authBadge.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 border border-slate-300 text-xs font-bold shadow-sm active:scale-95 transition";
@@ -3178,6 +3293,7 @@
       saveState();
     }
 
+    // Emergency Contacts Management: Add, Edit, Delete
     function openAddContactModal() {
       const isAdmin = state.currentUser && (state.currentUser.role === 'family' || state.currentUser.role === 'super_admin');
       if (!isAdmin) return alert('הוספת איש קשר מורשית למנהל בלבד. נא להתחבר כמנהל.');
@@ -3208,6 +3324,44 @@
       e.target.reset();
       playChime('success');
       saveState();
+    }
+
+    function openEditContactModal(id) {
+      const isAdmin = state.currentUser && (state.currentUser.role === 'family' || state.currentUser.role === 'super_admin');
+      if (!isAdmin) return alert('עריכת איש קשר מורשית למנהל בלבד');
+
+      const contact = state.contacts.find(c => c.id === id);
+      if (!contact) return;
+
+      document.getElementById('editContactId').value = contact.id;
+      document.getElementById('editContactNameInput').value = contact.name;
+      document.getElementById('editContactRoleInput').value = contact.role;
+      document.getElementById('editContactPhoneInput').value = contact.phone;
+      document.getElementById('editContactUrgentInput').checked = !!contact.urgent;
+
+      document.getElementById('editContactModal').classList.remove('hidden');
+    }
+
+    function handleUpdateContact(e) {
+      e.preventDefault();
+      const id = document.getElementById('editContactId').value;
+      const contact = state.contacts.find(c => c.id === id);
+      if (!contact) return;
+
+      contact.name = document.getElementById('editContactNameInput').value.trim();
+      contact.role = document.getElementById('editContactRoleInput').value.trim();
+      contact.phone = document.getElementById('editContactPhoneInput').value.trim();
+      contact.urgent = document.getElementById('editContactUrgentInput').checked;
+
+      closeModal('editContactModal');
+      playChime('success');
+      saveState();
+    }
+
+    function handleDeleteContactFromModal() {
+      const id = document.getElementById('editContactId').value;
+      closeModal('editContactModal');
+      deleteEmergencyContact(id);
     }
 
     function deleteEmergencyContact(id) {
@@ -3242,11 +3396,11 @@
         container.innerHTML = '';
         state.contacts.forEach(c => {
           const card = document.createElement('div');
-          card.className = `p-3.5 rounded-2xl border ${c.urgent ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200'} flex items-center justify-between gap-3 shadow-sm`;
+          card.className = `p-3.5 rounded-2xl border ${c.urgent ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'} flex items-center justify-between gap-3 shadow-sm`;
           card.innerHTML = `
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-base flex-shrink-0 ${
-                c.urgent ? 'bg-red-600 text-white' : 'bg-slate-800 text-white'
+                c.urgent ? 'bg-red-600 text-white shadow-sm' : 'bg-slate-800 text-white'
               }">
                 <i class="fa-solid ${c.phone === '101' ? 'fa-truck-medical' : 'fa-phone'}"></i>
               </div>
@@ -3257,16 +3411,24 @@
             </div>
 
             <div class="flex items-center gap-1.5 flex-shrink-0">
-              <a href="tel:${c.phone}" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 shadow-sm active:scale-95 transition" title="חייג">
+              <!-- Direct Phone Call Button -->
+              <a href="tel:${c.phone}" class="btn-call w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs shadow-sm active:scale-95 transition" title="חייג">
                 <i class="fa-solid fa-phone"></i>
               </a>
+
+              <!-- WhatsApp Button -->
               ${c.phone.startsWith('05') ? `
-                <a href="https://wa.me/972${c.phone.replace(/[^0-9]/g, '').slice(1)}" target="_blank" class="px-2.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center shadow-sm active:scale-95 transition" title="WhatsApp">
+                <a href="https://wa.me/972${c.phone.replace(/[^0-9]/g, '').slice(1)}" target="_blank" class="btn-whatsapp w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs shadow-sm active:scale-95 transition" title="WhatsApp">
                   <i class="fa-brands fa-whatsapp text-sm"></i>
                 </a>
               ` : ''}
+
+              <!-- Edit & Delete Contact Buttons (Admin Only) -->
               ${isAdmin ? `
-                <button onclick="deleteEmergencyContact('${c.id}')" class="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition" title="מחק איש קשר">
+                <button onclick="openEditContactModal('${c.id}')" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-teal-50 text-slate-500 hover:text-teal-700 flex items-center justify-center transition" title="ערוך איש קשר">
+                  <i class="fa-solid fa-pen-to-square text-xs"></i>
+                </button>
+                <button onclick="deleteEmergencyContact('${c.id}')" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-400 hover:text-red-600 flex items-center justify-center transition" title="מחק איש קשר">
                   <i class="fa-solid fa-trash-can text-xs"></i>
                 </button>
               ` : ''}
