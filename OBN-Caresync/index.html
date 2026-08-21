@@ -165,7 +165,7 @@
             <span data-i18n="emergencyBtn">דיווח חירום SOS</span>
           </button>
 
-          <!-- Settings Cog (Available to Admins, with direct access option in login) -->
+          <!-- Settings Cog -->
           <button onclick="openSettingsModal()" id="btnSettingsCog" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition" title="הגדרות מערכת ו-Firebase">
             <i class="fa-solid fa-gear text-xs"></i>
           </button>
@@ -544,7 +544,7 @@
               <h3 class="font-black text-slate-900 text-base" data-i18n="emergencyContactsTitle">ספר טלפונים לשעת חירום</h3>
               <p class="text-xs text-slate-500 font-medium" data-i18n="oneTapDialSub">חיוג מהיר בלחיצה אחת למשפחה ולמוקדי רפואה</p>
             </div>
-            <button onclick="openAddContactModal()" class="admin-only text-xs font-bold text-teal-700 bg-teal-50 px-2 py-1 rounded-lg border border-teal-200">
+            <button onclick="openAddContactModal()" class="admin-only text-xs font-bold text-teal-700 bg-teal-50 px-2.5 py-1.5 rounded-xl border border-teal-200 active:scale-95 transition">
               + <span data-i18n="addContact">הוסף איש קשר</span>
             </button>
           </div>
@@ -619,7 +619,7 @@
     <!-- MODALS & DIALOGS -->
     <!-- ======================================================== -->
 
-    <!-- 0. Authentication & Role Switcher Modal (Google Auth Only) -->
+    <!-- 0. Authentication Modal (Google Auth Only) -->
     <div id="authModal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-white w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl border border-slate-200">
         <div class="text-center">
@@ -671,7 +671,7 @@
       </div>
     </div>
 
-    <!-- 0.1 SUPER ADMIN ACTIVITY EXCEL REPORTS MODAL (Exclusive to Super Admin) -->
+    <!-- 0.1 SUPER ADMIN ACTIVITY EXCEL REPORTS MODAL -->
     <div id="reportsModal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-white w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl border border-slate-200">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -1065,6 +1065,50 @@
       </div>
     </div>
 
+    <!-- 6. ADD EMERGENCY CONTACT MODAL (Complete & Functional) -->
+    <div id="addContactModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200 animate-slide-up">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
+              <i class="fa-solid fa-phone"></i>
+            </div>
+            <h3 class="font-black text-slate-900 text-lg">הוספת איש קשר לשעת חירום</h3>
+          </div>
+          <button onclick="closeModal('addContactModal')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form onsubmit="handleSaveContact(event)" class="space-y-3">
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1">שם איש הקשר / מוקד</label>
+            <input type="text" id="contactNameInput" placeholder="דניאל (בן) / רופא תורן" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800" required />
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1">תפקיד / קרבה</label>
+            <input type="text" id="contactRoleInput" placeholder="בן משפחה / רופא מומחה / שכן קרוב" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800" required />
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1">מספר טלפון (לחיוג מהיר)</label>
+            <input type="tel" id="contactPhoneInput" placeholder="050-1234567" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-teal-800" required />
+          </div>
+
+          <label class="flex items-center gap-2 text-xs text-slate-700 font-semibold cursor-pointer pt-1">
+            <input type="checkbox" id="contactUrgentInput" class="rounded text-rose-600 focus:ring-rose-500 w-4 h-4" />
+            <span>הדגש כאיש קשר בעדיפות עליונה / חירום דחוף</span>
+          </label>
+
+          <div class="pt-2 flex gap-2">
+            <button type="button" onclick="closeModal('addContactModal')" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs" data-i18n="cancel">ביטול</button>
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20" data-i18n="save">שמור איש קשר</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- 7. SETTINGS & USER WHITELIST MANAGEMENT -->
     <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-white w-full max-w-md rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto custom-scrollbar">
@@ -1144,7 +1188,7 @@
             </div>
           </div>
 
-          <!-- Firebase Config Input & Auto Sync Guide -->
+          <!-- Firebase Config Input -->
           <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
@@ -1153,7 +1197,7 @@
               </span>
             </div>
             <p class="text-[11px] text-slate-500 leading-relaxed">
-              הקוד מקבל כל פורמט ישירות מ-Firebase Console (כולל `const firebaseConfig = { ... }`).
+              הקוד מחובר לפרויקט שלך כברירת מחדל.
             </p>
             <textarea id="firebaseConfigInput" rows="4" placeholder='const firebaseConfig = { apiKey: "...", projectId: "..." };' class="w-full font-mono text-[10px] bg-white border border-slate-300 rounded-xl p-2.5 focus:outline-none text-slate-700"></textarea>
             <button onclick="applyFirebaseConfig()" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs shadow-sm transition">
@@ -1184,23 +1228,24 @@
   <!-- JAVASCRIPT APPLICATION CORE -->
   <!-- ======================================================== -->
   <script>
-    // --- 0. SMART FIREBASE CONFIG PARSER ---
+    // --- 0. SMART CSP-COMPLIANT FIREBASE CONFIG PARSER (NO EVAL / NO NEW FUNCTION) ---
     function parseFirebaseConfigSnippet(raw) {
       if (!raw || typeof raw !== 'string') return null;
       let str = raw.trim();
-      // Strip JS variable declarations: const/let/var firebaseConfig =
       str = str.replace(/^(const|let|var)\s+firebaseConfig\s*=\s*/i, '').trim();
       if (str.endsWith(';')) str = str.slice(0, -1).trim();
 
-      // Try strict JSON first
       try {
         return JSON.parse(str);
       } catch (e) {
-        // Evaluate as JS Object (handles unquoted keys like apiKey: "...")
+        // Safe regex conversion of unquoted JS keys to strict JSON without eval
         try {
-          return Function('"use strict"; return (' + str + ')')();
+          const jsonStr = str
+            .replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":')
+            .replace(/,\s*([}\]])/g, '$1');
+          return JSON.parse(jsonStr);
         } catch (e2) {
-          throw new Error('Invalid config format');
+          return null;
         }
       }
     }
@@ -1600,12 +1645,12 @@
       }
     };
 
-    // --- 3. ADVANCED CLEAN INITIAL DATA STORE ---
+    // --- 3. CLEAN INITIAL STATE ---
     const cleanInitialState = {
       settings: {
         patientName: "Dad",
         lang: "he",
-        superAdminEmail: "", // Will be assigned to the first logged in Google account if empty
+        superAdminEmail: "",
         firebaseConfig: defaultFirebaseConfig
       },
       whitelist: {
@@ -1622,7 +1667,7 @@
       },
       currentUser: {
         uid: "pending_login",
-        name: "יוסי לוי (מנהל על)",
+        name: "מנהל על",
         role: "super_admin",
         email: "",
         avatar: null
@@ -1829,10 +1874,10 @@
           console.log('Firestore snapshot listener info:', err);
         });
 
-        // Listen to Google Auth State Changes
+        // Listen to Google Auth State Changes (Silent auth restore without annoying popups)
         auth.onAuthStateChanged(user => {
           if (user && user.email) {
-            processGoogleUser(user.email.toLowerCase(), user.displayName, user.photoURL);
+            processGoogleUser(user.email.toLowerCase(), user.displayName, user.photoURL, true);
           }
         });
 
@@ -1854,7 +1899,7 @@
         }
         state.settings.firebaseConfig = config;
         initFirebaseIfConfigured();
-        alert('החיבור ל-Firebase הופעל בהצלחה! כניסת Google וסנכרון ענן פעילים כעת.');
+        alert('החיבור ל-Firebase הופעל בהצלחה!');
         closeModal('settingsModal');
         saveState();
       } catch (e) {
@@ -1892,7 +1937,7 @@
         firebase.auth().signInWithPopup(provider)
           .then(result => {
             const user = result.user;
-            processGoogleUser(user.email.toLowerCase(), user.displayName, user.photoURL);
+            processGoogleUser(user.email.toLowerCase(), user.displayName, user.photoURL, false);
           })
           .catch(err => {
             console.log('Firebase Google Auth error:', err);
@@ -1904,7 +1949,7 @@
       }
     }
 
-    function processGoogleUser(email, displayName, avatar) {
+    function processGoogleUser(email, displayName, avatar, isSilentRestore = false) {
       const superAdminEmail = (state.settings.superAdminEmail || "").toLowerCase();
       const familyEmails = (state.whitelist.familyEmails || []).map(e => e.toLowerCase());
       const caregiver = (state.whitelist.caregivers || []).find(cg => (cg.email || "").toLowerCase() === email);
@@ -1923,9 +1968,8 @@
           avatar: avatar
         };
         closeModal('authModal');
-        playChime('success');
+        if (!isSilentRestore) playChime('success');
         saveState();
-        alert(`ברוך הבא! הוגדרת בהצלחה כמנהל על של CareSync (${email}).`);
         return;
       }
 
@@ -1939,7 +1983,7 @@
           avatar: avatar
         };
         closeModal('authModal');
-        playChime('success');
+        if (!isSilentRestore) playChime('success');
         saveState();
         return;
       }
@@ -1959,7 +2003,7 @@
           avatar: avatar
         };
         closeModal('authModal');
-        playChime('success');
+        if (!isSilentRestore) playChime('success');
         saveState();
         return;
       }
@@ -2083,11 +2127,6 @@
       if (!cg) return;
 
       cg.active = !cg.active;
-      if (!cg.active) {
-        alert(`ההרשאה של ${cg.name} (${cg.email}) בוטלה! המטפל ייחסם מיד מכל ניסיון כניסה.`);
-      } else {
-        alert(`ההרשאה של ${cg.name} הופעלה מחדש בהצלחה.`);
-      }
       renderWhitelistSettings();
       saveState();
     }
@@ -3008,7 +3047,7 @@
       });
     }
 
-    // --- 19. EMERGENCY & INCIDENT REPORTING ---
+    // --- 19. EMERGENCY, INCIDENTS & CONTACTS DIRECTORY ---
     function handleIncidentTypeSelect(type) {
       const descInput = document.getElementById('incidentDescInput');
       const reqTag = document.getElementById('incidentDescRequiredTag');
@@ -3084,6 +3123,50 @@
       saveState();
     }
 
+    function openAddContactModal() {
+      const isAdmin = state.currentUser.role === 'family' || state.currentUser.role === 'super_admin';
+      if (!isAdmin) return alert('הוספת איש קשר מורשית למנהל בלבד');
+      const modal = document.getElementById('addContactModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function handleSaveContact(e) {
+      e.preventDefault();
+      const name = document.getElementById('contactNameInput').value.trim();
+      const role = document.getElementById('contactRoleInput').value.trim();
+      const phone = document.getElementById('contactPhoneInput').value.trim();
+      const urgent = document.getElementById('contactUrgentInput').checked;
+
+      if (!name || !phone) return;
+
+      state.contacts.push({
+        id: 'cnt_' + Date.now(),
+        name,
+        role: role || "איש קשר",
+        phone,
+        urgent
+      });
+
+      closeModal('addContactModal');
+      e.target.reset();
+      playChime('success');
+      saveState();
+    }
+
+    function deleteEmergencyContact(id) {
+      const isAdmin = state.currentUser.role === 'family' || state.currentUser.role === 'super_admin';
+      if (!isAdmin) return alert('מחיקת איש קשר מורשית למנהל בלבד');
+
+      const contact = state.contacts.find(c => c.id === id);
+      if (!contact) return;
+
+      if (confirm(`האם למחוק את ${contact.name} (${contact.phone}) מספר הטלפונים לשעת חירום?`)) {
+        state.contacts = state.contacts.filter(c => c.id !== id);
+        playChime('success');
+        saveState();
+      }
+    }
+
     function renderEmergency() {
       const banner = document.getElementById('activeIncidentBanner');
       if (state.activeIncident && !state.activeIncident.resolved) {
@@ -3096,11 +3179,13 @@
       }
 
       const container = document.getElementById('emergencyContactsList');
+      const isAdmin = state.currentUser.role === 'family' || state.currentUser.role === 'super_admin';
+
       if (container) {
         container.innerHTML = '';
         state.contacts.forEach(c => {
           const card = document.createElement('div');
-          card.className = `p-3 rounded-2xl border ${c.urgent ? 'bg-rose-50/70 border-rose-200' : 'bg-slate-50 border-slate-200'} flex items-center justify-between gap-3`;
+          card.className = `p-3.5 rounded-2xl border ${c.urgent ? 'bg-rose-50/80 border-rose-200' : 'bg-slate-50 border-slate-200'} flex items-center justify-between gap-3 shadow-sm`;
           card.innerHTML = `
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-base flex-shrink-0 ${
@@ -3114,14 +3199,19 @@
               </div>
             </div>
 
-            <div class="flex gap-1.5 flex-shrink-0">
-              <a href="tel:${c.phone}" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 shadow-sm active:scale-95 transition">
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+              <a href="tel:${c.phone}" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 shadow-sm active:scale-95 transition" title="חייג">
                 <i class="fa-solid fa-phone"></i>
               </a>
               ${c.phone.startsWith('05') ? `
-                <a href="https://wa.me/972${c.phone.replace(/[^0-9]/g, '').slice(1)}" target="_blank" class="px-2.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center shadow-sm active:scale-95 transition">
+                <a href="https://wa.me/972${c.phone.replace(/[^0-9]/g, '').slice(1)}" target="_blank" class="px-2.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center shadow-sm active:scale-95 transition" title="WhatsApp">
                   <i class="fa-brands fa-whatsapp text-sm"></i>
                 </a>
+              ` : ''}
+              ${isAdmin ? `
+                <button onclick="deleteEmergencyContact('${c.id}')" class="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition" title="מחק איש קשר">
+                  <i class="fa-solid fa-trash-can text-xs"></i>
+                </button>
               ` : ''}
             </div>
           `;
@@ -3191,7 +3281,10 @@
       document.getElementById('settingsModal').classList.remove('hidden'); 
     }
 
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    function closeModal(id) { 
+      const modal = document.getElementById(id);
+      if (modal) modal.classList.add('hidden'); 
+    }
 
     function handleSaveMedication(e) {
       e.preventDefault();
