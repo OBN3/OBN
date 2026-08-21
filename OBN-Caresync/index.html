@@ -5,29 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>CareSync - ניהול טיפול חכם / Smart Care Management</title>
   
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              50: '#f0fdfa',
-              100: '#ccfbf1',
-              500: '#0d9488',
-              600: '#0f766e',
-              700: '#115e59',
-            }
-          },
-          fontFamily: {
-            sans: ['Heebo', 'Inter', 'Noto Sans Devanagari', 'sans-serif'],
-          }
-        }
-      }
-    }
-  </script>
+  <!-- Static Pre-Compiled Tailwind CSS CDN (Eliminates runtime eval CSP violations) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" />
 
   <!-- Google Fonts: Heebo (Hebrew), Inter (English), Noto Sans Devanagari (Hindi) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -49,6 +28,7 @@
     * {
       -webkit-tap-highlight-color: transparent;
       user-select: none;
+      box-sizing: border-box;
     }
     input, textarea, select {
       user-select: auto;
@@ -87,6 +67,23 @@
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-2px); }
     }
+    /* Extended Modern Utilities */
+    .bg-teal-50 { background-color: #f0fdfa; }
+    .bg-teal-100 { background-color: #ccfbf1; }
+    .bg-teal-600 { background-color: #0d9488; }
+    .bg-teal-700 { background-color: #0f766e; }
+    .bg-teal-800 { background-color: #115e59; }
+    .text-teal-600 { color: #0d9488; }
+    .text-teal-700 { color: #0f766e; }
+    .text-teal-800 { color: #115e59; }
+    .text-teal-900 { color: #134e4a; }
+    .border-teal-200 { border-color: #99f6e4; }
+    .border-teal-300 { border-color: #5eead4; }
+    .border-teal-500 { border-color: #14b8a6; }
+    .hover\:bg-teal-700:hover { background-color: #0f766e; }
+    .hover\:bg-teal-50:hover { background-color: #f0fdfa; }
+    .rounded-2xl { border-radius: 1rem; }
+    .rounded-3xl { border-radius: 1.5rem; }
   </style>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col items-center justify-start sm:py-4">
@@ -97,12 +94,12 @@
     <!-- ======================================================== -->
     <!-- TOP SYSTEM & STATUS HEADER -->
     <!-- ======================================================== -->
-    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm px-4 py-2.5 flex flex-col gap-2">
+    <header class="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm px-4 py-2.5 flex flex-col gap-2">
       <div class="flex items-center justify-between">
         
         <!-- App Brand Logo & Patient Name -->
         <div class="flex items-center gap-2.5">
-          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-teal-600 to-emerald-400 flex items-center justify-center text-white shadow-md shadow-teal-500/20">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-teal-600 to-emerald-400 flex items-center justify-center text-white shadow-md">
             <i class="fa-solid fa-heart-pulse text-lg"></i>
           </div>
           <div>
@@ -134,12 +131,12 @@
             </button>
           </div>
 
-          <!-- User Role & Google Auth Trigger -->
-          <button onclick="openAuthModal()" id="userAuthBadge" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 text-amber-900 border border-amber-300 text-xs font-bold shadow-sm active:scale-95 transition-transform">
-            <span id="userAvatarSlot" class="w-4 h-4 rounded-full bg-amber-600 text-white text-[9px] flex items-center justify-center font-bold">
-              <i class="fa-solid fa-crown"></i>
+          <!-- Dynamic Role / Auth Badge Button -->
+          <button onclick="openAuthModal()" id="userAuthBadge" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 border border-slate-300 text-xs font-bold shadow-sm active:scale-95 transition">
+            <span id="userAvatarSlot" class="w-4 h-4 rounded-full bg-slate-300 text-slate-700 text-[9px] flex items-center justify-center font-bold">
+              <i class="fa-solid fa-key"></i>
             </span>
-            <span id="userDisplayRole">מנהל על (Super Admin)</span>
+            <span id="userDisplayRole">התחבר למערכת</span>
           </button>
         </div>
       </div>
@@ -149,24 +146,24 @@
         <div class="flex items-center gap-1.5 text-slate-600 font-medium">
           <i class="fa-regular fa-calendar-check text-teal-600"></i>
           <span id="currentDateDisplay" data-i18n="todayLabel">שגרת יום</span>
-          <span id="currentTimeDisplay" class="font-black text-slate-900 bg-slate-200/80 px-2 py-0.5 rounded-md text-xs">08:00</span>
+          <span id="currentTimeDisplay" class="font-black text-slate-900 bg-slate-200 px-2 py-0.5 rounded-md text-xs">08:00</span>
         </div>
 
         <div class="flex items-center gap-2">
           <!-- Super Admin Reports Button (Strictly Super Admin Exclusive) -->
-          <button onclick="openReportsModal()" id="btnSuperAdminReports" class="super-admin-only px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold flex items-center gap-1 text-[11px] shadow-sm active:scale-95 transition" title="הפקת דוחות אקסל (מנהל על)">
+          <button onclick="openReportsModal()" id="btnSuperAdminReports" class="super-admin-only px-2.5 py-1 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-bold flex items-center gap-1 text-[11px] shadow-sm active:scale-95 transition" style="display:none;" title="הפקת דוחות אקסל (מנהל על)">
             <i class="fa-solid fa-file-excel"></i>
             <span data-i18n="btnReports">דוחות אקסל</span>
           </button>
 
           <!-- Quick SOS Button -->
-          <button onclick="openIncidentModal()" class="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold flex items-center gap-1 text-[11px] shadow-sm shadow-rose-500/30 active:scale-95 transition">
+          <button onclick="openIncidentModal()" class="px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold flex items-center gap-1 text-[11px] shadow-sm active:scale-95 transition">
             <i class="fa-solid fa-triangle-exclamation animate-bounce"></i>
             <span data-i18n="emergencyBtn">דיווח חירום SOS</span>
           </button>
 
-          <!-- Settings Cog -->
-          <button onclick="openSettingsModal()" id="btnSettingsCog" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition" title="הגדרות מערכת ו-Firebase">
+          <!-- Settings Cog (Available to Admins, with direct access in login modal) -->
+          <button onclick="openSettingsModal()" id="btnSettingsCog" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition" style="display:none;" title="הגדרות מערכת">
             <i class="fa-solid fa-gear text-xs"></i>
           </button>
         </div>
@@ -176,33 +173,33 @@
     <!-- Urgent Overdue Medication Alert Floating Banner -->
     <div id="overdueAlertBanner" class="hidden urgent-banner-glow text-white px-4 py-3 shadow-lg flex items-center justify-between gap-3 text-sm z-30 transition-all duration-300">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white text-lg flex-shrink-0 animate-pulse">
+        <div class="w-9 h-9 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white text-lg flex-shrink-0 animate-pulse">
           <i class="fa-solid fa-bell"></i>
         </div>
         <div>
           <div class="font-black tracking-tight" data-i18n="overdueAlertTitle">⚠️ התרעה דחופה: תרופה באיחור של מעל שעה!</div>
-          <div id="overdueAlertDetails" class="text-xs text-rose-100 font-medium">תרופה טרם נלקחה</div>
+          <div id="overdueAlertDetails" class="text-xs text-red-100 font-medium">תרופה טרם נלקחה</div>
         </div>
       </div>
-      <button onclick="switchTab('routine')" class="px-3 py-1.5 bg-white text-rose-700 font-black rounded-lg text-xs shadow hover:bg-rose-50 active:scale-95 transition flex-shrink-0" data-i18n="viewNowBtn">
+      <button onclick="switchTab('routine')" class="px-3 py-1.5 bg-white text-red-700 font-black rounded-lg text-xs shadow hover:bg-red-50 active:scale-95 transition flex-shrink-0" data-i18n="viewNowBtn">
         טפל כעת
       </button>
     </div>
 
     <!-- Active Incident SOS Top Banner with Acknowledge/Resolve Action -->
-    <div id="activeIncidentBanner" class="hidden bg-rose-600 text-white px-4 py-3 shadow-xl flex flex-col gap-2 z-30 animate-slide-down border-b-2 border-rose-800">
+    <div id="activeIncidentBanner" class="hidden bg-red-600 text-white px-4 py-3 shadow-xl flex flex-col gap-2 z-30 border-b-2 border-red-800">
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2 text-xs font-black">
           <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
           <span id="activeIncidentTitle">🚨 דיווח חירום פעיל!</span>
         </div>
-        <span id="activeIncidentTime" class="text-[10px] text-rose-100 font-bold">לפני מספר דקות</span>
+        <span id="activeIncidentTime" class="text-[10px] text-red-100 font-bold">לפני מספר דקות</span>
       </div>
 
       <div class="flex items-center justify-between gap-3">
-        <p id="activeIncidentText" class="text-xs font-semibold text-rose-50 leading-tight">נפילה ליד המיטה - דווח ע"י המטפל</p>
+        <p id="activeIncidentText" class="text-xs font-semibold text-red-50 leading-tight">נפילה ליד המיטה - דווח ע"י המטפל</p>
         
-        <button onclick="acknowledgeActiveIncident()" class="px-3 py-1.5 rounded-xl bg-white text-rose-800 font-black text-xs shadow-md hover:bg-rose-50 active:scale-95 transition flex-shrink-0 flex items-center gap-1">
+        <button onclick="acknowledgeActiveIncident()" class="px-3 py-1.5 rounded-xl bg-white text-red-800 font-black text-xs shadow-md hover:bg-red-50 active:scale-95 transition flex-shrink-0 flex items-center gap-1">
           <i class="fa-solid fa-check-double text-emerald-600"></i>
           <span data-i18n="btnAcknowledgeSOS">אישור קבלה וטיפול</span>
         </button>
@@ -219,29 +216,28 @@
         
         <!-- Summary Progress Card -->
         <div class="bg-gradient-to-br from-teal-700 via-teal-800 to-slate-900 rounded-3xl p-5 text-white shadow-xl relative overflow-hidden">
-          <div class="absolute -right-8 -bottom-8 w-36 h-36 bg-teal-500/10 rounded-full blur-2xl"></div>
           <div class="flex justify-between items-start mb-3 relative z-10">
             <div>
               <span class="text-xs font-bold text-teal-200 uppercase tracking-wider" data-i18n="dailyProgress">התקדמות טיפול יומית</span>
               <h2 class="text-2xl font-black mt-0.5"><span id="completedTasksCount">0</span> / <span id="totalTasksCount">0</span> <span class="text-sm font-medium text-teal-200" data-i18n="tasksDone">משימות ותרופות הושלמו</span></h2>
             </div>
-            <div class="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center font-black text-lg text-emerald-300">
+            <div class="w-12 h-12 rounded-2xl bg-white bg-opacity-10 border border-white border-opacity-20 flex items-center justify-center font-black text-lg text-emerald-300">
               <span id="completionPercentage">0%</span>
             </div>
           </div>
 
           <!-- Progress Bar -->
-          <div class="w-full bg-white/20 h-2.5 rounded-full overflow-hidden relative z-10">
-            <div id="progressBar" class="bg-gradient-to-r from-emerald-400 to-teal-300 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+          <div class="w-full bg-white bg-opacity-20 h-2.5 rounded-full overflow-hidden relative z-10">
+            <div id="progressBar" class="bg-emerald-400 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
           </div>
 
           <!-- Caregiver Tip & Admin Add Task -->
-          <div class="mt-3 flex items-center justify-between text-xs text-teal-100/90 pt-2 border-t border-white/10 relative z-10">
+          <div class="mt-3 flex items-center justify-between text-xs text-teal-100 pt-2 border-t border-white border-opacity-10 relative z-10">
             <span class="flex items-center gap-1.5">
               <i class="fa-solid fa-hand-holding-heart text-emerald-400"></i>
               <span data-i18n="caregiverTip">נא לוודא מתן שתייה מספקת לאורך היום</span>
             </span>
-            <button onclick="openAddTaskModal()" class="admin-only px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-white font-bold text-[11px] transition flex items-center gap-1">
+            <button onclick="openAddTaskModal()" class="admin-only px-2.5 py-1 rounded-lg bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-bold text-[11px] transition flex items-center gap-1" style="display:none;">
               <i class="fa-solid fa-plus"></i> <span data-i18n="addTask">הוסף משימה</span>
             </button>
           </div>
@@ -259,7 +255,7 @@
                 <p class="text-[11px] text-slate-500 font-medium" data-i18n="medsTimelineSub">ממוין כרונולוגית לפי שעת המתן</p>
               </div>
             </div>
-            <button onclick="openAddMedModal()" class="admin-only text-xs font-bold text-teal-700 hover:text-teal-900 flex items-center gap-1 bg-teal-50 px-2.5 py-1.5 rounded-xl border border-teal-200 active:scale-95 transition">
+            <button onclick="openAddMedModal()" class="admin-only text-xs font-bold text-teal-700 hover:text-teal-900 flex items-center gap-1 bg-teal-50 px-2.5 py-1.5 rounded-xl border border-teal-200 active:scale-95 transition" style="display:none;">
               <i class="fa-solid fa-plus"></i> <span data-i18n="addMedication">הוסף תרופה</span>
             </button>
           </div>
@@ -305,7 +301,7 @@
               <h2 class="text-xl font-black text-slate-900" data-i18n="vitalsTitle">יומן מעקב מדדים</h2>
               <p class="text-xs text-slate-500 font-medium" data-i18n="vitalsSubtitle">תיעוד מדדים יומי: לחץ דם, סוכר, חום ועוד</p>
             </div>
-            <button onclick="openLogVitalsModal()" class="px-3.5 py-2 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-teal-600/20 active:scale-95 transition">
+            <button onclick="openLogVitalsModal()" class="px-3.5 py-2 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-md active:scale-95 transition">
               <i class="fa-solid fa-plus-circle text-sm"></i>
               <span data-i18n="logVitalsBtn">הזנת מדדים חדשה</span>
             </button>
@@ -315,7 +311,7 @@
             <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between">
               <div class="flex items-center justify-between text-xs text-slate-500 font-semibold">
                 <span data-i18n="bpLabel">לחץ דם (Sys/Dia)</span>
-                <i class="fa-solid fa-heart-pulse text-rose-500"></i>
+                <i class="fa-solid fa-heart-pulse text-red-500"></i>
               </div>
               <div class="my-2">
                 <span id="latestBP" class="text-xl font-black text-slate-800">-- / --</span>
@@ -327,7 +323,7 @@
             <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between">
               <div class="flex items-center justify-between text-xs text-slate-500 font-semibold">
                 <span data-i18n="sugarLabel">סוכר (Glucose)</span>
-                <i class="fa-solid fa-droplet text-amber-500"></i>
+                <i class="fa-solid fa-droplet text-yellow-500"></i>
               </div>
               <div class="my-2">
                 <span id="latestSugar" class="text-xl font-black text-slate-800">--</span>
@@ -394,7 +390,7 @@
               <h2 class="text-xl font-black text-slate-900" data-i18n="shoppingTitle">רשימת קניות שיתופית</h2>
               <p class="text-xs text-slate-500 font-medium" data-i18n="shoppingSubtitle">המטפל מוסיף צרכים, המשפחה רואה ומסמנת 'נקנה'</p>
             </div>
-            <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg font-bold">
+            <div class="w-10 h-10 rounded-2xl bg-yellow-100 text-yellow-700 flex items-center justify-center text-lg font-bold">
               <i class="fa-solid fa-cart-shopping"></i>
             </div>
           </div>
@@ -423,7 +419,7 @@
 
           <!-- Custom Item Input Form -->
           <form onsubmit="handleCustomShoppingSubmit(event)" class="mt-3.5 flex gap-2">
-            <input type="text" id="customShoppingInput" placeholder="הקלד פריט לקנייה / Type item to buy..." class="flex-1 text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800" required />
+            <input type="text" id="customShoppingInput" placeholder="הקלד פריט לקנייה / Type item to buy..." class="flex-1 text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 focus:outline-none text-slate-800" required />
             <button type="submit" class="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-1 shadow-sm active:scale-95 transition">
               <i class="fa-solid fa-plus"></i>
               <span data-i18n="add">הוסף</span>
@@ -465,12 +461,12 @@
 
           <!-- New Message Composer Form -->
           <form onsubmit="handlePostNotice(event)" class="space-y-2.5">
-            <textarea id="noticeTextInput" rows="2" placeholder="כתוב הנחיה או הודעה / Write instruction or note..." class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-indigo-500 focus:bg-white text-slate-800" required></textarea>
+            <textarea id="noticeTextInput" rows="2" placeholder="כתוב הנחיה או הודעה / Write instruction or note..." class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-3 focus:outline-none text-slate-800" required></textarea>
             
             <div class="flex items-center justify-between">
               <label class="flex items-center gap-1.5 text-xs text-slate-600 font-semibold cursor-pointer">
-                <input type="checkbox" id="noticeUrgentCheck" class="rounded text-rose-600 focus:ring-rose-500 w-4 h-4" />
-                <span class="text-rose-600 font-bold" data-i18n="urgentNoticeLabel">הודעה דחופה / חשובה</span>
+                <input type="checkbox" id="noticeUrgentCheck" class="rounded text-red-600 w-4 h-4" />
+                <span class="text-red-600 font-bold" data-i18n="urgentNoticeLabel">הודעה דחופה / חשובה</span>
               </label>
 
               <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition">
@@ -505,7 +501,7 @@
               <h2 class="text-xl font-black text-slate-900" data-i18n="calendarTitle">יומן ביקורים ואירועים</h2>
               <p class="text-xs text-slate-500 font-medium" data-i18n="calendarSubtitle">תורים רפואיים, ביקור פיזיותרפיסט וביקורי משפחה</p>
             </div>
-            <button onclick="openAddEventModal()" class="admin-only px-3 py-2 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition">
+            <button onclick="openAddEventModal()" class="admin-only px-3 py-2 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition" style="display:none;">
               <i class="fa-solid fa-calendar-plus text-sm"></i>
               <span data-i18n="addEvent">הוסף אירוע</span>
             </button>
@@ -524,14 +520,14 @@
       <section id="tab-emergency" class="tab-content hidden space-y-4">
         
         <!-- Big SOS Action Card -->
-        <div class="bg-gradient-to-br from-rose-600 via-rose-700 to-red-900 rounded-3xl p-5 text-white shadow-xl relative overflow-hidden">
+        <div class="bg-gradient-to-br from-red-600 via-red-700 to-red-900 rounded-3xl p-5 text-white shadow-xl relative overflow-hidden">
           <div class="flex items-center justify-between">
             <div>
-              <span class="text-xs font-bold text-rose-200 uppercase tracking-wider" data-i18n="sosCenter">מוקד מצבי חירום</span>
+              <span class="text-xs font-bold text-red-200 uppercase tracking-wider" data-i18n="sosCenter">מוקד מצבי חירום</span>
               <h2 class="text-xl font-black mt-0.5" data-i18n="emergencyReporting">דיווח אירוע חריג / נפילה</h2>
-              <p class="text-xs text-rose-100 font-medium mt-1" data-i18n="sosDescription">שליחת התראה דחופה מיידית לכל בני המשפחה המחוברים</p>
+              <p class="text-xs text-red-100 font-medium mt-1" data-i18n="sosDescription">שליחת התראה דחופה מיידית לכל בני המשפחה המחוברים</p>
             </div>
-            <button onclick="openIncidentModal()" class="w-14 h-14 rounded-2xl bg-white text-rose-700 font-black text-xl flex items-center justify-center shadow-lg active:scale-90 transition pulsing-alert flex-shrink-0">
+            <button onclick="openIncidentModal()" class="w-14 h-14 rounded-2xl bg-white text-red-700 font-black text-xl flex items-center justify-center shadow-lg active:scale-90 transition pulsing-alert flex-shrink-0">
               SOS
             </button>
           </div>
@@ -544,7 +540,7 @@
               <h3 class="font-black text-slate-900 text-base" data-i18n="emergencyContactsTitle">ספר טלפונים לשעת חירום</h3>
               <p class="text-xs text-slate-500 font-medium" data-i18n="oneTapDialSub">חיוג מהיר בלחיצה אחת למשפחה ולמוקדי רפואה</p>
             </div>
-            <button onclick="openAddContactModal()" class="admin-only text-xs font-bold text-teal-700 bg-teal-50 px-2.5 py-1.5 rounded-xl border border-teal-200 active:scale-95 transition">
+            <button onclick="openAddContactModal()" class="admin-only text-xs font-bold text-teal-700 bg-teal-50 px-2.5 py-1.5 rounded-xl border border-teal-200 active:scale-95 transition" style="display:none;">
               + <span data-i18n="addContact">הוסף איש קשר</span>
             </button>
           </div>
@@ -569,7 +565,7 @@
     <!-- ======================================================== -->
     <!-- FIXED BOTTOM NAVIGATION BAR (Mobile First) -->
     <!-- ======================================================== -->
-    <nav class="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white/95 backdrop-blur border-t border-slate-200 shadow-2xl z-40 px-2 py-1 flex items-center justify-around sm:rounded-b-3xl">
+    <nav class="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white border-t border-slate-200 shadow-2xl z-40 px-2 py-1 flex items-center justify-around sm:rounded-b-3xl">
       
       <button onclick="switchTab('routine')" id="nav-routine" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-teal-600 font-bold transition-all">
         <div class="w-6 h-6 flex items-center justify-center text-lg">
@@ -606,7 +602,7 @@
         <span class="text-[10px] mt-0.5" data-i18n="navCalendar">ביקורים</span>
       </button>
 
-      <button onclick="switchTab('emergency')" id="nav-emergency" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-rose-500 font-medium transition-all">
+      <button onclick="switchTab('emergency')" id="nav-emergency" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-red-500 font-medium transition-all">
         <div class="w-6 h-6 flex items-center justify-center text-lg">
           <i class="fa-solid fa-phone-volume"></i>
         </div>
@@ -620,7 +616,7 @@
     <!-- ======================================================== -->
 
     <!-- 0. Authentication Modal (Google Auth Only) -->
-    <div id="authModal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="authModal" class="hidden fixed inset-0 z-50 bg-slate-900 bg-opacity-70 flex items-center justify-center p-4">
       <div class="bg-white w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl border border-slate-200">
         <div class="text-center">
           <div class="w-12 h-12 rounded-2xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl font-bold mx-auto mb-2 shadow-inner">
@@ -645,16 +641,16 @@
             <i class="fa-solid fa-arrow-left text-slate-400 group-hover:text-teal-600 transition text-sm"></i>
           </button>
 
-          <!-- Current Logged In Info & Logout -->
-          <div id="activeUserSection" class="p-3.5 rounded-2xl bg-teal-50 border border-teal-200 text-xs flex items-center justify-between">
+          <!-- Current Logged In Info & Logout (Only shown when a valid user is logged in) -->
+          <div id="activeUserSection" class="p-3.5 rounded-2xl bg-teal-50 border border-teal-200 text-xs flex items-center justify-between" style="display:none;">
             <div class="flex items-center gap-2">
               <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
               <div>
-                <div class="font-bold text-slate-800" id="currentLoggedUserText">מחובר כעת: מנהל על</div>
+                <div class="font-bold text-slate-800" id="currentLoggedUserText">מחובר כעת</div>
                 <div class="text-[10px] text-slate-500" id="currentLoggedEmailText">admin@gmail.com</div>
               </div>
             </div>
-            <button onclick="handleLogout()" class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 font-extrabold text-[11px] transition" data-i18n="logout">
+            <button onclick="handleLogout()" class="px-2.5 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 font-extrabold text-[11px] transition" data-i18n="logout">
               התנתק
             </button>
           </div>
@@ -672,16 +668,16 @@
     </div>
 
     <!-- 0.1 SUPER ADMIN ACTIVITY EXCEL REPORTS MODAL -->
-    <div id="reportsModal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="reportsModal" class="hidden fixed inset-0 z-50 bg-slate-900 bg-opacity-70 flex items-center justify-center p-4">
       <div class="bg-white w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl border border-slate-200">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div class="flex items-center gap-2.5">
-            <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg font-bold shadow-inner">
+            <div class="w-10 h-10 rounded-2xl bg-yellow-100 text-yellow-700 flex items-center justify-center text-lg font-bold shadow-inner">
               <i class="fa-solid fa-file-excel"></i>
             </div>
             <div>
               <h3 class="font-black text-slate-900 text-base" data-i18n="reportsModalTitle">הפקת דוחות אקסל (מנהל על)</h3>
-              <p class="text-[11px] text-amber-700 font-semibold" data-i18n="reportsModalSub">קובץ Excel רב-גליוני בקידוד עברית מושלם</p>
+              <p class="text-[11px] text-yellow-700 font-semibold" data-i18n="reportsModalSub">קובץ Excel רב-גליוני בקידוד עברית מושלם</p>
             </div>
           </div>
           <button onclick="closeModal('reportsModal')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200">
@@ -705,12 +701,12 @@
             </div>
           </div>
 
-          <div class="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 space-y-1">
+          <div class="p-3 bg-yellow-50 rounded-2xl border border-yellow-200 text-xs text-yellow-900 space-y-1">
             <div class="font-bold flex items-center gap-1.5">
               <i class="fa-solid fa-table-list"></i>
               <span>מבנה גליונות האקסל שיופקו:</span>
             </div>
-            <ul class="text-[11px] list-disc list-inside space-y-0.5 text-amber-800">
+            <ul class="text-[11px] list-disc list-inside space-y-0.5 text-yellow-800">
               <li>גליון 1: <strong>יומן תרופות</strong> (זמנים, סטטוס לקיחה, מבצע והוראות)</li>
               <li>גליון 2: <strong>משימות שגרה</strong> (היגיינה, חיתולים, ארוחות והליכה)</li>
               <li>גליון 3: <strong>מעקב מדדים</strong> (לחץ דם, סוכר, חום, דופק, חמצן)</li>
@@ -721,7 +717,7 @@
 
           <div class="pt-2 flex gap-2">
             <button type="button" onclick="closeModal('reportsModal')" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs" data-i18n="cancel">ביטול</button>
-            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-md shadow-emerald-600/30 flex items-center justify-center gap-1.5 active:scale-95 transition">
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-md flex items-center justify-center gap-1.5 active:scale-95 transition">
               <i class="fa-solid fa-file-arrow-down text-sm"></i>
               <span data-i18n="downloadExcelBtn">הורד קובץ Excel (.xlsx)</span>
             </button>
@@ -731,8 +727,8 @@
     </div>
 
     <!-- 1. Log Vitals Modal -->
-    <div id="logVitalsModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200 animate-slide-up">
+    <div id="logVitalsModal" class="hidden fixed inset-0 z-50 bg-slate-900 bg-opacity-60 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div class="flex items-center gap-2">
             <div class="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center font-bold">
@@ -786,21 +782,21 @@
 
           <div class="pt-2 flex gap-2">
             <button type="button" onclick="closeModal('logVitalsModal')" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs" data-i18n="cancel">ביטול</button>
-            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20" data-i18n="saveVitals">שמור מדדים</button>
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md" data-i18n="saveVitals">שמור מדדים</button>
           </div>
         </form>
       </div>
     </div>
 
     <!-- 2. Incident & Emergency SOS Modal -->
-    <div id="incidentModal" class="hidden fixed inset-0 z-50 bg-rose-950/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-rose-200 animate-slide-up">
-        <div class="flex items-center justify-between border-b border-rose-100 pb-3">
+    <div id="incidentModal" class="hidden fixed inset-0 z-50 bg-red-950 bg-opacity-70 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-red-200">
+        <div class="flex items-center justify-between border-b border-red-100 pb-3">
           <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
+            <div class="w-8 h-8 rounded-xl bg-red-100 text-red-700 flex items-center justify-center font-bold">
               <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
-            <h3 class="font-black text-rose-900 text-lg" data-i18n="incidentModalTitle">דיווח אירוע חריג / SOS</h3>
+            <h3 class="font-black text-red-900 text-lg" data-i18n="incidentModalTitle">דיווח אירוע חריג / SOS</h3>
           </div>
           <button onclick="closeModal('incidentModal')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200">
             <i class="fa-solid fa-xmark"></i>
@@ -810,28 +806,28 @@
         <form onsubmit="handleReportIncident(event)" class="space-y-3">
           <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="selectIncidentType">בחר סוג אירוע (שליחה מהירה):</label>
           <div class="grid grid-cols-2 gap-2">
-            <label onclick="handleIncidentTypeSelect('fall')" class="border border-slate-200 p-2.5 rounded-2xl flex items-center gap-2 cursor-pointer hover:bg-rose-50 has-[:checked]:border-rose-600 has-[:checked]:bg-rose-50">
-              <input type="radio" name="incidentType" value="fall" checked class="text-rose-600" />
+            <label onclick="handleIncidentTypeSelect('fall')" class="border border-slate-200 p-2.5 rounded-2xl flex items-center gap-2 cursor-pointer hover:bg-red-50">
+              <input type="radio" name="incidentType" value="fall" checked class="text-red-600" />
               <span class="text-xs font-bold text-slate-800">🤕 <span data-i18n="incFall">נפילה</span></span>
             </label>
-            <label onclick="handleIncidentTypeSelect('confusion')" class="border border-slate-200 p-2.5 rounded-2xl flex items-center gap-2 cursor-pointer hover:bg-rose-50 has-[:checked]:border-rose-600 has-[:checked]:bg-rose-50">
-              <input type="radio" name="incidentType" value="confusion" class="text-rose-600" />
+            <label onclick="handleIncidentTypeSelect('confusion')" class="border border-slate-200 p-2.5 rounded-2xl flex items-center gap-2 cursor-pointer hover:bg-red-50">
+              <input type="radio" name="incidentType" value="confusion" class="text-red-600" />
               <span class="text-xs font-bold text-slate-800">🧠 <span data-i18n="incConfusion">בלבול / חולשה</span></span>
             </label>
-            <label onclick="handleIncidentTypeSelect('fever')" class="border border-slate-200 p-2.5 rounded-2xl flex items-center gap-2 cursor-pointer hover:bg-rose-50 has-[:checked]:border-rose-600 has-[:checked]:bg-rose-50">
-              <input type="radio" name="incidentType" value="fever" class="text-rose-600" />
+            <label onclick="handleIncidentTypeSelect('fever')" class="border border-slate-200 p-2.5 rounded-2xl flex items-center gap-2 cursor-pointer hover:bg-red-50">
+              <input type="radio" name="incidentType" value="fever" class="text-red-600" />
               <span class="text-xs font-bold text-slate-800">🤒 <span data-i18n="incFever">חום גבוה / רעד</span></span>
             </label>
-            <label onclick="handleIncidentTypeSelect('breathing')" class="border border-slate-200 p-2.5 rounded-2xl flex items-center gap-2 cursor-pointer hover:bg-rose-50 has-[:checked]:border-rose-600 has-[:checked]:bg-rose-50">
-              <input type="radio" name="incidentType" value="breathing" class="text-rose-600" />
+            <label onclick="handleIncidentTypeSelect('breathing')" class="border border-slate-200 p-2.5 rounded-2xl flex items-center gap-2 cursor-pointer hover:bg-red-50">
+              <input type="radio" name="incidentType" value="breathing" class="text-red-600" />
               <span class="text-xs font-bold text-slate-800">🫁 <span data-i18n="incBreathing">קוצר נשימה</span></span>
             </label>
-            <label onclick="handleIncidentTypeSelect('refusal')" class="border border-slate-200 p-2.5 rounded-2xl flex items-center gap-2 cursor-pointer hover:bg-rose-50 has-[:checked]:border-rose-600 has-[:checked]:bg-rose-50">
-              <input type="radio" name="incidentType" value="refusal" class="text-rose-600" />
+            <label onclick="handleIncidentTypeSelect('refusal')" class="border border-slate-200 p-2.5 rounded-2xl flex items-center gap-2 cursor-pointer hover:bg-red-50">
+              <input type="radio" name="incidentType" value="refusal" class="text-red-600" />
               <span class="text-xs font-bold text-slate-800">🚫 <span data-i18n="incRefusal">סירוב תרופות/אוכל</span></span>
             </label>
-            <label onclick="handleIncidentTypeSelect('other')" class="border border-slate-200 p-2.5 rounded-2xl flex items-center gap-2 cursor-pointer hover:bg-rose-50 has-[:checked]:border-rose-600 has-[:checked]:bg-rose-50">
-              <input type="radio" name="incidentType" value="other" class="text-rose-600" />
+            <label onclick="handleIncidentTypeSelect('other')" class="border border-slate-200 p-2.5 rounded-2xl flex items-center gap-2 cursor-pointer hover:bg-red-50">
+              <input type="radio" name="incidentType" value="other" class="text-red-600" />
               <span class="text-xs font-bold text-slate-800">⚠️ <span data-i18n="incOther">אירוע אחר</span></span>
             </label>
           </div>
@@ -846,7 +842,7 @@
 
           <div class="pt-2 flex gap-2">
             <button type="button" onclick="closeModal('incidentModal')" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs" data-i18n="cancel">ביטול</button>
-            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-md shadow-rose-600/30 flex items-center justify-center gap-1.5" data-i18n="sendIncidentAlert">
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black text-xs shadow-md flex items-center justify-center gap-1.5" data-i18n="sendIncidentAlert">
               <i class="fa-solid fa-paper-plane"></i>
               <span>שלח התראת חירום</span>
             </button>
@@ -856,8 +852,8 @@
     </div>
 
     <!-- 3. Add Medication Modal -->
-    <div id="addMedModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200 animate-slide-up">
+    <div id="addMedModal" class="hidden fixed inset-0 z-50 bg-slate-900 bg-opacity-60 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div class="flex items-center gap-2">
             <div class="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center font-bold">
@@ -906,15 +902,15 @@
 
           <div class="pt-2 flex gap-2">
             <button type="button" onclick="closeModal('addMedModal')" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs" data-i18n="cancel">ביטול</button>
-            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20" data-i18n="save">שמור תרופה</button>
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md" data-i18n="save">שמור תרופה</button>
           </div>
         </form>
       </div>
     </div>
 
     <!-- 3.1 Edit Medication Modal -->
-    <div id="editMedModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200 animate-slide-up">
+    <div id="editMedModal" class="hidden fixed inset-0 z-50 bg-slate-900 bg-opacity-60 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div class="flex items-center gap-2">
             <div class="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center font-bold">
@@ -963,19 +959,19 @@
           </div>
 
           <div class="pt-2 flex gap-2">
-            <button type="button" onclick="handleDeleteMedication()" class="px-3 py-2.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-xs flex items-center gap-1" data-i18n="deleteMed">
+            <button type="button" onclick="handleDeleteMedication()" class="px-3 py-2.5 rounded-xl bg-red-50 text-red-700 hover:bg-red-100 font-bold text-xs flex items-center gap-1" data-i18n="deleteMed">
               <i class="fa-solid fa-trash"></i> מחק תרופה
             </button>
             <button type="button" onclick="closeModal('editMedModal')" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs" data-i18n="cancel">ביטול</button>
-            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20" data-i18n="save">שמור שינויים</button>
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md" data-i18n="save">שמור שינויים</button>
           </div>
         </form>
       </div>
     </div>
 
     <!-- 4. Add Task Modal -->
-    <div id="addTaskModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200 animate-slide-up">
+    <div id="addTaskModal" class="hidden fixed inset-0 z-50 bg-slate-900 bg-opacity-60 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div class="flex items-center gap-2">
             <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
@@ -1014,15 +1010,15 @@
 
           <div class="pt-2 flex gap-2">
             <button type="button" onclick="closeModal('addTaskModal')" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs" data-i18n="cancel">ביטול</button>
-            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20" data-i18n="save">שמור משימה</button>
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md" data-i18n="save">שמור משימה</button>
           </div>
         </form>
       </div>
     </div>
 
     <!-- 5. Add Calendar Event Modal -->
-    <div id="addEventModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200 animate-slide-up">
+    <div id="addEventModal" class="hidden fixed inset-0 z-50 bg-slate-900 bg-opacity-60 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div class="flex items-center gap-2">
             <div class="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center font-bold">
@@ -1059,18 +1055,18 @@
 
           <div class="pt-2 flex gap-2">
             <button type="button" onclick="closeModal('addEventModal')" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs" data-i18n="cancel">ביטול</button>
-            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20" data-i18n="save">שמור אירוע</button>
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md" data-i18n="save">שמור אירוע</button>
           </div>
         </form>
       </div>
     </div>
 
-    <!-- 6. ADD EMERGENCY CONTACT MODAL (Complete & Functional) -->
-    <div id="addContactModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200 animate-slide-up">
+    <!-- 6. ADD EMERGENCY CONTACT MODAL -->
+    <div id="addContactModal" class="hidden fixed inset-0 z-50 bg-slate-900 bg-opacity-60 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
+            <div class="w-8 h-8 rounded-xl bg-red-100 text-red-700 flex items-center justify-center font-bold">
               <i class="fa-solid fa-phone"></i>
             </div>
             <h3 class="font-black text-slate-900 text-lg">הוספת איש קשר לשעת חירום</h3>
@@ -1097,21 +1093,21 @@
           </div>
 
           <label class="flex items-center gap-2 text-xs text-slate-700 font-semibold cursor-pointer pt-1">
-            <input type="checkbox" id="contactUrgentInput" class="rounded text-rose-600 focus:ring-rose-500 w-4 h-4" />
+            <input type="checkbox" id="contactUrgentInput" class="rounded text-red-600 w-4 h-4" />
             <span>הדגש כאיש קשר בעדיפות עליונה / חירום דחוף</span>
           </label>
 
           <div class="pt-2 flex gap-2">
             <button type="button" onclick="closeModal('addContactModal')" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs" data-i18n="cancel">ביטול</button>
-            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20" data-i18n="save">שמור איש קשר</button>
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md" data-i18n="save">שמור איש קשר</button>
           </div>
         </form>
       </div>
     </div>
 
     <!-- 7. SETTINGS & USER WHITELIST MANAGEMENT -->
-    <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-white w-full max-w-md rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto custom-scrollbar">
+    <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-slate-900 bg-opacity-60 flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-md rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200 max-h-screen overflow-y-auto custom-scrollbar">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div class="flex items-center gap-2">
             <div class="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold">
@@ -1131,19 +1127,19 @@
           </div>
 
           <!-- Super Admin Config -->
-          <div class="p-3.5 bg-amber-50 rounded-2xl border border-amber-200 space-y-2">
+          <div class="p-3.5 bg-yellow-50 rounded-2xl border border-yellow-200 space-y-2">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-black text-amber-950 flex items-center gap-1.5">
-                <i class="fa-solid fa-crown text-amber-600"></i>
+              <span class="text-xs font-black text-yellow-950 flex items-center gap-1.5">
+                <i class="fa-solid fa-crown text-yellow-600"></i>
                 אימייל Google של מנהל על (Super Admin):
               </span>
-              <span class="text-[10px] bg-amber-200 text-amber-900 font-bold px-2 py-0.5 rounded">בעל הרשאת דוחות</span>
+              <span class="text-[10px] bg-yellow-200 text-yellow-900 font-bold px-2 py-0.5 rounded">בעל הרשאת דוחות</span>
             </div>
-            <input type="email" id="superAdminEmailInput" value="admin@gmail.com" class="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800" />
+            <input type="email" id="superAdminEmailInput" value="" placeholder="your.admin.email@gmail.com" class="w-full bg-white border border-yellow-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800" />
           </div>
 
           <!-- Section: Family Members Whitelist -->
-          <div class="p-3.5 bg-teal-50/70 rounded-2xl border border-teal-200 space-y-2.5">
+          <div class="p-3.5 bg-teal-50 rounded-2xl border border-teal-200 space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold text-teal-950 flex items-center gap-1.5">
                 <i class="fa-solid fa-users text-teal-600"></i>
@@ -1163,7 +1159,7 @@
           </div>
 
           <!-- Section: Caregivers Whitelist & Google Auth Revocation -->
-          <div class="p-3.5 bg-emerald-50/70 rounded-2xl border border-emerald-200 space-y-2.5">
+          <div class="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
                 <i class="fa-solid fa-user-nurse text-emerald-600"></i>
@@ -1176,7 +1172,7 @@
             </div>
             
             <!-- Add Caregiver Email Form -->
-            <div class="space-y-1.5 pt-1 border-t border-emerald-200/60">
+            <div class="space-y-1.5 pt-1 border-t border-emerald-200">
               <span class="text-[11px] font-bold text-emerald-900 block">הוספת מטפל חדש (חשבון Google):</span>
               <div class="flex gap-1.5">
                 <input type="text" id="newCaregiverNameInput" placeholder="שם המטפל (Rahul)" class="w-1/3 bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs text-slate-800" />
@@ -1192,12 +1188,12 @@
           <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                <i class="fa-brands fa-google text-amber-500"></i>
+                <i class="fa-brands fa-google text-yellow-500"></i>
                 חיבור Firebase Realtime & Authentication
               </span>
             </div>
             <p class="text-[11px] text-slate-500 leading-relaxed">
-              הקוד מחובר לפרויקט שלך כברירת מחדל.
+              האפליקציה מחוברת לפרויקט obn-caresync כברירת מחדל.
             </p>
             <textarea id="firebaseConfigInput" rows="4" placeholder='const firebaseConfig = { apiKey: "...", projectId: "..." };' class="w-full font-mono text-[10px] bg-white border border-slate-300 rounded-xl p-2.5 focus:outline-none text-slate-700"></textarea>
             <button onclick="applyFirebaseConfig()" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs shadow-sm transition">
@@ -1210,13 +1206,13 @@
             <button onclick="exportDataJSON()" class="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1">
               <i class="fa-solid fa-download"></i> גיבוי JSON
             </button>
-            <button onclick="clearAllDataToFresh()" class="flex-1 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs flex items-center justify-center gap-1">
+            <button onclick="clearAllDataToFresh()" class="flex-1 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs flex items-center justify-center gap-1">
               <i class="fa-solid fa-broom"></i> נקה הכל (דף חלק)
             </button>
           </div>
         </div>
 
-        <button onclick="saveGeneralSettings()" class="w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20">
+        <button onclick="saveGeneralSettings()" class="w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md">
           שמור שינויים
         </button>
       </div>
@@ -1238,7 +1234,6 @@
       try {
         return JSON.parse(str);
       } catch (e) {
-        // Safe regex conversion of unquoted JS keys to strict JSON without eval
         try {
           const jsonStr = str
             .replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":')
@@ -1576,7 +1571,7 @@
         btnPendingTake: "👉 यहाँ दबाएं: दवा दी गई",
         btnLateTake: "🚨 देरी से दवा दी गई",
         takenStamp: "✅ दवा ले ली गई",
-        undoBtn: "रद्द करें",
+        undoBtn: "רद्द करें",
         statusPending: "⏳ अभी देना बाकी है",
         statusOverdue: "⚠️ 1 घंटे से ज्यादा देरी!",
         authModalTitle: "CareSync में लॉगिन करें",
@@ -1645,7 +1640,7 @@
       }
     };
 
-    // --- 3. CLEAN INITIAL STATE ---
+    // --- 3. CLEAN INITIAL STATE (GUEST / UNAUTHENTICATED BY DEFAULT) ---
     const cleanInitialState = {
       settings: {
         patientName: "Dad",
@@ -1666,10 +1661,10 @@
         ]
       },
       currentUser: {
-        uid: "pending_login",
-        name: "מנהל על",
-        role: "super_admin",
-        email: "",
+        uid: "guest",
+        name: "לא מחובר",
+        role: "guest",
+        email: null,
         avatar: null
       },
       activeIncident: null,
@@ -1798,14 +1793,14 @@
     };
 
     // --- 4. STATE & PERSISTENCE ---
-    let state = JSON.parse(localStorage.getItem('careSync_v7_connected')) || cleanInitialState;
+    let state = JSON.parse(localStorage.getItem('careSync_v8_app')) || cleanInitialState;
     if (!state.settings.firebaseConfig) state.settings.firebaseConfig = defaultFirebaseConfig;
 
     function saveState() {
-      localStorage.setItem('careSync_v7_connected', JSON.stringify(state));
+      localStorage.setItem('careSync_v8_app', JSON.stringify(state));
       renderApp();
       
-      if (window.careSyncFirestoreDoc) {
+      if (window.careSyncFirestoreDoc && state.currentUser && state.currentUser.role !== 'guest') {
         window.careSyncFirestoreDoc.set(state, { merge: true }).catch(err => {
           console.log('Firebase sync note:', err);
         });
@@ -1866,18 +1861,30 @@
               state = cloudData;
               state.settings.lang = currentLang;
               state.currentUser = currentUser;
-              localStorage.setItem('careSync_v7_connected', JSON.stringify(state));
+              localStorage.setItem('careSync_v8_app', JSON.stringify(state));
               renderApp();
             }
           }
         }, err => {
-          console.log('Firestore snapshot listener info:', err);
+          console.log('Firestore snapshot info:', err);
         });
 
-        // Listen to Google Auth State Changes (Silent auth restore without annoying popups)
+        // Listen to Google Auth State Changes
         auth.onAuthStateChanged(user => {
           if (user && user.email) {
             processGoogleUser(user.email.toLowerCase(), user.displayName, user.photoURL, true);
+          } else {
+            // Unauthenticated state
+            if (state.currentUser && state.currentUser.role !== 'guest') {
+              state.currentUser = {
+                uid: "guest",
+                name: "לא מחובר",
+                role: "guest",
+                email: null,
+                avatar: null
+              };
+              saveState();
+            }
           }
         });
 
@@ -1886,7 +1893,7 @@
         if (syncDot) syncDot.className = "w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse";
         if (syncText) syncText.innerText = "Firebase מחובר";
       } catch (e) {
-        console.log('Firebase init error:', e);
+        console.log('Firebase init note:', e);
       }
     }
 
@@ -1907,27 +1914,32 @@
       }
     }
 
-    // --- 6. PURE GOOGLE AUTHENTICATION & ROLE DETERMINATION ---
+    // --- 6. PURE GOOGLE AUTHENTICATION & ROLE RESOLUTION ---
     function openAuthModal() {
       document.getElementById('authModal').classList.remove('hidden');
       updateAuthModalUI();
     }
 
     function updateAuthModalUI() {
-      const isSuper = state.currentUser.role === 'super_admin';
-      const isCaregiver = state.currentUser.role === 'caregiver';
+      const isLoggedIn = state.currentUser && state.currentUser.role !== 'guest' && state.currentUser.email;
+      const isSuper = state.currentUser && state.currentUser.role === 'super_admin';
+      const isCaregiver = state.currentUser && state.currentUser.role === 'caregiver';
+
+      const userSection = document.getElementById('activeUserSection');
       const textEl = document.getElementById('currentLoggedUserText');
       const emailEl = document.getElementById('currentLoggedEmailText');
 
-      if (textEl) {
+      if (userSection) {
+        userSection.style.display = isLoggedIn ? 'flex' : 'none';
+      }
+
+      if (isLoggedIn && textEl && emailEl) {
         textEl.innerText = isSuper 
           ? `מחובר: ${state.currentUser.name} 👑 (מנהל על)`
           : isCaregiver 
             ? `מחובר: ${state.currentUser.name} 🧑‍⚕️ (מטפל)`
             : `מחובר: ${state.currentUser.name} 👨‍👩‍👦 (בן משפחה)`;
-      }
-      if (emailEl) {
-        emailEl.innerText = state.currentUser.email || 'התחבר עם Google';
+        emailEl.innerText = state.currentUser.email;
       }
     }
 
@@ -1954,8 +1966,8 @@
       const familyEmails = (state.whitelist.familyEmails || []).map(e => e.toLowerCase());
       const caregiver = (state.whitelist.caregivers || []).find(cg => (cg.email || "").toLowerCase() === email);
 
-      // A) First-time creator setup: If no superAdminEmail is set yet, this user becomes Super Admin automatically!
-      if (!superAdminEmail || superAdminEmail === "admin@gmail.com" || email === superAdminEmail) {
+      // A) First-time creator setup or matching Super Admin:
+      if (!superAdminEmail || email === superAdminEmail) {
         state.settings.superAdminEmail = email;
         if (!state.whitelist.familyEmails.includes(email)) {
           state.whitelist.familyEmails.unshift(email);
@@ -2015,7 +2027,7 @@
 
     function handleLogout() {
       state.currentUser = {
-        uid: "logged_out",
+        uid: "guest",
         name: "לא מחובר",
         role: "guest",
         email: null,
@@ -2026,7 +2038,8 @@
       }
       closeModal('authModal');
       saveState();
-      openAuthModal();
+      updateAuthModalUI();
+      alert('התנתקת מהמערכת בהצלחה.');
     }
 
     // --- 7. WHITELIST MANAGEMENT IN SETTINGS ---
@@ -2040,10 +2053,10 @@
           row.innerHTML = `
             <span class="font-bold text-slate-800">${email}</span>
             ${email !== state.settings.superAdminEmail ? `
-              <button onclick="handleRemoveFamilyEmail('${email}')" class="text-rose-500 hover:text-rose-700 p-1 text-[11px] font-bold">
+              <button onclick="handleRemoveFamilyEmail('${email}')" class="text-red-500 hover:text-red-700 p-1 text-[11px] font-bold">
                 <i class="fa-solid fa-trash"></i>
               </button>
-            ` : `<span class="text-[10px] text-amber-600 font-black">👑 מנהל על</span>`}
+            ` : `<span class="text-[10px] text-yellow-700 font-black">👑 מנהל על</span>`}
           `;
           famContainer.appendChild(row);
         });
@@ -2054,7 +2067,7 @@
         cgContainer.innerHTML = '';
         (state.whitelist.caregivers || []).forEach(cg => {
           const row = document.createElement('div');
-          row.className = `p-2.5 rounded-2xl border ${cg.active ? 'bg-white border-emerald-200' : 'bg-rose-50 border-rose-200 opacity-90'} space-y-1.5 text-xs`;
+          row.className = `p-2.5 rounded-2xl border ${cg.active ? 'bg-white border-emerald-200' : 'bg-red-50 border-red-200 opacity-90'} space-y-1.5 text-xs`;
           row.innerHTML = `
             <div class="flex items-center justify-between">
               <div>
@@ -2063,11 +2076,11 @@
               </div>
               <div class="flex items-center gap-1.5">
                 <button onclick="toggleCaregiverActive('${cg.id}')" class="px-2 py-0.5 rounded-lg text-[10px] font-black transition ${
-                  cg.active ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-rose-100 hover:text-rose-800' : 'bg-rose-600 text-white shadow hover:bg-emerald-600'
+                  cg.active ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-red-600 text-white shadow'
                 }">
-                  ${cg.active ? '🟢 פעיל (לחץ לחסימה)' : '🔴 חסום (לחץ להפעלה)'}
+                  ${cg.active ? '🟢 פעיל' : '🔴 חסום'}
                 </button>
-                <button onclick="handleDeleteCaregiver('${cg.id}')" class="text-slate-400 hover:text-rose-600 p-1">
+                <button onclick="handleDeleteCaregiver('${cg.id}')" class="text-slate-400 hover:text-red-600 p-1">
                   <i class="fa-solid fa-trash-can text-xs"></i>
                 </button>
               </div>
@@ -2143,7 +2156,7 @@
 
     // --- 8. SUPER ADMIN MULTI-SHEET EXCEL EXPORT (XLSX) ---
     function openReportsModal() {
-      if (state.currentUser.role !== 'super_admin') {
+      if (!state.currentUser || state.currentUser.role !== 'super_admin') {
         alert('⛔ הפקת דוחות אקסל מורשית אך ורק למנהל העל (Super Admin)!');
         return;
       }
@@ -2161,7 +2174,7 @@
 
     function handleGenerateExcelReport(e) {
       e.preventDefault();
-      if (state.currentUser.role !== 'super_admin') {
+      if (!state.currentUser || state.currentUser.role !== 'super_admin') {
         alert('מנהל על בלבד רשאי להפיק דוחות');
         return;
       }
@@ -2318,8 +2331,11 @@
         }
       });
 
-      const isSuper = state.currentUser.role === 'super_admin';
-      const isCaregiver = state.currentUser.role === 'caregiver';
+      const isLoggedIn = state.currentUser && state.currentUser.role !== 'guest' && state.currentUser.email;
+      const isSuper = isLoggedIn && state.currentUser.role === 'super_admin';
+      const isCaregiver = isLoggedIn && state.currentUser.role === 'caregiver';
+      const isFamily = isLoggedIn && state.currentUser.role === 'family';
+
       const userRoleSlot = document.getElementById('userDisplayRole');
       const authBadge = document.getElementById('userAuthBadge');
       const avatarSlot = document.getElementById('userAvatarSlot');
@@ -2327,16 +2343,21 @@
       if (userRoleSlot && authBadge) {
         if (isSuper) {
           userRoleSlot.innerText = currentLang === 'hi' ? 'सुपर एडमिन' : (currentLang === 'en' ? 'Super Admin' : 'מנהל על (Admin)');
-          authBadge.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 text-amber-900 border border-amber-300 text-xs font-bold shadow-sm active:scale-95 transition-transform";
-          if (avatarSlot) avatarSlot.innerHTML = `<i class="fa-solid fa-crown text-amber-600"></i>`;
+          authBadge.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-yellow-50 text-yellow-900 border border-yellow-300 text-xs font-bold shadow-sm active:scale-95 transition";
+          if (avatarSlot) avatarSlot.innerHTML = `<i class="fa-solid fa-crown text-yellow-600"></i>`;
         } else if (isCaregiver) {
           userRoleSlot.innerText = currentLang === 'hi' ? 'राहुल (सहायक)' : (currentLang === 'en' ? 'Rahul (Caregiver)' : 'מטפל (Caregiver)');
-          authBadge.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-bold shadow-sm active:scale-95 transition-transform";
+          authBadge.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-bold shadow-sm active:scale-95 transition";
           if (avatarSlot) avatarSlot.innerHTML = `<i class="fa-solid fa-user-nurse"></i>`;
-        } else {
+        } else if (isFamily) {
           userRoleSlot.innerText = currentLang === 'hi' ? 'परिवार (Admin)' : (currentLang === 'en' ? 'Family (Admin)' : 'בן משפחה (Admin)');
-          authBadge.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-teal-50 text-teal-800 border border-teal-300 text-xs font-bold shadow-sm active:scale-95 transition-transform";
+          authBadge.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-teal-50 text-teal-800 border border-teal-300 text-xs font-bold shadow-sm active:scale-95 transition";
           if (avatarSlot) avatarSlot.innerHTML = `<i class="fa-solid fa-users"></i>`;
+        } else {
+          // Logged Out / Guest State
+          userRoleSlot.innerText = currentLang === 'hi' ? 'लॉगिन करें' : (currentLang === 'en' ? 'Sign In' : 'התחבר למערכת');
+          authBadge.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 border border-slate-300 text-xs font-bold shadow-sm active:scale-95 transition";
+          if (avatarSlot) avatarSlot.innerHTML = `<i class="fa-solid fa-key text-slate-600"></i>`;
         }
       }
 
@@ -2379,7 +2400,7 @@
       const lang = state.settings.lang || 'he';
       const dict = i18n[lang] || i18n.he;
       const todayKey = getTodayDateKey();
-      const isAdmin = state.currentUser.role === 'family' || state.currentUser.role === 'super_admin';
+      const isAdmin = state.currentUser && (state.currentUser.role === 'family' || state.currentUser.role === 'super_admin');
 
       const timelineDoses = [];
       state.medications.forEach(med => {
@@ -2418,7 +2439,7 @@
         const card = document.createElement('div');
         
         if (isTaken) {
-          card.className = "p-4 rounded-3xl bg-emerald-50/95 border-2 border-emerald-400 shadow-sm transition-all space-y-2.5";
+          card.className = "p-4 rounded-3xl bg-emerald-50 border-2 border-emerald-400 shadow-sm transition-all space-y-2.5";
           card.innerHTML = `
             <div class="flex items-start justify-between gap-2">
               <div class="flex items-center gap-3">
@@ -2441,36 +2462,36 @@
               ` : ''}
             </div>
 
-            <div class="p-2.5 rounded-2xl bg-emerald-100/90 border border-emerald-300 flex items-center justify-between">
+            <div class="p-2.5 rounded-2xl bg-emerald-100 border border-emerald-300 flex items-center justify-between">
               <div class="flex items-center gap-2 text-xs font-extrabold text-emerald-900">
                 <span class="px-2 py-0.5 rounded-lg bg-emerald-700 text-white text-[11px] font-black">${dict.takenStamp}</span>
                 <span class="text-[11px] font-semibold text-emerald-800">${takenInfo.time} (${takenInfo.by})</span>
               </div>
 
-              <button onclick="toggleMedicationDose('${med.id}', '${timeStr}')" class="text-[11px] font-bold text-emerald-700 hover:text-rose-600 underline px-2 py-1 transition">
+              <button onclick="toggleMedicationDose('${med.id}', '${timeStr}')" class="text-[11px] font-bold text-emerald-700 hover:text-red-600 underline px-2 py-1 transition">
                 ${dict.undoBtn}
               </button>
             </div>
           `;
         } else if (isOverdue) {
-          card.className = "p-4 rounded-3xl bg-rose-50/95 border-2 border-rose-500 shadow-md pulsing-alert transition-all space-y-3";
+          card.className = "p-4 rounded-3xl bg-red-50 border-2 border-red-500 shadow-md pulsing-alert transition-all space-y-3";
           card.innerHTML = `
             <div class="flex items-start justify-between gap-2">
               <div class="flex items-center gap-3">
-                <div class="w-11 h-11 rounded-2xl bg-rose-600 text-white flex items-center justify-center text-xl shadow-md flex-shrink-0 animate-bounce">
+                <div class="w-11 h-11 rounded-2xl bg-red-600 text-white flex items-center justify-center text-xl shadow-md flex-shrink-0 animate-bounce">
                   <i class="fa-solid fa-triangle-exclamation"></i>
                 </div>
                 <div>
                   <div class="flex items-center gap-2">
-                    <span class="text-xs font-black bg-rose-700 text-white px-2 py-0.5 rounded-md">${timeStr}</span>
-                    <h4 class="font-black text-rose-950 text-base">${med.name}</h4>
+                    <span class="text-xs font-black bg-red-700 text-white px-2 py-0.5 rounded-md">${timeStr}</span>
+                    <h4 class="font-black text-red-950 text-base">${med.name}</h4>
                   </div>
-                  <p class="text-xs font-bold text-rose-800 mt-0.5">${med.dosage} • <span class="text-slate-600 font-normal">${med.instructions || ''}</span></p>
+                  <p class="text-xs font-bold text-red-800 mt-0.5">${med.dosage} • <span class="text-slate-600 font-normal">${med.instructions || ''}</span></p>
                 </div>
               </div>
 
               <div class="flex items-center gap-1">
-                <span class="text-[10px] font-black bg-rose-600 text-white px-2 py-1 rounded-lg">${dict.statusOverdue}</span>
+                <span class="text-[10px] font-black bg-red-600 text-white px-2 py-1 rounded-lg">${dict.statusOverdue}</span>
                 ${isAdmin ? `
                   <button onclick="openEditMedModal('${med.id}')" class="text-slate-400 hover:text-teal-700 p-1.5 rounded-lg transition">
                     <i class="fa-solid fa-pen-to-square text-sm"></i>
@@ -2479,7 +2500,7 @@
               </div>
             </div>
 
-            <button onclick="toggleMedicationDose('${med.id}', '${timeStr}')" class="w-full py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-lg shadow-rose-600/30 flex items-center justify-center gap-2 active:scale-95 transition">
+            <button onclick="toggleMedicationDose('${med.id}', '${timeStr}')" class="w-full py-3 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black text-xs shadow-lg flex items-center justify-center gap-2 active:scale-95 transition">
               <i class="fa-solid fa-bell text-sm animate-pulse"></i>
               <span>${dict.btnLateTake}</span>
             </button>
@@ -2511,7 +2532,7 @@
               </div>
             </div>
 
-            <button onclick="toggleMedicationDose('${med.id}', '${timeStr}')" class="pending-action-btn w-full py-3 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-black text-xs shadow-md shadow-teal-600/30 flex items-center justify-center gap-2 active:scale-95 transition">
+            <button onclick="toggleMedicationDose('${med.id}', '${timeStr}')" class="pending-action-btn w-full py-3 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-black text-xs shadow-md flex items-center justify-center gap-2 active:scale-95 transition">
               <i class="fa-solid fa-hand-pointer text-sm"></i>
               <span>${dict.btnPendingTake}</span>
             </button>
@@ -2535,7 +2556,7 @@
       } else {
         const now = new Date();
         const timeFormatted = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        const userName = state.currentUser.name || 'Caregiver';
+        const userName = (state.currentUser && state.currentUser.name !== 'לא מחובר') ? state.currentUser.name : 'Caregiver';
         med.completedDoses[todayKey] = {
           taken: true,
           time: timeFormatted,
@@ -2549,7 +2570,7 @@
 
     // --- 12. EDIT MEDICATION ---
     function openEditMedModal(medId) {
-      const isAdmin = state.currentUser.role === 'family' || state.currentUser.role === 'super_admin';
+      const isAdmin = state.currentUser && (state.currentUser.role === 'family' || state.currentUser.role === 'super_admin');
       if (!isAdmin) {
         alert('עריכת תרופות מותרת למנהל בלבד!');
         return;
@@ -2659,18 +2680,18 @@
         const card = document.createElement('div');
         card.className = `p-3.5 rounded-2xl border transition-all ${
           task.completed 
-            ? 'bg-slate-100/70 border-slate-200 opacity-85' 
+            ? 'bg-slate-100 border-slate-200 opacity-85' 
             : isOverdue 
-              ? 'bg-orange-50/90 border-orange-300' 
+              ? 'bg-orange-50 border-orange-300' 
               : 'bg-white border-slate-200 shadow-sm'
         } flex items-center justify-between gap-3`;
 
         const catIcons = {
           hygiene: 'fa-bath text-blue-500 bg-blue-50',
-          diaper: 'fa-baby text-amber-500 bg-amber-50',
+          diaper: 'fa-baby text-yellow-500 bg-yellow-50',
           food: 'fa-utensils text-emerald-500 bg-emerald-50',
           walk: 'fa-person-walking text-indigo-500 bg-indigo-50',
-          water: 'fa-glass-water text-cyan-500 bg-cyan-50',
+          water: 'fa-glass-water text-blue-500 bg-blue-50',
           general: 'fa-heart text-teal-500 bg-teal-50'
         };
 
@@ -2681,7 +2702,7 @@
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <span class="text-xs font-black text-slate-800 bg-slate-200/80 px-2 py-0.5 rounded-md">${task.time}</span>
+                <span class="text-xs font-black text-slate-800 bg-slate-200 px-2 py-0.5 rounded-md">${task.time}</span>
                 <h4 class="font-bold text-slate-900 text-sm ${task.completed ? 'line-through text-slate-500' : ''}">${task.title}</h4>
               </div>
               ${task.completed ? `<p class="text-[10px] text-emerald-700 font-bold mt-0.5">✓ ${task.completedAt} (${task.completedBy})</p>` : ''}
@@ -2708,7 +2729,7 @@
       if (task.completed) {
         const now = new Date();
         task.completedAt = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        task.completedBy = state.currentUser.name || 'Caregiver';
+        task.completedBy = (state.currentUser && state.currentUser.name !== 'לא מחובר') ? state.currentUser.name : 'Caregiver';
         playChime('success');
       } else {
         task.completedAt = null;
@@ -2868,7 +2889,7 @@
             </div>
           </div>
 
-          <button onclick="deleteShoppingItem('${item.id}')" class="text-slate-300 hover:text-rose-500 p-1 transition">
+          <button onclick="deleteShoppingItem('${item.id}')" class="text-slate-300 hover:text-red-500 p-1 transition">
             <i class="fa-solid fa-trash-can text-xs"></i>
           </button>
         `;
@@ -2878,7 +2899,7 @@
     }
 
     function quickAddShoppingItem(name, cat) {
-      const userName = state.currentUser.name || 'Caregiver';
+      const userName = (state.currentUser && state.currentUser.name !== 'לא מחובר') ? state.currentUser.name : 'Caregiver';
       state.shopping.unshift({
         id: 's_' + Date.now(),
         item: name,
@@ -2895,7 +2916,7 @@
       const input = document.getElementById('customShoppingInput');
       if (!input.value.trim()) return;
 
-      const userName = state.currentUser.name || 'Caregiver';
+      const userName = (state.currentUser && state.currentUser.name !== 'לא מחובר') ? state.currentUser.name : 'Caregiver';
       state.shopping.unshift({
         id: 's_' + Date.now(),
         item: input.value.trim(),
@@ -2940,13 +2961,13 @@
       state.notices.forEach(notice => {
         const card = document.createElement('div');
         card.className = `p-4 rounded-3xl border transition-all ${
-          notice.urgent ? 'bg-rose-50/90 border-rose-300 shadow-sm' : 'bg-white border-slate-200 shadow-sm'
+          notice.urgent ? 'bg-red-50 border-red-300 shadow-sm' : 'bg-white border-slate-200 shadow-sm'
         } space-y-2.5`;
 
         card.innerHTML = `
           <div class="flex items-center justify-between text-xs">
             <div class="flex items-center gap-2">
-              <div class="w-7 h-7 rounded-xl ${notice.urgent ? 'bg-rose-500 text-white' : 'bg-indigo-100 text-indigo-700'} flex items-center justify-center font-bold text-xs">
+              <div class="w-7 h-7 rounded-xl ${notice.urgent ? 'bg-red-500 text-white' : 'bg-indigo-100 text-indigo-700'} flex items-center justify-center font-bold text-xs">
                 <i class="fa-solid fa-${notice.urgent ? 'triangle-exclamation' : 'message'}"></i>
               </div>
               <span class="font-extrabold text-slate-800">${notice.sender}</span>
@@ -2981,7 +3002,7 @@
       const isUrgent = document.getElementById('noticeUrgentCheck').checked;
       if (!text) return;
 
-      const userName = state.currentUser.name || 'Family Admin';
+      const userName = (state.currentUser && state.currentUser.name !== 'לא מחובר') ? state.currentUser.name : 'Family Admin';
       const now = new Date();
       const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
@@ -3006,7 +3027,7 @@
       if (notice) {
         const now = new Date();
         notice.acknowledged = true;
-        notice.acknowledgedBy = state.currentUser.name || 'Caregiver';
+        notice.acknowledgedBy = (state.currentUser && state.currentUser.name !== 'לא מחובר') ? state.currentUser.name : 'Caregiver';
         notice.acknowledgedAt = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         playChime('success');
         saveState();
@@ -3055,7 +3076,7 @@
         descInput.required = true;
         descInput.placeholder = "נא לפרט את מהות האירוע החריג... (חובה)";
         reqTag.innerText = "(שדה חובה לאירוע אחר)";
-        reqTag.className = "text-[10px] text-rose-600 font-bold";
+        reqTag.className = "text-[10px] text-red-600 font-bold";
       } else {
         descInput.required = false;
         descInput.placeholder = "פירוט קצר (אופציונלי)...";
@@ -3081,7 +3102,7 @@
       const now = new Date();
       const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}`;
-      const userName = state.currentUser.name || 'Caregiver';
+      const userName = (state.currentUser && state.currentUser.name !== 'לא מחובר') ? state.currentUser.name : 'Caregiver';
 
       const incidentObj = {
         id: 'inc_' + Date.now(),
@@ -3109,7 +3130,7 @@
       if (!state.activeIncident) return;
       const now = new Date();
       const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      const userName = state.currentUser.name || 'בן משפחה';
+      const userName = (state.currentUser && state.currentUser.name !== 'לא מחובר') ? state.currentUser.name : 'בן משפחה';
 
       const logged = state.incidents.find(i => i.id === state.activeIncident.id);
       if (logged) {
@@ -3124,8 +3145,8 @@
     }
 
     function openAddContactModal() {
-      const isAdmin = state.currentUser.role === 'family' || state.currentUser.role === 'super_admin';
-      if (!isAdmin) return alert('הוספת איש קשר מורשית למנהל בלבד');
+      const isAdmin = state.currentUser && (state.currentUser.role === 'family' || state.currentUser.role === 'super_admin');
+      if (!isAdmin) return alert('הוספת איש קשר מורשית למנהל בלבד. נא להתחבר כמנהל.');
       const modal = document.getElementById('addContactModal');
       if (modal) modal.classList.remove('hidden');
     }
@@ -3154,7 +3175,7 @@
     }
 
     function deleteEmergencyContact(id) {
-      const isAdmin = state.currentUser.role === 'family' || state.currentUser.role === 'super_admin';
+      const isAdmin = state.currentUser && (state.currentUser.role === 'family' || state.currentUser.role === 'super_admin');
       if (!isAdmin) return alert('מחיקת איש קשר מורשית למנהל בלבד');
 
       const contact = state.contacts.find(c => c.id === id);
@@ -3179,17 +3200,17 @@
       }
 
       const container = document.getElementById('emergencyContactsList');
-      const isAdmin = state.currentUser.role === 'family' || state.currentUser.role === 'super_admin';
+      const isAdmin = state.currentUser && (state.currentUser.role === 'family' || state.currentUser.role === 'super_admin');
 
       if (container) {
         container.innerHTML = '';
         state.contacts.forEach(c => {
           const card = document.createElement('div');
-          card.className = `p-3.5 rounded-2xl border ${c.urgent ? 'bg-rose-50/80 border-rose-200' : 'bg-slate-50 border-slate-200'} flex items-center justify-between gap-3 shadow-sm`;
+          card.className = `p-3.5 rounded-2xl border ${c.urgent ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200'} flex items-center justify-between gap-3 shadow-sm`;
           card.innerHTML = `
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-base flex-shrink-0 ${
-                c.urgent ? 'bg-rose-600 text-white' : 'bg-slate-800 text-white'
+                c.urgent ? 'bg-red-600 text-white' : 'bg-slate-800 text-white'
               }">
                 <i class="fa-solid ${c.phone === '101' ? 'fa-truck-medical' : 'fa-phone'}"></i>
               </div>
@@ -3209,7 +3230,7 @@
                 </a>
               ` : ''}
               ${isAdmin ? `
-                <button onclick="deleteEmergencyContact('${c.id}')" class="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition" title="מחק איש קשר">
+                <button onclick="deleteEmergencyContact('${c.id}')" class="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition" title="מחק איש קשר">
                   <i class="fa-solid fa-trash-can text-xs"></i>
                 </button>
               ` : ''}
@@ -3227,14 +3248,14 @@
         } else {
           state.incidents.forEach(inc => {
             const el = document.createElement('div');
-            el.className = `p-3.5 rounded-2xl border ${inc.resolved ? 'bg-emerald-50/60 border-emerald-200' : 'bg-rose-50 border-rose-300'} text-xs space-y-1.5`;
+            el.className = `p-3.5 rounded-2xl border ${inc.resolved ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-300'} text-xs space-y-1.5`;
             el.innerHTML = `
               <div class="flex items-center justify-between font-bold">
-                <span class="${inc.resolved ? 'text-emerald-950' : 'text-rose-950'}">⚠️ ${inc.typeTitle}</span>
+                <span class="${inc.resolved ? 'text-emerald-950' : 'text-red-950'}">⚠️ ${inc.typeTitle}</span>
                 <span class="text-[10px] text-slate-500">${inc.reportedAt}</span>
               </div>
               <p class="text-xs text-slate-700">${inc.description}</p>
-              <div class="pt-1 text-[11px] border-t border-slate-200/60 flex items-center justify-between">
+              <div class="pt-1 text-[11px] border-t border-slate-200 flex items-center justify-between">
                 <span class="text-slate-500">דווח ע"י: <strong>${inc.reportedBy}</strong></span>
                 ${inc.resolved ? `
                   <span class="text-emerald-800 font-bold flex items-center gap-1">
@@ -3242,7 +3263,7 @@
                     <span>${inc.resolvedBy} אישר/ה קבלה וטיפול ב-${inc.resolvedAt}</span>
                   </span>
                 ` : `
-                  <button onclick="acknowledgeActiveIncident()" class="text-rose-700 font-black underline">סמן שקיבלת וטופל</button>
+                  <button onclick="acknowledgeActiveIncident()" class="text-red-700 font-black underline">סמן שקיבלת וטופל</button>
                 `}
               </div>
             `;
@@ -3257,20 +3278,20 @@
     function openIncidentModal() { document.getElementById('incidentModal').classList.remove('hidden'); }
     
     function openAddMedModal() { 
-      const isAdmin = state.currentUser.role === 'family' || state.currentUser.role === 'super_admin';
-      if (!isAdmin) return alert('Adding medications is allowed for Family Admin only!');
+      const isAdmin = state.currentUser && (state.currentUser.role === 'family' || state.currentUser.role === 'super_admin');
+      if (!isAdmin) return alert('הוספת תרופות מורשית למנהל בלבד!');
       document.getElementById('addMedModal').classList.remove('hidden'); 
     }
     
     function openAddTaskModal() { 
-      const isAdmin = state.currentUser.role === 'family' || state.currentUser.role === 'super_admin';
-      if (!isAdmin) return alert('Adding tasks is allowed for Family Admin only!');
+      const isAdmin = state.currentUser && (state.currentUser.role === 'family' || state.currentUser.role === 'super_admin');
+      if (!isAdmin) return alert('הוספת משימות מורשית למנהל בלבד!');
       document.getElementById('addTaskModal').classList.remove('hidden'); 
     }
 
     function openAddEventModal() { 
-      const isAdmin = state.currentUser.role === 'family' || state.currentUser.role === 'super_admin';
-      if (!isAdmin) return alert('Adding events is allowed for Family Admin only!');
+      const isAdmin = state.currentUser && (state.currentUser.role === 'family' || state.currentUser.role === 'super_admin');
+      if (!isAdmin) return alert('הוספת אירועים מורשית למנהל בלבד!');
       document.getElementById('addEventModal').classList.remove('hidden'); 
     }
 
@@ -3402,7 +3423,7 @@
       checkOverdueAlerts();
     }
 
-    // --- 21. APP RENDER LOOP ---
+    // --- 21. APP RENDER LOOP & PERMISSION ENFORCEMENT ---
     function renderApp() {
       applyTranslations();
       renderMedications();
@@ -3415,8 +3436,9 @@
       checkOverdueAlerts();
 
       // Access controls
-      const isSuper = state.currentUser.role === 'super_admin';
-      const isAdmin = isSuper || state.currentUser.role === 'family';
+      const isLoggedIn = state.currentUser && state.currentUser.role !== 'guest' && state.currentUser.email;
+      const isSuper = isLoggedIn && state.currentUser.role === 'super_admin';
+      const isAdmin = isSuper || (isLoggedIn && state.currentUser.role === 'family');
 
       document.querySelectorAll('.admin-only').forEach(el => {
         el.style.display = isAdmin ? '' : 'none';
@@ -3428,6 +3450,9 @@
 
       const reportsBtn = document.getElementById('btnSuperAdminReports');
       if (reportsBtn) reportsBtn.style.display = isSuper ? 'flex' : 'none';
+
+      const settingsCog = document.getElementById('btnSettingsCog');
+      if (settingsCog) settingsCog.style.display = isAdmin ? 'flex' : 'none';
     }
 
     window.addEventListener('DOMContentLoaded', () => {
