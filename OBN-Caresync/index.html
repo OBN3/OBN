@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>CareSync - ניהול טיפול חכם / Smart Care Management</title>
   
-  <!-- Static Pre-Compiled Tailwind CSS CDN (Eliminates runtime eval CSP violations) -->
+  <!-- Precompiled Static CSS (100% CSP Compliant, Zero Eval) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" />
 
   <!-- Google Fonts: Heebo (Hebrew), Inter (English), Noto Sans Devanagari (Hindi) -->
@@ -35,9 +35,21 @@
     }
     body {
       font-family: 'Heebo', 'Inter', 'Noto Sans Devanagari', sans-serif;
-      background-color: #0f172a;
-      overscroll-behavior-y: none;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      color: #0f172a;
     }
+    
+    /* Core App Light Background Container (Guaranteed Crisp Light Theme) */
+    #appContainer {
+      background-color: #f8fafc !important;
+      color: #0f172a !important;
+      min-height: 100vh;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+    }
+
     .custom-scrollbar::-webkit-scrollbar {
       width: 4px;
       height: 4px;
@@ -67,29 +79,29 @@
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-2px); }
     }
-    /* Extended Modern Utilities */
-    .bg-teal-50 { background-color: #f0fdfa; }
-    .bg-teal-100 { background-color: #ccfbf1; }
-    .bg-teal-600 { background-color: #0d9488; }
-    .bg-teal-700 { background-color: #0f766e; }
-    .bg-teal-800 { background-color: #115e59; }
-    .text-teal-600 { color: #0d9488; }
-    .text-teal-700 { color: #0f766e; }
-    .text-teal-800 { color: #115e59; }
-    .text-teal-900 { color: #134e4a; }
-    .border-teal-200 { border-color: #99f6e4; }
-    .border-teal-300 { border-color: #5eead4; }
-    .border-teal-500 { border-color: #14b8a6; }
-    .hover\:bg-teal-700:hover { background-color: #0f766e; }
-    .hover\:bg-teal-50:hover { background-color: #f0fdfa; }
-    .rounded-2xl { border-radius: 1rem; }
-    .rounded-3xl { border-radius: 1.5rem; }
+
+    /* Reliable Teal Color Palette */
+    .bg-teal-50 { background-color: #f0fdfa !important; }
+    .bg-teal-100 { background-color: #ccfbf1 !important; }
+    .bg-teal-600 { background-color: #0d9488 !important; }
+    .bg-teal-700 { background-color: #0f766e !important; }
+    .bg-teal-800 { background-color: #115e59 !important; }
+    .text-teal-600 { color: #0d9488 !important; }
+    .text-teal-700 { color: #0f766e !important; }
+    .text-teal-800 { color: #115e59 !important; }
+    .text-teal-900 { color: #134e4a !important; }
+    .border-teal-200 { border-color: #99f6e4 !important; }
+    .border-teal-300 { border-color: #5eead4 !important; }
+    .border-teal-500 { border-color: #14b8a6 !important; }
+    
+    .rounded-2xl { border-radius: 1rem !important; }
+    .rounded-3xl { border-radius: 1.5rem !important; }
   </style>
 </head>
-<body class="text-slate-800 antialiased min-h-screen flex flex-col items-center justify-start sm:py-4">
+<body class="antialiased min-h-screen flex flex-col items-center justify-start sm:py-4">
 
   <!-- Main Mobile App Shell Container -->
-  <div id="appContainer" class="w-full max-w-lg min-h-screen sm:min-h-[92vh] bg-slate-50 flex flex-col shadow-2xl relative pb-24 sm:rounded-3xl border border-slate-200 overflow-hidden">
+  <div id="appContainer" class="w-full max-w-lg min-h-screen sm:min-h-[92vh] flex flex-col relative pb-24 sm:rounded-3xl border border-slate-200 overflow-hidden">
     
     <!-- ======================================================== -->
     <!-- TOP SYSTEM & STATUS HEADER -->
@@ -162,7 +174,7 @@
             <span data-i18n="emergencyBtn">דיווח חירום SOS</span>
           </button>
 
-          <!-- Settings Cog (Available to Admins, with direct access in login modal) -->
+          <!-- Settings Cog (Visible only to authenticated Admin/Super Admin) -->
           <button onclick="openSettingsModal()" id="btnSettingsCog" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition" style="display:none;" title="הגדרות מערכת">
             <i class="fa-solid fa-gear text-xs"></i>
           </button>
@@ -615,7 +627,7 @@
     <!-- MODALS & DIALOGS -->
     <!-- ======================================================== -->
 
-    <!-- 0. Authentication Modal (Google Auth Only) -->
+    <!-- 0. Authentication Modal (Google Auth Only - No Direct Settings Access for Unauthenticated Users) -->
     <div id="authModal" class="hidden fixed inset-0 z-50 bg-slate-900 bg-opacity-70 flex items-center justify-center p-4">
       <div class="bg-white w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl border border-slate-200">
         <div class="text-center">
@@ -641,7 +653,7 @@
             <i class="fa-solid fa-arrow-left text-slate-400 group-hover:text-teal-600 transition text-sm"></i>
           </button>
 
-          <!-- Current Logged In Info & Logout (Only shown when a valid user is logged in) -->
+          <!-- Current Logged In Info & Logout (Only shown when an authorized user is logged in) -->
           <div id="activeUserSection" class="p-3.5 rounded-2xl bg-teal-50 border border-teal-200 text-xs flex items-center justify-between" style="display:none;">
             <div class="flex items-center gap-2">
               <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -652,13 +664,6 @@
             </div>
             <button onclick="handleLogout()" class="px-2.5 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 font-extrabold text-[11px] transition" data-i18n="logout">
               התנתק
-            </button>
-          </div>
-
-          <!-- Direct Settings Access for First-Time Setup -->
-          <div class="pt-1 flex items-center justify-between text-xs border-t border-slate-100">
-            <button onclick="closeModal('authModal'); openSettingsModal();" class="text-teal-700 font-bold hover:underline flex items-center gap-1">
-              <i class="fa-solid fa-gear text-[11px]"></i> <span>הגדרות וחיבור Firebase</span>
             </button>
           </div>
         </div>
@@ -1105,7 +1110,7 @@
       </div>
     </div>
 
-    <!-- 7. SETTINGS & USER WHITELIST MANAGEMENT -->
+    <!-- 7. SETTINGS & USER WHITELIST MANAGEMENT (Only for Authenticated Admins) -->
     <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-slate-900 bg-opacity-60 flex items-center justify-center p-4">
       <div class="bg-white w-full max-w-md rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200 max-h-screen overflow-y-auto custom-scrollbar">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -1571,7 +1576,7 @@
         btnPendingTake: "👉 यहाँ दबाएं: दवा दी गई",
         btnLateTake: "🚨 देरी से दवा दी गई",
         takenStamp: "✅ दवा ले ली गई",
-        undoBtn: "רद्द करें",
+        undoBtn: "रद्द करें",
         statusPending: "⏳ अभी देना बाकी है",
         statusOverdue: "⚠️ 1 घंटे से ज्यादा देरी!",
         authModalTitle: "CareSync में लॉगिन करें",
@@ -1640,7 +1645,7 @@
       }
     };
 
-    // --- 3. CLEAN INITIAL STATE (GUEST / UNAUTHENTICATED BY DEFAULT) ---
+    // --- 3. CLEAN INITIAL STATE (GUEST BY DEFAULT) ---
     const cleanInitialState = {
       settings: {
         patientName: "Dad",
@@ -1793,11 +1798,11 @@
     };
 
     // --- 4. STATE & PERSISTENCE ---
-    let state = JSON.parse(localStorage.getItem('careSync_v8_app')) || cleanInitialState;
+    let state = JSON.parse(localStorage.getItem('careSync_v9_clean')) || cleanInitialState;
     if (!state.settings.firebaseConfig) state.settings.firebaseConfig = defaultFirebaseConfig;
 
     function saveState() {
-      localStorage.setItem('careSync_v8_app', JSON.stringify(state));
+      localStorage.setItem('careSync_v9_clean', JSON.stringify(state));
       renderApp();
       
       if (window.careSyncFirestoreDoc && state.currentUser && state.currentUser.role !== 'guest') {
@@ -1805,6 +1810,17 @@
           console.log('Firebase sync note:', err);
         });
       }
+    }
+
+    // Helper: Require Login Guard
+    function requireAuth(actionName = "לבצע פעולה זו") {
+      const isLoggedIn = state.currentUser && state.currentUser.role !== 'guest' && state.currentUser.email;
+      if (!isLoggedIn) {
+        openAuthModal();
+        alert(`🔒 נדרשת התחברות למערכת!\nעליך להתחבר עם חשבון Google מורשה כדי ${actionName}.`);
+        return false;
+      }
+      return true;
     }
 
     // Audio Chimes
@@ -1861,7 +1877,7 @@
               state = cloudData;
               state.settings.lang = currentLang;
               state.currentUser = currentUser;
-              localStorage.setItem('careSync_v8_app', JSON.stringify(state));
+              localStorage.setItem('careSync_v9_clean', JSON.stringify(state));
               renderApp();
             }
           }
@@ -1874,7 +1890,6 @@
           if (user && user.email) {
             processGoogleUser(user.email.toLowerCase(), user.displayName, user.photoURL, true);
           } else {
-            // Unauthenticated state
             if (state.currentUser && state.currentUser.role !== 'guest') {
               state.currentUser = {
                 uid: "guest",
@@ -2039,7 +2054,6 @@
       closeModal('authModal');
       saveState();
       updateAuthModalUI();
-      alert('התנתקת מהמערכת בהצלחה.');
     }
 
     // --- 7. WHITELIST MANAGEMENT IN SETTINGS ---
@@ -2354,7 +2368,6 @@
           authBadge.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-teal-50 text-teal-800 border border-teal-300 text-xs font-bold shadow-sm active:scale-95 transition";
           if (avatarSlot) avatarSlot.innerHTML = `<i class="fa-solid fa-users"></i>`;
         } else {
-          // Logged Out / Guest State
           userRoleSlot.innerText = currentLang === 'hi' ? 'लॉगिन करें' : (currentLang === 'en' ? 'Sign In' : 'התחבר למערכת');
           authBadge.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 border border-slate-300 text-xs font-bold shadow-sm active:scale-95 transition";
           if (avatarSlot) avatarSlot.innerHTML = `<i class="fa-solid fa-key text-slate-600"></i>`;
@@ -2544,6 +2557,8 @@
     }
 
     function toggleMedicationDose(medId, timeStr) {
+      if (!requireAuth("לסמן נטילת תרופות")) return;
+
       const med = state.medications.find(m => m.id === medId);
       if (!med) return;
       if (!med.completedDoses) med.completedDoses = {};
@@ -2556,7 +2571,7 @@
       } else {
         const now = new Date();
         const timeFormatted = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        const userName = (state.currentUser && state.currentUser.name !== 'לא מחובר') ? state.currentUser.name : 'Caregiver';
+        const userName = state.currentUser.name;
         med.completedDoses[todayKey] = {
           taken: true,
           time: timeFormatted,
@@ -2722,6 +2737,8 @@
     }
 
     function toggleTask(taskId) {
+      if (!requireAuth("לסמן משימות שגרה")) return;
+
       const task = state.tasks.find(t => t.id === taskId);
       if (!task) return;
 
@@ -2729,7 +2746,7 @@
       if (task.completed) {
         const now = new Date();
         task.completedAt = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        task.completedBy = (state.currentUser && state.currentUser.name !== 'לא מחובר') ? state.currentUser.name : 'Caregiver';
+        task.completedBy = state.currentUser.name;
         playChime('success');
       } else {
         task.completedAt = null;
@@ -2813,6 +2830,8 @@
 
     function handleSaveVitals(e) {
       e.preventDefault();
+      if (!requireAuth("להזין מדדים")) return;
+
       const now = new Date();
       const newVital = {
         id: 'v_' + Date.now(),
@@ -2899,7 +2918,9 @@
     }
 
     function quickAddShoppingItem(name, cat) {
-      const userName = (state.currentUser && state.currentUser.name !== 'לא מחובר') ? state.currentUser.name : 'Caregiver';
+      if (!requireAuth("להוסיף מוצרים לרשימת הקניות")) return;
+
+      const userName = state.currentUser.name;
       state.shopping.unshift({
         id: 's_' + Date.now(),
         item: name,
@@ -2913,10 +2934,12 @@
 
     function handleCustomShoppingSubmit(e) {
       e.preventDefault();
+      if (!requireAuth("להוסיף מוצרים לרשימת הקניות")) return;
+
       const input = document.getElementById('customShoppingInput');
       if (!input.value.trim()) return;
 
-      const userName = (state.currentUser && state.currentUser.name !== 'לא מחובר') ? state.currentUser.name : 'Caregiver';
+      const userName = state.currentUser.name;
       state.shopping.unshift({
         id: 's_' + Date.now(),
         item: input.value.trim(),
@@ -2931,6 +2954,8 @@
     }
 
     function toggleShoppingBought(id) {
+      if (!requireAuth("לסמן מוצרים כנקנו")) return;
+
       const item = state.shopping.find(s => s.id === id);
       if (item) {
         item.bought = !item.bought;
@@ -2940,6 +2965,7 @@
     }
 
     function deleteShoppingItem(id) {
+      if (!requireAuth("למחוק פריט מהרשימה")) return;
       state.shopping = state.shopping.filter(s => s.id !== id);
       saveState();
     }
@@ -2998,11 +3024,13 @@
 
     function handlePostNotice(e) {
       e.preventDefault();
+      if (!requireAuth("לפרסם הודעה בלוח")) return;
+
       const text = document.getElementById('noticeTextInput').value.trim();
       const isUrgent = document.getElementById('noticeUrgentCheck').checked;
       if (!text) return;
 
-      const userName = (state.currentUser && state.currentUser.name !== 'לא מחובר') ? state.currentUser.name : 'Family Admin';
+      const userName = state.currentUser.name;
       const now = new Date();
       const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
@@ -3023,11 +3051,13 @@
     }
 
     function acknowledgeNotice(id) {
+      if (!requireAuth("לאשר קריאת הודעה")) return;
+
       const notice = state.notices.find(n => n.id === id);
       if (notice) {
         const now = new Date();
         notice.acknowledged = true;
-        notice.acknowledgedBy = (state.currentUser && state.currentUser.name !== 'לא מחובר') ? state.currentUser.name : 'Caregiver';
+        notice.acknowledgedBy = state.currentUser.name;
         notice.acknowledgedAt = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         playChime('success');
         saveState();
@@ -3087,6 +3117,8 @@
 
     function handleReportIncident(e) {
       e.preventDefault();
+      if (!requireAuth("לדווח על אירוע חירום")) return;
+
       const type = document.querySelector('input[name="incidentType"]:checked').value;
       const desc = document.getElementById('incidentDescInput').value.trim();
 
@@ -3102,7 +3134,7 @@
       const now = new Date();
       const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}`;
-      const userName = (state.currentUser && state.currentUser.name !== 'לא מחובר') ? state.currentUser.name : 'Caregiver';
+      const userName = state.currentUser.name;
 
       const incidentObj = {
         id: 'inc_' + Date.now(),
@@ -3127,10 +3159,12 @@
     }
 
     function acknowledgeActiveIncident() {
+      if (!requireAuth("לאשר קבלת אירוע חירום")) return;
+
       if (!state.activeIncident) return;
       const now = new Date();
       const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      const userName = (state.currentUser && state.currentUser.name !== 'לא מחובר') ? state.currentUser.name : 'בן משפחה';
+      const userName = state.currentUser.name;
 
       const logged = state.incidents.find(i => i.id === state.activeIncident.id);
       if (logged) {
@@ -3153,6 +3187,8 @@
 
     function handleSaveContact(e) {
       e.preventDefault();
+      if (!requireAuth("להוסיף איש קשר")) return;
+
       const name = document.getElementById('contactNameInput').value.trim();
       const role = document.getElementById('contactRoleInput').value.trim();
       const phone = document.getElementById('contactPhoneInput').value.trim();
@@ -3274,8 +3310,15 @@
     }
 
     // --- 20. MODALS & SETTINGS ACTIONS ---
-    function openLogVitalsModal() { document.getElementById('logVitalsModal').classList.remove('hidden'); }
-    function openIncidentModal() { document.getElementById('incidentModal').classList.remove('hidden'); }
+    function openLogVitalsModal() { 
+      if (!requireAuth("להזין מדדים")) return;
+      document.getElementById('logVitalsModal').classList.remove('hidden'); 
+    }
+    
+    function openIncidentModal() { 
+      if (!requireAuth("לדווח אירוע חירום SOS")) return;
+      document.getElementById('incidentModal').classList.remove('hidden'); 
+    }
     
     function openAddMedModal() { 
       const isAdmin = state.currentUser && (state.currentUser.role === 'family' || state.currentUser.role === 'super_admin');
@@ -3296,6 +3339,9 @@
     }
 
     function openSettingsModal() { 
+      const isAdmin = state.currentUser && (state.currentUser.role === 'family' || state.currentUser.role === 'super_admin');
+      if (!isAdmin) return alert('הגדרות המערכת מורשות למנהל בלבד!');
+      
       document.getElementById('patientNameInput').value = state.settings.patientName || 'Dad';
       document.getElementById('superAdminEmailInput').value = state.settings.superAdminEmail || "";
       renderWhitelistSettings();
@@ -3435,7 +3481,7 @@
       renderEmergency();
       checkOverdueAlerts();
 
-      // Access controls
+      // Strict Access Controls
       const isLoggedIn = state.currentUser && state.currentUser.role !== 'guest' && state.currentUser.email;
       const isSuper = isLoggedIn && state.currentUser.role === 'super_admin';
       const isAdmin = isSuper || (isLoggedIn && state.currentUser.role === 'family');
