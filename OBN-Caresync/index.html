@@ -1,0 +1,3348 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>CareSync - ניהול טיפול חכם / Smart Care Management</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdfa',
+              100: '#ccfbf1',
+              500: '#0d9488',
+              600: '#0f766e',
+              700: '#115e59',
+            }
+          },
+          fontFamily: {
+            sans: ['Heebo', 'Inter', 'Noto Sans Devanagari', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Heebo (Hebrew), Inter (English), Noto Sans Devanagari (Hindi) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome 6 Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- SheetJS (XLSX) CDN for Multi-Sheet True Excel Export with Full UTF-8 Hebrew Support -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Firebase App, Auth & Firestore SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    input, textarea, select {
+      user-select: auto;
+    }
+    body {
+      font-family: 'Heebo', 'Inter', 'Noto Sans Devanagari', sans-serif;
+      background-color: #0f172a;
+      overscroll-behavior-y: none;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .pulsing-alert {
+      animation: pulse-border 1.5s infinite;
+    }
+    @keyframes pulse-border {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    }
+    .urgent-banner-glow {
+      animation: alert-glow 2s infinite alternate;
+    }
+    @keyframes alert-glow {
+      from { background-color: #dc2626; }
+      to { background-color: #991b1b; }
+    }
+    .pending-action-btn {
+      animation: bounce-subtle 3s infinite ease-in-out;
+    }
+    @keyframes bounce-subtle {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-2px); }
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col items-center justify-start sm:py-4">
+
+  <!-- Main Mobile App Shell Container -->
+  <div id="appContainer" class="w-full max-w-lg min-h-screen sm:min-h-[92vh] bg-slate-50 flex flex-col shadow-2xl relative pb-24 sm:rounded-3xl border border-slate-200 overflow-hidden">
+    
+    <!-- ======================================================== -->
+    <!-- TOP SYSTEM & STATUS HEADER -->
+    <!-- ======================================================== -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm px-4 py-2.5 flex flex-col gap-2">
+      <div class="flex items-center justify-between">
+        
+        <!-- App Brand Logo & Patient Name -->
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-teal-600 to-emerald-400 flex items-center justify-center text-white shadow-md shadow-teal-500/20">
+            <i class="fa-solid fa-heart-pulse text-lg"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <h1 class="font-black text-lg text-slate-900 leading-none tracking-tight">CareSync</h1>
+              <span id="syncBadge" class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 flex items-center gap-1">
+                <span id="syncIndicatorDot" class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span id="syncStatusText" data-i18n="statusLocal">Firebase מחובר</span>
+              </span>
+            </div>
+            <p id="patientNameLabel" class="text-xs text-slate-500 font-medium mt-0.5">
+              <span data-i18n="patientPrefix">טיפול ב:</span> <span class="font-bold text-slate-800" id="patientNameHeader">Dad</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Language Selector & User Profile / Login Button -->
+        <div class="flex items-center gap-1.5">
+          <!-- Language Buttons -->
+          <div class="bg-slate-100 p-0.5 rounded-xl flex items-center border border-slate-200">
+            <button onclick="setLanguage('he')" id="btnLangHe" class="px-2 py-1 text-xs font-bold rounded-lg transition-all bg-white text-teal-700 shadow-sm">
+              עב
+            </button>
+            <button onclick="setLanguage('en')" id="btnLangEn" class="px-2 py-1 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900">
+              EN
+            </button>
+            <button onclick="setLanguage('hi')" id="btnLangHi" class="px-2 py-1 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900">
+              हिं
+            </button>
+          </div>
+
+          <!-- User Role & Google Auth Trigger -->
+          <button onclick="openAuthModal()" id="userAuthBadge" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 text-amber-900 border border-amber-300 text-xs font-bold shadow-sm active:scale-95 transition-transform">
+            <span id="userAvatarSlot" class="w-4 h-4 rounded-full bg-amber-600 text-white text-[9px] flex items-center justify-center font-bold">
+              <i class="fa-solid fa-crown"></i>
+            </span>
+            <span id="userDisplayRole">מנהל על (Super Admin)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Action / Date & Emergency Bar -->
+      <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+        <div class="flex items-center gap-1.5 text-slate-600 font-medium">
+          <i class="fa-regular fa-calendar-check text-teal-600"></i>
+          <span id="currentDateDisplay" data-i18n="todayLabel">שגרת יום</span>
+          <span id="currentTimeDisplay" class="font-black text-slate-900 bg-slate-200/80 px-2 py-0.5 rounded-md text-xs">08:00</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <!-- Super Admin Reports Button (Strictly Super Admin Exclusive) -->
+          <button onclick="openReportsModal()" id="btnSuperAdminReports" class="super-admin-only px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold flex items-center gap-1 text-[11px] shadow-sm active:scale-95 transition" title="הפקת דוחות אקסל (מנהל על)">
+            <i class="fa-solid fa-file-excel"></i>
+            <span data-i18n="btnReports">דוחות אקסל</span>
+          </button>
+
+          <!-- Quick SOS Button -->
+          <button onclick="openIncidentModal()" class="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold flex items-center gap-1 text-[11px] shadow-sm shadow-rose-500/30 active:scale-95 transition">
+            <i class="fa-solid fa-triangle-exclamation animate-bounce"></i>
+            <span data-i18n="emergencyBtn">דיווח חירום SOS</span>
+          </button>
+
+          <!-- Settings Cog (Available to Admins, with direct access option in login) -->
+          <button onclick="openSettingsModal()" id="btnSettingsCog" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition" title="הגדרות מערכת ו-Firebase">
+            <i class="fa-solid fa-gear text-xs"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Urgent Overdue Medication Alert Floating Banner -->
+    <div id="overdueAlertBanner" class="hidden urgent-banner-glow text-white px-4 py-3 shadow-lg flex items-center justify-between gap-3 text-sm z-30 transition-all duration-300">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white text-lg flex-shrink-0 animate-pulse">
+          <i class="fa-solid fa-bell"></i>
+        </div>
+        <div>
+          <div class="font-black tracking-tight" data-i18n="overdueAlertTitle">⚠️ התרעה דחופה: תרופה באיחור של מעל שעה!</div>
+          <div id="overdueAlertDetails" class="text-xs text-rose-100 font-medium">תרופה טרם נלקחה</div>
+        </div>
+      </div>
+      <button onclick="switchTab('routine')" class="px-3 py-1.5 bg-white text-rose-700 font-black rounded-lg text-xs shadow hover:bg-rose-50 active:scale-95 transition flex-shrink-0" data-i18n="viewNowBtn">
+        טפל כעת
+      </button>
+    </div>
+
+    <!-- Active Incident SOS Top Banner with Acknowledge/Resolve Action -->
+    <div id="activeIncidentBanner" class="hidden bg-rose-600 text-white px-4 py-3 shadow-xl flex flex-col gap-2 z-30 animate-slide-down border-b-2 border-rose-800">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 text-xs font-black">
+          <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
+          <span id="activeIncidentTitle">🚨 דיווח חירום פעיל!</span>
+        </div>
+        <span id="activeIncidentTime" class="text-[10px] text-rose-100 font-bold">לפני מספר דקות</span>
+      </div>
+
+      <div class="flex items-center justify-between gap-3">
+        <p id="activeIncidentText" class="text-xs font-semibold text-rose-50 leading-tight">נפילה ליד המיטה - דווח ע"י המטפל</p>
+        
+        <button onclick="acknowledgeActiveIncident()" class="px-3 py-1.5 rounded-xl bg-white text-rose-800 font-black text-xs shadow-md hover:bg-rose-50 active:scale-95 transition flex-shrink-0 flex items-center gap-1">
+          <i class="fa-solid fa-check-double text-emerald-600"></i>
+          <span data-i18n="btnAcknowledgeSOS">אישור קבלה וטיפול</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Dynamic Content Screens -->
+    <main class="flex-1 p-4 space-y-4">
+
+      <!-- ======================================================== -->
+      <!-- TAB 1: DAILY ROUTINE & MEDICATIONS (שגרה ותרופות) -->
+      <!-- ======================================================== -->
+      <section id="tab-routine" class="tab-content space-y-4">
+        
+        <!-- Summary Progress Card -->
+        <div class="bg-gradient-to-br from-teal-700 via-teal-800 to-slate-900 rounded-3xl p-5 text-white shadow-xl relative overflow-hidden">
+          <div class="absolute -right-8 -bottom-8 w-36 h-36 bg-teal-500/10 rounded-full blur-2xl"></div>
+          <div class="flex justify-between items-start mb-3 relative z-10">
+            <div>
+              <span class="text-xs font-bold text-teal-200 uppercase tracking-wider" data-i18n="dailyProgress">התקדמות טיפול יומית</span>
+              <h2 class="text-2xl font-black mt-0.5"><span id="completedTasksCount">0</span> / <span id="totalTasksCount">0</span> <span class="text-sm font-medium text-teal-200" data-i18n="tasksDone">משימות ותרופות הושלמו</span></h2>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center font-black text-lg text-emerald-300">
+              <span id="completionPercentage">0%</span>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="w-full bg-white/20 h-2.5 rounded-full overflow-hidden relative z-10">
+            <div id="progressBar" class="bg-gradient-to-r from-emerald-400 to-teal-300 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+
+          <!-- Caregiver Tip & Admin Add Task -->
+          <div class="mt-3 flex items-center justify-between text-xs text-teal-100/90 pt-2 border-t border-white/10 relative z-10">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-hand-holding-heart text-emerald-400"></i>
+              <span data-i18n="caregiverTip">נא לוודא מתן שתייה מספקת לאורך היום</span>
+            </span>
+            <button onclick="openAddTaskModal()" class="admin-only px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-white font-bold text-[11px] transition flex items-center gap-1">
+              <i class="fa-solid fa-plus"></i> <span data-i18n="addTask">הוסף משימה</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section: Medications Timeline (Sorted Chronologically) -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center text-sm font-bold">
+                <i class="fa-solid fa-pills"></i>
+              </div>
+              <div>
+                <h3 class="font-black text-slate-900 text-base" data-i18n="medicationsHeader">ציר זמן תרופות (לפי שעות)</h3>
+                <p class="text-[11px] text-slate-500 font-medium" data-i18n="medsTimelineSub">ממוין כרונולוגית לפי שעת המתן</p>
+              </div>
+            </div>
+            <button onclick="openAddMedModal()" class="admin-only text-xs font-bold text-teal-700 hover:text-teal-900 flex items-center gap-1 bg-teal-50 px-2.5 py-1.5 rounded-xl border border-teal-200 active:scale-95 transition">
+              <i class="fa-solid fa-plus"></i> <span data-i18n="addMedication">הוסף תרופה</span>
+            </button>
+          </div>
+
+          <div id="medicationsList" class="space-y-3">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Section: Daily Routine & Care Tasks (Sorted Chronologically) -->
+        <div class="space-y-3 pt-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">
+                <i class="fa-solid fa-list-check"></i>
+              </div>
+              <div>
+                <h3 class="font-black text-slate-900 text-base" data-i18n="careTasksHeader">שגרת יום ומשימות טיפול</h3>
+                <p class="text-[11px] text-slate-500 font-medium" data-i18n="tasksTimelineSub">סדר יום מהבוקר ועד הלילה</p>
+              </div>
+            </div>
+            <div class="flex gap-1">
+              <button onclick="filterRoutine('all')" id="btnFilterAll" class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-slate-800 text-white" data-i18n="filterAll">הכל</button>
+              <button onclick="filterRoutine('pending')" id="btnFilterPending" class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600" data-i18n="filterPending">ממתין</button>
+            </div>
+          </div>
+
+          <div id="tasksList" class="space-y-2.5">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- TAB 2: VITALS & HEALTH LOG (יומן מדדים) -->
+      <!-- ======================================================== -->
+      <section id="tab-vitals" class="tab-content hidden space-y-4">
+        
+        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-xl font-black text-slate-900" data-i18n="vitalsTitle">יומן מעקב מדדים</h2>
+              <p class="text-xs text-slate-500 font-medium" data-i18n="vitalsSubtitle">תיעוד מדדים יומי: לחץ דם, סוכר, חום ועוד</p>
+            </div>
+            <button onclick="openLogVitalsModal()" class="px-3.5 py-2 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-teal-600/20 active:scale-95 transition">
+              <i class="fa-solid fa-plus-circle text-sm"></i>
+              <span data-i18n="logVitalsBtn">הזנת מדדים חדשה</span>
+            </button>
+          </div>
+
+          <div id="latestVitalsGrid" class="grid grid-cols-2 gap-2.5">
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between">
+              <div class="flex items-center justify-between text-xs text-slate-500 font-semibold">
+                <span data-i18n="bpLabel">לחץ דם (Sys/Dia)</span>
+                <i class="fa-solid fa-heart-pulse text-rose-500"></i>
+              </div>
+              <div class="my-2">
+                <span id="latestBP" class="text-xl font-black text-slate-800">-- / --</span>
+                <span class="text-[10px] text-slate-500 font-medium">mmHg</span>
+              </div>
+              <div id="bpStatusTag" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 self-start" data-i18n="statusNormal">תקין</div>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between">
+              <div class="flex items-center justify-between text-xs text-slate-500 font-semibold">
+                <span data-i18n="sugarLabel">סוכר (Glucose)</span>
+                <i class="fa-solid fa-droplet text-amber-500"></i>
+              </div>
+              <div class="my-2">
+                <span id="latestSugar" class="text-xl font-black text-slate-800">--</span>
+                <span class="text-[10px] text-slate-500 font-medium">mg/dL</span>
+              </div>
+              <div id="sugarStatusTag" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 self-start" data-i18n="statusNormal">תקין</div>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between">
+              <div class="flex items-center justify-between text-xs text-slate-500 font-semibold">
+                <span data-i18n="tempLabel">חום גוף</span>
+                <i class="fa-solid fa-temperature-half text-orange-500"></i>
+              </div>
+              <div class="my-2">
+                <span id="latestTemp" class="text-xl font-black text-slate-800">--</span>
+                <span class="text-[10px] text-slate-500 font-medium">°C</span>
+              </div>
+              <div id="tempStatusTag" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 self-start" data-i18n="statusNormal">תקין</div>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between">
+              <div class="flex items-center justify-between text-xs text-slate-500 font-semibold">
+                <span data-i18n="pulseSpo2Label">דופק / סטורציה</span>
+                <i class="fa-solid fa-lungs text-blue-500"></i>
+              </div>
+              <div class="my-2">
+                <span id="latestPulse" class="text-xl font-black text-slate-800">--</span> <span class="text-[10px] text-slate-400">bpm</span>
+                <span class="text-slate-300"> | </span>
+                <span id="latestSpo2" class="text-xl font-black text-slate-800">--%</span>
+              </div>
+              <div class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 self-start" data-i18n="statusNormal">תקין</div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+            <span class="text-xs text-slate-500 font-medium" data-i18n="shareWithDocText">שיתוף סיכום מדדים עם הרופא:</span>
+            <button onclick="shareVitalsWhatsApp()" class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition">
+              <i class="fa-brands fa-whatsapp text-sm"></i>
+              <span data-i18n="sendWhatsApp">שלח בוואטסאפ</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-3xl p-4 border border-slate-200 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-slate-800 text-sm" data-i18n="vitalsHistory">היסטוריית מדידות אחרונות</h3>
+            <span class="text-xs text-slate-400" id="vitalsCount">0 רשומות</span>
+          </div>
+          <div id="vitalsHistoryList" class="space-y-2">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- TAB 3: SHOPPING LIST (רשימת קניות שיתופית) -->
+      <!-- ======================================================== -->
+      <section id="tab-shopping" class="tab-content hidden space-y-4">
+        
+        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h2 class="text-xl font-black text-slate-900" data-i18n="shoppingTitle">רשימת קניות שיתופית</h2>
+              <p class="text-xs text-slate-500 font-medium" data-i18n="shoppingSubtitle">המטפל מוסיף צרכים, המשפחה רואה ומסמנת 'נקנה'</p>
+            </div>
+            <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg font-bold">
+              <i class="fa-solid fa-cart-shopping"></i>
+            </div>
+          </div>
+
+          <!-- Quick Add Preset Chips -->
+          <div class="space-y-1.5 pt-1">
+            <span class="text-[11px] font-bold text-slate-400" data-i18n="quickAddPresets">הוספה מהירה בלחיצה:</span>
+            <div class="flex flex-wrap gap-1.5">
+              <button onclick="quickAddShoppingItem('Adult Diapers (Size L)', 'hygiene')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-xl border border-slate-200 flex items-center gap-1 active:scale-95 transition">
+                🩲 <span>Diapers L</span>
+              </button>
+              <button onclick="quickAddShoppingItem('Wet Wipes', 'hygiene')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-xl border border-slate-200 flex items-center gap-1 active:scale-95 transition">
+                🧻 <span>Wet Wipes</span>
+              </button>
+              <button onclick="quickAddShoppingItem('Fresh Milk', 'food')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-xl border border-slate-200 flex items-center gap-1 active:scale-95 transition">
+                🥛 <span>Milk</span>
+              </button>
+              <button onclick="quickAddShoppingItem('Soft Fruits (Bananas / Apples)', 'food')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-xl border border-slate-200 flex items-center gap-1 active:scale-95 transition">
+                🍌 <span>Soft Fruits</span>
+              </button>
+              <button onclick="quickAddShoppingItem('Rash Cream', 'pharmacy')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-xl border border-slate-200 flex items-center gap-1 active:scale-95 transition">
+                🧴 <span>Rash Cream</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Custom Item Input Form -->
+          <form onsubmit="handleCustomShoppingSubmit(event)" class="mt-3.5 flex gap-2">
+            <input type="text" id="customShoppingInput" placeholder="הקלד פריט לקנייה / Type item to buy..." class="flex-1 text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800" required />
+            <button type="submit" class="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-1 shadow-sm active:scale-95 transition">
+              <i class="fa-solid fa-plus"></i>
+              <span data-i18n="add">הוסף</span>
+            </button>
+          </form>
+        </div>
+
+        <div class="space-y-2.5">
+          <div class="flex items-center justify-between px-1">
+            <h3 class="font-bold text-slate-800 text-sm" data-i18n="currentList">פריטים ברשימה</h3>
+            <div class="flex gap-1">
+              <button onclick="filterShopping('all')" id="btnShopAll" class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-teal-600 text-white" data-i18n="filterNeeded">דרוש</button>
+              <button onclick="filterShopping('bought')" id="btnShopBought" class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600" data-i18n="filterBought">נקנה</button>
+            </div>
+          </div>
+
+          <div id="shoppingListContainer" class="space-y-2">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- TAB 4: NOTICE BOARD (לוח מודעות והודעות) -->
+      <!-- ======================================================== -->
+      <section id="tab-notices" class="tab-content hidden space-y-4">
+        
+        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h2 class="text-xl font-black text-slate-900" data-i18n="noticeBoardTitle">לוח מודעות משפחתי</h2>
+              <p class="text-xs text-slate-500 font-medium" data-i18n="noticeBoardSubtitle">הנחיות, עדכונים ואישורי קריאה (Acknowledged)</p>
+            </div>
+            <div class="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-lg font-bold">
+              <i class="fa-solid fa-bullhorn"></i>
+            </div>
+          </div>
+
+          <!-- New Message Composer Form -->
+          <form onsubmit="handlePostNotice(event)" class="space-y-2.5">
+            <textarea id="noticeTextInput" rows="2" placeholder="כתוב הנחיה או הודעה / Write instruction or note..." class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-indigo-500 focus:bg-white text-slate-800" required></textarea>
+            
+            <div class="flex items-center justify-between">
+              <label class="flex items-center gap-1.5 text-xs text-slate-600 font-semibold cursor-pointer">
+                <input type="checkbox" id="noticeUrgentCheck" class="rounded text-rose-600 focus:ring-rose-500 w-4 h-4" />
+                <span class="text-rose-600 font-bold" data-i18n="urgentNoticeLabel">הודעה דחופה / חשובה</span>
+              </label>
+
+              <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span data-i18n="publishNotice">פרסם הודעה</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="space-y-3">
+          <div class="flex items-center justify-between px-1">
+            <h3 class="font-bold text-slate-800 text-sm" data-i18n="activeNotices">הודעות פעילות</h3>
+            <span class="text-xs text-slate-400" id="noticeCountBadge">0 הודעות</span>
+          </div>
+
+          <div id="noticesListContainer" class="space-y-3">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- TAB 5: CALENDAR & VISITS (יומן אירועים וביקורים) -->
+      <!-- ======================================================== -->
+      <section id="tab-calendar" class="tab-content hidden space-y-4">
+        
+        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h2 class="text-xl font-black text-slate-900" data-i18n="calendarTitle">יומן ביקורים ואירועים</h2>
+              <p class="text-xs text-slate-500 font-medium" data-i18n="calendarSubtitle">תורים רפואיים, ביקור פיזיותרפיסט וביקורי משפחה</p>
+            </div>
+            <button onclick="openAddEventModal()" class="admin-only px-3 py-2 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition">
+              <i class="fa-solid fa-calendar-plus text-sm"></i>
+              <span data-i18n="addEvent">הוסף אירוע</span>
+            </button>
+          </div>
+
+          <div id="calendarEventsList" class="space-y-2.5 pt-1">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- TAB 6: EMERGENCY & CONTACTS (חירום וטלפונים) -->
+      <!-- ======================================================== -->
+      <section id="tab-emergency" class="tab-content hidden space-y-4">
+        
+        <!-- Big SOS Action Card -->
+        <div class="bg-gradient-to-br from-rose-600 via-rose-700 to-red-900 rounded-3xl p-5 text-white shadow-xl relative overflow-hidden">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs font-bold text-rose-200 uppercase tracking-wider" data-i18n="sosCenter">מוקד מצבי חירום</span>
+              <h2 class="text-xl font-black mt-0.5" data-i18n="emergencyReporting">דיווח אירוע חריג / נפילה</h2>
+              <p class="text-xs text-rose-100 font-medium mt-1" data-i18n="sosDescription">שליחת התראה דחופה מיידית לכל בני המשפחה המחוברים</p>
+            </div>
+            <button onclick="openIncidentModal()" class="w-14 h-14 rounded-2xl bg-white text-rose-700 font-black text-xl flex items-center justify-center shadow-lg active:scale-90 transition pulsing-alert flex-shrink-0">
+              SOS
+            </button>
+          </div>
+        </div>
+
+        <!-- Emergency Contacts & One-Tap Dial Directory -->
+        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-black text-slate-900 text-base" data-i18n="emergencyContactsTitle">ספר טלפונים לשעת חירום</h3>
+              <p class="text-xs text-slate-500 font-medium" data-i18n="oneTapDialSub">חיוג מהיר בלחיצה אחת למשפחה ולמוקדי רפואה</p>
+            </div>
+            <button onclick="openAddContactModal()" class="admin-only text-xs font-bold text-teal-700 bg-teal-50 px-2 py-1 rounded-lg border border-teal-200">
+              + <span data-i18n="addContact">הוסף איש קשר</span>
+            </button>
+          </div>
+
+          <div id="emergencyContactsList" class="space-y-2.5 pt-1">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Recent Incidents & Resolved Log -->
+        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+          <h3 class="font-bold text-slate-800 text-sm" data-i18n="incidentHistoryTitle">יומן אירועים חריגים ואישורי טיפול</h3>
+          <div id="incidentsLogList" class="space-y-2">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- ======================================================== -->
+    <!-- FIXED BOTTOM NAVIGATION BAR (Mobile First) -->
+    <!-- ======================================================== -->
+    <nav class="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white/95 backdrop-blur border-t border-slate-200 shadow-2xl z-40 px-2 py-1 flex items-center justify-around sm:rounded-b-3xl">
+      
+      <button onclick="switchTab('routine')" id="nav-routine" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-teal-600 font-bold transition-all">
+        <div class="w-6 h-6 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-list-check"></i>
+        </div>
+        <span class="text-[10px] mt-0.5" data-i18n="navRoutine">שגרה ותרופות</span>
+      </button>
+
+      <button onclick="switchTab('vitals')" id="nav-vitals" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-slate-400 font-medium transition-all">
+        <div class="w-6 h-6 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-heart-pulse"></i>
+        </div>
+        <span class="text-[10px] mt-0.5" data-i18n="navVitals">מדדים</span>
+      </button>
+
+      <button onclick="switchTab('shopping')" id="nav-shopping" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-slate-400 font-medium transition-all relative">
+        <div class="w-6 h-6 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-cart-shopping"></i>
+        </div>
+        <span class="text-[10px] mt-0.5" data-i18n="navShopping">קניות</span>
+      </button>
+
+      <button onclick="switchTab('notices')" id="nav-notices" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-slate-400 font-medium transition-all relative">
+        <div class="w-6 h-6 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-bullhorn"></i>
+        </div>
+        <span class="text-[10px] mt-0.5" data-i18n="navNotices">הודעות</span>
+      </button>
+
+      <button onclick="switchTab('calendar')" id="nav-calendar" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-slate-400 font-medium transition-all">
+        <div class="w-6 h-6 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-calendar-days"></i>
+        </div>
+        <span class="text-[10px] mt-0.5" data-i18n="navCalendar">ביקורים</span>
+      </button>
+
+      <button onclick="switchTab('emergency')" id="nav-emergency" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-rose-500 font-medium transition-all">
+        <div class="w-6 h-6 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-phone-volume"></i>
+        </div>
+        <span class="text-[10px] mt-0.5" data-i18n="navEmergency">חירום</span>
+      </button>
+
+    </nav>
+
+    <!-- ======================================================== -->
+    <!-- MODALS & DIALOGS -->
+    <!-- ======================================================== -->
+
+    <!-- 0. Authentication & Role Switcher Modal (Google Auth Only) -->
+    <div id="authModal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl border border-slate-200">
+        <div class="text-center">
+          <div class="w-12 h-12 rounded-2xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl font-bold mx-auto mb-2 shadow-inner">
+            <i class="fa-brands fa-google text-red-500"></i>
+          </div>
+          <h3 class="font-black text-slate-900 text-lg" data-i18n="authModalTitle">כניסה למערכת CareSync</h3>
+          <p class="text-xs text-slate-500 font-medium mt-0.5" data-i18n="authModalSub">הזדהות מאובטחת באמצעות חשבון Google בלבד</p>
+        </div>
+
+        <div class="space-y-3">
+          <!-- Main Google Auth Button -->
+          <button onclick="handleGoogleSignIn()" class="w-full p-4 rounded-2xl border-2 border-slate-200 hover:border-teal-500 bg-white hover:bg-teal-50 flex items-center justify-between text-slate-800 font-bold text-xs shadow-md active:scale-95 transition-all group">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-white flex items-center justify-center border border-slate-200 shadow-sm text-lg">
+                <i class="fa-brands fa-google text-red-500"></i>
+              </div>
+              <div class="text-right">
+                <div class="text-slate-900 font-black text-sm" data-i18n="googleFamilyLogin">התחבר עם Google</div>
+                <div class="text-[10px] text-teal-700 font-semibold" data-i18n="whitelistVerified">אימות אוטומטי מול Firebase</div>
+              </div>
+            </div>
+            <i class="fa-solid fa-arrow-left text-slate-400 group-hover:text-teal-600 transition text-sm"></i>
+          </button>
+
+          <!-- Current Logged In Info & Logout -->
+          <div id="activeUserSection" class="p-3.5 rounded-2xl bg-teal-50 border border-teal-200 text-xs flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <div>
+                <div class="font-bold text-slate-800" id="currentLoggedUserText">מחובר כעת: מנהל על</div>
+                <div class="text-[10px] text-slate-500" id="currentLoggedEmailText">admin@gmail.com</div>
+              </div>
+            </div>
+            <button onclick="handleLogout()" class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 font-extrabold text-[11px] transition" data-i18n="logout">
+              התנתק
+            </button>
+          </div>
+
+          <!-- Direct Settings Access for First-Time Setup -->
+          <div class="pt-1 flex items-center justify-between text-xs border-t border-slate-100">
+            <button onclick="closeModal('authModal'); openSettingsModal();" class="text-teal-700 font-bold hover:underline flex items-center gap-1">
+              <i class="fa-solid fa-gear text-[11px]"></i> <span>הגדרות וחיבור Firebase</span>
+            </button>
+          </div>
+        </div>
+
+        <button onclick="closeModal('authModal')" class="w-full py-2.5 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs hover:bg-slate-200" data-i18n="close">סגור</button>
+      </div>
+    </div>
+
+    <!-- 0.1 SUPER ADMIN ACTIVITY EXCEL REPORTS MODAL (Exclusive to Super Admin) -->
+    <div id="reportsModal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl border border-slate-200">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg font-bold shadow-inner">
+              <i class="fa-solid fa-file-excel"></i>
+            </div>
+            <div>
+              <h3 class="font-black text-slate-900 text-base" data-i18n="reportsModalTitle">הפקת דוחות אקסל (מנהל על)</h3>
+              <p class="text-[11px] text-amber-700 font-semibold" data-i18n="reportsModalSub">קובץ Excel רב-גליוני בקידוד עברית מושלם</p>
+            </div>
+          </div>
+          <button onclick="closeModal('reportsModal')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form onsubmit="handleGenerateExcelReport(event)" class="space-y-3.5">
+          <p class="text-xs text-slate-600 leading-relaxed" data-i18n="reportsDesc">
+            בחר טווח תאריכים להפקת דוח מסכם. הקובץ שיופק מכיל 5 גליונות מסודרים: תרופות, משימות שגרה, מדדים קליניים, אירועים חריגים ורשימת קניות.
+          </p>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="reportFromDate">מתאריך:</label>
+              <input type="date" id="reportFromDate" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800" required />
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="reportToDate">עד תאריך:</label>
+              <input type="date" id="reportToDate" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800" required />
+            </div>
+          </div>
+
+          <div class="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 space-y-1">
+            <div class="font-bold flex items-center gap-1.5">
+              <i class="fa-solid fa-table-list"></i>
+              <span>מבנה גליונות האקסל שיופקו:</span>
+            </div>
+            <ul class="text-[11px] list-disc list-inside space-y-0.5 text-amber-800">
+              <li>גליון 1: <strong>יומן תרופות</strong> (זמנים, סטטוס לקיחה, מבצע והוראות)</li>
+              <li>גליון 2: <strong>משימות שגרה</strong> (היגיינה, חיתולים, ארוחות והליכה)</li>
+              <li>גליון 3: <strong>מעקב מדדים</strong> (לחץ דם, סוכר, חום, דופק, חמצן)</li>
+              <li>גליון 4: <strong>אירועים חריגים וקריאות SOS</strong> (פירוט, שעה, אישור וטיפול)</li>
+              <li>גליון 5: <strong>רשימת קניות וציוד</strong></li>
+            </ul>
+          </div>
+
+          <div class="pt-2 flex gap-2">
+            <button type="button" onclick="closeModal('reportsModal')" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs" data-i18n="cancel">ביטול</button>
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-md shadow-emerald-600/30 flex items-center justify-center gap-1.5 active:scale-95 transition">
+              <i class="fa-solid fa-file-arrow-down text-sm"></i>
+              <span data-i18n="downloadExcelBtn">הורד קובץ Excel (.xlsx)</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 1. Log Vitals Modal -->
+    <div id="logVitalsModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200 animate-slide-up">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center font-bold">
+              <i class="fa-solid fa-stethoscope"></i>
+            </div>
+            <h3 class="font-black text-slate-900 text-lg" data-i18n="vitalsModalTitle">הזנת מדדים יומיים</h3>
+          </div>
+          <button onclick="closeModal('logVitalsModal')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form onsubmit="handleSaveVitals(event)" class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="bpSysLabel">ל"ד סיסטולי (גבוה)</label>
+              <input type="number" id="vitalBpSys" placeholder="120" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold text-slate-800" />
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="bpDiaLabel">ל"ד דיאסטולי (נמוך)</label>
+              <input type="number" id="vitalBpDia" placeholder="80" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold text-slate-800" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="sugarInputLabel">רמת סוכר (mg/dL)</label>
+              <input type="number" id="vitalSugar" placeholder="100" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold text-slate-800" />
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="tempInputLabel">חום גוף (°C)</label>
+              <input type="number" step="0.1" id="vitalTemp" placeholder="36.6" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold text-slate-800" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="pulseInputLabel">דופק (BPM)</label>
+              <input type="number" id="vitalPulse" placeholder="75" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold text-slate-800" />
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="spo2InputLabel">סטורציה / חמצן (%)</label>
+              <input type="number" id="vitalSpo2" placeholder="98" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold text-slate-800" />
+            </div>
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="notesLabel">הערות נוספות</label>
+            <input type="text" id="vitalNotes" placeholder="Feeling good..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800" />
+          </div>
+
+          <div class="pt-2 flex gap-2">
+            <button type="button" onclick="closeModal('logVitalsModal')" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs" data-i18n="cancel">ביטול</button>
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20" data-i18n="saveVitals">שמור מדדים</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 2. Incident & Emergency SOS Modal -->
+    <div id="incidentModal" class="hidden fixed inset-0 z-50 bg-rose-950/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-rose-200 animate-slide-up">
+        <div class="flex items-center justify-between border-b border-rose-100 pb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="font-black text-rose-900 text-lg" data-i18n="incidentModalTitle">דיווח אירוע חריג / SOS</h3>
+          </div>
+          <button onclick="closeModal('incidentModal')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form onsubmit="handleReportIncident(event)" class="space-y-3">
+          <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="selectIncidentType">בחר סוג אירוע (שליחה מהירה):</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label onclick="handleIncidentTypeSelect('fall')" class="border border-slate-200 p-2.5 rounded-2xl flex items-center gap-2 cursor-pointer hover:bg-rose-50 has-[:checked]:border-rose-600 has-[:checked]:bg-rose-50">
+              <input type="radio" name="incidentType" value="fall" checked class="text-rose-600" />
+              <span class="text-xs font-bold text-slate-800">🤕 <span data-i18n="incFall">נפילה</span></span>
+            </label>
+            <label onclick="handleIncidentTypeSelect('confusion')" class="border border-slate-200 p-2.5 rounded-2xl flex items-center gap-2 cursor-pointer hover:bg-rose-50 has-[:checked]:border-rose-600 has-[:checked]:bg-rose-50">
+              <input type="radio" name="incidentType" value="confusion" class="text-rose-600" />
+              <span class="text-xs font-bold text-slate-800">🧠 <span data-i18n="incConfusion">בלבול / חולשה</span></span>
+            </label>
+            <label onclick="handleIncidentTypeSelect('fever')" class="border border-slate-200 p-2.5 rounded-2xl flex items-center gap-2 cursor-pointer hover:bg-rose-50 has-[:checked]:border-rose-600 has-[:checked]:bg-rose-50">
+              <input type="radio" name="incidentType" value="fever" class="text-rose-600" />
+              <span class="text-xs font-bold text-slate-800">🤒 <span data-i18n="incFever">חום גבוה / רעד</span></span>
+            </label>
+            <label onclick="handleIncidentTypeSelect('breathing')" class="border border-slate-200 p-2.5 rounded-2xl flex items-center gap-2 cursor-pointer hover:bg-rose-50 has-[:checked]:border-rose-600 has-[:checked]:bg-rose-50">
+              <input type="radio" name="incidentType" value="breathing" class="text-rose-600" />
+              <span class="text-xs font-bold text-slate-800">🫁 <span data-i18n="incBreathing">קוצר נשימה</span></span>
+            </label>
+            <label onclick="handleIncidentTypeSelect('refusal')" class="border border-slate-200 p-2.5 rounded-2xl flex items-center gap-2 cursor-pointer hover:bg-rose-50 has-[:checked]:border-rose-600 has-[:checked]:bg-rose-50">
+              <input type="radio" name="incidentType" value="refusal" class="text-rose-600" />
+              <span class="text-xs font-bold text-slate-800">🚫 <span data-i18n="incRefusal">סירוב תרופות/אוכל</span></span>
+            </label>
+            <label onclick="handleIncidentTypeSelect('other')" class="border border-slate-200 p-2.5 rounded-2xl flex items-center gap-2 cursor-pointer hover:bg-rose-50 has-[:checked]:border-rose-600 has-[:checked]:bg-rose-50">
+              <input type="radio" name="incidentType" value="other" class="text-rose-600" />
+              <span class="text-xs font-bold text-slate-800">⚠️ <span data-i18n="incOther">אירוע אחר</span></span>
+            </label>
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1">
+              <span data-i18n="incidentDescLabel">תיאור האירוע:</span> 
+              <span id="incidentDescRequiredTag" class="text-[10px] text-slate-400 font-normal">(רשות - לחץ שליחה מיידית)</span>
+            </label>
+            <textarea id="incidentDescInput" rows="2" placeholder="פירוט קצר (אופציונלי)..." class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-800"></textarea>
+          </div>
+
+          <div class="pt-2 flex gap-2">
+            <button type="button" onclick="closeModal('incidentModal')" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs" data-i18n="cancel">ביטול</button>
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-md shadow-rose-600/30 flex items-center justify-center gap-1.5" data-i18n="sendIncidentAlert">
+              <i class="fa-solid fa-paper-plane"></i>
+              <span>שלח התראת חירום</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 3. Add Medication Modal -->
+    <div id="addMedModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200 animate-slide-up">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center font-bold">
+              <i class="fa-solid fa-pills"></i>
+            </div>
+            <h3 class="font-black text-slate-900 text-lg" data-i18n="addMedModalTitle">הוספת תרופה חדשה</h3>
+          </div>
+          <button onclick="closeModal('addMedModal')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form onsubmit="handleSaveMedication(event)" class="space-y-3">
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="medNameLabel">שם התרופה</label>
+            <input type="text" id="medName" placeholder="Aspirin Cardio" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800" required />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="medDosageLabel">מינון</label>
+              <input type="text" id="medDosage" placeholder="100mg" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800" required />
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="medFormLabel">צורת מתן</label>
+              <select id="medForm" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800">
+                <option value="pill">💊 כדור / Pill</option>
+                <option value="syrup">🥄 סירופ / Syrup</option>
+                <option value="drops">💧 טיפות / Drops</option>
+                <option value="inhaler">💨 משאף / Inhaler</option>
+                <option value="injection">💉 זריקה / Injection</option>
+                <option value="patch">🩹 מדבקה / Patch</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="medTimesLabel">שעות מתן (מופרד בפסיקים)</label>
+            <input type="text" id="medTimes" placeholder="08:00, 20:00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-teal-800" required />
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="medInstructionsLabel">הוראות מיוחדות</label>
+            <input type="text" id="medInstructions" placeholder="After breakfast with a full glass of water..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800" />
+          </div>
+
+          <div class="pt-2 flex gap-2">
+            <button type="button" onclick="closeModal('addMedModal')" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs" data-i18n="cancel">ביטול</button>
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20" data-i18n="save">שמור תרופה</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 3.1 Edit Medication Modal -->
+    <div id="editMedModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200 animate-slide-up">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center font-bold">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </div>
+            <h3 class="font-black text-slate-900 text-lg" data-i18n="editMedModalTitle">עריכת תרופה</h3>
+          </div>
+          <button onclick="closeModal('editMedModal')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form onsubmit="handleUpdateMedication(event)" class="space-y-3">
+          <input type="hidden" id="editMedId" />
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="medNameLabel">שם התרופה</label>
+            <input type="text" id="editMedName" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800" required />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="medDosageLabel">מינון</label>
+              <input type="text" id="editMedDosage" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800" required />
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="medFormLabel">צורת מתן</label>
+              <select id="editMedForm" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800">
+                <option value="pill">💊 כדור / Pill</option>
+                <option value="syrup">🥄 סירופ / Syrup</option>
+                <option value="drops">💧 טיפות / Drops</option>
+                <option value="inhaler">💨 משאף / Inhaler</option>
+                <option value="injection">💉 זריקה / Injection</option>
+                <option value="patch">🩹 מדבקה / Patch</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="medTimesLabel">שעות מתן (מופרד בפסיקים)</label>
+            <input type="text" id="editMedTimes" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-teal-800" required />
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="medInstructionsLabel">הוראות מיוחדות</label>
+            <input type="text" id="editMedInstructions" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800" />
+          </div>
+
+          <div class="pt-2 flex gap-2">
+            <button type="button" onclick="handleDeleteMedication()" class="px-3 py-2.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-xs flex items-center gap-1" data-i18n="deleteMed">
+              <i class="fa-solid fa-trash"></i> מחק תרופה
+            </button>
+            <button type="button" onclick="closeModal('editMedModal')" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs" data-i18n="cancel">ביטול</button>
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20" data-i18n="save">שמור שינויים</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 4. Add Task Modal -->
+    <div id="addTaskModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200 animate-slide-up">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+              <i class="fa-solid fa-list-check"></i>
+            </div>
+            <h3 class="font-black text-slate-900 text-lg" data-i18n="addTaskModalTitle">הוספת משימת טיפול</h3>
+          </div>
+          <button onclick="closeModal('addTaskModal')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form onsubmit="handleSaveTask(event)" class="space-y-3">
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="taskTitleLabel">כותרת המשימה</label>
+            <input type="text" id="taskTitle" placeholder="Morning Shower / Diaper change" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800" required />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="taskTimeLabel">שעת ביצוע</label>
+              <input type="time" id="taskTime" value="09:00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800" required />
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="taskCatLabel">קטגוריה</label>
+              <select id="taskCategory" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800">
+                <option value="hygiene">🚿 מקלחת והיגיינה / Shower & Hygiene</option>
+                <option value="diaper">🩲 החלפת חיתול / Diaper Change</option>
+                <option value="food">🍲 ארוחה / Meal & Nutrition</option>
+                <option value="walk">🚶‍♂️ הליכה / Mobility & Walk</option>
+                <option value="water">💧 שתיית מים / Water Hydration</option>
+                <option value="general">✨ כללי / General</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="pt-2 flex gap-2">
+            <button type="button" onclick="closeModal('addTaskModal')" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs" data-i18n="cancel">ביטול</button>
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20" data-i18n="save">שמור משימה</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 5. Add Calendar Event Modal -->
+    <div id="addEventModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200 animate-slide-up">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center font-bold">
+              <i class="fa-solid fa-calendar-plus"></i>
+            </div>
+            <h3 class="font-black text-slate-900 text-lg" data-i18n="addEventModalTitle">הוספת תור / אירוע ביומן</h3>
+          </div>
+          <button onclick="closeModal('addEventModal')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form onsubmit="handleSaveCalendarEvent(event)" class="space-y-3">
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="eventTitleLabel">כותרת האירוע / התור</label>
+            <input type="text" id="eventTitle" placeholder="Physiotherapist visit / Blood test" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800" required />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="eventDateLabel">תאריך</label>
+              <input type="date" id="eventDate" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800" required />
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="eventTimeLabel">שעה</label>
+              <input type="time" id="eventTime" value="10:00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800" required />
+            </div>
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1" data-i18n="eventNotesLabel">הנחיות מיוחדות למטפל</label>
+            <input type="text" id="eventNotes" placeholder="Wear comfortable track pants..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800" />
+          </div>
+
+          <div class="pt-2 flex gap-2">
+            <button type="button" onclick="closeModal('addEventModal')" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs" data-i18n="cancel">ביטול</button>
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20" data-i18n="save">שמור אירוע</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 7. SETTINGS & USER WHITELIST MANAGEMENT -->
+    <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-md rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto custom-scrollbar">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold">
+              <i class="fa-solid fa-gear"></i>
+            </div>
+            <h3 class="font-black text-slate-900 text-lg" data-i18n="settingsTitle">הגדרות והרשאות Google (מנהל)</h3>
+          </div>
+          <button onclick="closeModal('settingsModal')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1">שם המטופל (Dad / אבא):</label>
+            <input type="text" id="patientNameInput" value="Dad" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800" />
+          </div>
+
+          <!-- Super Admin Config -->
+          <div class="p-3.5 bg-amber-50 rounded-2xl border border-amber-200 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black text-amber-950 flex items-center gap-1.5">
+                <i class="fa-solid fa-crown text-amber-600"></i>
+                אימייל Google של מנהל על (Super Admin):
+              </span>
+              <span class="text-[10px] bg-amber-200 text-amber-900 font-bold px-2 py-0.5 rounded">בעל הרשאת דוחות</span>
+            </div>
+            <input type="email" id="superAdminEmailInput" value="admin@gmail.com" class="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800" />
+          </div>
+
+          <!-- Section: Family Members Whitelist -->
+          <div class="p-3.5 bg-teal-50/70 rounded-2xl border border-teal-200 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-teal-950 flex items-center gap-1.5">
+                <i class="fa-solid fa-users text-teal-600"></i>
+                אימיילים מורשים של בני משפחה (Google)
+              </span>
+            </div>
+            <div id="familyWhitelistContainer" class="space-y-1.5 max-h-32 overflow-y-auto">
+              <!-- Rendered by JS -->
+            </div>
+            <!-- Add Family Email Form -->
+            <div class="flex gap-1.5 pt-1">
+              <input type="email" id="newFamilyEmailInput" placeholder="family.member@gmail.com" class="flex-1 bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs text-slate-800" />
+              <button onclick="handleAddFamilyEmail()" class="px-3 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-sm transition">
+                + הוסף
+              </button>
+            </div>
+          </div>
+
+          <!-- Section: Caregivers Whitelist & Google Auth Revocation -->
+          <div class="p-3.5 bg-emerald-50/70 rounded-2xl border border-emerald-200 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                <i class="fa-solid fa-user-nurse text-emerald-600"></i>
+                אימיילים של מטפלים ובקרת גישה (Google)
+              </span>
+            </div>
+            <p class="text-[10px] text-slate-500 leading-tight">כל מטפל מתחבר אך ורק בחשבון ה-Google שלו. באפשרותך לבטל או לחסום את גישתו בכל עת.</p>
+            <div id="caregiversWhitelistContainer" class="space-y-2 max-h-40 overflow-y-auto">
+              <!-- Rendered by JS -->
+            </div>
+            
+            <!-- Add Caregiver Email Form -->
+            <div class="space-y-1.5 pt-1 border-t border-emerald-200/60">
+              <span class="text-[11px] font-bold text-emerald-900 block">הוספת מטפל חדש (חשבון Google):</span>
+              <div class="flex gap-1.5">
+                <input type="text" id="newCaregiverNameInput" placeholder="שם המטפל (Rahul)" class="w-1/3 bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs text-slate-800" />
+                <input type="email" id="newCaregiverEmailInput" placeholder="rahul.caregiver@gmail.com" class="flex-1 bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs text-slate-800" />
+                <button onclick="handleAddCaregiver()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition">
+                  + הוסף
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Firebase Config Input & Auto Sync Guide -->
+          <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <i class="fa-brands fa-google text-amber-500"></i>
+                חיבור Firebase Realtime & Authentication
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-500 leading-relaxed">
+              הקוד מקבל כל פורמט ישירות מ-Firebase Console (כולל `const firebaseConfig = { ... }`).
+            </p>
+            <textarea id="firebaseConfigInput" rows="4" placeholder='const firebaseConfig = { apiKey: "...", projectId: "..." };' class="w-full font-mono text-[10px] bg-white border border-slate-300 rounded-xl p-2.5 focus:outline-none text-slate-700"></textarea>
+            <button onclick="applyFirebaseConfig()" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs shadow-sm transition">
+              החל והתחבר ל-Firebase
+            </button>
+          </div>
+
+          <!-- Data Backup & Clean Slate -->
+          <div class="pt-2 flex gap-2">
+            <button onclick="exportDataJSON()" class="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1">
+              <i class="fa-solid fa-download"></i> גיבוי JSON
+            </button>
+            <button onclick="clearAllDataToFresh()" class="flex-1 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs flex items-center justify-center gap-1">
+              <i class="fa-solid fa-broom"></i> נקה הכל (דף חלק)
+            </button>
+          </div>
+        </div>
+
+        <button onclick="saveGeneralSettings()" class="w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20">
+          שמור שינויים
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- JAVASCRIPT APPLICATION CORE -->
+  <!-- ======================================================== -->
+  <script>
+    // --- 0. SMART FIREBASE CONFIG PARSER ---
+    function parseFirebaseConfigSnippet(raw) {
+      if (!raw || typeof raw !== 'string') return null;
+      let str = raw.trim();
+      // Strip JS variable declarations: const/let/var firebaseConfig =
+      str = str.replace(/^(const|let|var)\s+firebaseConfig\s*=\s*/i, '').trim();
+      if (str.endsWith(';')) str = str.slice(0, -1).trim();
+
+      // Try strict JSON first
+      try {
+        return JSON.parse(str);
+      } catch (e) {
+        // Evaluate as JS Object (handles unquoted keys like apiKey: "...")
+        try {
+          return Function('"use strict"; return (' + str + ')')();
+        } catch (e2) {
+          throw new Error('Invalid config format');
+        }
+      }
+    }
+
+    // --- 1. DEFAULT FIREBASE CONFIGURATION (AUTO INITIALIZED) ---
+    const defaultFirebaseConfig = {
+      apiKey: "AIzaSyAkqUXT8iXLs3HA1lja5Wvpo6DyF97AP9E",
+      authDomain: "obn-caresync.firebaseapp.com",
+      projectId: "obn-caresync",
+      storageBucket: "obn-caresync.firebasestorage.app",
+      messagingSenderId: "494786606891",
+      appId: "1:494786606891:web:df6a7b7a4b21ad6dfcf76e"
+    };
+
+    // --- 2. UI LOCALIZATION DICTIONARY ---
+    const i18n = {
+      he: {
+        appTitle: "CareSync - ניהול טיפול חכם",
+        patientPrefix: "טיפול ב:",
+        todayLabel: "שגרת יום",
+        emergencyBtn: "דיווח חירום SOS",
+        overdueAlertTitle: "⚠️ התרעה: תרופה באיחור של מעל שעה!",
+        viewNowBtn: "טפל כעת",
+        dailyProgress: "התקדמות טיפול יומית",
+        tasksDone: "משימות ותרופות הושלמו",
+        caregiverTip: "נא לוודא מתן שתייה מספקת לאורך היום",
+        addTask: "הוסף משימה",
+        medicationsHeader: "ציר זמן תרופות (לפי שעות)",
+        medsTimelineSub: "ממוין כרונולוגית לפי שעת המתן",
+        addMedication: "הוסף תרופה",
+        careTasksHeader: "שגרת יום ומשימות טיפול",
+        tasksTimelineSub: "סדר יום מהבוקר ועד הלילה",
+        filterAll: "הכל",
+        filterPending: "ממתין",
+        filterNeeded: "דרוש",
+        filterBought: "נקנה",
+        vitalsTitle: "יומן מעקב מדדים",
+        vitalsSubtitle: "תיעוד מדדים יומי: לחץ דם, סוכר, חום ועוד",
+        logVitalsBtn: "הזנת מדדים חדשה",
+        bpLabel: "לחץ דם (Sys/Dia)",
+        sugarLabel: "סוכר (Glucose)",
+        tempLabel: "חום גוף",
+        pulseSpo2Label: "דופק / סטורציה",
+        statusNormal: "תקין",
+        shareWithDocText: "שיתוף סיכום מדדים עם הרופא:",
+        sendWhatsApp: "שלח בוואטסאפ",
+        vitalsHistory: "היסטוריית מדידות אחרונות",
+        shoppingTitle: "רשימת קניות שיתופית",
+        shoppingSubtitle: "המטפל מוסיף צרכים, המשפחה רואה ומסמנת 'נקנה'",
+        quickAddPresets: "הוספה מהירה בלחיצה:",
+        add: "הוסף",
+        currentList: "פריטים ברשימה",
+        noticeBoardTitle: "לוח מודעות משפחתי",
+        noticeBoardSubtitle: "הנחיות, עדכונים ואישורי קריאה (Acknowledged)",
+        urgentNoticeLabel: "הודעה דחופה / חשובה",
+        publishNotice: "פרסם הודעה",
+        activeNotices: "הודעות פעילות",
+        calendarTitle: "יומן ביקורים ואירועים",
+        calendarSubtitle: "תורים רפואיים, ביקור פיזיותרפיסט וביקורי משפחה",
+        addEvent: "הוסף אירוע",
+        sosCenter: "מוקד מצבי חירום",
+        emergencyReporting: "דיווח אירוע חריג / נפילה",
+        sosDescription: "שליחת התראה דחופה מיידית לכל בני המשפחה המחוברים",
+        emergencyContactsTitle: "ספר טלפונים לשעת חירום",
+        oneTapDialSub: "חיוג מהיר בלחיצה אחת למשפחה ולמוקדי רפואה",
+        addContact: "הוסף איש קשר",
+        incidentHistoryTitle: "יומן אירועים חריגים ואישורי טיפול",
+        navRoutine: "שגרה ותרופות",
+        navVitals: "מדדים",
+        navShopping: "קניות",
+        navNotices: "הודעות",
+        navCalendar: "ביקורים",
+        navEmergency: "חירום",
+        btnPendingTake: "👉 לחץ כאן: סמן שנלקח כעת",
+        btnLateTake: "🚨 סמן לקיחה באיחור עכשיו",
+        takenStamp: "✅ נלקח ואושר",
+        undoBtn: "בטל",
+        statusPending: "⏳ טרם נלקח",
+        statusOverdue: "⚠️ באיחור של מעל שעה!",
+        authModalTitle: "כניסה למערכת CareSync",
+        authModalSub: "הזדהות מאובטחת באמצעות חשבון Google בלבד",
+        googleFamilyLogin: "התחבר עם Google",
+        whitelistVerified: "אימות אוטומטי מול Firebase",
+        login: "כניסה",
+        logout: "התנתק",
+        close: "סגור",
+        cancel: "ביטול",
+        save: "שמור",
+        saveVitals: "שמור מדדים",
+        deleteMed: "מחק תרופה",
+        markAsRead: "קראתי והבנתי ✓",
+        alreadyRead: "נקרא ע\"י המטפל ✓",
+        statusLocal: "מקומי (Offline)",
+        emptyMeds: "אין תרופות מוגדרות. לחץ 'הוסף תרופה' כדי להתחיל.",
+        emptyTasks: "אין משימות שגרה. לחץ 'הוסף משימה' כדי להתחיל.",
+        emptyShopping: "רשימת הקניות ריקה.",
+        emptyNotices: "אין הודעות כרגע בלוח המודעות.",
+        emptyCalendar: "אין אירועים קרובים ביומן.",
+        emptyVitals: "טרם נרשמו מדדים.",
+        vitalsModalTitle: "הזנת מדדים יומיים",
+        incidentModalTitle: "דיווח אירוע חריג / SOS",
+        addMedModalTitle: "הוספת תרופה חדשה",
+        editMedModalTitle: "עריכת תרופה",
+        addTaskModalTitle: "הוספת משימת טיפול",
+        addEventModalTitle: "הוספת תור / אירוע ביומן",
+        settingsTitle: "הגדרות והרשאות Google (מנהל)",
+        bpSysLabel: "ל\"ד סיסטולי (גבוה)",
+        bpDiaLabel: "ל\"ד דיאסטולי (נמוך)",
+        sugarInputLabel: "רמת סוכר (mg/dL)",
+        tempInputLabel: "חום גוף (°C)",
+        pulseInputLabel: "דופק (BPM)",
+        spo2InputLabel: "סטורציה / חמצן (%)",
+        notesLabel: "הערות נוספות",
+        selectIncidentType: "בחר סוג אירוע (שליחה מהירה):",
+        incFall: "נפילה",
+        incConfusion: "בלבול / חולשה",
+        incFever: "חום גבוה / רעד",
+        incBreathing: "קוצר נשימה",
+        incRefusal: "סירוב תרופות/אוכל",
+        incOther: "אירוע אחר",
+        incidentDescLabel: "תיאור האירוע:",
+        sendIncidentAlert: "שלח התראת חירום",
+        medNameLabel: "שם התרופה",
+        medDosageLabel: "מינון",
+        medFormLabel: "צורת מתן",
+        medTimesLabel: "שעות מתן (מופרד בפסיקים)",
+        medInstructionsLabel: "הוראות מיוחדות",
+        taskTitleLabel: "כותרת המשימה",
+        taskTimeLabel: "שעת ביצוע",
+        taskCatLabel: "קטגוריה",
+        eventTitleLabel: "כותרת האירוע / התור",
+        eventDateLabel: "תאריך",
+        eventTimeLabel: "שעה",
+        eventNotesLabel: "הנחיות מיוחדות למטפל",
+        btnAcknowledgeSOS: "אישור קבלה וטיפול",
+        btnReports: "דוחות אקסל",
+        reportsModalTitle: "הפקת דוחות אקסל (מנהל על)",
+        reportsModalSub: "קובץ Excel רב-גליוני בקידוד עברית מושלם",
+        reportsDesc: "בחר טווח תאריכים להפקת דוח מסכם. הקובץ שיופק מכיל 5 גליונות מסודרים: תרופות, משימות שגרה, מדדים קליניים, אירועים חריגים ורשימת קניות.",
+        reportFromDate: "מתאריך:",
+        reportToDate: "עד תאריך:",
+        downloadExcelBtn: "הורד קובץ Excel (.xlsx)"
+      },
+      en: {
+        appTitle: "CareSync - Smart Care Management",
+        patientPrefix: "Caring for:",
+        todayLabel: "Today's Plan",
+        emergencyBtn: "Emergency SOS",
+        overdueAlertTitle: "⚠️ Alert: Medication >1 hour overdue!",
+        viewNowBtn: "Handle Now",
+        dailyProgress: "Daily Care Progress",
+        tasksDone: "tasks & meds completed",
+        caregiverTip: "Ensure sufficient hydration throughout the day",
+        addTask: "Add Task",
+        medicationsHeader: "Today's Medication Timeline",
+        medsTimelineSub: "Sorted chronologically by scheduled time",
+        addMedication: "Add Med",
+        careTasksHeader: "Daily Routine & Care Tasks",
+        tasksTimelineSub: "Schedule from morning to night",
+        filterAll: "All",
+        filterPending: "Pending",
+        filterNeeded: "Needed",
+        filterBought: "Bought",
+        vitalsTitle: "Vitals & Health Log",
+        vitalsSubtitle: "Daily clinical tracking: BP, Sugar, Temp & more",
+        logVitalsBtn: "Log Vitals",
+        bpLabel: "Blood Pressure",
+        sugarLabel: "Blood Glucose",
+        tempLabel: "Temperature",
+        pulseSpo2Label: "Pulse / SpO2",
+        statusNormal: "Normal",
+        shareWithDocText: "Share vitals report with doctor:",
+        sendWhatsApp: "Send WhatsApp",
+        vitalsHistory: "Recent Measurements",
+        shoppingTitle: "Shared Shopping List",
+        shoppingSubtitle: "Caregiver requests items, family marks as bought",
+        quickAddPresets: "Quick Tap Presets:",
+        add: "Add",
+        currentList: "Items in List",
+        noticeBoardTitle: "Family Notice Board",
+        noticeBoardSubtitle: "Instructions, notes & read confirmations",
+        urgentNoticeLabel: "Urgent / Important Notice",
+        publishNotice: "Post Note",
+        activeNotices: "Active Notices",
+        calendarTitle: "Visits & Appointments",
+        calendarSubtitle: "Doctor appointments, Physio & Family visits",
+        addEvent: "Add Event",
+        sosCenter: "Emergency Response Center",
+        emergencyReporting: "Incident & Fall Reporting",
+        sosDescription: "Instant alert sent to all connected family members",
+        emergencyContactsTitle: "Emergency Contacts Directory",
+        oneTapDialSub: "1-Tap direct dialing for family & emergency services",
+        addContact: "Add Contact",
+        incidentHistoryTitle: "Reported Incident & Acknowledgment Log",
+        navRoutine: "Routine & Meds",
+        navVitals: "Vitals",
+        navShopping: "Shopping",
+        navNotices: "Notices",
+        navCalendar: "Calendar",
+        navEmergency: "Emergency",
+        btnPendingTake: "👉 TAP HERE: Mark As Taken",
+        btnLateTake: "🚨 Mark Taken (Late)",
+        takenStamp: "✅ TAKEN & VERIFIED",
+        undoBtn: "Undo",
+        statusPending: "⏳ Pending",
+        statusOverdue: "⚠️ OVERDUE >1 HOUR!",
+        authModalTitle: "Sign In to CareSync",
+        authModalSub: "Secure Google Account Sign-In Only",
+        googleFamilyLogin: "Sign in with Google",
+        whitelistVerified: "Auto-verified via Firebase",
+        login: "Login",
+        logout: "Logout",
+        close: "Close",
+        cancel: "Cancel",
+        save: "Save",
+        saveVitals: "Save Vitals",
+        deleteMed: "Delete Med",
+        markAsRead: "Acknowledged ✓",
+        alreadyRead: "Read by Caregiver ✓",
+        statusLocal: "Local (Offline)",
+        emptyMeds: "No medications configured yet. Tap 'Add Med' to start.",
+        emptyTasks: "No routine tasks configured. Tap 'Add Task' to start.",
+        emptyShopping: "Shopping list is empty.",
+        emptyNotices: "No active notices at the moment.",
+        emptyCalendar: "No upcoming visits or appointments.",
+        emptyVitals: "No vitals recorded yet.",
+        vitalsModalTitle: "Log Daily Vitals",
+        incidentModalTitle: "Incident / SOS Report",
+        addMedModalTitle: "Add New Medication",
+        editMedModalTitle: "Edit Medication",
+        addTaskModalTitle: "Add Care Task",
+        addEventModalTitle: "Add Calendar Event",
+        settingsTitle: "Settings & Google Permissions (Admin)",
+        bpSysLabel: "BP Systolic (High)",
+        bpDiaLabel: "BP Diastolic (Low)",
+        sugarInputLabel: "Blood Glucose (mg/dL)",
+        tempInputLabel: "Body Temp (°C)",
+        pulseInputLabel: "Pulse (BPM)",
+        spo2InputLabel: "Oxygen SpO2 (%)",
+        notesLabel: "Additional Notes",
+        selectIncidentType: "Select incident type (Quick Send):",
+        incFall: "Fall",
+        incConfusion: "Confusion / Weakness",
+        incFever: "High Fever / Chills",
+        incBreathing: "Shortness of Breath",
+        incRefusal: "Refused Meds/Food",
+        incOther: "Other Event",
+        incidentDescLabel: "Description of incident:",
+        sendIncidentAlert: "Send Emergency Alert",
+        medNameLabel: "Medication Name",
+        medDosageLabel: "Dosage",
+        medFormLabel: "Form",
+        medTimesLabel: "Times (comma-separated)",
+        medInstructionsLabel: "Special Instructions",
+        taskTitleLabel: "Task Title",
+        taskTimeLabel: "Scheduled Time",
+        taskCatLabel: "Category",
+        eventTitleLabel: "Event Title",
+        eventDateLabel: "Date",
+        eventTimeLabel: "Time",
+        eventNotesLabel: "Instructions for Caregiver",
+        btnAcknowledgeSOS: "Acknowledge & Handle",
+        btnReports: "Excel Reports",
+        reportsModalTitle: "Excel Activity Reports (Super Admin)",
+        reportsModalSub: "Multi-Sheet Excel (.xlsx) with clean UTF-8 Hebrew",
+        reportsDesc: "Select date range to export comprehensive activity report across 5 organized sheets.",
+        reportFromDate: "From Date:",
+        reportToDate: "To Date:",
+        downloadExcelBtn: "Download Excel File (.xlsx)"
+      },
+      hi: {
+        appTitle: "केयरसिंक - स्मार्ट देखभाल प्रबंधन",
+        patientPrefix: "मरीज:",
+        todayLabel: "आज की दिनचर्या",
+        emergencyBtn: "आपातकालीन SOS",
+        overdueAlertTitle: "⚠️ चेतावनी: 1 घंटे से दवा में देरी!",
+        viewNowBtn: "अभी देखें",
+        dailyProgress: "दैनिक देखभाल प्रगति",
+        tasksDone: "कार्य व दवाइयां पूरी हुईं",
+        caregiverTip: "दिनभर में पर्याप्त पानी पिलाना सुनिश्चित करें",
+        addTask: "कार्य जोड़ें",
+        medicationsHeader: "आज की दवाइयां (समय अनुसार)",
+        medsTimelineSub: "समय के अनुसार क्रमबद्ध",
+        addMedication: "दवा जोड़ें",
+        careTasksHeader: "दैनिक दिनचर्या और देखभाल कार्य",
+        tasksTimelineSub: "सुबह से रात तक की दिनचर्या",
+        filterAll: "सभी",
+        filterPending: "बाकी",
+        filterNeeded: "जरूरी",
+        filterBought: "खरीदा",
+        vitalsTitle: "स्वास्थ्य माप रिकॉर्ड",
+        vitalsSubtitle: "दैनिक स्वास्थ्य जांच: बीपी, शुगर, बुखार आदि",
+        logVitalsBtn: "नया माप दर्ज करें",
+        bpLabel: "रक्तचाप (BP)",
+        sugarLabel: "ब्लड शुगर",
+        tempLabel: "शरीर का तापमान",
+        pulseSpo2Label: "नाड़ी / ऑक्सीजन (SpO2)",
+        statusNormal: "सामान्य",
+        shareWithDocText: "डॉक्टर के साथ रिपोर्ट साझा करें:",
+        sendWhatsApp: "व्हाट्सएप भेजें",
+        vitalsHistory: "हाल के स्वास्थ्य माप",
+        shoppingTitle: "खरीदारी सूची",
+        shoppingSubtitle: "जरूरी सामान जोड़ें, परिवार इसे खरीद लेगा",
+        quickAddPresets: "तुरंत जोड़ने के विकल्प:",
+        add: "जोड़ें",
+        currentList: "सूची में वस्तुएं",
+        noticeBoardTitle: "पारिवारिक सूचना पटल",
+        noticeBoardSubtitle: "निर्देश, संदेश और पढ़ने की पुष्टि (Acknowledged)",
+        urgentNoticeLabel: "अति आवश्यक / जरूरी सूचना",
+        publishNotice: "संदेश भेजें",
+        activeNotices: "सक्रिय संदेश",
+        calendarTitle: "मुलाकात और कार्यक्रम",
+        calendarSubtitle: "डॉक्टर, फिजियोथेरेपी और परिवार के दौरे",
+        addEvent: "कार्यक्रम जोड़ें",
+        sosCenter: "आपातकालीन केंद्र",
+        emergencyReporting: "गिरने या समस्या की सूचना",
+        sosDescription: "परिवार के सभी सदस्यों को तत्काल अलर्ट",
+        emergencyContactsTitle: "आपातकालीन संपर्क सूची",
+        oneTapDialSub: "एक टच में कॉल करें",
+        addContact: "संपर्क जोड़ें",
+        incidentHistoryTitle: "दर्ज की गई घटनाएं व प्रतिक्रिया",
+        navRoutine: "दिनचर्या और दवा",
+        navVitals: "स्वास्थ्य माप",
+        navShopping: "खरीदारी",
+        navNotices: "सूचनाएं",
+        navCalendar: "कैलेंडर",
+        navEmergency: "आपातकाल",
+        btnPendingTake: "👉 यहाँ दबाएं: दवा दी गई",
+        btnLateTake: "🚨 देरी से दवा दी गई",
+        takenStamp: "✅ दवा ले ली गई",
+        undoBtn: "रद्द करें",
+        statusPending: "⏳ अभी देना बाकी है",
+        statusOverdue: "⚠️ 1 घंटे से ज्यादा देरी!",
+        authModalTitle: "CareSync में लॉगिन करें",
+        authModalSub: "सुरक्षित Google खाता लॉगिन",
+        googleFamilyLogin: "Google से लॉगिन करें",
+        whitelistVerified: "Firebase द्वारा स्वचालित सत्यापन",
+        login: "लॉगिन",
+        logout: "लॉगआउट",
+        close: "बंद करें",
+        cancel: "रद्द करें",
+        save: "सहेजें",
+        saveVitals: "माप सहेजें",
+        deleteMed: "दवा हटाएं",
+        markAsRead: "समझ गया / पढ़ लिया ✓",
+        alreadyRead: "सहायक द्वारा पढ़ा गया ✓",
+        statusLocal: "लोकल (Offline)",
+        emptyMeds: "कोई दवा नहीं जोड़ी गई है। शुरू करने के लिए 'दवा जोड़ें' दबाएं।",
+        emptyTasks: "कोई दिनचर्या कार्य नहीं है। शुरू करने के लिए 'कार्य जोड़ें' दबाएं।",
+        emptyShopping: "खरीदारी सूची खाली है।",
+        emptyNotices: "वर्तमान में कोई सक्रिय सूचना नहीं है।",
+        emptyCalendar: "कोई आगामी मुलाकात या कार्यक्रम नहीं है।",
+        emptyVitals: "अभी तक कोई स्वास्थ्य माप दर्ज नहीं किया गया है।",
+        vitalsModalTitle: "दैनिक स्वास्थ्य माप दर्ज करें",
+        incidentModalTitle: "आपातकालीन SOS रिपोर्ट",
+        addMedModalTitle: "नई दवा जोड़ें",
+        editMedModalTitle: "दवा संपादित करें",
+        addTaskModalTitle: "देखभाल कार्य जोड़ें",
+        addEventModalTitle: "कैलेंडर कार्यक्रम जोड़ें",
+        settingsTitle: "सेटिंग्स और Google अनुमतियां (व्यवस्थापक)",
+        bpSysLabel: "बीपी सिस्टोलिक (ऊपरी)",
+        bpDiaLabel: "बीपी डायस्टोलिक (निचला)",
+        sugarInputLabel: "ब्लड शुगर (mg/dL)",
+        tempInputLabel: "तापमान (°C)",
+        pulseInputLabel: "नाड़ी दर (BPM)",
+        spo2InputLabel: "ऑक्सीजन SpO2 (%)",
+        notesLabel: "अतिरिक्त टिप्पणी",
+        selectIncidentType: "घटना का प्रकार चुनें (त्वरित भेजें):",
+        incFall: "गिरना",
+        incConfusion: "भ्रम / कमजोरी",
+        incFever: "तेज बुखार / कंपकंपी",
+        incBreathing: "सांस लेने में तकलीफ",
+        incRefusal: "दवा/भोजन से इनकार",
+        incOther: "अन्य घटना",
+        incidentDescLabel: "घटना का विवरण:",
+        sendIncidentAlert: "आपातकालीन अलर्ट भेजें",
+        medNameLabel: "दवा का नाम",
+        medDosageLabel: "खुराक",
+        medFormLabel: "प्रकार",
+        medTimesLabel: "समय (अल्पविराम द्वारा अलग)",
+        medInstructionsLabel: "विशेष निर्देश",
+        taskTitleLabel: "कार्य का शीर्षक",
+        taskTimeLabel: "नियत समय",
+        taskCatLabel: "श्रेणी",
+        eventTitleLabel: "कार्यक्रम का शीर्षक",
+        eventDateLabel: "तारीख",
+        eventTimeLabel: "समय",
+        eventNotesLabel: "सहायक के लिए निर्देश",
+        btnAcknowledgeSOS: "प्राप्ति स्वीकार करें",
+        btnReports: "एक्सेल रिपोर्ट",
+        reportsModalTitle: "एक्सेल गतिविधि रिपोर्ट (सुपर एडमिन)",
+        reportsModalSub: "मल्टी-शीट एक्सेल (.xlsx) स्वच्छ भाषा में",
+        reportsDesc: "5 अलग-अलग शीट में संपूर्ण गतिविधि रिपोर्ट प्राप्त करें।",
+        reportFromDate: "इस तारीख से:",
+        reportToDate: "इस तारीख तक:",
+        downloadExcelBtn: "एक्सेल फ़ाइल (.xlsx) डाउनलोड करें"
+      }
+    };
+
+    // --- 3. ADVANCED CLEAN INITIAL DATA STORE ---
+    const cleanInitialState = {
+      settings: {
+        patientName: "Dad",
+        lang: "he",
+        superAdminEmail: "", // Will be assigned to the first logged in Google account if empty
+        firebaseConfig: defaultFirebaseConfig
+      },
+      whitelist: {
+        familyEmails: [],
+        caregivers: [
+          {
+            id: "cg_1",
+            name: "Rahul Sharma",
+            email: "rahul.caregiver@gmail.com",
+            active: true,
+            role: "caregiver"
+          }
+        ]
+      },
+      currentUser: {
+        uid: "pending_login",
+        name: "יוסי לוי (מנהל על)",
+        role: "super_admin",
+        email: "",
+        avatar: null
+      },
+      activeIncident: null,
+      medications: [
+        {
+          id: "m1",
+          name: "Aspirin Cardio",
+          dosage: "100mg",
+          form: "pill",
+          instructions: "After breakfast with water",
+          times: ["08:00"],
+          completedDoses: {}
+        },
+        {
+          id: "m2",
+          name: "Normoten",
+          dosage: "50mg",
+          form: "pill",
+          instructions: "Morning with water",
+          times: ["08:30"],
+          completedDoses: {}
+        },
+        {
+          id: "m3",
+          name: "Glucophage",
+          dosage: "850mg",
+          form: "pill",
+          instructions: "With lunch",
+          times: ["13:00"],
+          completedDoses: {}
+        }
+      ],
+      tasks: [
+        {
+          id: "t1",
+          title: "Morning face wash & diaper change",
+          category: "diaper",
+          time: "07:30",
+          completed: false,
+          completedAt: null,
+          completedBy: null
+        },
+        {
+          id: "t2",
+          title: "Fasting glucose check & breakfast",
+          category: "food",
+          time: "08:00",
+          completed: false,
+          completedAt: null,
+          completedBy: null
+        },
+        {
+          id: "t3",
+          title: "Warm shower & clean clothes",
+          category: "hygiene",
+          time: "09:30",
+          completed: false,
+          completedAt: null,
+          completedBy: null
+        },
+        {
+          id: "t4",
+          title: "Short walk / wheelchair exercise in room",
+          category: "walk",
+          time: "11:00",
+          completed: false,
+          completedAt: null,
+          completedBy: null
+        },
+        {
+          id: "t5",
+          title: "Drink 2 cups of water / tea (Hydration)",
+          category: "water",
+          time: "11:30",
+          completed: false,
+          completedAt: null,
+          completedBy: null
+        },
+        {
+          id: "t6",
+          title: "Lunch & afternoon rest",
+          category: "food",
+          time: "13:30",
+          completed: false,
+          completedAt: null,
+          completedBy: null
+        },
+        {
+          id: "t7",
+          title: "Night diaper change & prepare for sleep",
+          category: "diaper",
+          time: "20:30",
+          completed: false,
+          completedAt: null,
+          completedBy: null
+        }
+      ],
+      vitals: [],
+      shopping: [],
+      notices: [],
+      calendar: [],
+      contacts: [
+        {
+          id: "cnt1",
+          name: "יוסי לוי (בן - מנהל על)",
+          role: "Super Admin",
+          phone: "050-1234567",
+          urgent: true
+        },
+        {
+          id: "cnt2",
+          name: "ד\"ר כהן (רופא משפחה)",
+          role: "Family Doctor",
+          phone: "052-5551234",
+          urgent: false
+        },
+        {
+          id: "cnt3",
+          name: "מד\"א (אמבולנס חירום)",
+          role: "Emergency MDA",
+          phone: "101",
+          urgent: true
+        }
+      ],
+      incidents: []
+    };
+
+    // --- 4. STATE & PERSISTENCE ---
+    let state = JSON.parse(localStorage.getItem('careSync_v7_connected')) || cleanInitialState;
+    if (!state.settings.firebaseConfig) state.settings.firebaseConfig = defaultFirebaseConfig;
+
+    function saveState() {
+      localStorage.setItem('careSync_v7_connected', JSON.stringify(state));
+      renderApp();
+      
+      if (window.careSyncFirestoreDoc) {
+        window.careSyncFirestoreDoc.set(state, { merge: true }).catch(err => {
+          console.log('Firebase sync note:', err);
+        });
+      }
+    }
+
+    // Audio Chimes
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playChime(type = 'success') {
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        if (type === 'success') {
+          osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+          osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+          osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2);
+          gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.4);
+        } else if (type === 'sos') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+          osc.frequency.setValueAtTime(440, audioCtx.currentTime + 0.2);
+          gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.5);
+        }
+      } catch (e) {}
+    }
+
+    // --- 5. FIREBASE AUTH & REALTIME INITIALIZER ---
+    function initFirebaseIfConfigured() {
+      const config = state.settings.firebaseConfig || defaultFirebaseConfig;
+      if (!config) return;
+
+      try {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(config);
+        }
+        
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        window.careSyncFirestoreDoc = db.collection('caresync').doc('main_data');
+        
+        // Listen to Firestore changes
+        window.careSyncFirestoreDoc.onSnapshot(doc => {
+          if (doc.exists) {
+            const cloudData = doc.data();
+            if (cloudData && cloudData.medications) {
+              const currentLang = state.settings.lang;
+              const currentUser = state.currentUser;
+              state = cloudData;
+              state.settings.lang = currentLang;
+              state.currentUser = currentUser;
+              localStorage.setItem('careSync_v7_connected', JSON.stringify(state));
+              renderApp();
+            }
+          }
+        }, err => {
+          console.log('Firestore snapshot listener info:', err);
+        });
+
+        // Listen to Google Auth State Changes
+        auth.onAuthStateChanged(user => {
+          if (user && user.email) {
+            processGoogleUser(user.email.toLowerCase(), user.displayName, user.photoURL);
+          }
+        });
+
+        const syncDot = document.getElementById('syncIndicatorDot');
+        const syncText = document.getElementById('syncStatusText');
+        if (syncDot) syncDot.className = "w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse";
+        if (syncText) syncText.innerText = "Firebase מחובר";
+      } catch (e) {
+        console.log('Firebase init error:', e);
+      }
+    }
+
+    function applyFirebaseConfig() {
+      const raw = document.getElementById('firebaseConfigInput').value.trim();
+      try {
+        const config = parseFirebaseConfigSnippet(raw);
+        if (!config || !config.apiKey || !config.projectId) {
+          throw new Error('Missing apiKey or projectId in config');
+        }
+        state.settings.firebaseConfig = config;
+        initFirebaseIfConfigured();
+        alert('החיבור ל-Firebase הופעל בהצלחה! כניסת Google וסנכרון ענן פעילים כעת.');
+        closeModal('settingsModal');
+        saveState();
+      } catch (e) {
+        alert('שגיאה במבנה ה-Firebase Config. אנא ודא שהעתקת את הקוד במלואו.');
+      }
+    }
+
+    // --- 6. PURE GOOGLE AUTHENTICATION & ROLE DETERMINATION ---
+    function openAuthModal() {
+      document.getElementById('authModal').classList.remove('hidden');
+      updateAuthModalUI();
+    }
+
+    function updateAuthModalUI() {
+      const isSuper = state.currentUser.role === 'super_admin';
+      const isCaregiver = state.currentUser.role === 'caregiver';
+      const textEl = document.getElementById('currentLoggedUserText');
+      const emailEl = document.getElementById('currentLoggedEmailText');
+
+      if (textEl) {
+        textEl.innerText = isSuper 
+          ? `מחובר: ${state.currentUser.name} 👑 (מנהל על)`
+          : isCaregiver 
+            ? `מחובר: ${state.currentUser.name} 🧑‍⚕️ (מטפל)`
+            : `מחובר: ${state.currentUser.name} 👨‍👩‍👦 (בן משפחה)`;
+      }
+      if (emailEl) {
+        emailEl.innerText = state.currentUser.email || 'התחבר עם Google';
+      }
+    }
+
+    function handleGoogleSignIn() {
+      if (window.firebase && firebase.apps.length && firebase.auth) {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        firebase.auth().signInWithPopup(provider)
+          .then(result => {
+            const user = result.user;
+            processGoogleUser(user.email.toLowerCase(), user.displayName, user.photoURL);
+          })
+          .catch(err => {
+            console.log('Firebase Google Auth error:', err);
+            alert(`שגיאת התחברות ל-Google:\n${err.message}\n\nנא לוודא שהפעלת את Google Sign-In ב-Firebase Console ושהוספת את ה-Domain ל-Authorized Domains.`);
+          });
+      } else {
+        initFirebaseIfConfigured();
+        alert('מתחבר ל-Firebase... אנא לחץ שוב.');
+      }
+    }
+
+    function processGoogleUser(email, displayName, avatar) {
+      const superAdminEmail = (state.settings.superAdminEmail || "").toLowerCase();
+      const familyEmails = (state.whitelist.familyEmails || []).map(e => e.toLowerCase());
+      const caregiver = (state.whitelist.caregivers || []).find(cg => (cg.email || "").toLowerCase() === email);
+
+      // A) First-time creator setup: If no superAdminEmail is set yet, this user becomes Super Admin automatically!
+      if (!superAdminEmail || superAdminEmail === "admin@gmail.com" || email === superAdminEmail) {
+        state.settings.superAdminEmail = email;
+        if (!state.whitelist.familyEmails.includes(email)) {
+          state.whitelist.familyEmails.unshift(email);
+        }
+        state.currentUser = {
+          uid: "google_" + email,
+          name: displayName || "מנהל על",
+          role: "super_admin",
+          email: email,
+          avatar: avatar
+        };
+        closeModal('authModal');
+        playChime('success');
+        saveState();
+        alert(`ברוך הבא! הוגדרת בהצלחה כמנהל על של CareSync (${email}).`);
+        return;
+      }
+
+      // B) Is Family Member?
+      if (familyEmails.includes(email)) {
+        state.currentUser = {
+          uid: "google_" + email,
+          name: displayName || "בן משפחה",
+          role: "family",
+          email: email,
+          avatar: avatar
+        };
+        closeModal('authModal');
+        playChime('success');
+        saveState();
+        return;
+      }
+
+      // C) Is Caregiver?
+      if (caregiver) {
+        if (!caregiver.active) {
+          if (window.firebase && firebase.auth) firebase.auth().signOut().catch(() => {});
+          alert(`🚫 הגישה חסומה!\nהרשאת המטפל (${caregiver.name} - ${email}) בוטלה על ידי מנהל המערכת.`);
+          return;
+        }
+        state.currentUser = {
+          uid: "google_" + email,
+          name: caregiver.name || displayName || "Caregiver",
+          role: "caregiver",
+          email: email,
+          avatar: avatar
+        };
+        closeModal('authModal');
+        playChime('success');
+        saveState();
+        return;
+      }
+
+      // D) Unauthorized Google Account
+      if (window.firebase && firebase.auth) firebase.auth().signOut().catch(() => {});
+      alert(`⛔ גישה נדחתה!\nחשבון Google זה (${email}) אינו מופיע ברשימת המורשים של CareSync.\nפנה למנהל העל (${state.settings.superAdminEmail}) להוספת כתובת האימייל שלך.`);
+    }
+
+    function handleLogout() {
+      state.currentUser = {
+        uid: "logged_out",
+        name: "לא מחובר",
+        role: "guest",
+        email: null,
+        avatar: null
+      };
+      if (window.firebase && firebase.auth) {
+        firebase.auth().signOut().catch(() => {});
+      }
+      closeModal('authModal');
+      saveState();
+      openAuthModal();
+    }
+
+    // --- 7. WHITELIST MANAGEMENT IN SETTINGS ---
+    function renderWhitelistSettings() {
+      const famContainer = document.getElementById('familyWhitelistContainer');
+      if (famContainer) {
+        famContainer.innerHTML = '';
+        (state.whitelist.familyEmails || []).forEach(email => {
+          const row = document.createElement('div');
+          row.className = "flex items-center justify-between p-2 rounded-xl bg-white border border-teal-200 text-xs";
+          row.innerHTML = `
+            <span class="font-bold text-slate-800">${email}</span>
+            ${email !== state.settings.superAdminEmail ? `
+              <button onclick="handleRemoveFamilyEmail('${email}')" class="text-rose-500 hover:text-rose-700 p-1 text-[11px] font-bold">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            ` : `<span class="text-[10px] text-amber-600 font-black">👑 מנהל על</span>`}
+          `;
+          famContainer.appendChild(row);
+        });
+      }
+
+      const cgContainer = document.getElementById('caregiversWhitelistContainer');
+      if (cgContainer) {
+        cgContainer.innerHTML = '';
+        (state.whitelist.caregivers || []).forEach(cg => {
+          const row = document.createElement('div');
+          row.className = `p-2.5 rounded-2xl border ${cg.active ? 'bg-white border-emerald-200' : 'bg-rose-50 border-rose-200 opacity-90'} space-y-1.5 text-xs`;
+          row.innerHTML = `
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="font-black text-slate-900">${cg.name}</span>
+                <span class="text-[10px] text-slate-500 font-medium ml-1">(${cg.email})</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="toggleCaregiverActive('${cg.id}')" class="px-2 py-0.5 rounded-lg text-[10px] font-black transition ${
+                  cg.active ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-rose-100 hover:text-rose-800' : 'bg-rose-600 text-white shadow hover:bg-emerald-600'
+                }">
+                  ${cg.active ? '🟢 פעיל (לחץ לחסימה)' : '🔴 חסום (לחץ להפעלה)'}
+                </button>
+                <button onclick="handleDeleteCaregiver('${cg.id}')" class="text-slate-400 hover:text-rose-600 p-1">
+                  <i class="fa-solid fa-trash-can text-xs"></i>
+                </button>
+              </div>
+            </div>
+          `;
+          cgContainer.appendChild(row);
+        });
+      }
+    }
+
+    function handleAddFamilyEmail() {
+      const input = document.getElementById('newFamilyEmailInput');
+      const email = (input.value || "").trim().toLowerCase();
+      if (!email || !email.includes('@')) return alert('אנא הזן כתובת Gmail תקינה');
+
+      if (!state.whitelist.familyEmails.includes(email)) {
+        state.whitelist.familyEmails.push(email);
+        input.value = '';
+        renderWhitelistSettings();
+        saveState();
+      } else {
+        alert('אימייל זה כבר מוגדר ברשימת המורשים');
+      }
+    }
+
+    function handleRemoveFamilyEmail(email) {
+      if (email === state.settings.superAdminEmail) return alert('לא ניתן להסיר את אימייל מנהל העל');
+      if (confirm(`להסיר את ${email} מרשימת מנהלי המשפחה?`)) {
+        state.whitelist.familyEmails = state.whitelist.familyEmails.filter(e => e !== email);
+        renderWhitelistSettings();
+        saveState();
+      }
+    }
+
+    function handleAddCaregiver() {
+      const name = document.getElementById('newCaregiverNameInput').value.trim();
+      const email = document.getElementById('newCaregiverEmailInput').value.trim().toLowerCase();
+
+      if (!name || !email || !email.includes('@')) return alert('נא למלא שם וכתובת Gmail תקינה למטפל');
+
+      state.whitelist.caregivers.push({
+        id: 'cg_' + Date.now(),
+        name,
+        email,
+        active: true,
+        role: "caregiver"
+      });
+
+      document.getElementById('newCaregiverNameInput').value = '';
+      document.getElementById('newCaregiverEmailInput').value = '';
+      renderWhitelistSettings();
+      saveState();
+    }
+
+    function toggleCaregiverActive(id) {
+      const cg = state.whitelist.caregivers.find(c => c.id === id);
+      if (!cg) return;
+
+      cg.active = !cg.active;
+      if (!cg.active) {
+        alert(`ההרשאה של ${cg.name} (${cg.email}) בוטלה! המטפל ייחסם מיד מכל ניסיון כניסה.`);
+      } else {
+        alert(`ההרשאה של ${cg.name} הופעלה מחדש בהצלחה.`);
+      }
+      renderWhitelistSettings();
+      saveState();
+    }
+
+    function handleDeleteCaregiver(id) {
+      const cg = state.whitelist.caregivers.find(c => c.id === id);
+      if (!cg) return;
+      if (confirm(`למחוק לצמיתות את המטפל ${cg.name}?`)) {
+        state.whitelist.caregivers = state.whitelist.caregivers.filter(c => c.id !== id);
+        renderWhitelistSettings();
+        saveState();
+      }
+    }
+
+    // --- 8. SUPER ADMIN MULTI-SHEET EXCEL EXPORT (XLSX) ---
+    function openReportsModal() {
+      if (state.currentUser.role !== 'super_admin') {
+        alert('⛔ הפקת דוחות אקסל מורשית אך ורק למנהל העל (Super Admin)!');
+        return;
+      }
+
+      const today = new Date();
+      const weekAgo = new Date();
+      weekAgo.setDate(today.getDate() - 7);
+
+      const fmt = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      document.getElementById('reportFromDate').value = fmt(weekAgo);
+      document.getElementById('reportToDate').value = fmt(today);
+
+      document.getElementById('reportsModal').classList.remove('hidden');
+    }
+
+    function handleGenerateExcelReport(e) {
+      e.preventDefault();
+      if (state.currentUser.role !== 'super_admin') {
+        alert('מנהל על בלבד רשאי להפיק דוחות');
+        return;
+      }
+
+      if (typeof XLSX === 'undefined') {
+        alert('ספריית האקסל עדיין בטעינה. אנא נסה שוב בעוד מספר שניות.');
+        return;
+      }
+
+      const fromDate = document.getElementById('reportFromDate').value;
+      const toDate = document.getElementById('reportToDate').value;
+
+      const wb = XLSX.utils.book_new();
+
+      // Sheet 1: Medications Log
+      const medsData = [
+        ["שם התרופה", "מינון", "צורת מתן", "שעות מתוכננות", "הוראות מיוחדות", "סטטוס מתן", "תאריך ושעה", "מי ביצע/אישר"]
+      ];
+      state.medications.forEach(m => {
+        const doses = m.completedDoses || {};
+        const doseKeys = Object.keys(doses);
+        if (doseKeys.length === 0) {
+          medsData.push([m.name, m.dosage, m.form, (m.times || []).join(', '), m.instructions || '', "טרם תועד", "-", "-"]);
+        } else {
+          doseKeys.forEach(dk => {
+            const d = doses[dk];
+            medsData.push([
+              m.name,
+              m.dosage,
+              m.form,
+              (m.times || []).join(', '),
+              m.instructions || '',
+              d.taken ? "נלקח בהצלחה" : "לא נלקח",
+              dk,
+              d.by || "-"
+            ]);
+          });
+        }
+      });
+      const wsMeds = XLSX.utils.aoa_to_sheet(medsData);
+      XLSX.utils.book_append_sheet(wb, wsMeds, "יומן תרופות");
+
+      // Sheet 2: Routine Tasks
+      const tasksData = [
+        ["משימת שגרה", "קטגוריה", "שעה מתוכננת", "סטטוס ביצוע", "שעת ביצוע", "בוצע על ידי"]
+      ];
+      state.tasks.forEach(t => {
+        tasksData.push([
+          t.title,
+          t.category,
+          t.time,
+          t.completed ? "הושלם" : "ממתין",
+          t.completedAt || "-",
+          t.completedBy || "-"
+        ]);
+      });
+      const wsTasks = XLSX.utils.aoa_to_sheet(tasksData);
+      XLSX.utils.book_append_sheet(wb, wsTasks, "משימות שגרה");
+
+      // Sheet 3: Vitals Log
+      const vitalsData = [
+        ["תאריך", "שעה", "ל\"ד סיסטולי (Sys)", "ל\"ד דיאסטולי (Dia)", "סוכר (Glucose)", "חום גוף (°C)", "דופק (BPM)", "סטורציה (%)", "הערות"]
+      ];
+      state.vitals.forEach(v => {
+        vitalsData.push([
+          v.date,
+          v.time,
+          v.bpSys || "-",
+          v.bpDia || "-",
+          v.sugar || "-",
+          v.temp || "-",
+          v.pulse || "-",
+          v.spo2 ? `${v.spo2}%` : "-",
+          v.notes || ""
+        ]);
+      });
+      const wsVitals = XLSX.utils.aoa_to_sheet(vitalsData);
+      XLSX.utils.book_append_sheet(wb, wsVitals, "מדדים קליניים");
+
+      // Sheet 4: Incidents & Emergency SOS Log
+      const incData = [
+        ["סוג אירוע חריג", "פירוט האירוע", "תאריך ושעת דיווח", "דווח על ידי", "סטטוס טיפול", "אושר וטופל על ידי", "שעת סיום טיפול"]
+      ];
+      state.incidents.forEach(inc => {
+        incData.push([
+          inc.typeTitle,
+          inc.description,
+          inc.reportedAt,
+          inc.reportedBy,
+          inc.resolved ? "טופל ואושר" : "פתוח / ממתין",
+          inc.resolvedBy || "-",
+          inc.resolvedAt || "-"
+        ]);
+      });
+      const wsInc = XLSX.utils.aoa_to_sheet(incData);
+      XLSX.utils.book_append_sheet(wb, wsInc, "אירועים חריגים ו-SOS");
+
+      // Sheet 5: Shopping List
+      const shopData = [
+        ["פריט לקנייה", "קטגוריה", "הוסף על ידי", "סטטוס רכישה"]
+      ];
+      state.shopping.forEach(s => {
+        shopData.push([
+          s.item,
+          s.category,
+          s.addedBy,
+          s.bought ? "נקנה" : "דרוש לקנייה"
+        ]);
+      });
+      const wsShop = XLSX.utils.aoa_to_sheet(shopData);
+      XLSX.utils.book_append_sheet(wb, wsShop, "רשימת קניות");
+
+      const fileName = `CareSync_Activity_Report_${fromDate}_to_${toDate}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      playChime('success');
+      closeModal('reportsModal');
+      alert(`קובץ הדוחות ${fileName} הופק בהצלחה בפורמט Excel עם 5 גליונות מסודרים!`);
+    }
+
+    // --- 9. LANGUAGE & UI RENDERING ---
+    function setLanguage(lang) {
+      state.settings.lang = lang;
+      const html = document.documentElement;
+      
+      if (lang === 'he') {
+        html.setAttribute('dir', 'rtl');
+        html.setAttribute('lang', 'he');
+      } else {
+        html.setAttribute('dir', 'ltr');
+        html.setAttribute('lang', lang);
+      }
+
+      ['he', 'en', 'hi'].forEach(l => {
+        const btn = document.getElementById(`btnLang${l.charAt(0).toUpperCase() + l.slice(1)}`);
+        if (btn) {
+          btn.className = (l === lang)
+            ? "px-2 py-1 text-xs font-bold rounded-lg transition-all bg-white text-teal-700 shadow-sm"
+            : "px-2 py-1 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900";
+        }
+      });
+
+      saveState();
+    }
+
+    function applyTranslations() {
+      const currentLang = state.settings.lang || 'he';
+      const dict = i18n[currentLang] || i18n.he;
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) {
+          el.innerText = dict[key];
+        }
+      });
+
+      const isSuper = state.currentUser.role === 'super_admin';
+      const isCaregiver = state.currentUser.role === 'caregiver';
+      const userRoleSlot = document.getElementById('userDisplayRole');
+      const authBadge = document.getElementById('userAuthBadge');
+      const avatarSlot = document.getElementById('userAvatarSlot');
+
+      if (userRoleSlot && authBadge) {
+        if (isSuper) {
+          userRoleSlot.innerText = currentLang === 'hi' ? 'सुपर एडमिन' : (currentLang === 'en' ? 'Super Admin' : 'מנהל על (Admin)');
+          authBadge.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 text-amber-900 border border-amber-300 text-xs font-bold shadow-sm active:scale-95 transition-transform";
+          if (avatarSlot) avatarSlot.innerHTML = `<i class="fa-solid fa-crown text-amber-600"></i>`;
+        } else if (isCaregiver) {
+          userRoleSlot.innerText = currentLang === 'hi' ? 'राहुल (सहायक)' : (currentLang === 'en' ? 'Rahul (Caregiver)' : 'מטפל (Caregiver)');
+          authBadge.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-bold shadow-sm active:scale-95 transition-transform";
+          if (avatarSlot) avatarSlot.innerHTML = `<i class="fa-solid fa-user-nurse"></i>`;
+        } else {
+          userRoleSlot.innerText = currentLang === 'hi' ? 'परिवार (Admin)' : (currentLang === 'en' ? 'Family (Admin)' : 'בן משפחה (Admin)');
+          authBadge.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-teal-50 text-teal-800 border border-teal-300 text-xs font-bold shadow-sm active:scale-95 transition-transform";
+          if (avatarSlot) avatarSlot.innerHTML = `<i class="fa-solid fa-users"></i>`;
+        }
+      }
+
+      const patientHeader = document.getElementById('patientNameHeader');
+      if (patientHeader) patientHeader.innerText = state.settings.patientName || 'Dad';
+    }
+
+    // --- 10. TAB SWITCHING ---
+    let currentTab = 'routine';
+    function switchTab(tabId) {
+      currentTab = tabId;
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      const activeContent = document.getElementById(`tab-${tabId}`);
+      if (activeContent) activeContent.classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('text-teal-600', 'font-bold');
+        btn.classList.add('text-slate-400', 'font-medium');
+      });
+      const activeNav = document.getElementById(`nav-${tabId}`);
+      if (activeNav) {
+        activeNav.classList.remove('text-slate-400', 'font-medium');
+        activeNav.classList.add('text-teal-600', 'font-bold');
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function getTodayDateKey() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    // --- 11. MEDICATIONS TIMELINE ---
+    function renderMedications() {
+      const container = document.getElementById('medicationsList');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const lang = state.settings.lang || 'he';
+      const dict = i18n[lang] || i18n.he;
+      const todayKey = getTodayDateKey();
+      const isAdmin = state.currentUser.role === 'family' || state.currentUser.role === 'super_admin';
+
+      const timelineDoses = [];
+      state.medications.forEach(med => {
+        (med.times || []).forEach(timeStr => {
+          const doseKey = `${todayKey}_${timeStr}`;
+          const isTaken = med.completedDoses && med.completedDoses[doseKey]?.taken;
+          const takenInfo = med.completedDoses && med.completedDoses[doseKey];
+
+          const now = new Date();
+          const [h, m] = timeStr.split(':').map(Number);
+          const currentMinutes = now.getHours() * 60 + now.getMinutes();
+          const scheduledMinutes = h * 60 + m;
+          const isOverdue = !isTaken && (currentMinutes - scheduledMinutes > 60);
+
+          timelineDoses.push({
+            med,
+            timeStr,
+            scheduledMinutes,
+            doseKey,
+            isTaken,
+            takenInfo,
+            isOverdue
+          });
+        });
+      });
+
+      timelineDoses.sort((a, b) => a.scheduledMinutes - b.scheduledMinutes);
+
+      if (timelineDoses.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-xs text-slate-400 font-semibold bg-white rounded-2xl border border-slate-200">${dict.emptyMeds}</div>`;
+        return;
+      }
+
+      timelineDoses.forEach(doseItem => {
+        const { med, timeStr, isTaken, takenInfo, isOverdue } = doseItem;
+        const card = document.createElement('div');
+        
+        if (isTaken) {
+          card.className = "p-4 rounded-3xl bg-emerald-50/95 border-2 border-emerald-400 shadow-sm transition-all space-y-2.5";
+          card.innerHTML = `
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-xl shadow-md flex-shrink-0">
+                  <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-black bg-emerald-800 text-white px-2 py-0.5 rounded-md">${timeStr}</span>
+                    <h4 class="font-black text-slate-900 text-base">${med.name}</h4>
+                  </div>
+                  <p class="text-xs font-bold text-emerald-900 mt-0.5">${med.dosage} • <span class="text-slate-600 font-normal">${med.instructions || ''}</span></p>
+                </div>
+              </div>
+
+              ${isAdmin ? `
+                <button onclick="openEditMedModal('${med.id}')" class="text-slate-400 hover:text-teal-700 p-1.5 rounded-lg transition" title="Edit">
+                  <i class="fa-solid fa-pen-to-square text-sm"></i>
+                </button>
+              ` : ''}
+            </div>
+
+            <div class="p-2.5 rounded-2xl bg-emerald-100/90 border border-emerald-300 flex items-center justify-between">
+              <div class="flex items-center gap-2 text-xs font-extrabold text-emerald-900">
+                <span class="px-2 py-0.5 rounded-lg bg-emerald-700 text-white text-[11px] font-black">${dict.takenStamp}</span>
+                <span class="text-[11px] font-semibold text-emerald-800">${takenInfo.time} (${takenInfo.by})</span>
+              </div>
+
+              <button onclick="toggleMedicationDose('${med.id}', '${timeStr}')" class="text-[11px] font-bold text-emerald-700 hover:text-rose-600 underline px-2 py-1 transition">
+                ${dict.undoBtn}
+              </button>
+            </div>
+          `;
+        } else if (isOverdue) {
+          card.className = "p-4 rounded-3xl bg-rose-50/95 border-2 border-rose-500 shadow-md pulsing-alert transition-all space-y-3";
+          card.innerHTML = `
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-rose-600 text-white flex items-center justify-center text-xl shadow-md flex-shrink-0 animate-bounce">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-black bg-rose-700 text-white px-2 py-0.5 rounded-md">${timeStr}</span>
+                    <h4 class="font-black text-rose-950 text-base">${med.name}</h4>
+                  </div>
+                  <p class="text-xs font-bold text-rose-800 mt-0.5">${med.dosage} • <span class="text-slate-600 font-normal">${med.instructions || ''}</span></p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-1">
+                <span class="text-[10px] font-black bg-rose-600 text-white px-2 py-1 rounded-lg">${dict.statusOverdue}</span>
+                ${isAdmin ? `
+                  <button onclick="openEditMedModal('${med.id}')" class="text-slate-400 hover:text-teal-700 p-1.5 rounded-lg transition">
+                    <i class="fa-solid fa-pen-to-square text-sm"></i>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+
+            <button onclick="toggleMedicationDose('${med.id}', '${timeStr}')" class="w-full py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-lg shadow-rose-600/30 flex items-center justify-center gap-2 active:scale-95 transition">
+              <i class="fa-solid fa-bell text-sm animate-pulse"></i>
+              <span>${dict.btnLateTake}</span>
+            </button>
+          `;
+        } else {
+          card.className = "p-4 rounded-3xl bg-white border-2 border-slate-200 hover:border-teal-300 shadow-sm transition-all space-y-3";
+          card.innerHTML = `
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl flex-shrink-0">
+                  <i class="fa-solid fa-${med.form === 'drops' ? 'droplet' : med.form === 'syrup' ? 'spoon' : med.form === 'inhaler' ? 'wind' : 'pills'}"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-black bg-slate-800 text-white px-2 py-0.5 rounded-md">${timeStr}</span>
+                    <h4 class="font-black text-slate-900 text-base">${med.name}</h4>
+                  </div>
+                  <p class="text-xs font-bold text-slate-600 mt-0.5">${med.dosage} • <span class="text-slate-500 font-normal">${med.instructions || ''}</span></p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-1">
+                <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">${dict.statusPending}</span>
+                ${isAdmin ? `
+                  <button onclick="openEditMedModal('${med.id}')" class="text-slate-400 hover:text-teal-700 p-1.5 rounded-lg transition">
+                    <i class="fa-solid fa-pen-to-square text-sm"></i>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+
+            <button onclick="toggleMedicationDose('${med.id}', '${timeStr}')" class="pending-action-btn w-full py-3 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-black text-xs shadow-md shadow-teal-600/30 flex items-center justify-center gap-2 active:scale-95 transition">
+              <i class="fa-solid fa-hand-pointer text-sm"></i>
+              <span>${dict.btnPendingTake}</span>
+            </button>
+          `;
+        }
+
+        container.appendChild(card);
+      });
+    }
+
+    function toggleMedicationDose(medId, timeStr) {
+      const med = state.medications.find(m => m.id === medId);
+      if (!med) return;
+      if (!med.completedDoses) med.completedDoses = {};
+
+      const todayKey = `${getTodayDateKey()}_${timeStr}`;
+      const isCurrentlyTaken = med.completedDoses[todayKey]?.taken;
+
+      if (isCurrentlyTaken) {
+        delete med.completedDoses[todayKey];
+      } else {
+        const now = new Date();
+        const timeFormatted = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const userName = state.currentUser.name || 'Caregiver';
+        med.completedDoses[todayKey] = {
+          taken: true,
+          time: timeFormatted,
+          by: userName
+        };
+        playChime('success');
+      }
+
+      saveState();
+    }
+
+    // --- 12. EDIT MEDICATION ---
+    function openEditMedModal(medId) {
+      const isAdmin = state.currentUser.role === 'family' || state.currentUser.role === 'super_admin';
+      if (!isAdmin) {
+        alert('עריכת תרופות מותרת למנהל בלבד!');
+        return;
+      }
+      const med = state.medications.find(m => m.id === medId);
+      if (!med) return;
+
+      document.getElementById('editMedId').value = med.id;
+      document.getElementById('editMedName').value = med.name;
+      document.getElementById('editMedDosage').value = med.dosage;
+      document.getElementById('editMedForm').value = med.form || 'pill';
+      document.getElementById('editMedTimes').value = (med.times || []).join(', ');
+      document.getElementById('editMedInstructions').value = med.instructions || '';
+
+      document.getElementById('editMedModal').classList.remove('hidden');
+    }
+
+    function handleUpdateMedication(e) {
+      e.preventDefault();
+      const id = document.getElementById('editMedId').value;
+      const med = state.medications.find(m => m.id === id);
+      if (!med) return;
+
+      med.name = document.getElementById('editMedName').value.trim();
+      med.dosage = document.getElementById('editMedDosage').value.trim();
+      med.form = document.getElementById('editMedForm').value;
+      med.instructions = document.getElementById('editMedInstructions').value.trim();
+      
+      const timesStr = document.getElementById('editMedTimes').value.trim();
+      med.times = timesStr.split(',').map(t => t.trim()).filter(Boolean);
+
+      closeModal('editMedModal');
+      playChime('success');
+      saveState();
+    }
+
+    function handleDeleteMedication() {
+      const id = document.getElementById('editMedId').value;
+      const med = state.medications.find(m => m.id === id);
+      if (!med) return;
+
+      if (confirm(`Delete medication "${med.name}"?`)) {
+        state.medications = state.medications.filter(m => m.id !== id);
+        closeModal('editMedModal');
+        playChime('success');
+        saveState();
+      }
+    }
+
+    // --- 13. ROUTINE TASKS ---
+    let routineFilter = 'all';
+    function filterRoutine(filter) {
+      routineFilter = filter;
+      document.getElementById('btnFilterAll').className = filter === 'all' ? "text-[11px] font-bold px-2 py-0.5 rounded-lg bg-slate-800 text-white" : "text-[11px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600";
+      document.getElementById('btnFilterPending').className = filter === 'pending' ? "text-[11px] font-bold px-2 py-0.5 rounded-lg bg-slate-800 text-white" : "text-[11px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600";
+      renderTasks();
+    }
+
+    function renderTasks() {
+      const container = document.getElementById('tasksList');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const lang = state.settings.lang || 'he';
+      const dict = i18n[lang] || i18n.he;
+
+      state.tasks.sort((a, b) => (a.time || "").localeCompare(b.time || ""));
+
+      let completedTasks = 0;
+      let totalDoses = 0;
+      let completedDoses = 0;
+
+      const todayKey = getTodayDateKey();
+      state.medications.forEach(m => {
+        (m.times || []).forEach(t => {
+          totalDoses++;
+          if (m.completedDoses && m.completedDoses[`${todayKey}_${t}`]?.taken) {
+            completedDoses++;
+          }
+        });
+      });
+
+      const filteredTasks = state.tasks.filter(task => {
+        if (task.completed) completedTasks++;
+        if (routineFilter === 'pending') return !task.completed;
+        return true;
+      });
+
+      const totalItems = state.tasks.length + totalDoses;
+      const totalCompleted = completedTasks + completedDoses;
+      document.getElementById('completedTasksCount').innerText = totalCompleted;
+      document.getElementById('totalTasksCount').innerText = totalItems;
+      const pct = totalItems > 0 ? Math.round((totalCompleted / totalItems) * 100) : 0;
+      document.getElementById('completionPercentage').innerText = `${pct}%`;
+      document.getElementById('progressBar').style.width = `${pct}%`;
+
+      if (filteredTasks.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-xs text-slate-400 font-semibold bg-white rounded-2xl border border-slate-200">${dict.emptyTasks}</div>`;
+        return;
+      }
+
+      filteredTasks.forEach(task => {
+        const now = new Date();
+        const [h, m] = (task.time || "08:00").split(':').map(Number);
+        const isOverdue = !task.completed && ((now.getHours() * 60 + now.getMinutes()) - (h * 60 + m) > 30);
+
+        const card = document.createElement('div');
+        card.className = `p-3.5 rounded-2xl border transition-all ${
+          task.completed 
+            ? 'bg-slate-100/70 border-slate-200 opacity-85' 
+            : isOverdue 
+              ? 'bg-orange-50/90 border-orange-300' 
+              : 'bg-white border-slate-200 shadow-sm'
+        } flex items-center justify-between gap-3`;
+
+        const catIcons = {
+          hygiene: 'fa-bath text-blue-500 bg-blue-50',
+          diaper: 'fa-baby text-amber-500 bg-amber-50',
+          food: 'fa-utensils text-emerald-500 bg-emerald-50',
+          walk: 'fa-person-walking text-indigo-500 bg-indigo-50',
+          water: 'fa-glass-water text-cyan-500 bg-cyan-50',
+          general: 'fa-heart text-teal-500 bg-teal-50'
+        };
+
+        card.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-base flex-shrink-0 ${catIcons[task.category] || catIcons.general}">
+              <i class="fa-solid ${catIcons[task.category] ? catIcons[task.category].split(' ')[0] : 'fa-heart'}"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-black text-slate-800 bg-slate-200/80 px-2 py-0.5 rounded-md">${task.time}</span>
+                <h4 class="font-bold text-slate-900 text-sm ${task.completed ? 'line-through text-slate-500' : ''}">${task.title}</h4>
+              </div>
+              ${task.completed ? `<p class="text-[10px] text-emerald-700 font-bold mt-0.5">✓ ${task.completedAt} (${task.completedBy})</p>` : ''}
+              ${isOverdue ? `<p class="text-[10px] text-orange-600 font-bold mt-0.5">⚠️ ${dict.statusOverdue}</p>` : ''}
+            </div>
+          </div>
+
+          <button onclick="toggleTask('${task.id}')" class="w-11 h-11 rounded-xl flex items-center justify-center transition active:scale-90 flex-shrink-0 ${
+            task.completed ? 'bg-emerald-600 text-white shadow' : 'bg-slate-100 text-slate-400 hover:bg-teal-50 hover:text-teal-600 border border-slate-300'
+          }">
+            <i class="fa-solid fa-check text-base"></i>
+          </button>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function toggleTask(taskId) {
+      const task = state.tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      task.completed = !task.completed;
+      if (task.completed) {
+        const now = new Date();
+        task.completedAt = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        task.completedBy = state.currentUser.name || 'Caregiver';
+        playChime('success');
+      } else {
+        task.completedAt = null;
+        task.completedBy = null;
+      }
+
+      saveState();
+    }
+
+    // --- 14. OVERDUE CHECKER ---
+    function checkOverdueAlerts() {
+      const now = new Date();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const todayKey = getTodayDateKey();
+
+      let overdueMedFound = null;
+
+      state.medications.forEach(med => {
+        (med.times || []).forEach(timeStr => {
+          const [h, m] = timeStr.split(':').map(Number);
+          const scheduledMinutes = h * 60 + m;
+          const doseKey = `${todayKey}_${timeStr}`;
+          const isTaken = med.completedDoses && med.completedDoses[doseKey]?.taken;
+
+          if (!isTaken && (currentMinutes - scheduledMinutes > 60)) {
+            overdueMedFound = { med, timeStr, minsLate: currentMinutes - scheduledMinutes };
+          }
+        });
+      });
+
+      const alertBanner = document.getElementById('overdueAlertBanner');
+      if (overdueMedFound) {
+        alertBanner.classList.remove('hidden');
+        document.getElementById('overdueAlertDetails').innerText = `${overdueMedFound.med.name} (${overdueMedFound.timeStr})`;
+      } else {
+        alertBanner.classList.add('hidden');
+      }
+    }
+
+    // --- 15. VITALS LOG ---
+    function renderVitals() {
+      const listContainer = document.getElementById('vitalsHistoryList');
+      if (!listContainer) return;
+      listContainer.innerHTML = '';
+      const dict = i18n[state.settings.lang || 'he'] || i18n.he;
+
+      if (state.vitals.length > 0) {
+        const latest = state.vitals[0];
+        document.getElementById('latestBP').innerText = `${latest.bpSys || '--'} / ${latest.bpDia || '--'}`;
+        document.getElementById('latestSugar').innerText = latest.sugar || '--';
+        document.getElementById('latestTemp').innerText = latest.temp || '--';
+        document.getElementById('latestPulse').innerText = latest.pulse || '--';
+        document.getElementById('latestSpo2').innerText = latest.spo2 ? `${latest.spo2}%` : '--';
+      }
+
+      document.getElementById('vitalsCount').innerText = `${state.vitals.length} records`;
+
+      if (state.vitals.length === 0) {
+        listContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">${dict.emptyVitals}</p>`;
+        return;
+      }
+
+      state.vitals.forEach(v => {
+        const row = document.createElement('div');
+        row.className = "p-3 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col gap-1.5";
+        row.innerHTML = `
+          <div class="flex items-center justify-between text-xs font-bold text-slate-700">
+            <span>📅 ${v.date} ${v.time}</span>
+            <span class="text-[11px] font-semibold text-teal-700">BPM: ${v.pulse || '-'} | SpO2: ${v.spo2 || '-'}%</span>
+          </div>
+          <div class="flex items-center gap-3 text-xs font-semibold text-slate-900">
+            <span>❤️ BP: <strong class="font-extrabold text-teal-800">${v.bpSys}/${v.bpDia}</strong></span>
+            <span>🩸 Glucose: <strong class="font-extrabold text-teal-800">${v.sugar}</strong></span>
+            <span>🌡️ Temp: <strong class="font-extrabold text-teal-800">${v.temp}°C</strong></span>
+          </div>
+          ${v.notes ? `<p class="text-[11px] text-slate-500 font-medium">💬 ${v.notes}</p>` : ''}
+        `;
+        listContainer.appendChild(row);
+      });
+    }
+
+    function handleSaveVitals(e) {
+      e.preventDefault();
+      const now = new Date();
+      const newVital = {
+        id: 'v_' + Date.now(),
+        date: `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}`,
+        time: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
+        bpSys: document.getElementById('vitalBpSys').value ? Number(document.getElementById('vitalBpSys').value) : null,
+        bpDia: document.getElementById('vitalBpDia').value ? Number(document.getElementById('vitalBpDia').value) : null,
+        sugar: document.getElementById('vitalSugar').value ? Number(document.getElementById('vitalSugar').value) : null,
+        temp: document.getElementById('vitalTemp').value ? Number(document.getElementById('vitalTemp').value) : null,
+        pulse: document.getElementById('vitalPulse').value ? Number(document.getElementById('vitalPulse').value) : null,
+        spo2: document.getElementById('vitalSpo2').value ? Number(document.getElementById('vitalSpo2').value) : null,
+        notes: document.getElementById('vitalNotes').value.trim()
+      };
+
+      state.vitals.unshift(newVital);
+      closeModal('logVitalsModal');
+      e.target.reset();
+      playChime('success');
+      saveState();
+    }
+
+    function shareVitalsWhatsApp() {
+      if (state.vitals.length === 0) return alert('אין נתוני מדדים לשיתוף');
+      const v = state.vitals[0];
+      const text = encodeURIComponent(
+        `Medical Vitals Report for ${state.settings.patientName || 'Dad'} (${v.date} ${v.time}):\n- BP: ${v.bpSys}/${v.bpDia} mmHg\n- Glucose: ${v.sugar} mg/dL\n- Temp: ${v.temp}°C\n- Pulse: ${v.pulse} bpm | SpO2: ${v.spo2}%\n- Notes: ${v.notes || 'None'}`
+      );
+      window.open(`https://wa.me/?text=${text}`, '_blank');
+    }
+
+    // --- 16. SHOPPING LIST ---
+    let shoppingFilter = 'all';
+    function filterShopping(filter) {
+      shoppingFilter = filter;
+      document.getElementById('btnShopAll').className = filter === 'all' ? "text-[11px] font-bold px-2 py-0.5 rounded-lg bg-teal-600 text-white" : "text-[11px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600";
+      document.getElementById('btnShopBought').className = filter === 'bought' ? "text-[11px] font-bold px-2 py-0.5 rounded-lg bg-teal-600 text-white" : "text-[11px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600";
+      renderShopping();
+    }
+
+    function renderShopping() {
+      const container = document.getElementById('shoppingListContainer');
+      if (!container) return;
+      container.innerHTML = '';
+      const dict = i18n[state.settings.lang || 'he'] || i18n.he;
+
+      const items = state.shopping.filter(s => {
+        if (shoppingFilter === 'bought') return s.bought;
+        return !s.bought;
+      });
+
+      if (items.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-xs text-slate-400 font-semibold bg-white rounded-2xl border border-slate-200">${dict.emptyShopping}</div>`;
+        return;
+      }
+
+      items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = `p-3 rounded-2xl border transition-all ${
+          item.bought ? 'bg-slate-100 border-slate-200 opacity-70' : 'bg-white border-slate-200 shadow-sm'
+        } flex items-center justify-between gap-2`;
+
+        card.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <button onclick="toggleShoppingBought('${item.id}')" class="w-7 h-7 rounded-lg flex items-center justify-center border transition ${
+              item.bought ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 bg-white text-transparent hover:border-teal-500'
+            }">
+              <i class="fa-solid fa-check text-xs"></i>
+            </button>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-bold text-slate-900 ${item.bought ? 'line-through text-slate-400' : ''}">${item.item}</span>
+              </div>
+              <span class="text-[10px] text-slate-400 font-medium">${item.addedBy}</span>
+            </div>
+          </div>
+
+          <button onclick="deleteShoppingItem('${item.id}')" class="text-slate-300 hover:text-rose-500 p-1 transition">
+            <i class="fa-solid fa-trash-can text-xs"></i>
+          </button>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function quickAddShoppingItem(name, cat) {
+      const userName = state.currentUser.name || 'Caregiver';
+      state.shopping.unshift({
+        id: 's_' + Date.now(),
+        item: name,
+        category: cat,
+        bought: false,
+        addedBy: userName
+      });
+      playChime('success');
+      saveState();
+    }
+
+    function handleCustomShoppingSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('customShoppingInput');
+      if (!input.value.trim()) return;
+
+      const userName = state.currentUser.name || 'Caregiver';
+      state.shopping.unshift({
+        id: 's_' + Date.now(),
+        item: input.value.trim(),
+        category: 'general',
+        bought: false,
+        addedBy: userName
+      });
+
+      input.value = '';
+      playChime('success');
+      saveState();
+    }
+
+    function toggleShoppingBought(id) {
+      const item = state.shopping.find(s => s.id === id);
+      if (item) {
+        item.bought = !item.bought;
+        playChime('success');
+        saveState();
+      }
+    }
+
+    function deleteShoppingItem(id) {
+      state.shopping = state.shopping.filter(s => s.id !== id);
+      saveState();
+    }
+
+    // --- 17. NOTICE BOARD ---
+    function renderNotices() {
+      const container = document.getElementById('noticesListContainer');
+      if (!container) return;
+      container.innerHTML = '';
+      const dict = i18n[state.settings.lang || 'he'] || i18n.he;
+
+      document.getElementById('noticeCountBadge').innerText = `${state.notices.length} notices`;
+
+      if (state.notices.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-xs text-slate-400 font-semibold bg-white rounded-2xl border border-slate-200">${dict.emptyNotices}</div>`;
+        return;
+      }
+
+      state.notices.forEach(notice => {
+        const card = document.createElement('div');
+        card.className = `p-4 rounded-3xl border transition-all ${
+          notice.urgent ? 'bg-rose-50/90 border-rose-300 shadow-sm' : 'bg-white border-slate-200 shadow-sm'
+        } space-y-2.5`;
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-xl ${notice.urgent ? 'bg-rose-500 text-white' : 'bg-indigo-100 text-indigo-700'} flex items-center justify-center font-bold text-xs">
+                <i class="fa-solid fa-${notice.urgent ? 'triangle-exclamation' : 'message'}"></i>
+              </div>
+              <span class="font-extrabold text-slate-800">${notice.sender}</span>
+            </div>
+            <span class="text-[10px] text-slate-400 font-medium">${notice.timestamp}</span>
+          </div>
+
+          <p class="text-xs font-semibold text-slate-800 leading-relaxed">${notice.text}</p>
+
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+            ${
+              notice.acknowledged 
+                ? `<span class="text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-xl flex items-center gap-1.5">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>${dict.alreadyRead} (${notice.acknowledgedBy})</span>
+                   </span>`
+                : `<button onclick="acknowledgeNotice('${notice.id}')" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition">
+                    <i class="fa-solid fa-check-double"></i>
+                    <span>${dict.markAsRead}</span>
+                   </button>`
+            }
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function handlePostNotice(e) {
+      e.preventDefault();
+      const text = document.getElementById('noticeTextInput').value.trim();
+      const isUrgent = document.getElementById('noticeUrgentCheck').checked;
+      if (!text) return;
+
+      const userName = state.currentUser.name || 'Family Admin';
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      state.notices.unshift({
+        id: 'n_' + Date.now(),
+        sender: userName,
+        text: text,
+        urgent: isUrgent,
+        timestamp: timeStr,
+        acknowledged: false,
+        acknowledgedBy: null,
+        acknowledgedAt: null
+      });
+
+      e.target.reset();
+      playChime('success');
+      saveState();
+    }
+
+    function acknowledgeNotice(id) {
+      const notice = state.notices.find(n => n.id === id);
+      if (notice) {
+        const now = new Date();
+        notice.acknowledged = true;
+        notice.acknowledgedBy = state.currentUser.name || 'Caregiver';
+        notice.acknowledgedAt = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        playChime('success');
+        saveState();
+      }
+    }
+
+    // --- 18. CALENDAR ---
+    function renderCalendar() {
+      const container = document.getElementById('calendarEventsList');
+      if (!container) return;
+      container.innerHTML = '';
+      const dict = i18n[state.settings.lang || 'he'] || i18n.he;
+
+      if (state.calendar.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-xs text-slate-400 font-semibold">${dict.emptyCalendar}</div>`;
+        return;
+      }
+
+      state.calendar.forEach(ev => {
+        const card = document.createElement('div');
+        card.className = "p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3";
+        card.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-teal-100 text-teal-700 flex flex-col items-center justify-center flex-shrink-0">
+              <span class="text-[9px] font-extrabold uppercase">${ev.date.split('-')[1] || '08'}</span>
+              <span class="text-sm font-black leading-none">${ev.date.split('-')[2] || '22'}</span>
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-bold text-slate-800">${ev.title}</span>
+                <span class="text-[10px] font-bold bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded">${ev.time}</span>
+              </div>
+              ${ev.notes ? `<p class="text-[11px] text-slate-500 font-medium mt-0.5">📌 ${ev.notes}</p>` : ''}
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // --- 19. EMERGENCY & INCIDENT REPORTING ---
+    function handleIncidentTypeSelect(type) {
+      const descInput = document.getElementById('incidentDescInput');
+      const reqTag = document.getElementById('incidentDescRequiredTag');
+      if (type === 'other') {
+        descInput.required = true;
+        descInput.placeholder = "נא לפרט את מהות האירוע החריג... (חובה)";
+        reqTag.innerText = "(שדה חובה לאירוע אחר)";
+        reqTag.className = "text-[10px] text-rose-600 font-bold";
+      } else {
+        descInput.required = false;
+        descInput.placeholder = "פירוט קצר (אופציונלי)...";
+        reqTag.innerText = "(רשות - לחץ שליחה מיידית)";
+        reqTag.className = "text-[10px] text-slate-400 font-normal";
+      }
+    }
+
+    function handleReportIncident(e) {
+      e.preventDefault();
+      const type = document.querySelector('input[name="incidentType"]:checked').value;
+      const desc = document.getElementById('incidentDescInput').value.trim();
+
+      const typeTitles = {
+        fall: 'נפילה / Fall',
+        confusion: 'בלבול / Confusion',
+        fever: 'חום גבוה / High Fever',
+        breathing: 'קוצר נשימה / Shortness of Breath',
+        refusal: 'סירוב תרופות/אוכל / Refusal',
+        other: 'אירוע חריג / Other'
+      };
+
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const userName = state.currentUser.name || 'Caregiver';
+
+      const incidentObj = {
+        id: 'inc_' + Date.now(),
+        type: type,
+        typeTitle: typeTitles[type],
+        description: desc || typeTitles[type],
+        reportedAt: `${dateStr} ${timeStr}`,
+        reportedBy: userName,
+        resolved: false,
+        resolvedBy: null,
+        resolvedAt: null
+      };
+
+      state.activeIncident = incidentObj;
+      state.incidents.unshift(incidentObj);
+
+      closeModal('incidentModal');
+      e.target.reset();
+      playChime('sos');
+      saveState();
+      switchTab('emergency');
+    }
+
+    function acknowledgeActiveIncident() {
+      if (!state.activeIncident) return;
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const userName = state.currentUser.name || 'בן משפחה';
+
+      const logged = state.incidents.find(i => i.id === state.activeIncident.id);
+      if (logged) {
+        logged.resolved = true;
+        logged.resolvedBy = userName;
+        logged.resolvedAt = timeStr;
+      }
+
+      state.activeIncident = null;
+      playChime('success');
+      saveState();
+    }
+
+    function renderEmergency() {
+      const banner = document.getElementById('activeIncidentBanner');
+      if (state.activeIncident && !state.activeIncident.resolved) {
+        banner.classList.remove('hidden');
+        document.getElementById('activeIncidentTitle').innerText = `🚨 ${state.activeIncident.typeTitle}`;
+        document.getElementById('activeIncidentText').innerText = `${state.activeIncident.description} (דווח ע"י ${state.activeIncident.reportedBy})`;
+        document.getElementById('activeIncidentTime').innerText = state.activeIncident.reportedAt;
+      } else {
+        banner.classList.add('hidden');
+      }
+
+      const container = document.getElementById('emergencyContactsList');
+      if (container) {
+        container.innerHTML = '';
+        state.contacts.forEach(c => {
+          const card = document.createElement('div');
+          card.className = `p-3 rounded-2xl border ${c.urgent ? 'bg-rose-50/70 border-rose-200' : 'bg-slate-50 border-slate-200'} flex items-center justify-between gap-3`;
+          card.innerHTML = `
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-base flex-shrink-0 ${
+                c.urgent ? 'bg-rose-600 text-white' : 'bg-slate-800 text-white'
+              }">
+                <i class="fa-solid ${c.phone === '101' ? 'fa-truck-medical' : 'fa-phone'}"></i>
+              </div>
+              <div>
+                <h4 class="font-extrabold text-slate-900 text-xs">${c.name}</h4>
+                <p class="text-[10px] font-semibold text-slate-500">${c.role} • ${c.phone}</p>
+              </div>
+            </div>
+
+            <div class="flex gap-1.5 flex-shrink-0">
+              <a href="tel:${c.phone}" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 shadow-sm active:scale-95 transition">
+                <i class="fa-solid fa-phone"></i>
+              </a>
+              ${c.phone.startsWith('05') ? `
+                <a href="https://wa.me/972${c.phone.replace(/[^0-9]/g, '').slice(1)}" target="_blank" class="px-2.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center shadow-sm active:scale-95 transition">
+                  <i class="fa-brands fa-whatsapp text-sm"></i>
+                </a>
+              ` : ''}
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      }
+
+      const incidentContainer = document.getElementById('incidentsLogList');
+      if (incidentContainer) {
+        incidentContainer.innerHTML = '';
+        if (state.incidents.length === 0) {
+          incidentContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-2">אין אירועים חריגים מדווחים ביומן.</p>`;
+        } else {
+          state.incidents.forEach(inc => {
+            const el = document.createElement('div');
+            el.className = `p-3.5 rounded-2xl border ${inc.resolved ? 'bg-emerald-50/60 border-emerald-200' : 'bg-rose-50 border-rose-300'} text-xs space-y-1.5`;
+            el.innerHTML = `
+              <div class="flex items-center justify-between font-bold">
+                <span class="${inc.resolved ? 'text-emerald-950' : 'text-rose-950'}">⚠️ ${inc.typeTitle}</span>
+                <span class="text-[10px] text-slate-500">${inc.reportedAt}</span>
+              </div>
+              <p class="text-xs text-slate-700">${inc.description}</p>
+              <div class="pt-1 text-[11px] border-t border-slate-200/60 flex items-center justify-between">
+                <span class="text-slate-500">דווח ע"י: <strong>${inc.reportedBy}</strong></span>
+                ${inc.resolved ? `
+                  <span class="text-emerald-800 font-bold flex items-center gap-1">
+                    <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                    <span>${inc.resolvedBy} אישר/ה קבלה וטיפול ב-${inc.resolvedAt}</span>
+                  </span>
+                ` : `
+                  <button onclick="acknowledgeActiveIncident()" class="text-rose-700 font-black underline">סמן שקיבלת וטופל</button>
+                `}
+              </div>
+            `;
+            incidentContainer.appendChild(el);
+          });
+        }
+      }
+    }
+
+    // --- 20. MODALS & SETTINGS ACTIONS ---
+    function openLogVitalsModal() { document.getElementById('logVitalsModal').classList.remove('hidden'); }
+    function openIncidentModal() { document.getElementById('incidentModal').classList.remove('hidden'); }
+    
+    function openAddMedModal() { 
+      const isAdmin = state.currentUser.role === 'family' || state.currentUser.role === 'super_admin';
+      if (!isAdmin) return alert('Adding medications is allowed for Family Admin only!');
+      document.getElementById('addMedModal').classList.remove('hidden'); 
+    }
+    
+    function openAddTaskModal() { 
+      const isAdmin = state.currentUser.role === 'family' || state.currentUser.role === 'super_admin';
+      if (!isAdmin) return alert('Adding tasks is allowed for Family Admin only!');
+      document.getElementById('addTaskModal').classList.remove('hidden'); 
+    }
+
+    function openAddEventModal() { 
+      const isAdmin = state.currentUser.role === 'family' || state.currentUser.role === 'super_admin';
+      if (!isAdmin) return alert('Adding events is allowed for Family Admin only!');
+      document.getElementById('addEventModal').classList.remove('hidden'); 
+    }
+
+    function openSettingsModal() { 
+      document.getElementById('patientNameInput').value = state.settings.patientName || 'Dad';
+      document.getElementById('superAdminEmailInput').value = state.settings.superAdminEmail || "";
+      renderWhitelistSettings();
+      document.getElementById('settingsModal').classList.remove('hidden'); 
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function handleSaveMedication(e) {
+      e.preventDefault();
+      const name = document.getElementById('medName').value.trim();
+      const dosage = document.getElementById('medDosage').value.trim();
+      const form = document.getElementById('medForm').value;
+      const timesStr = document.getElementById('medTimes').value.trim();
+      const instructions = document.getElementById('medInstructions').value.trim();
+
+      const times = timesStr.split(',').map(t => t.trim()).filter(Boolean);
+
+      state.medications.push({
+        id: 'm_' + Date.now(),
+        name,
+        dosage,
+        form,
+        instructions,
+        times,
+        completedDoses: {}
+      });
+
+      closeModal('addMedModal');
+      e.target.reset();
+      playChime('success');
+      saveState();
+    }
+
+    function handleSaveTask(e) {
+      e.preventDefault();
+      const title = document.getElementById('taskTitle').value.trim();
+      const time = document.getElementById('taskTime').value;
+      const category = document.getElementById('taskCategory').value;
+
+      state.tasks.push({
+        id: 't_' + Date.now(),
+        title,
+        category,
+        time,
+        completed: false,
+        completedAt: null,
+        completedBy: null
+      });
+
+      closeModal('addTaskModal');
+      e.target.reset();
+      playChime('success');
+      saveState();
+    }
+
+    function handleSaveCalendarEvent(e) {
+      e.preventDefault();
+      const title = document.getElementById('eventTitle').value.trim();
+      const date = document.getElementById('eventDate').value;
+      const time = document.getElementById('eventTime').value;
+      const notes = document.getElementById('eventNotes').value.trim();
+
+      state.calendar.push({
+        id: 'c_' + Date.now(),
+        title,
+        date,
+        time,
+        notes
+      });
+
+      closeModal('addEventModal');
+      e.target.reset();
+      playChime('success');
+      saveState();
+    }
+
+    function saveGeneralSettings() {
+      const name = document.getElementById('patientNameInput').value.trim();
+      const superAdmin = document.getElementById('superAdminEmailInput').value.trim().toLowerCase();
+      if (name) state.settings.patientName = name;
+      if (superAdmin) {
+        state.settings.superAdminEmail = superAdmin;
+        if (!state.whitelist.familyEmails.includes(superAdmin)) {
+          state.whitelist.familyEmails.unshift(superAdmin);
+        }
+      }
+      closeModal('settingsModal');
+      playChime('success');
+      saveState();
+    }
+
+    function clearAllDataToFresh() {
+      if (confirm('האם לאפס את כל הנתונים ולהתחיל מדף חלק ונקי?')) {
+        state.medications = [];
+        state.tasks = [];
+        state.vitals = [];
+        state.shopping = [];
+        state.notices = [];
+        state.calendar = [];
+        state.incidents = [];
+        state.activeIncident = null;
+        saveState();
+        closeModal('settingsModal');
+      }
+    }
+
+    function exportDataJSON() {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `CareSync_Backup_${getTodayDateKey()}.json`;
+      a.click();
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const timeEl = document.getElementById('currentTimeDisplay');
+      if (timeEl) timeEl.innerText = timeStr;
+
+      checkOverdueAlerts();
+    }
+
+    // --- 21. APP RENDER LOOP ---
+    function renderApp() {
+      applyTranslations();
+      renderMedications();
+      renderTasks();
+      renderVitals();
+      renderShopping();
+      renderNotices();
+      renderCalendar();
+      renderEmergency();
+      checkOverdueAlerts();
+
+      // Access controls
+      const isSuper = state.currentUser.role === 'super_admin';
+      const isAdmin = isSuper || state.currentUser.role === 'family';
+
+      document.querySelectorAll('.admin-only').forEach(el => {
+        el.style.display = isAdmin ? '' : 'none';
+      });
+
+      document.querySelectorAll('.super-admin-only').forEach(el => {
+        el.style.display = isSuper ? '' : 'none';
+      });
+
+      const reportsBtn = document.getElementById('btnSuperAdminReports');
+      if (reportsBtn) reportsBtn.style.display = isSuper ? 'flex' : 'none';
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      setLanguage(state.settings.lang || 'he');
+      initFirebaseIfConfigured();
+      setInterval(updateClock, 10000);
+      updateClock();
+    });
+  </script>
+</body>
+</html>
