@@ -168,560 +168,624 @@
 <body class="antialiased min-h-screen flex flex-col items-center justify-start sm:py-4">
 
   <!-- Main Mobile App Shell Container -->
-  <div id="appContainer" class="w-full max-w-lg min-h-screen sm:min-h-[92vh] flex flex-col relative pb-24 sm:rounded-3xl border border-slate-200 overflow-hidden">
+  <div id="appContainer" class="w-full max-w-lg min-h-screen sm:min-h-[92vh] flex flex-col relative sm:rounded-3xl border border-slate-200 overflow-hidden">
     
     <!-- ======================================================== -->
-    <!-- TOP SYSTEM & STATUS HEADER -->
+    <!-- 1. FULL-SCREEN AUTHENTICATION GATE (SHOWN WHEN NOT LOGGED IN) -->
     <!-- ======================================================== -->
-    <header class="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm px-4 py-2.5 flex flex-col gap-2">
+    <div id="loginGateView" class="min-h-screen sm:min-h-[92vh] flex flex-col justify-between p-6 bg-slate-50 relative z-50">
+      
+      <!-- Top Language Selector Bar on Login Gate -->
       <div class="flex items-center justify-between">
-        
-        <!-- App Brand Logo & Patient Name -->
-        <div class="flex items-center gap-2.5">
-          <div class="w-10 h-10 rounded-2xl bg-teal-600 flex items-center justify-center text-white shadow-md">
-            <i class="fa-solid fa-heart-pulse text-lg"></i>
-          </div>
-          <div>
-            <div class="flex items-center gap-1.5">
-              <h1 class="font-black text-lg text-slate-900 leading-none tracking-tight">CareSync</h1>
-              <span id="syncBadge" class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 flex items-center gap-1">
-                <span id="syncIndicatorDot" class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span id="syncStatusText" data-i18n="statusLocal">Firebase מחובר</span>
-              </span>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-slate-500">🌐 שפה / Language:</span>
+        </div>
+        <div class="bg-white p-0.5 rounded-xl flex items-center border border-slate-200 shadow-sm">
+          <button onclick="setLanguage('he')" id="gateBtnLangHe" class="px-2.5 py-1 text-xs font-bold rounded-lg transition-all bg-teal-50 text-teal-700 shadow-sm">
+            עב
+          </button>
+          <button onclick="setLanguage('en')" id="gateBtnLangEn" class="px-2.5 py-1 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900">
+            EN
+          </button>
+          <button onclick="setLanguage('hi')" id="gateBtnLangHi" class="px-2.5 py-1 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900">
+            हिं
+          </button>
+        </div>
+      </div>
+
+      <!-- Center Hero & App Branding -->
+      <div class="my-auto text-center space-y-6 max-w-sm mx-auto">
+        <div class="w-20 h-20 rounded-3xl bg-gradient-to-tr from-teal-600 to-emerald-400 flex items-center justify-center text-white shadow-xl mx-auto ring-8 ring-teal-50">
+          <i class="fa-solid fa-heart-pulse text-4xl"></i>
+        </div>
+
+        <div class="space-y-2">
+          <h1 class="text-3xl font-black text-slate-900 tracking-tight" data-i18n="loginGateTitle">CareSync</h1>
+          <p class="text-sm font-semibold text-slate-600 leading-relaxed" data-i18n="loginGateSubtitle">
+            מערכת חכמה ומאובטחת לניהול הטיפול הרפואי והיומי
+          </p>
+        </div>
+
+        <!-- Google Sign-In Action Box -->
+        <div class="space-y-3 pt-2">
+          <button onclick="handleGoogleSignIn()" class="w-full p-4 rounded-2xl border-2 border-teal-500 bg-white hover:bg-teal-50 flex items-center justify-between text-slate-800 font-bold text-sm shadow-lg active:scale-95 transition-all group">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center border border-slate-200 shadow-sm text-xl">
+                <i class="fa-brands fa-google text-red-500"></i>
+              </div>
+              <div class="text-right">
+                <div class="text-slate-900 font-black text-base" data-i18n="loginGateGoogleBtn">התחבר עם Google</div>
+                <div class="text-[11px] text-teal-700 font-bold" data-i18n="whitelistVerified">אימות מהיר ומאובטח</div>
+              </div>
             </div>
-            <p id="patientNameLabel" class="text-xs text-slate-500 font-medium mt-0.5">
-              <span data-i18n="patientPrefix">טיפול ב:</span> <span class="font-bold text-slate-800" id="patientNameHeader">Dad</span>
+            <i class="fa-solid fa-arrow-left text-teal-600 group-hover:-translate-x-1 transition text-base"></i>
+          </button>
+
+          <!-- Security Note -->
+          <div class="p-4 rounded-2xl bg-teal-50 border border-teal-200 text-right space-y-1">
+            <div class="flex items-center gap-1.5 text-xs font-black text-teal-900">
+              <i class="fa-solid fa-shield-halved text-teal-600"></i>
+              <span>פרטיות ואבטחת מידע רפואי</span>
+            </div>
+            <p class="text-[11px] text-slate-600 leading-relaxed" data-i18n="loginGateAuthNote">
+              הגישה למערכת והצגת הנתונים מורשית אך ורק לחשבונות Google מאושרים (בני משפחה ומטפלים).
             </p>
           </div>
         </div>
-
-        <!-- Language Selector & User Profile / Login Button -->
-        <div class="flex items-center gap-1.5">
-          <!-- Language Buttons -->
-          <div class="bg-slate-100 p-0.5 rounded-xl flex items-center border border-slate-200">
-            <button onclick="setLanguage('he')" id="btnLangHe" class="px-2 py-1 text-xs font-bold rounded-lg transition-all bg-white text-teal-700 shadow-sm">
-              עב
-            </button>
-            <button onclick="setLanguage('en')" id="btnLangEn" class="px-2 py-1 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900">
-              EN
-            </button>
-            <button onclick="setLanguage('hi')" id="btnLangHi" class="px-2 py-1 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900">
-              हिं
-            </button>
-          </div>
-
-          <!-- Dynamic Role / Auth Badge Button -->
-          <button onclick="openAuthModal()" id="userAuthBadge" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 border border-slate-300 text-xs font-bold shadow-sm active:scale-95 transition">
-            <span id="userAvatarSlot" class="w-4 h-4 rounded-full bg-slate-300 text-slate-700 text-[9px] flex items-center justify-center font-bold">
-              <i class="fa-solid fa-key"></i>
-            </span>
-            <span id="userDisplayRole">התחבר למערכת</span>
-          </button>
-        </div>
       </div>
 
-      <!-- Quick Action / Date & Emergency Bar -->
-      <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
-        <div class="flex items-center gap-1.5 text-slate-600 font-medium">
-          <i class="fa-regular fa-calendar-check text-teal-600"></i>
-          <span id="currentDateDisplay" data-i18n="todayLabel">שגרת יום</span>
-          <span id="currentTimeDisplay" class="font-black text-slate-900 bg-slate-200 px-2 py-0.5 rounded-md text-xs">08:00</span>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <!-- Super Admin Reports Button (Strictly Super Admin Exclusive) -->
-          <button onclick="openReportsModal()" id="btnSuperAdminReports" class="super-admin-only px-2.5 py-1 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-bold flex items-center gap-1 text-[11px] shadow-sm active:scale-95 transition" style="display:none;" title="הפקת דוחות אקסל (מנהל על)">
-            <i class="fa-solid fa-file-excel"></i>
-            <span data-i18n="btnReports">דוחות אקסל</span>
-          </button>
-
-          <!-- Quick SOS Button -->
-          <button onclick="openIncidentModal()" class="px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold flex items-center gap-1 text-[11px] shadow-sm active:scale-95 transition">
-            <i class="fa-solid fa-triangle-exclamation animate-bounce"></i>
-            <span data-i18n="emergencyBtn">דיווח חירום SOS</span>
-          </button>
-
-          <!-- Settings Cog (Visible only to authenticated Admin/Super Admin) -->
-          <button onclick="openSettingsModal()" id="btnSettingsCog" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition" style="display:none;" title="הגדרות מערכת">
-            <i class="fa-solid fa-gear text-xs"></i>
-          </button>
-        </div>
+      <!-- Bottom Status & Version Indicator -->
+      <div class="text-center pt-4 border-t border-slate-200 flex items-center justify-between text-xs text-slate-400 font-medium">
+        <span class="flex items-center gap-1.5 text-slate-600">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span data-i18n="loginGateSecured">מאובטח ב-Firebase</span>
+        </span>
+        <span>v2.0 • HIPAA Compliant</span>
       </div>
-    </header>
 
-    <!-- Urgent Overdue Medication Alert Floating Banner -->
-    <div id="overdueAlertBanner" class="hidden urgent-banner-glow text-white px-4 py-3 shadow-lg flex items-center justify-between gap-3 text-sm z-30 transition-all duration-300">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white text-lg flex-shrink-0 animate-pulse">
-          <i class="fa-solid fa-bell"></i>
-        </div>
-        <div>
-          <div class="font-black tracking-tight" data-i18n="overdueAlertTitle">⚠️ התרעה דחופה: תרופה באיחור של מעל שעה!</div>
-          <div id="overdueAlertDetails" class="text-xs text-red-100 font-medium">תרופה טרם נלקחה</div>
-        </div>
-      </div>
-      <button onclick="switchTab('routine')" class="px-3 py-1.5 bg-white text-red-700 font-black rounded-lg text-xs shadow hover:bg-red-50 active:scale-95 transition flex-shrink-0" data-i18n="viewNowBtn">
-        טפל כעת
-      </button>
     </div>
 
-    <!-- Active Incident SOS Top Banner with Acknowledge/Resolve Action -->
-    <div id="activeIncidentBanner" class="hidden bg-red-600 text-white px-4 py-3 shadow-xl flex flex-col gap-2 z-30 border-b-2 border-red-800">
-      <div class="flex items-center justify-between gap-2">
-        <div class="flex items-center gap-2 text-xs font-black">
-          <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
-          <span id="activeIncidentTitle">🚨 דיווח חירום פעיל!</span>
-        </div>
-        <span id="activeIncidentTime" class="text-[10px] text-red-100 font-bold">לפני מספר דקות</span>
-      </div>
+    <!-- ======================================================== -->
+    <!-- 2. MAIN APPLICATION INTERFACE (SHOWN ONLY AFTER AUTH) -->
+    <!-- ======================================================== -->
+    <div id="mainAppView" class="hidden flex-col flex-1 pb-24">
+      
+      <!-- TOP SYSTEM & STATUS HEADER -->
+      <header class="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm px-4 py-2.5 flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          
+          <!-- App Brand Logo & Patient Name -->
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-2xl bg-teal-600 flex items-center justify-center text-white shadow-md">
+              <i class="fa-solid fa-heart-pulse text-lg"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <h1 class="font-black text-lg text-slate-900 leading-none tracking-tight">CareSync</h1>
+                <span id="syncBadge" class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 flex items-center gap-1">
+                  <span id="syncIndicatorDot" class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span id="syncStatusText" data-i18n="statusLocal">Firebase מחובר</span>
+                </span>
+              </div>
+              <p id="patientNameLabel" class="text-xs text-slate-500 font-medium mt-0.5">
+                <span data-i18n="patientPrefix">טיפול ב:</span> <span class="font-bold text-slate-800" id="patientNameHeader">Dad</span>
+              </p>
+            </div>
+          </div>
 
-      <div class="flex items-center justify-between gap-3">
-        <p id="activeIncidentText" class="text-xs font-semibold text-red-50 leading-tight">נפילה ליד המיטה - דווח ע"י המטפל</p>
-        
-        <button onclick="acknowledgeActiveIncident()" class="px-3 py-1.5 rounded-xl bg-white text-red-800 font-black text-xs shadow-md hover:bg-red-50 active:scale-95 transition flex-shrink-0 flex items-center gap-1">
-          <i class="fa-solid fa-check-double text-emerald-600"></i>
-          <span data-i18n="btnAcknowledgeSOS">אישור קבלה וטיפול</span>
+          <!-- Language Selector & User Profile / Login Button -->
+          <div class="flex items-center gap-1.5">
+            <!-- Language Buttons -->
+            <div class="bg-slate-100 p-0.5 rounded-xl flex items-center border border-slate-200">
+              <button onclick="setLanguage('he')" id="btnLangHe" class="px-2 py-1 text-xs font-bold rounded-lg transition-all bg-white text-teal-700 shadow-sm">
+                עב
+              </button>
+              <button onclick="setLanguage('en')" id="btnLangEn" class="px-2 py-1 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900">
+                EN
+              </button>
+              <button onclick="setLanguage('hi')" id="btnLangHi" class="px-2 py-1 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900">
+                हिं
+              </button>
+            </div>
+
+            <!-- Dynamic Role / Auth Badge Button -->
+            <button onclick="openAuthModal()" id="userAuthBadge" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 border border-slate-300 text-xs font-bold shadow-sm active:scale-95 transition">
+              <span id="userAvatarSlot" class="w-4 h-4 rounded-full bg-slate-300 text-slate-700 text-[9px] flex items-center justify-center font-bold">
+                <i class="fa-solid fa-key"></i>
+              </span>
+              <span id="userDisplayRole">מחובר</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Action / Date & Emergency Bar -->
+        <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+          <div class="flex items-center gap-1.5 text-slate-600 font-medium">
+            <i class="fa-regular fa-calendar-check text-teal-600"></i>
+            <span id="currentDateDisplay" data-i18n="todayLabel">שגרת יום</span>
+            <span id="currentTimeDisplay" class="font-black text-slate-900 bg-slate-200 px-2 py-0.5 rounded-md text-xs">08:00</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <!-- Super Admin Reports Button (Strictly Super Admin Exclusive) -->
+            <button onclick="openReportsModal()" id="btnSuperAdminReports" class="super-admin-only px-2.5 py-1 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-bold flex items-center gap-1 text-[11px] shadow-sm active:scale-95 transition" style="display:none;" title="הפקת דוחות אקסל (מנהל על)">
+              <i class="fa-solid fa-file-excel"></i>
+              <span data-i18n="btnReports">דוחות אקסל</span>
+            </button>
+
+            <!-- Quick SOS Button -->
+            <button onclick="openIncidentModal()" class="px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold flex items-center gap-1 text-[11px] shadow-sm active:scale-95 transition">
+              <i class="fa-solid fa-triangle-exclamation animate-bounce"></i>
+              <span data-i18n="emergencyBtn">דיווח חירום SOS</span>
+            </button>
+
+            <!-- Settings Cog (Visible only to authenticated Admin/Super Admin) -->
+            <button onclick="openSettingsModal()" id="btnSettingsCog" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition" style="display:none;" title="הגדרות מערכת">
+              <i class="fa-solid fa-gear text-xs"></i>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Urgent Overdue Medication Alert Floating Banner -->
+      <div id="overdueAlertBanner" class="hidden urgent-banner-glow text-white px-4 py-3 shadow-lg flex items-center justify-between gap-3 text-sm z-30 transition-all duration-300">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white text-lg flex-shrink-0 animate-pulse">
+            <i class="fa-solid fa-bell"></i>
+          </div>
+          <div>
+            <div class="font-black tracking-tight" data-i18n="overdueAlertTitle">⚠️ התרעה דחופה: תרופה באיחור של מעל שעה!</div>
+            <div id="overdueAlertDetails" class="text-xs text-red-100 font-medium">תרופה טרם נלקחה</div>
+          </div>
+        </div>
+        <button onclick="switchTab('routine')" class="px-3 py-1.5 bg-white text-red-700 font-black rounded-lg text-xs shadow hover:bg-red-50 active:scale-95 transition flex-shrink-0" data-i18n="viewNowBtn">
+          טפל כעת
         </button>
       </div>
-    </div>
 
-    <!-- Dynamic Content Screens -->
-    <main class="flex-1 p-4 space-y-4">
-
-      <!-- ======================================================== -->
-      <!-- TAB 1: DAILY ROUTINE & MEDICATIONS (שגרה ותרופות) -->
-      <!-- ======================================================== -->
-      <section id="tab-routine" class="tab-content space-y-4">
-        
-        <!-- Summary Progress Card (Guaranteed High Contrast Gradient) -->
-        <div class="hero-progress-banner rounded-3xl p-5 shadow-xl relative overflow-hidden">
-          <div class="flex justify-between items-start mb-3 relative z-10">
-            <div>
-              <span class="text-xs font-bold text-teal-200 uppercase tracking-wider" data-i18n="dailyProgress">התקדמות טיפול יומית</span>
-              <h2 class="text-2xl font-black mt-0.5 text-white"><span id="completedTasksCount">0</span> / <span id="totalTasksCount">0</span> <span class="text-sm font-medium text-teal-200" data-i18n="tasksDone">משימות ותרופות הושלמו</span></h2>
-            </div>
-            <div class="w-12 h-12 rounded-2xl bg-white bg-opacity-20 border border-white border-opacity-30 flex items-center justify-center font-black text-lg text-white">
-              <span id="completionPercentage">0%</span>
-            </div>
+      <!-- Active Incident SOS Top Banner with Acknowledge/Resolve Action -->
+      <div id="activeIncidentBanner" class="hidden bg-red-600 text-white px-4 py-3 shadow-xl flex flex-col gap-2 z-30 border-b-2 border-red-800">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2 text-xs font-black">
+            <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
+            <span id="activeIncidentTitle">🚨 דיווח חירום פעיל!</span>
           </div>
-
-          <!-- Progress Bar -->
-          <div class="w-full bg-slate-900 bg-opacity-40 h-2.5 rounded-full overflow-hidden relative z-10">
-            <div id="progressBar" class="bg-emerald-400 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
-          </div>
-
-          <!-- Caregiver Tip & Admin Add Task -->
-          <div class="mt-3 flex items-center justify-between text-xs text-teal-100 pt-2 border-t border-white border-opacity-10 relative z-10">
-            <span class="flex items-center gap-1.5">
-              <i class="fa-solid fa-hand-holding-heart text-emerald-400"></i>
-              <span data-i18n="caregiverTip">נא לוודא מתן שתייה מספקת לאורך היום</span>
-            </span>
-            <button onclick="openAddTaskModal()" class="admin-only px-2.5 py-1 rounded-lg bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-bold text-[11px] transition flex items-center gap-1" style="display:none;">
-              <i class="fa-solid fa-plus"></i> <span data-i18n="addTask">הוסף משימה</span>
-            </button>
-          </div>
+          <span id="activeIncidentTime" class="text-[10px] text-red-100 font-bold">לפני מספר דקות</span>
         </div>
 
-        <!-- Section: Medications Timeline (Sorted Chronologically) -->
-        <div class="space-y-3">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <div class="w-7 h-7 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center text-sm font-bold">
-                <i class="fa-solid fa-pills"></i>
-              </div>
+        <div class="flex items-center justify-between gap-3">
+          <p id="activeIncidentText" class="text-xs font-semibold text-red-50 leading-tight">נפילה ליד המיטה - דווח ע"י המטפל</p>
+          
+          <button onclick="acknowledgeActiveIncident()" class="px-3 py-1.5 rounded-xl bg-white text-red-800 font-black text-xs shadow-md hover:bg-red-50 active:scale-95 transition flex-shrink-0 flex items-center gap-1">
+            <i class="fa-solid fa-check-double text-emerald-600"></i>
+            <span data-i18n="btnAcknowledgeSOS">אישור קבלה וטיפול</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Dynamic Content Screens -->
+      <main class="flex-1 p-4 space-y-4">
+
+        <!-- ======================================================== -->
+        <!-- TAB 1: DAILY ROUTINE & MEDICATIONS (שגרה ותרופות) -->
+        <!-- ======================================================== -->
+        <section id="tab-routine" class="tab-content space-y-4">
+          
+          <!-- Summary Progress Card (Guaranteed High Contrast Gradient) -->
+          <div class="hero-progress-banner rounded-3xl p-5 shadow-xl relative overflow-hidden">
+            <div class="flex justify-between items-start mb-3 relative z-10">
               <div>
-                <h3 class="font-black text-slate-900 text-base" data-i18n="medicationsHeader">ציר זמן תרופות (לפי שעות)</h3>
-                <p class="text-[11px] text-slate-500 font-medium" data-i18n="medsTimelineSub">ממוין כרונולוגית לפי שעת המתן</p>
+                <span class="text-xs font-bold text-teal-200 uppercase tracking-wider" data-i18n="dailyProgress">התקדמות טיפול יומית</span>
+                <h2 class="text-2xl font-black mt-0.5 text-white"><span id="completedTasksCount">0</span> / <span id="totalTasksCount">0</span> <span class="text-sm font-medium text-teal-200" data-i18n="tasksDone">משימות ותרופות הושלמו</span></h2>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-white bg-opacity-20 border border-white border-opacity-30 flex items-center justify-center font-black text-lg text-white">
+                <span id="completionPercentage">0%</span>
               </div>
             </div>
-            <button onclick="openAddMedModal()" class="admin-only text-xs font-bold text-teal-700 hover:text-teal-900 flex items-center gap-1 bg-teal-50 px-2.5 py-1.5 rounded-xl border border-teal-200 active:scale-95 transition" style="display:none;">
-              <i class="fa-solid fa-plus"></i> <span data-i18n="addMedication">הוסף תרופה</span>
-            </button>
-          </div>
 
-          <div id="medicationsList" class="space-y-3">
-            <!-- Rendered by JS -->
-          </div>
-        </div>
-
-        <!-- Section: Daily Routine & Care Tasks (Sorted Chronologically) -->
-        <div class="space-y-3 pt-2">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">
-                <i class="fa-solid fa-list-check"></i>
-              </div>
-              <div>
-                <h3 class="font-black text-slate-900 text-base" data-i18n="careTasksHeader">שגרת יום ומשימות טיפול</h3>
-                <p class="text-[11px] text-slate-500 font-medium" data-i18n="tasksTimelineSub">סדר יום מהבוקר ועד הלילה</p>
-              </div>
-            </div>
-            <div class="flex gap-1">
-              <button onclick="filterRoutine('all')" id="btnFilterAll" class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-slate-800 text-white" data-i18n="filterAll">הכל</button>
-              <button onclick="filterRoutine('pending')" id="btnFilterPending" class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600" data-i18n="filterPending">ממתין</button>
-            </div>
-          </div>
-
-          <div id="tasksList" class="space-y-2.5">
-            <!-- Rendered by JS -->
-          </div>
-        </div>
-
-      </section>
-
-      <!-- ======================================================== -->
-      <!-- TAB 2: VITALS & HEALTH LOG (יומן מדדים) -->
-      <!-- ======================================================== -->
-      <section id="tab-vitals" class="tab-content hidden space-y-4">
-        
-        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
-          <div class="flex items-center justify-between mb-4">
-            <div>
-              <h2 class="text-xl font-black text-slate-900" data-i18n="vitalsTitle">יומן מעקב מדדים</h2>
-              <p class="text-xs text-slate-500 font-medium" data-i18n="vitalsSubtitle">תיעוד מדדים יומי: לחץ דם, סוכר, חום ועוד</p>
-            </div>
-            <button onclick="openLogVitalsModal()" class="px-3.5 py-2 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-md active:scale-95 transition">
-              <i class="fa-solid fa-plus-circle text-sm"></i>
-              <span data-i18n="logVitalsBtn">הזנת מדדים חדשה</span>
-            </button>
-          </div>
-
-          <div id="latestVitalsGrid" class="grid grid-cols-2 gap-2.5">
-            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between">
-              <div class="flex items-center justify-between text-xs text-slate-500 font-semibold">
-                <span data-i18n="bpLabel">לחץ דם (Sys/Dia)</span>
-                <i class="fa-solid fa-heart-pulse text-red-500"></i>
-              </div>
-              <div class="my-2">
-                <span id="latestBP" class="text-xl font-black text-slate-800">-- / --</span>
-                <span class="text-[10px] text-slate-500 font-medium">mmHg</span>
-              </div>
-              <div id="bpStatusTag" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 self-start" data-i18n="statusNormal">תקין</div>
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-900 bg-opacity-40 h-2.5 rounded-full overflow-hidden relative z-10">
+              <div id="progressBar" class="bg-emerald-400 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
             </div>
 
-            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between">
-              <div class="flex items-center justify-between text-xs text-slate-500 font-semibold">
-                <span data-i18n="sugarLabel">סוכר (Glucose)</span>
-                <i class="fa-solid fa-droplet text-yellow-500"></i>
-              </div>
-              <div class="my-2">
-                <span id="latestSugar" class="text-xl font-black text-slate-800">--</span>
-                <span class="text-[10px] text-slate-500 font-medium">mg/dL</span>
-              </div>
-              <div id="sugarStatusTag" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 self-start" data-i18n="statusNormal">תקין</div>
-            </div>
-
-            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between">
-              <div class="flex items-center justify-between text-xs text-slate-500 font-semibold">
-                <span data-i18n="tempLabel">חום גוף</span>
-                <i class="fa-solid fa-temperature-half text-orange-500"></i>
-              </div>
-              <div class="my-2">
-                <span id="latestTemp" class="text-xl font-black text-slate-800">--</span>
-                <span class="text-[10px] text-slate-500 font-medium">°C</span>
-              </div>
-              <div id="tempStatusTag" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 self-start" data-i18n="statusNormal">תקין</div>
-            </div>
-
-            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between">
-              <div class="flex items-center justify-between text-xs text-slate-500 font-semibold">
-                <span data-i18n="pulseSpo2Label">דופק / סטורציה</span>
-                <i class="fa-solid fa-lungs text-blue-500"></i>
-              </div>
-              <div class="my-2">
-                <span id="latestPulse" class="text-xl font-black text-slate-800">--</span> <span class="text-[10px] text-slate-400">bpm</span>
-                <span class="text-slate-300"> | </span>
-                <span id="latestSpo2" class="text-xl font-black text-slate-800">--%</span>
-              </div>
-              <div class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 self-start" data-i18n="statusNormal">תקין</div>
-            </div>
-          </div>
-
-          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-            <span class="text-xs text-slate-500 font-medium" data-i18n="shareWithDocText">שיתוף סיכום מדדים עם הרופא:</span>
-            <button onclick="shareVitalsWhatsApp()" class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition">
-              <i class="fa-brands fa-whatsapp text-sm"></i>
-              <span data-i18n="sendWhatsApp">שלח בוואטסאפ</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-3xl p-4 border border-slate-200 shadow-sm space-y-3">
-          <div class="flex items-center justify-between">
-            <h3 class="font-bold text-slate-800 text-sm" data-i18n="vitalsHistory">היסטוריית מדידות אחרונות</h3>
-            <span class="text-xs text-slate-400" id="vitalsCount">0 רשומות</span>
-          </div>
-          <div id="vitalsHistoryList" class="space-y-2">
-            <!-- Populated by JS -->
-          </div>
-        </div>
-
-      </section>
-
-      <!-- ======================================================== -->
-      <!-- TAB 3: SHOPPING LIST (רשימת קניות שיתופית) -->
-      <!-- ======================================================== -->
-      <section id="tab-shopping" class="tab-content hidden space-y-4">
-        
-        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
-          <div class="flex items-center justify-between mb-3">
-            <div>
-              <h2 class="text-xl font-black text-slate-900" data-i18n="shoppingTitle">רשימת קניות שיתופית</h2>
-              <p class="text-xs text-slate-500 font-medium" data-i18n="shoppingSubtitle">המטפל מוסיף צרכים, המשפחה רואה ומסמנת 'נקנה'</p>
-            </div>
-            <div class="w-10 h-10 rounded-2xl bg-yellow-100 text-yellow-700 flex items-center justify-center text-lg font-bold">
-              <i class="fa-solid fa-cart-shopping"></i>
-            </div>
-          </div>
-
-          <!-- Quick Add Preset Chips -->
-          <div class="space-y-1.5 pt-1">
-            <span class="text-[11px] font-bold text-slate-400" data-i18n="quickAddPresets">הוספה מהירה בלחיצה:</span>
-            <div class="flex flex-wrap gap-1.5">
-              <button onclick="quickAddShoppingItem('Adult Diapers (Size L)', 'hygiene')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-xl border border-slate-200 flex items-center gap-1 active:scale-95 transition">
-                🩲 <span>Diapers L</span>
-              </button>
-              <button onclick="quickAddShoppingItem('Wet Wipes', 'hygiene')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-xl border border-slate-200 flex items-center gap-1 active:scale-95 transition">
-                🧻 <span>Wet Wipes</span>
-              </button>
-              <button onclick="quickAddShoppingItem('Fresh Milk', 'food')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-xl border border-slate-200 flex items-center gap-1 active:scale-95 transition">
-                🥛 <span>Milk</span>
-              </button>
-              <button onclick="quickAddShoppingItem('Soft Fruits (Bananas / Apples)', 'food')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-xl border border-slate-200 flex items-center gap-1 active:scale-95 transition">
-                🍌 <span>Soft Fruits</span>
-              </button>
-              <button onclick="quickAddShoppingItem('Rash Cream', 'pharmacy')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-xl border border-slate-200 flex items-center gap-1 active:scale-95 transition">
-                🧴 <span>Rash Cream</span>
+            <!-- Caregiver Tip & Admin Add Task -->
+            <div class="mt-3 flex items-center justify-between text-xs text-teal-100 pt-2 border-t border-white border-opacity-10 relative z-10">
+              <span class="flex items-center gap-1.5">
+                <i class="fa-solid fa-hand-holding-heart text-emerald-400"></i>
+                <span data-i18n="caregiverTip">נא לוודא מתן שתייה מספקת לאורך היום</span>
+              </span>
+              <button onclick="openAddTaskModal()" class="admin-only px-2.5 py-1 rounded-lg bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-bold text-[11px] transition flex items-center gap-1" style="display:none;">
+                <i class="fa-solid fa-plus"></i> <span data-i18n="addTask">הוסף משימה</span>
               </button>
             </div>
           </div>
 
-          <!-- Custom Item Input Form -->
-          <form onsubmit="handleCustomShoppingSubmit(event)" class="mt-3.5 flex gap-2">
-            <input type="text" id="customShoppingInput" placeholder="הקלד פריט לקנייה / Type item to buy..." class="flex-1 text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 focus:outline-none text-slate-800" required />
-            <button type="submit" class="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-1 shadow-sm active:scale-95 transition">
-              <i class="fa-solid fa-plus"></i>
-              <span data-i18n="add">הוסף</span>
-            </button>
-          </form>
-        </div>
-
-        <div class="space-y-2.5">
-          <div class="flex items-center justify-between px-1">
-            <h3 class="font-bold text-slate-800 text-sm" data-i18n="currentList">פריטים ברשימה</h3>
-            <div class="flex gap-1">
-              <button onclick="filterShopping('all')" id="btnShopAll" class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-teal-600 text-white" data-i18n="filterNeeded">דרוש</button>
-              <button onclick="filterShopping('bought')" id="btnShopBought" class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600" data-i18n="filterBought">נקנה</button>
-            </div>
-          </div>
-
-          <div id="shoppingListContainer" class="space-y-2">
-            <!-- Populated by JS -->
-          </div>
-        </div>
-
-      </section>
-
-      <!-- ======================================================== -->
-      <!-- TAB 4: NOTICE BOARD (לוח מודעות והודעות) -->
-      <!-- ======================================================== -->
-      <section id="tab-notices" class="tab-content hidden space-y-4">
-        
-        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
-          <div class="flex items-center justify-between mb-3">
-            <div>
-              <h2 class="text-xl font-black text-slate-900" data-i18n="noticeBoardTitle">לוח מודעות משפחתי</h2>
-              <p class="text-xs text-slate-500 font-medium" data-i18n="noticeBoardSubtitle">הנחיות, עדכונים ואישורי קריאה (Acknowledged)</p>
-            </div>
-            <div class="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-lg font-bold">
-              <i class="fa-solid fa-bullhorn"></i>
-            </div>
-          </div>
-
-          <!-- New Message Composer Form -->
-          <form onsubmit="handlePostNotice(event)" class="space-y-2.5">
-            <textarea id="noticeTextInput" rows="2" placeholder="כתוב הנחיה או הודעה / Write instruction or note..." class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-3 focus:outline-none text-slate-800" required></textarea>
-            
+          <!-- Section: Medications Timeline (Sorted Chronologically) -->
+          <div class="space-y-3">
             <div class="flex items-center justify-between">
-              <label class="flex items-center gap-1.5 text-xs text-slate-600 font-semibold cursor-pointer">
-                <input type="checkbox" id="noticeUrgentCheck" class="rounded text-red-600 w-4 h-4" />
-                <span class="text-red-600 font-bold" data-i18n="urgentNoticeLabel">הודעה דחופה / חשובה</span>
-              </label>
-
-              <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition">
-                <i class="fa-solid fa-paper-plane"></i>
-                <span data-i18n="publishNotice">פרסם הודעה</span>
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center text-sm font-bold">
+                  <i class="fa-solid fa-pills"></i>
+                </div>
+                <div>
+                  <h3 class="font-black text-slate-900 text-base" data-i18n="medicationsHeader">ציר זמן תרופות (לפי שעות)</h3>
+                  <p class="text-[11px] text-slate-500 font-medium" data-i18n="medsTimelineSub">ממוין כרונולוגית לפי שעת המתן</p>
+                </div>
+              </div>
+              <button onclick="openAddMedModal()" class="admin-only text-xs font-bold text-teal-700 hover:text-teal-900 flex items-center gap-1 bg-teal-50 px-2.5 py-1.5 rounded-xl border border-teal-200 active:scale-95 transition" style="display:none;">
+                <i class="fa-solid fa-plus"></i> <span data-i18n="addMedication">הוסף תרופה</span>
               </button>
             </div>
-          </form>
-        </div>
 
-        <div class="space-y-3">
-          <div class="flex items-center justify-between px-1">
-            <h3 class="font-bold text-slate-800 text-sm" data-i18n="activeNotices">הודעות פעילות</h3>
-            <span class="text-xs text-slate-400" id="noticeCountBadge">0 הודעות</span>
+            <div id="medicationsList" class="space-y-3">
+              <!-- Rendered by JS -->
+            </div>
           </div>
 
-          <div id="noticesListContainer" class="space-y-3">
-            <!-- Populated by JS -->
+          <!-- Section: Daily Routine & Care Tasks (Sorted Chronologically) -->
+          <div class="space-y-3 pt-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">
+                  <i class="fa-solid fa-list-check"></i>
+                </div>
+                <div>
+                  <h3 class="font-black text-slate-900 text-base" data-i18n="careTasksHeader">שגרת יום ומשימות טיפול</h3>
+                  <p class="text-[11px] text-slate-500 font-medium" data-i18n="tasksTimelineSub">סדר יום מהבוקר ועד הלילה</p>
+                </div>
+              </div>
+              <div class="flex gap-1">
+                <button onclick="filterRoutine('all')" id="btnFilterAll" class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-slate-800 text-white" data-i18n="filterAll">הכל</button>
+                <button onclick="filterRoutine('pending')" id="btnFilterPending" class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600" data-i18n="filterPending">ממתין</button>
+              </div>
+            </div>
+
+            <div id="tasksList" class="space-y-2.5">
+              <!-- Rendered by JS -->
+            </div>
           </div>
-        </div>
 
-      </section>
+        </section>
 
-      <!-- ======================================================== -->
-      <!-- TAB 5: CALENDAR & VISITS (יומן אירועים וביקורים) -->
-      <!-- ======================================================== -->
-      <section id="tab-calendar" class="tab-content hidden space-y-4">
+        <!-- ======================================================== -->
+        <!-- TAB 2: VITALS & HEALTH LOG (יומן מדדים) -->
+        <!-- ======================================================== -->
+        <section id="tab-vitals" class="tab-content hidden space-y-4">
+          
+          <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h2 class="text-xl font-black text-slate-900" data-i18n="vitalsTitle">יומן מעקב מדדים</h2>
+                <p class="text-xs text-slate-500 font-medium" data-i18n="vitalsSubtitle">תיעוד מדדים יומי: לחץ דם, סוכר, חום ועוד</p>
+              </div>
+              <button onclick="openLogVitalsModal()" class="px-3.5 py-2 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-md active:scale-95 transition">
+                <i class="fa-solid fa-plus-circle text-sm"></i>
+                <span data-i18n="logVitalsBtn">הזנת מדדים חדשה</span>
+              </button>
+            </div>
+
+            <div id="latestVitalsGrid" class="grid grid-cols-2 gap-2.5">
+              <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-xs text-slate-500 font-semibold">
+                  <span data-i18n="bpLabel">לחץ דם (Sys/Dia)</span>
+                  <i class="fa-solid fa-heart-pulse text-red-500"></i>
+                </div>
+                <div class="my-2">
+                  <span id="latestBP" class="text-xl font-black text-slate-800">-- / --</span>
+                  <span class="text-[10px] text-slate-500 font-medium">mmHg</span>
+                </div>
+                <div id="bpStatusTag" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 self-start" data-i18n="statusNormal">תקין</div>
+              </div>
+
+              <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-xs text-slate-500 font-semibold">
+                  <span data-i18n="sugarLabel">סוכר (Glucose)</span>
+                  <i class="fa-solid fa-droplet text-yellow-500"></i>
+                </div>
+                <div class="my-2">
+                  <span id="latestSugar" class="text-xl font-black text-slate-800">--</span>
+                  <span class="text-[10px] text-slate-500 font-medium">mg/dL</span>
+                </div>
+                <div id="sugarStatusTag" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 self-start" data-i18n="statusNormal">תקין</div>
+              </div>
+
+              <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-xs text-slate-500 font-semibold">
+                  <span data-i18n="tempLabel">חום גוף</span>
+                  <i class="fa-solid fa-temperature-half text-orange-500"></i>
+                </div>
+                <div class="my-2">
+                  <span id="latestTemp" class="text-xl font-black text-slate-800">--</span>
+                  <span class="text-[10px] text-slate-500 font-medium">°C</span>
+                </div>
+                <div id="tempStatusTag" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 self-start" data-i18n="statusNormal">תקין</div>
+              </div>
+
+              <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-xs text-slate-500 font-semibold">
+                  <span data-i18n="pulseSpo2Label">דופק / סטורציה</span>
+                  <i class="fa-solid fa-lungs text-blue-500"></i>
+                </div>
+                <div class="my-2">
+                  <span id="latestPulse" class="text-xl font-black text-slate-800">--</span> <span class="text-[10px] text-slate-400">bpm</span>
+                  <span class="text-slate-300"> | </span>
+                  <span id="latestSpo2" class="text-xl font-black text-slate-800">--%</span>
+                </div>
+                <div class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 self-start" data-i18n="statusNormal">תקין</div>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <span class="text-xs text-slate-500 font-medium" data-i18n="shareWithDocText">שיתוף סיכום מדדים עם הרופא:</span>
+              <button onclick="shareVitalsWhatsApp()" class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition">
+                <i class="fa-brands fa-whatsapp text-sm"></i>
+                <span data-i18n="sendWhatsApp">שלח בוואטסאפ</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-3xl p-4 border border-slate-200 shadow-sm space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-slate-800 text-sm" data-i18n="vitalsHistory">היסטוריית מדידות אחרונות</h3>
+              <span class="text-xs text-slate-400" id="vitalsCount">0 רשומות</span>
+            </div>
+            <div id="vitalsHistoryList" class="space-y-2">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- TAB 3: SHOPPING LIST (רשימת קניות שיתופית) -->
+        <!-- ======================================================== -->
+        <section id="tab-shopping" class="tab-content hidden space-y-4">
+          
+          <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h2 class="text-xl font-black text-slate-900" data-i18n="shoppingTitle">רשימת קניות שיתופית</h2>
+                <p class="text-xs text-slate-500 font-medium" data-i18n="shoppingSubtitle">המטפל מוסיף צרכים, המשפחה רואה ומסמנת 'נקנה'</p>
+              </div>
+              <div class="w-10 h-10 rounded-2xl bg-yellow-100 text-yellow-700 flex items-center justify-center text-lg font-bold">
+                <i class="fa-solid fa-cart-shopping"></i>
+              </div>
+            </div>
+
+            <!-- Quick Add Preset Chips -->
+            <div class="space-y-1.5 pt-1">
+              <span class="text-[11px] font-bold text-slate-400" data-i18n="quickAddPresets">הוספה מהירה בלחיצה:</span>
+              <div class="flex flex-wrap gap-1.5">
+                <button onclick="quickAddShoppingItem('Adult Diapers (Size L)', 'hygiene')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-xl border border-slate-200 flex items-center gap-1 active:scale-95 transition">
+                  🩲 <span>Diapers L</span>
+                </button>
+                <button onclick="quickAddShoppingItem('Wet Wipes', 'hygiene')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-xl border border-slate-200 flex items-center gap-1 active:scale-95 transition">
+                  🧻 <span>Wet Wipes</span>
+                </button>
+                <button onclick="quickAddShoppingItem('Fresh Milk', 'food')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-xl border border-slate-200 flex items-center gap-1 active:scale-95 transition">
+                  🥛 <span>Milk</span>
+                </button>
+                <button onclick="quickAddShoppingItem('Soft Fruits (Bananas / Apples)', 'food')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-xl border border-slate-200 flex items-center gap-1 active:scale-95 transition">
+                  🍌 <span>Soft Fruits</span>
+                </button>
+                <button onclick="quickAddShoppingItem('Rash Cream', 'pharmacy')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-xl border border-slate-200 flex items-center gap-1 active:scale-95 transition">
+                  🧴 <span>Rash Cream</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Custom Item Input Form -->
+            <form onsubmit="handleCustomShoppingSubmit(event)" class="mt-3.5 flex gap-2">
+              <input type="text" id="customShoppingInput" placeholder="הקלד פריט לקנייה / Type item to buy..." class="flex-1 text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 focus:outline-none text-slate-800" required />
+              <button type="submit" class="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-1 shadow-sm active:scale-95 transition">
+                <i class="fa-solid fa-plus"></i>
+                <span data-i18n="add">הוסף</span>
+              </button>
+            </form>
+          </div>
+
+          <div class="space-y-2.5">
+            <div class="flex items-center justify-between px-1">
+              <h3 class="font-bold text-slate-800 text-sm" data-i18n="currentList">פריטים ברשימה</h3>
+              <div class="flex gap-1">
+                <button onclick="filterShopping('all')" id="btnShopAll" class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-teal-600 text-white" data-i18n="filterNeeded">דרוש</button>
+                <button onclick="filterShopping('bought')" id="btnShopBought" class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600" data-i18n="filterBought">נקנה</button>
+              </div>
+            </div>
+
+            <div id="shoppingListContainer" class="space-y-2">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- TAB 4: NOTICE BOARD (לוח מודעות והודעות) -->
+        <!-- ======================================================== -->
+        <section id="tab-notices" class="tab-content hidden space-y-4">
+          
+          <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h2 class="text-xl font-black text-slate-900" data-i18n="noticeBoardTitle">לוח מודעות משפחתי</h2>
+                <p class="text-xs text-slate-500 font-medium" data-i18n="noticeBoardSubtitle">הנחיות, עדכונים ואישורי קריאה (Acknowledged)</p>
+              </div>
+              <div class="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-lg font-bold">
+                <i class="fa-solid fa-bullhorn"></i>
+              </div>
+            </div>
+
+            <!-- New Message Composer Form -->
+            <form onsubmit="handlePostNotice(event)" class="space-y-2.5">
+              <textarea id="noticeTextInput" rows="2" placeholder="כתוב הנחיה או הודעה / Write instruction or note..." class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-3 focus:outline-none text-slate-800" required></textarea>
+              
+              <div class="flex items-center justify-between">
+                <label class="flex items-center gap-1.5 text-xs text-slate-600 font-semibold cursor-pointer">
+                  <input type="checkbox" id="noticeUrgentCheck" class="rounded text-red-600 w-4 h-4" />
+                  <span class="text-red-600 font-bold" data-i18n="urgentNoticeLabel">הודעה דחופה / חשובה</span>
+                </label>
+
+                <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition">
+                  <i class="fa-solid fa-paper-plane"></i>
+                  <span data-i18n="publishNotice">פרסם הודעה</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex items-center justify-between px-1">
+              <h3 class="font-bold text-slate-800 text-sm" data-i18n="activeNotices">הודעות פעילות</h3>
+              <span class="text-xs text-slate-400" id="noticeCountBadge">0 הודעות</span>
+            </div>
+
+            <div id="noticesListContainer" class="space-y-3">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- TAB 5: CALENDAR & VISITS (יומן אירועים וביקורים) -->
+        <!-- ======================================================== -->
+        <section id="tab-calendar" class="tab-content hidden space-y-4">
+          
+          <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h2 class="text-xl font-black text-slate-900" data-i18n="calendarTitle">יומן ביקורים ואירועים</h2>
+                <p class="text-xs text-slate-500 font-medium" data-i18n="calendarSubtitle">תורים רפואיים, ביקור פיזיותרפיסט וביקורי משפחה</p>
+              </div>
+              <button onclick="openAddEventModal()" class="admin-only px-3 py-2 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition" style="display:none;">
+                <i class="fa-solid fa-calendar-plus text-sm"></i>
+                <span data-i18n="addEvent">הוסף אירוע</span>
+              </button>
+            </div>
+
+            <div id="calendarEventsList" class="space-y-2.5 pt-1">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- TAB 6: EMERGENCY & CONTACTS (חירום וטלפונים) -->
+        <!-- ======================================================== -->
+        <section id="tab-emergency" class="tab-content hidden space-y-4">
+          
+          <!-- Big SOS Action Card (Guaranteed High Contrast Gradient) -->
+          <div class="hero-sos-banner rounded-3xl p-5 shadow-xl relative overflow-hidden">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-xs font-bold text-red-200 uppercase tracking-wider" data-i18n="sosCenter">מוקד מצבי חירום</span>
+                <h2 class="text-xl font-black mt-0.5 text-white" data-i18n="emergencyReporting">דיווח אירוע חריג / נפילה</h2>
+                <p class="text-xs text-red-100 font-medium mt-1" data-i18n="sosDescription">שליחת התראה דחופה מיידית לכל בני המשפחה המחוברים</p>
+              </div>
+              <button onclick="openIncidentModal()" class="w-14 h-14 rounded-2xl bg-white text-red-700 font-black text-xl flex items-center justify-center shadow-lg active:scale-90 transition pulsing-alert flex-shrink-0">
+                SOS
+              </button>
+            </div>
+          </div>
+
+          <!-- Emergency Contacts & One-Tap Dial Directory -->
+          <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-black text-slate-900 text-base" data-i18n="emergencyContactsTitle">ספר טלפונים לשעת חירום</h3>
+                <p class="text-xs text-slate-500 font-medium" data-i18n="oneTapDialSub">חיוג מהיר בלחיצה אחת למשפחה ולמוקדי רפואה</p>
+              </div>
+              <button onclick="openAddContactModal()" class="admin-only text-xs font-bold text-teal-700 bg-teal-50 px-2.5 py-1.5 rounded-xl border border-teal-200 active:scale-95 transition" style="display:none;">
+                + <span data-i18n="addContact">הוסף איש קשר</span>
+              </button>
+            </div>
+
+            <div id="emergencyContactsList" class="space-y-2.5 pt-1">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <!-- Recent Incidents & Resolved Log -->
+          <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+            <h3 class="font-bold text-slate-800 text-sm" data-i18n="incidentHistoryTitle">יומן אירועים חריגים ואישורי טיפול</h3>
+            <div id="incidentsLogList" class="space-y-2">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+        </section>
+
+      </main>
+
+      <!-- FIXED BOTTOM NAVIGATION BAR (Mobile First) -->
+      <nav class="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white border-t border-slate-200 shadow-2xl z-40 px-2 py-1 flex items-center justify-around sm:rounded-b-3xl">
         
-        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
-          <div class="flex items-center justify-between mb-3">
-            <div>
-              <h2 class="text-xl font-black text-slate-900" data-i18n="calendarTitle">יומן ביקורים ואירועים</h2>
-              <p class="text-xs text-slate-500 font-medium" data-i18n="calendarSubtitle">תורים רפואיים, ביקור פיזיותרפיסט וביקורי משפחה</p>
-            </div>
-            <button onclick="openAddEventModal()" class="admin-only px-3 py-2 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition" style="display:none;">
-              <i class="fa-solid fa-calendar-plus text-sm"></i>
-              <span data-i18n="addEvent">הוסף אירוע</span>
-            </button>
+        <button onclick="switchTab('routine')" id="nav-routine" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-teal-600 font-bold transition-all">
+          <div class="w-6 h-6 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-list-check"></i>
           </div>
+          <span class="text-[10px] mt-0.5" data-i18n="navRoutine">שגרה ותרופות</span>
+        </button>
 
-          <div id="calendarEventsList" class="space-y-2.5 pt-1">
-            <!-- Populated by JS -->
+        <button onclick="switchTab('vitals')" id="nav-vitals" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-slate-400 font-medium transition-all">
+          <div class="w-6 h-6 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-heart-pulse"></i>
           </div>
-        </div>
+          <span class="text-[10px] mt-0.5" data-i18n="navVitals">מדדים</span>
+        </button>
 
-      </section>
-
-      <!-- ======================================================== -->
-      <!-- TAB 6: EMERGENCY & CONTACTS (חירום וטלפונים) -->
-      <!-- ======================================================== -->
-      <section id="tab-emergency" class="tab-content hidden space-y-4">
-        
-        <!-- Big SOS Action Card (Guaranteed High Contrast Gradient) -->
-        <div class="hero-sos-banner rounded-3xl p-5 shadow-xl relative overflow-hidden">
-          <div class="flex items-center justify-between">
-            <div>
-              <span class="text-xs font-bold text-red-200 uppercase tracking-wider" data-i18n="sosCenter">מוקד מצבי חירום</span>
-              <h2 class="text-xl font-black mt-0.5 text-white" data-i18n="emergencyReporting">דיווח אירוע חריג / נפילה</h2>
-              <p class="text-xs text-red-100 font-medium mt-1" data-i18n="sosDescription">שליחת התראה דחופה מיידית לכל בני המשפחה המחוברים</p>
-            </div>
-            <button onclick="openIncidentModal()" class="w-14 h-14 rounded-2xl bg-white text-red-700 font-black text-xl flex items-center justify-center shadow-lg active:scale-90 transition pulsing-alert flex-shrink-0">
-              SOS
-            </button>
+        <button onclick="switchTab('shopping')" id="nav-shopping" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-slate-400 font-medium transition-all relative">
+          <div class="w-6 h-6 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-cart-shopping"></i>
           </div>
-        </div>
+          <span class="text-[10px] mt-0.5" data-i18n="navShopping">קניות</span>
+        </button>
 
-        <!-- Emergency Contacts & One-Tap Dial Directory -->
-        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="font-black text-slate-900 text-base" data-i18n="emergencyContactsTitle">ספר טלפונים לשעת חירום</h3>
-              <p class="text-xs text-slate-500 font-medium" data-i18n="oneTapDialSub">חיוג מהיר בלחיצה אחת למשפחה ולמוקדי רפואה</p>
-            </div>
-            <button onclick="openAddContactModal()" class="admin-only text-xs font-bold text-teal-700 bg-teal-50 px-2.5 py-1.5 rounded-xl border border-teal-200 active:scale-95 transition" style="display:none;">
-              + <span data-i18n="addContact">הוסף איש קשר</span>
-            </button>
+        <button onclick="switchTab('notices')" id="nav-notices" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-slate-400 font-medium transition-all relative">
+          <div class="w-6 h-6 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-bullhorn"></i>
           </div>
+          <span class="text-[10px] mt-0.5" data-i18n="navNotices">הודעות</span>
+        </button>
 
-          <div id="emergencyContactsList" class="space-y-2.5 pt-1">
-            <!-- Populated by JS -->
+        <button onclick="switchTab('calendar')" id="nav-calendar" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-slate-400 font-medium transition-all">
+          <div class="w-6 h-6 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-calendar-days"></i>
           </div>
-        </div>
+          <span class="text-[10px] mt-0.5" data-i18n="navCalendar">ביקורים</span>
+        </button>
 
-        <!-- Recent Incidents & Resolved Log -->
-        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
-          <h3 class="font-bold text-slate-800 text-sm" data-i18n="incidentHistoryTitle">יומן אירועים חריגים ואישורי טיפול</h3>
-          <div id="incidentsLogList" class="space-y-2">
-            <!-- Populated by JS -->
+        <button onclick="switchTab('emergency')" id="nav-emergency" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-red-500 font-medium transition-all">
+          <div class="w-6 h-6 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-phone-volume"></i>
           </div>
-        </div>
+          <span class="text-[10px] mt-0.5" data-i18n="navEmergency">חירום</span>
+        </button>
 
-      </section>
+      </nav>
 
-    </main>
-
-    <!-- ======================================================== -->
-    <!-- FIXED BOTTOM NAVIGATION BAR (Mobile First) -->
-    <!-- ======================================================== -->
-    <nav class="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white border-t border-slate-200 shadow-2xl z-40 px-2 py-1 flex items-center justify-around sm:rounded-b-3xl">
-      
-      <button onclick="switchTab('routine')" id="nav-routine" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-teal-600 font-bold transition-all">
-        <div class="w-6 h-6 flex items-center justify-center text-lg">
-          <i class="fa-solid fa-list-check"></i>
-        </div>
-        <span class="text-[10px] mt-0.5" data-i18n="navRoutine">שגרה ותרופות</span>
-      </button>
-
-      <button onclick="switchTab('vitals')" id="nav-vitals" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-slate-400 font-medium transition-all">
-        <div class="w-6 h-6 flex items-center justify-center text-lg">
-          <i class="fa-solid fa-heart-pulse"></i>
-        </div>
-        <span class="text-[10px] mt-0.5" data-i18n="navVitals">מדדים</span>
-      </button>
-
-      <button onclick="switchTab('shopping')" id="nav-shopping" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-slate-400 font-medium transition-all relative">
-        <div class="w-6 h-6 flex items-center justify-center text-lg">
-          <i class="fa-solid fa-cart-shopping"></i>
-        </div>
-        <span class="text-[10px] mt-0.5" data-i18n="navShopping">קניות</span>
-      </button>
-
-      <button onclick="switchTab('notices')" id="nav-notices" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-slate-400 font-medium transition-all relative">
-        <div class="w-6 h-6 flex items-center justify-center text-lg">
-          <i class="fa-solid fa-bullhorn"></i>
-        </div>
-        <span class="text-[10px] mt-0.5" data-i18n="navNotices">הודעות</span>
-      </button>
-
-      <button onclick="switchTab('calendar')" id="nav-calendar" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-slate-400 font-medium transition-all">
-        <div class="w-6 h-6 flex items-center justify-center text-lg">
-          <i class="fa-solid fa-calendar-days"></i>
-        </div>
-        <span class="text-[10px] mt-0.5" data-i18n="navCalendar">ביקורים</span>
-      </button>
-
-      <button onclick="switchTab('emergency')" id="nav-emergency" class="nav-btn flex flex-col items-center justify-center py-1 px-2 text-red-500 font-medium transition-all">
-        <div class="w-6 h-6 flex items-center justify-center text-lg">
-          <i class="fa-solid fa-phone-volume"></i>
-        </div>
-        <span class="text-[10px] mt-0.5" data-i18n="navEmergency">חירום</span>
-      </button>
-
-    </nav>
+    </div>
 
     <!-- ======================================================== -->
     <!-- MODALS & DIALOGS -->
     <!-- ======================================================== -->
 
-    <!-- 0. Authentication Modal (Google Auth Only) -->
+    <!-- 0. Authentication & Profile Modal -->
     <div id="authModal" class="hidden fixed inset-0 z-50 bg-slate-900 bg-opacity-70 flex items-center justify-center p-4">
       <div class="bg-white w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl border border-slate-200">
         <div class="text-center">
           <div class="w-12 h-12 rounded-2xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl font-bold mx-auto mb-2 shadow-inner">
             <i class="fa-brands fa-google text-red-500"></i>
           </div>
-          <h3 class="font-black text-slate-900 text-lg" data-i18n="authModalTitle">כניסה למערכת CareSync</h3>
-          <p class="text-xs text-slate-500 font-medium mt-0.5" data-i18n="authModalSub">הזדהות מאובטחת באמצעות חשבון Google בלבד</p>
+          <h3 class="font-black text-slate-900 text-lg" data-i18n="authModalTitle">פרופיל משתמש CareSync</h3>
+          <p class="text-xs text-slate-500 font-medium mt-0.5" data-i18n="authModalSub">הזדהות מאובטחת באמצעות חשבון Google</p>
         </div>
 
         <div class="space-y-3">
-          <!-- Main Google Auth Button -->
-          <button onclick="handleGoogleSignIn()" class="w-full p-4 rounded-2xl border-2 border-slate-200 hover:border-teal-500 bg-white hover:bg-teal-50 flex items-center justify-between text-slate-800 font-bold text-xs shadow-md active:scale-95 transition-all group">
-            <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-xl bg-white flex items-center justify-center border border-slate-200 shadow-sm text-lg">
-                <i class="fa-brands fa-google text-red-500"></i>
-              </div>
-              <div class="text-right">
-                <div class="text-slate-900 font-black text-sm" data-i18n="googleFamilyLogin">התחבר עם Google</div>
-                <div class="text-[10px] text-teal-700 font-semibold" data-i18n="whitelistVerified">אימות אוטומטי מול Firebase</div>
-              </div>
-            </div>
-            <i class="fa-solid fa-arrow-left text-slate-400 group-hover:text-teal-600 transition text-sm"></i>
-          </button>
-
           <!-- Current Logged In Info & Logout -->
-          <div id="activeUserSection" class="p-3.5 rounded-2xl bg-teal-50 border border-teal-200 text-xs flex items-center justify-between" style="display:none;">
+          <div id="activeUserSection" class="p-3.5 rounded-2xl bg-teal-50 border border-teal-200 text-xs flex items-center justify-between">
             <div class="flex items-center gap-2">
               <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
               <div>
@@ -1379,6 +1443,11 @@
     const i18n = {
       he: {
         appTitle: "CareSync - ניהול טיפול חכם",
+        loginGateTitle: "CareSync",
+        loginGateSubtitle: "מערכת חכמה ומאובטחת לניהול הטיפול הרפואי והיומי",
+        loginGateGoogleBtn: "התחבר עם Google",
+        loginGateAuthNote: "הגישה למערכת והצגת הנתונים מורשית אך ורק לחשבונות Google מאושרים (בני משפחה ומטפלים).",
+        loginGateSecured: "מאובטח ב-Firebase",
         patientPrefix: "טיפול ב:",
         todayLabel: "שגרת יום",
         emergencyBtn: "דיווח חירום SOS",
@@ -1440,10 +1509,10 @@
         undoBtn: "בטל",
         statusPending: "⏳ טרם נלקח",
         statusOverdue: "⚠️ באיחור של מעל שעה!",
-        authModalTitle: "כניסה למערכת CareSync",
-        authModalSub: "הזדהות מאובטחת באמצעות חשבון Google בלבד",
+        authModalTitle: "פרופיל משתמש CareSync",
+        authModalSub: "הזדהות מאובטחת באמצעות חשבון Google",
         googleFamilyLogin: "התחבר עם Google",
-        whitelistVerified: "אימות אוטומטי מול Firebase",
+        whitelistVerified: "אימות מהיר ומאובטח",
         login: "כניסה",
         logout: "התנתק",
         close: "סגור",
@@ -1506,6 +1575,11 @@
       },
       en: {
         appTitle: "CareSync - Smart Care Management",
+        loginGateTitle: "CareSync",
+        loginGateSubtitle: "Smart and secure medical care and routine management",
+        loginGateGoogleBtn: "Sign in with Google",
+        loginGateAuthNote: "Access to patient data is strictly restricted to authorized Google accounts only (Family & Caregivers).",
+        loginGateSecured: "Secured by Firebase",
         patientPrefix: "Caring for:",
         todayLabel: "Today's Plan",
         emergencyBtn: "Emergency SOS",
@@ -1567,10 +1641,10 @@
         undoBtn: "Undo",
         statusPending: "⏳ Pending",
         statusOverdue: "⚠️ OVERDUE >1 HOUR!",
-        authModalTitle: "Sign In to CareSync",
-        authModalSub: "Secure Google Account Sign-In Only",
+        authModalTitle: "CareSync User Profile",
+        authModalSub: "Secure Google Account Sign-In",
         googleFamilyLogin: "Sign in with Google",
-        whitelistVerified: "Auto-verified via Firebase",
+        whitelistVerified: "Fast & Secure Verification",
         login: "Login",
         logout: "Logout",
         close: "Close",
@@ -1633,6 +1707,11 @@
       },
       hi: {
         appTitle: "केयरसिंक - स्मार्ट देखभाल प्रबंधन",
+        loginGateTitle: "केयरसिंक (CareSync)",
+        loginGateSubtitle: "दैनिक स्वास्थ्य एवं देखभाल प्रबंधन प्रणाली",
+        loginGateGoogleBtn: "Google से लॉगिन करें",
+        loginGateAuthNote: "मरीज का डेटा केवल अधिकृत Google खातों (परिवार एवं सहायक) के लिए ही उपलब्ध है।",
+        loginGateSecured: "Firebase द्वारा सुरक्षित",
         patientPrefix: "मरीज:",
         todayLabel: "आज की दिनचर्या",
         emergencyBtn: "आपातकालीन SOS",
@@ -1656,7 +1735,7 @@
         logVitalsBtn: "नया माप दर्ज करें",
         bpLabel: "रक्तचाप (BP)",
         sugarLabel: "ब्लड शुगर",
-        tempLabel: "शरीर का तापमान",
+        tempLabel: "शरीר का तापमान",
         pulseSpo2Label: "नाड़ी / ऑक्सीजन (SpO2)",
         statusNormal: "सामान्य",
         shareWithDocText: "डॉक्टर के साथ रिपोर्ट साझा करें:",
@@ -1691,13 +1770,13 @@
         btnPendingTake: "👉 यहाँ दबाएं: दवा दी गई",
         btnLateTake: "🚨 देरी से दवा दी गई",
         takenStamp: "✅ दवा ले ली गई",
-        undoBtn: "רद्द करें",
+        undoBtn: "रद्द करें",
         statusPending: "⏳ अभी देना बाकी है",
         statusOverdue: "⚠️ 1 घंटे से ज्यादा देरी!",
-        authModalTitle: "CareSync में लॉगिन करें",
+        authModalTitle: "CareSync उपयोगकर्ता प्रोफ़ाइल",
         authModalSub: "सुरक्षित Google खाता लॉगिन",
         googleFamilyLogin: "Google से लॉगिन करें",
-        whitelistVerified: "Firebase द्वारा स्वचालित सत्यापन",
+        whitelistVerified: "त्वरित और सुरक्षित सत्यापन",
         login: "लॉगिन",
         logout: "लॉगआउट",
         close: "बंद करें",
@@ -1913,11 +1992,11 @@
     };
 
     // --- 4. STATE & PERSISTENCE ---
-    let state = JSON.parse(localStorage.getItem('careSync_v10_clean')) || cleanInitialState;
+    let state = JSON.parse(localStorage.getItem('careSync_v11_gated')) || cleanInitialState;
     if (!state.settings.firebaseConfig) state.settings.firebaseConfig = defaultFirebaseConfig;
 
     function saveState() {
-      localStorage.setItem('careSync_v10_clean', JSON.stringify(state));
+      localStorage.setItem('careSync_v11_gated', JSON.stringify(state));
       renderApp();
       
       if (window.careSyncFirestoreDoc && state.currentUser && state.currentUser.role !== 'guest') {
@@ -1925,17 +2004,6 @@
           console.log('Firebase sync note:', err);
         });
       }
-    }
-
-    // Helper: Require Login Guard
-    function requireAuth(actionName = "לבצע פעולה זו") {
-      const isLoggedIn = state.currentUser && state.currentUser.role !== 'guest' && state.currentUser.email;
-      if (!isLoggedIn) {
-        openAuthModal();
-        alert(`🔒 נדרשת התחברות למערכת!\nעליך להתחבר עם חשבון Google מורשה כדי ${actionName}.`);
-        return false;
-      }
-      return true;
     }
 
     // Audio Chimes
@@ -1982,7 +2050,7 @@
         const db = firebase.firestore();
         window.careSyncFirestoreDoc = db.collection('caresync').doc('main_data');
         
-        // Listen to Firestore changes
+        // Listen to Firestore changes (Only processed when logged in)
         window.careSyncFirestoreDoc.onSnapshot(doc => {
           if (doc.exists) {
             const cloudData = doc.data();
@@ -1992,7 +2060,7 @@
               state = cloudData;
               state.settings.lang = currentLang;
               state.currentUser = currentUser;
-              localStorage.setItem('careSync_v10_clean', JSON.stringify(state));
+              localStorage.setItem('careSync_v11_gated', JSON.stringify(state));
               renderApp();
             }
           }
@@ -2005,16 +2073,15 @@
           if (user && user.email) {
             processGoogleUser(user.email.toLowerCase(), user.displayName, user.photoURL, true);
           } else {
-            if (state.currentUser && state.currentUser.role !== 'guest') {
-              state.currentUser = {
-                uid: "guest",
-                name: "לא מחובר",
-                role: "guest",
-                email: null,
-                avatar: null
-              };
-              saveState();
-            }
+            // Not authenticated
+            state.currentUser = {
+              uid: "guest",
+              name: "לא מחובר",
+              role: "guest",
+              email: null,
+              avatar: null
+            };
+            saveState();
           }
         });
 
@@ -2044,7 +2111,7 @@
       }
     }
 
-    // --- 6. PURE GOOGLE AUTHENTICATION & ROLE RESOLUTION ---
+    // --- 6. PURE GOOGLE AUTHENTICATION & GATE RESOLUTION ---
     function openAuthModal() {
       document.getElementById('authModal').classList.remove('hidden');
       updateAuthModalUI();
@@ -2168,7 +2235,6 @@
       }
       closeModal('authModal');
       saveState();
-      updateAuthModalUI();
     }
 
     // --- 7. WHITELIST MANAGEMENT IN SETTINGS ---
@@ -2444,6 +2510,12 @@
             ? "px-2 py-1 text-xs font-bold rounded-lg transition-all bg-white text-teal-700 shadow-sm"
             : "px-2 py-1 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900";
         }
+        const gateBtn = document.getElementById(`gateBtnLang${l.charAt(0).toUpperCase() + l.slice(1)}`);
+        if (gateBtn) {
+          gateBtn.className = (l === lang)
+            ? "px-2.5 py-1 text-xs font-bold rounded-lg transition-all bg-teal-50 text-teal-700 shadow-sm"
+            : "px-2.5 py-1 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900";
+        }
       });
 
       saveState();
@@ -2482,10 +2554,6 @@
           userRoleSlot.innerText = currentLang === 'hi' ? 'परिवार (Admin)' : (currentLang === 'en' ? 'Family (Admin)' : 'בן משפחה (Admin)');
           authBadge.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-teal-50 text-teal-800 border border-teal-300 text-xs font-bold shadow-sm active:scale-95 transition";
           if (avatarSlot) avatarSlot.innerHTML = `<i class="fa-solid fa-users text-teal-700"></i>`;
-        } else {
-          userRoleSlot.innerText = currentLang === 'hi' ? 'लॉगिन करें' : (currentLang === 'en' ? 'Sign In' : 'התחבר למערכת');
-          authBadge.className = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 border border-slate-300 text-xs font-bold shadow-sm active:scale-95 transition";
-          if (avatarSlot) avatarSlot.innerHTML = `<i class="fa-solid fa-key text-slate-600"></i>`;
         }
       }
 
@@ -2672,8 +2740,6 @@
     }
 
     function toggleMedicationDose(medId, timeStr) {
-      if (!requireAuth("לסמן נטילת תרופות")) return;
-
       const med = state.medications.find(m => m.id === medId);
       if (!med) return;
       if (!med.completedDoses) med.completedDoses = {};
@@ -2701,10 +2767,8 @@
     // --- 12. EDIT MEDICATION ---
     function openEditMedModal(medId) {
       const isAdmin = state.currentUser && (state.currentUser.role === 'family' || state.currentUser.role === 'super_admin');
-      if (!isAdmin) {
-        alert('עריכת תרופות מותרת למנהל בלבד!');
-        return;
-      }
+      if (!isAdmin) return alert('עריכת תרופות מותרת למנהל בלבד!');
+      
       const med = state.medications.find(m => m.id === medId);
       if (!med) return;
 
@@ -2852,8 +2916,6 @@
     }
 
     function toggleTask(taskId) {
-      if (!requireAuth("לסמן משימות שגרה")) return;
-
       const task = state.tasks.find(t => t.id === taskId);
       if (!task) return;
 
@@ -2893,11 +2955,13 @@
       });
 
       const alertBanner = document.getElementById('overdueAlertBanner');
-      if (overdueMedFound) {
-        alertBanner.classList.remove('hidden');
-        document.getElementById('overdueAlertDetails').innerText = `${overdueMedFound.med.name} (${overdueMedFound.timeStr})`;
-      } else {
-        alertBanner.classList.add('hidden');
+      if (alertBanner) {
+        if (overdueMedFound) {
+          alertBanner.classList.remove('hidden');
+          document.getElementById('overdueAlertDetails').innerText = `${overdueMedFound.med.name} (${overdueMedFound.timeStr})`;
+        } else {
+          alertBanner.classList.add('hidden');
+        }
       }
     }
 
@@ -2945,8 +3009,6 @@
 
     function handleSaveVitals(e) {
       e.preventDefault();
-      if (!requireAuth("להזין מדדים")) return;
-
       const now = new Date();
       const newVital = {
         id: 'v_' + Date.now(),
@@ -3033,8 +3095,6 @@
     }
 
     function quickAddShoppingItem(name, cat) {
-      if (!requireAuth("להוסיף מוצרים לרשימת הקניות")) return;
-
       const userName = state.currentUser.name;
       state.shopping.unshift({
         id: 's_' + Date.now(),
@@ -3049,8 +3109,6 @@
 
     function handleCustomShoppingSubmit(e) {
       e.preventDefault();
-      if (!requireAuth("להוסיף מוצרים לרשימת הקניות")) return;
-
       const input = document.getElementById('customShoppingInput');
       if (!input.value.trim()) return;
 
@@ -3069,8 +3127,6 @@
     }
 
     function toggleShoppingBought(id) {
-      if (!requireAuth("לסמן מוצרים כנקנו")) return;
-
       const item = state.shopping.find(s => s.id === id);
       if (item) {
         item.bought = !item.bought;
@@ -3080,7 +3136,6 @@
     }
 
     function deleteShoppingItem(id) {
-      if (!requireAuth("למחוק פריט מהרשימה")) return;
       state.shopping = state.shopping.filter(s => s.id !== id);
       saveState();
     }
@@ -3139,8 +3194,6 @@
 
     function handlePostNotice(e) {
       e.preventDefault();
-      if (!requireAuth("לפרסם הודעה בלוח")) return;
-
       const text = document.getElementById('noticeTextInput').value.trim();
       const isUrgent = document.getElementById('noticeUrgentCheck').checked;
       if (!text) return;
@@ -3166,8 +3219,6 @@
     }
 
     function acknowledgeNotice(id) {
-      if (!requireAuth("לאשר קריאת הודעה")) return;
-
       const notice = state.notices.find(n => n.id === id);
       if (notice) {
         const now = new Date();
@@ -3232,8 +3283,6 @@
 
     function handleReportIncident(e) {
       e.preventDefault();
-      if (!requireAuth("לדווח על אירוע חירום")) return;
-
       const type = document.querySelector('input[name="incidentType"]:checked').value;
       const desc = document.getElementById('incidentDescInput').value.trim();
 
@@ -3274,8 +3323,6 @@
     }
 
     function acknowledgeActiveIncident() {
-      if (!requireAuth("לאשר קבלת אירוע חירום")) return;
-
       if (!state.activeIncident) return;
       const now = new Date();
       const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -3296,15 +3343,13 @@
     // Emergency Contacts Management: Add, Edit, Delete
     function openAddContactModal() {
       const isAdmin = state.currentUser && (state.currentUser.role === 'family' || state.currentUser.role === 'super_admin');
-      if (!isAdmin) return alert('הוספת איש קשר מורשית למנהל בלבד. נא להתחבר כמנהל.');
+      if (!isAdmin) return alert('הוספת איש קשר מורשית למנהל בלבד.');
       const modal = document.getElementById('addContactModal');
       if (modal) modal.classList.remove('hidden');
     }
 
     function handleSaveContact(e) {
       e.preventDefault();
-      if (!requireAuth("להוסיף איש קשר")) return;
-
       const name = document.getElementById('contactNameInput').value.trim();
       const role = document.getElementById('contactRoleInput').value.trim();
       const phone = document.getElementById('contactPhoneInput').value.trim();
@@ -3380,13 +3425,15 @@
 
     function renderEmergency() {
       const banner = document.getElementById('activeIncidentBanner');
-      if (state.activeIncident && !state.activeIncident.resolved) {
-        banner.classList.remove('hidden');
-        document.getElementById('activeIncidentTitle').innerText = `🚨 ${state.activeIncident.typeTitle}`;
-        document.getElementById('activeIncidentText').innerText = `${state.activeIncident.description} (דווח ע"י ${state.activeIncident.reportedBy})`;
-        document.getElementById('activeIncidentTime').innerText = state.activeIncident.reportedAt;
-      } else {
-        banner.classList.add('hidden');
+      if (banner) {
+        if (state.activeIncident && !state.activeIncident.resolved) {
+          banner.classList.remove('hidden');
+          document.getElementById('activeIncidentTitle').innerText = `🚨 ${state.activeIncident.typeTitle}`;
+          document.getElementById('activeIncidentText').innerText = `${state.activeIncident.description} (דווח ע"י ${state.activeIncident.reportedBy})`;
+          document.getElementById('activeIncidentTime').innerText = state.activeIncident.reportedAt;
+        } else {
+          banner.classList.add('hidden');
+        }
       }
 
       const container = document.getElementById('emergencyContactsList');
@@ -3472,15 +3519,8 @@
     }
 
     // --- 20. MODALS & SETTINGS ACTIONS ---
-    function openLogVitalsModal() { 
-      if (!requireAuth("להזין מדדים")) return;
-      document.getElementById('logVitalsModal').classList.remove('hidden'); 
-    }
-    
-    function openIncidentModal() { 
-      if (!requireAuth("לדווח אירוע חירום SOS")) return;
-      document.getElementById('incidentModal').classList.remove('hidden'); 
-    }
+    function openLogVitalsModal() { document.getElementById('logVitalsModal').classList.remove('hidden'); }
+    function openIncidentModal() { document.getElementById('incidentModal').classList.remove('hidden'); }
     
     function openAddMedModal() { 
       const isAdmin = state.currentUser && (state.currentUser.role === 'family' || state.currentUser.role === 'super_admin');
@@ -3631,8 +3671,31 @@
       checkOverdueAlerts();
     }
 
-    // --- 21. APP RENDER LOOP & PERMISSION ENFORCEMENT ---
+    // --- 21. APP RENDER LOOP & GATE CONTROLLER ---
     function renderApp() {
+      const isLoggedIn = state.currentUser && state.currentUser.role !== 'guest' && state.currentUser.email;
+
+      const gateView = document.getElementById('loginGateView');
+      const mainAppView = document.getElementById('mainAppView');
+
+      if (!isLoggedIn) {
+        // Show Login Gate ONLY - Completely hide and protect all application data
+        if (gateView) gateView.style.display = 'flex';
+        if (mainAppView) {
+          mainAppView.style.display = 'none';
+          mainAppView.classList.add('hidden');
+        }
+        applyTranslations();
+        return;
+      }
+
+      // Logged in - Unlock Main App
+      if (gateView) gateView.style.display = 'none';
+      if (mainAppView) {
+        mainAppView.style.display = 'flex';
+        mainAppView.classList.remove('hidden');
+      }
+
       applyTranslations();
       renderMedications();
       renderTasks();
@@ -3643,10 +3706,9 @@
       renderEmergency();
       checkOverdueAlerts();
 
-      // Strict Access Controls
-      const isLoggedIn = state.currentUser && state.currentUser.role !== 'guest' && state.currentUser.email;
-      const isSuper = isLoggedIn && state.currentUser.role === 'super_admin';
-      const isAdmin = isSuper || (isLoggedIn && state.currentUser.role === 'family');
+      // Strict Role Access Controls
+      const isSuper = state.currentUser.role === 'super_admin';
+      const isAdmin = isSuper || state.currentUser.role === 'family';
 
       document.querySelectorAll('.admin-only').forEach(el => {
         el.style.display = isAdmin ? '' : 'none';
