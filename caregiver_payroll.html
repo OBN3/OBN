@@ -1,0 +1,3274 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>מערכת ניהול שכר ותנאים סוציאליים למטפל זר</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Heebo & Rubik -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Heebo', 'Rubik', 'sans-serif'],
+            mono: ['Courier New', 'monospace']
+          },
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b'
+            },
+            primary: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#0c4a6e',
+              900: '#082f49'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Heebo', sans-serif;
+      background-color: #f8fafc;
+      color: #1e293b;
+    }
+    
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Print specific A4 styling */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printArea, #printArea *, #printReportArea, #printReportArea * {
+        visibility: visible;
+      }
+      #printArea, #printReportArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background: white;
+      }
+      .no-print {
+        display: none !important;
+      }
+      @page {
+        size: A4 portrait;
+        margin: 8mm 10mm 8mm 10mm;
+      }
+    }
+
+    .badge-day {
+      transition: all 0.18s ease-in-out;
+    }
+    .badge-day:hover {
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased overflow-x-hidden">
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 left-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Hidden File Input for JSON Backup -->
+  <input type="file" id="importBackupInput" class="hidden" accept=".json" />
+
+  <!-- MAIN APPLICATION HEADER WITH GOOGLE AUTH -->
+  <header class="no-print bg-slate-900 text-white shadow-xl sticky top-0 z-40 border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+      
+      <!-- Top Row: App Title, Worker Selector, Auth & Global Actions -->
+      <div class="flex flex-wrap items-center justify-between py-2.5 gap-2.5">
+        
+        <!-- Logo & Title -->
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-md shrink-0">
+            <i class="fa-solid fa-hand-holding-heart text-lg sm:text-xl"></i>
+          </div>
+          <div>
+            <h1 class="font-black text-sm sm:text-base leading-tight tracking-tight text-white flex items-center gap-1.5">
+              <span>ניהול שכר מטפל זר</span>
+              <span class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-mono font-bold">2026 PRO</span>
+            </h1>
+            <p class="text-[11px] text-slate-400 hidden sm:block">שכר, נוכחות, תנאים סוציאליים ודוחות מנהלים</p>
+          </div>
+        </div>
+
+        <!-- Worker Selector Dropdown Pill -->
+        <div class="flex items-center gap-1.5 bg-slate-800/95 border border-slate-700 rounded-xl px-2.5 py-1 shadow-inner">
+          <i class="fa-solid fa-user text-emerald-400 text-xs"></i>
+          <span class="text-xs text-slate-300 font-semibold hidden md:inline">עובד/ת:</span>
+          <select id="workerSelectDropdown" onchange="window.switchActiveWorker(this.value)" class="bg-slate-900 text-white text-xs sm:text-sm font-bold focus:outline-none cursor-pointer pr-2 py-1 rounded-lg border border-slate-700">
+            <!-- Injected via JS -->
+          </select>
+          <button type="button" onclick="window.openWorkerManagerModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-lg transition flex items-center gap-1 shadow-sm mr-1" title="נהל והוסף כרטיסי עובדים">
+            <i class="fa-solid fa-users-gear text-xs"></i>
+            <span class="hidden sm:inline">ניהול עובדים</span>
+          </button>
+        </div>
+
+        <!-- Right Side: Cloud Sync & Google Auth Profile Controls -->
+        <div class="flex items-center gap-2">
+          
+          <!-- Cloud Sync Status Pill -->
+          <div id="cloudSyncStatusPill" class="hidden sm:flex items-center gap-1.5 bg-slate-800/80 border border-slate-700 px-2.5 py-1.5 rounded-xl text-xs" title="מצב סנכרון ענן">
+            <span id="syncIndicatorDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+            <span id="syncStatusLabel" class="text-[11px] text-slate-300 font-medium">ענן: מקומי</span>
+          </div>
+
+          <!-- Google Auth User Widget -->
+          <div id="authWidgetContainer" class="flex items-center gap-1.5">
+            <!-- Guest / Logged Out Button -->
+            <button type="button" id="btnOpenLoginModal" onclick="window.openAuthModal()" class="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow transition">
+              <i class="fa-brands fa-google text-xs"></i>
+              <span>התחברות</span>
+            </button>
+
+            <!-- Logged In User Profile (Hidden by default) -->
+            <div id="userProfilePill" class="hidden items-center gap-2 bg-slate-800 border border-slate-700 pl-2 pr-1 py-1 rounded-xl">
+              <img id="userAvatarImg" class="w-6 h-6 rounded-full object-cover border border-emerald-400" src="https://placehold.co/100x100/10b981/ffffff?text=U" alt="User Avatar" />
+              <div class="flex flex-col text-right">
+                <span id="userNameLabel" class="text-xs font-bold text-slate-100 max-w-[100px] sm:max-w-[120px] truncate">משתמש</span>
+                <span id="userEmailLabel" class="text-[9px] text-slate-400 max-w-[100px] truncate hidden md:block">מחובר</span>
+              </div>
+              <button type="button" onclick="window.handleSignOut()" class="p-1 hover:bg-slate-700 text-slate-400 hover:text-rose-400 rounded-lg transition" title="התנתק מחשבון Google">
+                <i class="fa-solid fa-right-from-bracket text-xs"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Action Buttons (Rates & Backup) -->
+          <div class="flex items-center gap-1.5">
+            <button type="button" onclick="window.openSettingsModal()" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-700 transition" title="עריכת פרטי עובד, שכר ותעריפים">
+              <i class="fa-solid fa-sliders text-emerald-400"></i>
+              <span class="hidden lg:inline">תעריפים</span>
+            </button>
+
+            <button type="button" onclick="window.openBackupModal()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs border border-slate-700 transition" title="גיבוי / שחזור נתונים מקובץ">
+              <i class="fa-solid fa-download text-sky-400"></i>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Permanent Navigation Tab Bar -->
+      <div class="flex flex-wrap items-center justify-between pt-1 pb-2.5 border-t border-slate-800/80 gap-2">
+        
+        <!-- Main View Switcher Tabs -->
+        <div class="flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700 shadow-inner">
+          <button type="button" id="navMonthlyTabBtn" onclick="window.switchAppView('monthly')" class="px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition bg-emerald-600 text-white shadow flex items-center gap-2">
+            <i class="fa-regular fa-calendar-days text-sm"></i>
+            <span>לוח חודשי ותלוש שכר</span>
+          </button>
+          
+          <button type="button" id="navReportsTabBtn" onclick="window.switchAppView('reports')" class="px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition bg-purple-900/80 hover:bg-purple-800 text-purple-200 hover:text-white border border-purple-500/40 flex items-center gap-2 shadow-sm">
+            <i class="fa-solid fa-chart-pie text-purple-300 text-sm"></i>
+            <span>דוח תנאים סוציאליים וחיסכון מעסיק (אקסל) 📊</span>
+          </button>
+        </div>
+
+        <!-- Month Navigation Bar -->
+        <div id="monthNavControls" class="flex items-center gap-1.5 bg-slate-800 p-1 rounded-xl border border-slate-700 shadow-inner">
+          <button type="button" onclick="window.navigateMonth(-1)" class="p-1 px-2.5 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition" title="חודש קודם">
+            <i class="fa-solid fa-chevron-right text-xs"></i>
+          </button>
+          
+          <div class="flex items-center gap-1.5 px-2 text-center">
+            <span id="currentMonthYearLabel" class="font-bold text-xs sm:text-sm tracking-wide text-white min-w-[105px]">אוגוסט 2026</span>
+          </div>
+
+          <button type="button" onclick="window.navigateMonth(1)" class="p-1 px-2.5 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition" title="חודש הבא">
+            <i class="fa-solid fa-chevron-left text-xs"></i>
+          </button>
+
+          <button type="button" onclick="window.goToCurrentMonth()" class="text-[11px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-md transition font-medium mr-1 hidden sm:inline-block">
+            החודש
+          </button>
+        </div>
+
+        <!-- Print Payslip Button -->
+        <button type="button" onclick="window.printCurrentPayslip()" class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold shadow-md transition">
+          <i class="fa-solid fa-print"></i>
+          <span>הדפס תלוש (A4)</span>
+        </button>
+
+      </div>
+
+    </div>
+  </header>
+
+  <!-- VIEW 1: MONTHLY ATTENDANCE & PAYROLL VIEW -->
+  <main id="monthlyViewContent" class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 no-print">
+
+    <!-- Super-Prominent Purple Callout Banner to Social Benefits Report -->
+    <div class="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-2xl p-4 sm:p-5 text-white shadow-lg border border-purple-600/50 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3.5">
+        <div class="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-purple-300 text-2xl shadow-inner shrink-0">
+          <i class="fa-solid fa-piggy-bank"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="font-bold text-base sm:text-lg text-white">דוח ריכוז תנאים סוציאליים וחיסכון מעסיק</h3>
+            <span class="text-[10px] uppercase font-black bg-purple-500/30 text-purple-300 px-2.5 py-0.5 rounded-full border border-purple-400/30">Excel & Print</span>
+          </div>
+          <p class="text-xs text-purple-200/90 mt-0.5">מעקב חודשי מצטבר של פנסיה, פיצויים מפוצלים (6% + 2.33%), הבראה, חופשה, מחלה וביטוח לאומי עם ייצוא מלא לאקסל.</p>
+        </div>
+      </div>
+
+      <button type="button" onclick="window.switchAppView('reports')" class="bg-purple-600 hover:bg-purple-500 text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 shrink-0">
+        <span>פתח דוח מרוכז + ייצוא לאקסל</span>
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+    </div>
+
+    <!-- Top Stat Cards (4 Cards) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Card 1: Gross Pay -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden">
+        <div class="flex items-center justify-between text-slate-500 mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider">שכר ברוטו כולל</span>
+          <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm">
+            <i class="fa-solid fa-coins"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-black text-slate-800" id="statGrossPay">₪0.00</div>
+        <div class="text-xs text-slate-500 mt-1 flex items-center justify-between">
+          <span id="statWorkDaysRatio">0 ימי עבודה מתוך 0</span>
+          <span id="statBasePaySummary" class="font-semibold text-blue-600">₪0.00 בסיס</span>
+        </div>
+        <div class="absolute bottom-0 right-0 left-0 h-1 bg-blue-500"></div>
+      </div>
+
+      <!-- Card 2: Pocket Money -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden">
+        <div class="flex items-center justify-between text-slate-500 mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider">מקדמות דמי כיס</span>
+          <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-sm">
+            <i class="fa-solid fa-wallet"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-black text-slate-800" id="statPocketMoney">₪0.00</div>
+        <div class="text-xs text-slate-500 mt-1 flex items-center justify-between">
+          <span id="statPocketMoneyMode">במזומן (מקוזז)</span>
+          <span id="statPocketWeeks" class="text-slate-400 font-mono">4 שבועות</span>
+        </div>
+        <div class="absolute bottom-0 right-0 left-0 h-1 bg-amber-500"></div>
+      </div>
+
+      <!-- Card 3: Net Bank Transfer -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden ring-2 ring-emerald-500/20">
+        <div class="flex items-center justify-between text-slate-500 mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider text-emerald-700">לתשלום בבנק (נטו)</span>
+          <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm font-bold">
+            <i class="fa-solid fa-building-columns"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-black text-emerald-600" id="statNetBank">₪0.00</div>
+        <div class="text-xs text-slate-500 mt-1">
+          <span>להעברה ישירה לחשבון העובד/ת</span>
+        </div>
+        <div class="absolute bottom-0 right-0 left-0 h-1 bg-emerald-500"></div>
+      </div>
+
+      <!-- Card 4: Employer Social Savings -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between text-slate-500 mb-2">
+            <span class="text-xs font-semibold uppercase tracking-wider text-purple-700">חיסכון מעסיק לחודש</span>
+            <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-sm">
+              <i class="fa-solid fa-piggy-bank"></i>
+            </div>
+          </div>
+          <div class="text-2xl font-black text-purple-700" id="statMonthlySavings">₪0.00</div>
+          <div class="text-xs text-slate-500 mt-1 flex items-center justify-between">
+            <span>מחושב מסך שכר ברוטו</span>
+            <span class="text-purple-600 font-bold" id="statSeveranceSplitTag">6% + 2.33%</span>
+          </div>
+        </div>
+        
+        <button type="button" onclick="window.switchAppView('reports')" class="mt-3 w-full bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 text-xs font-bold py-1.5 px-2 rounded-xl transition flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-chart-line text-purple-600"></i>
+          <span>פתח דוח סוציאלי + ייצוא לאקסל ➔</span>
+        </button>
+        <div class="absolute bottom-0 right-0 left-0 h-1 bg-purple-500"></div>
+      </div>
+
+    </div>
+
+    <!-- Main Grid Columns: Calendar on Right (in RTL), Breakdown on Left -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Calendar Column (7 Cols) -->
+      <div class="lg:col-span-7 space-y-6">
+        
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5 sm:p-6">
+          
+          <!-- Calendar Header & Batch Buttons -->
+          <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-100">
+            <div>
+              <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-regular fa-calendar-check text-emerald-600"></i>
+                <span>יומן נוכחות חודשי (סימון ימי עבודה בפועל)</span>
+              </h2>
+              <p class="text-xs text-slate-500 mt-0.5">לחץ על כל יום כדי לבחור: עבד, היעדרות, שבת, חג או יום חופשה שנתית</p>
+            </div>
+
+            <!-- Quick Batch Buttons -->
+            <div class="flex flex-wrap items-center gap-2">
+              <button type="button" onclick="window.batchFillWeekdaysWorked()" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg transition font-semibold flex items-center gap-1.5" title="סמן את כל ימי החול בחודש כעבד">
+                <i class="fa-solid fa-check-double text-emerald-600"></i>
+                <span>סמן חודש מלא (ימי חול עבד)</span>
+              </button>
+
+              <button type="button" onclick="window.batchClearAllDays()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1.5" title="אפס את כל הימים כדי לסמן מאפס">
+                <i class="fa-solid fa-eraser text-slate-400"></i>
+                <span>נקה הכל (לוח ריק)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Calendar Days Legend -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs mb-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-emerald-500 shrink-0"></span>
+              <span class="text-slate-700"><strong>יום חול שעבד</strong> (סופר לשכר)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-slate-300 border border-slate-400 shrink-0"></span>
+              <span class="text-slate-500"><strong>לא עבד / היעדרות</strong> (לא שולם)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-amber-500 shrink-0"></span>
+              <span class="text-amber-800"><strong>שבת שעבד</strong> (+תוספת שבת)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-indigo-500 shrink-0"></span>
+              <span class="text-indigo-800"><strong>חג שעבד</strong> (תעריף חג)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-teal-500 shrink-0"></span>
+              <span class="text-teal-800"><strong>חג מנוחה / בתשלום</strong> (שולם כרגיל)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-purple-500 shrink-0"></span>
+              <span class="text-purple-800"><strong>חופשה שנתית</strong> (שולם + יורד מצבירה)</span>
+            </div>
+          </div>
+
+          <!-- Calendar Days Grid Header (Sun - Sat) -->
+          <div class="grid grid-cols-7 gap-1.5 text-center font-bold text-xs text-slate-500 mb-2">
+            <div class="p-1.5 bg-slate-50 rounded-md">א'</div>
+            <div class="p-1.5 bg-slate-50 rounded-md">ב'</div>
+            <div class="p-1.5 bg-slate-50 rounded-md">ג'</div>
+            <div class="p-1.5 bg-slate-50 rounded-md">ד'</div>
+            <div class="p-1.5 bg-slate-50 rounded-md">ה'</div>
+            <div class="p-1.5 bg-slate-50 rounded-md">ו'</div>
+            <div class="p-1.5 text-amber-800 bg-amber-50/80 border border-amber-200/60 rounded-md">שבת</div>
+          </div>
+
+          <!-- Dynamic Days Container -->
+          <div id="calendarGrid" class="grid grid-cols-7 gap-1.5"></div>
+
+          <!-- Monthly Attendance Summary Bar -->
+          <div class="grid grid-cols-2 sm:grid-cols-6 gap-2 mt-5 pt-4 border-t border-slate-100 text-center">
+            <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100">
+              <span class="text-[10px] text-emerald-700 block font-semibold">חול שעבד</span>
+              <span id="sumRegularDays" class="text-base font-black text-emerald-900">0</span>
+            </div>
+            <div class="bg-slate-100 p-2 rounded-xl border border-slate-200">
+              <span class="text-[10px] text-slate-600 block font-semibold">היעדרויות</span>
+              <span id="sumNotWorkedDays" class="text-base font-black text-slate-700">0</span>
+            </div>
+            <div class="bg-amber-50 p-2 rounded-xl border border-amber-100">
+              <span class="text-[10px] text-amber-700 block font-semibold">שבתות שעבד</span>
+              <span id="sumWeekendDays" class="text-base font-black text-amber-800">0</span>
+            </div>
+            <div class="bg-indigo-50 p-2 rounded-xl border border-indigo-100">
+              <span class="text-[10px] text-indigo-700 block font-semibold">חג שעבד</span>
+              <span id="sumHolidayWorkedDays" class="text-base font-black text-indigo-800">0</span>
+            </div>
+            <div class="bg-teal-50 p-2 rounded-xl border border-teal-100">
+              <span class="text-[10px] text-teal-700 block font-semibold">חג מנוחה ₪</span>
+              <span id="sumHolidayOffDays" class="text-base font-black text-teal-800">0</span>
+            </div>
+            <div class="bg-purple-50 p-2 rounded-xl border border-purple-100">
+              <span class="text-[10px] text-purple-700 block font-semibold">חופשה שנתית</span>
+              <span id="sumVacationDaysTaken" class="text-base font-black text-purple-800">0</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Monthly Adjustments & Notes Card -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-file-invoice-dollar text-primary-600"></i>
+              <span>התאמות שכר והערות לתלוש לחודש זה (ניתן לעריכה)</span>
+            </h3>
+            <span class="text-[11px] text-slate-400">החזר ההוצאות מופיע בהערות התלוש ואינו נספר בברוטו</span>
+          </div>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs text-slate-600 font-semibold block mb-1">בונוס / תוספת מיוחדת (₪)</label>
+              <input type="number" id="inputMonthBonus" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500" value="0" />
+            </div>
+
+            <div>
+              <label class="text-xs text-slate-600 font-semibold block mb-1">ניכויים אחרים / מקדמות נוספות (₪)</label>
+              <input type="number" id="inputMonthOtherDeductions" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-rose-500" value="0" />
+            </div>
+          </div>
+
+          <!-- Pro-rated Expense Note (Editable) -->
+          <div class="bg-slate-50/80 p-3.5 rounded-xl border border-slate-200 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-xs text-slate-700 font-bold flex items-center gap-1.5">
+                <i class="fa-solid fa-receipt text-emerald-600"></i>
+                <span>הערת החזר הוצאות לתלוש (מחושבת אוטומטית לפי ימי עבודה - ניתנת לעריכה):</span>
+              </label>
+              <span id="expenseRatioBadge" class="text-[10px] text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded font-bold">100% (25+ ימי עבודה)</span>
+            </div>
+            <input type="text" id="inputMonthExpenseNote" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500" value="החזר הוצאות חודשי: ₪600.00 (מלא - 25+ ימי עבודה)" />
+            <span class="text-[10px] text-slate-400 block">עבודה של 25 ימים ומעלה = 600 ₪ מלא; פחות מ-25 = (ימי עבודה / 31) × 600</span>
+          </div>
+
+          <div>
+            <label class="text-xs text-slate-600 font-semibold block mb-1">הערות נוספות של המעסיק (יופיעו בתחתית התלוש המודפס):</label>
+            <input type="text" id="inputMonthNotes" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="למשל: תשלום עבור הוצאות נסיעה מיוחדות, אישור חופשה שנתית..." value="תשלום שכר שוטף" />
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Breakdown Column (5 Cols) -->
+      <div class="lg:col-span-5 space-y-6">
+        
+        <!-- Monthly Salary Breakdown Card -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5 sm:p-6">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-receipt text-emerald-600"></i>
+              <span>פירוט שכר חודשי</span>
+            </h2>
+            <span class="text-xs font-semibold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg">חישוב לפי ימי עבודה</span>
+          </div>
+
+          <!-- Calculation List Table -->
+          <div class="space-y-2.5 text-sm">
+            
+            <div class="flex justify-between items-center py-1 text-slate-600">
+              <div>
+                <span class="font-medium">שכר בסיס (לפי ימי עבודה וחופשה)</span>
+                <span id="rowBaseSalarySub" class="text-xs text-slate-400 block">0 מתוך 0 ימי חול</span>
+              </div>
+              <span id="rowBaseSalary" class="font-bold text-slate-800">₪0.00</span>
+            </div>
+
+            <div class="flex justify-between items-center py-1 text-slate-600">
+              <div>
+                <span>תוספת שבתות שעבד</span>
+                <span id="rowWeekendSub" class="text-xs text-slate-400 block">(0 ימים × ₪439.75)</span>
+              </div>
+              <span id="rowWeekendTotal" class="font-bold text-amber-700">₪0.00</span>
+            </div>
+
+            <div class="flex justify-between items-center py-1 text-slate-600">
+              <div>
+                <span>תוספת חגים שעבד</span>
+                <span id="rowHolidaySub" class="text-xs text-slate-400 block">(0 ימים × ₪439.75)</span>
+              </div>
+              <span id="rowHolidayTotal" class="font-bold text-indigo-700">₪0.00</span>
+            </div>
+
+            <div id="rowBonusWrapper" class="flex justify-between items-center py-1 text-slate-600">
+              <span>בונוס / תוספת מיוחדת</span>
+              <span id="rowBonus" class="font-bold text-emerald-600">₪0.00</span>
+            </div>
+
+            <!-- Total Gross Divider -->
+            <div class="pt-2 border-t border-dashed border-slate-200 flex justify-between items-center font-bold text-slate-800">
+              <span>סך הכל שכר ברוטו:</span>
+              <span id="rowGrossTotal" class="text-base font-black text-blue-700">₪0.00</span>
+            </div>
+
+            <!-- Pocket money deduction line (Conditional) -->
+            <div id="pocketMoneyDeductionRow" class="flex justify-between items-center py-1.5 text-rose-700 bg-rose-50/70 px-3 rounded-xl border border-rose-100">
+              <div>
+                <span class="font-semibold">ניכוי מקדמות דמי כיס במזומן</span>
+                <span id="rowPocketSub" class="text-xs text-rose-500 block">4 שבועות × ₪100</span>
+              </div>
+              <span id="rowPocketDeduction" class="font-bold">-₪400.00</span>
+            </div>
+
+            <div id="otherDeductionsRow" class="flex justify-between items-center py-1 text-rose-700 px-3">
+              <span>ניכויים נוספים:</span>
+              <span id="rowOtherDeduction" class="font-bold">-₪0.00</span>
+            </div>
+
+            <!-- Net to Bank Highlight Box -->
+            <div class="mt-4 p-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-xs font-medium text-emerald-100 block">סכום סופי להעברה לבנק</span>
+                  <span class="text-xs text-emerald-100/80">Total Pay at the Bank</span>
+                </div>
+                <div class="text-2xl font-black tracking-tight" id="rowNetBankTotal">₪0.00</div>
+              </div>
+              <div class="mt-2 pt-2 border-t border-emerald-400/40 text-[11px] text-emerald-50 flex items-center justify-between">
+                <span id="bankDestSummary">בנק: לא הוזן | ח-ן: לא הוזן</span>
+                <i class="fa-solid fa-check-double"></i>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Vacation Balance Tracker Widget -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5 sm:p-6">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+            <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-umbrella-beach text-teal-600"></i>
+              <span>מאזן ימי חופשה שנתית ופדיון</span>
+            </h2>
+            <span class="text-[11px] font-bold px-2 py-0.5 bg-teal-50 text-teal-700 rounded">14 ימים בשנה</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 text-center text-xs mb-3">
+            <div class="bg-slate-50 p-2 rounded-xl border border-slate-100">
+              <span class="text-slate-500 block text-[10px]">נצברו מתחילה</span>
+              <span id="vacationTotalAccrued" class="text-sm font-bold text-slate-800">0.0 ימים</span>
+            </div>
+            <div class="bg-rose-50 p-2 rounded-xl border border-rose-100">
+              <span class="text-rose-600 block text-[10px]">נוצלו בפועל</span>
+              <span id="vacationTotalUsed" class="text-sm font-bold text-rose-700">0 ימים</span>
+            </div>
+            <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100">
+              <span class="text-emerald-700 block text-[10px] font-bold">יתרה לפדיון</span>
+              <span id="vacationRemainingDays" class="text-sm font-black text-emerald-800">0.0 ימים</span>
+            </div>
+          </div>
+
+          <!-- Vacation Dates Taken List -->
+          <div class="bg-slate-50/80 p-2.5 rounded-xl border border-slate-100 text-[11px]">
+            <span class="font-bold text-slate-700 block mb-1">פירוט תאריכי חופשה שנוצלו:</span>
+            <div id="vacationDatesList" class="text-slate-500 max-h-16 overflow-y-auto space-y-0.5">
+              <span class="text-slate-400 italic">לא נרשמו ימי חופשה שנוצלו עד כה.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Social Benefits & Reserve Calculator Card (מחושב ישירות מסך הברוטו) -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5 sm:p-6">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <div>
+              <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved text-purple-600"></i>
+                <span>תנאים סוציאליים וחיסכון מעסיק</span>
+              </h2>
+              <p class="text-xs text-slate-400">סכומים שעליך לשמור מדי חודש לזכויות העובד/ת (מחושב מסך הברוטו)</p>
+            </div>
+            <span id="seniorityBadge" class="text-xs font-semibold px-2.5 py-1 bg-purple-50 text-purple-700 rounded-lg">וותק: 12 חודשים</span>
+          </div>
+
+          <div class="space-y-2.5 text-xs sm:text-sm">
+            
+            <!-- Pension -->
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+              <div class="flex justify-between items-center font-medium text-slate-700">
+                <div class="flex items-center gap-1.5">
+                  <i class="fa-solid fa-umbrella text-indigo-500"></i>
+                  <span>פנסיה / גמל (6.5%)</span>
+                  <span id="pensionStatusBadge" class="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold">פעיל (מחודש 7)</span>
+                </div>
+                <span id="calcPensionAmount" class="font-bold text-slate-900">₪418.86</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-0.5">מחושב מסך שכר ברוטו כולל (מתחיל אוטומטית מחודש 7 להעסקה)</p>
+            </div>
+
+            <!-- Severance Main (6%) -->
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+              <div class="flex justify-between items-center font-medium text-slate-700">
+                <div class="flex items-center gap-1.5">
+                  <i class="fa-solid fa-handshake-angle text-blue-500"></i>
+                  <span>פיצויים שוטפים (6.00%)</span>
+                  <span class="text-[10px] px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded font-semibold">מהחודש ה-1</span>
+                </div>
+                <span id="calcSeveranceMainAmount" class="font-bold text-slate-900">₪386.64</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-0.5">הפרשה חודשית שוטפת מסך שכר ברוטו כולל (סעיף 14)</p>
+            </div>
+
+            <!-- Severance Top-up (2.33%) -->
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+              <div class="flex justify-between items-center font-medium text-slate-700">
+                <div class="flex items-center gap-1.5">
+                  <i class="fa-solid fa-plus-circle text-sky-500"></i>
+                  <span>תוספת / השלמת פיצויים (2.33%)</span>
+                </div>
+                <span id="calcSeveranceTopupAmount" class="font-bold text-slate-900">₪150.15</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-0.5">השלמה ל-8.33% מסך שכר ברוטו כולל לקופה נפרדת / סיום העסקה</p>
+            </div>
+
+            <!-- Convalescence (הבראה) -->
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+              <div class="flex justify-between items-center font-medium text-slate-700">
+                <div class="flex items-center gap-1.5">
+                  <i class="fa-solid fa-spa text-teal-500"></i>
+                  <span>דמי הבראה (הפרשה חודשית)</span>
+                </div>
+                <span id="calcConvalescenceAmount" class="font-bold text-slate-900">₪174.16</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-0.5" id="calcConvalescenceNote">לפי 5 ימים בשנה × ₪418 ליום (מחולק ב-12)</p>
+            </div>
+
+            <!-- Annual Leave Accrual -->
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+              <div class="flex justify-between items-center font-medium text-slate-700">
+                <div class="flex items-center gap-1.5">
+                  <i class="fa-solid fa-sun text-amber-500"></i>
+                  <span>חופשה שנתית (צבירה חודשית)</span>
+                </div>
+                <span id="calcVacationAmount" class="font-bold text-slate-900">₪300.79</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-0.5" id="calcVacationNote">לפי 1.167 ימים בחודש × ₪257.75 ליום</p>
+            </div>
+
+            <!-- Sick Leave -->
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+              <div class="flex justify-between items-center font-medium text-slate-700">
+                <div class="flex items-center gap-1.5">
+                  <i class="fa-solid fa-notes-medical text-rose-500"></i>
+                  <span>ימי מחלה (קרן שמורה)</span>
+                </div>
+                <span id="calcSickAmount" class="font-bold text-slate-900">₪386.62</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-0.5" id="calcSickNote">לפי 1.5 ימים בחודש × ₪257.75 ליום</p>
+            </div>
+
+            <!-- National Insurance -->
+            <div class="p-2.5 rounded-xl bg-blue-50/50 border border-blue-100">
+              <div class="flex justify-between items-center font-medium text-slate-700">
+                <div class="flex items-center gap-1.5">
+                  <i class="fa-solid fa-landmark text-blue-600"></i>
+                  <span>ביטוח לאומי מעסיק (3.6%)</span>
+                </div>
+                <span id="calcNationalInsuranceAmount" class="font-bold text-blue-900">₪253.58</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-0.5">משולם ישירות למוסד לביטוח לאומי מדי רבעון</p>
+            </div>
+
+            <!-- Total Savings Required -->
+            <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center bg-purple-50 p-3 rounded-xl border border-purple-200">
+              <div>
+                <span class="font-bold text-purple-900 block text-sm">סה"כ לחיסכון מעסיק החודש:</span>
+                <span class="text-[11px] text-purple-700">(פנסיה + פיצויים 8.33% + הבראה + חופשה + מחלה)</span>
+              </div>
+              <span id="calcTotalSavingsAmount" class="text-xl font-black text-purple-900">₪1,816.42</span>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- VIEW 2: SOCIAL BENEFITS & EMPLOYER SAVINGS REPORT -->
+  <main id="reportsViewContent" class="hidden flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 no-print">
+
+    <!-- Report Header & Controls Bar -->
+    <div class="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center text-xl font-bold shadow-sm">
+            <i class="fa-solid fa-piggy-bank"></i>
+          </div>
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+              <span>דוח ריכוז תנאים סוציאליים וחיסכון מעסיק</span>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">Bilingual Report</span>
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">EMPLOYER SOCIAL BENEFITS & SAVINGS ACCRUAL REPORT</p>
+          </div>
+        </div>
+
+        <!-- Action Buttons (Export to Excel & Print) -->
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="window.exportSocialBenefitsToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow-md hover:shadow-lg">
+            <i class="fa-solid fa-file-excel text-base"></i>
+            <span>ייצוא לאקסל (Excel / CSV)</span>
+          </button>
+
+          <button type="button" onclick="window.printAdminReport()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow-md">
+            <i class="fa-solid fa-print"></i>
+            <span>הדפס דוח (A4)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter Selectors & Presets -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end text-xs">
+        <div>
+          <label class="block text-slate-600 font-bold mb-1">בחר עובד/ת / Select Caregiver</label>
+          <select id="reportFilterWorker" onchange="window.handleReportWorkerChange(this.value)" class="w-full bg-slate-900 text-white border border-slate-700 rounded-xl px-3 py-2 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500">
+            <!-- Injected via JS -->
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-slate-600 font-bold mb-1">מחודש (From Month)</label>
+          <input type="month" id="reportFilterFromDate" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500" />
+        </div>
+
+        <div>
+          <label class="block text-slate-600 font-bold mb-1">עד חודש (To Month)</label>
+          <input type="month" id="reportFilterToDate" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500" />
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <button type="button" onclick="window.generateAdminReport()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2.5 px-3 rounded-xl transition text-xs shadow flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-filter"></i>
+            <span>רענן דוח וסנן</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Range Presets -->
+      <div class="flex flex-wrap items-center gap-2 pt-1 text-xs">
+        <span class="text-slate-400 font-semibold text-[11px]">טווח מהיר:</span>
+        <button type="button" onclick="window.setPresetReportRange('currentMonth')" class="px-2.5 py-1 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-900 font-bold transition text-[11px]">
+          החודש הנוכחי (ברירת מחדל)
+        </button>
+        <button type="button" onclick="window.setPresetReportRange('all')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-purple-50 hover:text-purple-700 text-slate-600 font-medium transition text-[11px]">
+          מתחילת ההעסקה
+        </button>
+        <button type="button" onclick="window.setPresetReportRange('last12')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-purple-50 hover:text-purple-700 text-slate-600 font-medium transition text-[11px]">
+          12 חודשים אחרונים
+        </button>
+        <button type="button" onclick="window.setPresetReportRange('currentYear')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-purple-50 hover:text-purple-700 text-slate-600 font-medium transition text-[11px]">
+          שנה נוכחית (2026)
+        </button>
+      </div>
+    </div>
+
+    <!-- Cumulative KPI Summary Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      
+      <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm text-center">
+        <span class="text-[11px] text-slate-500 block font-semibold">סה"כ פנסיה (6.5%)</span>
+        <span class="text-xs text-slate-400 block mb-1">Pension Fund</span>
+        <span id="kpiSumPension" class="text-base sm:text-lg font-black text-indigo-700">₪0.00</span>
+      </div>
+
+      <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm text-center">
+        <span class="text-[11px] text-slate-500 block font-semibold">פיצויים שוטפים (6%)</span>
+        <span class="text-xs text-slate-400 block mb-1">Severance (6%)</span>
+        <span id="kpiSumSeveranceMain" class="text-base sm:text-lg font-black text-blue-700">₪0.00</span>
+      </div>
+
+      <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm text-center">
+        <span class="text-[11px] text-slate-500 block font-semibold">השלמת פיצויים (2.33%)</span>
+        <span class="text-xs text-slate-400 block mb-1">Severance Top-up</span>
+        <span id="kpiSumSeveranceTopup" class="text-base sm:text-lg font-black text-sky-700">₪0.00</span>
+      </div>
+
+      <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm text-center">
+        <span class="text-[11px] text-slate-500 block font-semibold">סה"כ דמי הבראה</span>
+        <span class="text-xs text-slate-400 block mb-1">Convalescence</span>
+        <span id="kpiSumConvalescence" class="text-base sm:text-lg font-black text-teal-700">₪0.00</span>
+      </div>
+
+      <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm text-center">
+        <span class="text-[11px] text-slate-500 block font-semibold">סה"כ חופשה + מחלה</span>
+        <span class="text-xs text-slate-400 block mb-1">Leave & Sick</span>
+        <span id="kpiSumLeaveAndSick" class="text-base sm:text-lg font-black text-amber-700">₪0.00</span>
+      </div>
+
+      <div class="bg-purple-50 p-3.5 rounded-2xl border border-purple-200 shadow-sm text-center ring-2 ring-purple-500/20">
+        <span class="text-[11px] text-purple-900 block font-bold">סה"כ חיסכון מעסיק</span>
+        <span class="text-xs text-purple-600 block mb-1">Total Employer Savings</span>
+        <span id="kpiSumTotalSavings" class="text-base sm:text-lg font-black text-purple-900">₪0.00</span>
+      </div>
+
+    </div>
+
+    <!-- Main Social Benefits Breakdown Table -->
+    <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
+      <div class="p-4 bg-slate-50/80 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-table-list text-purple-700"></i>
+            <span>טבלת פירוט חודשי של כלל התנאים הסוציאליים והפרשות המעסיק</span>
+          </h3>
+          <span class="text-xs text-slate-500" id="reportTablePeriodLabel">תקופה: 08/2026 עד 08/2026</span>
+        </div>
+        <span class="text-[11px] text-slate-400 font-mono">כל הסכומים מוצגים בש"ח (ILS)</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs text-right border-collapse">
+          <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 text-[11px]">
+            <tr>
+              <th class="p-2.5 whitespace-nowrap">
+                <span>חודש ושנה</span>
+                <span class="block text-[10px] text-slate-500 font-normal">Month / Period</span>
+              </th>
+              <th class="p-2.5 text-center whitespace-nowrap">
+                <span>וותק</span>
+                <span class="block text-[10px] text-slate-500 font-normal">Seniority</span>
+              </th>
+              <th class="p-2.5 text-left whitespace-nowrap">
+                <span>שכר בסיס</span>
+                <span class="block text-[10px] text-slate-500 font-normal">Base Salary</span>
+              </th>
+              <th class="p-2.5 text-left whitespace-nowrap bg-indigo-50/50 text-indigo-950">
+                <span>פנסיה (6.5%)</span>
+                <span class="block text-[10px] text-indigo-700 font-normal">Pension (6.5%)</span>
+              </th>
+              <th class="p-2.5 text-left whitespace-nowrap bg-blue-50/50 text-blue-950">
+                <span>פיצויים שוטפים (6%)</span>
+                <span class="block text-[10px] text-blue-700 font-normal">Severance (6%)</span>
+              </th>
+              <th class="p-2.5 text-left whitespace-nowrap bg-sky-50/50 text-sky-950">
+                <span>השלמת פיצויים (2.33%)</span>
+                <span class="block text-[10px] text-sky-700 font-normal">Severance Top-up</span>
+              </th>
+              <th class="p-2.5 text-left whitespace-nowrap bg-teal-50/50 text-teal-950">
+                <span>דמי הבראה</span>
+                <span class="block text-[10px] text-teal-700 font-normal">Convalescence</span>
+              </th>
+              <th class="p-2.5 text-left whitespace-nowrap bg-amber-50/50 text-amber-950">
+                <span>חופשה שנתית</span>
+                <span class="block text-[10px] text-amber-700 font-normal">Annual Leave</span>
+              </th>
+              <th class="p-2.5 text-left whitespace-nowrap bg-rose-50/50 text-rose-950">
+                <span>ימי מחלה</span>
+                <span class="block text-[10px] text-rose-700 font-normal">Sick Leave</span>
+              </th>
+              <th class="p-2.5 text-left whitespace-nowrap bg-slate-50 text-slate-700">
+                <span>ביטוח לאומי (3.6%)</span>
+                <span class="block text-[10px] text-slate-500 font-normal">Nat. Insurance</span>
+              </th>
+              <th class="p-2.5 text-left whitespace-nowrap bg-purple-100 text-purple-950 font-black">
+                <span>סה"כ חיסכון מעסיק</span>
+                <span class="block text-[10px] text-purple-800 font-bold">Total Savings</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="reportSocialTableBody" class="divide-y divide-slate-100 text-slate-800 font-mono">
+            <!-- Injected dynamically via JS -->
+          </tbody>
+          <tfoot id="reportSocialTableFoot" class="bg-purple-50/90 font-bold border-t-2 border-purple-200 text-purple-950 font-mono text-xs">
+            <!-- Summary Totals Row Injected via JS -->
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: Day Activity Selector Modal -->
+  <div id="daySelectorModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <h3 class="font-bold text-slate-800 text-base" id="selectedDateTitle">01/08/2026</h3>
+          <p class="text-xs text-slate-400">בחר את סוג הפעילות עבור יום זה:</p>
+        </div>
+        <button type="button" onclick="window.closeDayModal()" class="text-slate-400 hover:text-slate-600 text-lg p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 gap-2 text-xs font-semibold">
+        <button type="button" onclick="window.setDayType('regular_worked')" class="day-option-btn p-3 rounded-xl border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 flex items-center justify-between transition" data-type="regular_worked">
+          <div class="flex items-center gap-2.5">
+            <span class="w-3.5 h-3.5 rounded-full bg-emerald-500"></span>
+            <span>יום חול שעבד (נספר לשכר הבסיס)</span>
+          </div>
+          <span class="text-[10px] text-emerald-700">🟢 עבד</span>
+        </button>
+
+        <button type="button" onclick="window.setDayType('not_worked')" class="day-option-btn p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 flex items-center justify-between transition" data-type="not_worked">
+          <div class="flex items-center gap-2.5">
+            <span class="w-3.5 h-3.5 rounded-full bg-slate-300 border border-slate-400"></span>
+            <span>לא עבד / היעדרות (לא שולם)</span>
+          </div>
+          <span class="text-[10px] text-slate-500">⚪ ללא תשלום</span>
+        </button>
+
+        <button type="button" onclick="window.setDayType('weekend_worked')" class="day-option-btn p-3 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-900 flex items-center justify-between transition" data-type="weekend_worked">
+          <div class="flex items-center gap-2.5">
+            <span class="w-3.5 h-3.5 rounded-full bg-amber-500"></span>
+            <span>שבת שעבד (+תוספת שבת)</span>
+          </div>
+          <span class="text-[10px] text-amber-700">⭐ שבת+</span>
+        </button>
+
+        <button type="button" onclick="window.setDayType('weekend_rest')" class="day-option-btn p-3 rounded-xl border border-slate-200 bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-between transition" data-type="weekend_rest">
+          <div class="flex items-center gap-2.5">
+            <span class="w-3.5 h-3.5 rounded-full bg-slate-400"></span>
+            <span>שבת מנוחה (ללא עבודה)</span>
+          </div>
+          <span class="text-[10px] text-slate-500">מנוחה</span>
+        </button>
+
+        <button type="button" onclick="window.setDayType('holiday_worked')" class="day-option-btn p-3 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 flex items-center justify-between transition" data-type="holiday_worked">
+          <div class="flex items-center gap-2.5">
+            <span class="w-3.5 h-3.5 rounded-full bg-indigo-500"></span>
+            <span>חג שעבד (תעריף חג בלבד - ללא כפל)</span>
+          </div>
+          <span class="text-[10px] text-indigo-700">🎉 חג+</span>
+        </button>
+
+        <button type="button" onclick="window.setDayType('holiday_off')" class="day-option-btn p-3 rounded-xl border border-teal-200 bg-teal-50 hover:bg-teal-100 text-teal-900 flex items-center justify-between transition" data-type="holiday_off">
+          <div class="flex items-center gap-2.5">
+            <span class="w-3.5 h-3.5 rounded-full bg-teal-500"></span>
+            <span>חג מנוחה / בתשלום (יום חג מתוך 9 שנתיים)</span>
+          </div>
+          <span class="text-[10px] text-teal-700">🏖️ חג ₪</span>
+        </button>
+
+        <button type="button" onclick="window.setDayType('annual_vacation')" class="day-option-btn p-3 rounded-xl border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-900 flex items-center justify-between transition" data-type="annual_vacation">
+          <div class="flex items-center gap-2.5">
+            <span class="w-3.5 h-3.5 rounded-full bg-purple-500"></span>
+            <span>חופשה שנתית (שולם כרגיל + נגרע מצבירה לפדיון)</span>
+          </div>
+          <span class="text-[10px] text-purple-700">🌴 חופשה</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Workers Directory & Management -->
+  <div id="workerManagerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-100">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <i class="fa-solid fa-users"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base">ניהול והחלפת כרטיסי עובדים</h3>
+            <p class="text-xs text-slate-400">הוסף עובד חדש, ערוך פרטים או החלף בין עובדים ללא דריסת נתונים</p>
+          </div>
+        </div>
+        <button type="button" onclick="window.closeWorkerManagerModal()" class="text-slate-400 hover:text-white p-2 rounded-lg text-lg transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body: Worker List -->
+      <div class="p-6 overflow-y-auto space-y-4 flex-grow">
+        
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <span class="text-xs font-bold text-slate-600">רשימת העובדים במערכת:</span>
+          <button type="button" onclick="window.addNewWorker()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-user-plus"></i>
+            <span>+ הוסף עובד/ת חדש/ה</span>
+          </button>
+        </div>
+
+        <div id="workersDirectoryList" class="space-y-2.5"></div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
+        <button type="button" onclick="window.closeWorkerManagerModal()" class="px-5 py-2 text-xs font-bold text-slate-700 bg-slate-200 hover:bg-slate-300 rounded-xl transition">
+          סגור
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: Worker Profile & Dynamic Rates Settings -->
+  <div id="settingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-100">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <i class="fa-solid fa-sliders"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base" id="settingsModalTitle">הגדרות כרטיס עובד/ת ותעריפים</h3>
+            <p class="text-xs text-slate-400">פרטים אישיים, תעריפי עבודה ותנאים סוציאליים אישיים</p>
+          </div>
+        </div>
+        <button type="button" onclick="window.closeSettingsModal()" class="text-slate-400 hover:text-white p-2 rounded-lg text-lg transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto space-y-6 flex-grow">
+        
+        <!-- Section 1: Employee & Employer Details -->
+        <div>
+          <h4 class="text-sm font-bold text-slate-800 pb-2 border-b border-slate-100 mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-user-tag text-emerald-600"></i>
+            <span>פרטי העובד/ת והמעסיק</span>
+          </h4>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">שם מלא של העובד/ת (באנגלית / עברית)</label>
+              <input type="text" id="cfgWorkerName" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="Maria Santos" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">מספר דרכון / אשרת עבודה (Passport / Visa)</label>
+              <input type="text" id="cfgWorkerPassport" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="P12345678" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">תאריך תחילת העבודה (קריטי לוותק, פנסיה וחופשות)</label>
+              <input type="date" id="cfgWorkerStartDate" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="2025-08-01" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">שם המעסיק / משפחה</label>
+              <input type="text" id="cfgEmployerName" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="ישראל ישראלי" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">פרטי חשבון בנק של העובד (בנק, סניף, מספר חשבון)</label>
+              <input type="text" id="cfgWorkerBank" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="בנק לאומי, סניף 800, חשבון 12345678" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">כתובת / טלפון מעסיק</label>
+              <input type="text" id="cfgEmployerContact" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="תל אביב, 050-1234567" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Salary & Pocket Money Settings -->
+        <div>
+          <h4 class="text-sm font-bold text-slate-800 pb-2 border-b border-slate-100 mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-money-bill-wave text-emerald-600"></i>
+            <span>שכר בסיס ומדיניות דמי כיס</span>
+          </h4>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">שכר בסיס לחודש מלא (₪)</label>
+              <input type="number" id="cfgBaseSalary" class="w-full border border-slate-200 rounded-xl px-3 py-2 font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="6444" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">החזר הוצאות לחודש מלא (₪)</label>
+              <input type="number" id="cfgExpenseDefault" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="600" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">דמי כיס שבועיים (₪)</label>
+              <input type="number" id="cfgPocketWeekly" class="w-full border border-slate-200 rounded-xl px-3 py-2 font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="100" />
+            </div>
+          </div>
+
+          <!-- Pocket Money Mode Toggle -->
+          <div class="mt-4 p-3.5 bg-amber-50/60 rounded-2xl border border-amber-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span class="text-xs font-bold text-amber-900 block">אופן תשלום דמי הכיס השבועיים:</span>
+              <p class="text-xs text-amber-700">בחר האם דמי הכיס ניתנים במזומן (ויקוזזו מההעברה לבנק) או מועברים ישירות לבנק</p>
+            </div>
+            <div class="flex items-center bg-white p-1 rounded-xl border border-amber-300 shadow-sm shrink-0">
+              <button type="button" id="pocketModeCashBtn" onclick="window.updatePocketToggleUI('cash')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition bg-amber-500 text-white shadow">
+                מזומן (קיזוז בתלוש)
+              </button>
+              <button type="button" id="pocketModeBankBtn" onclick="window.updatePocketToggleUI('bank')" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition text-slate-600 hover:text-slate-900">
+                העברה לבנק (ללא קיזוז)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Dynamic Rates & Legal Constants -->
+        <div>
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100 mb-3">
+            <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-calculator text-emerald-600"></i>
+              <span>תעריפים משתנים, פיצויים מפוצלים וחופשות</span>
+            </h4>
+            <button type="button" onclick="window.autoCalculateDailyRates()" class="text-xs text-emerald-700 hover:text-emerald-800 font-semibold flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded-lg">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              <span>חשב תעריפים לפי שכר הבסיס</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">תעריף יום רגיל (₪ / יום)</label>
+              <input type="number" step="0.01" id="cfgRateRegularDay" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="257.75" />
+              <span class="text-[10px] text-slate-400">בסיס / 25 ימי עבודה</span>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">תעריף שבת / חג (₪ / יום)</label>
+              <input type="number" step="0.01" id="cfgRateWeekendDay" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="439.75" />
+              <span class="text-[10px] text-slate-400">תעריף מנוחה שבועית (150%+)</span>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">תעריף יום הבראה (₪ / יום)</label>
+              <input type="number" step="0.01" id="cfgRateConvalescence" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="418.00" />
+              <span class="text-[10px] text-slate-400">צו הרחבה במשק</span>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">ימי הבראה שנתיים (לפי וותק)</label>
+              <input type="number" step="0.5" id="cfgDaysConvalescenceYear" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="5" />
+              <span class="text-[10px] text-slate-400">שנה 1: 5 ימים, שנה 2-3: 6 ימים</span>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">צבירת ימי חופשה (ימים / חודש)</label>
+              <input type="number" step="0.001" id="cfgDaysVacationMonth" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="1.167" />
+              <span class="text-[10px] text-slate-400">14 ימים בשנה (1.167 לחודש)</span>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">צבירת ימי מחלה (ימים / חודש)</label>
+              <input type="number" step="0.1" id="cfgDaysSickMonth" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="1.5" />
+              <span class="text-[10px] text-slate-400">1.5 ימים לכל חודש עבודה</span>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">הפרשת פנסיה מעסיק (%)</label>
+              <input type="number" step="0.1" id="cfgPensionPct" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="6.5" />
+              <span class="text-[10px] text-slate-400">מופעל מחודש 7 ואילך</span>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">פיצויים שוטפים (%)</label>
+              <input type="number" step="0.01" id="cfgSeveranceMainPct" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="6.00" />
+              <span class="text-[10px] text-slate-400">סעיף 14 (6% מהחודש ה-1)</span>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">השלמת פיצויים (%)</label>
+              <input type="number" step="0.01" id="cfgSeveranceTopupPct" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="2.33" />
+              <span class="text-[10px] text-slate-400">תוספת לקופה למקרה עזיבה (2.33%)</span>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">ביטוח לאומי מעסיק (%)</label>
+              <input type="number" step="0.1" id="cfgNationalInsurancePct" class="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="3.6" />
+              <span class="text-[10px] text-slate-400">משולם ישירות למוסד</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+        <button type="button" onclick="window.resetSettingsDefaults()" class="text-xs text-rose-600 hover:text-rose-800 font-semibold">
+          איפוס לברירות מחדל חוקיות
+        </button>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="window.closeSettingsModal()" class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-200 rounded-xl transition">
+            ביטול
+          </button>
+          <button type="button" onclick="window.saveSettingsForm()" class="px-5 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl shadow-md transition flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>שמור נתונים</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: Google Authentication & Cloud Sync -->
+  <div id="authModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+            <i class="fa-brands fa-google text-base"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-800 text-base">התחברות וסנכרון ענן</h3>
+            <p class="text-xs text-slate-400">סנכרן את נתוני השכר בין מכשירים באופן מאובטח</p>
+          </div>
+        </div>
+        <button type="button" onclick="window.closeAuthModal()" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Logged In State Content -->
+      <div id="authModalLoggedInSection" class="hidden space-y-4">
+        <div class="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-center gap-3">
+          <img id="authModalUserImg" class="w-12 h-12 rounded-full object-cover border-2 border-emerald-500" src="https://placehold.co/100x100/10b981/ffffff?text=U" alt="User Avatar" />
+          <div class="overflow-hidden">
+            <div class="text-xs text-emerald-700 font-bold">מחובר כעת לחשבון Google:</div>
+            <div id="authModalUserName" class="font-black text-slate-800 text-sm truncate">משתמש</div>
+            <div id="authModalUserEmail" class="text-xs text-slate-500 font-mono truncate">user@gmail.com</div>
+          </div>
+        </div>
+
+        <div class="space-y-1.5 text-xs text-slate-600 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+          <div class="flex items-center justify-between font-bold text-slate-700">
+            <span>סטטוס ענן:</span>
+            <span class="text-emerald-600 flex items-center gap-1"><i class="fa-solid fa-cloud-arrow-up"></i> סנכרון בזמן אמת פעיל</span>
+          </div>
+          <p class="text-[11px] text-slate-500">כל שינוי ביומן הנוכחות, בשכר ובתעריפים נשמר מיידית ומאובטח בענן תחת חשבונך.</p>
+        </div>
+
+        <div class="flex gap-2">
+          <button type="button" onclick="window.handleSignOut()" class="w-full p-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl border border-rose-200 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>התנתק מהחשבון</span>
+          </button>
+          <button type="button" onclick="window.closeAuthModal()" class="w-full p-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl transition">
+            סגור
+          </button>
+        </div>
+      </div>
+
+      <!-- Logged Out State Content -->
+      <div id="authModalLoggedOutSection" class="space-y-4">
+        <p class="text-xs text-slate-500 leading-relaxed">
+          התחברות באמצעות חשבון Google מאפשרת לך לגשת לנתוני השכר והעובדים מכל טלפון או מחשב, עם גיבוי אוטומטי ומאובטח.
+        </p>
+
+        <!-- Big Google Sign In Button -->
+        <button type="button" onclick="window.loginWithGoogle()" class="w-full py-3 px-4 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm rounded-2xl border-2 border-slate-200 hover:border-blue-500 shadow-sm transition flex items-center justify-center gap-3">
+          <svg class="w-5 h-5" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          <span>המשך עם חשבון Google</span>
+        </button>
+
+        <div class="relative flex py-1 items-center">
+          <div class="flex-grow border-t border-slate-200"></div>
+          <span class="flex-shrink mx-2 text-[10px] text-slate-400 font-semibold">או המשך במצב אורח</span>
+          <div class="flex-grow border-t border-slate-200"></div>
+        </div>
+
+        <button type="button" onclick="window.closeAuthModal()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition text-center">
+          המשך ללא התחברות (שמירה במחשב בלבד)
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: Backup & Restore Manager -->
+  <div id="backupModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-database text-emerald-600 text-lg"></i>
+          <h3 class="font-bold text-slate-800 text-base">גיבוי ושחזור נתוני שכר</h3>
+        </div>
+        <button type="button" onclick="window.closeBackupModal()" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-500 leading-relaxed">
+        באפשרותך להוריד קובץ גיבוי של כלל נתוני העובדים, התעריפים ויומני הנוכחות למחשבך, או לטעון קובץ גיבוי קיים בכל עת.
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+        <button type="button" onclick="window.exportBackup()" class="p-3 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl flex flex-col items-center justify-center gap-2 text-xs font-bold transition">
+          <i class="fa-solid fa-file-arrow-down text-lg text-emerald-400"></i>
+          <span>הורד גיבוי מלא (JSON)</span>
+        </button>
+
+        <button type="button" onclick="window.triggerImport()" class="p-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-2xl flex flex-col items-center justify-center gap-2 text-xs font-bold transition">
+          <i class="fa-solid fa-file-arrow-up text-lg text-emerald-600"></i>
+          <span>טען גיבוי מקובץ</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRINT / EXPORT AREA: Official A4 Payslip (ללא מאזן חופשה) -->
+  <div id="printArea" class="bg-white text-slate-900 font-sans p-6 sm:p-8 max-w-[210mm] mx-auto border border-slate-200 sm:my-8 shadow-xl print:shadow-none print:border-none print:m-0 print:p-0">
+    
+    <!-- Slip Header & Title -->
+    <div class="border-b-2 border-slate-800 pb-4 mb-4">
+      <div class="flex justify-between items-start">
+        <div>
+          <h1 class="text-2xl font-black tracking-tight text-slate-900">תלוש שכר ודוח תשלום חודשי</h1>
+          <h2 class="text-sm font-bold text-slate-500 uppercase tracking-wider">MONTHLY PAYSLIP & PAYMENT STATEMENT</h2>
+        </div>
+        <div class="text-left">
+          <div class="text-xs text-slate-400 font-semibold">חודש שכר / Pay Period</div>
+          <div class="text-lg font-black text-slate-800" id="printSlipPeriod">08/2026</div>
+          <div class="text-[11px] text-slate-500" id="printGeneratedDate">הופק בתאריך: 30/08/2026</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Employer & Caregiver Details Boxes -->
+    <div class="grid grid-cols-2 gap-4 mb-4 text-xs">
+      
+      <!-- Caregiver Details -->
+      <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
+        <div class="font-bold text-slate-800 border-b border-slate-200 pb-1 text-sm flex items-center justify-between">
+          <span>פרטי העובד/ת / Caregiver</span>
+          <i class="fa-solid fa-user text-slate-400 text-xs"></i>
+        </div>
+        <div class="grid grid-cols-3 gap-1 pt-1">
+          <span class="text-slate-500">שם מלא / Name:</span>
+          <span class="col-span-2 font-bold text-slate-800" id="printWorkerName">Maria Santos</span>
+          
+          <span class="text-slate-500">דרכון / Passport:</span>
+          <span class="col-span-2 font-mono font-bold text-slate-800" id="printWorkerPassport">P12345678</span>
+
+          <span class="text-slate-500">ת. התחלה / Start:</span>
+          <span class="col-span-2 font-mono text-slate-700" id="printWorkerStartDate">01/08/2025</span>
+
+          <span class="text-slate-500">וותק / Seniority:</span>
+          <span class="col-span-2 font-semibold text-slate-700" id="printWorkerSeniority">12 חודשים</span>
+
+          <span class="text-slate-500">בנק / Bank:</span>
+          <span class="col-span-2 text-slate-700" id="printWorkerBank">בנק לאומי, סניף 800</span>
+        </div>
+      </div>
+
+      <!-- Employer Details -->
+      <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
+        <div class="font-bold text-slate-800 border-b border-slate-200 pb-1 text-sm flex items-center justify-between">
+          <span>פרטי המעסיק / Employer</span>
+          <i class="fa-solid fa-house-chimney-user text-slate-400 text-xs"></i>
+        </div>
+        <div class="grid grid-cols-3 gap-1 pt-1">
+          <span class="text-slate-500">שם מעסיק / Name:</span>
+          <span class="col-span-2 font-bold text-slate-800" id="printEmployerName">ישראל ישראלי</span>
+
+          <span class="text-slate-500">פרטי קשר / Contact:</span>
+          <span class="col-span-2 text-slate-700" id="printEmployerContact">תל אביב, 050-1234567</span>
+
+          <span class="text-slate-500">ימי עבודה בפועל:</span>
+          <span class="col-span-2 font-semibold text-slate-800" id="printDaysSummary">0 ימי חול עבד</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Earnings & Additions Table -->
+    <div class="mb-3">
+      <div class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+        <span>פירוט תשלומי שכר ותוספות / EARNINGS & ALLOWANCES</span>
+      </div>
+
+      <table class="w-full text-xs text-right border border-slate-200">
+        <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+          <tr>
+            <th class="p-1.5">תיאור התשלום / Description</th>
+            <th class="p-1.5 text-center">כמות / Units</th>
+            <th class="p-1.5 text-center">תעריף / Rate</th>
+            <th class="p-1.5 text-left">סה"כ לתשלום / Total (₪)</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 text-slate-800">
+          <tr>
+            <td class="p-1.5 font-medium">
+              <span>שכר בסיס (לפי ימי עבודה וחופשה) / Base Salary</span>
+              <span id="printBaseSalaryRatioSub" class="text-[10px] text-slate-500 block">(0 מתוך 0 ימי חול)</span>
+            </td>
+            <td class="p-1.5 text-center" id="printUnitsBaseSalary">0 ימים</td>
+            <td class="p-1.5 text-center" id="printRateBaseSalary">₪257.75</td>
+            <td class="p-1.5 text-left font-bold" id="printRowBaseSalary">₪0.00</td>
+          </tr>
+          <tr>
+            <td class="p-1.5 font-medium">תוספת עבודה בשבתות / Weekend Days Worked</td>
+            <td class="p-1.5 text-center" id="printUnitsWeekend">0 ימים</td>
+            <td class="p-1.5 text-center" id="printRateWeekend">₪439.75</td>
+            <td class="p-1.5 text-left font-bold text-amber-900" id="printRowWeekend">₪0.00</td>
+          </tr>
+          <tr>
+            <td class="p-1.5 font-medium">תוספת עבודה בחגים / Official Holidays Worked</td>
+            <td class="p-1.5 text-center" id="printUnitsHoliday">0 ימים</td>
+            <td class="p-1.5 text-center" id="printRateHoliday">₪439.75</td>
+            <td class="p-1.5 text-left font-bold text-indigo-900" id="printRowHoliday">₪0.00</td>
+          </tr>
+          <tr id="printBonusRow">
+            <td class="p-1.5 font-medium">בונוס / תוספת מיוחדת / Special Allowance</td>
+            <td class="p-1.5 text-center">1</td>
+            <td class="p-1.5 text-center">-</td>
+            <td class="p-1.5 text-left font-bold text-emerald-800" id="printRowBonus">₪0.00</td>
+          </tr>
+        </tbody>
+        <tfoot class="bg-slate-50 font-bold border-t-2 border-slate-300">
+          <tr>
+            <td colspan="3" class="p-1.5 text-slate-900">סך הכל שכר ברוטו / Total Gross Earnings</td>
+            <td class="p-1.5 text-left text-sm font-black text-slate-900" id="printGrossTotal">₪0.00</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- Deductions & Pocket Money Table -->
+    <div class="mb-3">
+      <div class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-rose-600"></span>
+        <span>ניכויים ומקדמות / DEDUCTIONS & ADVANCES</span>
+      </div>
+
+      <table class="w-full text-xs text-right border border-slate-200">
+        <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+          <tr>
+            <th class="p-1.5">תיאור הניכוי / Description</th>
+            <th class="p-1.5 text-center">פירוט / Note</th>
+            <th class="p-1.5 text-left">סכום לקיזוז / Amount (₪)</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 text-slate-800" id="printDeductionsBody">
+          <tr id="printPocketMoneyRow">
+            <td class="p-1.5 font-medium">מקדמת דמי כיס במזומן / Pocket Money Cash Advance</td>
+            <td class="p-1.5 text-center" id="printPocketNote">שולם במזומן שבועי (4 שבועות × ₪100)</td>
+            <td class="p-1.5 text-left font-bold text-rose-700" id="printRowPocket">-₪400.00</td>
+          </tr>
+          <tr id="printOtherDeductionRow">
+            <td class="p-1.5 font-medium">ניכויים נוספים / Other Deductions</td>
+            <td class="p-1.5 text-center">התאמה חודשית</td>
+            <td class="p-1.5 text-left font-bold text-rose-700" id="printRowOtherDeductions">-₪0.00</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Net Pay Highlight Banner -->
+    <div class="p-3.5 bg-slate-900 text-white rounded-xl mb-4 flex items-center justify-between">
+      <div>
+        <div class="text-xs font-semibold text-slate-300">סכום נטו להעברה בנקאית / NET BANK TRANSFER</div>
+        <div class="text-[11px] text-emerald-400 font-mono" id="printBankTransferDetails">העברה לחשבון: בנק לאומי, סניף 800</div>
+      </div>
+      <div class="text-2xl font-black text-emerald-400 tracking-tight" id="printNetBankTotal">₪0.00</div>
+    </div>
+
+    <!-- Notes & Remarks Area on Payslip -->
+    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs mb-4 space-y-1">
+      <div class="flex items-start gap-1">
+        <span class="font-bold text-slate-700 shrink-0">החזר הוצאות / Expense Note: </span>
+        <span class="text-slate-700 font-semibold" id="printExpenseNoteText">החזר הוצאות חודשי: ₪600.00 (מלא)</span>
+      </div>
+      <div class="flex items-start gap-1 pt-1 border-t border-slate-200/70">
+        <span class="font-bold text-slate-700 shrink-0">הערות / Notes: </span>
+        <span class="text-slate-600" id="printNotesText">תשלום שכר שוטף.</span>
+      </div>
+    </div>
+
+    <!-- Declarations & Signatures Section -->
+    <div class="grid grid-cols-2 gap-6 pt-3 border-t-2 border-slate-300 text-xs">
+      
+      <!-- Caregiver Confirmation & Signature -->
+      <div class="space-y-3">
+        <p class="text-slate-600 leading-tight">
+          הנני מאשר/ת בזאת כי קיבלתי את מלוא התשלומים המפורטים לעיל עבור חודש זה ואין לי כל תביעות שכר נוספות לתקופה זו.
+          <br />
+          <span class="text-[10px] text-slate-400">I hereby confirm receipt of full payment as stated above for this period.</span>
+        </p>
+
+        <div class="flex items-end justify-between pt-5 border-b border-slate-400">
+          <span class="text-slate-500">חתימת העובד/ת (Signature):</span>
+          <span class="font-mono text-slate-400">___________________</span>
+        </div>
+        <div class="flex justify-between text-[11px] text-slate-500">
+          <span>תאריך (Date): _____________</span>
+        </div>
+      </div>
+
+      <!-- Employer Signature -->
+      <div class="space-y-3">
+        <p class="text-slate-600 leading-tight">
+          הצהרת מעסיק: השכר שולם במלואו כחוק, וסכומי ההפרשות הסוציאליות נשמרו בחשבון ייעודי לטובת זכויות העובד.
+          <br />
+          <span class="text-[10px] text-slate-400">Employer statement: Payment executed in compliance with labor laws.</span>
+        </p>
+
+        <div class="flex items-end justify-between pt-5 border-b border-slate-400">
+          <span class="text-slate-500">חתימת המעסיק (Employer):</span>
+          <span class="font-mono text-slate-400">___________________</span>
+        </div>
+        <div class="flex justify-between text-[11px] text-slate-500">
+          <span>תאריך (Date): _____________</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- PRINT AREA: Official Admin Periodic Report (A4) -->
+  <div id="printReportArea" class="hidden bg-white text-slate-900 font-sans p-6 sm:p-8 max-w-[210mm] mx-auto border border-slate-200 sm:my-8 shadow-xl print:shadow-none print:border-none print:m-0 print:p-0">
+    <div class="border-b-2 border-slate-800 pb-4 mb-4">
+      <div class="flex justify-between items-start">
+        <div>
+          <h1 class="text-xl font-black tracking-tight text-slate-900">דוח ריכוז תנאים סוציאליים וחיסכון מעסיק</h1>
+          <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">EMPLOYER SOCIAL BENEFITS & SAVINGS ACCRUAL REPORT</h2>
+        </div>
+        <div class="text-left">
+          <div class="text-xs text-slate-400 font-semibold">תקופת הדוח / Period</div>
+          <div class="text-sm font-black text-slate-800" id="printReportHeaderPeriod">08/2026 - 08/2026</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-4 text-xs bg-slate-50 p-3 rounded-lg border border-slate-200">
+      <div>
+        <span class="text-slate-500">שם העובד/ת / Caregiver:</span>
+        <strong id="printReportWorkerName">Maria Santos</strong>
+        <span class="text-slate-400 mx-2">|</span>
+        <span class="text-slate-500">דרכון:</span>
+        <strong id="printReportWorkerPassport">P12345678</strong>
+      </div>
+      <div class="text-left">
+        <span class="text-slate-500">מעסיק / Employer:</span>
+        <strong id="printReportEmployerName">ישראל ישראלי</strong>
+      </div>
+    </div>
+
+    <!-- Report Table Container for Print -->
+    <div id="printReportTableContainer" class="mb-4"></div>
+
+    <div class="text-[11px] text-slate-500 pt-4 border-t border-slate-300 flex justify-between">
+      <span>דוח זה הופק אוטומטית ממערכת ניהול שכר ותנאים סוציאליים</span>
+      <span id="printReportGeneratedDate">תאריך הפקה: 30/08/2026</span>
+    </div>
+  </div>
+
+  <!-- APPLICATION JAVASCRIPT LOGIC & FIREBASE INTEGRATION -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { 
+      getAuth, 
+      signInWithPopup, 
+      GoogleAuthProvider, 
+      signInAnonymously, 
+      signInWithCustomToken, 
+      onAuthStateChanged, 
+      signOut 
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { 
+      getFirestore, 
+      doc, 
+      getDoc, 
+      setDoc, 
+      onSnapshot 
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'caregiver-payroll-pro-2026';
+    let firebaseConfig = null;
+    try {
+      if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+        firebaseConfig = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
+      }
+    } catch(e) {
+      console.warn("Could not parse environment firebaseConfig, using standard fallback", e);
+    }
+
+    if (!firebaseConfig) {
+      firebaseConfig = {
+        apiKey: "",
+        authDomain: "caregiver-payroll.firebaseapp.com",
+        projectId: "caregiver-payroll-app",
+        storageBucket: "caregiver-payroll-app.appspot.com"
+      };
+    }
+
+    let app = null;
+    let auth = null;
+    let db = null;
+    let currentUser = null;
+    let firestoreUnsubscribe = null;
+    let isCloudSyncActive = false;
+
+    try {
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+    } catch(e) {
+      console.warn("Firebase initialization skipped or running in mock mode:", e);
+    }
+
+    const hebrewMonths = [
+      "ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני",
+      "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"
+    ];
+
+    const hebrewDaysOfWeek = [
+      "יום ראשון", "יום שני", "יום שלישי", "יום רביעי", "יום חמישי", "יום שישי", "יום שבת"
+    ];
+
+    let currentYear = 2026;
+    let currentMonthIndex = 7; // August
+    let selectedActiveDateKey = null;
+
+    const defaultWorkerTemplate = {
+      id: "worker_1",
+      workerName: "Maria Santos",
+      workerPassport: "P12345678",
+      workerStartDate: "2025-08-01",
+      employerName: "ישראל ישראלי",
+      employerContact: "תל אביב, 050-1234567",
+      workerBank: "בנק לאומי, סניף 800, ח-ן 12345678",
+      baseSalary: 6444,
+      expenseDefault: 600,
+      pocketWeekly: 100,
+      pocketMode: "cash",
+      rateRegularDay: 257.75,
+      rateWeekendDay: 439.75,
+      rateConvalescence: 418.00,
+      daysConvalescenceYear: 5,
+      daysVacationMonth: 1.167,
+      daysSickMonth: 1.5,
+      pensionPct: 6.5,
+      severanceMainPct: 6.00,
+      severanceTopupPct: 2.33,
+      nationalInsurancePct: 3.6,
+      isActive: true
+    };
+
+    let activeWorkerId = "worker_1";
+    let workersList = [ { ...defaultWorkerTemplate } ];
+    let settings = { ...defaultWorkerTemplate };
+
+    let currentMonthData = {
+      days: {},
+      expenseNote: "החזר הוצאות חודשי: ₪600.00 (מלא - 25+ ימי עבודה)",
+      userOverrodeExpenseNote: false,
+      bonus: 0,
+      otherDeductions: 0,
+      notes: "תשלום שכר שוטף"
+    };
+
+    let allHistoricalMonths = {};
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+      const toast = document.createElement('div');
+      const bg = type === 'success' ? 'bg-emerald-600' : (type === 'error' ? 'bg-rose-600' : 'bg-slate-800');
+      toast.className = `${bg} text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 transform transition-all duration-300 pointer-events-auto`;
+      toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-info-circle'}"></i><span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function formatILS(num) {
+      return '₪' + Number(num || 0).toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function calculateSeniorityMonths(startDateStr, targetYear, targetMonthIndex) {
+      if (!startDateStr) return 12;
+      const start = new Date(startDateStr);
+      if (isNaN(start.getTime())) return 12;
+
+      const lastDayOfTargetMonth = new Date(targetYear, targetMonthIndex + 1, 0).getDate();
+      const end = new Date(targetYear, targetMonthIndex, lastDayOfTargetMonth);
+
+      if (end < start) return 0;
+
+      let months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+      const startDay = start.getDate();
+
+      if (end.getDate() < startDay) {
+        months -= 1;
+        const prevMonthDays = new Date(end.getFullYear(), end.getMonth(), 0).getDate();
+        const daysFraction = (end.getDate() + (prevMonthDays - startDay)) / prevMonthDays;
+        return Math.max(0, Math.round((months + daysFraction) * 10) / 10);
+      } else {
+        const daysInCurrentMonth = new Date(end.getFullYear(), end.getMonth() + 1, 0).getDate();
+        const daysFraction = (end.getDate() - startDay) / daysInCurrentMonth;
+        return Math.max(0, Math.round((months + daysFraction) * 10) / 10);
+      }
+    }
+
+    function generateBlankDays(year, monthIdx) {
+      const days = {};
+      const totalDays = new Date(year, monthIdx + 1, 0).getDate();
+      for (let d = 1; d <= totalDays; d++) {
+        const dateObj = new Date(year, monthIdx, d);
+        const dayOfWeek = dateObj.getDay();
+        const key = `${year}-${String(monthIdx + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        days[key] = dayOfWeek === 6 ? 'weekend_rest' : 'not_worked';
+      }
+      return days;
+    }
+
+    function generateFullWorkedDays(year, monthIdx) {
+      const days = {};
+      const totalDays = new Date(year, monthIdx + 1, 0).getDate();
+      for (let d = 1; d <= totalDays; d++) {
+        const dateObj = new Date(year, monthIdx, d);
+        const dayOfWeek = dateObj.getDay();
+        const key = `${year}-${String(monthIdx + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        days[key] = dayOfWeek === 6 ? 'weekend_rest' : 'regular_worked';
+      }
+      return days;
+    }
+
+    function getWeekCountInMonth(year, monthIdx) {
+      let count = 0;
+      const totalDays = new Date(year, monthIdx + 1, 0).getDate();
+      for (let d = 1; d <= totalDays; d++) {
+        const dateObj = new Date(year, monthIdx, d);
+        if (dateObj.getDay() === 5) count++;
+      }
+      return count || 4;
+    }
+
+    function calculateVacationSummary(workerObj) {
+      const wId = workerObj.id;
+      const workerHistory = allHistoricalMonths[wId] || {};
+      
+      const seniorityMonths = calculateSeniorityMonths(workerObj.workerStartDate, currentYear, currentMonthIndex);
+      const daysPerMonth = Number(workerObj.daysVacationMonth) || 1.167;
+      const totalAccrued = Math.round(seniorityMonths * daysPerMonth * 10) / 10;
+
+      let usedDates = [];
+      Object.keys(workerHistory).forEach(mKey => {
+        const mData = workerHistory[mKey];
+        if (mData && mData.days) {
+          Object.keys(mData.days).forEach(dKey => {
+            if (mData.days[dKey] === 'annual_vacation') usedDates.push(dKey);
+          });
+        }
+      });
+
+      if (wId === activeWorkerId && currentMonthData.days) {
+        Object.keys(currentMonthData.days).forEach(dKey => {
+          if (currentMonthData.days[dKey] === 'annual_vacation' && !usedDates.includes(dKey)) {
+            usedDates.push(dKey);
+          }
+        });
+      }
+
+      usedDates.sort();
+      const totalUsed = usedDates.length;
+      const remainingDays = Math.max(0, Math.round((totalAccrued - totalUsed) * 10) / 10);
+      const redemptionValue = Math.round(remainingDays * Number(workerObj.rateRegularDay || 257.75) * 100) / 100;
+
+      return { totalAccrued, totalUsed, remainingDays, redemptionValue, usedDates };
+    }
+
+    function updateCalculations() {
+      const monthKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}`;
+      
+      let countRegularWorked = 0;
+      let countNotWorked = 0;
+      let countWeekendWorked = 0;
+      let countHolidayWorked = 0;
+      let countHolidayOff = 0;
+      let countAnnualVacation = 0;
+      let totalStandardWeekdays = 0;
+
+      const totalDaysInMonth = new Date(currentYear, currentMonthIndex + 1, 0).getDate();
+      for (let d = 1; d <= totalDaysInMonth; d++) {
+        const dateObj = new Date(currentYear, currentMonthIndex, d);
+        const dayOfWeek = dateObj.getDay();
+        const key = `${monthKey}-${String(d).padStart(2, '0')}`;
+        const type = currentMonthData.days[key] || (dayOfWeek === 6 ? 'weekend_rest' : 'not_worked');
+        
+        if (dayOfWeek !== 6) totalStandardWeekdays++;
+
+        if (type === 'regular_worked') countRegularWorked++;
+        else if (type === 'not_worked') countNotWorked++;
+        else if (type === 'weekend_worked') countWeekendWorked++;
+        else if (type === 'holiday_worked') countHolidayWorked++;
+        else if (type === 'holiday_off') countHolidayOff++;
+        else if (type === 'annual_vacation') countAnnualVacation++;
+      }
+
+      const effectivePaidDays = countRegularWorked + countHolidayOff + countAnnualVacation;
+      const totalAllWorkedDays = countRegularWorked + countHolidayOff + countAnnualVacation + countWeekendWorked + countHolidayWorked;
+
+      const setElText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      setElText('sumRegularDays', countRegularWorked);
+      setElText('sumNotWorkedDays', countNotWorked);
+      setElText('sumWeekendDays', countWeekendWorked);
+      setElText('sumHolidayWorkedDays', countHolidayWorked);
+      setElText('sumHolidayOffDays', countHolidayOff);
+      setElText('sumVacationDaysTaken', countAnnualVacation);
+
+      const fullBaseSalary = Number(settings.baseSalary) || 6444;
+      const rateRegular = Number(settings.rateRegularDay) || 257.75;
+      const isFullMonth = (totalStandardWeekdays > 0 && effectivePaidDays >= totalStandardWeekdays);
+      
+      let actualBaseSalary = 0;
+      if (isFullMonth) {
+        actualBaseSalary = fullBaseSalary;
+      } else {
+        actualBaseSalary = Math.min(fullBaseSalary, Math.round(effectivePaidDays * rateRegular * 100) / 100);
+      }
+
+      const fullExpense = Number(settings.expenseDefault) || 600;
+      let calculatedExpense = fullExpense;
+      if (totalAllWorkedDays >= 25) {
+        calculatedExpense = fullExpense;
+      } else {
+        calculatedExpense = Math.min(fullExpense, Math.round((totalAllWorkedDays / 31) * fullExpense * 100) / 100);
+      }
+
+      const autoExpenseNote = totalAllWorkedDays >= 25
+        ? `החזר הוצאות חודשי: ₪${calculatedExpense.toFixed(2)} (מלא - ${totalAllWorkedDays} ימי עבודה)`
+        : `החזר הוצאות חודשי: ₪${calculatedExpense.toFixed(2)} (יחסי - ${totalAllWorkedDays}/31 ימי עבודה)`;
+
+      if (!currentMonthData.userOverrodeExpenseNote) {
+        currentMonthData.expenseNote = autoExpenseNote;
+        const expInput = document.getElementById('inputMonthExpenseNote');
+        if (expInput) expInput.value = autoExpenseNote;
+      }
+
+      const expenseBadge = document.getElementById('expenseRatioBadge');
+      if (expenseBadge) {
+        if (totalAllWorkedDays >= 25) {
+          expenseBadge.className = "text-[10px] text-sky-800 bg-sky-100 px-2 py-0.5 rounded font-bold";
+          expenseBadge.textContent = `100% (${totalAllWorkedDays} ימים: ₪${calculatedExpense.toFixed(2)})`;
+        } else {
+          const ratioPercent = Math.min(100, Math.round((totalAllWorkedDays / 31) * 100));
+          expenseBadge.className = "text-[10px] text-amber-800 bg-amber-100 px-2 py-0.5 rounded font-bold";
+          expenseBadge.textContent = `${ratioPercent}% (${totalAllWorkedDays}/31 ימים: ₪${calculatedExpense.toFixed(2)})`;
+        }
+      }
+
+      const weekendAddition = countWeekendWorked * Number(settings.rateWeekendDay);
+      const holidayAddition = countHolidayWorked * Number(settings.rateWeekendDay);
+      const bonusAmount = Number(currentMonthData.bonus || 0);
+
+      const grossPay = actualBaseSalary + weekendAddition + holidayAddition + bonusAmount;
+
+      const weeksCount = getWeekCountInMonth(currentYear, currentMonthIndex);
+      const pocketWeeklyAmount = Number(settings.pocketWeekly || 0);
+      const totalPocketAdvance = weeksCount * pocketWeeklyAmount;
+      const isPocketCash = settings.pocketMode === 'cash';
+
+      const pocketDeduction = isPocketCash ? totalPocketAdvance : 0;
+      const otherDeductions = Number(currentMonthData.otherDeductions || 0);
+      const totalDeductions = pocketDeduction + otherDeductions;
+
+      const netToBank = grossPay - totalDeductions;
+      const seniorityMonths = calculateSeniorityMonths(settings.workerStartDate, currentYear, currentMonthIndex);
+      
+      let pensionAmount = 0;
+      const isPensionActive = seniorityMonths >= 6.0;
+      if (isPensionActive) {
+        pensionAmount = grossPay * (Number(settings.pensionPct) / 100);
+      }
+
+      const severanceMainPct = Number(settings.severanceMainPct) || 6.00;
+      const severanceTopupPct = Number(settings.severanceTopupPct) || 2.33;
+      const severanceMainAmount = grossPay * (severanceMainPct / 100);
+      const severanceTopupAmount = grossPay * (severanceTopupPct / 100);
+      const totalSeveranceAmount = severanceMainAmount + severanceTopupAmount;
+
+      const convalescenceMonthly = (Number(settings.daysConvalescenceYear) * Number(settings.rateConvalescence)) / 12;
+      const vacationMonthly = Number(settings.daysVacationMonth) * Number(settings.rateRegularDay);
+      const sickMonthly = Number(settings.daysSickMonth) * Number(settings.rateRegularDay);
+      const nationalInsuranceAmount = grossPay * (Number(settings.nationalInsurancePct) / 100);
+      const totalMonthlySavings = pensionAmount + totalSeveranceAmount + convalescenceMonthly + vacationMonthly + sickMonthly;
+
+      const vacationSummary = calculateVacationSummary(settings);
+
+      setElText('statGrossPay', formatILS(grossPay));
+      setElText('statWorkDaysRatio', `${effectivePaidDays} ימי חול מתוך ${totalStandardWeekdays}`);
+      setElText('statBasePaySummary', `${formatILS(actualBaseSalary)} בסיס`);
+      setElText('statPocketMoney', formatILS(totalPocketAdvance));
+      setElText('statPocketMoneyMode', isPocketCash ? 'במזומן (מקוזז)' : 'מועבר לבנק (ללא קיזוז)');
+      setElText('statPocketWeeks', `${weeksCount} שבועות`);
+      setElText('statNetBank', formatILS(netToBank));
+      setElText('statMonthlySavings', formatILS(totalMonthlySavings));
+
+      setElText('rowBaseSalary', formatILS(actualBaseSalary));
+      if (isFullMonth) {
+        setElText('rowBaseSalarySub', `חודש מלא (${totalStandardWeekdays} ימי חול)`);
+      } else {
+        setElText('rowBaseSalarySub', `${effectivePaidDays} ימים × ₪${rateRegular.toFixed(2)} (${effectivePaidDays} מתוך ${totalStandardWeekdays} ימי חול)`);
+      }
+      setElText('rowWeekendSub', `(${countWeekendWorked} ימים × ₪${settings.rateWeekendDay})`);
+      setElText('rowWeekendTotal', formatILS(weekendAddition));
+      setElText('rowHolidaySub', `(${countHolidayWorked} ימים × ₪${settings.rateWeekendDay})`);
+      setElText('rowHolidayTotal', formatILS(holidayAddition));
+      setElText('rowBonus', formatILS(bonusAmount));
+      setElText('rowGrossTotal', formatILS(grossPay));
+
+      const pocketDeductionRow = document.getElementById('pocketMoneyDeductionRow');
+      if (pocketDeductionRow) {
+        if (isPocketCash) {
+          pocketDeductionRow.style.display = 'flex';
+          setElText('rowPocketSub', `${weeksCount} שבועות × ₪${pocketWeeklyAmount}`);
+          setElText('rowPocketDeduction', `-${formatILS(pocketDeduction)}`);
+        } else {
+          pocketDeductionRow.style.display = 'none';
+        }
+      }
+
+      setElText('rowOtherDeduction', `-${formatILS(otherDeductions)}`);
+      setElText('rowNetBankTotal', formatILS(netToBank));
+      setElText('bankDestSummary', settings.workerBank || 'בנק לא הוזן');
+
+      setElText('vacationTotalAccrued', `${vacationSummary.totalAccrued} ימים`);
+      setElText('vacationTotalUsed', `${vacationSummary.totalUsed} ימים`);
+      setElText('vacationRemainingDays', `${vacationSummary.remainingDays} ימים`);
+
+      const datesListEl = document.getElementById('vacationDatesList');
+      if (datesListEl) {
+        if (vacationSummary.usedDates.length > 0) {
+          datesListEl.innerHTML = vacationSummary.usedDates.map(d => `<span class="inline-block bg-purple-100 text-purple-800 px-2 py-0.5 rounded mr-1 font-mono text-[10px] font-bold">${d}</span>`).join(' ');
+        } else {
+          datesListEl.innerHTML = `<span class="text-slate-400 italic">לא נרשמו ימי חופשה שנוצלו עד כה.</span>`;
+        }
+      }
+
+      setElText('seniorityBadge', `וותק: ${seniorityMonths} חודשים`);
+      const pensionStatusBadge = document.getElementById('pensionStatusBadge');
+      if (pensionStatusBadge) {
+        if (isPensionActive) {
+          pensionStatusBadge.className = "text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold";
+          pensionStatusBadge.textContent = `פעיל (וותק חודש ${seniorityMonths})`;
+        } else {
+          pensionStatusBadge.className = "text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded font-bold";
+          pensionStatusBadge.textContent = `פטור (חודש ${seniorityMonths}/6)`;
+        }
+      }
+
+      setElText('calcPensionAmount', formatILS(pensionAmount));
+      setElText('calcSeveranceMainAmount', formatILS(severanceMainAmount));
+      setElText('calcSeveranceTopupAmount', formatILS(severanceTopupAmount));
+      setElText('calcConvalescenceAmount', formatILS(convalescenceMonthly));
+      setElText('calcVacationAmount', formatILS(vacationMonthly));
+      setElText('calcSickAmount', formatILS(sickMonthly));
+      setElText('calcNationalInsuranceAmount', formatILS(nationalInsuranceAmount));
+      setElText('calcTotalSavingsAmount', formatILS(totalMonthlySavings));
+
+      setElText('printSlipPeriod', `${String(currentMonthIndex + 1).padStart(2, '0')}/${currentYear} (${hebrewMonths[currentMonthIndex]})`);
+      setElText('printWorkerName', settings.workerName);
+      setElText('printWorkerPassport', settings.workerPassport);
+      setElText('printWorkerStartDate', settings.workerStartDate);
+      setElText('printWorkerSeniority', `${seniorityMonths} חודשים`);
+      setElText('printWorkerBank', settings.workerBank);
+
+      setElText('printEmployerName', settings.employerName);
+      setElText('printEmployerContact', settings.employerContact);
+      setElText('printDaysSummary', `${effectivePaidDays} ימי חול עבד מתוך ${totalStandardWeekdays} | ${countWeekendWorked} שבתות | ${countHolidayWorked} חגים (${totalAllWorkedDays} ימי עבודה סה"כ)`);
+
+      if (isFullMonth) {
+        setElText('printUnitsBaseSalary', `חודש מלא`);
+        setElText('printRateBaseSalary', `₪${rateRegular.toFixed(2)}`);
+        setElText('printBaseSalaryRatioSub', `(חודש מלא - ${totalStandardWeekdays} ימי עבודה)`);
+      } else {
+        setElText('printUnitsBaseSalary', `${effectivePaidDays} ימים`);
+        setElText('printRateBaseSalary', `₪${rateRegular.toFixed(2)}`);
+        setElText('printBaseSalaryRatioSub', `(${effectivePaidDays} מתוך ${totalStandardWeekdays} ימי חול - לפי תעריף יומי)`);
+      }
+      setElText('printRowBaseSalary', formatILS(actualBaseSalary));
+
+      setElText('printUnitsWeekend', `${countWeekendWorked} ימים`);
+      setElText('printRateWeekend', `₪${settings.rateWeekendDay}`);
+      setElText('printRowWeekend', formatILS(weekendAddition));
+
+      setElText('printUnitsHoliday', `${countHolidayWorked} ימים`);
+      setElText('printRateHoliday', `₪${settings.rateWeekendDay}`);
+      setElText('printRowHoliday', formatILS(holidayAddition));
+
+      setElText('printRowBonus', formatILS(bonusAmount));
+      setElText('printGrossTotal', formatILS(grossPay));
+
+      const printPocketRow = document.getElementById('printPocketMoneyRow');
+      if (printPocketRow) {
+        if (isPocketCash) {
+          printPocketRow.style.display = 'table-row';
+          setElText('printPocketNote', `שולם במזומן שבועי (${weeksCount} שבועות × ₪${pocketWeeklyAmount})`);
+          setElText('printRowPocket', `-${formatILS(pocketDeduction)}`);
+        } else {
+          printPocketRow.style.display = 'none';
+        }
+      }
+
+      setElText('printRowOtherDeductions', `-${formatILS(otherDeductions)}`);
+      setElText('printNetBankTotal', formatILS(netToBank));
+      setElText('printBankTransferDetails', `העברה לחשבון: ${settings.workerBank}`);
+      setElText('printExpenseNoteText', currentMonthData.expenseNote || autoExpenseNote);
+      setElText('printNotesText', currentMonthData.notes || "תשלום שכר שוטף.");
+    }
+
+    function renderCalendar() {
+      const grid = document.getElementById('calendarGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const labelEl = document.getElementById('currentMonthYearLabel');
+      if (labelEl) labelEl.textContent = `${hebrewMonths[currentMonthIndex]} ${currentYear}`;
+      
+      const firstDayOfMonth = new Date(currentYear, currentMonthIndex, 1).getDay();
+      const totalDaysInMonth = new Date(currentYear, currentMonthIndex + 1, 0).getDate();
+
+      const monthKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}`;
+      if (!currentMonthData.days || Object.keys(currentMonthData.days).length === 0) {
+        currentMonthData.days = generateBlankDays(currentYear, currentMonthIndex);
+      }
+
+      for (let i = 0; i < firstDayOfMonth; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'h-16 sm:h-20 bg-slate-50/50 rounded-xl border border-dashed border-slate-100 opacity-40';
+        grid.appendChild(emptyCell);
+      }
+
+      for (let day = 1; day <= totalDaysInMonth; day++) {
+        const dateObj = new Date(currentYear, currentMonthIndex, day);
+        const dayOfWeek = dateObj.getDay();
+        const dateKey = `${monthKey}-${String(day).padStart(2, '0')}`;
+        
+        let type = currentMonthData.days[dateKey];
+        if (!type) {
+          type = dayOfWeek === 6 ? 'weekend_rest' : 'not_worked';
+          currentMonthData.days[dateKey] = type;
+        }
+
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = `h-16 sm:h-20 p-1.5 rounded-xl border flex flex-col justify-between items-start text-right transition-all badge-day select-none focus:outline-none ${getDayStyles(type, dayOfWeek)}`;
+
+        cell.innerHTML = `
+          <div class="w-full flex items-center justify-between">
+            <span class="font-bold text-xs sm:text-sm">${day}</span>
+            <span class="text-[10px] opacity-80">${getDayTypeShort(type)}</span>
+          </div>
+          <div class="w-full text-center py-0.5">
+            <span class="text-[10px] sm:text-xs font-semibold block truncate">${getDayTypeLabel(type)}</span>
+          </div>
+        `;
+
+        cell.onclick = () => openDaySelectorModal(dateKey, day, dayOfWeek);
+        grid.appendChild(cell);
+      }
+
+      updateCalculations();
+    }
+
+    function getDayStyles(type, dayOfWeek) {
+      switch (type) {
+        case 'regular_worked':
+          return 'bg-emerald-50 hover:bg-emerald-100 border-emerald-300 text-emerald-900 shadow-sm ring-1 ring-emerald-400 font-medium';
+        case 'not_worked':
+          return 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-400 opacity-85';
+        case 'weekend_worked':
+          return 'bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900 shadow-sm ring-1 ring-amber-400 font-bold';
+        case 'weekend_rest':
+          return 'bg-slate-100/90 hover:bg-slate-200 border-slate-200 text-slate-500 opacity-75';
+        case 'holiday_worked':
+          return 'bg-indigo-50 hover:bg-indigo-100 border-indigo-300 text-indigo-900 shadow-sm ring-1 ring-indigo-400 font-bold';
+        case 'holiday_off':
+          return 'bg-teal-50 hover:bg-teal-100 border-teal-300 text-teal-900 shadow-sm ring-1 ring-teal-400 font-medium';
+        case 'annual_vacation':
+          return 'bg-purple-50 hover:bg-purple-100 border-purple-300 text-purple-900 shadow-sm ring-1 ring-purple-400 font-bold';
+        default:
+          return 'bg-white border-slate-200 text-slate-700';
+      }
+    }
+
+    function getDayTypeShort(type) {
+      switch (type) {
+        case 'regular_worked': return '🟢 עבד';
+        case 'not_worked': return '⚪ לא עבד';
+        case 'weekend_worked': return '⭐ שבת+';
+        case 'weekend_rest': return 'מנוחה';
+        case 'holiday_worked': return '🎉 חג+';
+        case 'holiday_off': return '🏖️ חג ₪';
+        case 'annual_vacation': return '🌴 חופש';
+        default: return '';
+      }
+    }
+
+    function getDayTypeLabel(type) {
+      switch (type) {
+        case 'regular_worked': return 'יום חול עבד';
+        case 'not_worked': return 'לא עבד';
+        case 'weekend_worked': return 'שבת שעבד';
+        case 'weekend_rest': return 'שבת מנוחה';
+        case 'holiday_worked': return 'חג שעבד';
+        case 'holiday_off': return 'חג מנוחה ₪';
+        case 'annual_vacation': return 'חופשה שנתית';
+        default: return '';
+      }
+    }
+
+    function openDaySelectorModal(dateKey, day, dayOfWeek) {
+      selectedActiveDateKey = dateKey;
+      const dayName = hebrewDaysOfWeek[dayOfWeek];
+      const titleEl = document.getElementById('selectedDateTitle');
+      if (titleEl) titleEl.textContent = `${String(day).padStart(2, '0')}/${String(currentMonthIndex + 1).padStart(2, '0')}/${currentYear} (${dayName})`;
+      
+      const currentType = currentMonthData.days[dateKey] || (dayOfWeek === 6 ? 'weekend_rest' : 'not_worked');
+      
+      document.querySelectorAll('.day-option-btn').forEach(btn => {
+        const btnType = btn.getAttribute('data-type');
+        if (btnType === currentType) {
+          btn.classList.add('ring-2', 'ring-slate-900', 'bg-slate-50');
+        } else {
+          btn.classList.remove('ring-2', 'ring-slate-900', 'bg-slate-50');
+        }
+      });
+
+      const modal = document.getElementById('daySelectorModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeDayModal() {
+      const modal = document.getElementById('daySelectorModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function setDayType(type) {
+      if (!selectedActiveDateKey) return;
+      currentMonthData.days[selectedActiveDateKey] = type;
+      closeDayModal();
+      renderCalendar();
+      saveMonthDataDebounced();
+    }
+
+    function batchFillWeekdaysWorked() {
+      currentMonthData.days = generateFullWorkedDays(currentYear, currentMonthIndex);
+      renderCalendar();
+      saveMonthDataDebounced();
+      showToast("כל ימי החול סומנו כעבד");
+    }
+
+    function batchClearAllDays() {
+      currentMonthData.days = generateBlankDays(currentYear, currentMonthIndex);
+      renderCalendar();
+      saveMonthDataDebounced();
+      showToast("הלוח אופס לסימון ידני");
+    }
+
+    function initReportDateFilters() {
+      const fromInput = document.getElementById('reportFilterFromDate');
+      const toInput = document.getElementById('reportFilterToDate');
+      const curMonthKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}`;
+      if (fromInput && !fromInput.value) {
+        fromInput.value = curMonthKey;
+      }
+      if (toInput && !toInput.value) {
+        toInput.value = curMonthKey;
+      }
+    }
+
+    function handleReportWorkerChange(selectedWId) {
+      if (!selectedWId) return;
+      switchActiveWorker(selectedWId);
+      generateAdminReport();
+    }
+
+    function generateAdminReport() {
+      const workerSelect = document.getElementById('reportFilterWorker');
+      const fromInput = document.getElementById('reportFilterFromDate');
+      const toInput = document.getElementById('reportFilterToDate');
+
+      const curMonthKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}`;
+      const selectedWId = workerSelect ? workerSelect.value : activeWorkerId;
+      
+      const fromStr = (fromInput && fromInput.value) ? fromInput.value : curMonthKey;
+      const toStr = (toInput && toInput.value) ? toInput.value : curMonthKey;
+
+      const workerObj = workersList.find(w => w.id === selectedWId) || settings;
+      const history = allHistoricalMonths[selectedWId] || {};
+      const isCurrentActive = (selectedWId === activeWorkerId);
+
+      let [fromY, fromM] = fromStr.split('-').map(Number);
+      let [toY, toM] = toStr.split('-').map(Number);
+
+      let startDate = new Date(fromY, fromM - 1, 1);
+      let endDate = new Date(toY, toM - 1, 1);
+
+      if (startDate > endDate) {
+        const tmp = startDate;
+        startDate = endDate;
+        endDate = tmp;
+      }
+
+      let sumPension = 0;
+      let sumSeveranceMain = 0;
+      let sumSeveranceTopup = 0;
+      let sumConvalescence = 0;
+      let sumVacation = 0;
+      let sumSick = 0;
+      let sumNationalInsurance = 0;
+      let sumTotalSavings = 0;
+      let sumBaseSalary = 0;
+      let countMonths = 0;
+
+      const tableBody = document.getElementById('reportSocialTableBody');
+      if (!tableBody) return;
+      tableBody.innerHTML = '';
+
+      let cur = new Date(startDate);
+      while (cur <= endDate) {
+        countMonths++;
+        const y = cur.getFullYear();
+        const m = cur.getMonth();
+        const mKey = `${y}-${String(m + 1).padStart(2, '0')}`;
+        
+        let mData = history[mKey];
+        if (isCurrentActive && y === currentYear && m === currentMonthIndex) {
+          mData = currentMonthData;
+        }
+
+        let mWorkDays = 0;
+        let mWeekends = 0;
+        let mHolidays = 0;
+
+        if (mData && mData.days) {
+          Object.values(mData.days).forEach(t => {
+            if (t === 'regular_worked' || t === 'holiday_off' || t === 'annual_vacation') mWorkDays++;
+            if (t === 'weekend_worked') mWeekends++;
+            if (t === 'holiday_worked') mHolidays++;
+          });
+        }
+
+        const fullBase = Number(workerObj.baseSalary) || 6444;
+        const rateReg = Number(workerObj.rateRegularDay) || 257.75;
+        const rateWk = Number(workerObj.rateWeekendDay) || 439.75;
+        
+        let baseEarn = fullBase;
+        if (mWorkDays > 0 && mWorkDays < 25) {
+          baseEarn = Math.min(fullBase, Math.round(mWorkDays * rateReg * 100) / 100);
+        }
+
+        const wkEarn = (mWeekends + mHolidays) * rateWk;
+        const bonus = Number(mData?.bonus || 0);
+        const grossPay = baseEarn + wkEarn + bonus;
+
+        const seniority = calculateSeniorityMonths(workerObj.workerStartDate, y, m);
+        const isPensionActive = seniority >= 6.0;
+        const pensionAmount = isPensionActive ? (grossPay * (Number(workerObj.pensionPct || 6.5) / 100)) : 0;
+        
+        const severanceMainAmount = grossPay * (Number(workerObj.severanceMainPct || 6.00) / 100);
+        const severanceTopupAmount = grossPay * (Number(workerObj.severanceTopupPct || 2.33) / 100);
+        
+        const convalescenceAmount = (Number(workerObj.daysConvalescenceYear || 5) * Number(workerObj.rateConvalescence || 418)) / 12;
+        const vacationAmount = Number(workerObj.daysVacationMonth || 1.167) * rateReg;
+        const sickAmount = Number(workerObj.daysSickMonth || 1.5) * rateReg;
+        const nationalInsuranceAmount = grossPay * (Number(workerObj.nationalInsurancePct || 3.6) / 100);
+        const totalMonthSavings = pensionAmount + severanceMainAmount + severanceTopupAmount + convalescenceAmount + vacationAmount + sickAmount;
+
+        sumBaseSalary += baseEarn;
+        sumPension += pensionAmount;
+        sumSeveranceMain += severanceMainAmount;
+        sumSeveranceTopup += severanceTopupAmount;
+        sumConvalescence += convalescenceAmount;
+        sumVacation += vacationAmount;
+        sumSick += sickAmount;
+        sumNationalInsurance += nationalInsuranceAmount;
+        sumTotalSavings += totalMonthSavings;
+
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-slate-50 transition';
+        row.innerHTML = `
+          <td class="p-2.5 font-semibold text-slate-900 font-sans">
+            <span>${mKey}</span>
+            <span class="text-[10px] text-slate-500 mr-1">(${hebrewMonths[m]})</span>
+          </td>
+          <td class="p-2.5 text-center">
+            <span class="inline-block px-1.5 py-0.5 rounded ${isPensionActive ? 'bg-purple-100 text-purple-800' : 'bg-amber-100 text-amber-800'} text-[10px] font-bold">
+              ${seniority} ח'
+            </span>
+          </td>
+          <td class="p-2.5 text-left font-semibold text-slate-800">${formatILS(baseEarn)}</td>
+          <td class="p-2.5 text-left font-bold ${pensionAmount > 0 ? 'text-indigo-800 bg-indigo-50/30' : 'text-slate-400'}">
+            ${pensionAmount > 0 ? formatILS(pensionAmount) : '₪0.00 (פטור)'}
+          </td>
+          <td class="p-2.5 text-left font-bold text-blue-800 bg-blue-50/30">${formatILS(severanceMainAmount)}</td>
+          <td class="p-2.5 text-left font-bold text-sky-800 bg-sky-50/30">${formatILS(severanceTopupAmount)}</td>
+          <td class="p-2.5 text-left font-bold text-teal-800 bg-teal-50/30">${formatILS(convalescenceAmount)}</td>
+          <td class="p-2.5 text-left font-bold text-amber-800 bg-amber-50/30">${formatILS(vacationAmount)}</td>
+          <td class="p-2.5 text-left font-bold text-rose-800 bg-rose-50/30">${formatILS(sickAmount)}</td>
+          <td class="p-2.5 text-left font-bold text-slate-700 bg-slate-50">${formatILS(nationalInsuranceAmount)}</td>
+          <td class="p-2.5 text-left font-black text-purple-900 bg-purple-100/60">${formatILS(totalMonthSavings)}</td>
+        `;
+        tableBody.appendChild(row);
+
+        cur.setMonth(cur.getMonth() + 1);
+      }
+
+      const tableFoot = document.getElementById('reportSocialTableFoot');
+      if (tableFoot) {
+        tableFoot.innerHTML = `
+          <tr>
+            <td class="p-3 font-sans font-black text-purple-950">
+              <span>סה"כ לתקופה (${countMonths} ח')</span>
+              <span class="block text-[10px] text-purple-700 font-normal">Period Total</span>
+            </td>
+            <td class="p-3 text-center text-purple-900 font-bold">-</td>
+            <td class="p-3 text-left font-black text-purple-950">${formatILS(sumBaseSalary)}</td>
+            <td class="p-3 text-left font-black text-indigo-900 bg-indigo-100/50">${formatILS(sumPension)}</td>
+            <td class="p-3 text-left font-black text-blue-900 bg-blue-100/50">${formatILS(sumSeveranceMain)}</td>
+            <td class="p-3 text-left font-black text-sky-900 bg-sky-100/50">${formatILS(sumSeveranceTopup)}</td>
+            <td class="p-3 text-left font-black text-teal-900 bg-teal-100/50">${formatILS(sumConvalescence)}</td>
+            <td class="p-3 text-left font-black text-amber-900 bg-amber-100/50">${formatILS(sumVacation)}</td>
+            <td class="p-3 text-left font-black text-rose-900 bg-rose-100/50">${formatILS(sumSick)}</td>
+            <td class="p-3 text-left font-black text-slate-900 bg-slate-200/50">${formatILS(sumNationalInsurance)}</td>
+            <td class="p-3 text-left font-black text-purple-950 bg-purple-200 text-sm">${formatILS(sumTotalSavings)}</td>
+          </tr>
+        `;
+      }
+
+      const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      setEl('kpiSumPension', formatILS(sumPension));
+      setEl('kpiSumSeveranceMain', formatILS(sumSeveranceMain));
+      setEl('kpiSumSeveranceTopup', formatILS(sumSeveranceTopup));
+      setEl('kpiSumConvalescence', formatILS(sumConvalescence));
+      setEl('kpiSumLeaveAndSick', formatILS(sumVacation + sumSick));
+      setEl('kpiSumTotalSavings', formatILS(sumTotalSavings));
+
+      setEl('reportTablePeriodLabel', `תקופה: ${fromStr} עד ${toStr} | עובד/ת: ${workerObj.workerName} (${workerObj.workerPassport})`);
+
+      setEl('printReportHeaderPeriod', `${fromStr} - ${toStr}`);
+      setEl('printReportWorkerName', workerObj.workerName);
+      setEl('printReportWorkerPassport', workerObj.workerPassport);
+      setEl('printReportEmployerName', workerObj.employerName);
+      
+      const printContainer = document.getElementById('printReportTableContainer');
+      const repTable = document.querySelector('#reportsViewContent table');
+      if (printContainer && repTable) {
+        printContainer.innerHTML = repTable.outerHTML;
+      }
+    }
+
+    function setPresetReportRange(type) {
+      const workerSelect = document.getElementById('reportFilterWorker');
+      const fromInput = document.getElementById('reportFilterFromDate');
+      const toInput = document.getElementById('reportFilterToDate');
+      if (!fromInput || !toInput) return;
+
+      const selectedWId = workerSelect ? workerSelect.value : activeWorkerId;
+      const workerObj = workersList.find(w => w.id === selectedWId) || settings;
+      const curMonthKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}`;
+
+      if (type === 'currentMonth') {
+        fromInput.value = curMonthKey;
+        toInput.value = curMonthKey;
+      } else if (type === 'all') {
+        fromInput.value = workerObj.workerStartDate ? workerObj.workerStartDate.slice(0, 7) : curMonthKey;
+        toInput.value = curMonthKey;
+      } else if (type === 'last12') {
+        const endD = new Date(currentYear, currentMonthIndex, 1);
+        const startD = new Date(currentYear, currentMonthIndex - 11, 1);
+        fromInput.value = `${startD.getFullYear()}-${String(startD.getMonth() + 1).padStart(2, '0')}`;
+        toInput.value = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, '0')}`;
+      } else if (type === 'currentYear') {
+        fromInput.value = `${currentYear}-01`;
+        toInput.value = `${currentYear}-12`;
+      }
+      generateAdminReport();
+    }
+
+    function exportSocialBenefitsToExcel() {
+      const workerSelect = document.getElementById('reportFilterWorker');
+      const fromInput = document.getElementById('reportFilterFromDate');
+      const toInput = document.getElementById('reportFilterToDate');
+
+      const curMonthKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}`;
+      const selectedWId = workerSelect ? workerSelect.value : activeWorkerId;
+      const fromStr = (fromInput && fromInput.value) ? fromInput.value : curMonthKey;
+      const toStr = (toInput && toInput.value) ? toInput.value : curMonthKey;
+
+      const workerObj = workersList.find(w => w.id === selectedWId) || settings;
+      const history = allHistoricalMonths[selectedWId] || {};
+      const isCurrentActive = (selectedWId === activeWorkerId);
+
+      let [fromY, fromM] = fromStr.split('-').map(Number);
+      let [toY, toM] = toStr.split('-').map(Number);
+
+      let startDate = new Date(fromY, fromM - 1, 1);
+      let endDate = new Date(toY, toM - 1, 1);
+
+      if (startDate > endDate) {
+        const tmp = startDate;
+        startDate = endDate;
+        endDate = tmp;
+      }
+
+      let csv = '\uFEFF';
+      
+      csv += `"דוח ריכוז תנאים סוציאליים וחיסכון מעסיק / EMPLOYER SOCIAL BENEFITS REPORT"\n`;
+      csv += `"שם העובד/ת / Caregiver Name:","${workerObj.workerName}"\n`;
+      csv += `"מספר דרכון / Passport:","${workerObj.workerPassport}"\n`;
+      csv += `"תאריך תחילת עבודה / Start Date:","${workerObj.workerStartDate}"\n`;
+      csv += `"מעסיק / Employer:","${workerObj.employerName}"\n`;
+      csv += `"תקופת הדוח / Report Period:","${fromStr} - ${toStr}"\n`;
+      csv += `"תאריך הפקה / Generated At:","${new Date().toLocaleDateString('he-IL')}"\n\n`;
+
+      csv += `"חודש / Month","חודש עברי / Hebrew Month","וותק (חודשים) / Seniority","שכר בסיס / Base Salary (₪)","פנסיה (6.5%) / Pension (6.5%)","פיצויים שוטפים (6.0%) / Severance (6.0%)","השלמת פיצויים (2.33%) / Severance Top-up (2.33%)","דמי הבראה / Convalescence (₪)","חופשה שנתית / Annual Leave (₪)","ימי מחלה / Sick Leave (₪)","ביטוח לאומי (3.6%) / National Insurance (3.6%)","סה""כ חיסכון מעסיק / Total Employer Savings (₪)"\n`;
+
+      let sumPension = 0;
+      let sumSeveranceMain = 0;
+      let sumSeveranceTopup = 0;
+      let sumConvalescence = 0;
+      let sumVacation = 0;
+      let sumSick = 0;
+      let sumNationalInsurance = 0;
+      let sumTotalSavings = 0;
+      let sumBaseSalary = 0;
+
+      let cur = new Date(startDate);
+      while (cur <= endDate) {
+        const y = cur.getFullYear();
+        const m = cur.getMonth();
+        const mKey = `${y}-${String(m + 1).padStart(2, '0')}`;
+        
+        let mData = history[mKey];
+        if (isCurrentActive && y === currentYear && m === currentMonthIndex) {
+          mData = currentMonthData;
+        }
+
+        let mWorkDays = 0;
+        let mWeekends = 0;
+        let mHolidays = 0;
+
+        if (mData && mData.days) {
+          Object.values(mData.days).forEach(t => {
+            if (t === 'regular_worked' || t === 'holiday_off' || t === 'annual_vacation') mWorkDays++;
+            if (t === 'weekend_worked') mWeekends++;
+            if (t === 'holiday_worked') mHolidays++;
+          });
+        }
+
+        const fullBase = Number(workerObj.baseSalary) || 6444;
+        const rateReg = Number(workerObj.rateRegularDay) || 257.75;
+        const rateWk = Number(workerObj.rateWeekendDay) || 439.75;
+        
+        let baseEarn = fullBase;
+        if (mWorkDays > 0 && mWorkDays < 25) {
+          baseEarn = Math.min(fullBase, Math.round(mWorkDays * rateReg * 100) / 100);
+        }
+
+        const wkEarn = (mWeekends + mHolidays) * rateWk;
+        const bonus = Number(mData?.bonus || 0);
+        const grossPay = baseEarn + wkEarn + bonus;
+
+        const seniority = calculateSeniorityMonths(workerObj.workerStartDate, y, m);
+        const isPensionActive = seniority >= 6.0;
+        const pensionAmount = isPensionActive ? (grossPay * (Number(workerObj.pensionPct || 6.5) / 100)) : 0;
+        const severanceMainAmount = grossPay * (Number(workerObj.severanceMainPct || 6.00) / 100);
+        const severanceTopupAmount = grossPay * (Number(workerObj.severanceTopupPct || 2.33) / 100);
+        const convalescenceAmount = (Number(workerObj.daysConvalescenceYear || 5) * Number(workerObj.rateConvalescence || 418)) / 12;
+        const vacationAmount = Number(workerObj.daysVacationMonth || 1.167) * rateReg;
+        const sickAmount = Number(workerObj.daysSickMonth || 1.5) * rateReg;
+        const nationalInsuranceAmount = grossPay * (Number(workerObj.nationalInsurancePct || 3.6) / 100);
+        const totalMonthSavings = pensionAmount + severanceMainAmount + severanceTopupAmount + convalescenceAmount + vacationAmount + sickAmount;
+
+        sumBaseSalary += baseEarn;
+        sumPension += pensionAmount;
+        sumSeveranceMain += severanceMainAmount;
+        sumSeveranceTopup += severanceTopupAmount;
+        sumConvalescence += convalescenceAmount;
+        sumVacation += vacationAmount;
+        sumSick += sickAmount;
+        sumNationalInsurance += nationalInsuranceAmount;
+        sumTotalSavings += totalMonthSavings;
+
+        csv += `"${mKey}","${hebrewMonths[m]}",${seniority},${baseEarn.toFixed(2)},${pensionAmount.toFixed(2)},${severanceMainAmount.toFixed(2)},${severanceTopupAmount.toFixed(2)},${convalescenceAmount.toFixed(2)},${vacationAmount.toFixed(2)},${sickAmount.toFixed(2)},${nationalInsuranceAmount.toFixed(2)},${totalMonthSavings.toFixed(2)}\n`;
+
+        cur.setMonth(cur.getMonth() + 1);
+      }
+
+      csv += `\n"סה""כ לתקופה / Period Total","--","--",${sumBaseSalary.toFixed(2)},${sumPension.toFixed(2)},${sumSeveranceMain.toFixed(2)},${sumSeveranceTopup.toFixed(2)},${sumConvalescence.toFixed(2)},${sumVacation.toFixed(2)},${sumSick.toFixed(2)},${sumNationalInsurance.toFixed(2)},${sumTotalSavings.toFixed(2)}\n`;
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', url);
+      downloadAnchor.setAttribute('download', `social_benefits_${workerObj.workerName.replace(/\s+/g, '_')}_${fromStr}_to_${toStr}.csv`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      URL.revokeObjectURL(url);
+      showToast("דוח תנאים סוציאליים יוצא בהצלחה לאקסל (CSV)");
+    }
+
+    function populateWorkerDropdowns() {
+      const mainDropdown = document.getElementById('workerSelectDropdown');
+      const reportDropdown = document.getElementById('reportFilterWorker');
+
+      if (mainDropdown) mainDropdown.innerHTML = '';
+      if (reportDropdown) reportDropdown.innerHTML = '';
+
+      workersList.forEach(w => {
+        if (mainDropdown) {
+          const opt1 = document.createElement('option');
+          opt1.value = w.id;
+          opt1.textContent = `${w.workerName} (${w.workerPassport})`;
+          opt1.className = "bg-slate-900 text-white py-1";
+          if (w.id === activeWorkerId) opt1.selected = true;
+          mainDropdown.appendChild(opt1);
+        }
+
+        if (reportDropdown) {
+          const opt2 = document.createElement('option');
+          opt2.value = w.id;
+          opt2.textContent = `${w.workerName} (${w.workerPassport})`;
+          opt2.className = "bg-slate-900 text-white py-1";
+          if (w.id === activeWorkerId) opt2.selected = true;
+          reportDropdown.appendChild(opt2);
+        }
+      });
+
+      if (mainDropdown) mainDropdown.value = activeWorkerId;
+      if (reportDropdown) reportDropdown.value = activeWorkerId;
+
+      renderWorkersListInDirectory();
+    }
+
+    function renderWorkersListInDirectory() {
+      const container = document.getElementById('workersDirectoryList');
+      if (!container) return;
+      container.innerHTML = '';
+
+      workersList.forEach(w => {
+        const isActive = w.id === activeWorkerId;
+        const card = document.createElement('div');
+        card.className = `p-3.5 rounded-2xl border flex flex-wrap items-center justify-between gap-3 transition ${isActive ? 'bg-emerald-50 border-emerald-300 ring-2 ring-emerald-500/20' : 'bg-white border-slate-200 hover:border-slate-300'}`;
+
+        card.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl ${isActive ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'} flex items-center justify-center font-bold text-sm">
+              <i class="fa-solid fa-user"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-sm text-slate-800">${w.workerName}</span>
+                ${isActive ? '<span class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold">עובד פעיל כעת</span>' : ''}
+              </div>
+              <div class="text-xs text-slate-500 mt-0.5">
+                <span>דרכון: <strong class="font-mono">${w.workerPassport}</strong></span>
+                <span class="mx-1.5">•</span>
+                <span>ת. התחלה: <strong>${w.workerStartDate || 'לא צוין'}</strong></span>
+                <span class="mx-1.5">•</span>
+                <span>שכר בסיס: <strong>₪${w.baseSalary}</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            ${!isActive ? `
+              <button type="button" onclick="window.switchActiveWorker('${w.id}'); window.closeWorkerManagerModal();" class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-xl font-bold transition">
+                הפוך לעובד פעיל
+              </button>
+            ` : ''}
+            <button type="button" onclick="window.switchActiveWorker('${w.id}'); window.closeWorkerManagerModal(); window.openSettingsModal();" class="text-xs bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl font-semibold transition">
+              <i class="fa-solid fa-pen-to-square text-emerald-600 ml-1"></i> ערוך פרטים
+            </button>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function switchActiveWorker(newId) {
+      if (activeWorkerId && currentMonthData) {
+        saveMonthData();
+      }
+      activeWorkerId = newId;
+      const found = workersList.find(w => w.id === newId);
+      if (found) {
+        settings = { ...found };
+      }
+      populateWorkerDropdowns();
+      populateSettingsForm();
+      loadMonthData();
+      generateAdminReport();
+      showToast(`כרטיס עובד הוחלף ל-${settings.workerName}`);
+    }
+
+    function addNewWorker() {
+      const newId = `worker_${Date.now()}`;
+      const newWorker = {
+        ...defaultWorkerTemplate,
+        id: newId,
+        workerName: "עובד/ת חדש/ה",
+        workerPassport: "דרכון חדש",
+        workerStartDate: new Date().toISOString().slice(0, 10)
+      };
+      workersList.push(newWorker);
+      activeWorkerId = newId;
+      settings = { ...newWorker };
+      populateWorkerDropdowns();
+      populateSettingsForm();
+      closeWorkerManagerModal();
+      openSettingsModal();
+      loadMonthData();
+      saveAllData();
+      showToast("נוצר כרטיס עובד חדש, אנא מלא את פרטיו");
+    }
+
+    function openWorkerManagerModal() {
+      renderWorkersListInDirectory();
+      const modal = document.getElementById('workerManagerModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeWorkerManagerModal() {
+      const modal = document.getElementById('workerManagerModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function openSettingsModal() {
+      populateSettingsForm();
+      const modal = document.getElementById('settingsModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      const modal = document.getElementById('settingsModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function openBackupModal() {
+      const modal = document.getElementById('backupModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeBackupModal() {
+      const modal = document.getElementById('backupModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function openAuthModal() {
+      updateAuthModalUI();
+      const modal = document.getElementById('authModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeAuthModal() {
+      const modal = document.getElementById('authModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function autoCalculateDailyRates() {
+      const baseEl = document.getElementById('cfgBaseSalary');
+      const base = parseFloat(baseEl ? baseEl.value : 6444) || 6444;
+      const regularDaily = (base / 25);
+      const weekendDaily = regularDaily * 1.5 + (regularDaily * 0.2);
+      
+      const regInput = document.getElementById('cfgRateRegularDay');
+      const wkInput = document.getElementById('cfgRateWeekendDay');
+      if (regInput) regInput.value = regularDaily.toFixed(2);
+      if (wkInput) wkInput.value = weekendDaily.toFixed(2);
+      showToast("תעריפי יום חושבו מחדש לפי שכר הבסיס");
+    }
+
+    function printCurrentPayslip() {
+      const printA = document.getElementById('printArea');
+      const printR = document.getElementById('printReportArea');
+      if (printA) printA.classList.remove('hidden');
+      if (printR) printR.classList.add('hidden');
+      window.print();
+    }
+
+    function printAdminReport() {
+      const printA = document.getElementById('printArea');
+      const printR = document.getElementById('printReportArea');
+      if (printA) printA.classList.add('hidden');
+      if (printR) printR.classList.remove('hidden');
+      window.print();
+    }
+
+    function navigateMonth(direction) {
+      if (direction === -1) {
+        if (currentMonthIndex === 0) {
+          currentMonthIndex = 11;
+          currentYear--;
+        } else {
+          currentMonthIndex--;
+        }
+      } else {
+        if (currentMonthIndex === 11) {
+          currentMonthIndex = 0;
+          currentYear++;
+        } else {
+          currentMonthIndex++;
+        }
+      }
+      loadMonthData();
+      generateAdminReport();
+    }
+
+    function goToCurrentMonth() {
+      const now = new Date();
+      currentYear = now.getFullYear();
+      currentMonthIndex = now.getMonth();
+      loadMonthData();
+      generateAdminReport();
+    }
+
+    function switchAppView(viewName) {
+      const monthlyView = document.getElementById('monthlyViewContent');
+      const reportsView = document.getElementById('reportsViewContent');
+      const monthlyTabBtn = document.getElementById('navMonthlyTabBtn');
+      const reportsTabBtn = document.getElementById('navReportsTabBtn');
+      const monthNav = document.getElementById('monthNavControls');
+
+      if (viewName === 'reports') {
+        monthlyView.classList.add('hidden');
+        reportsView.classList.remove('hidden');
+        if (monthNav) monthNav.classList.add('hidden');
+
+        reportsTabBtn.className = "px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition bg-purple-600 text-white shadow flex items-center gap-2";
+        monthlyTabBtn.className = "px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition text-slate-300 hover:text-white flex items-center gap-2 hover:bg-slate-700/50";
+        
+        initReportDateFilters();
+        generateAdminReport();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        reportsView.classList.add('hidden');
+        monthlyView.classList.remove('hidden');
+        if (monthNav) monthNav.classList.remove('hidden');
+
+        monthlyTabBtn.className = "px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition bg-emerald-600 text-white shadow flex items-center gap-2";
+        reportsTabBtn.className = "px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition bg-purple-900/80 hover:bg-purple-800 text-purple-200 hover:text-white border border-purple-500/40 flex items-center gap-2 shadow-sm";
+        
+        renderCalendar();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function setCloudSyncStatus(status, text) {
+      const dot = document.getElementById('syncIndicatorDot');
+      const label = document.getElementById('syncStatusLabel');
+      if (!dot || !label) return;
+
+      if (status === 'synced') {
+        dot.className = "w-2 h-2 rounded-full bg-emerald-400";
+        label.textContent = text || "ענן: מסונכרן";
+        label.className = "text-[11px] text-emerald-300 font-bold";
+      } else if (status === 'syncing') {
+        dot.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
+        label.textContent = text || "ענן: שומר...";
+        label.className = "text-[11px] text-amber-300 font-bold";
+      } else {
+        dot.className = "w-2 h-2 rounded-full bg-slate-400";
+        label.textContent = text || "ענן: מקומי";
+        label.className = "text-[11px] text-slate-300 font-medium";
+      }
+    }
+
+    async function syncToFirestore() {
+      if (!db || !currentUser) {
+        setCloudSyncStatus('offline', 'שמירה מקומית');
+        return;
+      }
+
+      setCloudSyncStatus('syncing', 'שומר בענן...');
+      try {
+        const userDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'payroll_data', 'main_state');
+        const statePayload = {
+          workersList,
+          activeWorkerId,
+          allHistoricalMonths,
+          updatedAt: new Date().toISOString()
+        };
+        await setDoc(userDocRef, statePayload, { merge: true });
+        setCloudSyncStatus('synced', 'מסונכרן בענן ✓');
+      } catch(err) {
+        console.warn("Firestore sync error:", err);
+        setCloudSyncStatus('offline', 'שגיאת סנכרון');
+      }
+    }
+
+    function setupFirestoreRealtimeSync() {
+      if (firestoreUnsubscribe) {
+        firestoreUnsubscribe();
+        firestoreUnsubscribe = null;
+      }
+
+      if (!db || !currentUser) return;
+
+      const userDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'payroll_data', 'main_state');
+      firestoreUnsubscribe = onSnapshot(userDocRef, (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.workersList) workersList = data.workersList;
+          if (data.activeWorkerId) activeWorkerId = data.activeWorkerId;
+          if (data.allHistoricalMonths) allHistoricalMonths = data.allHistoricalMonths;
+
+          const activeObj = workersList.find(w => w.id === activeWorkerId) || workersList[0];
+          settings = { ...defaultWorkerTemplate, ...activeObj };
+          activeWorkerId = settings.id;
+
+          populateWorkerDropdowns();
+          populateSettingsForm();
+          loadMonthData();
+          generateAdminReport();
+          setCloudSyncStatus('synced', 'מסונכרן בענן ✓');
+        } else {
+          syncToFirestore();
+        }
+      }, (err) => {
+        console.warn("Firestore onSnapshot error:", err);
+        setCloudSyncStatus('offline', 'מצב לא מקוון');
+      });
+    }
+
+    function updateAuthHeaderUI(user) {
+      const loginBtn = document.getElementById('btnOpenLoginModal');
+      const profilePill = document.getElementById('userProfilePill');
+      const nameLabel = document.getElementById('userNameLabel');
+      const emailLabel = document.getElementById('userEmailLabel');
+      const avatarImg = document.getElementById('userAvatarImg');
+
+      if (user && !user.isAnonymous) {
+        if (loginBtn) loginBtn.classList.add('hidden');
+        if (profilePill) {
+          profilePill.classList.remove('hidden');
+          profilePill.classList.add('flex');
+        }
+        if (nameLabel) nameLabel.textContent = user.displayName || 'משתמש Google';
+        if (emailLabel) emailLabel.textContent = user.email || user.uid;
+        if (avatarImg) {
+          avatarImg.src = user.photoURL || `https://placehold.co/100x100/10b981/ffffff?text=${encodeURIComponent((user.displayName || 'U').charAt(0))}`;
+        }
+      } else {
+        if (loginBtn) loginBtn.classList.remove('hidden');
+        if (profilePill) {
+          profilePill.classList.add('hidden');
+          profilePill.classList.remove('flex');
+        }
+      }
+    }
+
+    function updateAuthModalUI() {
+      const loggedInSection = document.getElementById('authModalLoggedInSection');
+      const loggedOutSection = document.getElementById('authModalLoggedOutSection');
+      const nameEl = document.getElementById('authModalUserName');
+      const emailEl = document.getElementById('authModalUserEmail');
+      const imgEl = document.getElementById('authModalUserImg');
+
+      if (currentUser && !currentUser.isAnonymous) {
+        if (loggedInSection) loggedInSection.classList.remove('hidden');
+        if (loggedOutSection) loggedOutSection.classList.add('hidden');
+        if (nameEl) nameEl.textContent = currentUser.displayName || 'משתמש Google';
+        if (emailEl) emailEl.textContent = currentUser.email || currentUser.uid;
+        if (imgEl) {
+          imgEl.src = currentUser.photoURL || `https://placehold.co/100x100/10b981/ffffff?text=${encodeURIComponent((currentUser.displayName || 'U').charAt(0))}`;
+        }
+      } else {
+        if (loggedInSection) loggedInSection.classList.add('hidden');
+        if (loggedOutSection) loggedOutSection.classList.remove('hidden');
+      }
+    }
+
+    async function loginWithGoogle() {
+      if (!auth) {
+        showToast("שירותי Firebase אינם זמינים כרגע", "error");
+        return;
+      }
+      try {
+        const provider = new GoogleAuthProvider();
+        const result = await signInWithPopup(auth, provider);
+        currentUser = result.user;
+        updateAuthHeaderUI(currentUser);
+        closeAuthModal();
+        showToast(`ברוך הבא, ${currentUser.displayName || 'משתמש Google'}!`);
+      } catch(e) {
+        console.error("Google login error:", e);
+        showToast("התחברות באמצעות Google בוטלה או נכשלה", "error");
+      }
+    }
+
+    async function handleSignOut() {
+      if (!auth) return;
+      try {
+        if (firestoreUnsubscribe) {
+          firestoreUnsubscribe();
+          firestoreUnsubscribe = null;
+        }
+        await signOut(auth);
+        currentUser = null;
+        updateAuthHeaderUI(null);
+        closeAuthModal();
+        setCloudSyncStatus('offline', 'מצב מקומי');
+        showToast("התנתקת בהצלחה מחשבון Google");
+      } catch(e) {
+        console.warn("Sign out error:", e);
+      }
+    }
+
+    let saveTimeout = null;
+    function saveMonthDataDebounced() {
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(saveMonthData, 400);
+    }
+
+    function saveMonthData() {
+      const monthDocId = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}`;
+      if (!allHistoricalMonths[activeWorkerId]) allHistoricalMonths[activeWorkerId] = {};
+      allHistoricalMonths[activeWorkerId][monthDocId] = {
+        days: currentMonthData.days,
+        expenseNote: currentMonthData.expenseNote,
+        userOverrodeExpenseNote: currentMonthData.userOverrodeExpenseNote,
+        bonus: currentMonthData.bonus,
+        otherDeductions: currentMonthData.otherDeductions,
+        notes: currentMonthData.notes,
+        updatedAt: new Date().toISOString()
+      };
+
+      saveAllData();
+    }
+
+    function saveAllData() {
+      try {
+        localStorage.setItem('caregiver_workers_list', JSON.stringify(workersList));
+        localStorage.setItem('caregiver_active_worker', activeWorkerId);
+        localStorage.setItem('caregiver_history', JSON.stringify(allHistoricalMonths));
+      } catch (e) {
+        console.warn("Storage save error:", e);
+      }
+
+      if (currentUser) {
+        syncToFirestore();
+      }
+    }
+
+    function loadAllData() {
+      try {
+        const savedWorkers = localStorage.getItem('caregiver_workers_list');
+        if (savedWorkers) workersList = JSON.parse(savedWorkers);
+        const savedActive = localStorage.getItem('caregiver_active_worker');
+        if (savedActive) activeWorkerId = savedActive;
+        const savedHistory = localStorage.getItem('caregiver_history');
+        if (savedHistory) allHistoricalMonths = JSON.parse(savedHistory);
+      } catch (e) {
+        console.warn("Storage load error:", e);
+      }
+
+      const activeObj = workersList.find(w => w.id === activeWorkerId) || workersList[0];
+      settings = { ...defaultWorkerTemplate, ...activeObj };
+      activeWorkerId = settings.id;
+
+      populateWorkerDropdowns();
+      populateSettingsForm();
+      initReportDateFilters();
+      loadMonthData();
+    }
+
+    function loadMonthData() {
+      const monthDocId = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}`;
+      const workerHistory = allHistoricalMonths[activeWorkerId] || {};
+      const saved = workerHistory[monthDocId];
+
+      if (saved) {
+        currentMonthData = {
+          days: saved.days || generateBlankDays(currentYear, currentMonthIndex),
+          expenseNote: saved.expenseNote || "החזר הוצאות חודשי: ₪600.00 (מלא - 25+ ימי עבודה)",
+          userOverrodeExpenseNote: saved.userOverrodeExpenseNote || false,
+          bonus: saved.bonus ?? 0,
+          otherDeductions: saved.otherDeductions ?? 0,
+          notes: saved.notes ?? "תשלום שכר שוטף"
+        };
+      } else {
+        currentMonthData = {
+          days: generateBlankDays(currentYear, currentMonthIndex),
+          expenseNote: "החזר הוצאות חודשי: ₪600.00 (מלא - 25+ ימי עבודה)",
+          userOverrodeExpenseNote: false,
+          bonus: 0,
+          otherDeductions: 0,
+          notes: "תשלום שכר שוטף"
+        };
+      }
+
+      const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+      setVal('inputMonthExpenseNote', currentMonthData.expenseNote);
+      setVal('inputMonthBonus', currentMonthData.bonus);
+      setVal('inputMonthOtherDeductions', currentMonthData.otherDeductions);
+      setVal('inputMonthNotes', currentMonthData.notes);
+
+      renderCalendar();
+    }
+
+    function populateSettingsForm() {
+      const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+      setVal('cfgWorkerName', settings.workerName);
+      setVal('cfgWorkerPassport', settings.workerPassport);
+      setVal('cfgWorkerStartDate', settings.workerStartDate);
+      setVal('cfgEmployerName', settings.employerName);
+      setVal('cfgEmployerContact', settings.employerContact);
+      setVal('cfgWorkerBank', settings.workerBank);
+      
+      setVal('cfgBaseSalary', settings.baseSalary);
+      setVal('cfgExpenseDefault', settings.expenseDefault);
+      setVal('cfgPocketWeekly', settings.pocketWeekly);
+      
+      setVal('cfgRateRegularDay', settings.rateRegularDay);
+      setVal('cfgRateWeekendDay', settings.rateWeekendDay);
+      setVal('cfgRateConvalescence', settings.rateConvalescence);
+      setVal('cfgDaysConvalescenceYear', settings.daysConvalescenceYear);
+      setVal('cfgDaysVacationMonth', settings.daysVacationMonth);
+      setVal('cfgDaysSickMonth', settings.daysSickMonth);
+      setVal('cfgPensionPct', settings.pensionPct);
+      setVal('cfgSeveranceMainPct', settings.severanceMainPct || 6.00);
+      setVal('cfgSeveranceTopupPct', settings.severanceTopupPct || 2.33);
+      setVal('cfgNationalInsurancePct', settings.nationalInsurancePct);
+
+      updatePocketToggleUI(settings.pocketMode);
+    }
+
+    function saveSettingsForm() {
+      const getVal = (id, fallback = '') => { const el = document.getElementById(id); return el ? el.value.trim() : fallback; };
+      const getNum = (id, fallback = 0) => { const el = document.getElementById(id); return el ? (parseFloat(el.value) || fallback) : fallback; };
+
+      settings.workerName = getVal('cfgWorkerName', 'Maria Santos');
+      settings.workerPassport = getVal('cfgWorkerPassport', 'P12345678');
+      settings.workerStartDate = getVal('cfgWorkerStartDate', '2025-08-01');
+      settings.employerName = getVal('cfgEmployerName', 'ישראל ישראלי');
+      settings.employerContact = getVal('cfgEmployerContact', '050-1234567');
+      settings.workerBank = getVal('cfgWorkerBank', 'בנק לאומי');
+
+      settings.baseSalary = getNum('cfgBaseSalary', 6444);
+      settings.expenseDefault = getNum('cfgExpenseDefault', 600);
+      settings.pocketWeekly = getNum('cfgPocketWeekly', 100);
+
+      settings.rateRegularDay = getNum('cfgRateRegularDay', 257.75);
+      settings.rateWeekendDay = getNum('cfgRateWeekendDay', 439.75);
+      settings.rateConvalescence = getNum('cfgRateConvalescence', 418.00);
+      settings.daysConvalescenceYear = getNum('cfgDaysConvalescenceYear', 5);
+      settings.daysVacationMonth = getNum('cfgDaysVacationMonth', 1.167);
+      settings.daysSickMonth = getNum('cfgDaysSickMonth', 1.5);
+      settings.pensionPct = getNum('cfgPensionPct', 6.5);
+      settings.severanceMainPct = getNum('cfgSeveranceMainPct', 6.00);
+      settings.severanceTopupPct = getNum('cfgSeveranceTopupPct', 2.33);
+      settings.nationalInsurancePct = getNum('cfgNationalInsurancePct', 3.6);
+
+      const idx = workersList.findIndex(w => w.id === settings.id);
+      if (idx !== -1) {
+        workersList[idx] = { ...settings };
+      }
+      populateWorkerDropdowns();
+      closeSettingsModal();
+      updateCalculations();
+      renderCalendar();
+      generateAdminReport();
+      saveAllData();
+      showToast("הגדרות כרטיס העובד נשמרו בהצלחה");
+    }
+
+    function resetSettingsDefaults() {
+      settings = { ...defaultWorkerTemplate, id: settings.id };
+      populateSettingsForm();
+      showToast("ההגדרות אופסו לברירות המחדל");
+    }
+
+    function updatePocketToggleUI(mode) {
+      const cashBtn = document.getElementById('pocketModeCashBtn');
+      const bankBtn = document.getElementById('pocketModeBankBtn');
+      if (cashBtn && bankBtn) {
+        if (mode === 'cash') {
+          cashBtn.className = "px-3 py-1.5 text-xs font-bold rounded-lg transition bg-amber-500 text-white shadow";
+          bankBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg transition text-slate-600 hover:text-slate-900";
+        } else {
+          bankBtn.className = "px-3 py-1.5 text-xs font-bold rounded-lg transition bg-amber-500 text-white shadow";
+          cashBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg transition text-slate-600 hover:text-slate-900";
+        }
+      }
+      settings.pocketMode = mode;
+    }
+
+    function exportBackup() {
+      const exportData = {
+        workersList,
+        activeWorkerId,
+        allHistoricalMonths,
+        exportedAt: new Date().toISOString()
+      };
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `caregiver_payroll_full_backup_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast("קובץ גיבוי מלא הורד בהצלחה");
+    }
+
+    function triggerImport() {
+      const inp = document.getElementById('importBackupInput');
+      if (inp) inp.click();
+    }
+
+    function importBackup(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported.workersList) workersList = imported.workersList;
+          if (imported.activeWorkerId) activeWorkerId = imported.activeWorkerId;
+          if (imported.allHistoricalMonths) allHistoricalMonths = imported.allHistoricalMonths;
+
+          saveAllData();
+          loadAllData();
+          generateAdminReport();
+          showToast("הנתונים שוחזרו בהצלחה מהקובץ");
+          closeBackupModal();
+        } catch(err) {
+          showToast("שגיאה בקריאת קובץ הגיבוי", "error");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    window.switchAppView = switchAppView;
+    window.navigateMonth = navigateMonth;
+    window.goToCurrentMonth = goToCurrentMonth;
+    window.switchActiveWorker = switchActiveWorker;
+    window.handleReportWorkerChange = handleReportWorkerChange;
+    window.addNewWorker = addNewWorker;
+    window.openWorkerManagerModal = openWorkerManagerModal;
+    window.closeWorkerManagerModal = closeWorkerManagerModal;
+    window.openSettingsModal = openSettingsModal;
+    window.closeSettingsModal = closeSettingsModal;
+    window.openBackupModal = openBackupModal;
+    window.closeBackupModal = closeBackupModal;
+    window.openAuthModal = openAuthModal;
+    window.closeAuthModal = closeAuthModal;
+    window.loginWithGoogle = loginWithGoogle;
+    window.handleSignOut = handleSignOut;
+    window.openDaySelectorModal = openDaySelectorModal;
+    window.closeDayModal = closeDayModal;
+    window.setDayType = setDayType;
+    window.batchFillWeekdaysWorked = batchFillWeekdaysWorked;
+    window.batchClearAllDays = batchClearAllDays;
+    window.saveSettingsForm = saveSettingsForm;
+    window.resetSettingsDefaults = resetSettingsDefaults;
+    window.updatePocketToggleUI = updatePocketToggleUI;
+    window.autoCalculateDailyRates = autoCalculateDailyRates;
+    window.printCurrentPayslip = printCurrentPayslip;
+    window.printAdminReport = printAdminReport;
+    window.generateAdminReport = generateAdminReport;
+    window.setPresetReportRange = setPresetReportRange;
+    window.exportSocialBenefitsToExcel = exportSocialBenefitsToExcel;
+    window.exportBackup = exportBackup;
+    window.triggerImport = triggerImport;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const bindInp = (id, fn) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', fn);
+      };
+
+      bindInp('inputMonthExpenseNote', (e) => {
+        currentMonthData.expenseNote = e.target.value;
+        currentMonthData.userOverrodeExpenseNote = true;
+        updateCalculations();
+        saveMonthDataDebounced();
+      });
+
+      bindInp('inputMonthBonus', (e) => {
+        currentMonthData.bonus = parseFloat(e.target.value) || 0;
+        updateCalculations();
+        saveMonthDataDebounced();
+      });
+
+      bindInp('inputMonthOtherDeductions', (e) => {
+        currentMonthData.otherDeductions = parseFloat(e.target.value) || 0;
+        updateCalculations();
+        saveMonthDataDebounced();
+      });
+
+      bindInp('inputMonthNotes', (e) => {
+        currentMonthData.notes = e.target.value;
+        updateCalculations();
+        saveMonthDataDebounced();
+      });
+
+      const importInp = document.getElementById('importBackupInput');
+      if (importInp) {
+        importInp.addEventListener('change', (e) => {
+          if (e.target.files && e.target.files[0]) importBackup(e.target.files[0]);
+        });
+      }
+
+      // First load local data instantly
+      loadAllData();
+
+      // Listen for Firebase Auth State Changes
+      if (auth) {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          signInWithCustomToken(auth, __initial_auth_token).catch(err => {
+            console.warn("Custom token login failed, falling back to auth state:", err);
+          });
+        }
+
+        onAuthStateChanged(auth, (user) => {
+          currentUser = user;
+          updateAuthHeaderUI(user);
+          if (user) {
+            setupFirestoreRealtimeSync();
+          } else {
+            setCloudSyncStatus('offline', 'מצב מקומי');
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
