@@ -832,11 +832,12 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // ═══════════════════════════════════════════════════════════
-// ██  CONFIGURATION - CHANGE THESE VALUES  ██
+// ██  CONFIGURATION  ██
 // ═══════════════════════════════════════════════════════════
 
-// ↓↓↓ PUT YOUR OWN GMAIL HERE (this email gets admin access) ↓↓↓
-const ADMIN_EMAIL = 'ofirbn@gmail.com';
+// ⚠️ ADMIN EMAIL IS NOT STORED HERE FOR SECURITY REASONS.
+// Admin identity is determined server-side via Firestore Security Rules only.
+// → The admin email is defined ONLY in Firebase Console > Firestore > Rules
 
 // Firebase project config — fill in from your Firebase Console
 const FIREBASE_CONFIG = {
@@ -974,7 +975,22 @@ async function handleSignOut() {
 async function checkAndRouteUser(user) {
   if (!user) { showScreen('screen-login'); return; }
   currentUser = user;
-  isAdmin = (user.email === ADMIN_EMAIL);
+
+  // ═══════════════════════════════════════════════════════
+  // SECURE ADMIN DETECTION: No email hardcoded in client!
+  // We probe Firestore with a collection-level read.
+  // Only the real admin can succeed (enforced by Security Rules server-side).
+  // ═══════════════════════════════════════════════════════
+  if (!db) { showScreen('screen-app'); return; }
+  try {
+    const probeQuery = query(collection(db, 'users'), where('status','==','pending'));
+    await getDocs(probeQuery);
+    // ✅ If we got here → Firestore permitted the read → we ARE admin
+    isAdmin = true;
+  } catch(e) {
+    // 🚫 Permission denied → regular user (or approved user)
+    isAdmin = false;
+  }
 
   if (isAdmin) {
     // Admin always has access
@@ -990,7 +1006,6 @@ async function checkAndRouteUser(user) {
   }
 
   // Regular user – check registration status
-  if (!db) { showScreen('screen-app'); return; }
   try {
     const userRef  = doc(db, 'users', user.uid);
     const userSnap = await getDoc(userRef);
@@ -1029,9 +1044,16 @@ async function checkAndRouteUser(user) {
       }
     }
   } catch(e) {
-    console.error("Auth routing error:", e);
-    showToast('שגיאה בבדיקת הרשאות. נסה שנית.', 'error');
-    showScreen('screen-login');
+    // If the user record doesn't exist yet AND they're not admin – new pending registration
+    if (e.code === 'permission-denied') {
+      // This shouldn't normally happen but handle gracefully
+      showToast('שגיאה בבדיקת הרשאות. נסה שנית.', 'error');
+      showScreen('screen-login');
+    } else {
+      console.error("Auth routing error:", e);
+      showToast('שגיאה בבדיקת הרשאות. נסה שנית.', 'error');
+      showScreen('screen-login');
+    }
   }
 }
 
