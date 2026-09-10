@@ -1530,11 +1530,11 @@ function loadLocalData() {
 }
 
 function loadLocalDataForUser(uid) {
-  // When impersonating, we skip localStorage and rely on Firestore only
-  workersList         = [{ ...defaultWorkerTemplate }];
+  // When impersonating, start with a clean empty state – Firestore will fill it in
+  workersList         = [{ ...emptyWorkerTemplate, id: 'worker_1' }];
   activeWorkerId      = 'worker_1';
   allHistoricalMonths = {};
-  settings            = { ...defaultWorkerTemplate };
+  settings            = { ...emptyWorkerTemplate, id: 'worker_1' };
   populateWorkerDropdowns();
   populateSettingsForm();
   initReportDateFilters();
@@ -2298,8 +2298,8 @@ function populateSettingsForm() {
 function saveSettingsForm() {
   const getVal = (id, fb = '') => { const el = document.getElementById(id); return el ? el.value.trim() : fb; };
   const getNum = (id, fb = 0)  => { const el = document.getElementById(id); return el ? (parseFloat(el.value) || fb) : fb; };
-  settings.workerName            = getVal('cfgWorkerName','Maria Santos');
-  settings.workerPassport        = getVal('cfgWorkerPassport','P12345678');
+  settings.workerName            = getVal('cfgWorkerName','');
+  settings.workerPassport        = getVal('cfgWorkerPassport','');
   settings.workerStartDate       = getVal('cfgWorkerStartDate','');
   settings.employerName          = getVal('cfgEmployerName','');
   settings.employerContact       = getVal('cfgEmployerContact','');
@@ -2473,10 +2473,19 @@ function importBackup(file) {
   reader.onload = e => {
     try {
       const imported = JSON.parse(e.target.result);
-      if (imported.workersList)        workersList        = imported.workersList;
-      if (imported.activeWorkerId)     activeWorkerId     = imported.activeWorkerId;
+      if (imported.workersList)         workersList         = imported.workersList;
+      if (imported.activeWorkerId)      activeWorkerId      = imported.activeWorkerId;
       if (imported.allHistoricalMonths) allHistoricalMonths = imported.allHistoricalMonths;
-      saveAllData(); loadLocalData(); generateAdminReport();
+      // Apply the loaded data to the UI without touching localStorage
+      const activeObj = workersList.find(w => w.id === activeWorkerId) || workersList[0];
+      settings        = { ...defaultWorkerTemplate, ...activeObj };
+      activeWorkerId  = settings.id;
+      populateWorkerDropdowns();
+      populateSettingsForm();
+      initReportDateFilters();
+      loadMonthData();
+      generateAdminReport();
+      saveAllData(); // persists to Firestore (and localStorage only for admin)
       showToast('הנתונים שוחזרו בהצלחה');
       closeBackupModal();
     } catch(err) { showToast('שגיאה בקריאת קובץ הגיבוי', 'error'); }
