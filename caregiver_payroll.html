@@ -1152,13 +1152,9 @@ async function loadUsersForAdmin() {
   emptyEl?.classList.add('hidden');
 
   try {
+    // No composite index needed: fetch all users, filter & sort client-side
     const usersRef = collection(db, 'users');
-    let q;
-    if (currentAdminTab === 'pending')  q = query(usersRef, where('status','==','pending'), orderBy('createdAt','desc'));
-    else if (currentAdminTab === 'approved') q = query(usersRef, where('status','==','approved'), orderBy('createdAt','desc'));
-    else q = query(usersRef, orderBy('createdAt','desc'));
-
-    const snap = await getDocs(q);
+    const snap = await getDocs(usersRef);
     loadingEl?.classList.add('hidden');
 
     if (snap.empty) {
@@ -1168,11 +1164,22 @@ async function loadUsersForAdmin() {
       return;
     }
 
-    const users = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+    // Filter by tab, then sort by createdAt descending – all client-side
+    let users = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
     const pendingCount = users.filter(u => u.status === 'pending').length;
-    if (currentAdminTab === 'all' || currentAdminTab === 'pending') {
-      updatePendingBadge(pendingCount);
-    }
+    updatePendingBadge(pendingCount);
+
+    if (currentAdminTab === 'pending')       users = users.filter(u => u.status === 'pending');
+    else if (currentAdminTab === 'approved') users = users.filter(u => u.status === 'approved');
+    // 'all' → no filter
+
+    // Sort newest first
+    users.sort((a, b) => {
+      const da = a.createdAt ? new Date(a.createdAt) : new Date(0);
+      const db2 = b.createdAt ? new Date(b.createdAt) : new Date(0);
+      return db2 - da;
+    });
+
     renderAdminUserList(users);
   } catch(e) {
     loadingEl?.classList.add('hidden');
