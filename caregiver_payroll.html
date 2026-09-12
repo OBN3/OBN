@@ -1244,18 +1244,19 @@ async function acceptTermsAndProceed() {
   try {
     const userRef = doc(db, 'users', currentUser.uid);
     const termsTs = new Date().toISOString();
-    if (_tosUserMode === 'new') {
-      await setDoc(userRef, {
-        email:           currentUser.email,
-        displayName:     currentUser.displayName || currentUser.email,
-        photoURL:        currentUser.photoURL || '',
-        status:          'pending',
-        createdAt:       termsTs,
-        approvedAt:      null,
-        rejectedAt:      null,
-        adminNote:       '',
-        termsAcceptedAt: termsTs
-      });
+if (_tosUserMode === 'new') {
+  // merge:true מטפל במקרה קצה שבו המסמך כבר קיים
+  await setDoc(userRef, {
+    email:           currentUser.email,
+    displayName:     currentUser.displayName || currentUser.email,
+    photoURL:        currentUser.photoURL || '',
+    status:          'pending',
+    createdAt:       termsTs,
+    approvedAt:      null,
+    rejectedAt:      null,
+    adminNote:       '',
+    termsAcceptedAt: termsTs
+  }, { merge: true });
       showPendingScreen(currentUser);
       listenForStatusChange(currentUser.uid);
     } else {
