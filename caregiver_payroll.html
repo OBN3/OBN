@@ -980,41 +980,20 @@
   rules_version = '2';
   service cloud.firestore {
     match /databases/{database}/documents {
-
-      // ── Admin identity ─────────────────────────────────────────────
-      // We use UID (not email) – it never changes, even if you change
-      // your Google email address in the future.
-      //
-      // How to find your UID (one-time setup):
-      //   Firebase Console → Authentication → click your email row → copy "User UID"
-      //   Example UID looks like: kF3mZx8QpwTb2YnR9vLo4sAeJi1d
-      //
-      // ⚠️  Replace PASTE-YOUR-UID-HERE with your real UID, then publish.
+      
       function isAdmin() {
         return request.auth != null &&
-               request.auth.uid == 'kF3mZx8QpwTb2YnR9vLo4sAeJi1d';
+               request.auth.uid == 'PASTE-YOUR-UID-HERE';
       }
-
-      // ── /users/{userId}  —  registration & approval records ────────
-      //
-      // WHO CAN READ a /users/{userId} document?
-      //   • The owner of that document  (request.auth.uid == userId)
-      //     → e.g. user "abc" can read /users/abc ONLY.
-      //     → user "abc" CANNOT read /users/xyz or /users/adminUID.
-      //   • Admin  (isAdmin() == true)
-      //     → Admin reads all records to manage the approval panel.
-      //
-      // WHO CAN CREATE?  Any authenticated user can create their own record.
-      // WHO CAN UPDATE?  Only Admin (to approve / reject / set status).
+      
+      // User registry: status, email, displayName
       match /users/{userId} {
-        allow read:   if request.auth != null &&
-                      (request.auth.uid == userId || isAdmin());
-        allow create: if request.auth != null && request.auth.uid == userId;
+        allow read: if request.auth != null && 
+                    (request.auth.uid == userId || isAdmin());
+        allow create: if request.auth.uid == userId;
         allow update: if isAdmin();
-
-        // ── /users/{userId}/appData  —  payroll data ─────────────────
-        // PRIVACY BY DESIGN: Admin has NO access to payroll data.
-        // Only the document owner (the family) can read/write their data.
+        
+        // User payroll data – ADMIN CANNOT ACCESS (privacy by design)
         match /appData/{doc} {
           allow read, write: if request.auth != null &&
                              request.auth.uid == userId;
@@ -1022,7 +1001,8 @@
       }
     }
   }
-  ════════════════════════════════════════════════════════════════ -->
+  
+════════════════════════════════════════════════════════════════ -->
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -1593,14 +1573,19 @@ async function loadUserFirestoreData(uid) {
     const ref  = doc(db, 'users', uid, 'appData', 'main');
     const snap = await getDoc(ref);
     if (snap.exists()) {
-      applyRemoteData(snap.data());
+      applyRemoteData(snap.data()); // sets status → 'מסונכרן ✓' inside
     } else if (!isAdmin) {
-      // First-time approved user — no Firestore data yet
-      // State is already blank from initEmptyState(); prompt for setup
+      // First-time approved user — no Firestore data yet.
+      // Still connected to cloud; just no data saved yet.
+      setCloudSyncStatus('synced', 'מחובר לענן ✓');
       handleFirstTimeUser();
+    } else {
+      // Admin with no data yet (e.g. first run)
+      setCloudSyncStatus('synced', 'מחובר לענן ✓');
     }
   } catch(e) {
     console.warn("Firestore load error:", e);
+    setCloudSyncStatus('offline', 'שגיאת חיבור');
   }
 }
 
