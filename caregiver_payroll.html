@@ -518,7 +518,7 @@
             <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100"><div class="flex justify-between items-center font-medium text-slate-700"><div class="flex items-center gap-1.5"><i class="fa-solid fa-umbrella text-indigo-500"></i><span>פנסיה (6.5%)</span><span id="pensionStatusBadge" class="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded font-bold">טוען...</span></div><span id="calcPensionAmount" class="font-bold text-slate-900">₪0.00</span></div><p class="text-[11px] text-slate-400 mt-0.5">מופעל מחודש 7 להעסקה</p></div>
             <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100"><div class="flex justify-between items-center font-medium text-slate-700"><div class="flex items-center gap-1.5"><i class="fa-solid fa-handshake-angle text-blue-500"></i><span>פיצויים שוטפים (6%)</span></div><span id="calcSeveranceMainAmount" class="font-bold text-slate-900">₪0.00</span></div></div>
             <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100"><div class="flex justify-between items-center font-medium text-slate-700"><div class="flex items-center gap-1.5"><i class="fa-solid fa-plus-circle text-sky-500"></i><span>השלמת פיצויים (2.33%)</span></div><span id="calcSeveranceTopupAmount" class="font-bold text-slate-900">₪0.00</span></div></div>
-            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100"><div class="flex justify-between items-center font-medium text-slate-700"><div class="flex items-center gap-1.5"><i class="fa-solid fa-spa text-teal-500"></i><span>דמי הבראה</span></div><span id="calcConvalescenceAmount" class="font-bold text-slate-900">₪0.00</span></div><p class="text-[11px] text-slate-400 mt-0.5" id="calcConvalescenceNote">5 ימים × ₪418 ÷ 12</p></div>
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100"><div class="flex justify-between items-center font-medium text-slate-700"><div class="flex items-center gap-1.5"><i class="fa-solid fa-spa text-teal-500"></i><span>דמי הבראה</span></div><span id="calcConvalescenceAmount" class="font-bold text-slate-900">₪0.00</span></div><p class="text-[11px] text-slate-400 mt-0.5" id="calcConvalescenceNote">5 ימים × ₪451.50 ÷ 12</p></div>
             <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100"><div class="flex justify-between items-center font-medium text-slate-700"><div class="flex items-center gap-1.5"><i class="fa-solid fa-sun text-amber-500"></i><span>חופשה שנתית (צבירה)</span></div><span id="calcVacationAmount" class="font-bold text-slate-900">₪0.00</span></div><p class="text-[11px] text-slate-400 mt-0.5" id="calcVacationNote">1.167 ימים × תעריף יומי</p></div>
             <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100"><div class="flex justify-between items-center font-medium text-slate-700"><div class="flex items-center gap-1.5"><i class="fa-solid fa-notes-medical text-rose-500"></i><span>ימי מחלה (קרן שמורה)</span></div><span id="calcSickAmount" class="font-bold text-slate-900">₪0.00</span></div><p class="text-[11px] text-slate-400 mt-0.5" id="calcSickNote">1.5 ימים × תעריף יומי</p></div>
             <div class="p-2.5 rounded-xl bg-blue-50/50 border border-blue-100"><div class="flex justify-between items-center font-medium text-slate-700"><div class="flex items-center gap-1.5"><i class="fa-solid fa-landmark text-blue-600"></i><span>ביטוח לאומי מעסיק (3.6%)</span></div><span id="calcNationalInsuranceAmount" class="font-bold text-blue-900">₪0.00</span></div></div>
@@ -828,7 +828,7 @@
       <div class="px-6 py-4 bg-gradient-to-r from-violet-900 to-purple-900 text-white flex items-center justify-between shrink-0">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center"><i class="fa-solid fa-user-shield text-violet-300 text-lg"></i></div>
-          <div><h3 class="font-black text-base">פאנל ניהול מערכת</h3><p class="text-xs text-violet-300">ניהול משתמשים, אישורים וצפייה בנתונים</p></div>
+          <div><h3 class="font-black text-base">פאנל ניהול מערכת</h3><p class="text-xs text-violet-300">ניהול משתמשים ואישורים</p></div>
         </div>
         <button type="button" onclick="window.closeAdminPanel()" class="text-white/60 hover:text-white p-2 rounded-lg text-xl transition"><i class="fa-solid fa-xmark"></i></button>
       </div>
@@ -980,20 +980,41 @@
   rules_version = '2';
   service cloud.firestore {
     match /databases/{database}/documents {
-      
+
+      // ── Admin identity ─────────────────────────────────────────────
+      // We use UID (not email) – it never changes, even if you change
+      // your Google email address in the future.
+      //
+      // How to find your UID (one-time setup):
+      //   Firebase Console → Authentication → click your email row → copy "User UID"
+      //   Example UID looks like: kF3mZx8QpwTb2YnR9vLo4sAeJi1d
+      //
+      // ⚠️  Replace PASTE-YOUR-UID-HERE with your real UID, then publish.
       function isAdmin() {
         return request.auth != null &&
-               request.auth.token.email == 'YOUR_ADMIN_GMAIL@gmail.com';
+               request.auth.uid == 'kF3mZx8QpwTb2YnR9vLo4sAeJi1d';
       }
-      
-      // User registry: status, email, displayName
+
+      // ── /users/{userId}  —  registration & approval records ────────
+      //
+      // WHO CAN READ a /users/{userId} document?
+      //   • The owner of that document  (request.auth.uid == userId)
+      //     → e.g. user "abc" can read /users/abc ONLY.
+      //     → user "abc" CANNOT read /users/xyz or /users/adminUID.
+      //   • Admin  (isAdmin() == true)
+      //     → Admin reads all records to manage the approval panel.
+      //
+      // WHO CAN CREATE?  Any authenticated user can create their own record.
+      // WHO CAN UPDATE?  Only Admin (to approve / reject / set status).
       match /users/{userId} {
-        allow read: if request.auth != null && 
-                    (request.auth.uid == userId || isAdmin());
-        allow create: if request.auth.uid == userId;
+        allow read:   if request.auth != null &&
+                      (request.auth.uid == userId || isAdmin());
+        allow create: if request.auth != null && request.auth.uid == userId;
         allow update: if isAdmin();
-        
-        // User payroll data – ADMIN CANNOT ACCESS (privacy by design)
+
+        // ── /users/{userId}/appData  —  payroll data ─────────────────
+        // PRIVACY BY DESIGN: Admin has NO access to payroll data.
+        // Only the document owner (the family) can read/write their data.
         match /appData/{doc} {
           allow read, write: if request.auth != null &&
                              request.auth.uid == userId;
@@ -1001,8 +1022,7 @@
       }
     }
   }
-  
-════════════════════════════════════════════════════════════════ -->
+  ════════════════════════════════════════════════════════════════ -->
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
