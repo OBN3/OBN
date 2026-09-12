@@ -436,7 +436,7 @@
           </div>
           <div class="bg-slate-50/80 p-3.5 rounded-xl border border-slate-200 space-y-1.5">
             <div class="flex items-center justify-between">
-              <label class="text-xs text-slate-700 font-bold flex items-center gap-1.5"><i class="fa-solid fa-receipt text-emerald-600"></i><span>הערת החזר הוצאות לתלוש:</span></label>
+              <label class="text-xs text-slate-700 font-bold flex items-center gap-1.5"><i class="fa-solid fa-receipt text-emerald-600"></i><span>הערת החזר הוצאות לתלוש: <span class="font-normal text-slate-500">(במידה והיו החזרי הוצאות)</span></span></label>
               <span id="expenseRatioBadge" class="text-[10px] text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded font-bold">100%</span>
             </div>
             <input type="text" id="inputMonthExpenseNote" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
@@ -802,7 +802,7 @@
           <h4 class="font-bold text-slate-800 text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-info-circle text-slate-600"></i>תעריפים כברירת מחדל (2026)</h4>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-slate-600">
             <div class="bg-white p-2 rounded-lg border border-slate-100"><span class="block font-bold text-slate-800">שכר מינימום</span>₪6,444 / חודש</div>
-            <div class="bg-white p-2 rounded-lg border border-slate-100"><span class="block font-bold text-slate-800">דמי הבראה</span>₪418 / יום (2026)</div>
+            <div class="bg-white p-2 rounded-lg border border-slate-100"><span class="block font-bold text-slate-800">דמי הבראה</span>₪451.50 / יום (2026)</div>
             <div class="bg-white p-2 rounded-lg border border-slate-100"><span class="block font-bold text-slate-800">פיצויים</span>6% + 2.33% (סעיף 14)</div>
             <div class="bg-white p-2 rounded-lg border border-slate-100"><span class="block font-bold text-slate-800">פנסיה</span>6.5% מהשכר הברוטו</div>
             <div class="bg-white p-2 rounded-lg border border-slate-100"><span class="block font-bold text-slate-800">חופשה שנתית</span>14 ימים / שנה</div>
@@ -828,7 +828,7 @@
       <div class="px-6 py-4 bg-gradient-to-r from-violet-900 to-purple-900 text-white flex items-center justify-between shrink-0">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center"><i class="fa-solid fa-user-shield text-violet-300 text-lg"></i></div>
-          <div><h3 class="font-black text-base">פאנל ניהול מערכת</h3><p class="text-xs text-violet-300">ניהול משתמשים ואישורים</p></div>
+          <div><h3 class="font-black text-base">פאנל ניהול מערכת</h3><p class="text-xs text-violet-300">ניהול משתמשים, אישורים וצפייה בנתונים</p></div>
         </div>
         <button type="button" onclick="window.closeAdminPanel()" class="text-white/60 hover:text-white p-2 rounded-lg text-xl transition"><i class="fa-solid fa-xmark"></i></button>
       </div>
@@ -1081,12 +1081,12 @@ const defaultWorkerTemplate = {
   employerContact: '',
   workerBank: '',
   baseSalary: 6444,
-  expenseDefault: 600,
-  pocketWeekly: 100,
+  expenseDefault: 0,
+  pocketWeekly: 0,
   pocketMode: 'cash',
   rateRegularDay: 257.75,
   rateWeekendDay: 439.75,
-  rateConvalescence: 418.00,
+  rateConvalescence: 451.5,
   daysConvalescenceYear: 5,
   daysVacationMonth: 1.167,
   daysSickMonth: 1.5,
@@ -1148,7 +1148,8 @@ async function handleSignOut() {
     await signOut(auth);
     currentUser = null;
     isAdmin     = false;
-    resetLoginButton();           // ← BUG 1 FIX: restore button to original state
+    document.getElementById('adminButtonWrapper')?.classList.add('hidden');
+    resetLoginButton();           // ← restore button to original state
     showScreen('screen-login');
     setCloudSyncStatus('offline','מצב מקומי');
   } catch(e) { console.warn("Sign out error:", e); }
@@ -1202,6 +1203,7 @@ async function checkAndRouteUser(user) {
       switch(userData.status) {
         case 'approved':
           updateAuthHeaderUI(user);
+          document.getElementById('adminButtonWrapper')?.classList.add('hidden');
           initEmptyState();
           await loadUserFirestoreData(user.uid);
           setupFirestoreRealtimeSync(user.uid);
@@ -1789,7 +1791,7 @@ function calcMonthPayroll(workerObj, mData, year, monthIdx) {
     pensionAmount:          isPensionActive ? (grossPay * pensionPct / 100) : 0,
     severanceMainAmount:    grossPay * sevMainPct / 100,
     severanceTopupAmount:   grossPay * sevTopupPct / 100,
-    convalescenceAmount:    (Number(workerObj.daysConvalescenceYear || 5) * Number(workerObj.rateConvalescence || 418)) / 12,
+    convalescenceAmount:    (Number(workerObj.daysConvalescenceYear || 5) * Number(workerObj.rateConvalescence || 451.5)) / 12,
     vacationAmount:         Number(workerObj.daysVacationMonth || 1.167) * rateReg,
     sickAmount:             Number(workerObj.daysSickMonth || 1.5) * rateReg,
     nationalInsuranceAmount: grossPay * niPct / 100,
@@ -1890,17 +1892,14 @@ function updateCalculations() {
   const actualBaseSalary   = isFullMonth ? fullBaseSalary : Math.min(fullBaseSalary, Math.round(effectivePaidDays * rateRegular * 100) / 100);
 
   // Expense note auto-calc
-  const fullExpense       = Number(settings.expenseDefault) || 600;
+  const fullExpense       = Number(settings.expenseDefault) || 0;
   const calculatedExpense = totalAllWorkedDays >= 25 ? fullExpense : Math.min(fullExpense, Math.round((totalAllWorkedDays / 31) * fullExpense * 100) / 100);
   const autoExpenseNote   = totalAllWorkedDays >= 25
     ? `החזר הוצאות חודשי: ₪${calculatedExpense.toFixed(2)} (מלא - ${totalAllWorkedDays} ימי עבודה)`
     : `החזר הוצאות חודשי: ₪${calculatedExpense.toFixed(2)} (יחסי - ${totalAllWorkedDays}/31 ימים)`;
 
-  if (!currentMonthData.userOverrodeExpenseNote) {
-    currentMonthData.expenseNote = autoExpenseNote;
-    const expInput = document.getElementById('inputMonthExpenseNote');
-    if (expInput) expInput.value = autoExpenseNote;
-  }
+  // Expense note is user-controlled only – never auto-filled
+  // Badge still shows the calculated ratio for reference
   const expBadge = document.getElementById('expenseRatioBadge');
   if (expBadge) {
     if (totalAllWorkedDays >= 25) {
@@ -2043,7 +2042,7 @@ function updateCalculations() {
   setElText('printRowOtherDeductions', `-${formatILS(otherDeductions)}`);
   setElText('printNetBankTotal',      formatILS(netToBank));
   setElText('printBankTransferDetails', `העברה לחשבון: ${settings.workerBank}`);
-  setElText('printExpenseNoteText',   currentMonthData.expenseNote || autoExpenseNote);
+  setElText('printExpenseNoteText',   currentMonthData.expenseNote || '');
   setElText('printNotesText',         currentMonthData.notes || 'תשלום שכר שוטף.');
 }
 
@@ -2464,11 +2463,11 @@ function saveSettingsForm() {
   settings.employerContact       = getVal('cfgEmployerContact','');
   settings.workerBank            = getVal('cfgWorkerBank','');
   settings.baseSalary            = getNum('cfgBaseSalary',6444);
-  settings.expenseDefault        = getNum('cfgExpenseDefault',600);
-  settings.pocketWeekly          = getNum('cfgPocketWeekly',100);
+  settings.expenseDefault        = getNum('cfgExpenseDefault',0);
+  settings.pocketWeekly          = getNum('cfgPocketWeekly',0);
   settings.rateRegularDay        = getNum('cfgRateRegularDay',257.75);
   settings.rateWeekendDay        = getNum('cfgRateWeekendDay',439.75);
-  settings.rateConvalescence     = getNum('cfgRateConvalescence',418.00);
+  settings.rateConvalescence     = getNum('cfgRateConvalescence',451.5);
   settings.daysConvalescenceYear = getNum('cfgDaysConvalescenceYear',5);
   settings.daysVacationMonth     = getNum('cfgDaysVacationMonth',1.167);
   settings.daysSickMonth         = getNum('cfgDaysSickMonth',1.5);
@@ -2745,6 +2744,7 @@ window.addEventListener('DOMContentLoaded', () => {
       } else {
         currentUser = null;
         isAdmin     = false;
+        document.getElementById('adminButtonWrapper')?.classList.add('hidden');
         resetLoginButton();   // ← always restore button on logout/unauthenticated state
         showScreen('screen-login');
       }
