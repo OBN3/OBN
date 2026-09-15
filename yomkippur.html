@@ -4,20 +4,36 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>מחולל גלויות יום כיפור</title>
+
+<!-- טעינת פונט עברי Sans-Serif מובטח מ-Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; }
+/* הגדרת Sans-Serif אבסולוטית לכל האלמנטים */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Heebo', 'Segoe UI', Tahoma, Arial, sans-serif !important;
+}
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
   background: #0b1a2e;
   color: #D4AF37;
   min-height: 100vh;
-  padding: 20px 16px 60px;
+  padding: 20px 16px 30px;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Heebo', 'Segoe UI', Tahoma, Arial, sans-serif !important;
 }
 
 .container {
   max-width: 600px;
   margin: 0 auto;
+  width: 100%;
+  flex: 1;
 }
 
 /* HEADER */
@@ -136,7 +152,6 @@ header .subtitle2 {
   margin-bottom: 9px;
   cursor: pointer;
   transition: all 0.2s;
-  /* KEY CHANGE: larger text for descriptions */
   font-size: 1rem;
   color: rgba(212,175,55,0.88);
   line-height: 1.6;
@@ -317,9 +332,7 @@ header .subtitle2 {
 .copy-btn:hover { background: rgba(212,175,55,0.09); }
 
 /* VALIDATION POPUP */
-.validation-box {
-  text-align: center;
-}
+.validation-box { text-align: center; }
 .validation-icon {
   width: 52px;
   height: 52px;
@@ -331,7 +344,6 @@ header .subtitle2 {
   font-weight: 900;
   line-height: 52px;
   margin: 0 auto 18px;
-  font-family: Arial, Helvetica, sans-serif;
 }
 .validation-title {
   font-size: 1.05rem !important;
@@ -350,7 +362,6 @@ header .subtitle2 {
   color: rgba(212,175,55,0.85);
   padding: 7px 0;
   border-bottom: 1px solid rgba(212,175,55,0.12);
-  font-family: Arial, Helvetica, sans-serif;
 }
 .validation-list li:last-child { border-bottom: none; }
 .validation-list li::before {
@@ -411,9 +422,31 @@ header .subtitle2 {
 
 .popup-close:hover { opacity: 0.85; }
 
+/* FOOTER */
+.site-footer {
+  text-align: center;
+  padding: 26px 0 10px;
+  margin-top: 30px;
+  font-size: 0.92rem;
+  color: rgba(212, 175, 55, 0.7);
+  border-top: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.site-footer a {
+  color: #D4AF37;
+  text-decoration: none;
+  font-weight: 700;
+  transition: color 0.2s;
+}
+
+.site-footer a:hover {
+  text-decoration: underline;
+  color: #fae078;
+}
+
 /* RESPONSIVE */
 @media (max-width: 480px) {
-  body { padding: 10px 10px 50px; }
+  body { padding: 10px 10px 24px; }
   .concept-grid { grid-template-columns: 1fr; }
   header h1 { font-size: 1.45rem; }
   header .subtitle { font-size: 0.97rem; }
@@ -462,7 +495,7 @@ header .subtitle2 {
       </div>
     </div>
 
-    <!-- VISUAL OPTIONS — rendered dynamically -->
+    <!-- VISUAL OPTIONS -->
     <div id="visual-section" class="visual-section">
       <div class="visual-label">בחרו את האיור המרכזי:</div>
       <div id="visual-options-list"></div>
@@ -530,6 +563,11 @@ header .subtitle2 {
     <button class="copy-btn" onclick="copyPrompt()">העתק פרומפט</button>
   </div>
 
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    כל הזכויות שמורות ל-<a href="https://obn-kappa.vercel.app/" target="_blank" rel="noopener noreferrer">OBN</a>
+  </footer>
+
 </div><!-- /container -->
 
 <!-- VALIDATION POPUP -->
@@ -595,24 +633,20 @@ const concepts = {
   }
 };
 
-/* ─── STATE ─────────────────────────────────────────────────────────── */
 let selectedConcept  = null;
 let selectedVisual   = null;
 let selectedStyle    = null;
 let selectedElements = [];
 let generatedPrompt  = '';
 
-/* ─── CONCEPT ────────────────────────────────────────────────────────── */
 function selectConcept(id) {
   selectedConcept = id;
   selectedVisual  = null;
 
-  // Highlight selected card
   [1,2,3,4].forEach(i => {
     document.getElementById('concept-' + i).classList.toggle('selected', i === id);
   });
 
-  // Build visual options
   const concept = concepts[id];
   const listEl  = document.getElementById('visual-options-list');
   listEl.innerHTML = concept.options.map((opt, i) => `
@@ -625,21 +659,18 @@ function selectConcept(id) {
   document.getElementById('visual-section').classList.add('visible');
 }
 
-/* ─── VISUAL ─────────────────────────────────────────────────────────── */
 function selectVisual(el, idx) {
   selectedVisual = idx;
   document.querySelectorAll('.visual-option').forEach(v => v.classList.remove('selected'));
   el.classList.add('selected');
 }
 
-/* ─── STYLE ──────────────────────────────────────────────────────────── */
 function selectStyle(el, style) {
   selectedStyle = style;
   document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
 }
 
-/* ─── ELEMENTS ───────────────────────────────────────────────────────── */
 function selectElement(el, elem) {
   if (el.classList.contains('selected')) {
     el.classList.remove('selected');
@@ -661,7 +692,6 @@ function updateElementsUI() {
   });
 }
 
-/* ─── GENERATE ───────────────────────────────────────────────────────── */
 function generatePrompt() {
   const sigVal = document.getElementById('signature-input').value.trim();
   if (!selectedConcept || selectedVisual === null || !sigVal) {
@@ -712,21 +742,36 @@ ${visual}
   output.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-/* ─── COPY ───────────────────────────────────────────────────────────── */
+/* מנגנון העתקה עמיד לסביבות מקומיות (file://) */
 function copyPrompt() {
   if (!generatedPrompt) return;
-  navigator.clipboard.writeText(generatedPrompt)
-    .then(() => document.getElementById('popup-overlay').classList.add('visible'))
-    .catch(() => {
-      // Fallback for older browsers
-      const ta = document.createElement('textarea');
-      ta.value = generatedPrompt;
-      document.body.appendChild(ta);
-      ta.select();
+
+  function fallbackCopy() {
+    const ta = document.createElement('textarea');
+    ta.value = generatedPrompt;
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.left = '0';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try {
       document.execCommand('copy');
-      document.body.removeChild(ta);
       document.getElementById('popup-overlay').classList.add('visible');
-    });
+    } catch (err) {
+      alert('נא להעתיק את הטקסט ידנית מתוך התיבה');
+    }
+    document.body.removeChild(ta);
+  }
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(generatedPrompt)
+      .then(() => document.getElementById('popup-overlay').classList.add('visible'))
+      .catch(() => fallbackCopy());
+  } else {
+    fallbackCopy();
+  }
 }
 
 function showValidationPopup(missingItems) {
@@ -743,7 +788,6 @@ function closePopup() {
   document.getElementById('popup-overlay').classList.remove('visible');
 }
 
-// Close popup on overlay click
 document.getElementById('popup-overlay').addEventListener('click', function(e) {
   if (e.target === this) closePopup();
 });
