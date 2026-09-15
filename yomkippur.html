@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מחולל גלויות יום כיפור</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; }
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: #0b1a2e;
+  color: #D4AF37;
+  min-height: 100vh;
+  padding: 20px 16px 60px;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* HEADER */
+header {
+  text-align: center;
+  padding: 32px 16px 24px;
+  border-bottom: 1px solid rgba(212,175,55,0.25);
+  margin-bottom: 20px;
+}
+
+header h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #D4AF37;
+  margin-bottom: 10px;
+  letter-spacing: 0.01em;
+}
+
+header .subtitle {
+  font-size: 1.1rem;
+  color: rgba(212,175,55,0.82);
+  margin-bottom: 8px;
+}
+
+header .subtitle2 {
+  font-size: 0.93rem;
+  color: rgba(212,175,55,0.58);
+  line-height: 1.7;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* SECTION CARD */
+.section {
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(212,175,55,0.18);
+  border-radius: 12px;
+  padding: 18px 16px;
+  margin-bottom: 14px;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #D4AF37;
+  margin-bottom: 4px;
+}
+
+.section-sub {
+  font-size: 0.88rem;
+  color: rgba(212,175,55,0.55);
+  margin-bottom: 18px;
+}
+
+/* CONCEPT GRID */
+.concept-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.concept-card {
+  background: rgba(212,175,55,0.04);
+  border: 1px solid rgba(212,175,55,0.22);
+  border-radius: 10px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.concept-card:hover {
+  background: rgba(212,175,55,0.1);
+  border-color: rgba(212,175,55,0.5);
+}
+
+.concept-card.selected {
+  background: rgba(212,175,55,0.16);
+  border-color: #D4AF37;
+  box-shadow: 0 0 14px rgba(212,175,55,0.18);
+}
+
+.concept-card h3 {
+  font-size: 1.08rem;
+  color: #D4AF37;
+  margin-bottom: 6px;
+}
+
+.concept-card p {
+  font-size: 0.85rem;
+  color: rgba(212,175,55,0.65);
+  line-height: 1.55;
+}
+
+/* VISUAL OPTIONS */
+.visual-section {
+  display: none;
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(212,175,55,0.15);
+}
+
+.visual-section.visible { display: block; }
+
+.visual-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #D4AF37;
+  margin-bottom: 12px;
+}
+
+.visual-option {
+  background: rgba(212,175,55,0.04);
+  border: 1px solid rgba(212,175,55,0.18);
+  border-radius: 9px;
+  padding: 13px 16px;
+  margin-bottom: 9px;
+  cursor: pointer;
+  transition: all 0.2s;
+  /* KEY CHANGE: larger text for descriptions */
+  font-size: 1rem;
+  color: rgba(212,175,55,0.88);
+  line-height: 1.6;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.visual-option:hover {
+  background: rgba(212,175,55,0.1);
+  border-color: rgba(212,175,55,0.4);
+}
+
+.visual-option.selected {
+  background: rgba(212,175,55,0.16);
+  border-color: #D4AF37;
+  color: #D4AF37;
+}
+
+.opt-num {
+  font-weight: 700;
+  color: #D4AF37;
+  white-space: nowrap;
+  font-size: 1rem;
+}
+
+/* STYLE PILLS */
+.style-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.style-btn {
+  background: rgba(212,175,55,0.05);
+  border: 1px solid rgba(212,175,55,0.28);
+  border-radius: 22px;
+  padding: 9px 20px;
+  cursor: pointer;
+  color: rgba(212,175,55,0.82);
+  font-size: 0.92rem;
+  transition: all 0.2s;
+}
+
+.style-btn:hover { background: rgba(212,175,55,0.12); }
+
+.style-btn.selected {
+  background: rgba(212,175,55,0.2);
+  border-color: #D4AF37;
+  color: #D4AF37;
+  font-weight: 700;
+}
+
+/* ELEMENTS */
+.elements-note {
+  font-size: 0.88rem;
+  color: rgba(212,175,55,0.58);
+  margin-bottom: 14px;
+  font-style: italic;
+}
+
+.elements-counter {
+  display: inline-block;
+  background: rgba(212,175,55,0.15);
+  border: 1px solid rgba(212,175,55,0.35);
+  border-radius: 12px;
+  padding: 3px 12px;
+  font-size: 0.83rem;
+  color: #D4AF37;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.elements-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.element-btn {
+  background: rgba(212,175,55,0.05);
+  border: 1px solid rgba(212,175,55,0.28);
+  border-radius: 22px;
+  padding: 9px 20px;
+  cursor: pointer;
+  color: rgba(212,175,55,0.82);
+  font-size: 0.92rem;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.element-btn:hover:not(.maxed) { background: rgba(212,175,55,0.12); }
+
+.element-btn.selected {
+  background: rgba(212,175,55,0.2);
+  border-color: #D4AF37;
+  color: #D4AF37;
+  font-weight: 700;
+}
+
+.element-btn.maxed {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* SIGNATURE */
+.signature-input {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(212,175,55,0.28);
+  border-radius: 9px;
+  padding: 13px 16px;
+  color: #D4AF37;
+  font-size: 1rem;
+  outline: none;
+  direction: rtl;
+  transition: border-color 0.2s;
+}
+
+.signature-input::placeholder { color: rgba(212,175,55,0.38); }
+.signature-input:focus { border-color: #D4AF37; }
+
+/* GENERATE BUTTON */
+.generate-btn {
+  display: block;
+  width: 100%;
+  padding: 17px;
+  background: linear-gradient(135deg, #b8870c, #D4AF37, #b8870c);
+  border: none;
+  border-radius: 11px;
+  color: #0b1a2e;
+  font-size: 1.22rem;
+  font-weight: 800;
+  cursor: pointer;
+  margin: 24px 0 20px;
+  letter-spacing: 0.02em;
+  transition: all 0.2s;
+}
+
+.generate-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(212,175,55,0.28);
+}
+
+/* PROMPT OUTPUT */
+.prompt-output { display: none; }
+.prompt-output.visible { display: block; }
+
+.prompt-box {
+  background: rgba(0,0,0,0.28);
+  border: 1px solid rgba(212,175,55,0.25);
+  border-radius: 10px;
+  padding: 22px;
+  font-size: 0.93rem;
+  color: rgba(212,175,55,0.9);
+  line-height: 1.85;
+  white-space: pre-wrap;
+  direction: rtl;
+  text-align: right;
+  margin-bottom: 16px;
+}
+
+.copy-btn {
+  display: block;
+  width: 100%;
+  padding: 15px;
+  background: transparent;
+  border: 2px solid #D4AF37;
+  border-radius: 11px;
+  color: #D4AF37;
+  font-size: 1.12rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copy-btn:hover { background: rgba(212,175,55,0.09); }
+
+/* VALIDATION POPUP */
+.validation-box {
+  text-align: center;
+}
+.validation-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(212,175,55,0.15);
+  border: 2px solid #D4AF37;
+  color: #D4AF37;
+  font-size: 1.8rem;
+  font-weight: 900;
+  line-height: 52px;
+  margin: 0 auto 18px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.validation-title {
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 14px !important;
+}
+.validation-list {
+  list-style: none;
+  margin-bottom: 24px;
+  text-align: right;
+  direction: rtl;
+  padding: 0 8px;
+}
+.validation-list li {
+  font-size: 0.97rem;
+  color: rgba(212,175,55,0.85);
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(212,175,55,0.12);
+  font-family: Arial, Helvetica, sans-serif;
+}
+.validation-list li:last-child { border-bottom: none; }
+.validation-list li::before {
+  content: '← ';
+  color: #D4AF37;
+  font-weight: 700;
+}
+
+/* POPUP */
+.popup-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 999;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup-overlay.visible { display: flex; }
+
+.popup-box {
+  background: #0d1f36;
+  border: 2px solid #D4AF37;
+  border-radius: 14px;
+  padding: 36px 44px;
+  text-align: center;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 0 40px rgba(212,175,55,0.22);
+  animation: popIn 0.2s ease;
+}
+
+@keyframes popIn {
+  from { transform: scale(0.88); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+.popup-box p {
+  font-size: 1.22rem;
+  font-weight: 800;
+  color: #D4AF37;
+  line-height: 1.7;
+  margin-bottom: 22px;
+}
+
+.popup-close {
+  padding: 11px 36px;
+  background: #D4AF37;
+  border: none;
+  border-radius: 9px;
+  color: #0b1a2e;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.popup-close:hover { opacity: 0.85; }
+
+/* RESPONSIVE */
+@media (max-width: 480px) {
+  body { padding: 10px 10px 50px; }
+  .concept-grid { grid-template-columns: 1fr; }
+  header h1 { font-size: 1.45rem; }
+  header .subtitle { font-size: 0.97rem; }
+  header .subtitle2 { font-size: 0.85rem; }
+  .section-title { font-size: 1.05rem; }
+  .section-sub { font-size: 0.82rem; }
+  .style-btn, .element-btn { font-size: 0.85rem; padding: 8px 14px; }
+  .visual-option { font-size: 0.92rem; }
+  .generate-btn { font-size: 1.05rem; padding: 14px; }
+  .popup-box { padding: 24px 16px; }
+  .popup-box p { font-size: 1rem; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <h1>מחולל גלויות יום כיפור</h1>
+    <p class="subtitle">בחר את הסגנון שלך וקבל פרומפט מוכן למחולל תמונות AI</p>
+    <p class="subtitle2">לאחר שתבחרו את הסגנון, האלמנטים והטקסטים לברכה, הקישו על "צור את הפרומפט שלי", העתיקו את הפרומפט והדביקו במנוע בינה מלאכותית ליצירת הגלויה</p>
+  </header>
+
+  <!-- STEP 1: CONCEPT -->
+  <div class="section">
+    <div class="section-title">שלב 1 — בחירת קונספט</div>
+    <div class="section-sub">בחרו את הרעיון המרכזי לגלויה שלכם</div>
+
+    <div class="concept-grid">
+      <div class="concept-card" id="concept-1" onclick="selectConcept(1)">
+        <h3>מכתב השמים</h3>
+        <p>קלף עתיק, נוצת כתיבה וכסת דיו, אור רך היורד מלמעלה — סמל הכתיבה בספר החיים</p>
+      </div>
+      <div class="concept-card" id="concept-2" onclick="selectConcept(2)">
+        <h3>שערי תפילה</h3>
+        <p>שער עתיק נפתח אל אור זהוב ושמיים שלווים — סמל של תקווה, תפילה והתחדשות</p>
+      </div>
+      <div class="concept-card" id="concept-3" onclick="selectConcept(3)">
+        <h3>ספר החיים</h3>
+        <p>ספר קדוש פתוח עם דפים מוזהבים — סמל הכתיבה והחתימה לשנה חדשה</p>
+      </div>
+      <div class="concept-card" id="concept-4" onclick="selectConcept(4)">
+        <h3>היונה והפתק</h3>
+        <p>יונה לבנה נושאת פתק ברכה מעל הרי ירושלים — סמל של שלום, פיוס וסליחה</p>
+      </div>
+    </div>
+
+    <!-- VISUAL OPTIONS — rendered dynamically -->
+    <div id="visual-section" class="visual-section">
+      <div class="visual-label">בחרו את האיור המרכזי:</div>
+      <div id="visual-options-list"></div>
+    </div>
+  </div>
+
+  <!-- STEP 2: STYLE -->
+  <div class="section">
+    <div class="section-title">שלב 2 — סגנון עיצובי</div>
+    <div class="section-sub">בחרו את הסגנון האמנותי של הגלויה</div>
+    <div class="style-grid">
+      <div class="style-btn" onclick="selectStyle(this, 'ליטוגרפיית וינטג יהודית, סגנון גלויות מתחילת המאה ה-20')">ליטוגרפיית וינטג' יהודית</div>
+      <div class="style-btn" onclick="selectStyle(this, 'צבעי מים עדינים על נייר מחוספס')">צבעי מים עדינים</div>
+      <div class="style-btn" onclick="selectStyle(this, 'איור ריאליסטי רך ומפורט')">איור ריאליסטי רך</div>
+      <div class="style-btn" onclick="selectStyle(this, 'אמנות יהודית קלאסית מסורתית')">אמנות יהודית קלאסית</div>
+      <div class="style-btn" onclick="selectStyle(this, 'ציור שמן בסגנון אירופאי עתיק')">ציור שמן עתיק</div>
+    </div>
+  </div>
+
+  <!-- STEP 3: ELEMENTS -->
+  <div class="section">
+    <div class="section-title">שלב 3 — אלמנטים נוספים</div>
+    <div class="section-sub">בחרו אלמנטים שיתווספו לעיצוב הגלויה</div>
+    <p class="elements-note">ניתן לבחור עד 3 אלמנטים בלבד</p>
+    <div class="elements-counter" id="elements-counter">נבחרו: 0 / 3</div>
+    <div class="elements-grid">
+      <div class="element-btn" onclick="selectElement(this, 'שופר')">שופר</div>
+      <div class="element-btn" onclick="selectElement(this, 'טלית לבנה')">טלית לבנה</div>
+      <div class="element-btn" onclick="selectElement(this, 'ספר תורה')">ספר תורה</div>
+      <div class="element-btn" onclick="selectElement(this, 'כסת דיו')">כסת דיו</div>
+      <div class="element-btn" onclick="selectElement(this, 'נוצת כתיבה')">נוצת כתיבה</div>
+      <div class="element-btn" onclick="selectElement(this, 'יונה לבנה')">יונה לבנה</div>
+      <div class="element-btn" onclick="selectElement(this, 'ענפי זית')">ענפי זית</div>
+      <div class="element-btn" onclick="selectElement(this, 'נר דולק')">נר דולק</div>
+      <div class="element-btn" onclick="selectElement(this, 'מגן דוד')">מגן דוד</div>
+      <div class="element-btn" onclick="selectElement(this, 'הרי ירושלים')">הרי ירושלים</div>
+      <div class="element-btn" onclick="selectElement(this, 'פרחי שדה')">פרחי שדה</div>
+    </div>
+  </div>
+
+  <!-- STEP 4: YEAR TEXT -->
+  <div class="section">
+    <div class="section-title">שלב 4 — כיתוב שנה</div>
+    <div class="section-sub">הכיתוב שיופיע בפינה השמאלית התחתונה של הגלויה. ניתן לשנות לפי הצורך</div>
+    <input type="text" class="signature-input" id="year-input"
+           value='תשפ"ז, 2026' />
+  </div>
+
+  <!-- STEP 5: SIGNATURE -->
+  <div class="section">
+    <div class="section-title">שלב 5 — טקסט חתימה</div>
+    <div class="section-sub">הכניסו את שורת הברכה האישית שתופיע בתחתית הגלויה</div>
+    <input type="text" class="signature-input" id="signature-input"
+           placeholder='לדוגמה: מאחלים: משפחת בן נתן' />
+  </div>
+
+  <!-- GENERATE -->
+  <button class="generate-btn" onclick="generatePrompt()">צור את הפרומפט שלי</button>
+
+  <!-- OUTPUT -->
+  <div id="prompt-output" class="prompt-output section">
+    <div class="section-title">הפרומפט שלכם מוכן</div>
+    <div class="section-sub">העתיקו והדביקו במנוע בינה מלאכותית ליצירת הגלויה</div>
+    <div id="prompt-box" class="prompt-box"></div>
+    <button class="copy-btn" onclick="copyPrompt()">העתק פרומפט</button>
+  </div>
+
+</div><!-- /container -->
+
+<!-- VALIDATION POPUP -->
+<div id="validation-overlay" class="popup-overlay">
+  <div class="popup-box validation-box">
+    <div class="validation-icon">!</div>
+    <p class="validation-title">נא להשלים את הבחירות הבאות:</p>
+    <ul id="validation-list" class="validation-list"></ul>
+    <button class="popup-close" onclick="closeValidationPopup()">הבנתי, אחזור לבחור</button>
+  </div>
+</div>
+
+<!-- COPY POPUP -->
+<div id="popup-overlay" class="popup-overlay">
+  <div class="popup-box">
+    <p>הפרומפט הועתק.<br>עבור למנוע בינה מלאכותית<br>והדבק אותו ליצירת הגלויה</p>
+    <button class="popup-close" onclick="closePopup()">אישור</button>
+  </div>
+</div>
+
+<script>
+/* ─── DATA ─────────────────────────────────────────────────────────── */
+const concepts = {
+  1: {
+    name: 'מכתב השמים',
+    palette: 'קרם, זהב עתיק, כחול מלכותי וירוק זית',
+    mood: 'כתיבה בספר החיים, מסורת ותפילה',
+    options: [
+      'קלף עתיק פתוח על שולחן עץ מהגוני. לצידו כסת דיו מזכוכית כחולה, נוצה לבנה לכתיבה ומטבעות זהב קטנים. בראש הקלף אותיות קליגרפיות עבריות. מסביב פרחים עדינים ועלי זית',
+      'מכתב מגולגל הנישא על ידי זוג יונים לבנות מעל הרי ירושלים. קצוות המכתב מעוטרים בזהב ובדוגמאות מסורתיות בסגנון יהודי מזרח אירופי',
+      'סופר סת"ם יושב ליד שולחן עתיק, כותב בעדינות על קלף לאור נר. ברקע מדפי ספרים עתיקים וספרי קודש'
+    ]
+  },
+  2: {
+    name: 'שערי תפילה',
+    palette: 'לבן, זהב, כחול שמיים ותכלת',
+    mood: 'התרוממות רוח, תפילה ותקווה',
+    options: [
+      'שער אבן עתיק ומפואר נפתח אל אור לבן וזהוב. מעבר לשער שמיים שלווים ועננים רכים',
+      'זוג שערים גבוהים בעיטורים מסורתיים, פתוחים למחצה. קרני אור נשפכות מתוכם על שביל המוביל אליהם',
+      'שער קשת ירושלמי עתיק המעוטר בפרחי גפן ועלי זית. דרכו נשקפים הרי ירושלים באור שקיעה רך'
+    ]
+  },
+  3: {
+    name: 'ספר החיים',
+    palette: 'זהב עתיק, שנהב, כחול כהה ולבן',
+    mood: 'חגיגיות ומכובדות, כתיבה וחתימה בספר החיים',
+    options: [
+      'ספר חיים גדול פתוח על גבי בד קטיפה כחול כהה. דפיו מוזהבים ומוארים באור רך',
+      'ספר עתיק פתוח שעל דפיו כתובות המילים "חיים, שלום וברכה". מוקף ענפי זית וורדים לבנים',
+      'ספר החיים פתוח על שולחן עץ עתיק, לצד שופר, טלית לבנה ונר דולק'
+    ]
+  },
+  4: {
+    name: 'היונה והפתק',
+    palette: 'לבן פנינה, תכלת, זהב רך וירוק זית',
+    mood: 'שלווה, פיוס, תפילה ושלום',
+    options: [
+      'יונה לבנה נושאת במקורה פתק מגולגל עליו המילה "שלום". מרחפת מעל הרי ירושלים באור תכלת',
+      'זוג יונים לבנות אוחזות יחד במכתב ברכה מעוטר בזהב ובפרחי ורדים לבנים',
+      'יונה לבנה יושבת על ענף זית, ומולה מכתב פתוח עם ברכת יום כיפור בכתב עברי עדין'
+    ]
+  }
+};
+
+/* ─── STATE ─────────────────────────────────────────────────────────── */
+let selectedConcept  = null;
+let selectedVisual   = null;
+let selectedStyle    = null;
+let selectedElements = [];
+let generatedPrompt  = '';
+
+/* ─── CONCEPT ────────────────────────────────────────────────────────── */
+function selectConcept(id) {
+  selectedConcept = id;
+  selectedVisual  = null;
+
+  // Highlight selected card
+  [1,2,3,4].forEach(i => {
+    document.getElementById('concept-' + i).classList.toggle('selected', i === id);
+  });
+
+  // Build visual options
+  const concept = concepts[id];
+  const listEl  = document.getElementById('visual-options-list');
+  listEl.innerHTML = concept.options.map((opt, i) => `
+    <div class="visual-option" id="vopt-${i}" onclick="selectVisual(this, ${i})">
+      <span class="opt-num">אפשרות ${i + 1}:</span>
+      <span>${opt}</span>
+    </div>
+  `).join('');
+
+  document.getElementById('visual-section').classList.add('visible');
+}
+
+/* ─── VISUAL ─────────────────────────────────────────────────────────── */
+function selectVisual(el, idx) {
+  selectedVisual = idx;
+  document.querySelectorAll('.visual-option').forEach(v => v.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+/* ─── STYLE ──────────────────────────────────────────────────────────── */
+function selectStyle(el, style) {
+  selectedStyle = style;
+  document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+/* ─── ELEMENTS ───────────────────────────────────────────────────────── */
+function selectElement(el, elem) {
+  if (el.classList.contains('selected')) {
+    el.classList.remove('selected');
+    selectedElements = selectedElements.filter(e => e !== elem);
+  } else if (selectedElements.length < 3) {
+    el.classList.add('selected');
+    selectedElements.push(elem);
+  }
+  updateElementsUI();
+}
+
+function updateElementsUI() {
+  const count = selectedElements.length;
+  document.getElementById('elements-counter').textContent = 'נבחרו: ' + count + ' / 3';
+  document.querySelectorAll('.element-btn').forEach(btn => {
+    if (!btn.classList.contains('selected')) {
+      btn.classList.toggle('maxed', count >= 3);
+    }
+  });
+}
+
+/* ─── GENERATE ───────────────────────────────────────────────────────── */
+function generatePrompt() {
+  const sigVal = document.getElementById('signature-input').value.trim();
+  if (!selectedConcept || selectedVisual === null || !sigVal) {
+    let missing = [];
+    if (!selectedConcept)        missing.push('קונספט (שלב 1)');
+    if (selectedVisual === null)  missing.push('איור מרכזי (שלב 1)');
+    if (!sigVal)                  missing.push('טקסט חתימה (שלב 5)');
+    showValidationPopup(missing);
+    return;
+  }
+
+  const concept    = concepts[selectedConcept];
+  const signature  = document.getElementById('signature-input').value.trim() || 'מאחלים: משפחת בן נתן';
+  const yearText   = document.getElementById('year-input').value.trim() || 'תשפ"ז, 2026';
+  const style      = selectedStyle || 'ליטוגרפיית וינטג יהודית';
+  const visual     = concept.options[selectedVisual];
+  const elements   = selectedElements.length > 0 ? selectedElements.join(', ') : 'ללא אלמנטים נוספים';
+
+  generatedPrompt =
+`צור גלויית ברכה ליום כיפור ברמת עיצוב מקצועית ויוקרתית.
+
+פרמטרים טכניים:
+פורמט: 1:1 (ריבועי)
+שפה: עברית
+איכות: גבוהה מאוד, פרטים עדינים ומדויקים
+
+קונספט: ${concept.name}
+סגנון עיצובי: ${style}
+
+איור מרכזי:
+${visual}
+
+אלמנטים נוספים לשילוב: ${elements}
+
+כיתוב מרכזי: "גמר חתימה טובה" בעברית, פונט וינטג' מסורתי, גדול ומודגש, מעוטר בקשת של פרחים עדינים.
+
+כיתוב תחתית:
+בפינה השמאלית: כיתוב קטן בפונט דפוס מיושן: "${yearText}"
+שורת חתימה בכתב יד עדין: ${signature}
+
+פלטת צבעים: ${concept.palette}
+
+קומפוזיציה: הרמונית ומאוזנת, מעבירה תחושת ${concept.mood}, קדושה, מסורת ותקווה.`;
+
+  const output = document.getElementById('prompt-output');
+  document.getElementById('prompt-box').textContent = generatedPrompt;
+  output.classList.add('visible');
+  output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ─── COPY ───────────────────────────────────────────────────────────── */
+function copyPrompt() {
+  if (!generatedPrompt) return;
+  navigator.clipboard.writeText(generatedPrompt)
+    .then(() => document.getElementById('popup-overlay').classList.add('visible'))
+    .catch(() => {
+      // Fallback for older browsers
+      const ta = document.createElement('textarea');
+      ta.value = generatedPrompt;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      document.getElementById('popup-overlay').classList.add('visible');
+    });
+}
+
+function showValidationPopup(missingItems) {
+  const list = document.getElementById('validation-list');
+  list.innerHTML = missingItems.map(item => `<li>${item}</li>`).join('');
+  document.getElementById('validation-overlay').classList.add('visible');
+}
+
+function closeValidationPopup() {
+  document.getElementById('validation-overlay').classList.remove('visible');
+}
+
+function closePopup() {
+  document.getElementById('popup-overlay').classList.remove('visible');
+}
+
+// Close popup on overlay click
+document.getElementById('popup-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closePopup();
+});
+</script>
+</body>
+</html>
