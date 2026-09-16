@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <title>מחזירים את ההיסטוריה לחיים</title>
+  <style>
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      background: #f0f8ff;
+      color: #1a3a5c;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      padding: 52px 24px 36px;
+      background: linear-gradient(135deg, #2980b9 0%, #5dade2 60%, #aed6f1 100%);
+    }
+
+    header h1 {
+      font-size: clamp(1.7rem, 5vw, 3rem);
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.03em;
+      line-height: 1.25;
+      text-shadow: 0 1px 8px rgba(0,0,0,0.15);
+    }
+
+    header p.subtitle {
+      margin-top: 10px;
+      font-size: 1rem;
+      color: #ddeeff;
+    }
+
+    /* ── Grid ── */
+    main {
+      flex: 1;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 44px 20px 64px;
+      width: 100%;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 28px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #ffffff;
+      border: 1px solid #b3d7f0;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(41, 128, 185, 0.10);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.22s ease, box-shadow 0.22s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 28px rgba(41, 128, 185, 0.20);
+    }
+
+    /* ── Media wrapper ── */
+    .media-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #cce4f6;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    /* Clean thumbnail – NO overlay, NO icon */
+    .thumb {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.35s ease, opacity 0.45s ease;
+      z-index: 2;
+    }
+
+    /* Gentle zoom on hover so user knows it's clickable */
+    .media-wrapper:hover .thumb {
+      transform: scale(1.04);
+      opacity: 0.92;
+    }
+
+    /* YouTube iframe – hidden until activated */
+    .yt-frame {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+      z-index: 1;
+    }
+
+    /* Playing state: hide image, show video */
+    .media-wrapper.playing .thumb {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .media-wrapper.playing .yt-frame {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* ── Caption ── */
+    .caption {
+      padding: 14px 16px 18px;
+      flex: 1;
+      border-top: 1px solid #d6ecf8;
+    }
+
+    .caption h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1a3a5c;
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+
+    .caption p {
+      font-size: 0.875rem;
+      color: #4a7a9b;
+      line-height: 1.6;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 20px;
+      background: #2980b9;
+      font-size: 0.85rem;
+      color: #d6eaf8;
+    }
+
+    footer a {
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 600px) {
+      .grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      header {
+        padding: 32px 16px 22px;
+      }
+    }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>מחזירים את ההיסטוריה לחיים</h1>
+    <p class="subtitle">לחצו על תמונה לצפייה בסרטון</p>
+  </header>
+
+  <main>
+    <div class="grid" id="gallery"></div>
+  </main>
+
+  <footer>
+    כל הזכויות שמורות ל-<a href="https://linktr.ee/ofirbn" target="_blank" rel="noopener">OBN</a>
+  </footer>
+
+  <script>
+    /*
+      ✏️ ערוך כאן:
+      videoId = ה-ID מתוך הקישור https://youtu.be/XXXXXXX
+    */
+    const items = [
+      { image: "images/kkl-001.jpg", videoId: "6TkRYfNyJUo", title: "כותרת פרק 1", desc: "תיאור קצר של הסרטון. שורה או שתיים." },
+      { image: "images/kkl-002.jpg", videoId: "6Uj0k6jYBDQ", title: "כותרת פרק 2", desc: "תיאור קצר של הסרטון. שורה או שתיים." },
+      { image: "images/kkl-003.jpg", videoId: "JytMrh9B3zg", title: "כותרת פרק 3", desc: "תיאור קצר של הסרטון. שורה או שתיים." },
+      { image: "images/kkl-004.jpg", videoId: "EYXvuqmoHVY", title: "כותרת פרק 4", desc: "תיאור קצר של הסרטון. שורה או שתיים." },
+      { image: "images/kkl-005.jpg", videoId: "bfv9RvjOtLA", title: "כותרת פרק 5", desc: "תיאור קצר של הסרטון. שורה או שתיים." },
+      { image: "images/kkl-006.jpg", videoId: "bUIK8-Z_SPI", title: "כותרת פרק 6", desc: "תיאור קצר של הסרטון. שורה או שתיים." },
+      { image: "images/kkl-007.jpg", videoId: "rd4KsKmUZrU", title: "כותרת פרק 7", desc: "תיאור קצר של הסרטון. שורה או שתיים." },
+      { image: "images/kkl-008.jpg", videoId: "enzoBa5lALU", title: "כותרת פרק 8", desc: "תיאור קצר של הסרטון. שורה או שתיים." },
+      { image: "images/kkl-009.jpg", videoId: "6TkRYfNyJUo", title: "כותרת פרק 9", desc: "תיאור קצר של הסרטון. שורה או שתיים." },
+      { image: "images/kkl-010.jpg", videoId: "haN9rP8TA40", title: "כותרת פרק 10", desc: "תיאור קצר של הסרטון. שורה או שתיים." },
+      { image: "images/kkl-011.jpg", videoId: "EmQl2afPlUw", title: "כותרת פרק 11", desc: "תיאור קצר של הסרטון. שורה או שתיים." },
+      { image: "images/kkl-012.jpg", videoId: "YOUTUBE_ID_12", title: "כותרת פרק 12", desc: "תיאור קצר של הסרטון. שורה או שתיים." }
+    ];
+
+    const gallery = document.getElementById('gallery');
+
+    items.forEach((item) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="media-wrapper" data-videoid="${item.videoId}">
+          <img class="thumb" src="${item.image}" alt="${item.title}" loading="lazy" />
+          <iframe
+            class="yt-frame"
+            allow="autoplay; encrypted-media; picture-in-picture"
+            allowfullscreen
+            referrerpolicy="strict-origin-when-cross-origin"
+          ></iframe>
+        </div>
+        <div class="caption">
+          <h2>${item.title}</h2>
+          <p>${item.desc}</p>
+        </div>
+      `;
+      gallery.appendChild(card);
+    });
+
+    gallery.addEventListener('click', (e) => {
+      const wrapper = e.target.closest('.media-wrapper');
+      if (!wrapper || wrapper.classList.contains('playing')) return;
+
+      const videoId = wrapper.dataset.videoid;
+      if (!videoId || videoId.startsWith('YOUTUBE_ID')) {
+        alert('יש להזין מזהה וידאו אמיתי מיוטיוב.');
+        return;
+      }
+
+      const iframe = wrapper.querySelector('.yt-frame');
+      iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+      wrapper.classList.add('playing');
+    });
+  </script>
+</body>
+</html>
