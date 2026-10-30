@@ -113,7 +113,7 @@
                 </button>
             </div>
             <p class="text-xs text-gray-500 leading-relaxed">
-                מי שייכנס דרך קישור ההזמנה יאושר אוטומטית במערכת ויצורף ישירות לרשימה זו:
+                מי שייכנס דרך קישור ההזמנה יאושר אוטומטית, יצורף לרשימה זו ויישמר כשותף קבוע לרשימות הבאות שתפתחו:
             </p>
             <div class="flex flex-col gap-2.5">
                 <button onclick="shareViaWhatsApp()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3.5 px-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-md transition-all">
@@ -163,21 +163,21 @@
             <div class="space-y-3.5 text-gray-600 text-sm leading-relaxed">
                 <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
                     <h4 class="font-bold text-emerald-800 mb-1 flex items-center gap-2">
-                        <i data-lucide="user-plus" class="w-5 h-5"></i> הזמנת שותפים בקליק
+                        <i data-lucide="users" class="w-5 h-5"></i> שיתוף משפחתי אוטומטי או פרטי
                     </h4>
-                    <p class="text-emerald-700">לחצו על כפתור השיתוף בראש הרשימה ושלחו קישור בוואטסאפ לבן או בת הזוג. הם יאושרו אוטומטית ויצטרפו לרשימה שלכם!</p>
+                    <p class="text-emerald-700">אחרי שהזמנתם שותף פעם אחת, כל רשימה חדשה שתפתחו תשותף איתו אוטומטית! רוצים רשימה אישית? לחצו על כפתור "משותף/פרטי" מתחת לתיבת יצירת הרשימה.</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                    <h4 class="font-bold text-gray-800 mb-1 flex items-center gap-2">
+                        <i data-lucide="scale" class="w-5 h-5 text-blue-500"></i> כמויות ויחידות מידה
+                    </h4>
+                    <p>הכמויות קופצות במספרים שלמים ונוחים (1, 2, 3...). ניתן ללחוץ על שם היחידה (למשל "ק"ג" או "יח'") בתוך כרטיס המוצר כדי להחליף אותה.</p>
                 </div>
                 <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                     <h4 class="font-bold text-gray-800 mb-1 flex items-center gap-2">
                         <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-500"></i> סימון חכם וביטול טעויות
                     </h4>
                     <p>בלחיצה על מוצר תקבלו חיווי קולי וויזואלי לפני שהוא עובר ל"הושלמו". סימנתם בטעות? לחצו על "ביטול" בהודעה הצפה למטה.</p>
-                </div>
-                <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                    <h4 class="font-bold text-gray-800 mb-1 flex items-center gap-2">
-                        <i data-lucide="camera" class="w-5 h-5 text-purple-500"></i> סורק ברקודים לומד
-                    </h4>
-                    <p>סריקת ברקוד מוסיפה את המוצר מיד. אם הברקוד לא זוהה, שנו את שמו פעם אחת והמערכת תזכור אותו בענן לפעם הבאה!</p>
                 </div>
             </div>
             <button onclick="closeHelp()" class="mt-2 w-full bg-gray-900 text-white py-3.5 rounded-2xl font-bold shadow-md hover:bg-black transition-colors text-base">
@@ -189,7 +189,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, addDoc, setDoc, getDoc, updateDoc, deleteDoc, doc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, addDoc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, doc, arrayUnion, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCVDD-5659lKohVacBWyowCbF4FeZA3FQY",
@@ -209,7 +209,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- הפקת צלילי חיווי עדינים ללא קבצים חיצוניים (Web Audio API) ---
+        // --- הפקת צלילי חיווי עדינים (Web Audio API) ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playFeedbackSound(type = 'check') {
             try {
@@ -278,12 +278,13 @@
             container.classList.add('opacity-0', 'translate-y-4');
         }
 
-        // --- קטגוריות ומוצרי ברירת מחדל ---
+        // --- קטגוריות (כולל קטגוריית "מוצרי אפייה" החדשה) ---
         const CATEGORY_COLORS = {
             "מוצרי חלב וביצים": "bg-blue-100 text-blue-800 border-blue-200",
             "פירות וירקות": "bg-green-100 text-green-800 border-green-200",
             "בשר ודגים": "bg-red-100 text-red-800 border-red-200",
             "מאפה ולחם": "bg-orange-100 text-orange-800 border-orange-200",
+            "מוצרי אפייה": "bg-pink-100 text-pink-800 border-pink-200",
             "מזווה ובישול": "bg-amber-100 text-amber-800 border-amber-200",
             "סלטים וממרחים": "bg-lime-100 text-lime-800 border-lime-200",
             "דגנים וחטיפים": "bg-purple-100 text-purple-800 border-purple-200",
@@ -296,8 +297,11 @@
             "אחר": "bg-gray-100 text-gray-800 border-gray-200"
         };
         const CATEGORIES = Object.keys(CATEGORY_COLORS);
+        const UNITS_CYCLE = ["יח'", "ק\"ג", "אריזה", "מארז", "ליטר", "בקבוק", "קופסא"];
 
+        // --- מאגר מוצרים מובנה ומסודר ---
         const DEFAULT_PRODUCTS = [
+          // מוצרי חלב וביצים
           { "name": "חלב 3%", "category": "מוצרי חלב וביצים", "unit": "ליטר" },
           { "name": "גבינה צהובה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
           { "name": "קוטג'", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
@@ -318,7 +322,9 @@
           { "name": "חלומי", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
           { "name": "חלב עזים", "category": "מוצרי חלב וביצים", "unit": "ליטר" },
           { "name": "גבינת מוצרלה", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
-          { "name": "טופו", "category": "מוצרי חלב וביצים", "unit": "יח'" },
+          { "name": "טופו", "category": "מוצרי חלב וביצים", "unit": "אריזה" },
+
+          // פירות וירקות
           { "name": "עגבניות", "category": "פירות וירקות", "unit": "ק\"ג" },
           { "name": "מלפפונים", "category": "פירות וירקות", "unit": "ק\"ג" },
           { "name": "פלפל גמבה", "category": "פירות וירקות", "unit": "ק\"ג" },
@@ -337,36 +343,194 @@
           { "name": "פטרוזיליה", "category": "פירות וירקות", "unit": "מארז" },
           { "name": "כוסברה", "category": "פירות וירקות", "unit": "מארז" },
           { "name": "אבוקדו", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "אבטיח", "category": "פירות וירקות", "unit": "יח'" },
+          { "name": "ענבים", "category": "פירות וירקות", "unit": "ק\"ג" },
           { "name": "בטטה", "category": "פירות וירקות", "unit": "ק\"ג" },
           { "name": "בצל ירוק", "category": "פירות וירקות", "unit": "מארז" },
           { "name": "פטריות שמפיניון", "category": "פירות וירקות", "unit": "מארז" },
+          { "name": "כרוב לבן", "category": "פירות וירקות", "unit": "יח'" },
+          { "name": "כרוב אדום", "category": "פירות וירקות", "unit": "יח'" },
+          { "name": "דלעת", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "צנונית", "category": "פירות וירקות", "unit": "מארז" },
+          { "name": "סלק", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "אפרסק", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "שזיף", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "מנגו", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "תות שדה", "category": "פירות וירקות", "unit": "מארז" },
+          { "name": "מלון", "category": "פירות וירקות", "unit": "יח'" },
+          { "name": "תפוז", "category": "פירות וירקות", "unit": "ק\"ג" },
+          { "name": "קיווי", "category": "פירות וירקות", "unit": "ק\"ג" },
+
+          // בשר ודגים
           { "name": "חזה עוף", "category": "בשר ודגים", "unit": "ק\"ג" },
           { "name": "בשר טחון", "category": "בשר ודגים", "unit": "ק\"ג" },
           { "name": "דג סלמון", "category": "בשר ודגים", "unit": "ק\"ג" },
           { "name": "פסטרמה", "category": "בשר ודגים", "unit": "אריזה" },
           { "name": "כרעיים עוף", "category": "בשר ודגים", "unit": "ק\"ג" },
+          { "name": "המבורגר", "category": "בשר ודגים", "unit": "אריזה" },
+          { "name": "נקניקיות", "category": "בשר ודגים", "unit": "אריזה" },
+          { "name": "דג אמנון", "category": "בשר ודגים", "unit": "ק\"ג" },
+          { "name": "סטייק אנטריקוט", "category": "בשר ודגים", "unit": "ק\"ג" },
+          { "name": "קבב", "category": "בשר ודגים", "unit": "אריזה" },
+          { "name": "כנפיים", "category": "בשר ודגים", "unit": "ק\"ג" },
+          { "name": "שניצל מוכן", "category": "בשר ודגים", "unit": "אריזה" },
+          { "name": "דג לברק", "category": "בשר ודגים", "unit": "ק\"ג" },
+          { "name": "בשר בקר לצלי", "category": "בשר ודגים", "unit": "ק\"ג" },
+
+          // מאפה ולחם
           { "name": "לחם פרוס", "category": "מאפה ולחם", "unit": "אריזה" },
           { "name": "פיתות", "category": "מאפה ולחם", "unit": "אריזה" },
           { "name": "לחמניות", "category": "מאפה ולחם", "unit": "אריזה" },
           { "name": "חלה", "category": "מאפה ולחם", "unit": "יח'" },
+          { "name": "בגט", "category": "מאפה ולחם", "unit": "יח'" },
+          { "name": "לחם מחמצת", "category": "מאפה ולחם", "unit": "יח'" },
           { "name": "טורטיות", "category": "מאפה ולחם", "unit": "אריזה" },
+          { "name": "פיתות כוסמין", "category": "מאפה ולחם", "unit": "אריזה" },
+          { "name": "ביסקוויטים", "category": "מאפה ולחם", "unit": "אריזה" },
+          { "name": "עוגה בחושה", "category": "מאפה ולחם", "unit": "יח'" },
+          { "name": "בורקס קפוא", "category": "מאפה ולחם", "unit": "אריזה" },
+          { "name": "קרואסון", "category": "מאפה ולחם", "unit": "אריזה" },
+
+          // מוצרי אפייה (קטגוריה חדשה!)
+          { "name": "קמח חיטה", "category": "מוצרי אפייה", "unit": "ק\"ג" },
+          { "name": "קמח תופח", "category": "מוצרי אפייה", "unit": "ק\"ג" },
+          { "name": "קמח כוסמין", "category": "מוצרי אפייה", "unit": "ק\"ג" },
+          { "name": "סוכר לבן", "category": "מוצרי אפייה", "unit": "ק\"ג" },
+          { "name": "סוכר חום", "category": "מוצרי אפייה", "unit": "אריזה" },
+          { "name": "אבקת סוכר", "category": "מוצרי אפייה", "unit": "אריזה" },
+          { "name": "אבקת אפייה", "category": "מוצרי אפייה", "unit": "מארז" },
+          { "name": "סוכר וניל", "category": "מוצרי אפייה", "unit": "מארז" },
+          { "name": "שמרים יבשים", "category": "מוצרי אפייה", "unit": "אריזה" },
+          { "name": "סודה לשתייה", "category": "מוצרי אפייה", "unit": "אריזה" },
+          { "name": "תמצית וניל", "category": "מוצרי אפייה", "unit": "בקבוק" },
+          { "name": "קקאו", "category": "מוצרי אפייה", "unit": "אריזה" },
+          { "name": "שוקולד מריר לאפייה", "category": "מוצרי אפייה", "unit": "יח'" },
+          { "name": "שוקולד צ'יפס", "category": "מוצרי אפייה", "unit": "אריזה" },
+          { "name": "אינסטנט פודינג וניל", "category": "מוצרי אפייה", "unit": "אריזה" },
+          { "name": "סירופ מייפל", "category": "מוצרי אפייה", "unit": "בקבוק" },
+          { "name": "קינמון", "category": "מוצרי אפייה", "unit": "יח'" },
+          { "name": "אגוזי מלך", "category": "מוצרי אפייה", "unit": "אריזה" },
+          { "name": "שקדים", "category": "מוצרי אפייה", "unit": "אריזה" },
+          { "name": "קוקוס טחון", "category": "מוצרי אפייה", "unit": "אריזה" },
+
+          // מזווה ובישול
           { "name": "אורז לבן", "category": "מזווה ובישול", "unit": "ק\"ג" },
-          { "name": "פסטה", "category": "מזווה ובישול", "unit": "אריזה" },
-          { "name": "שמן זית", "category": "מזווה ובישול", "unit": "בקבוק" },
+          { "name": "אורז מלא", "category": "מזווה ובישול", "unit": "ק\"ג" },
+          { "name": "פסטה פוסילי", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "ספגטי", "category": "מזווה ובישול", "unit": "אריזה" },
           { "name": "שמן קנולה", "category": "מזווה ובישול", "unit": "בקבוק" },
+          { "name": "שמן זית", "category": "מזווה ובישול", "unit": "בקבוק" },
+          { "name": "מלח שולחן", "category": "מזווה ובישול", "unit": "ק\"ג" },
           { "name": "קפה נמס", "category": "מזווה ובישול", "unit": "יח'" },
-          { "name": "טונה בשמן", "category": "מזווה ובישול", "unit": "מארז" },
+          { "name": "תה קלאסי", "category": "מזווה ובישול", "unit": "אריזה" },
           { "name": "רסק עגבניות", "category": "מזווה ובישול", "unit": "מארז" },
-          { "name": "טחינה גולמית", "category": "סלטים וממרחים", "unit": "אריזה" },
+          { "name": "טונה בשמן", "category": "מזווה ובישול", "unit": "מארז" },
+          { "name": "טונה במים", "category": "מזווה ובישול", "unit": "מארז" },
+          { "name": "תירס בשימורים", "category": "מזווה ובישול", "unit": "יח'" },
+          { "name": "דבש", "category": "מזווה ובישול", "unit": "יח'" },
+          { "name": "סילאן", "category": "מזווה ובישול", "unit": "בקבוק" },
+          { "name": "ריבה", "category": "מזווה ובישול", "unit": "יח'" },
+          { "name": "ממרח שוקולד", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "חמאת בוטנים", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "קטשופ", "category": "מזווה ובישול", "unit": "בקבוק" },
+          { "name": "מיונז", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "חרדל", "category": "מזווה ובישול", "unit": "בקבוק" },
+          { "name": "פתיתים", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "קוסקוס", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "פירורי לחם", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "שעועית לבנה", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "עדשים ירוקות", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "עדשים כתומות", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "חומץ", "category": "מזווה ובישול", "unit": "בקבוק" },
+          { "name": "רוטב סויה", "category": "מזווה ובישול", "unit": "בקבוק" },
+          { "name": "רוטב טריאקי", "category": "מזווה ובישול", "unit": "בקבוק" },
+          { "name": "רוטב צ'ילי מתוק", "category": "מזווה ובישול", "unit": "בקבוק" },
+          { "name": "שימורי פטריות", "category": "מזווה ובישול", "unit": "יח'" },
+          { "name": "אבקת מרק", "category": "מזווה ובישול", "unit": "אריזה" },
+          { "name": "פפריקה מתוקה", "category": "מזווה ובישול", "unit": "יח'" },
+          { "name": "כמון", "category": "מזווה ובישול", "unit": "יח'" },
+          { "name": "כורכום", "category": "מזווה ובישול", "unit": "יח'" },
+          { "name": "פלפל שחור", "category": "מזווה ובישול", "unit": "יח'" },
+
+          // סלטים וממרחים
           { "name": "חומוס מוכן", "category": "סלטים וממרחים", "unit": "אריזה" },
+          { "name": "טחינה גולמית", "category": "סלטים וממרחים", "unit": "אריזה" },
+          { "name": "טחינה מוכנה", "category": "סלטים וממרחים", "unit": "אריזה" },
+          { "name": "מטבוחה", "category": "סלטים וממרחים", "unit": "אריזה" },
+          { "name": "סלט טורקי", "category": "סלטים וממרחים", "unit": "אריזה" },
+          { "name": "סלט כרוב", "category": "סלטים וממרחים", "unit": "אריזה" },
+          { "name": "חמוצים (מלפפון)", "category": "סלטים וממרחים", "unit": "קופסא" },
           { "name": "זיתים ירוקים", "category": "סלטים וממרחים", "unit": "קופסא" },
-          { "name": "במבה", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "זיתים שחורים", "category": "סלטים וממרחים", "unit": "קופסא" },
+          { "name": "פסטו", "category": "סלטים וממרחים", "unit": "יח'" },
+          { "name": "ממרח עגבניות מיובשות", "category": "סלטים וממרחים", "unit": "יח'" },
+
+          // דגנים וחטיפים
           { "name": "קורנפלקס", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "גרנולה", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "שיבולת שועל", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "במבה", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "ביסלי", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "תפוצ'יפס", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "דוריטוס", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "בייגלה", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "שוקולד פרה", "category": "דגנים וחטיפים", "unit": "יח'" },
+          { "name": "עוגיות שוקולד צ'יפס", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "ופלים שוקולד", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "חטיף אנרגיה", "category": "דגנים וחטיפים", "unit": "מארז" },
+          { "name": "פריכיות אורז", "category": "דגנים וחטיפים", "unit": "אריזה" },
+          { "name": "פיצוחים מעורבים", "category": "דגנים וחטיפים", "unit": "אריזה" },
+
+          // משקאות
           { "name": "מים מינרליים", "category": "משקאות", "unit": "מארז" },
+          { "name": "קוקה קולה", "category": "משקאות", "unit": "בקבוק" },
+          { "name": "דיאט קולה / זירו", "category": "משקאות", "unit": "בקבוק" },
           { "name": "סודה", "category": "משקאות", "unit": "מארז" },
+          { "name": "מיץ תפוזים", "category": "משקאות", "unit": "בקבוק" },
+          { "name": "מיץ ענבים", "category": "משקאות", "unit": "בקבוק" },
+          { "name": "בירה", "category": "משקאות", "unit": "מארז" },
+          { "name": "יין אדום", "category": "משקאות", "unit": "בקבוק" },
+          { "name": "יין לבן", "category": "משקאות", "unit": "בקבוק" },
+
+          // ניקיון וטואלטיקה
           { "name": "נייר טואלט", "category": "ניקיון וטואלטיקה", "unit": "מארז" },
           { "name": "נוזל כלים", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
-          { "name": "שקיות אשפה", "category": "ניקיון וטואלטיקה", "unit": "גליל" }
+          { "name": "אבקת כביסה", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
+          { "name": "ג'ל כביסה", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+          { "name": "מרכך כביסה", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+          { "name": "טבליות למדיח", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
+          { "name": "שמפו", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+          { "name": "מרכך שיער", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+          { "name": "סבון גוף נוזלי", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+          { "name": "משחת שיניים", "category": "ניקיון וטואלטיקה", "unit": "יח'" },
+          { "name": "דאודורנט", "category": "ניקיון וטואלטיקה", "unit": "יח'" },
+          { "name": "שקיות אשפה", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
+          { "name": "מגבוני ניקוי", "category": "ניקיון וטואלטיקה", "unit": "מארז" },
+          { "name": "נייר אפייה", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
+          { "name": "רדיד אלומיניום", "category": "ניקיון וטואלטיקה", "unit": "אריזה" },
+          { "name": "סבון ידיים", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+          { "name": "חומר לניקוי רצפות", "category": "ניקיון וטואלטיקה", "unit": "בקבוק" },
+
+          // קפואים, תינוקות, חיות מחמד, שונות
+          { "name": "ירקות קפואים (לקט)", "category": "קפואים", "unit": "אריזה" },
+          { "name": "אפונה קפואה", "category": "קפואים", "unit": "אריזה" },
+          { "name": "שעועית ירוקה קפואה", "category": "קפואים", "unit": "אריזה" },
+          { "name": "תירס קפוא", "category": "קפואים", "unit": "אריזה" },
+          { "name": "צ'יפס קפוא", "category": "קפואים", "unit": "אריזה" },
+          { "name": "פיצה קפואה", "category": "קפואים", "unit": "אריזה" },
+          { "name": "מלאווח", "category": "קפואים", "unit": "אריזה" },
+          { "name": "ג'חנון", "category": "קפואים", "unit": "אריזה" },
+          { "name": "גלידה משפחתית", "category": "קפואים", "unit": "קופסא" },
+          { "name": "פירות יער קפואים", "category": "קפואים", "unit": "אריזה" },
+          { "name": "חיתולים", "category": "תינוקות", "unit": "מארז" },
+          { "name": "מגבונים לחים", "category": "תינוקות", "unit": "מארז" },
+          { "name": "תחליף חלב (מטרנה/סימילאק)", "category": "תינוקות", "unit": "אריזה" },
+          { "name": "מזון לכלבים", "category": "חיות מחמד", "unit": "אריזה" },
+          { "name": "מזון לחתולים", "category": "חיות מחמד", "unit": "אריזה" },
+          { "name": "חול לחתולים", "category": "חיות מחמד", "unit": "אריזה" },
+          { "name": "נרות שבת", "category": "שונות", "unit": "מארז" },
+          { "name": "סוללות AA", "category": "שונות", "unit": "מארז" },
+          { "name": "סוללות AAA", "category": "שונות", "unit": "מארז" }
         ];
 
         // בדיקה אם המשתמש הגיע דרך קישור הזמנה לרשימה
@@ -389,6 +553,7 @@
             searchQuery: '',
             showCompleted: true,
             hasCelebrated: false,
+            shareNewListWithPartners: true, // כברירת מחדל משתף רשימות חדשות עם שותפי הבית הקבועים
             animatingItems: new Set()
         };
 
@@ -399,6 +564,19 @@
         let html5QrcodeScanner = null;
 
         const isSuperAdmin = () => state.user && state.user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+
+        // איסוף אוטומטי של כל השותפים שאיתם כבר יש למשתמש רשימות משותפות
+        function getKnownPartners() {
+            if (!state.user) return [];
+            const myEmail = state.user.email.toLowerCase();
+            const partners = new Set();
+            state.lists.forEach(list => {
+                (list.members || []).forEach(m => {
+                    if (m.toLowerCase() !== myEmail) partners.add(m.toLowerCase());
+                });
+            });
+            return Array.from(partners);
+        }
 
         // --- מעקב התחברות וניהול הרשאות ---
         onAuthStateChanged(auth, async (user) => {
@@ -413,10 +591,10 @@
         });
 
         function cleanupSubscriptions() {
-            if (unsubLists) unsubLists();
-            if (unsubItems) unsubItems();
-            if (unsubProfile) unsubProfile();
-            if (unsubAllUsers) unsubAllUsers();
+            if (unsubLists) { unsubLists(); unsubLists = null; }
+            if (unsubItems) { unsubItems(); unsubItems = null; }
+            if (unsubProfile) { unsubProfile(); unsubProfile = null; }
+            if (unsubAllUsers) { unsubAllUsers(); unsubAllUsers = null; }
         }
 
         async function ensureUserProfileAndInvites(user) {
@@ -444,7 +622,7 @@
                     }
                 }
 
-                // אם הגיע מקישור הזמנה - הוספה אוטומטית לרשימה המשותפת ופתיחתה
+                // אם הגיע מקישור הזמנה - הוספה אוטומטית לרשימה המשותפת
                 if (pendingInvite) {
                     const listRef = doc(db, 'artifacts', appId, 'public', 'data', 'lists', pendingInvite);
                     const listSnap = await getDoc(listRef);
@@ -459,7 +637,6 @@
                     localStorage.removeItem('familyCart_pendingInvite');
                 }
 
-                // האזנה לפרופיל המשתמש בזמן אמת (כך שאם תאשר אותו, המסך ייפתח לו מיד)
                 unsubProfile = onSnapshot(userRef, (docSnap) => {
                     state.userProfile = docSnap.data();
                     if (state.userProfile?.status === 'approved' || isSuperAdmin()) {
@@ -470,8 +647,7 @@
                     }
                 });
 
-                // אם המשתמש הוא אדמין - האזנה לרשימת כל המשתמשים לאישור מהיר
-                if (isAdmin) {
+                if (isAdmin && !unsubAllUsers) {
                     const usersCol = collection(db, 'artifacts', appId, 'public', 'data', 'users');
                     unsubAllUsers = onSnapshot(usersCol, (uSnap) => {
                         state.allUsers = uSnap.docs.map(d => d.data()).sort((a, b) => b.createdAt - a.createdAt);
@@ -487,46 +663,61 @@
             }
         }
 
+        // --- שליפת נתונים מבודדת ברמת השרת ---
         function fetchData() {
             if (!state.user) return;
             const userEmail = state.user.email.toLowerCase();
 
-            // האזנה לרשימות (מסונן לרשימות שהמשתמש חבר בהן, או רשימות ישנות ללא שדה members)
             if (!unsubLists) {
-                const listsRef = collection(db, 'artifacts', appId, 'public', 'data', 'lists');
-                unsubLists = onSnapshot(listsRef, (snapshot) => {
-                    const allLists = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                    state.lists = allLists.filter(l => 
-                        !l.members || 
-                        l.members.includes(userEmail) || 
-                        isSuperAdmin()
-                    ).sort((a, b) => b.createdAt - a.createdAt);
+                const listsCol = collection(db, 'artifacts', appId, 'public', 'data', 'lists');
+                const listsQuery = isSuperAdmin()
+                    ? listsCol
+                    : query(listsCol, where('members', 'array-contains', userEmail));
+
+                unsubLists = onSnapshot(listsQuery, (snapshot) => {
+                    state.lists = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+                        .sort((a, b) => b.createdAt - a.createdAt);
+
+                    if (isSuperAdmin()) {
+                        state.lists.forEach(l => {
+                            if (!l.members) {
+                                updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lists', l.id), {
+                                    ownerEmail: userEmail,
+                                    members: [userEmail]
+                                });
+                            }
+                        });
+                    }
 
                     if (state.activeListId && !state.lists.find(l => l.id === state.activeListId)) {
                         setActiveList(null);
+                    } else if (state.activeListId && !unsubItems) {
+                        subscribeToListItems(state.activeListId);
                     }
                     state.loading = false;
                     renderApp();
                 });
             }
+        }
 
-            // האזנה לפריטים
-            if (!unsubItems) {
-                const itemsRef = collection(db, 'artifacts', appId, 'public', 'data', 'items');
-                unsubItems = onSnapshot(itemsRef, (snapshot) => {
-                    state.items = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                    // בניית מילון ברקודים שנלמדו ממוצרים קיימים
-                    state.items.forEach(item => {
-                        if (item.barcode && item.name && item.name !== 'מוצר סרוק') {
-                            state.learnedProducts[item.barcode] = { name: item.name, category: item.category || 'אחר' };
-                        }
-                    });
-                    // מניעת רינדור דורס בזמן שהמשתמש מקליד שם מוצר
-                    if (document.activeElement?.classList.contains('item-name-input')) return;
-                    renderDynamicListContent();
-                    renderSuggestions();
+        function subscribeToListItems(listId) {
+            if (unsubItems) { unsubItems(); unsubItems = null; }
+            if (!listId) { state.items = []; return; }
+
+            const itemsCol = collection(db, 'artifacts', appId, 'public', 'data', 'items');
+            const itemsQuery = query(itemsCol, where('listId', '==', listId));
+
+            unsubItems = onSnapshot(itemsQuery, (snapshot) => {
+                state.items = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                state.items.forEach(item => {
+                    if (item.barcode && item.name && !item.name.includes('מוצר סרוק')) {
+                        state.learnedProducts[item.barcode] = { name: item.name, category: item.category || 'אחר' };
+                    }
                 });
-            }
+                if (document.activeElement?.classList.contains('item-name-input')) return;
+                renderDynamicListContent();
+                renderSuggestions();
+            });
         }
 
         // --- פעולות ניהול משתמשים (Admin) ---
@@ -641,8 +832,19 @@
         window.setActiveList = (listId) => {
             state.activeListId = listId;
             state.searchQuery = '';
-            if (listId) localStorage.setItem('familyCart_lastListId', listId);
-            else localStorage.removeItem('familyCart_lastListId');
+            if (listId) {
+                localStorage.setItem('familyCart_lastListId', listId);
+                subscribeToListItems(listId);
+            } else {
+                localStorage.removeItem('familyCart_lastListId');
+                if (unsubItems) { unsubItems(); unsubItems = null; }
+                state.items = [];
+            }
+            renderApp();
+        };
+
+        window.toggleNewListShareMode = () => {
+            state.shareNewListWithPartners = !state.shareNewListWithPartners;
             renderApp();
         };
 
@@ -652,6 +854,11 @@
             const name = input.value.trim();
             if (!name || !state.user) return;
             const userEmail = state.user.email.toLowerCase();
+            const partners = getKnownPartners();
+            const initialMembers = (state.shareNewListWithPartners && partners.length > 0)
+                ? [userEmail, ...partners]
+                : [userEmail];
+
             try {
                 const listsRef = collection(db, 'artifacts', appId, 'public', 'data', 'lists');
                 const docRef = await addDoc(listsRef, {
@@ -659,7 +866,7 @@
                     createdAt: Date.now(),
                     ownerUid: state.user.uid,
                     ownerEmail: userEmail,
-                    members: [userEmail]
+                    members: initialMembers
                 });
                 input.value = '';
                 setActiveList(docRef.id);
@@ -669,9 +876,11 @@
         window.deleteList = async (listId) => {
             if (!confirm("האם למחוק רשימה זו וכל המוצרים שבה?")) return;
             try {
-                // מחיקת כל הפריטים המשויכים לרשימה כדי לא להשאיר רשומות יתומות
-                const listItems = state.items.filter(i => i.listId === listId);
-                await Promise.all(listItems.map(i => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'items', i.id))));
+                const itemsCol = collection(db, 'artifacts', appId, 'public', 'data', 'items');
+                const q = query(itemsCol, where('listId', '==', listId));
+                const snap = await getDocs(q);
+                await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lists', listId));
                 if (state.activeListId === listId) setActiveList(null);
                 showToast('הרשימה נמחקה', 'trash-2');
@@ -692,7 +901,6 @@
             const newStatus = !currentStatus;
             playFeedbackSound(newStatus ? 'check' : 'restore');
 
-            // הפעלת אנימציית ביניים לפני שהפריט זז במסך
             if (cardEl) {
                 if (newStatus) {
                     cardEl.classList.add('item-checking-off');
@@ -808,11 +1016,13 @@
             if (!name.trim() || !state.user || !state.activeListId) return;
             const trimmedName = name.trim();
             const existingItem = state.items.find(i => i.listId === state.activeListId && i.name === trimmedName);
+            const cleanQty = Math.max(1, Math.round(parseFloat(quantity) || 1));
             
             try {
                 if (existingItem) {
                     const wasBought = existingItem.isBought;
-                    const newQty = wasBought ? 1 : (parseFloat(existingItem.quantity) || 1) + parseFloat(quantity);
+                    const currentClean = Math.max(1, Math.round(parseFloat(existingItem.quantity) || 1));
+                    const newQty = wasBought ? 1 : currentClean + cleanQty;
                     const updates = { quantity: newQty, isBought: false };
                     if (barcode && !existingItem.barcode) updates.barcode = barcode;
                     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'items', existingItem.id), updates);
@@ -822,7 +1032,7 @@
                         listId: state.activeListId,
                         name: trimmedName,
                         category: category || 'אחר',
-                        quantity: parseFloat(quantity) || 1,
+                        quantity: cleanQty,
                         unit: unit,
                         isBought: false,
                         createdAt: Date.now()
@@ -848,13 +1058,27 @@
             }
         };
 
+        // --- עדכון כמות במספרים שלמים ומדויקים (1, 2, 3...) ---
         window.updateItemQty = async (itemId, delta) => {
             const item = state.items.find(i => i.id === itemId);
             if (!item) return;
-            const newQty = Math.max(0.5, (parseFloat(item.quantity) || 1) + delta);
+            const currentQty = Math.round(parseFloat(item.quantity) || 1);
+            const newQty = Math.max(1, currentQty + delta);
             try {
                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'items', itemId), { quantity: newQty });
             } catch (err) { console.error("Error updating qty", err); }
+        };
+
+        // החלפת יחידת מידה בלחיצה (למשל מק"ג ליח' או אריזה)
+        window.cycleItemUnit = async (itemId) => {
+            const item = state.items.find(i => i.id === itemId);
+            if (!item) return;
+            const currentUnit = item.unit || "יח'";
+            const nextIndex = (UNITS_CYCLE.indexOf(currentUnit) + 1) % UNITS_CYCLE.length;
+            const nextUnit = UNITS_CYCLE[nextIndex];
+            try {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'items', itemId), { unit: nextUnit });
+            } catch (err) { console.error("Error updating unit", err); }
         };
 
         window.toggleCompleted = () => { state.showCompleted = !state.showCompleted; renderDynamicListContent(); };
@@ -885,23 +1109,21 @@
             closeScanner();
             playFeedbackSound('check');
 
-            // 1. בדיקה אם המוצר כבר ברשימה הנוכחית
             const existingInList = state.items.find(i => i.barcode === decodedText && i.listId === state.activeListId);
             if (existingInList) {
-                const newQty = existingInList.isBought ? 1 : (parseFloat(existingInList.quantity) || 1) + 1;
+                const currentClean = Math.max(1, Math.round(parseFloat(existingInList.quantity) || 1));
+                const newQty = existingInList.isBought ? 1 : currentClean + 1;
                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'items', existingInList.id), { quantity: newQty, isBought: false });
                 showToast(`נסרק: "${existingInList.name}" (כמות: ${newQty})`, 'scan');
                 return;
             }
 
-            // 2. בדיקה אם הברקוד נלמד בעבר במערכת
             if (state.learnedProducts[decodedText]) {
                 const learned = state.learnedProducts[decodedText];
                 addItem(learned.name, learned.category, 1, "יח'", decodedText);
                 return;
             }
 
-            // 3. שליפה ממאגר OpenFoodFacts
             try {
                 const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${decodedText}.json`);
                 const data = await res.json();
@@ -910,6 +1132,7 @@
                     let cat = 'אחר';
                     const pTags = (data.product.categories_tags || []).join(' ').toLowerCase();
                     if (pTags.includes('dairy') || pTags.includes('milk') || pTags.includes('cheese')) cat = 'מוצרי חלב וביצים';
+                    else if (pTags.includes('baking') || pTags.includes('flour') || pTags.includes('sugar')) cat = 'מוצרי אפייה';
                     else if (pTags.includes('snack') || pTags.includes('chocolate')) cat = 'דגנים וחטיפים';
                     else if (pTags.includes('beverage') || pTags.includes('drink')) cat = 'משקאות';
                     addItem(productName, cat, 1, "יח'", decodedText);
@@ -1001,18 +1224,28 @@
                 </button>
             ` : '';
 
+            const knownPartners = getKnownPartners();
+            const shareModeToggleHtml = knownPartners.length > 0 ? `
+                <div class="flex items-center justify-between px-3 mb-6 -mt-4">
+                    <span class="text-xs text-gray-500 font-medium">שיוך הרשימה החדשה:</span>
+                    <button type="button" onclick="toggleNewListShareMode()" class="text-xs font-bold px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 ${state.shareNewListWithPartners ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-600 border-gray-200'}">
+                        <i data-lucide="${state.shareNewListWithPartners ? 'users' : 'lock'}" class="w-3.5 h-3.5"></i>
+                        ${state.shareNewListWithPartners ? `משותף אוטומטית עם שותפי הבית (${knownPartners.length})` : 'רשימה פרטית רק לי'}
+                    </button>
+                </div>
+            ` : '';
+
             const listsHtml = state.lists.length === 0 
                 ? `<div class="text-center text-gray-400 py-16 flex flex-col items-center fade-in"><i data-lucide="package-open" class="w-16 h-16 mb-4 opacity-50"></i><p>אין רשימות עדיין.<br/>צרו רשימה חדשה למעלה!</p></div>` 
                 : state.lists.map(list => {
                     const memberCount = (list.members || []).length;
-                    const countItems = state.items.filter(i => i.listId === list.id && !i.isBought).length;
                     return `
                         <div onclick="setActiveList('${list.id}')" class="group flex items-center justify-between bg-white border border-gray-100 p-5 rounded-3xl shadow-sm hover:shadow-md transition-all cursor-pointer mb-3 fade-in">
                             <div class="flex items-center gap-4 min-w-0">
                                 <div class="bg-emerald-100 text-emerald-600 p-3 rounded-2xl shrink-0"><i data-lucide="shopping-basket" class="w-6 h-6"></i></div>
                                 <div class="min-w-0">
                                     <span class="font-bold text-xl text-gray-800 block truncate">${list.name}</span>
-                                    <span class="text-xs text-gray-400 font-medium">${countItems} מוצרים לקנייה • ${memberCount > 1 ? `${memberCount} שותפים` : 'פרטי'}</span>
+                                    <span class="text-xs text-gray-400 font-medium">${memberCount > 1 ? `משותף (${memberCount} משתתפים)` : 'רשימה פרטית'}</span>
                                 </div>
                             </div>
                             <button onclick="event.stopPropagation(); deleteList('${list.id}')" class="text-gray-300 hover:text-red-500 p-2 transition-colors shrink-0"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
@@ -1042,10 +1275,11 @@
                     <p class="text-emerald-50 opacity-90 text-sm mt-1 font-medium">היי ${userName}, איזו רשימה פותחים היום?</p>
                 </header>
                 <main class="p-5 bg-gray-50 flex-1 flex flex-col">
-                    <form onsubmit="createList(event)" class="flex gap-3 mb-8 mt-2 relative fade-in">
+                    <form onsubmit="createList(event)" class="flex gap-3 mb-6 mt-2 relative fade-in">
                         <input type="text" id="new-list-name" placeholder="שם לרשימה חדשה..." class="flex-1 border-gray-200 border bg-white rounded-3xl py-4 px-6 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm text-lg font-medium">
                         <button type="submit" class="bg-emerald-500 text-white rounded-full w-14 h-14 shadow-lg hover:bg-emerald-600 transition-all flex items-center justify-center shrink-0"><i data-lucide="plus" class="w-8 h-8"></i></button>
                     </form>
+                    ${shareModeToggleHtml}
                     <div class="space-y-1 mb-8">
                         <h2 class="font-bold text-gray-400 mb-4 px-2 text-xs uppercase tracking-widest">הרשימות שלי</h2>
                         ${listsHtml}
@@ -1170,7 +1404,9 @@
                     <div class="space-y-3">
                         <h3 class="text-[11px] font-black px-3.5 py-1.5 inline-block rounded-xl shadow-sm border ${colorClass}">${category}</h3>
                         <div class="space-y-2.5">
-                            ${items.map(item => `
+                            ${items.map(item => {
+                                const displayQty = Math.max(1, Math.round(parseFloat(item.quantity) || 1));
+                                return `
                                 <div id="item-card-${item.id}" class="item-card bg-white rounded-3xl p-4 shadow-sm border border-gray-100 flex flex-col gap-3">
                                     <!-- קומה 1: כפתור סימון + שם מוצר -->
                                     <div class="flex items-center gap-3.5">
@@ -1186,11 +1422,13 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- קומה 2: כמות, קטגוריה ומחיקה -->
+                                    <!-- קומה 2: כמות (במספרים שלמים) + החלפת יחידה בלחיצה, קטגוריה ומחיקה -->
                                     <div class="flex items-center justify-between border-t border-gray-50 pt-2.5">
                                         <div class="flex items-center bg-gray-100 rounded-2xl p-1 border border-gray-200/50 shrink-0">
                                             <button onclick="updateItemQty('${item.id}', -1)" class="w-8 h-8 flex items-center justify-center text-gray-700 hover:bg-white active:scale-90 rounded-xl transition-all font-black text-lg">-</button>
-                                            <span class="text-xs font-black text-gray-800 w-14 text-center select-none">${item.quantity || 1} ${item.unit || "יח'"}</span>
+                                            <button onclick="cycleItemUnit('${item.id}')" title="לחץ להחלפת יחידת מידה" class="text-xs font-black text-gray-800 px-2.5 py-1 hover:bg-white/60 rounded-lg text-center select-none transition-colors">
+                                                ${displayQty} ${item.unit || "יח'"}
+                                            </button>
                                             <button onclick="updateItemQty('${item.id}', 1)" class="w-8 h-8 flex items-center justify-center text-gray-700 hover:bg-white active:scale-90 rounded-xl transition-all font-black text-lg">+</button>
                                         </div>
 
@@ -1204,7 +1442,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            `).join('')}
+                            `}).join('')}
                         </div>
                     </div>
                 `;
@@ -1223,7 +1461,9 @@
                         </div>
                         ${state.showCompleted ? `
                             <div class="space-y-2">
-                                ${bought.map(item => `
+                                ${bought.map(item => {
+                                    const displayQty = Math.max(1, Math.round(parseFloat(item.quantity) || 1));
+                                    return `
                                     <div id="item-card-${item.id}" class="item-card flex items-center justify-between p-3.5 bg-gray-100/80 rounded-2xl border border-gray-200/80">
                                         <div class="flex items-center gap-3.5 flex-1 cursor-pointer min-w-0" onclick="toggleItem('${item.id}', true)">
                                             <div class="w-7 h-7 rounded-full flex items-center justify-center bg-emerald-500 text-white shadow-sm shrink-0">
@@ -1231,14 +1471,14 @@
                                             </div>
                                             <div class="flex flex-col min-w-0">
                                                 <span class="text-base text-gray-500 font-bold line-through truncate">${item.name}</span>
-                                                <span class="text-[10px] font-bold text-gray-400">${item.quantity || 1} ${item.unit || "יח'"} • לחץ להחזרה לרשימה</span>
+                                                <span class="text-[10px] font-bold text-gray-400">${displayQty} ${item.unit || "יח'"} • לחץ להחזרה לרשימה</span>
                                             </div>
                                         </div>
                                         <button onclick="deleteItem('${item.id}')" class="p-2 text-gray-400 hover:text-red-500 transition-all shrink-0">
                                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                                         </button>
                                     </div>
-                                `).join('')}
+                                `}).join('')}
                             </div>
                         ` : ''}
                     </div>
