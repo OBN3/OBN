@@ -1,0 +1,1788 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- iOS Web App Meta Tags for Native iPhone Experience -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="הקול שלי!">
+    <meta name="theme-color" content="#FFFDF9">
+    <title>הקול שלי! - לוח תקשורת עם אופי</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Rubik & Secular One -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,400;0,500;0,700;0,900;1,400&family=Secular+One&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Rubik', 'sans-serif'],
+                        display: ['Secular One', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'neo': '4px 4px 0px 0px rgba(15, 23, 42, 1)',
+                        'neo-lg': '6px 6px 0px 0px rgba(15, 23, 42, 1)',
+                        'neo-sm': '2px 2px 0px 0px rgba(15, 23, 42, 1)',
+                        'neo-pressed': '0px 0px 0px 0px rgba(15, 23, 42, 1)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #FFFDF9;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 20px 20px;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .neo-card {
+            border: 3px solid #0f172a;
+            transition: transform 0.06s ease-out, box-shadow 0.06s ease-out;
+        }
+
+        .neo-card:active, .neo-card.playing {
+            transform: translate(4px, 4px);
+            box-shadow: 0px 0px 0px 0px rgba(15, 23, 42, 1) !important;
+        }
+
+        @keyframes equalizer {
+            0%, 100% { height: 6px; }
+            50% { height: 22px; }
+        }
+
+        .eq-bar {
+            width: 4px;
+            background-color: #0f172a;
+            border-radius: 9999px;
+            animation: equalizer 0.5s infinite ease-in-out;
+        }
+        .eq-bar:nth-child(2) { animation-delay: 0.15s; }
+        .eq-bar:nth-child(3) { animation-delay: 0.3s; }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-900 pb-10 flex flex-col justify-start">
+
+    <!-- Top Header & Quick Input Bar -->
+    <header class="relative z-10 bg-[#FFFDF9] border-b-4 border-slate-900 px-3.5 py-2.5 shadow-sm">
+        <div class="max-w-xl mx-auto">
+            <!-- Row 1: App Title & Studio/Settings Buttons -->
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                    <div class="w-9 h-9 rounded-xl bg-amber-400 border-2 border-slate-900 shadow-neo-sm flex items-center justify-center text-xl transform -rotate-6">
+                        📣
+                    </div>
+                    <div>
+                        <h1 class="font-display text-xl sm:text-2xl leading-none tracking-tight text-slate-900">הקול שלי!</h1>
+                        <p class="text-[11px] font-bold text-slate-500">לוח תקשורת עם פלפל 🌶️</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                    <!-- Edit/Studio Mode Toggle -->
+                    <button id="toggleEditBtn" onclick="toggleEditMode()" class="px-2.5 py-1.5 rounded-xl border-2 border-slate-900 bg-white hover:bg-slate-100 font-bold text-xs flex items-center gap-1 shadow-neo-sm active:translate-x-0.5 active:translate-y-0.5 transition-all">
+                        <i class="ph-bold ph-microphone-stage text-base text-rose-500"></i>
+                        <span id="editBtnText">אולפן ועריכה</span>
+                    </button>
+
+                    <!-- Settings Button -->
+                    <button onclick="openSettingsModal()" class="w-9 h-9 rounded-xl border-2 border-slate-900 bg-amber-200 hover:bg-amber-300 flex items-center justify-center shadow-neo-sm active:translate-x-0.5 active:translate-y-0.5 transition-all" title="הגדרות קול והורדה מראש">
+                        <i class="ph-bold ph-sliders-horizontal text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Row 2: Voice Engine (Fast vs AI) & Voice Gender (Female vs Male) -->
+            <div class="flex items-center justify-between gap-2 mb-2.5 bg-slate-100 border-2 border-slate-900 rounded-xl p-1 shadow-neo-sm">
+                <!-- Engine Toggle -->
+                <div class="flex items-center gap-1">
+                    <button id="engineFastBtn" onclick="setVoiceEngine('fast')" class="px-2.5 py-1 rounded-lg text-[11px] font-black transition-all bg-emerald-300 text-slate-900 border border-slate-900">
+                        ⚡ מידי (0 השהיה)
+                    </button>
+                    <button id="engineAiBtn" onclick="setVoiceEngine('ai')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all text-slate-600">
+                        🤖 קול AI מתקדם
+                    </button>
+                </div>
+
+                <!-- Gender Toggle -->
+                <div class="flex items-center gap-1 border-r-2 border-slate-300 pr-2">
+                    <button id="genderFemaleBtn" onclick="setVoiceGender('female')" class="px-2 py-1 rounded-lg text-[11px] font-black transition-all bg-amber-300 text-slate-900 border border-slate-900">
+                        👩 אישה
+                    </button>
+                    <button id="genderMaleBtn" onclick="setVoiceGender('male')" class="px-2 py-1 rounded-lg text-[11px] font-bold transition-all text-slate-600">
+                        👨 גבר
+                    </button>
+                </div>
+            </div>
+
+            <!-- Row 3: Top Quick Type & Single Speak Button -->
+            <div id="speechBanner" class="relative bg-white border-2 border-slate-900 rounded-2xl p-2 shadow-neo flex items-center gap-2 transition-all duration-300">
+                <div class="relative flex-grow flex items-center">
+                    <input type="text" id="quickSpeakInput" placeholder="הקלידו משפט חופשי להשמעה בקול..." 
+                        class="w-full pr-3 pl-8 py-2 rounded-xl border-2 border-slate-900 font-bold text-sm sm:text-base bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 text-slate-900 placeholder:text-slate-400"
+                        onkeypress="if(event.key === 'Enter') speakQuickInput()">
+                    <button id="clearQuickInputBtn" onclick="document.getElementById('quickSpeakInput').value=''; document.getElementById('quickSpeakInput').focus();" class="absolute left-2 text-slate-400 hover:text-slate-700 p-1" title="נקה טקסט">
+                        <i class="ph-bold ph-x text-sm"></i>
+                    </button>
+                </div>
+
+                <!-- Loading Spinner when AI generates live audio -->
+                <div id="aiLoadingSpinner" class="hidden items-center gap-1 px-1.5 text-xs font-black text-violet-700 shrink-0">
+                    <i class="ph-bold ph-spinner animate-spin text-lg"></i>
+                </div>
+
+                <!-- Equalizer animation when playing -->
+                <div id="equalizer" class="hidden items-center gap-1 h-6 px-1.5 shrink-0">
+                    <div class="eq-bar"></div>
+                    <div class="eq-bar"></div>
+                    <div class="eq-bar"></div>
+                </div>
+
+                <!-- SINGLE Unified Speak Button -->
+                <button id="mainSpeakBtn" onclick="speakQuickInput()" class="shrink-0 px-4 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-500 border-2 border-slate-900 shadow-neo-sm flex items-center justify-center gap-1.5 font-black text-sm active:translate-x-0.5 active:translate-y-0.5 transition-all" title="השמע בקול">
+                    <span>דבר</span>
+                    <i class="ph-fill ph-speaker-high text-lg text-slate-900"></i>
+                </button>
+            </div>
+
+            <!-- Edit Mode Banner Alert -->
+            <div id="editModeBanner" class="hidden mt-2 bg-rose-500 text-white border-2 border-slate-900 rounded-xl p-2 text-xs font-bold flex items-center justify-between shadow-neo-sm">
+                <div class="flex items-center gap-2">
+                    <i class="ph-fill ph-sparkle text-lg animate-spin"></i>
+                    <span>מצב אולפן פעיל: לחצו על כל כרטיסייה כדי להקליט קול אמיתי, להעלות קובץ שמע או לערוך!</span>
+                </div>
+            </div>
+
+            <!-- Category Filter Pills -->
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pt-2.5 pb-0.5" id="categoryContainer">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Grid Section -->
+    <main class="flex-grow px-3.5 pt-3.5 max-w-xl mx-auto w-full">
+        <div id="cardsGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <!-- Cards dynamically injected here (First card is "חדש") -->
+        </div>
+    </main>
+
+    <!-- MODAL 1: EDIT / STUDIO RECORDING MODAL -->
+    <div id="studioModal" onclick="if(event.target === this) closeStudioModal()" class="fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-sm hidden items-center justify-center p-3">
+        <div class="bg-[#FFFDF9] border-4 border-slate-900 rounded-3xl max-w-md w-full shadow-neo-lg flex flex-col max-h-[85vh] overflow-hidden">
+            
+            <div class="flex items-center justify-between border-b-2 border-slate-200 px-4 py-3 bg-[#FFFDF9] shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-rose-400 border-2 border-slate-900 flex items-center justify-center text-base">🎙️</span>
+                    <h2 id="modalTitle" class="font-display text-lg text-slate-900">עריכת כפתור והקלטה</h2>
+                </div>
+                <button type="button" onclick="closeStudioModal()" class="px-2.5 py-1 rounded-xl border-2 border-slate-900 bg-rose-100 hover:bg-rose-200 text-slate-900 font-black text-xs flex items-center gap-1 shadow-neo-sm">
+                    <span>סגור</span>
+                    <span>✕</span>
+                </button>
+            </div>
+
+            <form id="cardForm" onsubmit="saveCard(event)" class="p-4 space-y-3.5 overflow-y-auto flex-grow">
+                <input type="hidden" id="cardId">
+
+                <div class="grid grid-cols-3 gap-2.5">
+                    <div class="col-span-1">
+                        <label class="block text-xs font-black text-slate-700 mb-1">אימוג'י</label>
+                        <input type="text" id="cardEmoji" required maxlength="4" placeholder="☕" 
+                            class="w-full text-center text-xl py-1.5 rounded-xl border-2 border-slate-900 shadow-neo-sm bg-white focus:outline-none">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-black text-slate-700 mb-1">כותרת על הכפתור</label>
+                        <input type="text" id="cardLabel" required placeholder="למשל: קפה!" 
+                            class="w-full px-3 py-2 rounded-xl border-2 border-slate-900 font-bold text-sm shadow-neo-sm bg-white focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-slate-700 mb-1">מה שהכפתור יגיד (בקול!)</label>
+                    <textarea id="cardPhrase" required rows="2" placeholder="למשל: גיא - תכין לי קפה ומהר!" 
+                        class="w-full p-2.5 rounded-xl border-2 border-slate-900 font-bold text-sm shadow-neo-sm bg-white focus:outline-none"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block text-xs font-black text-slate-700 mb-1">קטגוריה</label>
+                        <select id="cardCategory" class="w-full px-2.5 py-2 rounded-xl border-2 border-slate-900 font-bold text-xs shadow-neo-sm bg-white">
+                            <option value="food">🍔 אוכל ופינוקים</option>
+                            <option value="vibe">😂 אווירה ועקיצות</option>
+                            <option value="needs">🛎️ צרכים ועזרה</option>
+                            <option value="social">❤️ נימוסים ואהבה</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-700 mb-1">צבע הכפתור</label>
+                        <select id="cardColor" class="w-full px-2.5 py-2 rounded-xl border-2 border-slate-900 font-bold text-xs shadow-neo-sm bg-white">
+                            <option value="bg-amber-300">צהוב שמש ☀️</option>
+                            <option value="bg-rose-300">ורוד פוקסיה 🌸</option>
+                            <option value="bg-sky-300">תכלת שמיים ☁️</option>
+                            <option value="bg-emerald-300">ירוק מנטה 🌿</option>
+                            <option value="bg-violet-300">סגול לילך 💜</option>
+                            <option value="bg-orange-300">כתום אפרסק 🍑</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bg-slate-100 border-2 border-slate-900 rounded-2xl p-3 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-slate-900 flex items-center gap-1">
+                            <i class="ph-fill ph-waveform text-base text-violet-600"></i>
+                            מקור הקול:
+                        </span>
+                        <span id="audioSourceBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-200 border border-slate-800">
+                            מנוע דיבור אוטומטי 🤖
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" id="recordBtn" onclick="toggleRecording()" class="py-2 px-2.5 rounded-xl border-2 border-slate-900 bg-rose-400 hover:bg-rose-500 text-slate-900 font-black text-xs shadow-neo-sm flex items-center justify-center gap-1 transition-all">
+                            <i id="recordIcon" class="ph-fill ph-microphone text-sm"></i>
+                            <span id="recordBtnText">הקלטת קול</span>
+                        </button>
+
+                        <label class="cursor-pointer py-2 px-2.5 rounded-xl border-2 border-slate-900 bg-sky-300 hover:bg-sky-400 text-slate-900 font-black text-xs shadow-neo-sm flex items-center justify-center gap-1 transition-all">
+                            <i class="ph-bold ph-upload-simple text-sm"></i>
+                            <span>העלאת קובץ</span>
+                            <input type="file" id="audioUploadInput" accept="audio/*" class="hidden" onchange="handleFileUpload(event)">
+                        </label>
+                    </div>
+
+                    <div id="customAudioControls" class="hidden items-center justify-between bg-white border-2 border-slate-900 rounded-xl p-2">
+                        <button type="button" onclick="previewCustomAudio()" class="px-2.5 py-1 rounded-lg bg-emerald-300 border border-slate-900 font-bold text-xs flex items-center gap-1">
+                            <i class="ph-fill ph-play"></i> שמע הקלטה
+                        </button>
+                        <button type="button" onclick="clearCustomAudio()" class="px-2 py-1 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 border border-rose-300 font-bold text-xs flex items-center gap-1">
+                            <i class="ph-bold ph-trash"></i> מחק
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-2 gap-2 border-t-2 border-slate-200">
+                    <button type="button" id="deleteCardBtn" onclick="deleteCurrentCard()" class="px-3 py-2 rounded-xl border-2 border-slate-900 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-xs flex items-center gap-1">
+                        <i class="ph-bold ph-trash text-sm"></i>
+                        מחיקה
+                    </button>
+
+                    <div class="flex items-center gap-2 mr-auto">
+                        <button type="button" onclick="closeStudioModal()" class="px-3.5 py-2 rounded-xl border-2 border-slate-900 bg-white font-bold text-xs">
+                            ביטול
+                        </button>
+                        <button type="submit" class="px-4 py-2 rounded-xl border-2 border-slate-900 bg-emerald-400 hover:bg-emerald-500 font-black text-xs sm:text-sm shadow-neo-sm">
+                            שמור כפתור ✨
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: VOICE SETTINGS, AI PRE-FETCH & BACKUP -->
+    <div id="settingsModal" onclick="if(event.target === this) closeSettingsModal()" class="fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-sm hidden items-center justify-center p-3">
+        <div class="bg-[#FFFDF9] border-4 border-slate-900 rounded-3xl max-w-md w-full shadow-neo-lg flex flex-col max-h-[85vh] overflow-hidden">
+            
+            <div class="flex items-center justify-between border-b-2 border-slate-200 px-4 py-3 bg-[#FFFDF9] shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-amber-300 border-2 border-slate-900 flex items-center justify-center text-base">⚙️</span>
+                    <h2 class="font-display text-lg text-slate-900">הגדרות קול, AI והורדה מראש</h2>
+                </div>
+                <button type="button" onclick="closeSettingsModal()" class="px-2.5 py-1 rounded-xl border-2 border-slate-900 bg-rose-100 hover:bg-rose-200 text-slate-900 font-black text-xs flex items-center gap-1 shadow-neo-sm">
+                    <span>סגור</span>
+                    <span>✕</span>
+                </button>
+            </div>
+
+            <div class="p-4 space-y-3.5 text-sm overflow-y-auto flex-grow">
+                
+                <!-- Section 1: AI Pre-Fetch & Offline Zero-Latency Cache -->
+                <div class="bg-violet-100 border-2 border-slate-900 rounded-2xl p-3 space-y-2.5 shadow-neo-sm">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-black text-xs sm:text-sm text-slate-900 flex items-center gap-1.5">
+                            <i class="ph-fill ph-sparkle text-base text-violet-700"></i>
+                            קולות AI מתקדמים ללא השהיה!
+                        </h3>
+                        <span id="cachedCountBadge" class="text-[10px] font-black px-2 py-0.5 rounded-md bg-white border border-slate-900">
+                            בדיקת זיכרון...
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-700 leading-relaxed">
+                        כדי ליהנות מקול AI אנושי ועשיר (גבר או אישה) עם <strong>אפס זמן המתנה בלחיצה</strong>, לחצו כאן כדי לייצר ולהוריד מראש את כל קולות הכפתורים לזיכרון המכשיר:
+                    </p>
+
+                    <!-- Progress Bar for Pre-fetching -->
+                    <div id="prefetchProgressBox" class="hidden space-y-1">
+                        <div class="flex justify-between text-[11px] font-black text-violet-900">
+                            <span id="prefetchStatusText">מייצר ומוריד קולות AI...</span>
+                            <span id="prefetchPercentText">0%</span>
+                        </div>
+                        <div class="w-full h-3 bg-white rounded-full border border-slate-900 overflow-hidden">
+                            <div id="prefetchProgressBar" class="h-full bg-violet-500 transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <button type="button" id="prefetchAllBtn" onclick="preDownloadAllAiVoices()" class="w-full py-2.5 px-3 rounded-xl border-2 border-slate-900 bg-violet-400 hover:bg-violet-500 text-slate-900 font-black text-xs shadow-neo-sm flex items-center justify-center gap-1.5 transition-all">
+                        <i class="ph-bold ph-cloud-arrow-down text-base"></i>
+                        <span>הורד והכן מראש את כל קולות ה-AI למכשיר ⚡</span>
+                    </button>
+                </div>
+
+                <!-- Section 2: Voice Engine & Gender Selection -->
+                <div class="bg-white border-2 border-slate-900 rounded-2xl p-3 space-y-3 shadow-neo-sm">
+                    <h3 class="font-black text-xs sm:text-sm text-slate-900 flex items-center gap-1.5">
+                        <i class="ph-fill ph-speaker-high text-base text-amber-500"></i>
+                        בחירת סוג מנוע, מגדר ומהירות
+                    </h3>
+
+                    <!-- Engine Switch inside Settings -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" id="settingsEngineFast" onclick="setVoiceEngine('fast')" class="py-2 px-2 rounded-xl border-2 border-slate-900 font-black text-xs flex items-center justify-center gap-1 bg-emerald-300 shadow-neo-sm">
+                            <span>⚡</span>
+                            <span>מידי (מנוע מכשיר)</span>
+                        </button>
+                        <button type="button" id="settingsEngineAi" onclick="setVoiceEngine('ai')" class="py-2 px-2 rounded-xl border-2 border-slate-900 font-black text-xs flex items-center justify-center gap-1 bg-white">
+                            <span>🤖</span>
+                            <span>קול AI מתקדם</span>
+                        </button>
+                    </div>
+
+                    <!-- Gender Switch inside Settings -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" id="settingsGenderFemale" onclick="setVoiceGender('female')" class="py-2 px-3 rounded-xl border-2 border-slate-900 font-black text-xs flex items-center justify-center gap-1.5 bg-amber-300 shadow-neo-sm">
+                            <span>👩</span>
+                            <span>קול נשי (לה)</span>
+                        </button>
+                        <button type="button" id="settingsGenderMale" onclick="setVoiceGender('male')" class="py-2 px-3 rounded-xl border-2 border-slate-900 font-black text-xs flex items-center justify-center gap-1.5 bg-white">
+                            <span>👨</span>
+                            <span>קול גברי (לו)</span>
+                        </button>
+                    </div>
+
+                    <!-- AI Voice Character Selection -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">גון קול AI מועדף (עבור מצב AI):</label>
+                        <select id="aiVoiceSelect" onchange="updateVoiceSettings()" class="w-full px-2.5 py-2 rounded-xl border-2 border-slate-900 font-bold text-xs bg-slate-50">
+                            <option value="Aoede">Aoede - קול נשי חם וטבעי 👩</option>
+                            <option value="Kore">Kore - קול נשי אנרגטי וברור 👩</option>
+                            <option value="Leda">Leda - קול נשי צעיר וקליל 👩</option>
+                            <option value="Puck">Puck - קול גברי קליל ומשעשע 👨</option>
+                            <option value="Fenrir">Fenrir - קול גברי עמוק ונמרץ 👨</option>
+                            <option value="Charon">Charon - קול גברי רגוע וברור 👨</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between text-xs font-bold mb-1">
+                            <span>מהירות דיבור:</span>
+                            <span id="rateValueLabel">1.0x</span>
+                        </div>
+                        <input type="range" id="ttsRate" min="0.7" max="1.5" step="0.05" value="1.0" onchange="updateVoiceSettings()" class="w-full accent-amber-500">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs font-bold mb-1">
+                            <span>גובה הקול (Pitch למנוע מכשיר):</span>
+                            <span id="pitchValueLabel">1.05</span>
+                        </div>
+                        <input type="range" id="ttsPitch" min="0.7" max="1.4" step="0.05" value="1.05" onchange="updateVoiceSettings()" class="w-full accent-amber-500">
+                    </div>
+
+                    <button type="button" onclick="testCurrentVoiceSettings()" class="w-full py-2.5 rounded-xl border-2 border-slate-900 bg-emerald-300 hover:bg-emerald-400 font-black text-xs shadow-neo-sm">
+                        🔊 לחצו לבדיקת הקול הנבחר כעת
+                    </button>
+                </div>
+
+                <!-- Section 3: Backup & Restore -->
+                <div class="bg-white border-2 border-slate-900 rounded-2xl p-3 space-y-2.5 shadow-neo-sm">
+                    <h3 class="font-black text-xs sm:text-sm text-slate-900 flex items-center gap-1.5">
+                        <i class="ph-fill ph-floppy-disk text-base text-sky-600"></i>
+                        גיבוי ושחזור לוח הכפתורים
+                    </h3>
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <button type="button" onclick="exportBackupToFile()" class="py-2 px-2.5 rounded-xl border-2 border-slate-900 bg-sky-200 hover:bg-sky-300 text-slate-900 font-black text-xs shadow-neo-sm flex items-center justify-center gap-1">
+                            <i class="ph-bold ph-download-simple"></i>
+                            <span>ייצוא גיבוי</span>
+                        </button>
+                        <label class="cursor-pointer py-2 px-2.5 rounded-xl border-2 border-slate-900 bg-amber-200 hover:bg-amber-300 text-slate-900 font-black text-xs shadow-neo-sm flex items-center justify-center gap-1 text-center">
+                            <i class="ph-bold ph-upload-simple"></i>
+                            <span>שחזור מגיבוי</span>
+                            <input type="file" accept=".json" class="hidden" onchange="importBackupFromFile(event)">
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-4 py-3 border-t-2 border-slate-200 bg-[#FFFDF9] flex justify-between items-center shrink-0">
+                <button onclick="resetToDefaults()" class="text-xs font-bold text-rose-600 underline hover:text-rose-800">
+                    איפוס לברירת מחדל
+                </button>
+                <button onclick="closeSettingsModal()" class="px-5 py-2 rounded-xl border-2 border-slate-900 bg-emerald-400 text-slate-900 font-black text-xs shadow-neo-sm">
+                    שמור וסגור ✓
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Toast Notification -->
+    <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-2xl border-2 border-white shadow-lg font-bold text-xs hidden items-center gap-2 transition-all">
+        <span id="toastIcon">✨</span>
+        <span id="toastText">נשמר בהצלחה!</span>
+    </div>
+
+    <!-- Firebase SDK (Cloud Sync & Persistent Storage) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'my-voice-aac-app';
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+
+        if (typeof __firebase_config !== 'undefined') {
+            try {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (authErr) {
+                        await signInAnonymously(auth);
+                    }
+                };
+
+                await initAuth();
+                currentUser = auth.currentUser;
+
+                if (currentUser && db) {
+                    const userId = currentUser.uid;
+                    const cardsCollection = collection(db, 'artifacts', appId, 'users', userId, 'cards');
+
+                    onSnapshot(cardsCollection, (snapshot) => {
+                        if (!snapshot.empty) {
+                            const cloudCards = [];
+                            snapshot.forEach(docSnap => {
+                                cloudCards.push(docSnap.data());
+                            });
+                            window.cards = cloudCards.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                            if (window.syncCloudCardsToApp) window.syncCloudCardsToApp(window.cards);
+                        } else if (window.DEFAULT_CARDS) {
+                            window.seedInitialCloudCards(userId, cardsCollection);
+                        }
+                    }, (err) => {
+                        console.error("Firestore onSnapshot error:", err);
+                    });
+                }
+            } catch (err) {
+                console.warn("Cloud persistence setup error:", err);
+            }
+        }
+
+        window.saveCardToCloud = async (cardData) => {
+            if (!db || !auth || !auth.currentUser) return false;
+            try {
+                const userId = auth.currentUser.uid;
+                const cardRef = doc(db, 'artifacts', appId, 'users', userId, 'cards', cardData.id);
+                await setDoc(cardRef, cardData);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        };
+
+        window.deleteCardFromCloud = async (cardId) => {
+            if (!db || !auth || !auth.currentUser) return false;
+            try {
+                const userId = auth.currentUser.uid;
+                const cardRef = doc(db, 'artifacts', appId, 'users', userId, 'cards', cardId);
+                await deleteDoc(cardRef);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        };
+
+        window.seedInitialCloudCards = async (userId) => {
+            try {
+                for (let i = 0; i < window.DEFAULT_CARDS.length; i++) {
+                    const c = window.DEFAULT_CARDS[i];
+                    const cardData = { ...c, createdAt: Date.now() - (i * 1000) };
+                    const cardDoc = doc(db, 'artifacts', appId, 'users', userId, 'cards', c.id);
+                    await setDoc(cardDoc, cardData);
+                }
+            } catch (e) {}
+        };
+    </script>
+
+    <script>
+        /**************************************************************
+         * 1. INITIAL DATA: FUNNY & PRACTICAL HEBREW CARDS
+         **************************************************************/
+        const DEFAULT_CARDS = [
+            {
+                id: 'c_coffee',
+                label: 'קפה!',
+                phrase: 'גיא - תכין לי קפה ומהר!',
+                emoji: '☕',
+                category: 'food',
+                color: 'bg-amber-300',
+                hasCustomAudio: false
+            },
+            {
+                id: 'c_hungry',
+                label: 'רעבה אש',
+                phrase: 'מה לא הבנתם? אני רֵעֵבַה!',
+                emoji: '🍔',
+                category: 'food',
+                color: 'bg-orange-300',
+                hasCustomAudio: false
+            },
+            {
+                id: 'c_tired',
+                label: 'עייפה / הביתה!',
+                phrase: 'איזה קרציות! לכו כבר הביתה ותנו לנוח!',
+                emoji: '🥱',
+                category: 'vibe',
+                color: 'bg-rose-300',
+                hasCustomAudio: false
+            },
+            {
+                id: 'c_sweet',
+                label: 'בא לי מתוק',
+                phrase: 'תביאו משהו מתוק לפני שאני מתעלפת פה!',
+                emoji: '🍫',
+                category: 'food',
+                color: 'bg-pink-300',
+                hasCustomAudio: false
+            },
+            {
+                id: 'c_water',
+                label: 'מים קרים',
+                phrase: 'התייבשתי פה! אפשר כוס מַיִם קרים עם קרח?',
+                emoji: '🧊',
+                category: 'food',
+                color: 'bg-sky-300',
+                hasCustomAudio: false
+            },
+            {
+                id: 'c_drama',
+                label: 'הגזמתם!',
+                phrase: 'וואו, איזה דרמה עשיתם מכלום, תירגעו ומהר!',
+                emoji: '🙄',
+                category: 'vibe',
+                color: 'bg-violet-300',
+                hasCustomAudio: false
+            },
+            {
+                id: 'c_right',
+                label: 'אני צודקת',
+                phrase: 'תקשיבו לי טוב, אני תמיד צודקת גם כשאני שותקת!',
+                emoji: '👑',
+                category: 'vibe',
+                color: 'bg-amber-300',
+                hasCustomAudio: false
+            },
+            {
+                id: 'c_gossip',
+                label: 'תשפכו רכילות!',
+                phrase: 'נו, תפסיקו למתוח אותי! ספרו לי כבר את כל הרכילות!',
+                emoji: '🍿',
+                category: 'vibe',
+                color: 'bg-emerald-300',
+                hasCustomAudio: false
+            },
+            {
+                id: 'c_ac',
+                label: 'מזגן קפוא',
+                phrase: 'קפאתי פה! מי אחראי על המזגן? תנמיכו מיד!',
+                emoji: '🥶',
+                category: 'needs',
+                color: 'bg-sky-300',
+                hasCustomAudio: false
+            },
+            {
+                id: 'c_phone',
+                label: 'איפה הטלפון?',
+                phrase: 'תביאו לי את הטלפון שלי ושימו אותו במטען בבקשה!',
+                emoji: '📱',
+                category: 'needs',
+                color: 'bg-violet-300',
+                hasCustomAudio: false
+            },
+            {
+                id: 'c_come',
+                label: 'בואו רגע!',
+                phrase: 'הלו! מישהו שומע אותי? בואו לפה רגע, אני צריכה עזרה!',
+                emoji: '🛎️',
+                category: 'needs',
+                color: 'bg-rose-300',
+                hasCustomAudio: false
+            },
+            {
+                id: 'c_tv',
+                label: 'שלט לטלוויזיה',
+                phrase: 'משעמם לי בעיניים, תעבירו ערוץ או תביאו את השלט!',
+                emoji: '📺',
+                category: 'needs',
+                color: 'bg-emerald-300',
+                hasCustomAudio: false
+            },
+            {
+                id: 'c_yes',
+                label: 'ברור שכן!',
+                phrase: 'ברור שכן! איזו שאלה בכלל?',
+                emoji: '✅',
+                category: 'social',
+                color: 'bg-emerald-300',
+                hasCustomAudio: false
+            },
+            {
+                id: 'c_no',
+                label: 'ממש לא!',
+                phrase: 'ממש אבל ממש לא! תשכחו מזה!',
+                emoji: '❌',
+                category: 'social',
+                color: 'bg-rose-300',
+                hasCustomAudio: false
+            },
+            {
+                id: 'c_love',
+                label: 'אוהבת אתכם',
+                phrase: 'אין עליכם בעולם, תודה על הכל, אני אוהבת אתכם מלא!',
+                emoji: '❤️',
+                category: 'social',
+                color: 'bg-amber-300',
+                hasCustomAudio: false
+            }
+        ];
+
+        const CATEGORIES = [
+            { id: 'all', label: 'הכל 🌟' },
+            { id: 'food', label: 'אוכל וקפה ☕' },
+            { id: 'vibe', label: 'עקיצות ואווירה 😂' },
+            { id: 'needs', label: 'צרכים ועזרה 🛎️' },
+            { id: 'social', label: 'תשובות ואהבה ❤️' }
+        ];
+
+        /**************************************************************
+         * 2. STATE, iOS UNLOCK & PERSISTENT CACHE DATABASE
+         **************************************************************/
+        let cards = [];
+        let activeCategory = 'all';
+        let isEditMode = false;
+        let lastSpokenCard = null;
+        let currentAudioPlayer = null;
+        let voiceSettings = {
+            rate: 1.0,
+            pitch: 1.05,
+            gender: 'female',
+            engine: 'fast', // 'fast' (0 latency native) or 'ai' (Gemini TTS with IndexedDB cache)
+            aiVoice: 'Aoede'
+        };
+        let iosAudioUnlocked = false;
+        let aiMemoryCache = new Map(); // Instant RAM cache for AI Audio URLs
+        let cachedAiKeysSet = new Set(); // Track which phrases have pre-downloaded AI audio
+
+        window.cards = cards;
+        window.DEFAULT_CARDS = DEFAULT_CARDS;
+        window.syncCloudCardsToApp = (newCards) => {
+            cards = newCards;
+            saveCardsToStorage();
+            renderCards();
+        };
+
+        let tempAudioBlob = null;
+        let tempAudioDataUrl = null;
+        let tempAudioCleared = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+
+        const DB_NAME = 'MyVoiceAAC_DB';
+        const STORE_NAME = 'audioFiles';
+        let dbInstance = null;
+
+        function unlockiOSAudio() {
+            if (iosAudioUnlocked) return;
+            iosAudioUnlocked = true;
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) {
+                    const ctx = new AudioCtx();
+                    if (ctx.state === 'suspended') ctx.resume();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    gain.gain.value = 0;
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(0);
+                    osc.stop(0.001);
+                }
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.getVoices();
+                }
+            } catch (e) {}
+        }
+        window.addEventListener('touchstart', unlockiOSAudio, { once: true, passive: true });
+        window.addEventListener('click', unlockiOSAudio, { once: true, passive: true });
+
+        function initDB() {
+            return new Promise((resolve) => {
+                try {
+                    const request = indexedDB.open(DB_NAME, 1);
+                    request.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains(STORE_NAME)) {
+                            db.createObjectStore(STORE_NAME);
+                        }
+                    };
+                    request.onsuccess = (e) => {
+                        dbInstance = e.target.result;
+                        resolve(dbInstance);
+                    };
+                    request.onerror = () => resolve(null);
+                } catch (e) {
+                    resolve(null);
+                }
+            });
+        }
+
+        function saveAudioToDB(key, blob) {
+            return new Promise((resolve) => {
+                if (!dbInstance) return resolve();
+                try {
+                    const tx = dbInstance.transaction(STORE_NAME, 'readwrite');
+                    const store = tx.objectStore(STORE_NAME);
+                    store.put(blob, key);
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = () => resolve();
+                } catch (e) {
+                    resolve();
+                }
+            });
+        }
+
+        function getAudioFromDB(key) {
+            return new Promise((resolve) => {
+                if (!dbInstance) return resolve(null);
+                try {
+                    const tx = dbInstance.transaction(STORE_NAME, 'readonly');
+                    const store = tx.objectStore(STORE_NAME);
+                    const req = store.get(key);
+                    req.onsuccess = () => resolve(req.result || null);
+                    req.onerror = () => resolve(null);
+                } catch (e) {
+                    resolve(null);
+                }
+            });
+        }
+
+        function deleteAudioFromDB(key) {
+            return new Promise((resolve) => {
+                if (!dbInstance) return resolve();
+                try {
+                    const tx = dbInstance.transaction(STORE_NAME, 'readwrite');
+                    const store = tx.objectStore(STORE_NAME);
+                    store.delete(key);
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = () => resolve();
+                } catch (e) {
+                    resolve();
+                }
+            });
+        }
+
+        function blobToDataURL(blob) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = () => resolve(null);
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        /**************************************************************
+         * 3. INITIALIZATION & RENDERING
+         **************************************************************/
+        window.addEventListener('DOMContentLoaded', async () => {
+            await initDB();
+            loadCardsFromStorage();
+            loadVoiceSettings();
+            await warmUpAiCacheFromDB();
+            renderCategories();
+            renderCards();
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.getVoices();
+                window.speechSynthesis.onvoiceschanged = () => {
+                    window.speechSynthesis.getVoices();
+                };
+            }
+        });
+
+        function getAiCacheKey(phrase, voiceName) {
+            const v = voiceName || getActiveAiVoiceName();
+            return `ai_tts_${v}_${phrase.trim()}`;
+        }
+
+        function getActiveAiVoiceName() {
+            if (voiceSettings.aiVoice) return voiceSettings.aiVoice;
+            return voiceSettings.gender === 'male' ? 'Puck' : 'Aoede';
+        }
+
+        // Warm up RAM cache from IndexedDB so pre-downloaded AI voices play with 0ms delay
+        async function warmUpAiCacheFromDB() {
+            if (!dbInstance) return;
+            const voiceName = getActiveAiVoiceName();
+            let cachedCount = 0;
+            for (const c of cards) {
+                const key = getAiCacheKey(c.phrase, voiceName);
+                const blob = await getAudioFromDB(key);
+                if (blob) {
+                    cachedAiKeysSet.add(key);
+                    if (!aiMemoryCache.has(key)) {
+                        aiMemoryCache.set(key, URL.createObjectURL(blob));
+                    }
+                    cachedCount++;
+                }
+            }
+            updateCachedBadgeUI(cachedCount);
+        }
+
+        function updateCachedBadgeUI(count) {
+            const badge = document.getElementById('cachedCountBadge');
+            if (badge) {
+                badge.textContent = `${count}/${cards.length} מוכנים במכשיר ⚡`;
+            }
+        }
+
+        function loadCardsFromStorage() {
+            try {
+                const saved = localStorage.getItem('my_voice_cards_v1');
+                if (saved) {
+                    cards = JSON.parse(saved);
+                    window.cards = cards;
+                    return;
+                }
+            } catch (e) {}
+            cards = [...DEFAULT_CARDS];
+            window.cards = cards;
+        }
+
+        function saveCardsToStorage() {
+            window.cards = cards;
+            try {
+                localStorage.setItem('my_voice_cards_v1', JSON.stringify(cards));
+            } catch (e) {}
+        }
+
+        function renderCategories() {
+            const container = document.getElementById('categoryContainer');
+            if (!container) return;
+            container.innerHTML = CATEGORIES.map(cat => {
+                const isActive = cat.id === activeCategory;
+                const bgClass = isActive ? 'bg-slate-900 text-white' : 'bg-white text-slate-800 hover:bg-slate-100';
+                return `
+                    <button onclick="setCategory('${cat.id}')" 
+                        class="shrink-0 px-3 py-1.5 rounded-full border-2 border-slate-900 text-xs font-black shadow-neo-sm active:translate-x-0.5 active:translate-y-0.5 transition-all ${bgClass}">
+                        ${cat.label}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function setCategory(catId) {
+            activeCategory = catId;
+            renderCategories();
+            renderCards();
+        }
+
+        function renderCards() {
+            const grid = document.getElementById('cardsGrid');
+            if (!grid) return;
+
+            const filtered = activeCategory === 'all' 
+                ? cards 
+                : cards.filter(c => c.category === activeCategory);
+
+            const voiceName = getActiveAiVoiceName();
+
+            // First card is ALWAYS the "חדש" (Add New Card) button
+            const addNewCardHTML = `
+                <div onclick="openEditModal(null)"
+                    class="neo-card bg-white hover:bg-violet-50 border-dashed rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between cursor-pointer min-h-[115px] sm:min-h-[125px] shadow-neo relative overflow-hidden group select-none">
+                    
+                    <div class="flex items-start justify-between">
+                        <span class="text-3xl sm:text-4xl filter drop-shadow-sm transition-transform group-active:scale-125">➕</span>
+                        <span class="text-[10px] font-black bg-violet-200 border border-slate-900 px-1.5 py-0.5 rounded-md">הוספה</span>
+                    </div>
+
+                    <div class="mt-2">
+                        <h3 class="font-black text-slate-900 text-sm sm:text-base leading-tight">חדש</h3>
+                        <p class="text-[11px] text-slate-600 font-bold leading-tight mt-0.5">הקישו כדי ליצור כפתור דיבור חדש</p>
+                    </div>
+                </div>
+            `;
+
+            const cardsHTML = filtered.map(card => {
+                const hasCustom = card.hasCustomAudio || !!card.audioDataUrl;
+                const aiKey = getAiCacheKey(card.phrase, voiceName);
+                const isAiCached = cachedAiKeysSet.has(aiKey);
+
+                return `
+                    <div id="card-${card.id}" onclick="triggerCard('${card.id}')"
+                        class="neo-card ${card.color} rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between cursor-pointer min-h-[115px] sm:min-h-[125px] shadow-neo relative overflow-hidden group select-none">
+                        
+                        <div class="flex items-start justify-between">
+                            <span class="text-3xl sm:text-4xl filter drop-shadow-sm transition-transform group-active:scale-125">${card.emoji}</span>
+                            <div class="flex items-center gap-1">
+                                ${hasCustom ? '<span class="text-[10px] font-black bg-white/90 border border-slate-900 px-1.5 py-0.5 rounded-md" title="קול מוקלט אישי">🎙️ אישי</span>' : ''}
+                                ${(!hasCustom && voiceSettings.engine === 'ai' && isAiCached) ? '<span class="text-[10px] font-black bg-violet-200 border border-slate-900 px-1.5 py-0.5 rounded-md" title="קול AI שמור במכשיר (0 השהיה)">⚡ AI</span>' : ''}
+                                ${isEditMode ? '<span class="w-6 h-6 rounded-lg bg-white border border-slate-900 flex items-center justify-center text-xs font-black shadow-sm">✏️</span>' : ''}
+                            </div>
+                        </div>
+
+                        <div class="mt-2">
+                            <h3 class="font-black text-slate-900 text-sm sm:text-base leading-tight">${card.label}</h3>
+                            <p class="text-[11px] text-slate-800/80 font-medium line-clamp-2 leading-tight mt-0.5">${card.phrase}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            grid.innerHTML = addNewCardHTML + cardsHTML;
+        }
+
+        window.renderCards = renderCards;
+
+        /**************************************************************
+         * 4. AUDIO, GEMINI AI TTS & ZERO-LATENCY CACHE ENGINE
+         **************************************************************/
+        function stopCurrentAudio() {
+            if (currentAudioPlayer) {
+                try {
+                    currentAudioPlayer.pause();
+                    currentAudioPlayer.currentTime = 0;
+                } catch(e) {}
+                currentAudioPlayer = null;
+            }
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            setEqualizerState(false);
+            setAiLoadingState(false);
+        }
+
+        function setEqualizerState(isPlaying) {
+            const eq = document.getElementById('equalizer');
+            if (!eq) return;
+            if (isPlaying) {
+                eq.classList.remove('hidden');
+                eq.classList.add('flex');
+            } else {
+                eq.classList.remove('flex');
+                eq.classList.add('hidden');
+            }
+        }
+
+        function setAiLoadingState(isLoading) {
+            const sp = document.getElementById('aiLoadingSpinner');
+            if (!sp) return;
+            if (isLoading) {
+                sp.classList.remove('hidden');
+                sp.classList.add('flex');
+            } else {
+                sp.classList.remove('flex');
+                sp.classList.add('hidden');
+            }
+        }
+
+        async function setVoiceEngine(engine) {
+            voiceSettings.engine = engine;
+            updateEngineAndGenderUI();
+            localStorage.setItem('my_voice_settings_v1', JSON.stringify(voiceSettings));
+            await warmUpAiCacheFromDB();
+            renderCards();
+            showToast(engine === 'ai' ? 'נבחר קול AI מתקדם 🤖' : 'נבחר מנוע מהיר ומידי ⚡', '🔊');
+        }
+
+        async function setVoiceGender(gender) {
+            voiceSettings.gender = gender;
+            voiceSettings.pitch = gender === 'male' ? 0.82 : 1.08;
+            voiceSettings.aiVoice = gender === 'male' ? 'Puck' : 'Aoede';
+
+            const pitchInput = document.getElementById('ttsPitch');
+            const pitchLabel = document.getElementById('pitchValueLabel');
+            const aiVoiceSelect = document.getElementById('aiVoiceSelect');
+            if (pitchInput) pitchInput.value = voiceSettings.pitch;
+            if (pitchLabel) pitchLabel.textContent = voiceSettings.pitch;
+            if (aiVoiceSelect) aiVoiceSelect.value = voiceSettings.aiVoice;
+
+            updateEngineAndGenderUI();
+            localStorage.setItem('my_voice_settings_v1', JSON.stringify(voiceSettings));
+            await warmUpAiCacheFromDB();
+            renderCards();
+            showToast(gender === 'male' ? 'נבחר קול גברי 👨' : 'נבחר קול נשי 👩', '🔊');
+        }
+
+        function updateEngineAndGenderUI() {
+            const fBtn = document.getElementById('genderFemaleBtn');
+            const mBtn = document.getElementById('genderMaleBtn');
+            const sfBtn = document.getElementById('settingsGenderFemale');
+            const smBtn = document.getElementById('settingsGenderMale');
+
+            const fastBtn = document.getElementById('engineFastBtn');
+            const aiBtn = document.getElementById('engineAiBtn');
+            const sFastBtn = document.getElementById('settingsEngineFast');
+            const sAiBtn = document.getElementById('settingsEngineAi');
+
+            const isMale = voiceSettings.gender === 'male';
+            const isAi = voiceSettings.engine === 'ai';
+
+            if (fBtn && mBtn) {
+                if (isMale) {
+                    mBtn.className = 'px-2 py-1 rounded-lg text-[11px] font-black transition-all bg-sky-300 text-slate-900 border border-slate-900';
+                    fBtn.className = 'px-2 py-1 rounded-lg text-[11px] font-bold transition-all text-slate-600';
+                } else {
+                    fBtn.className = 'px-2 py-1 rounded-lg text-[11px] font-black transition-all bg-amber-300 text-slate-900 border border-slate-900';
+                    mBtn.className = 'px-2 py-1 rounded-lg text-[11px] font-bold transition-all text-slate-600';
+                }
+            }
+            if (sfBtn && smBtn) {
+                if (isMale) {
+                    smBtn.className = 'py-2 px-3 rounded-xl border-2 border-slate-900 font-black text-xs flex items-center justify-center gap-1.5 bg-sky-300 shadow-neo-sm';
+                    sfBtn.className = 'py-2 px-3 rounded-xl border-2 border-slate-900 font-black text-xs flex items-center justify-center gap-1.5 bg-white';
+                } else {
+                    sfBtn.className = 'py-2 px-3 rounded-xl border-2 border-slate-900 font-black text-xs flex items-center justify-center gap-1.5 bg-amber-300 shadow-neo-sm';
+                    smBtn.className = 'py-2 px-3 rounded-xl border-2 border-slate-900 font-black text-xs flex items-center justify-center gap-1.5 bg-white';
+                }
+            }
+            if (fastBtn && aiBtn) {
+                if (isAi) {
+                    aiBtn.className = 'px-2.5 py-1 rounded-lg text-[11px] font-black transition-all bg-violet-300 text-slate-900 border border-slate-900';
+                    fastBtn.className = 'px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all text-slate-600';
+                } else {
+                    fastBtn.className = 'px-2.5 py-1 rounded-lg text-[11px] font-black transition-all bg-emerald-300 text-slate-900 border border-slate-900';
+                    aiBtn.className = 'px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all text-slate-600';
+                }
+            }
+            if (sFastBtn && sAiBtn) {
+                if (isAi) {
+                    sAiBtn.className = 'py-2 px-2 rounded-xl border-2 border-slate-900 font-black text-xs flex items-center justify-center gap-1 bg-violet-300 shadow-neo-sm';
+                    sFastBtn.className = 'py-2 px-2 rounded-xl border-2 border-slate-900 font-black text-xs flex items-center justify-center gap-1 bg-white';
+                } else {
+                    sFastBtn.className = 'py-2 px-2 rounded-xl border-2 border-slate-900 font-black text-xs flex items-center justify-center gap-1 bg-emerald-300 shadow-neo-sm';
+                    sAiBtn.className = 'py-2 px-2 rounded-xl border-2 border-slate-900 font-black text-xs flex items-center justify-center gap-1 bg-white';
+                }
+            }
+        }
+
+        // Convert raw PCM16 from Gemini TTS into standard playable WAV Blob
+        function base64ToArrayBuffer(base64) {
+            const binaryString = atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        function pcmToWavBlob(pcm16, sampleRate = 24000) {
+            const buffer = new ArrayBuffer(44 + pcm16.length * 2);
+            const view = new DataView(buffer);
+            const writeString = (offset, str) => {
+                for (let i = 0; i < str.length; i++) {
+                    view.setUint8(offset + i, str.charCodeAt(i));
+                }
+            };
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + pcm16.length * 2, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, pcm16.length * 2, true);
+            let offset = 44;
+            for (let i = 0; i < pcm16.length; i++, offset += 2) {
+                view.setInt16(offset, pcm16[i], true);
+            }
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        // Fetch Gemini 2.5 Flash TTS Audio Blob
+        async function generateGeminiAiVoiceBlob(text, voiceName) {
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{
+                    parts: [{ text: `קרא בעברית בנימה טבעית, חיה וברורה: ${text}` }]
+                }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: {
+                            prebuiltVoiceConfig: { voiceName: voiceName || getActiveAiVoiceName() }
+                        }
+                    }
+                }
+            };
+
+            const delays = [1000, 2000];
+            for (let attempt = 0; attempt <= delays.length; attempt++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error('TTS API failed');
+                    const result = await response.json();
+                    const part = result?.candidates?.[0]?.content?.parts?.[0];
+                    const audioData = part?.inlineData?.data;
+                    const mimeType = part?.inlineData?.mimeType || 'audio/L16;rate=24000';
+
+                    if (audioData) {
+                        const rateMatch = mimeType.match(/rate=(\d+)/);
+                        const sampleRate = rateMatch ? parseInt(rateMatch[1], 10) : 24000;
+                        const pcmBuffer = base64ToArrayBuffer(audioData);
+                        const pcm16 = new Int16Array(pcmBuffer);
+                        return pcmToWavBlob(pcm16, sampleRate);
+                    }
+                } catch (e) {
+                    if (attempt < delays.length) {
+                        await new Promise(r => setTimeout(r, delays[attempt]));
+                    }
+                }
+            }
+            return null;
+        }
+
+        // Pre-download all cards' AI voices into IndexedDB & RAM Cache
+        async function preDownloadAllAiVoices() {
+            const btn = document.getElementById('prefetchAllBtn');
+            const progressBox = document.getElementById('prefetchProgressBox');
+            const progressBar = document.getElementById('prefetchProgressBar');
+            const statusText = document.getElementById('prefetchStatusText');
+            const percentText = document.getElementById('prefetchPercentText');
+
+            const voiceName = getActiveAiVoiceName();
+            btn.disabled = true;
+            btn.classList.add('opacity-60');
+            progressBox.classList.remove('hidden');
+
+            let completed = 0;
+            const total = cards.length;
+
+            for (const card of cards) {
+                const key = getAiCacheKey(card.phrase, voiceName);
+                statusText.textContent = `מכין קול עבור: "${card.label}"...`;
+
+                let blob = await getAudioFromDB(key);
+                if (!blob) {
+                    blob = await generateGeminiAiVoiceBlob(card.phrase, voiceName);
+                    if (blob) {
+                        await saveAudioToDB(key, blob);
+                    }
+                }
+
+                if (blob) {
+                    cachedAiKeysSet.add(key);
+                    if (!aiMemoryCache.has(key)) {
+                        aiMemoryCache.set(key, URL.createObjectURL(blob));
+                    }
+                }
+
+                completed++;
+                const pct = Math.round((completed / total) * 100);
+                progressBar.style.width = pct + '%';
+                percentText.textContent = pct + '%';
+                updateCachedBadgeUI(completed);
+                renderCards();
+            }
+
+            // Switch automatically to AI mode once pre-downloaded!
+            voiceSettings.engine = 'ai';
+            updateEngineAndGenderUI();
+            localStorage.setItem('my_voice_settings_v1', JSON.stringify(voiceSettings));
+            renderCards();
+
+            statusText.textContent = 'כל קולות ה-AI מוכנים במכשיר באפס השהיה! 🎉';
+            btn.disabled = false;
+            btn.classList.remove('opacity-60');
+            showToast('כל קולות ה-AI נשמרו במכשיר ומוכנים להשמעה מידית! ⚡', '🤖');
+        }
+
+        function speakNativeDeviceText(text) {
+            if (!text) return;
+            stopCurrentAudio();
+
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'he-IL';
+                utterance.rate = voiceSettings.rate || 1.0;
+                utterance.pitch = voiceSettings.pitch || (voiceSettings.gender === 'male' ? 0.82 : 1.08);
+
+                const voices = window.speechSynthesis.getVoices();
+                const heVoices = voices.filter(v => v.lang.toLowerCase().includes('he') || v.lang.toLowerCase().includes('iw') || v.name.toLowerCase().includes('hebrew'));
+
+                if (heVoices.length > 0) {
+                    const isMale = voiceSettings.gender === 'male';
+                    const matchedVoice = heVoices.find(v => {
+                        const n = v.name.toLowerCase();
+                        return isMale 
+                            ? (n.includes('male') || n.includes('assaf') || n.includes('אסף') || n.includes('hed'))
+                            : (n.includes('female') || n.includes('carmit') || n.includes('כרמית') || n.includes('sara') || n.includes('hef'));
+                    });
+                    utterance.voice = matchedVoice || heVoices[0];
+                }
+
+                setEqualizerState(true);
+                utterance.onend = () => setEqualizerState(false);
+                utterance.onerror = () => setEqualizerState(false);
+
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        async function speakText(text) {
+            if (!text) return;
+            stopCurrentAudio();
+
+            // If engine is Fast Device Mode -> 0ms native speech
+            if (voiceSettings.engine === 'fast') {
+                speakNativeDeviceText(text);
+                return;
+            }
+
+            // AI Mode: 1. Check Instant RAM Cache first (0ms latency)
+            const voiceName = getActiveAiVoiceName();
+            const key = getAiCacheKey(text, voiceName);
+
+            if (aiMemoryCache.has(key)) {
+                currentAudioPlayer = new Audio(aiMemoryCache.get(key));
+                currentAudioPlayer.playbackRate = voiceSettings.rate || 1.0;
+                setEqualizerState(true);
+                currentAudioPlayer.onended = () => setEqualizerState(false);
+                currentAudioPlayer.onerror = () => speakNativeDeviceText(text);
+                currentAudioPlayer.play().catch(() => speakNativeDeviceText(text));
+                return;
+            }
+
+            // 2. Check IndexedDB Cache
+            const cachedBlob = await getAudioFromDB(key);
+            if (cachedBlob) {
+                const url = URL.createObjectURL(cachedBlob);
+                aiMemoryCache.set(key, url);
+                cachedAiKeysSet.add(key);
+                currentAudioPlayer = new Audio(url);
+                currentAudioPlayer.playbackRate = voiceSettings.rate || 1.0;
+                setEqualizerState(true);
+                currentAudioPlayer.onended = () => setEqualizerState(false);
+                currentAudioPlayer.onerror = () => speakNativeDeviceText(text);
+                currentAudioPlayer.play().catch(() => speakNativeDeviceText(text));
+                return;
+            }
+
+            // 3. Generate live via Gemini TTS and cache permanently for next time
+            setAiLoadingState(true);
+            const liveBlob = await generateGeminiAiVoiceBlob(text, voiceName);
+            setAiLoadingState(false);
+
+            if (liveBlob) {
+                await saveAudioToDB(key, liveBlob);
+                const url = URL.createObjectURL(liveBlob);
+                aiMemoryCache.set(key, url);
+                cachedAiKeysSet.add(key);
+                renderCards();
+
+                currentAudioPlayer = new Audio(url);
+                currentAudioPlayer.playbackRate = voiceSettings.rate || 1.0;
+                setEqualizerState(true);
+                currentAudioPlayer.onended = () => setEqualizerState(false);
+                currentAudioPlayer.onerror = () => speakNativeDeviceText(text);
+                currentAudioPlayer.play().catch(() => speakNativeDeviceText(text));
+            } else {
+                // Fallback to native speech if offline
+                speakNativeDeviceText(text);
+            }
+        }
+
+        async function playCardAudio(card) {
+            stopCurrentAudio();
+
+            // 1. Direct Synchronous Custom Recorded Data URL Playback (0ms latency)
+            if (card.audioDataUrl) {
+                currentAudioPlayer = new Audio(card.audioDataUrl);
+                setEqualizerState(true);
+                currentAudioPlayer.onended = () => setEqualizerState(false);
+                currentAudioPlayer.onerror = () => {
+                    setEqualizerState(false);
+                    speakText(card.phrase);
+                };
+                currentAudioPlayer.play().catch(() => speakText(card.phrase));
+                return;
+            }
+
+            // 2. IndexedDB Custom Audio Blob if card has custom recording
+            if (card.hasCustomAudio) {
+                const audioBlob = await getAudioFromDB(card.id);
+                if (audioBlob) {
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    currentAudioPlayer = new Audio(audioUrl);
+                    setEqualizerState(true);
+                    currentAudioPlayer.onended = () => {
+                        setEqualizerState(false);
+                        URL.revokeObjectURL(audioUrl);
+                    };
+                    currentAudioPlayer.onerror = () => {
+                        setEqualizerState(false);
+                        speakText(card.phrase);
+                    };
+                    currentAudioPlayer.play().catch(() => speakText(card.phrase));
+                    return;
+                }
+            }
+
+            // 3. Speak via selected Engine (Fast Native or Cached/Live AI)
+            speakText(card.phrase);
+        }
+
+        function triggerCard(cardId) {
+            const card = cards.find(c => c.id === cardId);
+            if (!card) return;
+
+            if (isEditMode) {
+                openEditModal(card);
+                return;
+            }
+
+            // Show the spoken phrase in the top input bar
+            const input = document.getElementById('quickSpeakInput');
+            if (input) input.value = card.phrase;
+            lastSpokenCard = card;
+
+            const el = document.getElementById(`card-${card.id}`);
+            if (el) {
+                el.classList.add('playing');
+                setTimeout(() => el.classList.remove('playing'), 200);
+            }
+
+            playCardAudio(card);
+        }
+
+        function speakQuickInput() {
+            const input = document.getElementById('quickSpeakInput');
+            const text = input ? input.value.trim() : '';
+
+            if (!text) {
+                if (lastSpokenCard) {
+                    if (input) input.value = lastSpokenCard.phrase;
+                    playCardAudio(lastSpokenCard);
+                } else if (input) {
+                    input.focus();
+                }
+                return;
+            }
+
+            // If the text matches the last clicked card (and it has custom audio), play that card
+            if (lastSpokenCard && lastSpokenCard.phrase === text && (lastSpokenCard.hasCustomAudio || lastSpokenCard.audioDataUrl)) {
+                playCardAudio(lastSpokenCard);
+                return;
+            }
+
+            lastSpokenCard = { emoji: '💬', label: 'הודעה חופשית', phrase: text, hasCustomAudio: false };
+            speakText(text);
+        }
+
+        function testCurrentVoiceSettings() {
+            speakText('שלום! ככה נשמע הקול שלי עכשיו!');
+        }
+
+        /**************************************************************
+         * 5. STUDIO MODE: RECORDING & CARD EDITING
+         **************************************************************/
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            const btn = document.getElementById('toggleEditBtn');
+            const banner = document.getElementById('editModeBanner');
+
+            if (isEditMode) {
+                btn.classList.remove('bg-white');
+                btn.classList.add('bg-rose-400', 'text-white');
+                banner.classList.remove('hidden');
+            } else {
+                btn.classList.add('bg-white');
+                btn.classList.remove('bg-rose-400', 'text-white');
+                banner.classList.add('hidden');
+            }
+            renderCards();
+        }
+
+        async function openEditModal(card = null) {
+            stopCurrentAudio();
+            tempAudioBlob = null;
+            tempAudioDataUrl = null;
+            tempAudioCleared = false;
+
+            const modal = document.getElementById('studioModal');
+            const deleteBtn = document.getElementById('deleteCardBtn');
+            const modalTitle = document.getElementById('modalTitle');
+
+            if (card) {
+                modalTitle.textContent = 'עריכת כפתור והקלטה';
+                document.getElementById('cardId').value = card.id;
+                document.getElementById('cardEmoji').value = card.emoji;
+                document.getElementById('cardLabel').value = card.label;
+                document.getElementById('cardPhrase').value = card.phrase;
+                document.getElementById('cardCategory').value = card.category;
+                document.getElementById('cardColor').value = card.color;
+                deleteBtn.classList.remove('hidden');
+
+                if (card.audioDataUrl) {
+                    tempAudioDataUrl = card.audioDataUrl;
+                    updateAudioUIState(true);
+                } else {
+                    const existingBlob = await getAudioFromDB(card.id);
+                    if (existingBlob) {
+                        tempAudioBlob = existingBlob;
+                        updateAudioUIState(true);
+                    } else {
+                        updateAudioUIState(false);
+                    }
+                }
+            } else {
+                modalTitle.textContent = 'יצירת כפתור דיבור חדש';
+                document.getElementById('cardId').value = '';
+                document.getElementById('cardEmoji').value = '✨';
+                document.getElementById('cardLabel').value = '';
+                document.getElementById('cardPhrase').value = '';
+                document.getElementById('cardCategory').value = activeCategory === 'all' ? 'vibe' : activeCategory;
+                document.getElementById('cardColor').value = 'bg-amber-300';
+                deleteBtn.classList.add('hidden');
+                updateAudioUIState(false);
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeStudioModal() {
+            if (isRecording) stopRecording();
+            const modal = document.getElementById('studioModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function updateAudioUIState(hasCustom) {
+            const badge = document.getElementById('audioSourceBadge');
+            const controls = document.getElementById('customAudioControls');
+            if (hasCustom) {
+                badge.textContent = 'קול אישי מוקלט 🎙️';
+                badge.className = 'text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-300 border border-slate-900';
+                controls.classList.remove('hidden');
+                controls.classList.add('flex');
+            } else {
+                badge.textContent = 'מנוע דיבור אוטומטי 🤖';
+                badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-200 border border-slate-800';
+                controls.classList.add('hidden');
+                controls.classList.remove('flex');
+            }
+        }
+
+        async function toggleRecording() {
+            if (isRecording) {
+                stopRecording();
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioChunks = [];
+                mediaRecorder = new MediaRecorder(stream);
+
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) audioChunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const mimeType = mediaRecorder.mimeType || 'audio/webm';
+                    tempAudioBlob = new Blob(audioChunks, { type: mimeType });
+                    tempAudioDataUrl = await blobToDataURL(tempAudioBlob);
+                    tempAudioCleared = false;
+                    updateAudioUIState(true);
+                    stream.getTracks().forEach(track => track.stop());
+                    showToast('ההקלטה נקלטה בהצלחה! 🎙️', '✅');
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+
+                const btn = document.getElementById('recordBtn');
+                const txt = document.getElementById('recordBtnText');
+                btn.classList.replace('bg-rose-400', 'bg-slate-900');
+                btn.classList.add('text-white', 'animate-pulse');
+                txt.textContent = 'עצור הקלטה ⏹️';
+            } catch (err) {
+                showToast('לא ניתן לגשת למיקרופון במכשיר זה', '⚠️');
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                const btn = document.getElementById('recordBtn');
+                const txt = document.getElementById('recordBtnText');
+                btn.classList.replace('bg-slate-900', 'bg-rose-400');
+                btn.classList.remove('text-white', 'animate-pulse');
+                txt.textContent = 'הקלטת קול';
+            }
+        }
+
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            tempAudioBlob = file;
+            tempAudioDataUrl = await blobToDataURL(file);
+            tempAudioCleared = false;
+            updateAudioUIState(true);
+            showToast('קובץ הקול נטען! 🎵', '📂');
+        }
+
+        function previewCustomAudio() {
+            stopCurrentAudio();
+            if (tempAudioDataUrl) {
+                currentAudioPlayer = new Audio(tempAudioDataUrl);
+                currentAudioPlayer.play();
+            } else if (tempAudioBlob) {
+                const url = URL.createObjectURL(tempAudioBlob);
+                currentAudioPlayer = new Audio(url);
+                currentAudioPlayer.onended = () => URL.revokeObjectURL(url);
+                currentAudioPlayer.play();
+            }
+        }
+
+        function clearCustomAudio() {
+            tempAudioBlob = null;
+            tempAudioDataUrl = null;
+            tempAudioCleared = true;
+            updateAudioUIState(false);
+            showToast('ההקלטה הוסרה, הכפתור ישתמש במנוע דיבור', '🗑️');
+        }
+
+        async function saveCard(event) {
+            event.preventDefault();
+            const idInput = document.getElementById('cardId').value;
+            const isNew = !idInput;
+            const cardId = idInput || ('c_' + Date.now());
+
+            let hasCustomAudio = false;
+            let finalAudioDataUrl = null;
+
+            if (tempAudioCleared) {
+                await deleteAudioFromDB(cardId);
+                hasCustomAudio = false;
+            } else if (tempAudioBlob || tempAudioDataUrl) {
+                if (tempAudioBlob) await saveAudioToDB(cardId, tempAudioBlob);
+                finalAudioDataUrl = tempAudioDataUrl;
+                hasCustomAudio = true;
+            } else if (!isNew) {
+                const existingCard = cards.find(c => c.id === cardId);
+                hasCustomAudio = existingCard ? existingCard.hasCustomAudio : false;
+                finalAudioDataUrl = existingCard ? (existingCard.audioDataUrl || null) : null;
+            }
+
+            const newCardData = {
+                id: cardId,
+                emoji: document.getElementById('cardEmoji').value.trim() || '📣',
+                label: document.getElementById('cardLabel').value.trim(),
+                phrase: document.getElementById('cardPhrase').value.trim(),
+                category: document.getElementById('cardCategory').value,
+                color: document.getElementById('cardColor').value,
+                hasCustomAudio: hasCustomAudio,
+                audioDataUrl: finalAudioDataUrl,
+                createdAt: Date.now()
+            };
+
+            if (isNew) {
+                cards.unshift(newCardData);
+            } else {
+                const idx = cards.findIndex(c => c.id === cardId);
+                if (idx !== -1) cards[idx] = newCardData;
+            }
+
+            saveCardsToStorage();
+            if (window.saveCardToCloud) {
+                window.saveCardToCloud(newCardData);
+            }
+            renderCards();
+            closeStudioModal();
+            showToast(isNew ? 'כפתור חדש נוסף ללוח! 🎉' : 'הכפתור עודכן בהצלחה! ✨');
+        }
+
+        async function deleteCurrentCard() {
+            const cardId = document.getElementById('cardId').value;
+            if (!cardId) return;
+
+            cards = cards.filter(c => c.id !== cardId);
+            await deleteAudioFromDB(cardId);
+            saveCardsToStorage();
+            if (window.deleteCardFromCloud) {
+                window.deleteCardFromCloud(cardId);
+            }
+            renderCards();
+            closeStudioModal();
+            showToast('הכפתור נמחק מהלוח', '🗑️');
+        }
+
+        /**************************************************************
+         * 6. SETTINGS & BACKUP EXPORT/IMPORT
+         **************************************************************/
+        async function openSettingsModal() {
+            await warmUpAiCacheFromDB();
+            const modal = document.getElementById('settingsModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function exportBackupToFile() {
+            try {
+                const dataStr = JSON.stringify({ cards, voiceSettings }, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'my-voice-backup.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast('קובץ הגיבוי הורד למכשיר! 💾', '✅');
+            } catch (e) {
+                showToast('שגיאה בייצוא הגיבוי', '⚠️');
+            }
+        }
+
+        function importBackupFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed && Array.isArray(parsed.cards)) {
+                        cards = parsed.cards;
+                        saveCardsToStorage();
+                        renderCards();
+                        if (window.saveCardToCloud) {
+                            for (const c of cards) {
+                                await window.saveCardToCloud(c);
+                            }
+                        }
+                        closeSettingsModal();
+                        showToast('הלוח שוחזר מהגיבוי בהצלחה! 🎉', '✅');
+                    }
+                } catch (err) {
+                    showToast('קובץ הגיבוי אינו תקין', '⚠️');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function loadVoiceSettings() {
+            const saved = localStorage.getItem('my_voice_settings_v1');
+            if (saved) {
+                try { 
+                    const parsed = JSON.parse(saved);
+                    voiceSettings = { ...voiceSettings, ...parsed };
+                } catch (e) {}
+            }
+            document.getElementById('ttsRate').value = voiceSettings.rate;
+            document.getElementById('ttsPitch').value = voiceSettings.pitch;
+            document.getElementById('rateValueLabel').textContent = voiceSettings.rate + 'x';
+            document.getElementById('pitchValueLabel').textContent = voiceSettings.pitch;
+            if (document.getElementById('aiVoiceSelect')) {
+                document.getElementById('aiVoiceSelect').value = voiceSettings.aiVoice || (voiceSettings.gender === 'male' ? 'Puck' : 'Aoede');
+            }
+            updateEngineAndGenderUI();
+        }
+
+        async function updateVoiceSettings() {
+            const rate = parseFloat(document.getElementById('ttsRate').value);
+            const pitch = parseFloat(document.getElementById('ttsPitch').value);
+            const aiVoiceEl = document.getElementById('aiVoiceSelect');
+            const aiVoice = aiVoiceEl ? aiVoiceEl.value : voiceSettings.aiVoice;
+
+            voiceSettings = { ...voiceSettings, rate, pitch, aiVoice };
+            document.getElementById('rateValueLabel').textContent = rate + 'x';
+            document.getElementById('pitchValueLabel').textContent = pitch;
+            localStorage.setItem('my_voice_settings_v1', JSON.stringify(voiceSettings));
+            await warmUpAiCacheFromDB();
+            renderCards();
+        }
+
+        function resetToDefaults() {
+            cards = [...DEFAULT_CARDS];
+            saveCardsToStorage();
+            renderCards();
+            closeSettingsModal();
+            showToast('הכפתורים אופסו לברירת המחדל!', '🔄');
+        }
+
+        function showToast(message, icon = '✨') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastText').textContent = message;
+            document.getElementById('toastIcon').textContent = icon;
+            toast.classList.remove('hidden');
+            toast.classList.add('flex');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.classList.remove('flex');
+            }, 2600);
+        }
+    </script>
+</body>
+</html>
