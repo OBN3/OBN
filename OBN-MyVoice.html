@@ -1784,5 +1784,52 @@
             }, 2600);
         }
     </script>
+
+<!-- מנגנון זיהוי והצגת הודעה לפתיחה בדפדפן חיצוני בתוך פייסבוק/אינסטגרם -->
+  <script>
+    (function checkInAppBrowser() {
+      const ua = navigator.userAgent || navigator.vendor || window.opera;
+      const isFB = (ua.indexOf('FBAN') > -1) || (ua.indexOf('FBAV') > -1) || (ua.indexOf('Instagram') > -1);
+
+      if (isFB) {
+        window.addEventListener('DOMContentLoaded', () => {
+          const isIOS = /iPad|iPhone|iPod/.test(ua);
+          const banner = document.createElement('div');
+          
+          banner.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999999;
+            background: #dc2626;
+            color: #ffffff;
+            padding: 12px 16px;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.4;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+            direction: rtl;
+            font-family: system-ui, -apple-system, sans-serif;
+          `;
+
+          if (isIOS) {
+            banner.innerHTML = '⚠️ להשמעת הקול: לחצו על 3 הנקודות בפינה (או כפתור השיתוף) ובחרו <b>"פתח ב-Safari"</b>';
+          } else {
+            banner.innerHTML = '⚠️ להשמעת הקול: לחצו על 3 הנקודות בפינה למעלה ובחרו <b>"פתח בדפדפן Chrome"</b>';
+          }
+
+          document.body.prepend(banner);
+          
+          // דחיפת תוכן האפליקציה מעט למטה כדי שהבאנר לא יסתיר את שורת ההקלדה
+          document.body.style.paddingTop = '50px';
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
+
 </body>
 </html>
