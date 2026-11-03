@@ -349,6 +349,45 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   .med-log-table th:nth-child(4),
   .med-log-table td:nth-child(4){display:none;}
 }
+
+/* ===== MULTI-USER (v2) ===== */
+#gateScreen{display:none;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);padding:24px;}
+.gate-card{max-width:480px;text-align:right;}
+.gate-card h1{text-align:center;font-size:1.5rem;}
+.gate-card .login-icon{text-align:center;}
+.gate-card p{margin-bottom:16px;line-height:1.6;}
+.gate-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px;}
+.invite-box{background:var(--bg);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;}
+.hdr-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;
+  border-radius:8px;padding:6px 12px;font-size:.85rem;font-weight:600;position:relative;}
+.hdr-btn:hover{background:rgba(255,255,255,.25);}
+.hdr-badge{position:absolute;top:-7px;left:-7px;background:var(--danger);color:#fff;border-radius:99px;
+  min-width:18px;height:18px;font-size:.7rem;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;}
+.fam-switch{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);
+  border-radius:8px;padding:6px 8px;font-size:.85rem;font-weight:600;max-width:170px;}
+.fam-switch option{color:var(--text);}
+#famNameHdr{font-weight:500;opacity:.85;font-size:.95rem;margin-right:6px;}
+.member-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.member-row:last-child{border-bottom:none;}
+.member-info{flex:1;min-width:160px;}
+.member-info .nm{font-weight:700;font-size:.92rem;}
+.member-info .em{font-size:.78rem;color:var(--text2);direction:ltr;text-align:right;}
+.role-badge{padding:3px 9px;border-radius:20px;font-size:.72rem;font-weight:700;background:#ede9fe;color:#5b21b6;}
+.role-owner{background:#fef3c7;color:#92400e;}
+.role-viewer{background:#f1f5f9;color:#64748b;}
+.mini-select{border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px;font-size:.8rem;background:#fff;}
+.box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-top:16px;}
+.box h3{font-size:.95rem;font-weight:700;margin-bottom:10px;}
+.user-row{padding:12px 0;border-bottom:1px solid var(--border);}
+.user-row:last-child{border-bottom:none;}
+.user-note{background:#fefce8;border-right:3px solid var(--warning);padding:6px 10px;border-radius:6px;
+  font-size:.82rem;margin-top:6px;white-space:pre-wrap;}
+/* הרשאות תצוגה */
+body:not(.fam-admin) .secret-only{display:none !important;}
+body.ro #btnAddTask, body.ro .task-actions, body.ro .comment-input-row, body.ro #btnAddExpense,
+body.ro #btnAddMed, body.ro #btnEditPatient, body.ro [data-action], body.ro label[for="importFile"]{display:none !important;}
+@media(max-width:600px){ #headerUserName{display:none;} .fam-switch{max-width:110px;} #famNameHdr{display:none;} }
 </style>
 </head>
 <body>
@@ -375,10 +414,24 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </div>
 </div>
 
+<!-- מסך ביניים: ממתין לאישור / הזמנות / יצירת משפחה -->
+<div id="gateScreen">
+  <div class="login-card gate-card">
+    <div class="login-icon" id="gateIcon">⏳</div>
+    <h1 id="gateTitle"></h1>
+    <div id="gateBody"></div>
+    <div class="gate-actions"><button class="btn btn-gray btn-sm" id="gateSignOut">יציאה</button></div>
+  </div>
+</div>
+
 <div id="app">
   <header>
-    <h1>👨‍👩‍👦 משפחה ביחד</h1>
+    <h1>👨‍👩‍👦 משפחה ביחד<span id="famNameHdr"></span></h1>
     <div class="header-user">
+      <select id="familySwitcher" class="fam-switch" title="החלפת משפחה" style="display:none;"></select>
+      <button id="btnMembers" class="hdr-btn" title="בני המשפחה והזמנות">👥 משפחה</button>
+      <button id="btnAdmin" class="hdr-btn" style="display:none;" title="ניהול משתמשים">🛡️ ניהול
+        <span id="adminBadge" class="hdr-badge" style="display:none;"></span></button>
       <div id="headerUserName" style="font-size:.85rem;font-weight:600;"></div>
       <div id="headerAvatar" class="avatar-initials"></div>
       <button id="signOut">יציאה</button>
@@ -596,7 +649,7 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
     <h2>✏️ עריכת פרטי המטופל</h2>
     <div class="patient-tabs">
       <button class="patient-tab active" data-ptab="personal">👤 אישי</button>
-      <button class="patient-tab" data-ptab="btl">🏠 ביטוח לאומי</button>
+      <button class="patient-tab secret-only" data-ptab="btl">🏠 ביטוח לאומי</button>
       <button class="patient-tab" data-ptab="kup">🏥 קופת חולים</button>
       <button class="patient-tab" data-ptab="bank">🏦 בנק</button>
       <button class="patient-tab" data-ptab="free">📝 מידע חופשי</button>
@@ -636,9 +689,9 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
       </div>
       <div class="form-row">
         <div class="form-group"><label>טלפון מרפאה</label><input type="text" id="pKupPhone"/></div>
-        <div class="form-group"><label>שם משתמש באתר</label><input type="text" id="pKupUser"/></div>
+        <div class="form-group secret-only"><label>שם משתמש באתר</label><input type="text" id="pKupUser"/></div>
       </div>
-      <div class="form-group"><label>סיסמה (🔒 מוסתרת)</label><input type="text" id="pKupPass"/></div>
+      <div class="form-group secret-only"><label>סיסמה (🔒 מוסתרת)</label><input type="text" id="pKupPass"/></div>
     </div>
 
     <div class="patient-tab-content" id="ptab-bank">
@@ -646,10 +699,10 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
         <div class="form-group"><label>שם הבנק</label><input type="text" id="pBnkName"/></div>
         <div class="form-group"><label>סניף</label><input type="text" id="pBnkBranch"/></div>
       </div>
-      <div class="form-group"><label>מספר חשבון (🔒 מוסתר)</label><input type="text" id="pBnkAcc"/></div>
+      <div class="form-group secret-only"><label>מספר חשבון (🔒 מוסתר)</label><input type="text" id="pBnkAcc"/></div>
       <div class="form-row">
-        <div class="form-group"><label>שם משתמש באתר</label><input type="text" id="pBnkUser"/></div>
-        <div class="form-group"><label>סיסמה (🔒 מוסתרת)</label><input type="text" id="pBnkPass"/></div>
+        <div class="form-group secret-only"><label>שם משתמש באתר</label><input type="text" id="pBnkUser"/></div>
+        <div class="form-group secret-only"><label>סיסמה (🔒 מוסתרת)</label><input type="text" id="pBnkPass"/></div>
       </div>
     </div>
 
@@ -732,8 +785,9 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
       <select id="eTaskLink"><option value="">— ללא קישור —</option></select>
     </div>
     <div class="form-group">
-      <label>מי שילם? (השאר ריק אם אתה שילמת)</label>
-      <input type="text" id="ePaidByManually" placeholder="אחי הגדול, אימא..."/>
+      <label>מי שילם?</label>
+      <select id="ePaidBySel"></select>
+      <input type="text" id="ePaidByManually" placeholder="או שם אחר (אופציונלי)" style="margin-top:6px;"/>
     </div>
     <div class="modal-actions">
       <button class="btn btn-gray" id="cancelExpenseModal">ביטול</button>
@@ -788,6 +842,63 @@ main{flex:1;padding:24px;max-width:1000px;width:100%;margin:0 auto;}
   </div>
 </div>
 
+<!-- Members modal -->
+<div class="modal-overlay" id="membersModal">
+  <div class="modal large">
+    <button class="close-modal" data-close="membersModal">✕</button>
+    <h2>👥 בני המשפחה במערכת</h2>
+    <div id="membersList"></div>
+    <div class="box secret-only" id="inviteBox">
+      <h3>➕ הזמנת בן/בת משפחה</h3>
+      <p style="font-size:.8rem;color:var(--text2);margin-bottom:10px;">
+        ההזמנה משויכת לכתובת Google. לאחר השליחה תועתק ללוח הודעה מוכנה לוואטסאפ.</p>
+      <div class="form-row">
+        <div class="form-group"><label>כתובת Gmail</label>
+          <input type="email" id="invEmail" placeholder="name@gmail.com" style="direction:ltr;text-align:right;"/></div>
+        <div class="form-group"><label>הרשאה</label>
+          <select id="invRole">
+            <option value="member" selected>חבר/ת משפחה – צפייה ועדכון</option>
+            <option value="viewer">צפייה בלבד</option>
+            <option value="admin">מנהל/ת – כולל סיסמאות והזמנות</option>
+          </select></div>
+      </div>
+      <button class="btn btn-primary btn-sm" id="btnSendInvite" type="button">📨 צור הזמנה</button>
+      <div id="pendingInvites" style="margin-top:14px;"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-gray" data-close="membersModal">סגור</button>
+    </div>
+  </div>
+</div>
+
+<!-- Super-admin modal -->
+<div class="modal-overlay" id="adminModal">
+  <div class="modal large">
+    <button class="close-modal" data-close="adminModal">✕</button>
+    <h2>🛡️ ניהול משתמשים</h2>
+    <p style="font-size:.8rem;color:var(--text2);margin-bottom:12px;">
+      אישור משתמש מאפשר לו לפתוח מרחב משפחתי משלו. מי שהוזמן ע"י משפחה קיימת לא צריך אישור.
+      מנהל המערכת <strong>אינו</strong> רואה נתוני משפחות שאינו חבר בהן.</p>
+    <div class="filters" id="adminFilters" style="margin-bottom:12px;">
+      <button class="filter-btn active" data-ustatus="pending">ממתינים</button>
+      <button class="filter-btn" data-ustatus="approved">מאושרים</button>
+      <button class="filter-btn" data-ustatus="rejected">נדחו</button>
+      <button class="filter-btn" data-ustatus="suspended">מושעים</button>
+    </div>
+    <div id="adminUserList"></div>
+    <div class="box" id="legacyBox" style="display:none;">
+      <h3>🔁 חיבור המשפחה הקיימת</h3>
+      <p style="font-size:.82rem;color:var(--text2);margin-bottom:10px;">
+        פעולה חד-פעמית: הופכת את הנתונים הקיימים (family_main) למרחב משפחתי שבבעלותך,
+        ומעבירה סיסמאות ופרטי בנק למסמך מוגן. לאחר מכן הזמן/י את האחים מתוך "👥 משפחה".</p>
+      <button class="btn btn-warning btn-sm" id="btnMigrateLegacy" type="button">חבר עכשיו</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-gray" data-close="adminModal">סגור</button>
+    </div>
+  </div>
+</div>
+
 <div id="toastContainer"></div>
 
 <!-- Firebase Compat 10.7.1 (single version) -->
@@ -808,7 +919,13 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "833616633042",
   appId:             "1:833616633042:web:82339189ba55f3d916210b"
 };
-const FAMILY_ID = "family_main"; // מזהה המשפחה שלך
+/* ── MULTI-USER CONFIG ──
+   UID של מנהל/י המערכת. חייב להיות זהה לרשימה ב-firestore.rules (פונקציה isSuper). */
+const SUPER_ADMINS     = ["QjT2Hkd8LUVme4whqUV4wFQkXJG3"];
+const LEGACY_FAMILY_ID = "family_main";   // הנתונים הקיימים
+const SECRET_FIELDS = ["pBtuUser","pBtuPass","pBtuCode","pKupUser","pKupPass",
+                       "pBnkAcc","pBnkUser","pBnkPass"];
+const ROLE_LABEL = { owner:"מנהל/ת ראשי/ת", admin:"מנהל/ת", member:"חבר/ת משפחה", viewer:"צפייה בלבד" };
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const auth = firebase.auth();
@@ -843,10 +960,25 @@ let logFilterMed       = "all";
 let logFilterFrom      = "";
 let logFilterTo        = "";
 let unsubTasks, unsubExpenses, unsubPatient, unsubMeds, unsubTodayLogs, unsubAllLogs;
+let unsubMembers, unsubSecrets, unsubMe, unsubPendingUsers;
+let currentFamilyId = null;
+let myRole          = null;
+let myUserDoc       = {};
+let myFamilies      = [];   // [{id, name, role}]
+let familyMembers   = [];
+let secretData      = {};
+let adminFilter     = "pending";
 
 /* ── UTILS ── */
 const $ = id => document.getElementById(id);
-const colRef = col => db.collection("families").doc(FAMILY_ID).collection(col);
+const famRef = id  => db.collection("families").doc(id || currentFamilyId);
+const colRef = col => famRef().collection(col);
+const TS      = () => firebase.firestore.FieldValue.serverTimestamp();
+const isSuperAdmin = () => !!currentUser && SUPER_ADMINS.includes(currentUser.uid);
+const canEdit      = () => ["owner","admin","member"].includes(myRole);
+const isFamAdmin   = () => ["owner","admin"].includes(myRole);
+const myEmail      = () => (currentUser?.email || "").toLowerCase();
+const myName       = () => currentUser?.displayName || currentUser?.email || "";
 
 function esc(s) {
   if (s === null || s === undefined) return "";
@@ -914,7 +1046,12 @@ function fmtTime(ts) {
   if (!d || isNaN(d)) return "";
   return d.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
 }
-function todayStr() { return new Date().toISOString().slice(0, 10); }
+/* תאריך מקומי (ולא UTC) – אחרת בין 00:00 ל-02:00/03:00 שעון ישראל נרשם "אתמול" */
+function localDateStr(d = new Date()) {
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" +
+         String(d.getDate()).padStart(2, "0");
+}
+function todayStr() { return localDateStr(); }
 function showLoading() { $("loadingOverlay").classList.remove("hidden"); }
 function hideLoading() { $("loadingOverlay").classList.add("hidden"); }
 
@@ -956,67 +1093,539 @@ $("googleSignIn").addEventListener("click", () =>
   auth.signInWithPopup(googleProvider)
     .catch(e => toast("שגיאת כניסה: " + e.message, "error")));
 
-$("signOut").addEventListener("click", () => auth.signOut());
+/* ================================================================
+   MULTI-USER: הרשמה → אישור מנהל מערכת → מרחב משפחתי → הזמנת בני משפחה
+   ================================================================ */
+function getPatientView() { return { ...patientData, ...secretData }; }
+
+/* יציאה: מנקה גם את המטמון המקומי (מידע רפואי/בנקאי) – חשוב במכשירים משותפים */
+async function fullSignOut() {
+  unsubscribeAll(true);
+  try { await auth.signOut(); } catch (e) {}
+  try { await db.terminate(); await db.clearPersistence(); } catch (e) {}
+  location.reload();
+}
+$("signOut").addEventListener("click", fullSignOut);
+$("gateSignOut").addEventListener("click", fullSignOut);
+
+function unsubscribeAll(includeUser = false) {
+  [unsubTasks, unsubExpenses, unsubPatient, unsubMeds, unsubTodayLogs, unsubAllLogs,
+   unsubMembers, unsubSecrets].forEach(u => u && u());
+  unsubTasks = unsubExpenses = unsubPatient = unsubMeds = unsubTodayLogs =
+    unsubAllLogs = unsubMembers = unsubSecrets = null;
+  if (includeUser) {
+    [unsubMe, unsubPendingUsers].forEach(u => u && u());
+    unsubMe = unsubPendingUsers = null;
+  }
+  allTasks = []; allExpenses = []; allMedications = []; todayMedLogs = []; allMedLogs = [];
+  patientData = {}; secretData = {}; familyMembers = [];
+}
 
 auth.onAuthStateChanged(async user => {
   currentUser = user;
-  
-  if (user) {
-    showLoading(); // מפעילים מסך טעינה בזמן וידוא הרשאות
-    
-    try {
-      // קריאת רשימת המורשים מ-Firestore
-      const permDoc = await db.collection("families").doc(FAMILY_ID).collection("settings").doc("permissions").get();
-      let allowedEmails = [];
-      
-      if (permDoc.exists) {
-        allowedEmails = permDoc.data().emails || [];
-      } else {
-        // רשימת גיבוי זמנית למקרה שהמסמך טרם נוצר
-        allowedEmails = ["veredt9@gmail.com", "brother2@gmail.com", "ofirbn@gmail.com"];
-      }
-
-      // אימות המייל
-      if (!allowedEmails.includes(user.email)) {
-        hideLoading();
-        toast("❌ אינך מורשה לגשת לאפליקציה זו.", "error");
-        auth.signOut();
-        return;
-      }
-    } catch (error) {
-      hideLoading();
-      console.error("Permissions check failed:", error);
-      toast("שגיאה בבדיקת הרשאות גישה.", "error");
-      auth.signOut();
-      return;
-    }
-
-    // המשתמש מורשה - נטען את הממשק
-    $("loginScreen").style.display = "none";
-    $("app").style.display = "flex";
-
-    const name = user.displayName || user.email;
-    $("headerUserName").textContent = name;
-
-    const av = $("headerAvatar");
-    if (user.photoURL) {
-      av.innerHTML = `<img src="${esc(user.photoURL)}"
-        style="width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.5);"
-        alt="avatar"/>`;
-    } else {
-      av.textContent = initials(name);
-    }
-
-    loadedCount = 0;
-    subscribeData();
-  } else {
-    // משתמש לא מחובר
-    hideLoading(); // ⚠️ התיקון שמונע את היתקעות מסך הטעינה
+  if (!user) {
+    unsubscribeAll(true);
+    hideLoading();
+    $("gateScreen").style.display  = "none";
+    $("app").style.display         = "none";
     $("loginScreen").style.display = "flex";
-    $("app").style.display = "none";
-    [unsubTasks, unsubExpenses, unsubPatient, unsubMeds, unsubTodayLogs, unsubAllLogs]
-      .forEach(u => u && u());
+    return;
   }
+  showLoading();
+  try {
+    myUserDoc = await ensureUserDoc(user);
+    watchMyUserDoc();
+    if (isSuperAdmin()) watchPendingUsers();
+    await route();
+  } catch (err) {
+    console.error("Init failed:", err);
+    hideLoading();
+    toast("שגיאה בטעינת החשבון: " + err.message, "error");
+  }
+});
+
+/* יוצר רשומת משתמש בכניסה הראשונה (סטטוס pending) */
+async function ensureUserDoc(user) {
+  const ref  = db.collection("users").doc(user.uid);
+  const snap = await ref.get();
+  if (snap.exists) {
+    ref.update({ displayName: user.displayName || "", photoURL: user.photoURL || "",
+                 lastLoginAt: TS() }).catch(() => {});
+    return snap.data();
+  }
+  const data = {
+    uid: user.uid, email: (user.email || "").toLowerCase(),
+    displayName: user.displayName || "", photoURL: user.photoURL || "",
+    status: isSuperAdmin() ? "approved" : "pending",
+    families: [], requestNote: "",
+    createdAt: TS(), lastLoginAt: TS()
+  };
+  await ref.set(data);
+  return data;
+}
+
+/* מאזין לשינוי סטטוס (למשל: אושרתי בזמן שאני על מסך ההמתנה) */
+function watchMyUserDoc() {
+  if (unsubMe) unsubMe();
+  let lastStatus = myUserDoc.status;
+  unsubMe = db.collection("users").doc(currentUser.uid).onSnapshot(snap => {
+    if (!snap.exists) return;
+    myUserDoc = snap.data();
+    if (myUserDoc.status !== lastStatus) {
+      lastStatus = myUserDoc.status;
+      if ($("app").style.display !== "flex") route();
+      if (myUserDoc.status === "approved") toast("🎉 החשבון שלך אושר!", "success");
+    }
+  });
+}
+
+/* המשפחות שלי – לפי users/{uid}.families, מאומת מול members (מסנן משפחות שהוסרתי מהן) */
+async function loadMyFamilies() {
+  const ids = [...new Set(myUserDoc.families || [])];
+  const out = [];
+  await Promise.all(ids.map(async id => {
+    try {
+      const m = await famRef(id).collection("members").doc(currentUser.uid).get();
+      if (!m.exists) return;
+      const f = await famRef(id).get();
+      out.push({ id, role: m.data().role, name: (f.exists && f.data().name) || id });
+    } catch (e) { /* אין גישה – מתעלמים */ }
+  }));
+  out.sort((a, b) => a.name.localeCompare(b.name, "he"));
+  myFamilies = out;
+  if (out.length !== ids.length) {   // ניקוי הפניות ישנות
+    db.collection("users").doc(currentUser.uid)
+      .update({ families: out.map(f => f.id) }).catch(() => {});
+  }
+}
+
+async function loadMyInvites() {
+  try {
+    const snap = await db.collection("invites").where("email", "==", myEmail()).get();
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+               .filter(i => !myFamilies.some(f => f.id === i.familyId));
+  } catch (e) { console.warn("invites:", e); return []; }
+}
+
+/* ניתוב מרכזי אחרי התחברות */
+async function route() {
+  showLoading();
+  unsubscribeAll(false);
+  await loadMyFamilies();
+  const invites = await loadMyInvites();
+  if (invites.length) return showInvitesGate(invites);
+  if (myFamilies.length) {
+    const last = localStorage.getItem("mb_lastFamily_" + currentUser.uid);
+    return enterFamily(myFamilies.some(f => f.id === last) ? last : myFamilies[0].id);
+  }
+  const st = isSuperAdmin() ? "approved" : (myUserDoc.status || "pending");
+  if (st === "approved") return showCreateFamilyGate(false);
+  if (st === "rejected" || st === "suspended") {
+    return showGate("🚫", "אין גישה למערכת",
+      `<p style="text-align:center;">הבקשה עבור ${esc(myEmail())} לא אושרה.
+       אם קיבלת הזמנה ממשפחה – ודא/י שנכנסת עם אותה כתובת Gmail.</p>`);
+  }
+  return showPendingGate();
+}
+
+function showGate(icon, title, html) {
+  hideLoading();
+  $("loginScreen").style.display = "none";
+  $("app").style.display         = "none";
+  $("gateScreen").style.display  = "flex";
+  $("gateIcon").textContent  = icon;
+  $("gateTitle").textContent = title;
+  $("gateBody").innerHTML    = html;
+}
+
+function showPendingGate() {
+  showGate("⏳", "הבקשה ממתינה לאישור", `
+    <p>נרשמת עם <strong style="direction:ltr;display:inline-block;">${esc(myEmail())}</strong>.
+       מנהל המערכת יאשר את החשבון בהקדם, והמסך יתעדכן אוטומטית.</p>
+    <p style="font-size:.85rem;color:var(--text2);">
+       קיבלת הזמנה מבן משפחה? אין צורך באישור – בקש/י ממנו לוודא שההזמנה נשלחה לכתובת הזו.</p>
+    <div class="form-group">
+      <label>כמה מילים עליך (מי את/ה, עבור מי הטיפול) – יעזור לאשר מהר</label>
+      <textarea id="gateNote" maxlength="500">${esc(myUserDoc.requestNote || "")}</textarea>
+    </div>
+    <div class="gate-actions">
+      <button class="btn btn-primary btn-sm" id="gateSaveNote" type="button">💾 שמור</button>
+      <button class="btn btn-outline btn-sm" id="gateRefresh" type="button">🔄 בדוק שוב</button>
+    </div>`);
+  $("gateSaveNote").onclick = async () => {
+    try {
+      await db.collection("users").doc(currentUser.uid)
+        .update({ requestNote: $("gateNote").value.trim().slice(0, 500) });
+      toast("נשמר, תודה!", "success");
+    } catch (e) { toast("שגיאה: " + e.message, "error"); }
+  };
+  $("gateRefresh").onclick = () => route();
+}
+
+function showCreateFamilyGate(canCancel) {
+  showGate("🏡", "פתיחת מרחב משפחתי", `
+    <p>צור/י מרחב לניהול הטיפול. לאחר מכן תוכל/י להזמין את בני המשפחה.</p>
+    <div class="form-group"><label>שם המרחב *</label>
+      <input type="text" id="gFamName" placeholder="למשל: משפחת כהן – אבא" maxlength="60"/></div>
+    <div class="form-group"><label>שם המטופל/ת</label>
+      <input type="text" id="gPatient" placeholder="שם ומשפחה" maxlength="60"/></div>
+    <div class="gate-actions">
+      <button class="btn btn-primary" id="gCreateFam" type="button">✅ צור מרחב</button>
+      ${canCancel ? '<button class="btn btn-gray" id="gCancel" type="button">חזרה</button>' : ""}
+      ${isSuperAdmin() ? '<button class="btn btn-outline" id="gAdmin" type="button">🛡️ ניהול משתמשים</button>' : ""}
+    </div>`);
+  $("gCreateFam").onclick = createFamily;
+  if ($("gCancel")) $("gCancel").onclick = () => route();
+  if ($("gAdmin"))  $("gAdmin").onclick  = openAdminModal;
+}
+
+function memberPayload(role) {
+  return { uid: currentUser.uid, email: myEmail(), displayName: myName(),
+           photoURL: currentUser.photoURL || "", role, joinedAt: TS() };
+}
+
+async function createFamily() {
+  const name    = $("gFamName").value.trim();
+  const patient = $("gPatient").value.trim();
+  if (!name) { toast("נא להזין שם למרחב", "error"); return; }
+  const ref   = db.collection("families").doc();
+  const batch = db.batch();
+  batch.set(ref, { name, ownerUid: currentUser.uid, createdByName: myName(), createdAt: TS() });
+  batch.set(ref.collection("members").doc(currentUser.uid), memberPayload("owner"));
+  batch.set(db.collection("users").doc(currentUser.uid),
+            { families: firebase.firestore.FieldValue.arrayUnion(ref.id) }, { merge: true });
+  try {
+    showLoading();
+    await batch.commit();
+    if (patient) await ref.collection("settings").doc("patient").set({ pName: patient }, { merge: true });
+    myUserDoc.families = [...(myUserDoc.families || []), ref.id];
+    localStorage.setItem("mb_lastFamily_" + currentUser.uid, ref.id);
+    toast("🏡 המרחב נוצר! עכשיו אפשר להזמין את בני המשפחה.", "success");
+    await route();
+  } catch (e) { hideLoading(); toast("שגיאה ביצירה: " + e.message, "error"); }
+}
+
+function showInvitesGate(invites) {
+  showGate("📨", "הוזמנת להצטרף", invites.map(i => `
+    <div class="invite-box">
+      <div><strong>${esc(i.invitedByName || "בן/בת משפחה")}</strong> הזמין/ה אותך למרחב
+        <strong>${esc(i.familyName || "")}</strong></div>
+      <div style="font-size:.8rem;color:var(--text2);margin:4px 0 10px;">הרשאה: ${esc(ROLE_LABEL[i.role] || i.role)}</div>
+      <button class="btn btn-success btn-sm" data-inv-accept="${esc(i.id)}" type="button">✅ הצטרפות</button>
+      <button class="btn btn-gray btn-sm" data-inv-decline="${esc(i.id)}" type="button">דחייה</button>
+    </div>`).join("") +
+    (myFamilies.length ? `<div class="gate-actions"><button class="btn btn-outline btn-sm" id="gSkipInv" type="button">המשך למרחבים שלי</button></div>` : ""));
+  const byId = Object.fromEntries(invites.map(i => [i.id, i]));
+  $("gateBody").onclick = async e => {
+    const a = e.target.closest("[data-inv-accept]");
+    const d = e.target.closest("[data-inv-decline]");
+    if (e.target.id === "gSkipInv") {
+      return enterFamily(myFamilies[0].id);
+    }
+    if (a) await acceptInvite(byId[a.dataset.invAccept]);
+    if (d) {
+      try { await db.collection("invites").doc(d.dataset.invDecline).delete(); route(); }
+      catch (err) { toast("שגיאה: " + err.message, "error"); }
+    }
+  };
+}
+
+async function acceptInvite(inv) {
+  const batch = db.batch();
+  batch.set(famRef(inv.familyId).collection("members").doc(currentUser.uid), memberPayload(inv.role));
+  batch.delete(db.collection("invites").doc(inv.id));
+  batch.set(db.collection("users").doc(currentUser.uid),
+            { families: firebase.firestore.FieldValue.arrayUnion(inv.familyId) }, { merge: true });
+  try {
+    showLoading();
+    await batch.commit();
+    myUserDoc.families = [...(myUserDoc.families || []), inv.familyId];
+    localStorage.setItem("mb_lastFamily_" + currentUser.uid, inv.familyId);
+    toast("ברוך/ה הבא/ה! 👋", "success");
+    await route();
+  } catch (e) { hideLoading(); toast("שגיאה בהצטרפות: " + e.message, "error"); }
+}
+
+/* כניסה למרחב משפחתי */
+function enterFamily(fid) {
+  unsubscribeAll(false);
+  const fam = myFamilies.find(f => f.id === fid);
+  if (!fam) return route();
+  currentFamilyId = fid;
+  myRole = fam.role;
+  localStorage.setItem("mb_lastFamily_" + currentUser.uid, fid);
+
+  $("gateScreen").style.display  = "none";
+  $("loginScreen").style.display = "none";
+  $("app").style.display         = "flex";
+  $("famNameHdr").textContent    = "· " + fam.name;
+
+  const name = myName();
+  $("headerUserName").textContent = name;
+  const av = $("headerAvatar");
+  if (currentUser.photoURL) {
+    av.innerHTML = `<img src="${esc(currentUser.photoURL)}"
+      style="width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.5);" alt="avatar"/>`;
+  } else {
+    av.textContent = initials(name);
+  }
+  renderFamilySwitcher();
+  applyRoleUI();
+  showLoading();
+  loadedCount = 0;
+  subscribeData();
+}
+
+function applyRoleUI() {
+  document.body.classList.toggle("ro", !canEdit());
+  document.body.classList.toggle("fam-admin", isFamAdmin());
+  $("btnAdmin").style.display = isSuperAdmin() ? "" : "none";
+}
+
+function renderFamilySwitcher() {
+  const sel = $("familySwitcher");
+  const canCreate = isSuperAdmin() || myUserDoc.status === "approved";
+  if (myFamilies.length < 2 && !canCreate) { sel.style.display = "none"; return; }
+  sel.style.display = "";
+  sel.innerHTML = myFamilies.map(f =>
+      `<option value="${esc(f.id)}"${f.id === currentFamilyId ? " selected" : ""}>${esc(f.name)}</option>`).join("") +
+    (canCreate ? '<option value="__new">➕ מרחב חדש...</option>' : "");
+}
+$("familySwitcher").addEventListener("change", e => {
+  const v = e.target.value;
+  if (v === "__new") { e.target.value = currentFamilyId; unsubscribeAll(false); showCreateFamilyGate(true); return; }
+  enterFamily(v);
+});
+
+/* ================================================================
+   MEMBERS MODAL – בני משפחה, הרשאות והזמנות
+   ================================================================ */
+$("btnMembers").addEventListener("click", async () => {
+  renderMembers();
+  $("membersModal").classList.add("open");
+  if (isFamAdmin()) await loadFamilyInvites();
+});
+
+const ROLE_ORDER = { owner: 0, admin: 1, member: 2, viewer: 3 };
+function renderMembers() {
+  const me = currentUser.uid;
+  $("membersList").innerHTML = [...familyMembers]
+    .sort((a, b) => (ROLE_ORDER[a.role] - ROLE_ORDER[b.role]) ||
+                    (a.displayName || "").localeCompare(b.displayName || "", "he"))
+    .map(m => {
+      const isMe = m.id === me;
+      let ctl = "";
+      if (myRole === "owner" && !isMe && m.role !== "owner") {
+        ctl += `<select class="mini-select" data-mrole="${esc(m.id)}">
+          ${["admin","member","viewer"].map(r =>
+            `<option value="${r}"${r === m.role ? " selected" : ""}>${ROLE_LABEL[r]}</option>`).join("")}
+        </select>`;
+      }
+      const canRemove = !isMe && m.role !== "owner" &&
+        (myRole === "owner" || (myRole === "admin" && ["member","viewer"].includes(m.role)));
+      if (canRemove) ctl += `<button class="btn btn-gray btn-sm" data-mremove="${esc(m.id)}" type="button">הסרה</button>`;
+      if (isMe && m.role !== "owner") ctl += `<button class="btn btn-gray btn-sm" data-mleave="1" type="button">עזיבת המרחב</button>`;
+      return `<div class="member-row">
+        <div class="member-info">
+          <div class="nm">${esc(m.displayName || m.email)}${isMe ? " (אני)" : ""}</div>
+          <div class="em">${esc(m.email || "")}</div>
+        </div>
+        <span class="role-badge role-${esc(m.role)}">${esc(ROLE_LABEL[m.role] || m.role)}</span>
+        ${ctl}
+      </div>`;
+    }).join("") || '<div class="empty">אין חברים</div>';
+  // רק הבעלים יכול/ה להזמין מנהלים
+  const adminOpt = $("invRole").querySelector('option[value="admin"]');
+  if (adminOpt) adminOpt.disabled = myRole !== "owner";
+}
+
+async function loadFamilyInvites() {
+  const box = $("pendingInvites");
+  try {
+    const snap = await db.collection("invites").where("familyId", "==", currentFamilyId).get();
+    const inv  = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    box.innerHTML = inv.length
+      ? `<div style="font-size:.82rem;font-weight:700;margin-bottom:6px;">הזמנות שטרם מומשו</div>` +
+        inv.map(i => `<div class="member-row">
+          <div class="member-info"><div class="em">${esc(i.email)}</div></div>
+          <span class="role-badge">${esc(ROLE_LABEL[i.role] || i.role)}</span>
+          <button class="btn btn-outline btn-sm" data-invcopy="${esc(i.email)}" type="button">📋 העתק הודעה</button>
+          <button class="btn btn-gray btn-sm" data-invcancel="${esc(i.id)}" type="button">ביטול</button>
+        </div>`).join("")
+      : "";
+  } catch (e) { box.innerHTML = ""; console.warn(e); }
+}
+
+function inviteMessage(email) {
+  const fam = myFamilies.find(f => f.id === currentFamilyId);
+  const url = location.origin + location.pathname;
+  return `היי! הזמנתי אותך לאפליקציית "משפחה ביחד" – ${fam ? fam.name : ""}.\n` +
+         `כניסה: ${url}\n` +
+         `יש להתחבר עם חשבון Google: ${email}`;
+}
+
+$("btnSendInvite").addEventListener("click", async () => {
+  const email = $("invEmail").value.trim().toLowerCase();
+  const role  = $("invRole").value;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { toast("כתובת מייל לא תקינה", "error"); return; }
+  if (familyMembers.some(m => (m.email || "").toLowerCase() === email)) {
+    toast("כבר חבר/ה במרחב", "error"); return;
+  }
+  if (role === "admin" && myRole !== "owner") { toast("רק הבעלים יכול/ה להזמין מנהלים", "error"); return; }
+  const fam = myFamilies.find(f => f.id === currentFamilyId);
+  try {
+    await db.collection("invites").doc(currentFamilyId + "__" + email).set({
+      email, role, familyId: currentFamilyId, familyName: fam ? fam.name : "",
+      invitedBy: currentUser.uid, invitedByName: myName(), createdAt: TS()
+    });
+    $("invEmail").value = "";
+    copyText(inviteMessage(email), "✅ ההזמנה נוצרה וההודעה הועתקה – הדבק/י בוואטסאפ");
+    loadFamilyInvites();
+  } catch (e) { toast("שגיאה: " + e.message, "error"); }
+});
+
+function copyText(text, okMsg) {
+  navigator.clipboard.writeText(text)
+    .then(() => toast(okMsg, "success"))
+    .catch(() => toast("ההזמנה נוצרה. לא ניתן היה להעתיק ללוח.", "success"));
+}
+
+$("membersModal").addEventListener("change", async e => {
+  const sel = e.target.closest("[data-mrole]");
+  if (!sel) return;
+  try {
+    await colRef("members").doc(sel.dataset.mrole).update({ role: sel.value });
+    toast("ההרשאה עודכנה", "success");
+  } catch (err) { toast("שגיאה: " + err.message, "error"); renderMembers(); }
+});
+
+$("membersModal").addEventListener("click", async e => {
+  const rm  = e.target.closest("[data-mremove]");
+  const lv  = e.target.closest("[data-mleave]");
+  const cc  = e.target.closest("[data-invcancel]");
+  const cp  = e.target.closest("[data-invcopy]");
+  try {
+    if (rm) {
+      const m = familyMembers.find(x => x.id === rm.dataset.mremove);
+      if (!confirm(`להסיר את ${m?.displayName || m?.email} מהמרחב? הגישה תיחסם מיד.`)) return;
+      await colRef("members").doc(rm.dataset.mremove).delete();
+      toast("הוסר/ה", "success");
+    }
+    if (lv) {
+      if (!confirm("לעזוב את המרחב? לא תהיה לך גישה עד הזמנה חדשה.")) return;
+      await colRef("members").doc(currentUser.uid).delete();
+      $("membersModal").classList.remove("open");
+      route();
+    }
+    if (cc) { await db.collection("invites").doc(cc.dataset.invcancel).delete(); loadFamilyInvites(); }
+    if (cp) copyText(inviteMessage(cp.dataset.invcopy), "📋 ההודעה הועתקה");
+  } catch (err) { toast("שגיאה: " + err.message, "error"); }
+});
+
+/* ================================================================
+   SUPER-ADMIN – אישור משתמשים (אין גישה לנתוני משפחות!)
+   ================================================================ */
+function watchPendingUsers() {
+  if (unsubPendingUsers) unsubPendingUsers();
+  unsubPendingUsers = db.collection("users").where("status", "==", "pending")
+    .onSnapshot(snap => {
+      // משתמשים שהצטרפו בהזמנה לא דורשים פעולה
+      const n = snap.docs.filter(d => !(d.data().families || []).length).length;
+      const b = $("adminBadge");
+      b.textContent = n; b.style.display = n ? "" : "none";
+      if ($("adminModal").classList.contains("open") && adminFilter === "pending") renderAdminUsers();
+    }, err => console.warn("pending users:", err.code));
+}
+
+function openAdminModal() {
+  $("adminModal").classList.add("open");
+  $("legacyBox").style.display = myFamilies.some(f => f.id === LEGACY_FAMILY_ID) ? "none" : "";
+  renderAdminUsers();
+}
+$("btnAdmin").addEventListener("click", openAdminModal);
+
+$("adminFilters").addEventListener("click", e => {
+  const b = e.target.closest("[data-ustatus]");
+  if (!b) return;
+  $("adminFilters").querySelectorAll(".filter-btn").forEach(x => x.classList.toggle("active", x === b));
+  adminFilter = b.dataset.ustatus;
+  renderAdminUsers();
+});
+
+async function renderAdminUsers() {
+  const list = $("adminUserList");
+  list.innerHTML = '<div class="empty">טוען...</div>';
+  try {
+    const snap  = await db.collection("users").where("status", "==", adminFilter).get();
+    const users = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (tsToDate(b.createdAt) || 0) - (tsToDate(a.createdAt) || 0));
+    if (!users.length) { list.innerHTML = '<div class="empty">אין משתמשים בסטטוס זה</div>'; return; }
+    list.innerHTML = users.map(u => {
+      const joined = (u.families || []).length;
+      const btns = [];
+      if (u.status !== "approved")  btns.push(`<button class="btn btn-success btn-sm" data-uset="approved" data-uid="${esc(u.id)}" type="button">✅ אישור</button>`);
+      if (u.status === "pending")   btns.push(`<button class="btn btn-gray btn-sm" data-uset="rejected" data-uid="${esc(u.id)}" type="button">דחייה</button>`);
+      if (u.status === "approved" && !SUPER_ADMINS.includes(u.id))
+                                    btns.push(`<button class="btn btn-gray btn-sm" data-uset="suspended" data-uid="${esc(u.id)}" type="button">השעיה</button>`);
+      return `<div class="user-row">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <strong>${esc(u.displayName || "—")}</strong>
+          <span style="direction:ltr;font-size:.8rem;color:var(--text2);">${esc(u.email)}</span>
+          ${joined ? `<span class="role-badge role-viewer">חבר/ה ב-${joined} מרחבים (בהזמנה)</span>` : ""}
+          <span style="font-size:.75rem;color:var(--text2);">${u.createdAt ? "נרשם/ה " + fmtDate(u.createdAt) : ""}</span>
+        </div>
+        ${u.requestNote ? `<div class="user-note">${esc(u.requestNote)}</div>` : ""}
+        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">${btns.join("")}</div>
+      </div>`;
+    }).join("");
+  } catch (e) { list.innerHTML = `<div class="empty">שגיאה: ${esc(e.message)}</div>`; }
+}
+
+$("adminUserList").addEventListener("click", async e => {
+  const b = e.target.closest("[data-uset]");
+  if (!b) return;
+  try {
+    await db.collection("users").doc(b.dataset.uid).update({
+      status: b.dataset.uset, statusBy: currentUser.uid, statusAt: TS()
+    });
+    toast("עודכן", "success");
+    renderAdminUsers();
+  } catch (err) { toast("שגיאה: " + err.message, "error"); }
+});
+
+/* מיגרציה חד-פעמית של family_main */
+$("btnMigrateLegacy").addEventListener("click", async () => {
+  if (!confirm("לחבר את הנתונים הקיימים (family_main) כמרחב שבבעלותך?")) return;
+  const name  = prompt("שם המרחב:", "המשפחה שלנו") || "המשפחה שלנו";
+  const fid   = LEGACY_FAMILY_ID;
+  const batch = db.batch();
+  batch.set(famRef(fid), { name, ownerUid: currentUser.uid, createdByName: myName(),
+                           createdAt: TS(), migratedAt: TS() });
+  batch.set(famRef(fid).collection("members").doc(currentUser.uid), memberPayload("owner"));
+  batch.set(db.collection("users").doc(currentUser.uid),
+            { families: firebase.firestore.FieldValue.arrayUnion(fid) }, { merge: true });
+  try {
+    showLoading();
+    await batch.commit();
+    // העברת סיסמאות/בנק למסמך מוגן ומחיקתם מהמסמך הכללי
+    const pRef = famRef(fid).collection("settings").doc("patient");
+    const p = await pRef.get();
+    if (p.exists) {
+      const d = p.data(), sec = {}, del = {};
+      SECRET_FIELDS.forEach(f => {
+        if (d[f] !== undefined) { sec[f] = d[f]; del[f] = firebase.firestore.FieldValue.delete(); }
+      });
+      if (Object.keys(sec).length) {
+        await famRef(fid).collection("settings").doc("secrets").set(sec, { merge: true });
+        await pRef.update(del);
+      }
+    }
+    myUserDoc.families = [...(myUserDoc.families || []), fid];
+    localStorage.setItem("mb_lastFamily_" + currentUser.uid, fid);
+    $("adminModal").classList.remove("open");
+    toast("✅ המשפחה הקיימת חוברה. עכשיו הזמן/י את האחים דרך 👥 משפחה", "success");
+    await route();
+  } catch (e) { hideLoading(); toast("שגיאה במיגרציה: " + e.message, "error"); }
 });
 
 /* ── REALTIME SUBSCRIPTIONS ── */
@@ -1024,6 +1633,25 @@ function subscribeData() {
   function checkLoaded() {
     if (++loadedCount >= 3) hideLoading();
   }
+  const onErr = err => {
+    console.error(err);
+    hideLoading();
+    if (err.code === "permission-denied") toast("❌ אין לך הרשאה לנתונים אלה.", "error");
+  };
+
+  unsubMembers = colRef("members").onSnapshot(snap => {
+    familyMembers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const me = familyMembers.find(m => m.id === currentUser.uid);
+    if (!me) {                       // הוסרתי מהמשפחה בזמן אמת
+      toast("הגישה שלך למשפחה זו הוסרה.", "error");
+      route();
+      return;
+    }
+    if (me.role !== myRole) { myRole = me.role; applyRoleUI(); subscribeSecrets(); renderTasks(); renderExpenses(); }
+    renderExpenses();   // חלוקת הוצאות תלויה ברשימת החברים
+    if ($("membersModal").classList.contains("open")) renderMembers();
+  }, onErr);
+  subscribeSecrets();
 
   unsubTasks = colRef("tasks").orderBy("createdAt", "desc")
     .onSnapshot(snap => {
@@ -1031,12 +1659,7 @@ function subscribeData() {
       renderDashboardStats();
       renderTasks();
       checkLoaded();
-    }, err => {
-      if (err.code === "permission-denied") {
-        toast("❌ אינך מורשה לגשת לנתונים.", "error");
-        setTimeout(() => auth.signOut(), 2000);
-      }
-    });
+    }, onErr);
 
   unsubExpenses = colRef("expenses").orderBy("date", "desc")
     .onSnapshot(snap => {
@@ -1044,14 +1667,14 @@ function subscribeData() {
       renderExpenses();
       renderDashboardStats();
       checkLoaded();
-    });
+    }, onErr);
 
   unsubPatient = colRef("settings").doc("patient")
     .onSnapshot(snap => {
       patientData = snap.exists ? snap.data() : {};
       renderPatientCard();
       checkLoaded();
-    });
+    }, onErr);
 
   unsubMeds = colRef("medications").orderBy("name")
     .onSnapshot(snap => {
@@ -1059,20 +1682,31 @@ function subscribeData() {
       renderMedications();
       renderDashboardStats();
       updateLogMedFilter();
-    });
+    }, onErr);
 
   unsubTodayLogs = colRef("med_logs").where("date", "==", todayStr())
     .onSnapshot(snap => {
       todayMedLogs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderMedSchedule();
       renderDashboardStats();
-    });
+    }, onErr);
 
   unsubAllLogs = colRef("med_logs").orderBy("takenAt", "desc").limit(300)
     .onSnapshot(snap => {
       allMedLogs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderMedLog();
-    });
+    }, onErr);
+}
+
+/* סיסמאות ופרטי בנק – רק למנהלי המשפחה (נאכף גם ב-Security Rules) */
+function subscribeSecrets() {
+  if (unsubSecrets) { unsubSecrets(); unsubSecrets = null; }
+  secretData = {};
+  if (!isFamAdmin()) { renderPatientCard(); return; }
+  unsubSecrets = colRef("settings").doc("secrets").onSnapshot(snap => {
+    secretData = snap.exists ? snap.data() : {};
+    renderPatientCard();
+  }, err => console.warn("secrets:", err.code));
 }
 
 /* ── TAB NAVIGATION (3 tabs) ── */
@@ -1095,6 +1729,8 @@ $("patientCardHeader").addEventListener("click", () => {
 });
 
 function renderPatientCard() {
+  const patientData = getPatientView();   // מיזוג פרטים + סודות (אם מורשה)
+  const S    = isFamAdmin();
   const grid = $("patientInfoGrid");
 
   function renderItem(label, val, isSecret = false) {
@@ -1121,24 +1757,24 @@ function renderPatientCard() {
       ${renderItem("אימייל ראשי",patientData.pEmail)}
       ${renderItem("אימייל נוסף",patientData.pEmail2)}
     </div>
-    <div class="info-group"><h4>🏠 ביטוח לאומי</h4>
+    ${S ? `<div class="info-group"><h4>🏠 ביטוח לאומי</h4>
       ${renderItem("שם משתמש",  patientData.pBtuUser)}
       ${renderItem("סיסמה",     patientData.pBtuPass, true)}
       ${renderItem("קוד טלפוני",patientData.pBtuCode, true)}
-    </div>
+    </div>` : ""}
     <div class="info-group"><h4>🏥 קופת חולים</h4>
       ${renderItem("שם הקופה",    patientData.pKupName)}
       ${renderItem("סניף/מרפאה", patientData.pKupBranch)}
       ${renderItem("טלפון",       patientData.pKupPhone)}
-      ${renderItem("שם משתמש",    patientData.pKupUser)}
-      ${renderItem("סיסמה",       patientData.pKupPass, true)}
+      ${S ? renderItem("שם משתמש",    patientData.pKupUser) : ""}
+      ${S ? renderItem("סיסמה",       patientData.pKupPass, true) : ""}
     </div>
     <div class="info-group"><h4>🏦 פרטי בנק</h4>
       ${renderItem("שם הבנק",    patientData.pBnkName)}
       ${renderItem("סניף",       patientData.pBnkBranch)}
-      ${renderItem("מספר חשבון", patientData.pBnkAcc,  true)}
-      ${renderItem("שם משתמש",   patientData.pBnkUser)}
-      ${renderItem("סיסמה",      patientData.pBnkPass, true)}
+      ${S ? renderItem("מספר חשבון", patientData.pBnkAcc,  true) : ""}
+      ${S ? renderItem("שם משתמש",   patientData.pBnkUser) : ""}
+      ${S ? renderItem("סיסמה",      patientData.pBnkPass, true) : ""}
     </div>`;
 
   const freeItems = [];
@@ -1221,7 +1857,8 @@ const PATIENT_FIELDS = [
 ];
 
 $("btnEditPatient").addEventListener("click", () => {
-  PATIENT_FIELDS.forEach(f => { const el = $(f); if (el) el.value = patientData[f] || ""; });
+  const merged = { ...patientData, ...secretData };
+  PATIENT_FIELDS.forEach(f => { const el = $(f); if (el) el.value = merged[f] || ""; });
   document.querySelectorAll(".patient-tab").forEach((t, i) => t.classList.toggle("active", i === 0));
   document.querySelectorAll(".patient-tab-content").forEach((c, i) => c.classList.toggle("active", i === 0));
   $("patientModal").classList.add("open");
@@ -1230,10 +1867,14 @@ $("closePatientModal").addEventListener("click",  () => $("patientModal").classL
 $("cancelPatientModal").addEventListener("click", () => $("patientModal").classList.remove("open"));
 
 $("savePatientBtn").addEventListener("click", async () => {
-  const nd = {};
-  PATIENT_FIELDS.forEach(f => { const el = $(f); if (el) nd[f] = el.value.trim(); });
+  const nd = {}, sec = {};
+  PATIENT_FIELDS.forEach(f => {
+    const el = $(f); if (!el) return;
+    (SECRET_FIELDS.includes(f) ? sec : nd)[f] = el.value.trim();
+  });
   try {
     await colRef("settings").doc("patient").set(nd, { merge: true });
+    if (isFamAdmin()) await colRef("settings").doc("secrets").set(sec, { merge: true });
     toast("💾 פרטי המטופל נשמרו!", "success");
     $("patientModal").classList.remove("open");
   } catch (e) { toast("שגיאה: " + e.message, "error"); }
@@ -1550,14 +2191,17 @@ async function addComment(taskId, text) {
   if (!text.trim()) return;
   const task = allTasks.find(t => t.id === taskId);
   if (!task) return;
-  const comments = [...(task.comments || []), {
+  const comment = {
     uid:  currentUser.uid,
-    name: currentUser.displayName || currentUser.email,
+    name: myName(),
     text: text.trim(),
-    date: new Date().toLocaleDateString("he-IL")
-  }];
+    date: new Date().toLocaleDateString("he-IL"),
+    ts:   Date.now()          // מונע איחוד של שתי הערות זהות
+  };
   try {
-    await colRef("tasks").doc(taskId).update({ comments });
+    // arrayUnion = עדכון אטומי; מונע דריסה כשכמה בני משפחה מגיבים במקביל
+    await colRef("tasks").doc(taskId).update({
+      comments: firebase.firestore.FieldValue.arrayUnion(comment) });
     toast("💬 הערה נוספה", "success");
   } catch (e) { toast("שגיאה: " + e.message, "error"); }
 }
@@ -1640,14 +2284,17 @@ function renderExpenses() {
           <div class="meta">שילם: <strong>${esc(e.paidByName)}</strong> · ${e.date ? fmtDate(e.date) : ""}</div>
           ${e.taskTitle ? `<div class="meta">🔗 ${esc(e.taskTitle)}</div>` : ""}
         </div>
-        <button class="btn btn-icon btn-sm" data-action="del-expense"
-                data-expid="${esc(e.id)}" style="color:var(--danger);">🗑️</button>
+        ${(isFamAdmin() || (canEdit() && e.createdBy === currentUser?.uid))
+          ? `<button class="btn btn-icon btn-sm" data-action="del-expense"
+                data-expid="${esc(e.id)}" style="color:var(--danger);">🗑️</button>` : ""}
       </div>`).join("");
   }
 
   /* Balance calculation */
   const paid    = {};
-  const members = new Set();
+  /* כל בני המשפחה הפעילים נכללים בחלוקה – גם מי שעוד לא שילם (בעבר רק משלמים נספרו) */
+  const members = new Set(familyMembers.filter(m => m.role !== "viewer")
+                                       .map(m => m.displayName || m.email));
   let total     = 0;
 
   allExpenses.forEach(e => {
@@ -1718,6 +2365,11 @@ $("btnAddExpense").addEventListener("click", () => {
   $("eDate").value   = todayStr();
   $("eDesc").value   = "";
   $("ePaidByManually").value = "";
+  $("ePaidBySel").innerHTML = familyMembers
+    .filter(m => m.role !== "viewer")
+    .map(m => { const n = m.displayName || m.email;
+      return `<option value="${esc(n)}"${m.id === currentUser.uid ? " selected" : ""}>${esc(n)}</option>`; })
+    .join("");
   const sel = $("eTaskLink");
   sel.innerHTML = '<option value="">— ללא קישור —</option>' +
     allTasks
@@ -1737,12 +2389,12 @@ $("saveExpenseBtn").addEventListener("click", async () => {
 
   const taskId    = $("eTaskLink").value;
   const task      = taskId ? allTasks.find(t => t.id === taskId) : null;
-  const payerName = $("ePaidByManually").value.trim() ||
-                    currentUser.displayName || currentUser.email;
+  const payerName = $("ePaidByManually").value.trim() || $("ePaidBySel").value || myName();
   try {
     await colRef("expenses").add({
       amount, description: desc, date: new Date(date),
       paidBy: currentUser.uid, paidByName: payerName,
+      createdBy: currentUser.uid, createdByName: myName(),
       taskId: taskId || null, taskTitle: task ? task.title : null,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -1929,9 +2581,9 @@ function renderMedLog() {
 
   const today    = todayStr();
   const weekAgo  = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
-  const weekStr  = weekAgo.toISOString().slice(0, 10);
+  const weekStr  = localDateStr(weekAgo);
   const monthAgo = new Date(); monthAgo.setDate(monthAgo.getDate() - 30);
-  const monthStr = monthAgo.toISOString().slice(0, 10);
+  const monthStr = localDateStr(monthAgo);
   const uniqueDays = new Set(logs.map(l => l.date)).size;
 
   $("medLogStats").innerHTML = `
@@ -2347,6 +2999,11 @@ $("importFile").addEventListener("change", async ev => {
     ev.target.value = "";
   };
   reader.readAsArrayBuffer(file);
+});
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-close]");
+  if (b) $(b.dataset.close).classList.remove("open");
 });
 
 /* ── CLOSE MODALS ON OVERLAY CLICK ── */
