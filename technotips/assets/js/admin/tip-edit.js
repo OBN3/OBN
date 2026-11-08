@@ -125,7 +125,7 @@ function build() {
 
   inputs.whatsapp = h('textarea', { id: 'f-whatsapp', rows: '7', class: 'mono-ish', value: tip.whatsappText, dir: 'rtl' });
   const waPreview = h('div', { class: 'whatsapp-preview', id: 'wa-preview' });
-  const updateWa = () => { waPreview.textContent = whatsappMessage(collect()); };
+const updateWa = () => { waPreview.textContent = whatsappMessage(collect(), { withLink: false }); };
   inputs.whatsapp.addEventListener('input', updateWa);
 
   inputs.seoTitle = h('input', { id: 'f-seo-title', type: 'text', maxlength: '90', value: tip.seo.title, placeholder: 'ברירת מחדל: כותרת הטיפ' });
@@ -149,7 +149,7 @@ function build() {
           h('div', { class: 'slug-row' }, inputs.slug,
             h('button', { type: 'button', class: 'btn btn--secondary btn--small', onclick: () => { slugTouched = false; autoSlug(); markDirty(); } }, 'יצירה אוטומטית')),
           h('p', { class: 'hint', id: 'f-slug-hint' }, 'אותיות באנגלית קטנות, ספרות ומקפים. משמשת בכתובת הטיפ – עדיף לא לשנות אחרי שיתוף.')),
-        field('תקציר', inputs.summary, { id: 'f-summary', span2: true, hint: 'משפט-שניים שמופיעים בכרטיס, בשיתוף ובמנועי חיפוש. נדרש לפרסום.', counter: withCounter(inputs.summary, 500) }),
+        field('תקציר', inputs.summary, { id: 'f-summary', span2: true, hint: 'אופציונלי. אם נשאר ריק – ייווצר אוטומטית מתחילת התוכן.', counter: withCounter(inputs.summary, 500) }),
         h('div', { class: 'field span-2' }, h('label', { for: 'f-tags' }, 'תגיות'), inputs.tags,
           h('p', { class: 'hint', id: 'f-tags-hint' }, 'הפרידו בפסיקים. למשל: Copilot, Outlook, מיילים'), tagPreview))),
 
@@ -160,13 +160,13 @@ function build() {
     h('fieldset', { class: 'edit-section' }, h('legend', {}, 'תכנים משלימים (פרומפטים, הערות, קישורים)'), extrasBox),
 
     h('fieldset', { class: 'edit-section' }, h('legend', {}, 'נוסח WhatsApp'),
-      field('נוסח להפצה', inputs.whatsapp, { id: 'f-whatsapp', hint: 'עיצוב WhatsApp: *מודגש*, _נטוי_, ~קו חוצה~. הקישור לטיפ יתווסף אוטומטית בסוף.' }),
+      field('נוסח להפצה', inputs.whatsapp, { id: 'f-whatsapp', hint: 'עיצוב WhatsApp: *מודגש*, _נטוי_, ~קו חוצה~. ' }),
       h('div', { class: 'form-actions' },
         h('button', { type: 'button', class: 'btn btn--secondary btn--small', onclick: () => {
           if (inputs.whatsapp.value.trim() && !confirmAction('להחליף את הנוסח הקיים בנוסח שנוצר מהטיפ?')) return;
           inputs.whatsapp.value = defaultWhatsappDraft(collect()); updateWa(); markDirty();
         } }, '✍️ יצירת נוסח מתוך הטיפ'),
-        h('button', { type: 'button', class: 'btn btn--whatsapp btn--small', onclick: () => copyText(whatsappMessage(collect()), 'נוסח WhatsApp הועתק ✓') }, '📋 העתקת נוסח WhatsApp + קישור')),
+        h('button', { type: 'button', class: 'btn btn--whatsapp btn--small', onclick: () => copyText(whatsappMessage(collect(), { withLink: false }), 'נוסח WhatsApp הועתק ✓') }, '📋 העתקת נוסח WhatsApp')),
       h('p', { class: 'label', style: 'margin-top:1rem' }, 'תצוגה מקדימה:'), waPreview),
 
     h('fieldset', { class: 'edit-section' }, h('legend', {}, 'SEO'),

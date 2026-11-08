@@ -1,5 +1,14 @@
 // הכנת טיפ לשמירה – משותף לשני המתאמים.
-import { sanitizeHtml } from '../utils/sanitize.js';
+import { sanitizeHtml, htmlToText } from '../utils/sanitize.js';
+
+/** תקציר אוטומטי מהתוכן – כשהשדה נשאר ריק. */
+function autoSummary(html) {
+  const t = htmlToText(html || '');
+  if (t.length <= 160) return t;
+  const cut = t.slice(0, 157);
+  const sp = cut.lastIndexOf(' ');
+  return `${cut.slice(0, sp > 100 ? sp : 157)}…`;
+}
 import { buildSearchTokens, parseTags, SLUG_RE } from '../utils/text.js';
 import { normalizeDistribution } from '../utils/tip-logic.js';
 
@@ -10,7 +19,7 @@ export function prepareTip(tip, categoryName = '') {
     number: tip.number == null || tip.number === '' || isNaN(Number(tip.number)) ? null : Number(tip.number),
     title: String(tip.title || '').trim().slice(0, 200),
     slug: String(tip.slug || '').trim().toLowerCase(),
-    summary: String(tip.summary || '').trim().slice(0, 500),
+    summary: (String(tip.summary || '').trim() || autoSummary(tip.contentHtml)).slice(0, 500),
     contentHtml: sanitizeHtml(tip.contentHtml || ''),
     poster: tip.poster?.url ? {
       url: tip.poster.url, storagePath: tip.poster.storagePath || null, alt: String(tip.poster.alt || '').trim(),
@@ -45,7 +54,6 @@ export function validateTipForSave(tip) {
   if (!tip.slug) errors.push({ field: 'slug', message: 'יש להזין כתובת (slug).' });
   else if (!SLUG_RE.test(tip.slug)) errors.push({ field: 'slug', message: 'כתובת (slug) יכולה לכלול רק אותיות באנגלית קטנות, ספרות ומקפים.' });
   if (!tip.categoryId) errors.push({ field: 'categoryId', message: 'יש לבחור קטגוריה.' });
-  if (tip.status === 'published' && !tip.summary) errors.push({ field: 'summary', message: 'לפרסום באתר נדרש תקציר.' });
   if (tip.poster && !tip.poster.alt) errors.push({ field: 'posterAlt', message: 'יש להזין טקסט חלופי (alt) לפוסטר.' });
   tip.images.forEach((im, i) => { if (!im.alt) errors.push({ field: `imageAlt-${im.id}`, message: `יש להזין טקסט חלופי (alt) לתמונה ${i + 1} בגלריה.` }); });
   tip.extras.forEach((e, i) => {

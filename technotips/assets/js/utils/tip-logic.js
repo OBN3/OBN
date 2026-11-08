@@ -78,9 +78,9 @@ export function tipUrl(slug) { return siteOrigin() + tipPath(slug); }
 
 export function categoryPath(slug) { return `/category.html?slug=${encodeURIComponent(slug)}`; }
 
-export function whatsappMessage(tip) {
-  const url = tipUrl(tip.slug);
-  if (tip.whatsappText && tip.whatsappText.trim()) return `${tip.whatsappText.trim()}\n\n${url}`;
+export function whatsappMessage(tip, { withLink = true } = {}) {
+  const url = withLink && tip.slug ? tipUrl(tip.slug) : '';
+  if (tip.whatsappText && tip.whatsappText.trim()) return [tip.whatsappText.trim(), url].filter(Boolean).join('\n\n');
   return [`*${tip.title}*`, tip.summary, url].filter(Boolean).join('\n\n');
 }
 
