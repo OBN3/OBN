@@ -1,0 +1,497 @@
+{
+  "categories": [
+    {
+      "id": "cat-ai",
+      "name": "AI",
+      "slug": "ai",
+      "description": "בינה מלאכותית – עקרונות, פרומפטים וכלים",
+      "order": 1,
+      "active": true
+    },
+    {
+      "id": "cat-copilot",
+      "name": "Copilot",
+      "slug": "copilot",
+      "description": "Microsoft 365 Copilot בעבודה היומיומית",
+      "order": 2,
+      "active": true
+    },
+    {
+      "id": "cat-chatgpt",
+      "name": "ChatGPT",
+      "slug": "chatgpt",
+      "description": "טיפים לעבודה עם ChatGPT",
+      "order": 3,
+      "active": true
+    },
+    {
+      "id": "cat-excel",
+      "name": "Excel",
+      "slug": "excel",
+      "description": "גיליונות, נוסחאות ותובנות",
+      "order": 4,
+      "active": true
+    },
+    {
+      "id": "cat-outlook",
+      "name": "Outlook",
+      "slug": "outlook",
+      "description": "דואר, יומן ותיבת דואר מסודרת",
+      "order": 5,
+      "active": true
+    },
+    {
+      "id": "cat-teams",
+      "name": "Teams",
+      "slug": "teams",
+      "description": "פגישות, צ'אטים וערוצים",
+      "order": 6,
+      "active": true
+    },
+    {
+      "id": "cat-powerpoint",
+      "name": "PowerPoint",
+      "slug": "powerpoint",
+      "description": "מצגות מהר ונכון",
+      "order": 7,
+      "active": true
+    },
+    {
+      "id": "cat-word",
+      "name": "Word",
+      "slug": "word",
+      "description": "מסמכים מקצועיים",
+      "order": 8,
+      "active": true
+    },
+    {
+      "id": "cat-whatsapp",
+      "name": "WhatsApp",
+      "slug": "whatsapp",
+      "description": "טיפים לוואטסאפ",
+      "order": 9,
+      "active": true
+    },
+    {
+      "id": "cat-productivity",
+      "name": "פרודוקטיביות",
+      "slug": "productivity",
+      "description": "הרגלי עבודה חכמים",
+      "order": 10,
+      "active": true
+    },
+    {
+      "id": "cat-tools",
+      "name": "כלי עבודה",
+      "slug": "tools",
+      "description": "אפליקציות וכלים שימושיים",
+      "order": 11,
+      "active": true
+    }
+  ],
+  "distributionGroups": [
+    {
+      "id": "grp-1",
+      "name": "צוות המטה",
+      "description": "",
+      "order": 1,
+      "active": true,
+      "archived": false
+    },
+    {
+      "id": "grp-2",
+      "name": "מנהלות ומנהלי תוכניות",
+      "description": "",
+      "order": 2,
+      "active": true,
+      "archived": false
+    },
+    {
+      "id": "grp-3",
+      "name": "רכזות ורכזי קהילה",
+      "description": "",
+      "order": 3,
+      "active": true,
+      "archived": false
+    },
+    {
+      "id": "grp-4",
+      "name": "קבוצת חדשנות",
+      "description": "",
+      "order": 4,
+      "active": true,
+      "archived": false
+    },
+    {
+      "id": "grp-5",
+      "name": "שגרירי Copilot",
+      "description": "",
+      "order": 5,
+      "active": true,
+      "archived": false
+    },
+    {
+      "id": "grp-6",
+      "name": "מתנדבים דיגיטליים",
+      "description": "",
+      "order": 6,
+      "active": true,
+      "archived": false
+    },
+    {
+      "id": "grp-7",
+      "name": "שותפים חיצוניים",
+      "description": "",
+      "order": 7,
+      "active": true,
+      "archived": false
+    },
+    {
+      "id": "grp-8",
+      "name": "הנהלה",
+      "description": "",
+      "order": 8,
+      "active": true,
+      "archived": false
+    }
+  ],
+  "tips": [
+    {
+      "id": "seed-tip-1",
+      "number": 1,
+      "title": "קיצור מקשים שחוסך זמן ב-Teams",
+      "slug": "teams-keyboard-shortcuts",
+      "summary": "שלושה קיצורי מקשים שכדאי להכיר כדי לעבור בין צ'אטים, להשתיק את עצמכם ולחפש – בלי עכבר.",
+      "contentHtml": "<p>במקום לחפש כפתורים, נסו את הקיצורים האלה:</p><ul><li><strong>Ctrl+Shift+M</strong> – השתקה / ביטול השתקה בפגישה.</li><li><strong>Ctrl+E</strong> – מעבר מהיר לשורת החיפוש.</li><li><strong>Ctrl+.</strong> – הצגת כל קיצורי המקשים.</li></ul><p>טיפ: הדביקו את הרשימה ליד המסך לשבוע אחד – אחרי זה זה כבר בידיים.</p>",
+      "categoryId": "cat-teams",
+      "tags": [
+        "Teams",
+        "קיצורי מקשים",
+        "פרודוקטיביות"
+      ],
+      "status": "published",
+      "featured": false,
+      "websitePublishedAt": "2026-10-12T09:00:00.000Z",
+      "whatsappText": "",
+      "extras": [],
+      "images": [],
+      "poster": null,
+      "distribution": [],
+      "authorName": "אופיר",
+      "seo": {
+        "title": "",
+        "description": ""
+      }
+    },
+    {
+      "id": "seed-tip-2",
+      "number": 2,
+      "title": "מייל מקצועי ב-30 שניות עם Copilot",
+      "slug": "copilot-outlook-email-draft",
+      "summary": "איך לבקש מ-Copilot ב-Outlook טיוטת מייל בטון הנכון – ולשפר אותה בלחיצה.",
+      "contentHtml": "<p>ב-Outlook לחצו על <strong>Copilot ← טיוטה עם Copilot</strong>, כתבו בשורה אחת מה אתם רוצים להשיג, ובחרו טון ואורך.</p><h3>איך זה נראה בפועל</h3><ol><li>כתבו: <em>\"תזכורת מנומסת לשותף לגבי הגשת הדוח עד יום חמישי\"</em>.</li><li>בחרו טון <strong>ישיר</strong> ואורך <strong>קצר</strong>.</li><li>לחצו <strong>יצירה</strong>, ואז <strong>שמור</strong> או <strong>צור מחדש</strong>.</li></ol><p>תמיד קראו לפני שליחה – Copilot מנסח, אתם אחראים.</p>",
+      "categoryId": "cat-outlook",
+      "tags": [
+        "Copilot",
+        "Outlook",
+        "מיילים"
+      ],
+      "status": "published",
+      "featured": true,
+      "websitePublishedAt": "2026-10-20T08:30:00.000Z",
+      "whatsappText": "",
+      "extras": [],
+      "images": [],
+      "poster": {
+        "url": "/media/seed/poster-email-draft.svg",
+        "storagePath": null,
+        "alt": "פוסטר: מייל מקצועי ב-30 שניות עם Copilot ב-Outlook",
+        "width": 800,
+        "height": 1000
+      },
+      "distribution": [],
+      "authorName": "אופיר",
+      "seo": {
+        "title": "",
+        "description": ""
+      }
+    },
+    {
+      "id": "seed-tip-3",
+      "number": 3,
+      "title": "נוסחת הפרומפט המנצח: מטרה, הקשר, מקור, פורמט",
+      "slug": "winning-prompt-formula",
+      "summary": "ארבעה רכיבים שהופכים בקשה כללית לפרומפט שמחזיר תשובה מדויקת ושימושית.",
+      "contentHtml": "<p>פרומפט טוב עונה על ארבע שאלות:</p><ul><li><strong>מטרה</strong> – מה אני רוצה לקבל?</li><li><strong>הקשר</strong> – למה ובשביל מי?</li><li><strong>מקור</strong> – על איזה מידע להסתמך (קובץ, מייל, פגישה)?</li><li><strong>פורמט</strong> – באיזו צורה להחזיר (טבלה, רשימה, 5 שורות)?</li></ul>",
+      "categoryId": "cat-ai",
+      "tags": [
+        "פרומפטים",
+        "AI",
+        "Copilot"
+      ],
+      "status": "published",
+      "featured": true,
+      "websitePublishedAt": "2026-10-27T07:45:00.000Z",
+      "whatsappText": "",
+      "images": [],
+      "poster": {
+        "url": "/media/seed/poster-prompt-formula.svg",
+        "storagePath": null,
+        "alt": "פוסטר: נוסחת הפרומפט – מטרה, הקשר, מקור, פורמט",
+        "width": 800,
+        "height": 1000
+      },
+      "extras": [
+        {
+          "id": "x31",
+          "type": "prompt",
+          "title": "פרומפט לדוגמה",
+          "content": "אני מנהל/ת תוכנית ומכין/ה עדכון להנהלה (הקשר).\nסכם/י את 3 הנקודות המרכזיות מהמסמך /דוח רבעוני (מקור)\nכדי שההנהלה תבין מה התקדם ומה תקוע (מטרה).\nהחזר/י טבלה עם העמודות: נושא, סטטוס, צעד הבא (פורמט).",
+          "url": "",
+          "order": 0
+        },
+        {
+          "id": "x32",
+          "type": "note",
+          "title": "שימו לב",
+          "content": "אל תזינו מידע אישי או רגיש שאינו נדרש למשימה. בדקו את מדיניות אבטחת המידע בארגון.",
+          "url": "",
+          "order": 1
+        }
+      ],
+      "distribution": [],
+      "authorName": "אופיר",
+      "seo": {
+        "title": "",
+        "description": ""
+      }
+    },
+    {
+      "id": "seed-tip-4",
+      "number": 4,
+      "title": "תובנות מטבלה ב-Excel בלי נוסחאות",
+      "slug": "excel-copilot-insights",
+      "summary": "שלושה צעדים לקבלת ניתוח, גרף ותובנות מטבלה – גם אם אתם לא אוהבים נוסחאות.",
+      "contentHtml": "<p>ודאו שהנתונים מעוצבים כ<strong>טבלה</strong> (Ctrl+T) ושהקובץ שמור ב-OneDrive או SharePoint. אחר כך:</p><ol><li>פתחו את Copilot מתוך Excel.</li><li>בקשו: <em>\"הצג את המגמות העיקריות לפי חודש\"</em>.</li><li>לחצו <strong>הוסף לגיליון חדש</strong> כדי לשמור את הגרף.</li></ol>",
+      "categoryId": "cat-excel",
+      "tags": [
+        "Excel",
+        "Copilot",
+        "נתונים"
+      ],
+      "status": "published",
+      "featured": false,
+      "websitePublishedAt": "2026-11-01T10:00:00.000Z",
+      "whatsappText": "",
+      "extras": [],
+      "poster": {
+        "url": "/media/seed/poster-excel-insights.svg",
+        "storagePath": null,
+        "alt": "פוסטר: תובנות מטבלה ב-Excel עם Copilot",
+        "width": 800,
+        "height": 1000
+      },
+      "images": [
+        {
+          "id": "i41",
+          "url": "/media/seed/step-1-open-copilot.svg",
+          "storagePath": null,
+          "alt": "פתיחת חלונית Copilot בתוך Excel",
+          "caption": "שלב 1: פותחים את Copilot מהסרגל העליון",
+          "width": 1200,
+          "height": 900,
+          "order": 0
+        },
+        {
+          "id": "i42",
+          "url": "/media/seed/step-2-write-prompt.svg",
+          "storagePath": null,
+          "alt": "כתיבת בקשה לניתוח מגמות",
+          "caption": "שלב 2: כותבים מה רוצים לראות",
+          "width": 1200,
+          "height": 900,
+          "order": 1
+        },
+        {
+          "id": "i43",
+          "url": "/media/seed/step-3-review.svg",
+          "storagePath": null,
+          "alt": "בדיקת הגרף והוספתו לגיליון",
+          "caption": "שלב 3: בודקים ומוסיפים לגיליון",
+          "width": 1200,
+          "height": 900,
+          "order": 2
+        }
+      ],
+      "distribution": [],
+      "authorName": "אופיר",
+      "seo": {
+        "title": "",
+        "description": ""
+      }
+    },
+    {
+      "id": "seed-tip-5",
+      "number": 5,
+      "title": "תזמון פרומפטים: סיכום שבועי שמגיע לבד",
+      "slug": "scheduled-prompts-weekly-summary",
+      "summary": "מגדירים פעם אחת פרומפט מתוזמן ב-Copilot, ומקבלים כל יום ראשון סיכום של מה שחשוב.",
+      "contentHtml": "<p>ב-Copilot Chat, אחרי שכתבתם פרומפט שעובד טוב, לחצו על <strong>תזמון פרומפט</strong> ובחרו תדירות.</p><p>זה מתאים במיוחד ל:</p><ul><li>סיכום מיילים לא נקראים מהשבוע.</li><li>רשימת משימות פתוחות מפגישות.</li><li>הכנה לפגישות של השבוע הבא.</li></ul>",
+      "categoryId": "cat-copilot",
+      "tags": [
+        "Copilot",
+        "תזמון",
+        "אוטומציה"
+      ],
+      "status": "published",
+      "featured": false,
+      "websitePublishedAt": "2026-11-04T06:30:00.000Z",
+      "whatsappText": "",
+      "poster": null,
+      "images": [
+        {
+          "id": "i51",
+          "url": "/media/seed/schedule-1.svg",
+          "storagePath": null,
+          "alt": "מסך תזמון פרומפט ב-Copilot",
+          "caption": "בוחרים יום ושעה",
+          "width": 1200,
+          "height": 900,
+          "order": 0
+        },
+        {
+          "id": "i52",
+          "url": "/media/seed/schedule-2.svg",
+          "storagePath": null,
+          "alt": "התראה על סיכום שבועי שהתקבל",
+          "caption": "הסיכום מגיע אוטומטית",
+          "width": 1200,
+          "height": 900,
+          "order": 1
+        }
+      ],
+      "extras": [
+        {
+          "id": "x51",
+          "type": "prompt",
+          "title": "פרומפט להפעלה",
+          "content": "סכם עבורי את השבוע שעבר: מיילים חשובים שלא עניתי עליהם, החלטות מפגישות ומשימות שהוטלו עליי.\nסדר לפי דחיפות והצג כרשימה עם בעלים ותאריך יעד.",
+          "url": "",
+          "order": 0
+        },
+        {
+          "id": "x52",
+          "type": "link",
+          "title": "מדריך Microsoft לפרומפטים מתוזמנים",
+          "content": "",
+          "url": "https://support.microsoft.com/",
+          "order": 1
+        }
+      ],
+      "distribution": [],
+      "authorName": "אופיר",
+      "seo": {
+        "title": "",
+        "description": ""
+      }
+    },
+    {
+      "id": "seed-tip-6",
+      "number": 6,
+      "title": "סיכום פגישה בקליק עם Copilot ב-Teams",
+      "slug": "teams-meeting-recap",
+      "summary": "אחרי פגישה מוקלטת – בקשו מ-Copilot סיכום, החלטות ומשימות עם בעלים, תוך פחות מדקה.",
+      "contentHtml": "<p>בסיום פגישה עם תמלול, פתחו את הפגישה ביומן ← <strong>סיכום</strong> ← <strong>Copilot</strong>.</p><p>בקשו במפורש <strong>משימות עם בעלים ודדליין</strong> – כך הסיכום הופך לתוכנית עבודה.</p>",
+      "categoryId": "cat-teams",
+      "tags": [
+        "Teams",
+        "Copilot",
+        "פגישות"
+      ],
+      "status": "published",
+      "featured": true,
+      "websitePublishedAt": "2026-11-06T17:00:00.000Z",
+      "whatsappText": "טכנוטיפ #6 💡\n*סיכום פגישה בקליק עם Copilot*\n\nאחרי פגישה מוקלטת ב-Teams:\n1️⃣ פותחים את הפגישה ביומן\n2️⃣ לוחצים *סיכום* ← *Copilot*\n3️⃣ מבקשים: _\"משימות עם בעלים ודדליין\"_\n\nוזהו – יש תוכנית עבודה ✅",
+      "poster": {
+        "url": "/media/seed/poster-meeting-summary.svg",
+        "storagePath": null,
+        "alt": "פוסטר: סיכום פגישה בקליק עם Copilot ב-Teams",
+        "width": 800,
+        "height": 1000
+      },
+      "images": [],
+      "extras": [
+        {
+          "id": "x61",
+          "type": "prompt",
+          "title": "פרומפט לסיכום",
+          "content": "סכם את הפגישה כך שיכלול: סיכום כולל, נקודות מרכזיות, החלטות, פריטי פעולה (בעלים + תאריך יעד) ושאלות פתוחות.",
+          "url": "",
+          "order": 0
+        }
+      ],
+      "distribution": [
+        {
+          "groupId": "grp-1",
+          "target": true,
+          "published": true,
+          "publishedAt": "2026-11-06T17:05:00.000Z",
+          "notes": ""
+        },
+        {
+          "groupId": "grp-2",
+          "target": true,
+          "published": true,
+          "publishedAt": "2026-11-07T08:10:00.000Z",
+          "notes": "נשלח עם פוסטר"
+        },
+        {
+          "groupId": "grp-5",
+          "target": true,
+          "published": false,
+          "publishedAt": null,
+          "notes": ""
+        }
+      ],
+      "authorName": "אופיר",
+      "seo": {
+        "title": "",
+        "description": ""
+      }
+    },
+    {
+      "id": "seed-tip-7",
+      "number": 7,
+      "title": "טיוטה: מצגת מתוך מסמך Word",
+      "slug": "powerpoint-from-word-draft",
+      "summary": "איך הופכים מסמך Word למצגת ראשונית עם Copilot ב-PowerPoint.",
+      "contentHtml": "<p>בעבודה…</p>",
+      "categoryId": "cat-powerpoint",
+      "tags": [
+        "PowerPoint",
+        "Copilot"
+      ],
+      "status": "draft",
+      "featured": false,
+      "websitePublishedAt": null,
+      "whatsappText": "",
+      "extras": [],
+      "images": [],
+      "poster": null,
+      "distribution": [
+        {
+          "groupId": "grp-4",
+          "target": true,
+          "published": false,
+          "publishedAt": null,
+          "notes": ""
+        }
+      ],
+      "authorName": "אופיר",
+      "seo": {
+        "title": "",
+        "description": ""
+      }
+    }
+  ]
+}

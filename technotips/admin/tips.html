@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>טיפים | ניהול טכנוטיפים</title>
+  <meta name="theme-color" content="#123B4E">
+  <link rel="icon" href="/media/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/admin.css">
+</head>
+<body class="admin auth-pending">
+  <a class="skip-link" href="#main">דילוג לתוכן הראשי</a>
+  <header class="admin-header">
+    <div class="admin-header__inner">
+      <a class="admin-brand" href="/admin/"><span aria-hidden="true">💡</span> טכנוטיפים <span class="admin-brand__tag">ניהול</span></a>
+      <nav class="admin-nav" aria-label="ניווט ניהול">
+        <ul>
+          <li><a href="/admin/" data-nav="dashboard">לוח בקרה</a></li>
+          <li><a href="/admin/tips.html" data-nav="tips">טיפים</a></li>
+          <li><a href="/admin/tip-edit.html" data-nav="new">טיפ חדש</a></li>
+          <li><a href="/admin/categories.html" data-nav="categories">קטגוריות</a></li>
+          <li><a href="/admin/groups.html" data-nav="groups">קבוצות הפצה</a></li>
+          <li><a href="/" target="_blank" rel="noopener">לאתר <span aria-hidden="true">↗</span><span class="visually-hidden">(נפתח בחלון חדש)</span></a></li>
+        </ul>
+      </nav>
+      <div class="admin-user">
+        <span id="admin-user" class="muted"></span>
+        <button type="button" id="logout" class="btn btn--small btn--secondary">יציאה</button>
+      </div>
+    </div>
+  </header>
+  <div class="auth-loader" aria-live="polite">טוען…</div>
+  <main id="main" tabindex="-1" class="admin-main">
+    <div class="admin-container">
+      <div class="page-bar">
+        <h1>טיפים</h1>
+        <a class="btn btn--primary" href="/admin/tip-edit.html">+ טיפ חדש</a>
+      </div>
+      <form id="tip-filters" class="admin-filters" role="search" aria-label="סינון טיפים">
+        <div class="field field--grow"><label for="a-q">חיפוש</label><input id="a-q" type="search" placeholder="כותרת, מספר, תגית…"></div>
+        <div class="field"><label for="a-status">סטטוס אתר</label>
+          <select id="a-status"><option value="">הכול</option><option value="published">מפורסם</option><option value="draft">טיוטה</option><option value="featured">נבחרים</option></select></div>
+        <div class="field"><label for="a-cat">קטגוריה</label><select id="a-cat"><option value="">הכול</option></select></div>
+        <div class="field"><label for="a-dist">הפצה</label>
+          <select id="a-dist"><option value="">הכול</option><option value="notyet">טרם הופץ</option><option value="partial">הופץ חלקית</option><option value="complete">הופץ בכל קבוצות היעד</option></select></div>
+        <div class="field"><label for="a-group">קבוצה</label><select id="a-group"><option value="">כל הקבוצות</option></select></div>
+        <div class="field"><label for="a-sort">מיון</label>
+          <select id="a-sort"><option value="updated">עודכן לאחרונה</option><option value="number">מספר טיפ</option><option value="title">כותרת</option><option value="published">תאריך פרסום</option></select></div>
+      </form>
+      <p id="tips-count" class="muted" aria-live="polite"></p>
+      <div id="tips-table" class="table-wrap"></div>
+    </div>
+  </main>
+  <script type="module" src="/assets/js/admin/tips-list.js"></script>
+</body>
+</html>

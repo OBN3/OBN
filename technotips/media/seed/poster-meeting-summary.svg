@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000" direction="rtl">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#123B4E"/><stop offset="1" stop-color="#1F6F8B"/></linearGradient></defs>
+<rect width="800" height="1000" fill="url(#g)"/>
+<circle cx="720" cy="120" r="220" fill="#ffffff" opacity=".08"/>
+<circle cx="90" cy="940" r="200" fill="#ffffff" opacity=".06"/>
+<text x="400" y="360" font-size="176" text-anchor="middle">📝</text>
+<text x="400" y="580" font-family="Assistant, Arial, sans-serif" font-weight="800" font-size="68" fill="#ffffff" text-anchor="middle">סיכום פגישה בקליק</text>
+<text x="400" y="660" font-family="Assistant, Arial, sans-serif" font-size="36" fill="#ffe2b5" text-anchor="middle">Copilot ב-Teams</text>
+<rect x="280" y="820" width="240" height="56" rx="28" fill="#F2A541"/>
+<text x="400" y="858" font-family="Assistant, Arial, sans-serif" font-weight="700" font-size="28" fill="#2a1a00" text-anchor="middle">טכנוטיפים</text>
+</svg>

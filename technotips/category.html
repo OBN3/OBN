@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>קטגוריה | טכנוטיפים</title>
+  <meta name="description" content="טיפים לפי קטגוריה.">
+  <meta property="og:title" content="קטגוריה | טכנוטיפים">
+  <meta property="og:description" content="טיפים לפי קטגוריה.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/media/og-default.png">
+  <meta property="og:locale" content="he_IL">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#123B4E">
+  <link rel="icon" href="/media/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/public.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">דילוג לתוכן הראשי</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="טכנוטיפים – דף הבית">
+        <span class="brand__mark" aria-hidden="true">💡</span><span class="brand__name">טכנוטיפים</span>
+      </a>
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="site-nav">
+        <span aria-hidden="true">☰</span><span class="visually-hidden">תפריט</span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="ניווט ראשי">
+        <ul class="site-nav__list">
+          <li><a href="/" data-nav="home">בית</a></li>
+          <li><a href="/tips.html" data-nav="tips">כל הטיפים</a></li>
+          <li><a href="/about.html" data-nav="about">אודות</a></li>
+        </ul>
+        <form class="header-search" role="search" action="/tips.html" method="get">
+          <label for="header-q" class="visually-hidden">חיפוש טיפים</label>
+          <input id="header-q" name="q" type="search" placeholder="חיפוש טיפ…" autocomplete="off" enterkeyhint="search">
+          <button type="submit" class="btn btn--icon" aria-label="חיפוש"><span aria-hidden="true">🔍</span></button>
+        </form>
+      </nav>
+    </div>
+  </header>
+  <main id="main" tabindex="-1">
+    <section class="page-head">
+      <div class="container">
+        <nav class="breadcrumb" aria-label="פירורי לחם"><ol><li><a href="/">בית</a></li><li><a href="/tips.html">כל הטיפים</a></li><li aria-current="page" id="crumb-cat">קטגוריה</li></ol></nav>
+        <h1 class="page-title" id="cat-title">קטגוריה</h1>
+        <p class="page-lead" id="cat-desc"></p>
+      </div>
+    </section>
+    <section class="section section--tight">
+      <div class="container">
+        <div class="filters filters--inline">
+          <div class="field">
+            <label for="c-sort">מיון</label>
+            <select id="c-sort">
+              <option value="newest">החדש ביותר</option>
+              <option value="oldest">הישן ביותר</option>
+              <option value="number">לפי מספר טיפ</option>
+            </select>
+          </div>
+        </div>
+        <div id="list"></div>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p><strong>טכנוטיפים</strong> · טיפים קצרים ומעשיים לטכנולוגיה, AI וכלי עבודה</p>
+      <p class="footer-meta">© <span data-year></span> · <a href="/about.html">אודות</a></p>
+    </div>
+  </footer>
+  <script type="module" src="/assets/js/pages/category.js"></script>
+</body>
+</html>

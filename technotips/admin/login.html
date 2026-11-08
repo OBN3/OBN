@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>כניסה | ניהול טכנוטיפים</title>
+  <meta name="theme-color" content="#123B4E">
+  <link rel="icon" href="/media/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/admin.css">
+</head>
+<body class="admin admin--login">
+
+  <div class="auth-loader" aria-live="polite">טוען…</div>
+  <main id="main" tabindex="-1" class="admin-main">
+    <div class="login-card">
+      <h1 class="login-title"><span aria-hidden="true">💡</span> כניסה לניהול טכנוטיפים</h1>
+      <div id="login-note"></div>
+      <form id="login-form" novalidate>
+        <div class="field">
+          <label for="email">דוא"ל</label>
+          <input id="email" name="email" type="email" autocomplete="username" required dir="ltr">
+        </div>
+        <div class="field">
+          <label for="password">סיסמה</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required dir="ltr">
+        </div>
+        <p id="login-error" class="field-error" role="alert"></p>
+        <button type="submit" class="btn btn--primary btn--block">כניסה</button>
+      </form>
+      <p class="login-back"><a href="/">← חזרה לאתר</a></p>
+    </div>
+  </main>
+  <script type="module" src="/assets/js/admin/login.js"></script>
+</body>
+</html>

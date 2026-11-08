@@ -1,0 +1,82 @@
+rules_version = '2';
+
+// טכנוטיפים – Firestore Security Rules
+// עקרון: קריאה ציבורית רק לתוכן מפורסם; כל כתיבה – למנהל מורשה בלבד.
+// מנהל = custom claim admin==true או מסמך admins/{uid} (נוצר ע"י scripts/set-admin.mjs בלבד).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn() && (
+        request.auth.token.admin == true ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+    function isStr(v, min, max) { return v is string && v.size() >= min && v.size() <= max; }
+    function optStr(d, k, max) { return !(k in d) || d[k] == null || (d[k] is string && d[k].size() <= max); }
+
+    function validTip(d) {
+      return isStr(d.title, 1, 200)
+        && d.slug is string && d.slug.matches('^[a-z0-9]+(-[a-z0-9]+)*$') && d.slug.size() <= 80
+        && d.status in ['draft', 'published']
+        && d.featured is bool
+        && d.categoryId is string
+        && d.tags is list && d.tags.size() <= 30
+        && d.images is list && d.images.size() <= 100
+        && d.extras is list && d.extras.size() <= 50
+        && d.searchTokens is list && d.searchTokens.size() <= 2000
+        && (d.number == null || d.number is int || d.number is float)
+        && d.numberSort is number
+        && optStr(d, 'summary', 500)
+        && optStr(d, 'contentHtml', 200000)
+        && optStr(d, 'whatsappText', 10000)
+        && (d.status == 'draft' || d.websitePublishedAt is timestamp);
+    }
+
+    function validCategory(d) {
+      return isStr(d.name, 1, 60)
+        && d.slug is string && d.slug.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+        && d.active is bool && d.order is number;
+    }
+
+    // רשימת מנהלים – משתמש יכול לבדוק רק את עצמו. כתיבה רק דרך Admin SDK.
+    match /admins/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // טיפים – ציבורי רק כשהסטטוס published (שאילתות ציבוריות חייבות לכלול where status == 'published').
+    match /tips/{tipId} {
+      allow read: if resource.data.status == 'published' || isAdmin();
+      allow create, update: if isAdmin() && validTip(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // נתוני הפצה (קבוצות, הערות) – למנהלים בלבד.
+    match /tipAdmin/{tipId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /categories/{id} {
+      allow read: if resource.data.active == true || isAdmin();
+      allow create, update: if isAdmin() && validCategory(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // שמות קבוצות ההפצה אינם ציבוריים.
+    match /distributionGroups/{id} {
+      allow read: if isAdmin();
+      allow create, update: if isAdmin() && isStr(request.resource.data.name, 1, 80);
+      allow delete: if isAdmin();
+    }
+
+    match /cleanupQueue/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,8 @@
+# קובץ לפיתוח מקומי. בייצור (Vercel) הקובץ נוצר דינמית ע"י api/robots.js עם כתובת sitemap מלאה.
+User-agent: *
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/
+Allow: /
+
+Sitemap: /sitemap.xml
