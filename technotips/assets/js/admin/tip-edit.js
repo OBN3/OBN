@@ -145,10 +145,10 @@ const updateWa = () => { waPreview.textContent = whatsappMessage(collect(), { wi
         field('כותרת *', inputs.title, { id: 'f-title', span2: true }),
         field('מספר טיפ', inputs.number, { id: 'f-number', hint: 'אופציונלי. מוצג כ"טיפ #12".' }),
         field('קטגוריה *', inputs.category, { id: 'f-category' }),
-        h('div', { class: 'field span-2' }, h('label', { for: 'f-slug' }, 'כתובת (slug) *'),
+        h('div', { class: 'field span-2' }, h('label', { for: 'f-slug' }, 'כתובת (slug)'),
           h('div', { class: 'slug-row' }, inputs.slug,
             h('button', { type: 'button', class: 'btn btn--secondary btn--small', onclick: () => { slugTouched = false; autoSlug(); markDirty(); } }, 'יצירה אוטומטית')),
-          h('p', { class: 'hint', id: 'f-slug-hint' }, 'אותיות באנגלית קטנות, ספרות ומקפים. משמשת בכתובת הטיפ – עדיף לא לשנות אחרי שיתוף.')),
+          h('p', { class: 'hint', id: 'f-slug-hint' }, 'אופציונלי. אם נשאר ריק – תיווצר אוטומטית לפי מספר הטיפ. עדיף לא לשנות אחרי שיתוף.')),
         field('תקציר', inputs.summary, { id: 'f-summary', span2: true, hint: 'אופציונלי. אם נשאר ריק – ייווצר אוטומטית מתחילת התוכן.', counter: withCounter(inputs.summary, 500) }),
         h('div', { class: 'field span-2' }, h('label', { for: 'f-tags' }, 'תגיות'), inputs.tags,
           h('p', { class: 'hint', id: 'f-tags-hint' }, 'הפרידו בפסיקים. למשל: Copilot, Outlook, מיילים'), tagPreview))),
@@ -244,7 +244,7 @@ function renderPoster() {
         } }, 'הסרת פוסטר') : null),
       h('p', { class: 'hint' }, 'JPG, PNG או WebP עד 10MB. התמונה מוקטנת ומומרת אוטומטית.'),
       progress, status,
-      tip.poster ? field('טקסט חלופי (alt) *', alt, { id: 'f-poster-alt', hint: 'חובה לנגישות. תארו את המסר המרכזי של הפוסטר.' }) : null)));
+      tip.poster ? field('טקסט חלופי (alt)', alt, { id: 'f-poster-alt', hint: 'אופציונלי. אם נשאר ריק – תשמש כותרת הטיפ.' }) : null)));
 }
 
 /* ---------- גלריה ---------- */
@@ -298,7 +298,7 @@ function renderGallery(focusSel) {
     return h('li', { class: 'gallery-item' },
       h('img', { src: im.url, alt: '', width: 96, height: 96 }),
       h('div', { class: 'fields' },
-        h('div', { class: 'field', style: 'margin:0' }, h('label', { for: `imageAlt-${im.id}` }, `טקסט חלופי לתמונה ${i + 1} *`), alt),
+        h('div', { class: 'field', style: 'margin:0' }, h('label', { for: `imageAlt-${im.id}` }, `טקסט חלופי לתמונה ${i + 1}`), alt),
         h('div', { class: 'field', style: 'margin:0' }, h('label', { for: `imageCap-${im.id}` }, 'כיתוב'), cap)),
       h('div', { class: 'item-tools' },
         h('button', { type: 'button', class: 'btn btn--small btn--ghost', 'data-move': `img-up-${im.id}`, disabled: i === 0, 'aria-label': `הזזת תמונה ${i + 1} למעלה`, onclick: () => { moveItem(tip.images, i, -1); markDirty(); renderGallery(`[data-move="img-up-${im.id}"]`); } }, '▲'),
@@ -455,13 +455,19 @@ async function save(status) {
   draft.status = status;
   const cat = categories.find((c) => c.id === draft.categoryId);
   const prepared = prepareTip(draft, cat?.name || '');
+    if (!prepared.slug) {
+    prepared.slug = prepared.number != null ? `tip-${prepared.number}` : `tip-${String(id).toLowerCase().replace(/[^a-z0-9]/g, '').slice(-8)}`;
+  }
   const errors = validateTipForSave(prepared);
   saving = true;
   root.setAttribute('aria-busy', 'true');
   $('#action-buttons')?.querySelectorAll('button').forEach((b) => { b.disabled = true; });
   try {
-    if (prepared.slug && !errors.some((e) => e.field === 'slug') && await api.isSlugTaken(prepared.slug, id)) {
-      errors.push({ field: 'slug', message: 'כתובת (slug) זו כבר בשימוש בטיפ אחר. בחרו כתובת ייחודית.' });
+    if (prepared.slug && !errors.some((e) => e.field === 'slug')) {
+      const base = prepared.slug;
+      let n = 2;
+      while (await api.isSlugTaken(prepared.slug, id)) prepared.slug = `${base}-${n++}`;
+      inputs.slug.value = prepared.slug;
     }
     showErrors(errors);
     if (errors.length) return;
