@@ -2,6 +2,44 @@
 import { h } from '../utils/dom.js';
 import { sanitizeHtml, isSafeUrl } from '../utils/sanitize.js';
 
+// המרת טקסט בעיצוב WhatsApp (*מודגש*, _נטוי_, ~קו חוצה~, רשימות, קישורים) ל-HTML.
+const WA_MARKERS = /(^|[\s(])([*_~])[^\s*_~][^\n]*?\2(?=[\s.,!?:)]|$)|^\s*([-•●▪]|\d{1,2}[.)])\s+\S/m;
+const WA_URL_RE = /(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+)/gi;
+const escHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+function waInline(line) {
+  return line.split(WA_URL_RE).map((part, i) => {
+    if (i % 2 === 0) {
+      return escHtml(part)
+        .replace(/(^|[\s(])\*([^*\n]+?)\*(?=[\s.,!?:)]|$)/g, '$1<strong>$2</strong>')
+        .replace(/(^|[\s(])_([^_\n]+?)_(?=[\s.,!?:)]|$)/g, '$1<em>$2</em>')
+        .replace(/(^|[\s(])~([^~\n]+?)~(?=[\s.,!?:)]|$)/g, '$1<s>$2</s>');
+    }
+    let url = part, tail = '';
+    while (/[.,;:!?)\]״"'»]$/.test(url)) { tail = url.slice(-1) + tail; url = url.slice(0, -1); }
+    const href = url.startsWith('www.') ? `https://${url}` : url;
+    return `<a href="${escHtml(href)}">${escHtml(url)}</a>${escHtml(tail)}`;
+  }).join('');
+}
+
+function whatsappToHtml(text) {
+  const out = []; let list = null;
+  const close = () => { if (list) { out.push(`<${list.tag}>${list.items.map((x) => `<li>${x}</li>`).join('')}</${list.tag}>`); list = null; } };
+  for (const raw of String(text).replace(/\r\n?/g, '\n').split('\n')) {
+    const line = raw.trim();
+    if (!line) { close(); continue; }
+    const ul = line.match(/^[-•●▪]\s+(.+)$/);
+    const ol = line.match(/^\d{1,2}[.)]\s+(.+)$/);
+    const tag = ul ? 'ul' : ol ? 'ol' : null;
+    if (tag) {
+      if (!list || list.tag !== tag) { close(); list = { tag, items: [] }; }
+      list.items.push(waInline((ul || ol)[1]));
+    } else { close(); out.push(`<p>${waInline(line)}</p>`); }
+  }
+  close();
+  return out.join('');
+}
+
 const EMOJIS = ['💡', '✅', '👉', '⭐', '🚀', '📌', '📝', '📊', '✉️', '📅', '🔍', '⚡', '🎯', '🤖', '✨', '⚠️', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '🙂', '👏', '🔗'];
 
 export function createRichEditor({ id, labelId, initialHtml = '', placeholder = '', onChange }) {
@@ -69,7 +107,8 @@ export function createRichEditor({ id, labelId, initialHtml = '', placeholder = 
     const html = e.clipboardData.getData('text/html');
     const text = e.clipboardData.getData('text/plain');
     e.preventDefault();
-    if (html) document.execCommand('insertHTML', false, sanitizeHtml(html));
+    if (text && WA_MARKERS.test(text)) document.execCommand('insertHTML', false, sanitizeHtml(whatsappToHtml(text)));
+    else if (html) document.execCommand('insertHTML', false, sanitizeHtml(html));
     else document.execCommand('insertText', false, text);
     update();
   });
