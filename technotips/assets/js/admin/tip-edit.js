@@ -483,7 +483,21 @@ async function save(status) {
     isNew = false; dirty = false;
     sessionUploads.clear();
     if (pendingDeletes.size) { await api.deleteFiles([...pendingDeletes]); pendingDeletes.clear(); }
-    if (wasNew) history.replaceState(null, '', `/admin/tip-edit.html?id=${encodeURIComponent(id)}`);
+    if (wasNew) {
+  dirty = false;
+
+  showToast(
+    status === 'published'
+      ? 'הטיפ פורסם. פותח טופס חדש…'
+      : 'הטיוטה נשמרה. פותח טופס חדש…'
+  );
+
+  setTimeout(() => {
+    location.href = '/admin/tip-edit.html';
+  }, 700);
+
+  return;
+}
     $('#edit-title').textContent = `עריכה: ${tip.title}`;
     showToast(status === 'published' ? (prevStatus !== 'published' ? 'הטיפ פורסם באתר 🎉' : 'השינויים נשמרו') : 'נשמר כטיוטה');
   } catch (e) {
