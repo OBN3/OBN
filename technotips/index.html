@@ -45,14 +45,15 @@
     </div>
   </header>
   <main id="main" tabindex="-1">
-    <section class="hero">
+    <section class="hero hero--compact">
       <div class="container hero__inner">
-        <p class="hero__eyebrow">טיפ קטן. שינוי גדול בשגרה.</p>
-        <h1 class="hero__title">טכנוטיפים</h1>
-        <p class="hero__lead">טיפים קצרים ומעשיים ל-Copilot, בינה מלאכותית וכלי העבודה היומיומיים – עם פרומפטים מוכנים להעתקה.</p>
+        <div class="hero__text">
+          <h1 class="hero__title">טכנוטיפים</h1>
+          <p class="hero__lead"><strong id="home-total">טיפים קצרים ומעשיים</strong> לטכנולוגיה, בינה מלאכותית וכלי עבודה</p>
+        </div>
         <form class="hero-search" role="search" action="/tips.html" method="get">
           <label for="hero-q" class="visually-hidden">חיפוש בטיפים</label>
-          <input id="hero-q" name="q" type="search" placeholder="מה תרצו ללמוד היום? למשל: סיכום פגישה" autocomplete="off" enterkeyhint="search">
+          <input id="hero-q" name="q" type="search" placeholder="מה תרצו למצוא?" autocomplete="off" enterkeyhint="search">
           <button type="submit" class="btn btn--primary">חיפוש</button>
         </form>
       </div>
