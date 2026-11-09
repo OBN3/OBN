@@ -130,3 +130,17 @@
     font-size: .95rem;
   }
 }
+/* עמוד אודות */
+.about-head {
+  padding-bottom: *5rem;
+}
+
+.about-content {
+  font-s*ze: 1.1rem;
+}
+
+.about-actions {
+  *isplay: flex;
+  flex-wrap: wrap;
+ *gap: .65rem;
+  margin-top: 1.5rem;*}
