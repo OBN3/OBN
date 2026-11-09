@@ -132,15 +132,15 @@
 }
 /* עמוד אודות */
 .about-head {
-  padding-bottom: *5rem;
+  padding-bottom: .5rem;
 }
 
 .about-content {
-  font-s*ze: 1.1rem;
+  font-size: 1.1rem;
 }
 
 .about-actions {
-  *isplay: flex;
+  display: flex;
   flex-wrap: wrap;
- *gap: .65rem;
+  gap: .65rem;
   margin-top: 1.5rem;*}
