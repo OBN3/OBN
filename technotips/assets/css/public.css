@@ -98,38 +98,29 @@
 .footer-inner p { margin: 0; }
 .tip-page [id], .gallery, .share { scroll-margin-top: 80px; }
 .admin-edit-link { margin-bottom: .75rem; }
-/* Hero קומפקטי - ספריית תוכן ולא דף נחיתה */
-.hero {
-  padding: 1.35rem 0 1.5rem;
-}
 
-.hero__eyebrow {
-  display: none;
+/* Hero קומפקטי – ספריית תוכן ולא דף נחיתה */
+.hero--compact { padding: 1.1rem 0 1.25rem; }
+.hero--compact .hero__inner { max-width: var(--container); }
+.hero--compact .hero__title { font-size: clamp(1.8rem, 4vw, 2.4rem); margin-bottom: .1rem; }
+.hero--compact .hero__lead { max-width: none; margin-bottom: .75rem; font-size: 1.05rem; line-height: 1.45; }
+.hero--compact .hero-search { max-width: 600px; }
+.hero--compact .hero-search input, .hero--compact .hero-search .btn { min-height: 44px; }
+@media (min-width: 860px) {
+  .hero--compact .hero__inner { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(400px, 600px); align-items: center; gap: 1.5rem; }
+  .hero--compact .hero__lead { margin-bottom: 0; }
+  .hero--compact .hero-search { width: 100%; }
 }
-
-.hero__title {
-  font-size: clamp(2rem, 5vw, 2.75rem);
-  margin-bottom: .15rem;
-}
-
-.hero__lead {
-  font-size: 1.05rem;
-  margin-bottom: .8rem;
-}
-
-.hero-search {
-  max-width: 600px;
-}
-
 @media (max-width: 600px) {
-  .hero {
-    padding: 1rem 0 1.15rem;
-  }
-
-  .hero__lead {
-    font-size: .95rem;
-  }
+  .hero--compact { padding: .8rem 0 1rem; }
+  .hero--compact .hero__lead { font-size: .95rem; }
+  .hero--compact .hero-search { gap: .3rem; padding: .3rem; }
+  .hero--compact .hero-search .btn { padding-inline: 1rem; }
 }
+
+
+
+
 /* עמוד אודות */
 .about-head {
   padding-bottom: .5rem;
