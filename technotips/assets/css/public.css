@@ -98,3 +98,35 @@
 .footer-inner p { margin: 0; }
 .tip-page [id], .gallery, .share { scroll-margin-top: 80px; }
 .admin-edit-link { margin-bottom: .75rem; }
+/* Hero קומפקטי - ספריית תוכן ולא דף נחיתה */
+.hero {
+  padding: 1.35rem 0 1.5rem;
+}
+
+.hero__eyebrow {
+  display: none;
+}
+
+.hero__title {
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  margin-bottom: .15rem;
+}
+
+.hero__lead {
+  font-size: 1.05rem;
+  margin-bottom: .8rem;
+}
+
+.hero-search {
+  max-width: 600px;
+}
+
+@media (max-width: 600px) {
+  .hero {
+    padding: 1rem 0 1.15rem;
+  }
+
+  .hero__lead {
+    font-size: .95rem;
+  }
+}
